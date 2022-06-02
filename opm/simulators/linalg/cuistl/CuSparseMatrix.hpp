@@ -104,7 +104,7 @@ public:
 
     size_t nonzeros() const
     {
-        return numberOfNonzeroElements;
+        return numberOfNonzeroElements / blockSize();
     }
 
     CuVector<T>& getNonZeroValues()

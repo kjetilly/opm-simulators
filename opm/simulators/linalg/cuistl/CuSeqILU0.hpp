@@ -71,9 +71,10 @@ public:
         , descriptionU(createUpperDiagonalDescription())
         , cuSparseHandle(CuSparseHandle::getInstance())
     {
+        // https://docs.nvidia.com/cuda/cusparse/index.html#csrilu02_solve
         OpmLog::info("Running CuSeqILU0");
         auto bufferSize = findBufferSize();
-        buffer.reset(new CuVector<field_type>(bufferSize / sizeof(field_type)));
+        buffer.reset(new CuVector<field_type>((bufferSize + sizeof(field_type) - 1) / sizeof(field_type)));
         analyzeMatrix();
         createILU();
     }
@@ -101,7 +102,7 @@ public:
         const double one = 1.0;
 
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroElements = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeros();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -113,7 +114,7 @@ public:
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                      numberOfRows,
-                                                     numberOfNonzeroElements,
+                                                     numberOfNonzeroBlocks,
                                                      &one,
                                                      descriptionL->get(),
                                                      nonZeroValues,
@@ -123,7 +124,7 @@ public:
                                                      infoL.get(),
                                                      d.data(),
                                                      temporaryStorage.data(),
-                                                     CUSPARSE_SOLVE_POLICY_USE_LEVEL,
+                                                     CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                      buffer->data()));
 
         // Solve U v = temporaryStorage
@@ -131,7 +132,7 @@ public:
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                      numberOfRows,
-                                                     numberOfNonzeroElements,
+                                                     numberOfNonzeroBlocks,
                                                      &one,
                                                      descriptionU->get(),
                                                      nonZeroValues,
@@ -194,7 +195,7 @@ private:
                       "Buffer not initialized. Call findBufferSize() then initialize with the appropiate size.");
         }
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroElements = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeros();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -204,14 +205,14 @@ private:
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02_analysis(cuSparseHandle.get(),
                                                           CUSPARSE_MATRIX_ORDER,
                                                           numberOfRows,
-                                                          numberOfNonzeroElements,
+                                                          numberOfNonzeroBlocks,
                                                           LU.getDescription().get(),
                                                           nonZeroValues,
                                                           rowIndices,
                                                           columnIndices,
                                                           blockSize,
                                                           infoM.get(),
-                                                          CUSPARSE_SOLVE_POLICY_USE_LEVEL,
+                                                          CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                           buffer->data()));
 
         int structural_zero;
@@ -222,21 +223,21 @@ private:
                                                         CUSPARSE_MATRIX_ORDER,
                                                         CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                         numberOfRows,
-                                                        numberOfNonzeroElements,
+                                                        numberOfNonzeroBlocks,
                                                         descriptionL->get(),
                                                         nonZeroValues,
                                                         rowIndices,
                                                         columnIndices,
                                                         blockSize,
                                                         infoL.get(),
-                                                        CUSPARSE_SOLVE_POLICY_USE_LEVEL,
+                                                        CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                         buffer->data()));
 
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_analysis(cuSparseHandle.get(),
                                                         CUSPARSE_MATRIX_ORDER,
                                                         CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                         numberOfRows,
-                                                        numberOfNonzeroElements,
+                                                        numberOfNonzeroBlocks,
                                                         descriptionU->get(),
                                                         nonZeroValues,
                                                         rowIndices,
@@ -257,7 +258,7 @@ private:
         // we combine these buffers into one since it is not used across calls,
         // however, it was used in the Across project.
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroElements = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeros();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -268,7 +269,7 @@ private:
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02_bufferSize(cuSparseHandle.get(),
                                                             CUSPARSE_MATRIX_ORDER,
                                                             numberOfRows,
-                                                            numberOfNonzeroElements,
+                                                            numberOfNonzeroBlocks,
                                                             LU.getDescription().get(),
                                                             nonZeroValues,
                                                             rowIndices,
@@ -281,7 +282,7 @@ private:
                                                           CUSPARSE_MATRIX_ORDER,
                                                           CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                           numberOfRows,
-                                                          numberOfNonzeroElements,
+                                                          numberOfNonzeroBlocks,
                                                           descriptionL->get(),
                                                           nonZeroValues,
                                                           rowIndices,
@@ -295,7 +296,7 @@ private:
                                                           CUSPARSE_MATRIX_ORDER,
                                                           CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                           numberOfRows,
-                                                          numberOfNonzeroElements,
+                                                          numberOfNonzeroBlocks,
                                                           descriptionL->get(),
                                                           nonZeroValues,
                                                           rowIndices,
@@ -318,7 +319,7 @@ private:
             OPM_THROW(std::runtime_error, "Analyzis of matrix not done. Call analyzeMatrix() first.");
         }
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroElements = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeros();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -327,14 +328,14 @@ private:
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02(cuSparseHandle.get(),
                                                  CUSPARSE_MATRIX_ORDER,
                                                  numberOfRows,
-                                                 numberOfNonzeroElements,
+                                                 numberOfNonzeroBlocks,
                                                  LU.getDescription().get(),
                                                  nonZeroValues,
                                                  rowIndices,
                                                  columnIndices,
                                                  blockSize,
                                                  infoM.get(),
-                                                 CUSPARSE_SOLVE_POLICY_USE_LEVEL,
+                                                 CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                  buffer->data()));
 
         // TODO: Do we really need to do this twice?
