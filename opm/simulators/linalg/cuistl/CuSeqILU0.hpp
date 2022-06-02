@@ -71,6 +71,7 @@ public:
         , descriptionU(createUpperDiagonalDescription())
         , cuSparseHandle(CuSparseHandle::getInstance())
     {
+        OpmLog::info("Running CuSeqILU0");
         auto bufferSize = findBufferSize();
         buffer.reset(new CuVector<field_type>(bufferSize / sizeof(field_type)));
         analyzeMatrix();
