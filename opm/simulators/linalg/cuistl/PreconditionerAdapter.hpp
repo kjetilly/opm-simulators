@@ -1,5 +1,5 @@
 /*
-  Copyright SINTEF AS
+  Copyright SINTEF AS 2022
 
   This file is part of the Open Porous Media project (OPM).
 
@@ -54,7 +54,7 @@ public:
        \param w The relaxation factor.
             */
     PreconditionerAdapter(std::shared_ptr<CudaPreconditionerType> preconditioner_)
-        : underlyingPeconditioner(preconditioner_)
+        : underlyingPreconditioner(preconditioner_)
     {
 
     }
@@ -82,7 +82,7 @@ public:
             outputBuffer.reset(new CuVector<field_type>(v.dim() * v.N()));
         }
         inputBuffer->copyFrom(d);
-        underlyingPeconditioner->apply(*inputBuffer, *outputBuffer);
+        underlyingPreconditioner->apply(*inputBuffer, *outputBuffer);
         outputBuffer->copyTo(v);
     }
 
@@ -104,7 +104,7 @@ public:
 
 private:
     //! \brief the underlying preconditioner to use
-    std::shared_ptr<CudaPreconditionerType> underlyingPeconditioner;
+    std::shared_ptr<CudaPreconditionerType> underlyingPreconditioner;
 
     std::unique_ptr<CuVector<field_type>> inputBuffer;
     std::unique_ptr<CuVector<field_type>> outputBuffer;

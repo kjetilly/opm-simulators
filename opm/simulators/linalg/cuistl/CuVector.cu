@@ -4,27 +4,29 @@
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 
+
 namespace Opm::cuistl
 {
 
 template <class T>
 CuVector<T>::CuVector(const int numberOfElements)
-    : cuBlasHandle(CuBlasHandle::getInstance())
+    : numberOfElements(numberOfElements)
+    , cuBlasHandle(CuBlasHandle::getInstance())
 {
-    CUDA_SAFE_CALL(cudaMalloc(&dataOnDevice, sizeof(T) * numberOfElements));
+    OPM_CUDA_SAFE_CALL(cudaMalloc(&dataOnDevice, sizeof(T) * numberOfElements));
 }
 
 template <class T>
 CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
     : CuVector(numberOfElements)
 {
-    CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, dataOnHost, cudaMemcpyHostToDevice));
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, dataOnHost, numberOfElements, cudaMemcpyHostToDevice));
 }
 
 template <class T>
 CuVector<T>::~CuVector()
 {
-    cudaFree(data);
+    OPM_CUDA_SAFE_CALL(cudaFree(dataOnDevice));
 }
 
 template <typename T>
@@ -45,7 +47,18 @@ template <class T>
 CuVector<T>&
 CuVector<T>::operator*=(const T& scalar)
 {
-    OPM_CUBLAS_SAFE_CALL(cublasDscal(cuBlasHandle.get(), numberOfElements, scalar, data(), 1));
+    // maybe this can be done more elegantly?
+    if constexpr (std::is_same<T, double>::value) {
+        OPM_CUBLAS_SAFE_CALL(cublasDscal(cuBlasHandle.get(), numberOfElements, &scalar, data(), 1));
+    } else if constexpr (std::is_same<T, float>::value) {
+        OPM_CUBLAS_SAFE_CALL(cublasSscal(cuBlasHandle.get(), numberOfElements, &scalar, data(), 1));
+    } else if constexpr (std::is_same<T, int>::value) {
+        OPM_THROW(std::runtime_error, "Scalar multiplication for integer vectors is not implemented yet.");
+    } else {
+        // TODO: Make this a static assert.
+        OPM_THROW(std::runtime_error, "This should not land here...");
+    }
+
     return *this;
 }
 
@@ -53,14 +66,17 @@ template <class T>
 void
 CuVector<T>::copyFromHost(const T* dataPointer, int numberOfElements)
 {
-    CUDA_SAFE_CALL(cudaMemcpy(data(), dataPointer, numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(data(), dataPointer, numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template <class T>
 void
 CuVector<T>::copyToHost(T* dataPointer, int numberOfElements) const
 {
-    CUDA_SAFE_CALL(cudaMemcpy(dataPointer, data(), numberOfElements * sizeof(T), cudaMemcpyDeviceToHost));
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataPointer, data(), numberOfElements * sizeof(T), cudaMemcpyDeviceToHost));
 }
-class CuVector<double>;
+template class CuVector<double>;
+template class CuVector<float>;
+template class CuVector<int>;
+
 } // namespace Opm::cuistl

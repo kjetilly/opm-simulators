@@ -23,7 +23,10 @@ public:
     CuSparseResource(const CuSparseResource&) = delete;
     CuSparseResource& operator=(const CuSparseResource&) = delete;
 
-    T get();
+    T get()
+    {
+        return resource;
+    }
 
 private:
     // cuSparse exposes its types as typedefs of pointers.

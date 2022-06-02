@@ -7,7 +7,7 @@ namespace Opm::cuistl
 {
 using CuSparseMatrixDescription = CuSparseResource<cusparseMatDescr_t>;
 using CuSparseMatrixDescriptionPtr = std::shared_ptr<CuSparseResource<cusparseMatDescr_t>>;
-CuSparseMatrixDescriptionPtr
+inline CuSparseMatrixDescriptionPtr
 createMatrixDescription()
 {
     auto description = std::make_shared<CuSparseMatrixDescription>();
@@ -19,7 +19,7 @@ createMatrixDescription()
     return description;
 }
 
-CuSparseMatrixDescriptionPtr
+inline CuSparseMatrixDescriptionPtr
 createLowerDiagonalDescription()
 {
     auto description = createMatrixDescription();
@@ -28,7 +28,7 @@ createLowerDiagonalDescription()
     return description;
 }
 
-CuSparseMatrixDescriptionPtr
+inline CuSparseMatrixDescriptionPtr
 createUpperDiagonalDescription()
 {
     auto description = createMatrixDescription();

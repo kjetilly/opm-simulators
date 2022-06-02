@@ -56,6 +56,6 @@ CuSparseMatrix<T>::setNonUnitDiagonal()
     OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(matrixDescription->get(), CUSPARSE_DIAG_TYPE_NON_UNIT));
 }
 
-class CuSparseMatrix<float>;
-class CuSparseMatrix<double>;
+template class CuSparseMatrix<float>;
+template class CuSparseMatrix<double>;
 } // namespace Opm::cuistl

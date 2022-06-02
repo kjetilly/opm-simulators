@@ -76,8 +76,8 @@ public:
         columnIndices.reserve(numberOfNonzeroBlocks);
         rowIndices.reserve(numberOfRows + 1);
         for (auto& row : matrix) {
-            for (auto& column : row) {
-                columnIndices.push_back(column.index());
+            for (auto columnIterator = row.begin(); columnIterator != row.end(); ++columnIterator) {
+                columnIndices.push_back(columnIterator.index());
             }
             rowIndices.push_back(columnIndices.size());
         }
@@ -134,11 +134,11 @@ public:
         return columnIndices;
     }
 
-    const int dim() const
+    int dim() const
     {
         return _blockSize;
     }
-    const int blockSize() const
+    int blockSize() const
     {
         return _blockSize;
     }

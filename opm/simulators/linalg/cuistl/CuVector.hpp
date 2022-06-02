@@ -38,8 +38,8 @@ public:
     CuVector(const T* dataOnHost, const int numberOfElements);
     virtual ~CuVector();
 
-    const T* data() const;
     T* data();
+    const T* data() const;
 
     template <class VectorType>
     void copyFrom(const VectorType& vector)
@@ -74,7 +74,7 @@ public:
     CuVector<T>& operator*=(const T& scalar);
 
 private:
-    T* dataOnDevice;
+    T* dataOnDevice = nullptr;
     const int numberOfElements;
     CuBlasHandle& cuBlasHandle;
 };
