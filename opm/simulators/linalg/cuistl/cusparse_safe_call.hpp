@@ -31,6 +31,7 @@ getCusparseErrorMessage(int code)
         return "UNKNOWN CUSPARSE ERROR " + std::to_string(code);
     }
 }
+} // namespace
 #undef ADD_CUSPRASE_ERROR_TYPE
 #define OPM_CUSPARSE_SAFE_CALL(expression)                                                                             \
     {                                                                                                                  \
@@ -40,7 +41,7 @@ getCusparseErrorMessage(int code)
             message << "cuSparse expression did not execute correctly. Expression was: \n";                            \
             message << "    " << #expression << "\n";                                                                  \
             message << "in function " << __func__ << ", in " << __FILE__ << " at line " << __LINE__ << "\n";           \
-            message << "CuSparse error code was: " << getCusparseErrorMessage << "\n";                                 \
+            message << "CuSparse error code was: " << getCusparseErrorMessage(code) << "\n";                           \
             OpmLog::error(message.str());                                                                              \
             OPM_THROW(std::runtime_error, message.str());                                                              \
         }                                                                                                              \
