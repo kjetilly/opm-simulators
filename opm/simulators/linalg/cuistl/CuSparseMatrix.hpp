@@ -136,7 +136,7 @@ public:
 
     int dim() const
     {
-        return _blockSize;
+        return _blockSize * numberOfRows;
     }
     int blockSize() const
     {

@@ -66,7 +66,7 @@ public:
     CuSeqILU0(const M& A, scalar_field_type w)
         : w(w)
         , LU(CuSparseMatrix<field_type>::fromMatrix(A))
-        , temporaryStorage(LU.N() * LU.dim())
+        , temporaryStorage(LU.N() * LU.blockSize())
         , descriptionL(createLowerDiagonalDescription())
         , descriptionU(createUpperDiagonalDescription())
         , cuSparseHandle(CuSparseHandle::getInstance())
@@ -213,8 +213,8 @@ private:
                                                           CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                           buffer->data()));
 
-        int structural_zero;
-        OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
+        // int structural_zero;
+        // OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
 
         // analysis of ilu apply
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_analysis(cuSparseHandle.get(),
@@ -336,10 +336,10 @@ private:
                                                  CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                  buffer->data()));
 
-        // TODO: Do we really need to do this twice?
-        int structural_zero;
-        // cusparseXbsrilu02_zeroPivot() calls cudaDeviceSynchronize()
-        OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
+        // // TODO: Do we really need to do this twice?
+        // int structural_zero;
+        // // cusparseXbsrilu02_zeroPivot() calls cudaDeviceSynchronize()
+        // OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
     }
 };
 } // end namespace Opm::cuistl

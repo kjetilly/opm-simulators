@@ -44,12 +44,11 @@ public:
     template <class VectorType>
     void copyFrom(const VectorType& vector)
     {
-        if (numberOfElements != vector.N() * vector.dim()) {
+        if (numberOfElements != vector.dim()) {
             OPM_THROW(std::runtime_error,
                       "Given incompatible vector size. CuVector has size " + std::to_string(numberOfElements)
                           + ",\nhowever, " + typeid(VectorType).name() + " has N() = " + std::to_string(vector.N())
-                          + ", and dim() = " + std::to_string(vector.dim()) + "\nMaking the total size "
-                          + std::to_string(vector.N() * vector.dim()));
+                          + ", and dim() = " + std::to_string(vector.dim()));
         }
         const auto dataPointer = static_cast<const T*>(&(vector[0][0]));
         copyFromHost(dataPointer, numberOfElements);
@@ -58,12 +57,11 @@ public:
     template <class VectorType>
     void copyTo(VectorType& vector) const
     {
-        if (numberOfElements != vector.N() * vector.dim()) {
+        if (numberOfElements != vector.dim()) {
             OPM_THROW(std::runtime_error,
                       "Given incompatible vector size. CuVector has size " + std::to_string(numberOfElements)
                           + ",\nhowever, " + typeid(VectorType).name() + " has N() = " + std::to_string(vector.N())
-                          + ", and dim() = " + std::to_string(vector.dim()) + "\nMaking the total size "
-                          + std::to_string(vector.N() * vector.dim()));
+                          + ", and dim() = " + std::to_string(vector.dim()));
         }
         const auto dataPointer = static_cast<T*>(&(vector[0][0]));
         copyToHost(dataPointer, numberOfElements);

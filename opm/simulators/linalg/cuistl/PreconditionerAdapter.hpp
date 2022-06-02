@@ -78,8 +78,8 @@ public:
     virtual void apply(X& v, const Y& d)
     {
         if (!inputBuffer) {
-            inputBuffer.reset(new CuVector<field_type>(v.dim() * v.N()));
-            outputBuffer.reset(new CuVector<field_type>(v.dim() * v.N()));
+            inputBuffer.reset(new CuVector<field_type>(v.dim()));
+            outputBuffer.reset(new CuVector<field_type>(v.dim()));
         }
         inputBuffer->copyFrom(d);
         underlyingPreconditioner->apply(*inputBuffer, *outputBuffer);
