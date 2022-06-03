@@ -50,7 +50,7 @@ public:
     CuSparseMatrix(const T* nonZeroElements,
                    const int* rowIndices,
                    const int* columnIndices,
-                   int numberOfNonzeroElements,
+                   int numberOfNonzeroBlocks,
                    int blockSize,
                    int numberOfRows);
 
@@ -88,8 +88,16 @@ public:
             OPM_THROW(std::logic_error, "Error size of rows do not sum to number of nonzeroes in CuSparseMatrix.");
         }
 
+        if (rowIndices.size() != numberOfRows + 1) {
+            OPM_THROW(std::logic_error, "Row indices do not match for CuSparseMatrix.");
+        }
+
+        if (columnIndices.size() != numberOfNonzeroBlocks) {
+            OPM_THROW(std::logic_error, "Column indices do not match for CuSparseMatrix.");
+        }
+
         return CuSparseMatrix<T>(
-            nonZeroElements, rowIndices.data(), columnIndices.data(), numberOfNonzeroElements, blockSize, numberOfRows);
+            nonZeroElements, rowIndices.data(), columnIndices.data(), numberOfNonzeroBlocks, blockSize, numberOfRows);
     }
 
     void setUpperTriangular();
@@ -102,9 +110,9 @@ public:
         return numberOfRows;
     }
 
-    size_t nonzeros() const
+    size_t nonzeroes() const
     {
-        return numberOfNonzeroElements / blockSize();
+        return numberOfNonzeroBlocks;
     }
 
     CuVector<T>& getNonZeroValues()
@@ -152,7 +160,7 @@ private:
     CuVector<T> nonZeroElements;
     CuVector<int> columnIndices;
     CuVector<int> rowIndices;
-    const int numberOfNonzeroElements;
+    const int numberOfNonzeroBlocks;
     const int numberOfRows;
     const int _blockSize;
 

@@ -9,13 +9,13 @@ template <class T>
 CuSparseMatrix<T>::CuSparseMatrix(const T* nonZeroElements,
                                   const int* rowIndices,
                                   const int* columnIndices,
-                                  int numberOfNonzeroElements,
+                                  int numberOfNonzeroBlocks,
                                   int blockSize,
                                   int numberOfRows)
-    : nonZeroElements(nonZeroElements, numberOfNonzeroElements)
+    : nonZeroElements(nonZeroElements, numberOfNonzeroBlocks * blockSize * blockSize)
     , rowIndices(rowIndices, numberOfRows + 1)
-    , columnIndices(columnIndices, numberOfNonzeroElements / blockSize)
-    , numberOfNonzeroElements(numberOfNonzeroElements)
+    , columnIndices(columnIndices, numberOfNonzeroBlocks)
+    , numberOfNonzeroBlocks(numberOfNonzeroBlocks)
     , numberOfRows(numberOfRows)
     , matrixDescription(createMatrixDescription())
     , _blockSize(blockSize)

@@ -71,9 +71,43 @@ public:
         , descriptionU(createUpperDiagonalDescription())
         , cuSparseHandle(CuSparseHandle::getInstance())
     {
+        // Some sanity check
+        if (A.N() != LU.N()) {
+            OPM_THROW(std::runtime_error,
+                      "CuSparse matrix not same size as DUNE matrix. " + std::to_string(LU.N()) + " vs "
+                          + std::to_string(A.N()));
+        }
+        if (A[0][0].N() != LU.blockSize()) {
+            OPM_THROW(std::runtime_error,
+                      "CuSparse matrix not same blocksize as DUNE matrix. " + std::to_string(LU.blockSize()) + " vs "
+                          + std::to_string(A[0][0].N()));
+        }
+        if (A.N() * A[0][0].N() != LU.dim()) {
+            OPM_THROW(std::runtime_error,
+                      "CuSparse matrix not same dimension as DUNE matrix. " + std::to_string(LU.dim()) + " vs "
+                          + std::to_string(A.N() * A[0][0].N()));
+        }
+
+        if (A.nonzeroes() != LU.nonzeroes()) {
+            OPM_THROW(std::runtime_error,
+                      "CuSparse matrix not same number of non zeroes as DUNE matrix. " + std::to_string(LU.nonzeroes())
+                          + " vs " + std::to_string(A.nonzeroes()));
+        }
+
+
         // https://docs.nvidia.com/cuda/cusparse/index.html#csrilu02_solve
         OpmLog::info("Running CuSeqILU0");
         auto bufferSize = findBufferSize();
+        
+        std::stringstream mzero;
+
+        for (int i = 0; i < LU.blockSize(); ++i) {
+            for (int j = 0; j < LU.blockSize(); ++j) {
+                mzero << A[74, 74][i, j] << ", ";
+            }
+            mzero << "\n";
+        }
+        OpmLog::info("A[74, 74] = " + mzero.str());
         buffer.reset(new CuVector<field_type>((bufferSize + sizeof(field_type) - 1) / sizeof(field_type)));
         analyzeMatrix();
         createILU();
@@ -102,7 +136,7 @@ public:
         const double one = 1.0;
 
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroBlocks = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeroes();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -195,7 +229,7 @@ private:
                       "Buffer not initialized. Call findBufferSize() then initialize with the appropiate size.");
         }
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroBlocks = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeroes();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -215,9 +249,16 @@ private:
                                                           CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                           buffer->data()));
 
-        int structural_zero;
-        OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
-
+        // Make sure we can decompose the matrix.
+        int structuralZero;
+        auto statusPivot = cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structuralZero);
+        if (statusPivot != CUSPARSE_STATUS_SUCCESS) {
+            OPM_THROW(std::runtime_error,
+                      "Found a structucal zero at A(" + std::to_string(structuralZero) + ", "
+                          + std::to_string(structuralZero) + "). Could not decompose LU approx A.\n\n"
+                          + "A has dimension: " + std::to_string(LU.N()) + ",\n" + "and has "
+                          + std::to_string(LU.nonzeroes()) + " nonzeroes.");
+        }
         // analysis of ilu apply
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_analysis(cuSparseHandle.get(),
                                                         CUSPARSE_MATRIX_ORDER,
@@ -258,7 +299,7 @@ private:
         // we combine these buffers into one since it is not used across calls,
         // however, it was used in the Across project.
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroBlocks = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeroes();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -319,7 +360,7 @@ private:
             OPM_THROW(std::runtime_error, "Analyzis of matrix not done. Call analyzeMatrix() first.");
         }
         const auto numberOfRows = LU.N();
-        const auto numberOfNonzeroBlocks = LU.nonzeros();
+        const auto numberOfNonzeroBlocks = LU.nonzeroes();
         const auto blockSize = LU.blockSize();
 
         auto nonZeroValues = LU.getNonZeroValues().data();
@@ -338,10 +379,17 @@ private:
                                                  CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                  buffer->data()));
 
-        // TODO: Do we really need to do this twice?
-        int structural_zero;
+        // We need to do this here as well. The first call was to check that we could decompose the system A=LU
+        // the second call here is to make sure we can solve LUx=y
+        int structuralZero;
         // cusparseXbsrilu02_zeroPivot() calls cudaDeviceSynchronize()
-        OPM_CUSPARSE_SAFE_CALL(cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structural_zero));
+        auto statusPivot = cusparseXbsrilu02_zeroPivot(cuSparseHandle.get(), infoM.get(), &structuralZero);
+
+        if (statusPivot != CUSPARSE_STATUS_SUCCESS) {
+            OPM_THROW(std::runtime_error,
+                      "Found a structucal zero at LU(" + std::to_string(structuralZero) + ", "
+                          + std::to_string(structuralZero) + "). Could not solve LUx = y.");
+        }
     }
 };
 } // end namespace Opm::cuistl

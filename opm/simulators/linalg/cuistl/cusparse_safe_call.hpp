@@ -38,8 +38,8 @@ getCusparseErrorMessage(int code)
         cusparseStatus_t error = expression;                                                                           \
         if (error != CUSPARSE_STATUS_SUCCESS) {                                                                        \
             std::stringstream message;                                                                                 \
-            message << "cuSparse expression did not execute correctly. Expression was: \n";                            \
-            message << "    " << #expression << "\n";                                                                  \
+            message << "cuSparse expression did not execute correctly. Expression was: \n\n";                            \
+            message << "    " << #expression << "\n\n";                                                                  \
             message << "in function " << __func__ << ", in " << __FILE__ << " at line " << __LINE__ << "\n";           \
             message << "CuSparse error code was: " << getCusparseErrorMessage(error) << "\n";                          \
             OpmLog::error(message.str());                                                                              \
