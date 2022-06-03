@@ -99,15 +99,6 @@ public:
         OpmLog::info("Running CuSeqILU0");
         auto bufferSize = findBufferSize();
         
-        std::stringstream mzero;
-
-        for (int i = 0; i < LU.blockSize(); ++i) {
-            for (int j = 0; j < LU.blockSize(); ++j) {
-                mzero << A[74, 74][i, j] << ", ";
-            }
-            mzero << "\n";
-        }
-        OpmLog::info("A[74, 74] = " + mzero.str());
         buffer.reset(new CuVector<field_type>((bufferSize + sizeof(field_type) - 1) / sizeof(field_type)));
         analyzeMatrix();
         createILU();
