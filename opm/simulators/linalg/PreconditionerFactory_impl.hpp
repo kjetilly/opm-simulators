@@ -40,6 +40,11 @@
 #include <dune/istl/paamg/kamg.hh>
 #include <dune/istl/paamg/fastamg.hh>
 
+#if HAVE_CUDA
+#include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
+#include <opm/simulators/linalg/cuistl/CuSeqILU0.hpp>
+#endif
+
 namespace Opm {
 
 template<class Smoother>
@@ -412,6 +417,17 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
                                 using LevelTransferPolicy = Opm::PressureTransferPolicy<O, Dune::Amg::SequentialInformation, true>;
                                 return std::make_shared<OwningTwoLevelPreconditioner<O, V, LevelTransferPolicy>>(op, prm, weightsCalculator, pressureIndex);
         });
+
+        #if HAVE_CUDA
+            F::addCreator("CUILU0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+            const double w = prm.get<double>("relaxation", 1.0);
+            using field_type = typename V::field_type;
+            using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
+            //return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(
+            //    std::make_shared<CuILU0>(op.getmat(), w));
+            return wrapPreconditioner<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
+        });
+        #endif
     }
 };
 
