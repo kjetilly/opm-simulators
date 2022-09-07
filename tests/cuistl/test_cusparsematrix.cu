@@ -66,8 +66,22 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
     nonZeroValuesCuda.copyToHost(buffer.data(), buffer.size());
     const double* nonZeroElements = static_cast<const double*>(&((B[0][0][0][0])));
     BOOST_CHECK_EQUAL_COLLECTIONS(buffer.begin(), buffer.end(), nonZeroElements, nonZeroElements + B.nonzeroes());
-    for (int i = 0; i < buffer.size(); ++i) {
-        std::cout << buffer[i] << ", " << nonZeroElements[i] << std::endl;
+    BOOST_CHECK_EQUAL(N*3-2, cuSparseMatrix.nonzeroes());
+    
+    std::vector<int> rowIndicesFromCUDA(N + 1);
+    cuSparseMatrix.getRowIndices().copyToHost(rowIndicesFromCUDA.data(), rowIndicesFromCUDA.size());
+    BOOST_CHECK_EQUAL(rowIndicesFromCUDA[0], 0);
+    BOOST_CHECK_EQUAL(rowIndicesFromCUDA[1], 2);
+    for (int i = 2; i <N; ++i) {
+        BOOST_CHECK_EQUAL(rowIndicesFromCUDA[i], rowIndicesFromCUDA[i-1]+3);
     }
+
+
+    std::vector<int> columnIndicesFromCUDA(B.nonzeroes(), 0);
+    cuSparseMatrix.getColumnIndices().copyToHost(columnIndicesFromCUDA.data(), columnIndicesFromCUDA.size());
+    
+    BOOST_CHECK_EQUAL(columnIndicesFromCUDA[0], 0);
+    BOOST_CHECK_EQUAL(columnIndicesFromCUDA[1], 1);
+    // TODO: Check rest
 }
 
