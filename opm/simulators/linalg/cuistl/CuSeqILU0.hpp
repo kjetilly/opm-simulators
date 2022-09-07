@@ -20,6 +20,7 @@
 #define OPM_CUSEQILU0_HEADER_INCLUDED
 #include <cusparse.h>
 #include <dune/common/simd.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/preconditioner.hh>
 #include <opm/simulators/linalg/cuistl/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/cuistl/CuSparseHandle.hpp>
@@ -122,6 +123,7 @@ public:
         */
     virtual void apply(X& v, const Y& d)
     {
+        OpmLog::info("Applying CuSeqILU0");
         // We need to pass the solve routine a scalar to multiply.
         // In our case this scalar is 1.0
         const double one = 1.0;
