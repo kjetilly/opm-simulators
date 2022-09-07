@@ -35,6 +35,10 @@ class CuVector
 public:
     using field_type = T;
     using size_type = size_t;
+    // Can not be copied:
+    CuVector(const CuVector<T>& other) = delete;
+    CuVector& operator=(const CuVector<T>&) = delete;
+    
     CuVector(const int numberOfElements);
     CuVector(const T* dataOnHost, const int numberOfElements);
     virtual ~CuVector();
