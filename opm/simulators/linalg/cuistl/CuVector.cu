@@ -37,6 +37,13 @@ CuVector<T>::data() const
 }
 
 template <typename T>
+typename CuVector<T>::size_type
+CuVector<T>::dim() const
+{
+    return numberOfElements;
+}
+
+template <typename T>
 T*
 CuVector<T>::data()
 {

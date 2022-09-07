@@ -34,6 +34,7 @@ class CuVector
 {
 public:
     using field_type = T;
+    using size_type = size_t;
     CuVector(const int numberOfElements);
     CuVector(const T* dataOnHost, const int numberOfElements);
     virtual ~CuVector();
@@ -70,6 +71,9 @@ public:
     void copyToHost(T* dataPointer, int numberOfElements) const;
 
     CuVector<T>& operator*=(const T& scalar);
+
+    size_type dim() const;
+
 
 private:
     T* dataOnDevice = nullptr;
