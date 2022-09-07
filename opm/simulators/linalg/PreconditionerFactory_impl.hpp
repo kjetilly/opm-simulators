@@ -419,7 +419,7 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
         });
 
         #if HAVE_CUDA
-            F::addCreator("CUILU0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+        F::addCreator("CUILU0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
