@@ -100,7 +100,7 @@ public:
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
     {
-        return Dune::SolverCategory::sequential;
+        return underlyingPreconditioner->category();
     }
 
     virtual void update() override {
