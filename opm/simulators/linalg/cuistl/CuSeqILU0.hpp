@@ -28,6 +28,8 @@
 #include <opm/simulators/linalg/cuistl/CuSparseResource.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
+#include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
+
 
 
 namespace Opm::cuistl
@@ -44,7 +46,7 @@ Wraps the naked ISTL generic ILU0 preconditioner into the solver framework.
         as other preconditioners.
             */
 template <class M, class X, class Y, int l = 1>
-class CuSeqILU0 : public Dune::Preconditioner<X, Y>
+class CuSeqILU0 : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -65,7 +67,8 @@ public:
        \param w The relaxation factor.
             */
     CuSeqILU0(const M& A, scalar_field_type w)
-        : w(w)
+        : underlyingMatrix(A)
+        , w(w)
         , LU(CuSparseMatrix<field_type>::fromMatrix(A))
         , temporaryStorage(LU.N() * LU.blockSize())
         , descriptionL(createLowerDiagonalDescription())
@@ -97,12 +100,7 @@ public:
 
 
         // https://docs.nvidia.com/cuda/cusparse/index.html#csrilu02_solve
-        OpmLog::info("Running CuSeqILU0");
-        auto bufferSize = findBufferSize();
-        
-        buffer.reset(new CuVector<field_type>((bufferSize + sizeof(field_type) - 1) / sizeof(field_type)));
-        analyzeMatrix();
-        createILU();
+        updateILUConfiguration();
     }
 
     /*!
@@ -110,7 +108,7 @@ public:
 
     \copydoc Preconditioner::pre(X&,Y&)
         */
-    virtual void pre(X& x, Y& b)
+    virtual void pre(X& x, Y& b) override
     {
         DUNE_UNUSED_PARAMETER(x);
         DUNE_UNUSED_PARAMETER(b);
@@ -121,9 +119,8 @@ public:
 
     \copydoc Preconditioner::apply(X&,const Y&)
         */
-    virtual void apply(X& v, const Y& d)
+    virtual void apply(X& v, const Y& d) override
     {
-        OpmLog::info("Applying CuSeqILU0");
         // We need to pass the solve routine a scalar to multiply.
         // In our case this scalar is 1.0
         const double one = 1.0;
@@ -180,18 +177,28 @@ public:
 
     \copydoc Preconditioner::post(X&)
         */
-    virtual void post(X& x)
+    virtual void post(X& x) override
     {
         DUNE_UNUSED_PARAMETER(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
-    virtual Dune::SolverCategory::Category category() const
+    virtual Dune::SolverCategory::Category category() const override
     {
         return Dune::SolverCategory::sequential;
     }
 
+    virtual void update() override {
+        LU.updateNonzeroValues(underlyingMatrix);
+
+        // We can probably get away with updating less than this,
+        // but for now we're sticking to the safe route.
+        updateILUConfiguration();
+    }
+
 private:
+    //! \brief Reference to the underlying matrix
+    const M& underlyingMatrix;
     //! \brief The relaxation factor to use.
     scalar_field_type w;
 
@@ -383,6 +390,15 @@ private:
                       "Found a structucal zero at LU(" + std::to_string(structuralZero) + ", "
                           + std::to_string(structuralZero) + "). Could not solve LUx = y.");
         }
+    }
+
+    void updateILUConfiguration() {
+        auto bufferSize = findBufferSize();
+        if (!buffer || buffer->dim() < bufferSize) {
+            buffer.reset(new CuVector<field_type>((bufferSize + sizeof(field_type) - 1) / sizeof(field_type)));
+        }
+        analyzeMatrix();
+        createILU();
     }
 };
 } // end namespace Opm::cuistl

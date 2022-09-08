@@ -82,6 +82,26 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
         }
         
     }
+
+    // Now we check that we can update the matrix. We basically just negate B
+    B *= -1.0;
+    auto duneILUNew = Dune::SeqILU<SpMatrix, Vector, Vector>(B, 1.0);
+    cuILU.update();
+     // check for the standard basis {e_i} 
+    // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
+    for (int i = 0; i < N; ++i) {
+        Vector inputVector(N);
+        inputVector[i][0] = 1.0;
+        Vector outputVectorDune(N);
+        Vector outputVectorCuistl(N);
+        duneILUNew.apply(outputVectorDune, inputVector);
+        cuILU.apply(outputVectorCuistl, inputVector);
+
+        for (int component = 0; component < N; ++component) {
+            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component], 1e-8);
+        }
+        
+    }
 }
 
 

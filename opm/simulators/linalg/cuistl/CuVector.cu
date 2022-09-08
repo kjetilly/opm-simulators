@@ -73,6 +73,10 @@ template <class T>
 void
 CuVector<T>::copyFromHost(const T* dataPointer, int numberOfElements)
 {
+    if (numberOfElements > dim()) {
+        OPM_THROW(std::runtime_error, "Requesting to copy too many elements. Vector has "
+            << dim() << " elements, while " << numberOfElements << " was requested.");
+    }
     OPM_CUDA_SAFE_CALL(cudaMemcpy(data(), dataPointer, numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
 }
 

@@ -26,6 +26,7 @@
 #include <opm/simulators/linalg/cuistl/CuSparseHandle.hpp>
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <vector>
+#include <iostream>
 
 namespace Opm::cuistl
 {
@@ -156,6 +157,25 @@ public:
         return *matrixDescription;
     }
 
+
+    template <class MatrixType>
+    void updateNonzeroValues(const MatrixType& matrix) {
+        if (nonzeroes() != matrix.nonzeroes()) {
+            OPM_THROW(std::logic_error, "Matrix does not have the same number of non-zero elements.");
+        }
+
+        if (matrix[0][0].N() != blockSize()) {
+            OPM_THROW(std::logic_error, "Matrix does not have the same blocksize.");
+        }
+
+
+        if (matrix.N() != N()) {
+            OPM_THROW(std::logic_error, "Matrix does not have the same number of rows.");
+        }
+
+        const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        nonZeroElements.copyFromHost(newNonZeroElements, nonzeroes() * blockSize() * blockSize());
+    }
 private:
     CuVector<T> nonZeroElements;
     CuVector<int> columnIndices;

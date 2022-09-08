@@ -27,13 +27,14 @@
 #include <opm/simulators/linalg/cuistl/CuSparseResource.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
+#include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
 
 
 namespace Opm::cuistl
 {
 //!\brief Makes a CUDA preconditioner available to a CPU simulator.
 template <class CudaPreconditionerType, class M, class X, class Y, int l = 1>
-class PreconditionerAdapter : public Dune::Preconditioner<X, Y>
+class PreconditionerAdapter : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:
     //! \brief The matrix type the preconditioner is for.
@@ -64,7 +65,7 @@ public:
 
     \copydoc Preconditioner::pre(X&,Y&)
         */
-    virtual void pre(X& x, Y& b)
+    virtual void pre(X& x, Y& b) override
     {
         DUNE_UNUSED_PARAMETER(x);
         DUNE_UNUSED_PARAMETER(b);
@@ -75,7 +76,7 @@ public:
 
     \copydoc Preconditioner::apply(X&,const Y&)
         */
-    virtual void apply(X& v, const Y& d)
+    virtual void apply(X& v, const Y& d) override
     {
         if (!inputBuffer) {
             inputBuffer.reset(new CuVector<field_type>(v.dim()));
@@ -91,7 +92,7 @@ public:
 
     \copydoc Preconditioner::post(X&)
         */
-    virtual void post(X& x)
+    virtual void post(X& x) override
     {
         DUNE_UNUSED_PARAMETER(x);
     }
@@ -100,6 +101,10 @@ public:
     virtual Dune::SolverCategory::Category category() const
     {
         return Dune::SolverCategory::sequential;
+    }
+
+    virtual void update() override {
+        underlyingPreconditioner->update();
     }
 
 private:

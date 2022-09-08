@@ -423,9 +423,7 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
-            //return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(
-            //    std::make_shared<CuILU0>(op.getmat(), w));
-            return wrapPreconditioner<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
+            return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
         });
         #endif
     }
