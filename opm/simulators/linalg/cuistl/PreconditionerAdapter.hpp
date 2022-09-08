@@ -82,7 +82,7 @@ public:
             outputBuffer.reset(new CuVector<field_type>(v.dim()));
         }
         inputBuffer->copyFrom(d);
-        underlyingPreconditioner->apply(*inputBuffer, *outputBuffer);
+        underlyingPreconditioner->apply(*outputBuffer, *inputBuffer);
         outputBuffer->copyTo(v);
     }
 

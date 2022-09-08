@@ -76,8 +76,11 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
         Vector outputVectorCuistl(N);
         duneILU.apply(outputVectorDune, inputVector);
         cuILU.apply(outputVectorCuistl, inputVector);
-        BOOST_CHECK_EQUAL_COLLECTIONS(&outputVectorDune[0][0], &outputVectorDune[0][0] + N,
-            &outputVectorCuistl[0][0], &outputVectorCuistl[0][0]+N);
+
+        for (int component = 0; component < N; ++component) {
+            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component], 1e-8);
+        }
+        
     }
 }
 
