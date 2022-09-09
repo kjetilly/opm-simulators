@@ -42,6 +42,7 @@
 
 #if HAVE_CUDA
 #include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
+#include <opm/simulators/linalg/cuistl/RemakeUpdatePreconditioner.hpp>
 #include <opm/simulators/linalg/cuistl/CuSeqILU0.hpp>
 #endif
 
@@ -221,6 +222,15 @@ struct StandardPreconditioners
             return std::make_shared<OwningTwoLevelPreconditioner<O, V, LevelTransferPolicy, Comm>>(op, prm, weightsCalculator, pressureIndex, comm);
           });
         }
+
+        #if HAVE_CUDA
+        F::addCreator("CUILU0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t, const C&) {
+            const double w = prm.get<double>("relaxation", 1.0);
+            using field_type = typename V::field_type;
+            using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
+            return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
+        });
+        #endif
     }
 
 
@@ -424,6 +434,25 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
             return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
+        });
+
+        F::addCreator("CUILU0Update", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+            const double w = prm.get<double>("relaxation", 1.0);
+            using field_type = typename V::field_type;
+            using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
+            return std::make_shared<Opm::cuistl::RemakeUpdatePreconditioner<M, V, V>>([=,&op]() {
+                std::unique_ptr<Dune::Preconditioner<V,V>> pointer(new Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>(std::make_shared<CuILU0>(op.getmat(), w)));
+                return std::move(pointer);
+            });
+        });
+        F::addCreator("ILU0Update", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+            const double w = prm.get<double>("relaxation", 1.0);
+            using field_type = typename V::field_type;
+            using ILU0 = typename Dune::SeqILU<M, V, V>;
+            return std::make_shared<Opm::cuistl::RemakeUpdatePreconditioner<M, V, V>>([=,&op]() {
+                std::unique_ptr<Dune::Preconditioner<V,V>> pointer(new ILU0(op.getmat(), w));
+                return std::move(pointer);
+            });
         });
         #endif
     }
