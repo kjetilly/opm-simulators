@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
     //      ....
     //      0  0  0  ...1 -2  1
     //      0  0  0  ...   1 -2
-    for (int k = 5; k < 20; ++k) {
+    for (int k = 5; k < 25; ++k) {
         const int N = 2<<k;
         const int nonZeroes = N*3-2;
         using M = Dune::FieldMatrix<double,1,1>;

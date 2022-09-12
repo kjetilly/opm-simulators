@@ -27,6 +27,7 @@
 
 #include <opm/simulators/linalg/GraphColoring.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
+#include <opm/simulators/linalg/cuistl/time_to_file.hpp>
 
 namespace Opm
 {
@@ -285,6 +286,7 @@ template<class Matrix, class Domain, class Range, class ParallelInfoT>
 void ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfoT>::
 apply (Domain& v, const Range& d)
 {
+    Opm::cuistl::TimeToFile timer("OpmILU0", A_->nonzeroes()*(*A_)[0][0].N()*(*A_)[0][0].N());
     Range& md = reorderD(d);
     Domain& mv = reorderV(v);
 

@@ -18,6 +18,8 @@
 */
 #ifndef OPM_CUSEQILU0_HEADER_INCLUDED
 #define OPM_CUSEQILU0_HEADER_INCLUDED
+#include <cuda.h>
+#include <cuda_runtime.h>
 #include <cusparse.h>
 #include <dune/common/simd.hh>
 #include <dune/common/unused.hh>
@@ -29,7 +31,7 @@
 #include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
-
+#include <opm/simulators/linalg/cuistl/time_to_file.hpp>
 
 
 namespace Opm::cuistl
@@ -121,6 +123,7 @@ public:
         */
     virtual void apply(X& v, const Y& d) override
     {
+        
         // We need to pass the solve routine a scalar to multiply.
         // In our case this scalar is 1.0
         const double one = 1.0;
@@ -134,6 +137,8 @@ public:
         auto columnIndices = LU.getColumnIndices().data();
 
         // Solve L temporaryStorage = d
+        {
+        TimeToFile timer("cuistl", LU.nonzeroes() * LU.blockSize() * LU.blockSize());
         OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_solve(cuSparseHandle.get(),
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -168,6 +173,8 @@ public:
                                                      v.data(),
                                                      CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                      buffer->data()));
+                                                     cudaDeviceSynchronize();
+        }
 
         v *= w;
     }

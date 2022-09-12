@@ -30,6 +30,7 @@
 
 #include <opm/simulators/wells/WellHelpers.hpp>
 
+#include <functional>
 #include <optional>
 #include <vector>
 
