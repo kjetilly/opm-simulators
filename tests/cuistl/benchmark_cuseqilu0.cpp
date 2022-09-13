@@ -89,6 +89,8 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
                 B[i][i-1] = 1;
             }
         }
+
+
         Vector inputVector(N);
         Vector outputVector(N);
         Opm::cuistl::CuVector<double> cuInputVector(N);

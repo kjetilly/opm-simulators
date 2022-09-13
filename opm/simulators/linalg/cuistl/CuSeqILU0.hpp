@@ -32,6 +32,7 @@
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
 #include <opm/simulators/linalg/cuistl/time_to_file.hpp>
+#include <opm/simulators/linalg/cuistl/impl/cusparse_wrapper.hpp>
 
 
 namespace Opm::cuistl
@@ -126,7 +127,7 @@ public:
         
         // We need to pass the solve routine a scalar to multiply.
         // In our case this scalar is 1.0
-        const double one = 1.0;
+        const scalar_field_type one = 1.0;
 
         const auto numberOfRows = LU.N();
         const auto numberOfNonzeroBlocks = LU.nonzeroes();
@@ -139,7 +140,7 @@ public:
         // Solve L temporaryStorage = d
         {
         TimeToFile timer("cuistl", LU.nonzeroes() * LU.blockSize() * LU.blockSize());
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_solve(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_solve(cuSparseHandle.get(),
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                      numberOfRows,
@@ -157,7 +158,7 @@ public:
                                                      buffer->data()));
 
         // Solve U v = temporaryStorage
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_solve(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_solve(cuSparseHandle.get(),
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                      numberOfRows,
@@ -230,6 +231,7 @@ private:
 
     void analyzeMatrix()
     {
+
         // TODO: Move this method to the .cu file
         if (!buffer) {
             OPM_THROW(std::runtime_error,
@@ -243,7 +245,7 @@ private:
         auto rowIndices = LU.getRowIndices().data();
         auto columnIndices = LU.getColumnIndices().data();
         // analysis of ilu LU decomposition
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02_analysis(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrilu02_analysis(cuSparseHandle.get(),
                                                           CUSPARSE_MATRIX_ORDER,
                                                           numberOfRows,
                                                           numberOfNonzeroBlocks,
@@ -267,7 +269,7 @@ private:
                           + std::to_string(LU.nonzeroes()) + " nonzeroes.");
         }
         // analysis of ilu apply
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_analysis(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_analysis(cuSparseHandle.get(),
                                                         CUSPARSE_MATRIX_ORDER,
                                                         CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                         numberOfRows,
@@ -281,7 +283,7 @@ private:
                                                         CUSPARSE_SOLVE_POLICY_NO_LEVEL,
                                                         buffer->data()));
 
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_analysis(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_analysis(cuSparseHandle.get(),
                                                         CUSPARSE_MATRIX_ORDER,
                                                         CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                         numberOfRows,
@@ -314,7 +316,7 @@ private:
         auto columnIndices = LU.getColumnIndices().data();
 
         int bufferSizeM = 0;
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02_bufferSize(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrilu02_bufferSize(cuSparseHandle.get(),
                                                             CUSPARSE_MATRIX_ORDER,
                                                             numberOfRows,
                                                             numberOfNonzeroBlocks,
@@ -326,7 +328,7 @@ private:
                                                             infoM.get(),
                                                             &bufferSizeM));
         int bufferSizeL = 0;
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_bufferSize(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_bufferSize(cuSparseHandle.get(),
                                                           CUSPARSE_MATRIX_ORDER,
                                                           CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                           numberOfRows,
@@ -340,7 +342,7 @@ private:
                                                           &bufferSizeL));
 
         int bufferSizeU = 0;
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrsv2_bufferSize(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_bufferSize(cuSparseHandle.get(),
                                                           CUSPARSE_MATRIX_ORDER,
                                                           CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                           numberOfRows,
@@ -373,7 +375,7 @@ private:
         auto nonZeroValues = LU.getNonZeroValues().data();
         auto rowIndices = LU.getRowIndices().data();
         auto columnIndices = LU.getColumnIndices().data();
-        OPM_CUSPARSE_SAFE_CALL(cusparseDbsrilu02(cuSparseHandle.get(),
+        OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrilu02(cuSparseHandle.get(),
                                                  CUSPARSE_MATRIX_ORDER,
                                                  numberOfRows,
                                                  numberOfNonzeroBlocks,

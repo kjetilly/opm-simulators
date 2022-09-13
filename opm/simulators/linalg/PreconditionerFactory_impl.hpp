@@ -44,6 +44,7 @@
 #include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
 #include <opm/simulators/linalg/cuistl/RemakeUpdatePreconditioner.hpp>
 #include <opm/simulators/linalg/cuistl/CuSeqILU0.hpp>
+#include <opm/simulators/linalg/cuistl/PreconditionerConvertToFloatAdapter.hpp>
 #endif
 
 namespace Opm {
@@ -436,10 +437,42 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
         });
 
+        F::addCreator("CUILU0Float", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+            const double w = prm.get<double>("relaxation", 1.0);
+            using field_type = typename V::field_type;
+            using block_type = typename V::block_type;
+            using VTo=Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
+            using matrix_type_to = typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
+            using CuILU0 = typename Opm::cuistl::CuSeqILU0<matrix_type_to, Opm::cuistl::CuVector<float>, Opm::cuistl::CuVector<float>>;
+            using Adapter = typename Opm::cuistl::PreconditionerAdapter<CuILU0, matrix_type_to, VTo, VTo>;
+            using Converter = typename Opm::cuistl::PreconditionerConvertToFloatAdapter<Adapter, M, V, V>;
+            auto converted = std::make_shared<Converter>(op.getmat());
+            auto adapted = std::make_shared<Adapter>(std::make_shared<CuILU0>(converted->getConvertedMatrix(), w));
+            converted->setUnderlyingPreconditioner(adapted);
+            return converted;
+            
+        });
+
+        // F::addCreator("ILU0Float", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+        //     const double w = prm.get<double>("relaxation", 1.0);
+        //     using field_type = typename V::field_type;
+        //     using block_type = typename V::block_type;
+        //     using VTo=Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
+        //     using matrix_type_to = typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
+        //     using ILU0 = typename Opm::ParallelOverlappingILU0<matrix_type_to, VTo, VTo, C>;
+        //     using Converter = typename Opm::cuistl::PreconditionerConvertToFloatAdapter<ILU0, M, V, V>;
+        //     auto converted = std::make_shared<Converter>(op.getmat());
+        //     auto preconditioner = std::make_shared<ILU0>(converted->getConvertedMatrix(), 0, w, Opm::MILU_VARIANT::ILU);
+        //     converted->setUnderlyingPreconditioner(preconditioner);
+        //     return converted;
+            
+        // });
+
         F::addCreator("CUILU0Update", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
+          
             return std::make_shared<Opm::cuistl::RemakeUpdatePreconditioner<M, V, V>>([=,&op]() {
                 std::unique_ptr<Dune::Preconditioner<V,V>> pointer(new Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>(std::make_shared<CuILU0>(op.getmat(), w)));
                 return std::move(pointer);
