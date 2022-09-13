@@ -33,6 +33,7 @@
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
 #include <opm/simulators/linalg/cuistl/time_to_file.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_wrapper.hpp>
+#include <opm/simulators/linalg/cuistl/impl/fix_zero_diagonal.hpp>
 
 
 namespace Opm::cuistl
@@ -72,7 +73,7 @@ public:
     CuSeqILU0(const M& A, scalar_field_type w)
         : underlyingMatrix(A)
         , w(w)
-        , LU(CuSparseMatrix<field_type>::fromMatrix(A))
+        , LU(CuSparseMatrix<field_type>::fromMatrix(impl::makeMatrixWithNonzeroDiagonal(A)))
         , temporaryStorage(LU.N() * LU.blockSize())
         , descriptionL(createLowerDiagonalDescription())
         , descriptionU(createUpperDiagonalDescription())
@@ -154,7 +155,7 @@ public:
                                                      infoL.get(),
                                                      d.data(),
                                                      temporaryStorage.data(),
-                                                     CUSPARSE_SOLVE_POLICY_NO_LEVEL,
+                                                     CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                      buffer->data()));
 
         // Solve U v = temporaryStorage
@@ -174,7 +175,7 @@ public:
                                                      v.data(),
                                                      CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                      buffer->data()));
-                                                     cudaDeviceSynchronize();
+        cudaDeviceSynchronize();
         }
 
         v *= w;
@@ -197,7 +198,7 @@ public:
     }
 
     virtual void update() override {
-        LU.updateNonzeroValues(underlyingMatrix);
+        LU.updateNonzeroValues(impl::makeMatrixWithNonzeroDiagonal(underlyingMatrix));
 
         // We can probably get away with updating less than this,
         // but for now we're sticking to the safe route.
@@ -255,7 +256,7 @@ private:
                                                           columnIndices,
                                                           blockSize,
                                                           infoM.get(),
-                                                          CUSPARSE_SOLVE_POLICY_NO_LEVEL,
+                                                          CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                           buffer->data()));
 
         // Make sure we can decompose the matrix.
@@ -280,7 +281,7 @@ private:
                                                         columnIndices,
                                                         blockSize,
                                                         infoL.get(),
-                                                        CUSPARSE_SOLVE_POLICY_NO_LEVEL,
+                                                        CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                         buffer->data()));
 
         OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_analysis(cuSparseHandle.get(),
@@ -385,7 +386,7 @@ private:
                                                  columnIndices,
                                                  blockSize,
                                                  infoM.get(),
-                                                 CUSPARSE_SOLVE_POLICY_NO_LEVEL,
+                                                 CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                  buffer->data()));
 
         // We need to do this here as well. The first call was to check that we could decompose the system A=LU
