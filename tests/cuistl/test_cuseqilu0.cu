@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
         cuILU.apply(outputVectorCuistl, inputVector);
 
         for (int component = 0; component < N; ++component) {
-            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component], std::numeric_limits<T>::epsilon()*1000);
+            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component][0], std::numeric_limits<T>::epsilon()*1000);
         }
     }
 
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
         cuILU.apply(outputVectorCuistl, inputVector);
 
         for (int component = 0; component < N; ++component) {
-            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component], std::numeric_limits<T>::epsilon()*1000);
+            BOOST_CHECK_CLOSE(outputVectorDune[component][0], outputVectorCuistl[component][0], std::numeric_limits<T>::epsilon()*1000);
         }
     }
 }
