@@ -140,7 +140,7 @@ public:
 
         // Solve L temporaryStorage = d
         {
-        TimeToFile timer("cuistl", LU.nonzeroes() * LU.blockSize() * LU.blockSize());
+        OPM_CU_TIME_TO_FILE(cuistl, LU.nonzeroes() * LU.blockSize() * LU.blockSize());
         OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrsv2_solve(cuSparseHandle.get(),
                                                      CUSPARSE_MATRIX_ORDER,
                                                      CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -175,7 +175,6 @@ public:
                                                      v.data(),
                                                      CUSPARSE_SOLVE_POLICY_USE_LEVEL,
                                                      buffer->data()));
-        cudaDeviceSynchronize();
         }
 
         v *= w;

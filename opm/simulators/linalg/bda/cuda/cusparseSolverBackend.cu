@@ -128,7 +128,7 @@ namespace Accelerator
 
             // apply ilu0
             {
-                Opm::cuistl::TimeToFile timer("bda", nnz);
+                OPM_CU_TIME_TO_FILE(bda, nnz);
                 cusparseDbsrsv2_solve(cusparseHandle,
                                       order,
                                       operation,
@@ -161,10 +161,11 @@ namespace Accelerator
                                       d_pw,
                                       policy,
                                       d_buffer);
-                                      cudaDeviceSynchronize();
             }
 
+            {
             // spmv
+            OPM_CU_TIME_TO_FILE(bda_spmv, nnz);
             cusparseDbsrmv(cusparseHandle,
                            order,
                            operation,
@@ -180,6 +181,7 @@ namespace Accelerator
                            d_pw,
                            &zero,
                            d_v);
+            }
 
             // apply wellContributions
             if (wellContribs.getNumWells() > 0) {
@@ -200,7 +202,7 @@ namespace Accelerator
             it += 0.5;
 
             {
-            Opm::cuistl::TimeToFile timer("bda", nnz);
+            OPM_CU_TIME_TO_FILE(bda, nnz);
             // apply ilu0
             cusparseDbsrsv2_solve(cusparseHandle,
                                   order,
@@ -234,10 +236,11 @@ namespace Accelerator
                                   d_s,
                                   policy,
                                   d_buffer);
-                                  cudaDeviceSynchronize();
             }
 
+            {
             // spmv
+            OPM_CU_TIME_TO_FILE(bda_spmv, nnz);
             cusparseDbsrmv(cusparseHandle,
                            order,
                            operation,
@@ -253,6 +256,7 @@ namespace Accelerator
                            d_s,
                            &zero,
                            d_t);
+            }
 
             // apply wellContributions
             if (wellContribs.getNumWells() > 0) {

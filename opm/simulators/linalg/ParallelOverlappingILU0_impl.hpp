@@ -286,7 +286,7 @@ template<class Matrix, class Domain, class Range, class ParallelInfoT>
 void ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfoT>::
 apply (Domain& v, const Range& d)
 {
-    Opm::cuistl::TimeToFile timer("OpmILU0", A_->nonzeroes()*(*A_)[0][0].N()*(*A_)[0][0].N());
+    OPM_TIME_TO_FILE(OpmILU0, A_->nonzeroes()*(*A_)[0][0].N()*(*A_)[0][0].N());
     Range& md = reorderD(d);
     Domain& mv = reorderV(v);
 

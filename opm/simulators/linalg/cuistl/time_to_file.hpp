@@ -2,6 +2,10 @@
 #include <fstream>
 #include <mpi.h>
 #include <string>
+#include <cuda_runtime.h>
+
+#define OPM_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes)
+#define OPM_CU_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes, true)
 
 namespace
 {
@@ -24,15 +28,19 @@ makeFilename(const std::string& basename)
 namespace Opm::cuistl
 {
 struct TimeToFile {
-    TimeToFile(const std::string& filename, int numberOfNonzeroes)
+    TimeToFile(const std::string& filename, int numberOfNonzeroes, bool doDeviceSynchronize=false)
         : filename(makeFilename(filename))
         , numberOfNonzeroes(numberOfNonzeroes)
         , start(std::chrono::high_resolution_clock::now())
+        , doDeviceSynchronize(doDeviceSynchronize)
     {
     }
 
     ~TimeToFile()
     {
+        if (doDeviceSynchronize) {
+            cudaDeviceSynchronize();
+        }
         const auto stop = std::chrono::high_resolution_clock::now();
         const auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
 
@@ -45,5 +53,6 @@ private:
     const std::string filename;
     const int numberOfNonzeroes;
     const std::chrono::time_point<std::chrono::high_resolution_clock> start;
+    const bool doDeviceSynchronize;
 };
 } // namespace Opm::cuistl
