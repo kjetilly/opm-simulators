@@ -113,6 +113,7 @@ T CuVector<T>::dot(const CuVector<T>& other) const {
         1,
         &result)
     );
+    return result;
 }
 template<class T>
 T CuVector<T>::two_norm() const {
@@ -124,6 +125,7 @@ T CuVector<T>::two_norm() const {
         1,
         &result)
     );
+    return result;
 }
 
 template <class T>
