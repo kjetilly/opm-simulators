@@ -24,6 +24,13 @@ CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
 }
 
 template <class T>
+CuVector<T>::CuVector(const CuVector<T>& other)
+    : CuVector(other.numberOfElements)
+{
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, other.dataOnDevice, numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
+}
+
+template <class T>
 CuVector<T>::~CuVector()
 {
     OPM_CUDA_SAFE_CALL(cudaFree(dataOnDevice));
