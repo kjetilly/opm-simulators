@@ -128,5 +128,5 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     cuSparseMatrix.applyscaleadd(alpha, inputVectorX, inputVectorY);
 
     inputVectorY.copyToHost(inputDataY.data(), inputDataY.size());
-    BOOST_CHECK_EQUAL(inputDataY[0], 0.25);
+    BOOST_CHECK_EQUAL(inputDataY[0], -4+0.25);
 }
