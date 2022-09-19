@@ -358,5 +358,72 @@ cusparseBsrilu02(cusparseHandle_t handle,
                              pBuffer);
 }
 
+inline cusparseStatus_t
+cusparseBsrmv(cusparseHandle_t handle,
+              cusparseDirection_t dirA,
+              cusparseOperation_t transA,
+              int mb,
+              int nb,
+              int nnzb,
+              const double* alpha,
+              const cusparseMatDescr_t descrA,
+              const double* bsrSortedValA,
+              const int* bsrSortedRowPtrA,
+              const int* bsrSortedColIndA,
+              int blockDim,
+              const double* x,
+              const double* beta,
+              double* y)
+{
+    return cusparseDbsrmv(handle,
+                          dirA,
+                          transA,
+                          mb,
+                          nb,
+                          nnzb,
+                          alpha,
+                          descrA,
+                          bsrSortedValA,
+                          bsrSortedRowPtrA,
+                          bsrSortedColIndA,
+                          blockDim,
+                          x,
+                          beta,
+                          y);
+}
+
+inline cusparseStatus_t
+cusparseBsrmv(cusparseHandle_t handle,
+              cusparseDirection_t dirA,
+              cusparseOperation_t transA,
+              int mb,
+              int nb,
+              int nnzb,
+              const float* alpha,
+              const cusparseMatDescr_t descrA,
+              const float* bsrSortedValA,
+              const int* bsrSortedRowPtrA,
+              const int* bsrSortedColIndA,
+              int blockDim,
+              const float* x,
+              const float* beta,
+              float* y)
+{
+    return cusparseSbsrmv(handle,
+                          dirA,
+                          transA,
+                          mb,
+                          nb,
+                          nnzb,
+                          alpha,
+                          descrA,
+                          bsrSortedValA,
+                          bsrSortedRowPtrA,
+                          bsrSortedColIndA,
+                          blockDim,
+                          x,
+                          beta,
+                          y);
+}
 } // namespace Opm::cuistl::impl
 #endif

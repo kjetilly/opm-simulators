@@ -1,7 +1,8 @@
 #include <cuda.h>
 #include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
-
+#include <opm/simulators/linalg/cuistl/impl/cusparse_wrapper.hpp>
+#include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
 namespace Opm::cuistl
 {
 
@@ -19,6 +20,7 @@ CuSparseMatrix<T>::CuSparseMatrix(const T* nonZeroElements,
     , numberOfRows(numberOfRows)
     , matrixDescription(createMatrixDescription())
     , _blockSize(blockSize)
+    , cusparseHandle(CuSparseHandle::getInstance())
 {
 }
 
@@ -55,6 +57,48 @@ CuSparseMatrix<T>::setNonUnitDiagonal()
 {
     OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(matrixDescription->get(), CUSPARSE_DIAG_TYPE_NON_UNIT));
 }
+
+template<typename T>
+void CuSparseMatrix<T>::apply(const CuVector<T>& x, CuVector<T>& y) const {
+    applyscaleadd(1.0, x, y);
+}
+
+template<typename T>
+void CuSparseMatrix<T>::applyscaleadd (T alpha, const CuVector<T>& x, CuVector<T>& y) const {
+    if (blockSize() < 2) {
+        OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::applyscaleadd and CuSparseMatrix<T>::apply are only implemented for block sizes greater than 1.");
+    }
+    const auto numberOfRows = N();
+    const auto numberOfNonzeroBlocks = nonzeroes();
+    const auto nonzeroValues = getNonZeroValues().data();
+
+    auto rowIndices = getRowIndices().data();
+    auto columnIndices = getColumnIndices().data();
+            
+    T beta = 1.0;
+    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(cusparseHandle.get(),
+               CUSPARSE_MATRIX_ORDER,
+               CUSPARSE_OPERATION_NON_TRANSPOSE,
+               numberOfRows,
+               numberOfRows,
+               numberOfNonzeroBlocks,
+               &alpha,
+               matrixDescription->get(),
+               nonzeroValues,
+               rowIndices,
+               columnIndices,
+               blockSize(),
+               x.data(),
+               &beta,
+               y.data()));
+}
+
+template<typename T>
+Dune::SolverCategory::Category CuSparseMatrix<T>::category() const {
+    return Dune::SolverCategory::sequential;
+}
+
+
 
 template class CuSparseMatrix<float>;
 template class CuSparseMatrix<double>;

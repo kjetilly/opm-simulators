@@ -85,3 +85,48 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
     // TODO: Check rest
 }
 
+
+BOOST_AUTO_TEST_CASE(TestApply2D) 
+{
+    
+    const int N = 5;
+    const int nonZeroes = N*3-2;
+    using M = Dune::FieldMatrix<double,2,2>;
+    using SpMatrix = Dune::BCRSMatrix<M>;
+    using Vector = Dune::BlockVector<Dune::FieldVector<double, 1>>;
+    
+    SpMatrix B(N, N, nonZeroes, SpMatrix::row_wise);
+    for(auto row=B.createbegin(); row!=B.createend(); ++row)
+    {
+        // Add nonzeros for left neighbour, diagonal and right neighbour
+        if(row.index()>0) {
+            row.insert(row.index()-1);
+        }
+        row.insert(row.index());
+        if(row.index()<B.N()-1) {
+            row.insert(row.index()+1);
+        }
+    }
+    // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
+    for (int i = 0; i < N; ++i) {
+        if (i < N - 1) {
+            B[i][i+1] = 1;
+        }
+        B[i][i] = -2;
+        if (i > 0) {
+            B[i][i-1] = 1;
+        }
+    }
+
+    auto cuSparseMatrix = Opm::cuistl::CuSparseMatrix<double>::fromMatrix(B);
+    std::vector<double> inputDataX(N*2, 1.0);
+    std::vector<double> inputDataY(N*2, .25);
+    auto inputVectorX = Opm::cuistl::CuVector<double>(inputDataX.data(), inputDataX.size());
+    auto inputVectorY = Opm::cuistl::CuVector<double>(inputDataY.data(), inputDataY.size());
+
+    double alpha = 2.0;
+    cuSparseMatrix.applyscaleadd(alpha, inputVectorX, inputVectorY);
+
+    inputVectorY.copyToHost(inputDataY.data(), inputDataY.size());
+    BOOST_CHECK_EQUAL(inputDataY[0], 0.25);
+}
