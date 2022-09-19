@@ -38,6 +38,7 @@ public:
     
     CuVector(const CuVector<T>& other);
     CuVector& operator=(const CuVector<T>&);
+    CuVector& operator=(T scalar);
     
     CuVector(const int numberOfElements);
     CuVector(const T* dataOnHost, const int numberOfElements);
@@ -78,6 +79,7 @@ public:
 
     CuVector<T>& axpy(T alpha, const CuVector<T>& y);
     CuVector<T>& operator+=(const CuVector<T>& other);
+    CuVector<T>& operator-=(const CuVector<T>& other);
     T dot(const CuVector<T>& other) const;
     T two_norm() const;
 

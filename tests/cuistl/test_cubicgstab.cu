@@ -73,13 +73,26 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     auto scalarProduct = std::make_shared<Dune::ScalarProduct<Opm::cuistl::CuVector<T>>>();
 
     Dune::ParameterTree config;
-    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BonGPUAsLinearOperator, scalarProduct, cuILUAsDunePreconditioner, 1.0, 10, 0);
+    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BonGPUAsLinearOperator, scalarProduct, cuILUAsDunePreconditioner, 1.0, 100, 0);
     // auto solver = Dune::CGSolver<Opm::cuistl::CuVector<T>>(BonGPUAsLinearOperator, scalarProduct, cuILUAsDunePreconditioner, 1.0, 10, 0, true);
+    std::vector<T> correct(N*2, 2.0);
+    std::vector<T> initialGuess(N*2, 0.0);
+    Opm::cuistl::CuVector<T> x(N*2);
+    Opm::cuistl::CuVector<T> y(N*2);
+    x.copyFromHost(correct.data(), correct.size());
+    BonGPU->apply(x, y);
+    x.copyFromHost(initialGuess.data(), initialGuess.size());
 
-    Opm::cuistl::CuVector<double> x(N*2);
-    Opm::cuistl::CuVector<double> y(N*2);
     Dune::InverseOperatorResult result;
+    Opm::cuistl::CuVector<T> tmp(N*2);
+    tmp.copyFromHost(correct.data(), correct.size());
+    tmp -= x;
+    auto normBefore = tmp.two_norm();
     solver.apply(x, y, result);
+    tmp.copyFromHost(correct.data(), correct.size());
+    tmp -= x;
+    auto normAfter = tmp.two_norm();
+    BOOST_CHECK_CLOSE(normAfter, 0.0, 1e-7);
     // auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BonGPUAsLinearOperator, scalarProduct, cuILUAsDunePreconditioner, config);
 }   
     

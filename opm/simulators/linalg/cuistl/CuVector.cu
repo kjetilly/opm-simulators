@@ -5,6 +5,7 @@
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cublas_wrapper.hpp>
 
+
 namespace Opm::cuistl
 {
 
@@ -20,7 +21,17 @@ template <class T>
 CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
     : CuVector(numberOfElements)
 {
+
     OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, dataOnHost, numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
+}
+
+template <class T>
+CuVector<T>& CuVector<T>::operator=(T scalar)
+{
+    // TODO: [perf] Make this a standalone kernel
+    std::vector<T> tmp(numberOfElements, scalar);
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, tmp.data(), numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
+    return *this;
 }
 
 template <class T>
@@ -133,6 +144,13 @@ CuVector<T>&
 CuVector<T>::operator+=(const CuVector<T>& other) {
     // TODO: [perf] Make a specialized version of this
     return axpy(1.0, other);
+}
+
+template <class T>
+CuVector<T>&
+CuVector<T>::operator-=(const CuVector<T>& other) {
+    // TODO: [perf] Make a specialized version of this
+    return axpy(-1.0, other);
 }
 
 
