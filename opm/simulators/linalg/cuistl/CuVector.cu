@@ -91,6 +91,31 @@ CuVector<T>::axpy(T alpha, const CuVector<T>& y) {
     return *this;
 }
 
+template<class T>
+T CuVector<T>::dot(const CuVector<T>& other) const {
+    T result = T(0);
+    OPM_CUBLAS_SAFE_CALL(impl::cublasDot(
+        cuBlasHandle.get(),
+        numberOfElements,
+        data(),
+        1,
+        other.data(),
+        1,
+        &result)
+    );
+}
+template<class T>
+T CuVector<T>::two_norm() const {
+    T result = T(0);
+    OPM_CUBLAS_SAFE_CALL(impl::cublasNrm2(
+        cuBlasHandle.get(),
+        numberOfElements,
+        data(),
+        1,
+        &result)
+    );
+}
+
 template <class T>
 CuVector<T>&
 CuVector<T>::operator+=(const CuVector<T>& other) {

@@ -52,5 +52,64 @@ cublasAxpy(cublasHandle_t handle,
     OPM_THROW(std::runtime_error, "axpy multiplication for integer vectors is not implemented yet.");
 }
 
+cublasStatus_t cublasDot(cublasHandle_t handle,
+                             int n,
+                             const double* x,
+                             int incx,
+                             const double* y,
+                             int incy,
+                             double* result) {
+    return cublasDdot(handle,
+                             n,
+                             x,
+                             incx,
+                             y,
+                             incy,
+                             result);
+}
+
+cublasStatus_t cublasDot(cublasHandle_t handle,
+                             int n,
+                             const float* x,
+                             int incx,
+                             const float* y,
+                             int incy,
+                             float* result) {
+    return cublasSdot(handle,
+                             n,
+                             x,
+                             incx,
+                             y,
+                             incy,
+                             result);
+}
+
+cublasStatus_t cublasDot(cublasHandle_t handle,
+                             int n,
+                             const int* x,
+                             int incx,
+                             const int* y,
+                             int incy,
+                             int* result) {
+    OPM_THROW(std::runtime_error, "inner product for integer vectors is not implemented yet.");
+
+}
+
+cublasStatus_t
+cublasNrm2(cublasHandle_t handle, int n, const double* x, int incx, double* result) {
+    return cublasDnrm2(handle, n, x, incx, result);
+}
+
+
+cublasStatus_t
+cublasNrm2(cublasHandle_t handle, int n, const float* x, int incx, float* result) {
+    return cublasSnrm2(handle, n, x, incx, result);
+}
+
+cublasStatus_t
+cublasNrm2(cublasHandle_t handle, int n, const int* x, int incx, int* result) {
+    OPM_THROW(std::runtime_error, "norm2 for integer vectors is not implemented yet.");
+
+}
 } // namespace Opm::cuistl::impl
 #endif

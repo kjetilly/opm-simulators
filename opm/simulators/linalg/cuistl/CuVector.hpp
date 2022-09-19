@@ -78,6 +78,8 @@ public:
 
     CuVector<T>& axpy(T alpha, const CuVector<T>& y);
     CuVector<T>& operator+=(const CuVector<T>& other);
+    T dot(const CuVector<T>& other) const;
+    T two_norm() const;
 
     size_type dim() const;
 
