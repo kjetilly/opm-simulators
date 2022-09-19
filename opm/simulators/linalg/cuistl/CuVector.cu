@@ -24,6 +24,16 @@ CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
 }
 
 template <class T>
+CuVector<T>& CuVector<T>::operator=(const CuVector<T>& other)
+{
+    if (other.numberOfElements != numberOfElements) {
+        OPM_THROW(std::invalid_argument, "Can only copy from vector of same size.");
+    }
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, other.dataOnDevice, numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
+    return *this;
+}
+
+template <class T>
 CuVector<T>::CuVector(const CuVector<T>& other)
     : CuVector(other.numberOfElements)
 {

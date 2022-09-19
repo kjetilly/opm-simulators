@@ -37,7 +37,7 @@ public:
     using size_type = size_t;
     
     CuVector(const CuVector<T>& other);
-    CuVector& operator=(const CuVector<T>&) = delete;
+    CuVector& operator=(const CuVector<T>&);
     
     CuVector(const int numberOfElements);
     CuVector(const T* dataOnHost, const int numberOfElements);

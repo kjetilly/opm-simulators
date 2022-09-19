@@ -36,7 +36,7 @@ namespace Opm::cuistl
  *
  */
 template <typename T>
-class CuSparseMatrix : Dune::LinearOperator<CuVector<T>, CuVector<T>>
+class CuSparseMatrix : public Dune::LinearOperator<CuVector<T>, CuVector<T>>
 {
 public:
     /// Create the sparse matrix specified by the raw data.
