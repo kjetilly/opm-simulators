@@ -19,7 +19,7 @@
 #include <memory>
 
 
-using NumericTypes = boost::mpl::list<double>;
+using NumericTypes = boost::mpl::list<double, float>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
 {
