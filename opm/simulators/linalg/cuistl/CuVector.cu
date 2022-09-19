@@ -3,7 +3,7 @@
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
-
+#include <opm/simulators/linalg/cuistl/impl/cublas_wrapper.hpp>
 
 namespace Opm::cuistl
 {
@@ -68,6 +68,29 @@ CuVector<T>::operator*=(const T& scalar)
 
     return *this;
 }
+
+template <class T>
+CuVector<T>&
+CuVector<T>::axpy(T alpha, const CuVector<T>& y) {
+    OPM_CUBLAS_SAFE_CALL(impl::cublasAxpy(
+        cuBlasHandle.get(), 
+        numberOfElements,
+        &alpha,
+        y.data(),
+        1,
+        data(),
+        1
+    ));
+    return *this;
+}
+
+template <class T>
+CuVector<T>&
+CuVector<T>::operator+=(const CuVector<T>& other) {
+    // TODO: [perf] Make a specialized version of this
+    return axpy(1.0, other);
+}
+
 
 template <class T>
 void

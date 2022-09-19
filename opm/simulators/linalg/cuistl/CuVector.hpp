@@ -76,6 +76,9 @@ public:
 
     CuVector<T>& operator*=(const T& scalar);
 
+    CuVector<T>& axpy(T alpha, const CuVector<T>& y);
+    CuVector<T>& operator+=(const CuVector<T>& other);
+
     size_type dim() const;
 
 
