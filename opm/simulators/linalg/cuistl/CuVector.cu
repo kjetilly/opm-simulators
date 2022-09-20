@@ -4,7 +4,6 @@
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cublas_wrapper.hpp>
-#include <iostream>
 #define CHECKSIZE(x) \
     if (x.numberOfElements != numberOfElements) { \
         OPM_THROW(std::invalid_argument, "Given vector has " << x.numberOfElements << ", while we have " << numberOfElements); \
@@ -155,7 +154,6 @@ T CuVector<T>::two_norm() const {
         1,
         &result)
     );
-    std::cout  << "result is " << result  << std::endl;
     return result;
 }
 
