@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
 
     auto duneILU = Dune::SeqILU<SpMatrix, Vector, Vector>(B, 1.0);
 
-    auto cuILU = Opm::cuistl::PreconditionerAdapter<CuILU0, SpMatrix, Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
+    auto cuILU = Opm::cuistl::PreconditionerAdapter<Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
 
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
 
     auto duneILU = Dune::SeqILU<SpMatrix, Vector, Vector>(B, 1.0);
 
-    auto cuILU = Opm::cuistl::PreconditionerAdapter<CuILU0, SpMatrix, Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
+    auto cuILU = Opm::cuistl::PreconditionerAdapter<Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
 
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))

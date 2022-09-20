@@ -33,12 +33,10 @@
 namespace Opm::cuistl
 {
 //!\brief Makes a CUDA preconditioner available to a CPU simulator.
-template <class CudaPreconditionerType, class M, class X, class Y, int l = 1>
+template <class X, class Y>
 class PreconditionerAdapter : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:
-    //! \brief The matrix type the preconditioner is for.
-    typedef typename std::remove_const<M>::type matrix_type;
     //! \brief The domain type of the preconditioner.
     typedef X domain_type;
     //! \brief The range type of the preconditioner.
@@ -47,6 +45,7 @@ public:
     typedef typename X::field_type field_type;
     //! \brief scalar type underlying the field_type
     typedef Dune::SimdScalar<field_type> scalar_field_type;
+    using CudaPreconditionerType = Dune::PreconditionerWithUpdate<CuVector<scalar_field_type>, CuVector<scalar_field_type>>;
 
     /*! \brief Constructor.
 

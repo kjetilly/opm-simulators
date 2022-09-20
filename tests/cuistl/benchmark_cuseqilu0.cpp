@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
             auto durationDune = std::chrono::duration_cast<std::chrono::microseconds>(stopDune - startDune);
 
             
-            auto cuILUAdapt = Opm::cuistl::PreconditionerAdapter<CuILU0, SpMatrix, Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
+            auto cuILUAdapt = Opm::cuistl::PreconditionerAdapter<Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
             auto startcuILUAdapt = std::chrono::high_resolution_clock::now();
             for (int q = 0; q < repeats; ++q) {
                 cuILUAdapt.apply(outputVector, inputVector);

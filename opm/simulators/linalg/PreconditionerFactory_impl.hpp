@@ -229,7 +229,7 @@ struct StandardPreconditioners
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
-            return wrapBlockPreconditioner<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(comm, std::make_shared<CuILU0>(op.getmat(), w));
+            return wrapBlockPreconditioner<Opm::cuistl::PreconditionerAdapter<V, V>>(comm, std::make_shared<CuILU0>(op.getmat(), w));
         });
         #endif
     }
@@ -434,7 +434,7 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
-            return std::make_shared<Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
+            return std::make_shared<Opm::cuistl::PreconditionerAdapter<V, V>>(std::make_shared<CuILU0>(op.getmat(), w));
         });
 
         F::addCreator("CUILU0Float", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
@@ -444,7 +444,7 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             using VTo=Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
             using matrix_type_to = typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<matrix_type_to, Opm::cuistl::CuVector<float>, Opm::cuistl::CuVector<float>>;
-            using Adapter = typename Opm::cuistl::PreconditionerAdapter<CuILU0, matrix_type_to, VTo, VTo>;
+            using Adapter = typename Opm::cuistl::PreconditionerAdapter<VTo, VTo>;
             using Converter = typename Opm::cuistl::PreconditionerConvertToFloatAdapter<Adapter, M, V, V>;
             auto converted = std::make_shared<Converter>(op.getmat());
             auto adapted = std::make_shared<Adapter>(std::make_shared<CuILU0>(converted->getConvertedMatrix(), w));
@@ -474,7 +474,7 @@ struct StandardPreconditioners<Operator,Dune::Amg::SequentialInformation>
             using CuILU0 = typename Opm::cuistl::CuSeqILU0<M, Opm::cuistl::CuVector<field_type>, Opm::cuistl::CuVector<field_type>>;
           
             return std::make_shared<Opm::cuistl::RemakeUpdatePreconditioner<M, V, V>>([=,&op]() {
-                std::unique_ptr<Dune::Preconditioner<V,V>> pointer(new Opm::cuistl::PreconditionerAdapter<CuILU0, M, V, V>(std::make_shared<CuILU0>(op.getmat(), w)));
+                std::unique_ptr<Dune::Preconditioner<V,V>> pointer(new Opm::cuistl::PreconditionerAdapter<V, V>(std::make_shared<CuILU0>(op.getmat(), w)));
                 return std::move(pointer);
             });
         });
