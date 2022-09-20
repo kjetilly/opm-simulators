@@ -131,4 +131,13 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     
     B.usmv(alpha, xHost, yHost);
     BOOST_CHECK_EQUAL_COLLECTIONS(inputDataY.begin(), inputDataY.end(), &yHost[0][0], &yHost[0][0] + yHost.dim());
+
+    inputVectorX.copyTo(xHost);
+
+    cuSparseMatrix.mv(inputVectorX, inputVectorY);
+
+    inputVectorY.copyToHost(inputDataY);
+    
+    B.mv(xHost, yHost);
+    BOOST_CHECK_EQUAL_COLLECTIONS(inputDataY.begin(), inputDataY.end(), &yHost[0][0], &yHost[0][0] + yHost.dim());
 }
