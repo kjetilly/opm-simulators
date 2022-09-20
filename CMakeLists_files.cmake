@@ -195,7 +195,7 @@ if(CUDA_FOUND)
   list(APPEND TEST_SOURCE_FILES tests/cuistl/test_cusparsematrix.cu)
   list(APPEND TEST_SOURCE_FILES tests/cuistl/test_cuseqilu0.cu)
   list(APPEND TEST_SOURCE_FILES tests/cuistl/test_converttofloatadapter.cpp)
-  list(APPEND TEST_SOURCE_FILES tests/cuistl/test_cubicgstab.cu)
+  list(APPEND TEST_SOURCE_FILES tests/cuistl/test_cubicgstab.cpp)
 
   list(APPEND TEST_SOURCE_FILES tests/cuistl/benchmark_cuseqilu0.cpp)
 endif()
