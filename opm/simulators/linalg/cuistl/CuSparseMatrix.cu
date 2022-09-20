@@ -59,12 +59,12 @@ CuSparseMatrix<T>::setNonUnitDiagonal()
 }
 
 template<typename T>
-void CuSparseMatrix<T>::apply(const CuVector<T>& x, CuVector<T>& y) const {
-    applyscaleadd(1.0, x, y);
+void CuSparseMatrix<T>::mv(const CuVector<T>& x, CuVector<T>& y) const {
+    usmv(1.0, x, y);
 }
 
 template<typename T>
-void CuSparseMatrix<T>::applyscaleadd (T alpha, const CuVector<T>& x, CuVector<T>& y) const {
+void CuSparseMatrix<T>::usmv (T alpha, const CuVector<T>& x, CuVector<T>& y) const {
     if (blockSize() < 2) {
         OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::applyscaleadd and CuSparseMatrix<T>::apply are only implemented for block sizes greater than 1.");
     }

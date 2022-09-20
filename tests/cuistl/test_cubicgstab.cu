@@ -67,16 +67,17 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     }
 
     auto BonGPU = std::make_shared<Opm::cuistl::CuSparseMatrix<T>>(Opm::cuistl::CuSparseMatrix<T>::fromMatrix(B));
+    auto BOperator = std::make_shared<Dune::MatrixAdapter< Opm::cuistl::CuSparseMatrix<T>, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>>(BonGPU);
     auto cuILU = std::make_shared<CuILU0>(B, 1.0);
     auto scalarProduct = std::make_shared<Dune::ScalarProduct<Opm::cuistl::CuVector<T>>>();
 
-    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BonGPU, scalarProduct, cuILU, 1.0, 100, 0);
+    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, 1.0, 100, 0);
     std::vector<T> correct(N*2, 2.0);
     std::vector<T> initialGuess(N*2, 0.0);
     Opm::cuistl::CuVector<T> x(N*2);
     Opm::cuistl::CuVector<T> y(N*2);
     x.copyFromHost(correct.data(), correct.size());
-    BonGPU->apply(x, y);
+    BonGPU->mv(x, y);
     x.copyFromHost(initialGuess.data(), initialGuess.size());
 
     Dune::InverseOperatorResult result;

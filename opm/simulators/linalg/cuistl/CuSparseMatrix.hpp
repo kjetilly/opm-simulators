@@ -20,7 +20,6 @@
 #define OPM_CUSPARSEMATRIX_HEADER_INCLUDED
 #include <cusparse.h>
 #include <dune/istl/preconditioner.hh>
-#include <dune/istl/operators.hh>
 #include <memory>
 #include <opm/common/ErrorMacros.hpp>
 #include <opm/simulators/linalg/cuistl/CuMatrixDescription.hpp>
@@ -36,7 +35,7 @@ namespace Opm::cuistl
  *
  */
 template <typename T>
-class CuSparseMatrix : public Dune::LinearOperator<CuVector<T>, CuVector<T>>
+class CuSparseMatrix
 {
 public:
     /// Create the sparse matrix specified by the raw data.
@@ -158,9 +157,9 @@ public:
         return *matrixDescription;
     }
 
-    virtual void apply (const CuVector<T>& x, CuVector<T>& y) const override;
-    virtual void applyscaleadd (T alpha, const CuVector<T>& x, CuVector<T>& y) const override;
-    virtual Dune::SolverCategory::Category category() const override;
+    virtual void mv (const CuVector<T>& x, CuVector<T>& y) const;
+    virtual void usmv (T alpha, const CuVector<T>& x, CuVector<T>& y) const;
+    virtual Dune::SolverCategory::Category category() const;
 
     template <class MatrixType>
     void updateNonzeroValues(const MatrixType& matrix) {

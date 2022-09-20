@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     auto inputVectorY = Opm::cuistl::CuVector<double>(inputDataY.data(), inputDataY.size());
 
     double alpha = 2.0;
-    cuSparseMatrix.applyscaleadd(alpha, inputVectorX, inputVectorY);
+    cuSparseMatrix.usmv(alpha, inputVectorX, inputVectorY);
 
     inputVectorY.copyToHost(inputDataY.data(), inputDataY.size());
     BOOST_CHECK_EQUAL(inputDataY[0], -4+0.25);
