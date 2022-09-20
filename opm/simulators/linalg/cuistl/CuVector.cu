@@ -4,6 +4,7 @@
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cublas_wrapper.hpp>
+#include <iostream>
 #define CHECKSIZE(x) \
     if (x.numberOfElements != numberOfElements) { \
         OPM_THROW(std::invalid_argument, "Given vector has " << x.numberOfElements << ", while we have " << numberOfElements); \
@@ -154,6 +155,7 @@ T CuVector<T>::two_norm() const {
         1,
         &result)
     );
+    std::cout  << "result is " << result  << std::endl;
     return result;
 }
 
@@ -192,6 +194,17 @@ void
 CuVector<T>::copyToHost(T* dataPointer, int numberOfElements) const
 {
     OPM_CUDA_SAFE_CALL(cudaMemcpy(dataPointer, data(), numberOfElements * sizeof(T), cudaMemcpyDeviceToHost));
+}
+
+template <class T>
+void
+CuVector<T>::copyFromHost(const std::vector<T>& data) {
+    copyFromHost(data.data(), data.size());
+}
+template <class T>
+void
+CuVector<T>::copyToHost(std::vector<T>& data) const  {
+    copyToHost(data.data(), data.size());
 }
 template class CuVector<double>;
 template class CuVector<float>;

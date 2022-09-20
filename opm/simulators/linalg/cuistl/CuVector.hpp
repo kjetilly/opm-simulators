@@ -74,6 +74,8 @@ public:
     }
     void copyFromHost(const T* dataPointer, int numberOfElements);
     void copyToHost(T* dataPointer, int numberOfElements) const;
+    void copyFromHost(const std::vector<T>& data);
+    void copyToHost(std::vector<T>& data) const;
 
     CuVector<T>& operator*=(const T& scalar);
 
