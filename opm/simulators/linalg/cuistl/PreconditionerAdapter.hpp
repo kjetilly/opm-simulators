@@ -106,6 +106,10 @@ public:
         underlyingPreconditioner->update();
     }
 
+    std::shared_ptr<CudaPreconditionerType> getUnderlyingPreconditioner() {
+        return underlyingPreconditioner;
+    }
+
 private:
     //! \brief the underlying preconditioner to use
     std::shared_ptr<CudaPreconditionerType> underlyingPreconditioner;
