@@ -4,7 +4,14 @@
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cublas_wrapper.hpp>
-
+#define CHECKSIZE(x) \
+    if (x.numberOfElements != numberOfElements) { \
+        OPM_THROW(std::invalid_argument, "Given vector has " << x.numberOfElements << ", while we have " << numberOfElements); \
+    } 
+#define CHECKPOSITIVESIZE \
+    if (numberOfElements <= 0) { \
+        OPM_THROW(std::invalid_argument, "We have 0 elements"); \
+    }
 
 namespace Opm::cuistl
 {
@@ -28,6 +35,7 @@ CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
 template <class T>
 CuVector<T>& CuVector<T>::operator=(T scalar)
 {
+    CHECKPOSITIVESIZE
     // TODO: [perf] Make this a standalone kernel
     std::vector<T> tmp(numberOfElements, scalar);
     OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, tmp.data(), numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
@@ -37,6 +45,8 @@ CuVector<T>& CuVector<T>::operator=(T scalar)
 template <class T>
 CuVector<T>& CuVector<T>::operator=(const CuVector<T>& other)
 {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(other)
     if (other.numberOfElements != numberOfElements) {
         OPM_THROW(std::invalid_argument, "Can only copy from vector of same size.");
     }
@@ -48,6 +58,8 @@ template <class T>
 CuVector<T>::CuVector(const CuVector<T>& other)
     : CuVector(other.numberOfElements)
 {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(other)
     OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, other.dataOnDevice, numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
 }
 
@@ -82,6 +94,7 @@ template <class T>
 CuVector<T>&
 CuVector<T>::operator*=(const T& scalar)
 {
+    CHECKPOSITIVESIZE
     // maybe this can be done more elegantly?
     if constexpr (std::is_same<T, double>::value) {
         OPM_CUBLAS_SAFE_CALL(cublasDscal(cuBlasHandle.get(), numberOfElements, &scalar, data(), 1));
@@ -100,6 +113,8 @@ CuVector<T>::operator*=(const T& scalar)
 template <class T>
 CuVector<T>&
 CuVector<T>::axpy(T alpha, const CuVector<T>& y) {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(y)
     OPM_CUBLAS_SAFE_CALL(impl::cublasAxpy(
         cuBlasHandle.get(), 
         numberOfElements,
@@ -114,6 +129,8 @@ CuVector<T>::axpy(T alpha, const CuVector<T>& y) {
 
 template<class T>
 T CuVector<T>::dot(const CuVector<T>& other) const {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(other)
     T result = T(0);
     OPM_CUBLAS_SAFE_CALL(impl::cublasDot(
         cuBlasHandle.get(),
@@ -128,6 +145,7 @@ T CuVector<T>::dot(const CuVector<T>& other) const {
 }
 template<class T>
 T CuVector<T>::two_norm() const {
+    CHECKPOSITIVESIZE
     T result = T(0);
     OPM_CUBLAS_SAFE_CALL(impl::cublasNrm2(
         cuBlasHandle.get(),
@@ -142,6 +160,8 @@ T CuVector<T>::two_norm() const {
 template <class T>
 CuVector<T>&
 CuVector<T>::operator+=(const CuVector<T>& other) {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(other)
     // TODO: [perf] Make a specialized version of this
     return axpy(1.0, other);
 }
@@ -149,6 +169,8 @@ CuVector<T>::operator+=(const CuVector<T>& other) {
 template <class T>
 CuVector<T>&
 CuVector<T>::operator-=(const CuVector<T>& other) {
+    CHECKPOSITIVESIZE
+    CHECKSIZE(other)
     // TODO: [perf] Make a specialized version of this
     return axpy(-1.0, other);
 }
