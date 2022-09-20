@@ -39,7 +39,7 @@ public:
     {
     }
 
-    virtual void apply (X& x, X& b, double reduction, Dune::InverseOperatorResult& res) {
+    virtual void apply (X& x, X& b, double reduction, Dune::InverseOperatorResult& res) override {
         // TODO: Can we do this without reimplementing the other function?
         // TODO: [perf] Do we need to update the matrix every time? Probably yes
         matrix.updateNonzeroValues(opOnCPUWithMatrix.getmat());
