@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     
     using M = Dune::FieldMatrix<T, 2, 2>;
     using SpMatrix = Dune::BCRSMatrix<M>;
-    using Vector = Dune::BlockVector<Dune::FieldVector<T, 1>>;
+    using Vector = Dune::BlockVector<Dune::FieldVector<T, 2>>;
     using CuILU0 = Opm::cuistl::CuSeqILU0<SpMatrix, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>;
 
     SpMatrix B;
@@ -116,10 +116,22 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     std::vector<T> correct(N*2, 0.0);
     correct[N/2] =  1.0;
     std::vector<T> initialGuess(N*2, 0.0);
+    initialGuess[N/2]  = 0.5;
     Opm::cuistl::CuVector<T> x(N*2);
     Opm::cuistl::CuVector<T> y(N*2);
+
     x.copyFromHost(correct.data(), correct.size());
+        x =  0.0;
     BonGPU->mv(x, y);
+
+    Vector xHost(N), yHost(N);
+    x.copyTo(xHost);
+    B.mv(xHost, yHost);
+    std::vector<double> dataOnHost(y.dim());
+    y.copyToHost(dataOnHost);
+    BOOST_CHECK_EQUAL_COLLECTIONS(dataOnHost.begin(),
+    dataOnHost.end(), &yHost[0][0], &yHost[0][0] + 2*N);
+
     x.copyFromHost(initialGuess.data(), initialGuess.size());
 
     Dune::InverseOperatorResult result;
@@ -129,6 +141,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     auto normBefore = tmp.two_norm();
     std::cout << normBefore << std::endl;
     BOOST_CHECK_GT(normBefore, 0.5);
+
+    auto normy =  y.two_norm();
+
+    y.copyTo(yHost);
+    auto normyhost = yHost.two_norm();
+    std::cout << "normy = "  << normy << std::endl;
+    std::cout << "normyhost = "  << normyhost << std::endl;
+
     solver.apply(x, y, result);
     tmp.copyFromHost(correct.data(), correct.size());
     tmp -= x;
