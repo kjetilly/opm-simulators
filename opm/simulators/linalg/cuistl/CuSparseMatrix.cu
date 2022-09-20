@@ -60,13 +60,38 @@ CuSparseMatrix<T>::setNonUnitDiagonal()
 
 template<typename T>
 void CuSparseMatrix<T>::mv(const CuVector<T>& x, CuVector<T>& y) const {
-    usmv(1.0, x, y);
+     if (blockSize() < 2) {
+        OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::usmv and CuSparseMatrix<T>::mv are only implemented for block sizes greater than 1.");
+    }
+    const auto numberOfRows = N();
+    const auto numberOfNonzeroBlocks = nonzeroes();
+    const auto nonzeroValues = getNonZeroValues().data();
+
+    auto rowIndices = getRowIndices().data();
+    auto columnIndices = getColumnIndices().data();
+    T alpha = 1.0;  
+    T beta = 0.0;
+    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(cusparseHandle.get(),
+               CUSPARSE_MATRIX_ORDER,
+               CUSPARSE_OPERATION_NON_TRANSPOSE,
+               numberOfRows,
+               numberOfRows,
+               numberOfNonzeroBlocks,
+               &alpha,
+               matrixDescription->get(),
+               nonzeroValues,
+               rowIndices,
+               columnIndices,
+               blockSize(),
+               x.data(),
+               &beta,
+               y.data()));
 }
 
 template<typename T>
 void CuSparseMatrix<T>::usmv (T alpha, const CuVector<T>& x, CuVector<T>& y) const {
     if (blockSize() < 2) {
-        OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::applyscaleadd and CuSparseMatrix<T>::apply are only implemented for block sizes greater than 1.");
+        OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::usmv and CuSparseMatrix<T>::mv are only implemented for block sizes greater than 1.");
     }
     const auto numberOfRows = N();
     const auto numberOfNonzeroBlocks = nonzeroes();
