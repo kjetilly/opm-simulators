@@ -115,3 +115,30 @@ BOOST_AUTO_TEST_CASE(TestDot)
     correctAnswer = correctAnswer;
     BOOST_CHECK_EQUAL(correctAnswer, dot);
 }
+
+BOOST_AUTO_TEST_CASE(Assigment)
+{
+    std::vector<double> data{{1,2,3,4,5,6,7}};
+    auto vectorOnGPU = Opm::cuistl::CuVector<double>(data.data(), data.size());
+    vectorOnGPU = 10.0;
+    vectorOnGPU.copyToHost(data.data(), data.size());
+
+    for (double x : data) {
+        BOOST_CHECK_EQUAL(10.0, x);
+    }
+}
+
+
+BOOST_AUTO_TEST_CASE(CopyConstructor)
+{
+    std::vector<double> data{{1,2,3,4,5,6,7}};
+    auto vectorOnGPU = Opm::cuistl::CuVector<double>(data.data(), data.size());
+    vectorOnGPU.copyToHost(data.data(), data.size());
+    auto vectorOnGPUB = Opm::cuistl::CuVector<double>(data.size());
+    vectorOnGPUB = 4.0;
+    vectorOnGPUB = vectorOnGPU;
+
+    std::vector<double> output(data.size());
+    vectorOnGPUB.copyToHost(output.data(), output.size());
+    BOOST_CHECK_EQUAL_COLLECTIONS(output.begin(), output.end(), data.begin(), data.end());   
+}
