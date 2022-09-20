@@ -85,3 +85,33 @@ BOOST_AUTO_TEST_CASE(TestCopyScalarMultiply)
         BOOST_CHECK_EQUAL(buffer[i], scalar * data[i]);
     }
 }
+
+BOOST_AUTO_TEST_CASE(TestTwoNorm)
+{
+    std::vector<double> data{{1,2,3,4,5,6,7}};
+    auto vectorOnGPU = Opm::cuistl::CuVector<double>(data.data(), data.size());
+    auto twoNorm = vectorOnGPU.two_norm();
+
+    double correctAnswer = 0.0;
+    for (double d : data) {
+        correctAnswer += d*d;
+    }
+    correctAnswer = std::sqrt(correctAnswer);
+    BOOST_CHECK_EQUAL(correctAnswer, twoNorm);
+}
+
+BOOST_AUTO_TEST_CASE(TestDot)
+{
+    std::vector<double> dataA{{1,2,3,4,5,6,7}};
+    std::vector<double> dataB{{8,9,10,11,12,13,14}};
+    auto vectorOnGPUA = Opm::cuistl::CuVector<double>(dataA.data(), dataA.size());
+    auto vectorOnGPUB = Opm::cuistl::CuVector<double>(dataB.data(), dataB.size());
+    auto dot = vectorOnGPUA.dot(vectorOnGPUB);
+
+    double correctAnswer = 0.0;
+    for (size_t i = 0; i < dataA.size(); ++i) {
+        correctAnswer += dataA[i] * dataB[i];
+    }
+    correctAnswer = correctAnswer;
+    BOOST_CHECK_EQUAL(correctAnswer, dot);
+}
