@@ -40,7 +40,7 @@ public:
     CuVector& operator=(const CuVector<T>&);
     CuVector& operator=(T scalar);
     
-    CuVector(const int numberOfElements);
+    explicit CuVector(const int numberOfElements);
     CuVector(const T* dataOnHost, const int numberOfElements);
     virtual ~CuVector();
 
