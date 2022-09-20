@@ -118,6 +118,9 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
 
     auto cuSparseMatrix = Opm::cuistl::CuSparseMatrix<double>::fromMatrix(B);
     std::vector<double> inputDataX(N * 2, 1.0);
+    for (size_t i =  0; i < inputDataX.size(); ++i)  {
+        inputDataX[i] =  i;
+    }
     std::vector<double> inputDataY(N * 2, .25);
     auto inputVectorX = Opm::cuistl::CuVector<double>(inputDataX.data(), inputDataX.size());
     auto inputVectorY = Opm::cuistl::CuVector<double>(inputDataY.data(), inputDataY.size());
@@ -130,8 +133,11 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     inputVectorY.copyToHost(inputDataY);
     
     B.usmv(alpha, xHost, yHost);
-    BOOST_CHECK_EQUAL_COLLECTIONS(inputDataY.begin(), inputDataY.end(), &yHost[0][0], &yHost[0][0] + yHost.dim());
-
+    for (size_t i = 0; i < N;  ++i) {
+        for (size_t c  = 0; c < 2; ++c)  {
+            BOOST_CHECK_CLOSE(inputDataY[i*2 +c], yHost[i][c], 1e-7);
+        }
+    }
     inputVectorX.copyTo(xHost);
 
     cuSparseMatrix.mv(inputVectorX, inputVectorY);
@@ -139,5 +145,9 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     inputVectorY.copyToHost(inputDataY);
     
     B.mv(xHost, yHost);
-    BOOST_CHECK_EQUAL_COLLECTIONS(inputDataY.begin(), inputDataY.end(), &yHost[0][0], &yHost[0][0] + yHost.dim());
+    for (size_t i = 0; i < N;  ++i) {
+        for (size_t c  = 0; c < 2; ++c)  {
+            BOOST_CHECK_CLOSE(inputDataY[i*2 +c], yHost[i][c], 1e-7);
+        }
+    }
 }
