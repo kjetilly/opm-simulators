@@ -98,9 +98,10 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
 BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
 {
     
-    using M = Dune::FieldMatrix<T, 2, 2>;
+    static constexpr size_t dim = 3;
+    using M = Dune::FieldMatrix<T, dim, dim>;
     using SpMatrix = Dune::BCRSMatrix<M>;
-    using Vector = Dune::BlockVector<Dune::FieldVector<T, 2>>;
+    using Vector = Dune::BlockVector<Dune::FieldVector<T, dim>>;
     using CuILU0 = Opm::cuistl::CuSeqILU0<SpMatrix, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>;
 
     SpMatrix B;
@@ -113,34 +114,34 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     auto scalarProduct = std::make_shared<Dune::ScalarProduct<Opm::cuistl::CuVector<T>>>();
 
     auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, 1.0, 100, 0);
-    std::vector<T> correct(N*2, 0.0);
-    correct[N/2] =  1.0;
-    std::vector<T> initialGuess(N*2, 0.0);
+    std::vector<T> correct(N*dim, 1.0);
+    //correct[N/2] =  1.0;
+    std::vector<T> initialGuess(N*dim, 0.0);
     initialGuess[N/2]  = 0.5;
-    Opm::cuistl::CuVector<T> x(N*2);
-    Opm::cuistl::CuVector<T> y(N*2);
+    Opm::cuistl::CuVector<T> x(N*dim);
+    Opm::cuistl::CuVector<T> y(N*dim);
 
     x.copyFromHost(correct.data(), correct.size());
-        x =  0.0;
-    BonGPU->mv(x, y);
-
     Vector xHost(N), yHost(N);
     x.copyTo(xHost);
+    BonGPU->mv(x, y);
+
+    
     B.mv(xHost, yHost);
     std::vector<double> dataOnHost(y.dim());
     y.copyToHost(dataOnHost);
     BOOST_CHECK_EQUAL_COLLECTIONS(dataOnHost.begin(),
-    dataOnHost.end(), &yHost[0][0], &yHost[0][0] + 2*N);
+    dataOnHost.end(), &yHost[0][0], &yHost[0][0] + dim*N);
 
     x.copyFromHost(initialGuess.data(), initialGuess.size());
 
     Dune::InverseOperatorResult result;
-    Opm::cuistl::CuVector<T> tmp(N*2);
+    Opm::cuistl::CuVector<T> tmp(N*dim);
     tmp.copyFromHost(correct.data(), correct.size());
     tmp -= x;
     auto normBefore = tmp.two_norm();
     std::cout << normBefore << std::endl;
-    BOOST_CHECK_GT(normBefore, 0.5);
+    BOOST_CHECK_GT(normBefore, 0.2);
 
     auto normy =  y.two_norm();
 
