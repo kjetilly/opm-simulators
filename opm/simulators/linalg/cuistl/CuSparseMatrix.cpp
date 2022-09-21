@@ -3,6 +3,11 @@
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_wrapper.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
+#define CHECK_SIZE(x) \
+    if (x.dim() != blockSize() * N()) { \
+        OPM_THROW(std::invalid_argument, "Size mismatch. " << #x <<" has " << x.dim() << " elements, while we have " << blockSize() * N() << " elements."); \
+    }
+
 namespace Opm::cuistl
 {
 
@@ -60,7 +65,9 @@ CuSparseMatrix<T>::setNonUnitDiagonal()
 
 template<typename T>
 void CuSparseMatrix<T>::mv(const CuVector<T>& x, CuVector<T>& y) const {
-     if (blockSize() < 2) {
+    CHECK_SIZE(x)
+    CHECK_SIZE(y)
+    if (blockSize() < 2) {
         OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::usmv and CuSparseMatrix<T>::mv are only implemented for block sizes greater than 1.");
     }
     const auto numberOfRows = N();
@@ -90,6 +97,8 @@ void CuSparseMatrix<T>::mv(const CuVector<T>& x, CuVector<T>& y) const {
 
 template<typename T>
 void CuSparseMatrix<T>::usmv (T alpha, const CuVector<T>& x, CuVector<T>& y) const {
+    CHECK_SIZE(x)
+    CHECK_SIZE(y)
     if (blockSize() < 2) {
         OPM_THROW(std::invalid_argument, "CuSparseMatrix<T>::usmv and CuSparseMatrix<T>::mv are only implemented for block sizes greater than 1.");
     }
