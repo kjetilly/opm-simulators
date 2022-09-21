@@ -37,6 +37,7 @@ public:
     using size_type = size_t;
     
     CuVector(const CuVector<T>& other);
+    explicit CuVector(const std::vector<T>& data);
     CuVector& operator=(const CuVector<T>&);
     CuVector& operator=(T scalar);
     

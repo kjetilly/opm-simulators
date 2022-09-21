@@ -18,6 +18,13 @@ namespace Opm::cuistl
 {
 
 template <class T>
+CuVector<T>::CuVector(const std::vector<T>& data) 
+    : CuVector(data.data(), data.size())
+{
+
+}
+
+template <class T>
 CuVector<T>::CuVector(const int numberOfElements)
     : numberOfElements(numberOfElements)
     , cuBlasHandle(CuBlasHandle::getInstance())
