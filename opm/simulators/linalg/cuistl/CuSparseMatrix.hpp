@@ -61,7 +61,8 @@ public:
     static CuSparseMatrix<T> fromMatrix(const MatrixType& matrix)
     {
         // TODO: Do we need the static_cast? Do we need more paranthesis than a normal Lisp codebase?
-        const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        //const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        
 
         // TODO: Do we need this intermediate storage? Or this shuffling of data?
         std::vector<int> columnIndices;
@@ -73,16 +74,23 @@ public:
         const int numberOfRows = matrix.N();
         const int numberOfNonzeroBlocks = matrix.nonzeroes();
         const int numberOfNonzeroElements = blockSize * blockSize * numberOfNonzeroBlocks;
-
+        std::vector<T> nonZeroElementsData;
+        // TODO: [perf] Can we avoid building nonZeroElementsData?
+        nonZeroElementsData.reserve(numberOfNonzeroElements);
         columnIndices.reserve(numberOfNonzeroBlocks);
         rowIndices.reserve(numberOfRows + 1);
         for (auto& row : matrix) {
             for (auto columnIterator = row.begin(); columnIterator != row.end(); ++columnIterator) {
                 columnIndices.push_back(columnIterator.index());
+                for (int c = 0; c < blockSize; ++c) {
+                    for (int d = 0; d < blockSize; ++d) {
+                        nonZeroElementsData.push_back((*columnIterator)[c][d]);
+                    }
+                }
             }
             rowIndices.push_back(columnIndices.size());
         }
-
+        auto nonZeroElements = nonZeroElementsData.data();
         // Sanity check
         // h_rows and h_cols could be changed to 'unsigned int', but cusparse expects 'int'
         if (static_cast<unsigned int>(rowIndices[matrix.N()]) != matrix.nonzeroes()) {
