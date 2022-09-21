@@ -87,12 +87,12 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
 
 BOOST_AUTO_TEST_CASE(TestApply2D)
 {
-
+    constexpr size_t dim = 3;
     const int N = 5;
     const int nonZeroes = N * 3 - 2;
-    using M = Dune::FieldMatrix<double, 2, 2>;
+    using M = Dune::FieldMatrix<double, dim, dim>;
     using SpMatrix = Dune::BCRSMatrix<M>;
-    using Vector = Dune::BlockVector<Dune::FieldVector<double, 2>>;
+    using Vector = Dune::BlockVector<Dune::FieldVector<double, dim>>;
 
     SpMatrix B(N, N, nonZeroes, SpMatrix::row_wise);
     for (auto row = B.createbegin(); row != B.createend(); ++row) {
@@ -106,22 +106,39 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
+
+    auto index = [&](size_t i, size_t j, size_t c1, size_t c2) {
+        return i * N * N * dim * dim * dim * dim + j * N * dim * dim + c1 * dim  + c2;
+    };
     for (int i = 0; i < N; ++i) {
         if (i < N - 1) {
-            B[i][i + 1] = 1;
+            for (size_t c1 = 0; c1 < dim; ++c1) {
+                for (size_t c2 = 0; c2 < dim; ++c2) {
+                    B[i][i + 1][c1][c2] = index(i, i + 1, c1, c2);
+                }
+            }
         }
-        B[i][i] = -2;
+        for (size_t c1 = 0; c1 < dim; ++c1) {
+            for (size_t c2 = 0; c2 < dim; ++c2) {
+                    B[i][i][c1][c2] = index(i, i, c1, c2);
+            }
+        }
+       
         if (i > 0) {
-            B[i][i - 1] = 1;
+            for (size_t c1 = 0; c1 < dim; ++c1) {
+                for (size_t c2 = 0; c2 < dim; ++c2) {
+                    B[i][i - 1][c1][c2] = index(i, i - 1, c1, c2);
+                }
+            }
         }
     }
 
     auto cuSparseMatrix = Opm::cuistl::CuSparseMatrix<double>::fromMatrix(B);
-    std::vector<double> inputDataX(N * 2, 1.0);
+    std::vector<double> inputDataX(N * dim, 1.0);
     for (size_t i =  0; i < inputDataX.size(); ++i)  {
         inputDataX[i] =  i;
     }
-    std::vector<double> inputDataY(N * 2, .25);
+    std::vector<double> inputDataY(N * dim, .25);
     auto inputVectorX = Opm::cuistl::CuVector<double>(inputDataX.data(), inputDataX.size());
     auto inputVectorY = Opm::cuistl::CuVector<double>(inputDataY.data(), inputDataY.size());
     Vector xHost(N), yHost(N);
@@ -134,8 +151,8 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     
     B.usmv(alpha, xHost, yHost);
     for (size_t i = 0; i < N;  ++i) {
-        for (size_t c  = 0; c < 2; ++c)  {
-            BOOST_CHECK_CLOSE(inputDataY[i*2 +c], yHost[i][c], 1e-7);
+        for (size_t c  = 0; c < dim; ++c)  {
+            BOOST_CHECK_CLOSE(inputDataY[i*dim +c], yHost[i][c], 1e-7);
         }
     }
     inputVectorX.copyTo(xHost);
@@ -146,8 +163,8 @@ BOOST_AUTO_TEST_CASE(TestApply2D)
     
     B.mv(xHost, yHost);
     for (size_t i = 0; i < N;  ++i) {
-        for (size_t c  = 0; c < 2; ++c)  {
-            BOOST_CHECK_CLOSE(inputDataY[i*2 +c], yHost[i][c], 1e-7);
+        for (size_t c  = 0; c < dim; ++c)  {
+            BOOST_CHECK_CLOSE(inputDataY[i*dim +c], yHost[i][c], 1e-7);
         }
     }
 }
