@@ -1,5 +1,6 @@
 #include <cublas_v2.h>
 #include <cuda.h>
+#include <cuda_runtime.h>
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/cublas_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>

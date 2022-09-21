@@ -7,6 +7,7 @@
 #include <opm/simulators/linalg/cuistl/cuda_safe_call.hpp>
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
+#include <cuda_runtime.h>
 
 
 BOOST_AUTO_TEST_CASE(TestConstructionSize)
