@@ -97,7 +97,7 @@ private:
         }
         auto preconditionerOnGPU = precAsAdapter->getUnderlyingPreconditioner();
         auto matrixOperator = std::make_shared<Dune::MatrixAdapter<CuSparseMatrix<real_type>, XGPU, XGPU>>(matrix);
-        auto scalarProduct = std::make_shared<Dune::ScalarProduct<XGPU>>();
+        auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<XGPU>>();
 
         return UnderlyingSolver<XGPU>(matrixOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
     }

@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     auto BonGPU = std::make_shared<Opm::cuistl::CuSparseMatrix<T>>(Opm::cuistl::CuSparseMatrix<T>::fromMatrix(B));
     auto BOperator = std::make_shared<Dune::MatrixAdapter< Opm::cuistl::CuSparseMatrix<T>, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>>(BonGPU);
     auto cuILU = std::make_shared<CuILU0>(B, 1.0);
-    auto scalarProduct = std::make_shared<Dune::ScalarProduct<Opm::cuistl::CuVector<T>>>();
+    auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<Opm::cuistl::CuVector<T>>>();
 
     auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, 1.0, 100, 0);
     std::vector<T> correct(N*2, 2.0);
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(TestLoadFromFile, * boost::unit_test::tolerance(1e-7))
     auto BonGPU = std::make_shared<Opm::cuistl::CuSparseMatrix<T>>(Opm::cuistl::CuSparseMatrix<T>::fromMatrix(B));
     auto BOperator = std::make_shared<Dune::MatrixAdapter< Opm::cuistl::CuSparseMatrix<T>, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>>(BonGPU);
     auto cuILU = std::make_shared<CuILU0>(B, 1.0);
-    auto scalarProduct = std::make_shared<Dune::ScalarProduct<Opm::cuistl::CuVector<T>>>();
+    auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<Opm::cuistl::CuVector<T>>>();
 
     auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, 1.0, 100, 0);
     std::vector<T> correct(N*dim, 1.0);
