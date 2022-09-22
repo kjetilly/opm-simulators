@@ -4,8 +4,13 @@
 #include <string>
 #include <cuda_runtime.h>
 
+#ifdef USE_INTRUSIVE_CUDA_TIMING
 #define OPM_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes)
 #define OPM_CU_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes, true)
+#else
+#define OPM_TIME_TO_FILE(b,n)
+#define OPM_CU_TIME_TO_FILE(b,n)
+#endif
 
 namespace
 {
