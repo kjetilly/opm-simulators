@@ -60,10 +60,6 @@ public:
     template <class MatrixType>
     static CuSparseMatrix<T> fromMatrix(const MatrixType& matrix)
     {
-        // TODO: Do we need the static_cast? Do we need more paranthesis than a normal Lisp codebase?
-        //const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
-        
-
         // TODO: Do we need this intermediate storage? Or this shuffling of data?
         std::vector<int> columnIndices;
         std::vector<int> rowIndices;
@@ -90,7 +86,9 @@ public:
             }
             rowIndices.push_back(columnIndices.size());
         }
+
         auto nonZeroElements = nonZeroElementsData.data();
+        // const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
         // Sanity check
         // h_rows and h_cols could be changed to 'unsigned int', but cusparse expects 'int'
         if (static_cast<unsigned int>(rowIndices[matrix.N()]) != matrix.nonzeroes()) {
@@ -183,8 +181,23 @@ public:
         if (matrix.N() != N()) {
             OPM_THROW(std::logic_error, "Matrix does not have the same number of rows.");
         }
-
-        const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        const int numberOfRows = N();
+        const int numberOfNonzeroBlocks =  nonzeroes();
+        const int numberOfNonzeroElements = blockSize() * blockSize() * numberOfNonzeroBlocks;
+        std::vector<T> nonZeroElementsData;
+        // TODO: [perf] Can we avoid building nonZeroElementsData?
+        nonZeroElementsData.reserve(numberOfNonzeroElements);
+        for (auto& row : matrix) {
+            for (auto columnIterator = row.begin(); columnIterator != row.end(); ++columnIterator) {
+                for (int c = 0; c < blockSize(); ++c) {
+                    for (int d = 0; d < blockSize(); ++d) {
+                        nonZeroElementsData.push_back((*columnIterator)[c][d]);
+                    }
+                }
+            }
+        }
+        auto newNonZeroElements = nonZeroElementsData.data();
+        // const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
         nonZeroElements.copyFromHost(newNonZeroElements, nonzeroes() * blockSize() * blockSize());
     }
 private:
