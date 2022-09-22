@@ -95,18 +95,19 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     BOOST_CHECK_CLOSE(normAfter, 0.0, 1e-7);
 }
 
-BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
+BOOST_AUTO_TEST_CASE(TestLoadFromFile, * boost::unit_test::tolerance(1e-7))
 {
-    
+    using T = double;   
     static constexpr size_t dim = 3;
     using M = Dune::FieldMatrix<T, dim, dim>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, dim>>;
     using CuILU0 = Opm::cuistl::CuSeqILU0<SpMatrix, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>;
 
-    SpMatrix B;
+    SpMatrix B(300, 300, 16020/9, SpMatrix::row_wise);
 
-    Dune::loadMatrixMarket(B, "matrix.mm");
+    Dune::loadMatrixMarket(B, "../matrix.mm");
+    //B.compress();
     const size_t N = B.N();
     auto BonGPU = std::make_shared<Opm::cuistl::CuSparseMatrix<T>>(Opm::cuistl::CuSparseMatrix<T>::fromMatrix(B));
     auto BOperator = std::make_shared<Dune::MatrixAdapter< Opm::cuistl::CuSparseMatrix<T>, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>>(BonGPU);
@@ -117,21 +118,48 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     std::vector<T> correct(N*dim, 1.0);
     //correct[N/2] =  1.0;
     std::vector<T> initialGuess(N*dim, 0.0);
-    initialGuess[N/2]  = 0.5;
-    Opm::cuistl::CuVector<T> x(N*dim);
-    Opm::cuistl::CuVector<T> y(N*dim);
+    //initialGuess[N/2]  = 0.5;
+    Opm::cuistl::CuVector<T> x(correct);
+    Opm::cuistl::CuVector<T> y(initialGuess);
 
-    x.copyFromHost(correct.data(), correct.size());
     Vector xHost(N), yHost(N);
     x.copyTo(xHost);
+    xHost = 1.0;
+    x.copyFrom(xHost);
+
     BonGPU->mv(x, y);
 
     
     B.mv(xHost, yHost);
     std::vector<double> dataOnHost(y.dim());
     y.copyToHost(dataOnHost);
-    BOOST_CHECK_EQUAL_COLLECTIONS(dataOnHost.begin(),
-    dataOnHost.end(), &yHost[0][0], &yHost[0][0] + dim*N);
+    //BOOST_CHECK_EQUAL_COLLECTIONS(dataOnHost.begin(),
+    //dataOnHost.end(), &yHost[0][0], &yHost[0][0] + dim*N);
+    int totalfound = 0;
+    for (size_t i = 0; i < yHost.N(); ++i) {
+        for (size_t c = 0; c < dim; ++c) {
+            if (std::abs(yHost[i][c] - dataOnHost[i * dim + c])/std::abs(yHost[i][c]) > 1e-4) {
+                totalfound++;
+            }
+            // bool failed = false;
+            // if (std::abs(yHost[i][c]) > 1e-8) { 
+            //     std::cout << "Dune is " << yHost[i][c] << " ";
+            //     failed = true;
+            // }
+            // if (std::abs(dataOnHost[i * dim + c]) > 1e-8) { 
+            //     std::cout << "cuistl is " << dataOnHost[i * dim + c] << " ";
+            //     failed = true;
+            // }
+            // if (failed) {
+            //     std::cout << std::endl;
+            // }
+            // std::cout << yHost[i][c] << " " << dataOnHost[i * dim + c] << std::endl;
+            // BOOST_TEST_EQUAL(yHost[i][c], dataOnHost[i * dim + c], 1e-6);
+            BOOST_CHECK_CLOSE_FRACTION(yHost[i][c], dataOnHost[i * dim + c], 1e-4);
+        }
+    }
+    std::cout << "totalfound = " << totalfound << std::endl;
+    std::cout << "percent found: " << 100.0 * totalfound / double(N*dim) << " %" << std::endl;
 
     x.copyFromHost(initialGuess.data(), initialGuess.size());
 
@@ -154,7 +182,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestLoadFromFile, T, NumericTypes)
     tmp.copyFromHost(correct.data(), correct.size());
     tmp -= x;
     auto normAfter = tmp.two_norm();
-    BOOST_CHECK_CLOSE(normAfter, 0.0, 1e-7);
+    BOOST_CHECK_LT(normAfter, 1e-6);
 }
     
 
