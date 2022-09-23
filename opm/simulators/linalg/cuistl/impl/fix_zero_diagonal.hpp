@@ -50,7 +50,7 @@ makeMatrixWithNonzeroDiagonal(const Matrix& matrix,
                               = std::numeric_limits<typename Matrix::field_type>::epsilon())
 {
     #ifdef CUISTL_ASSUME_NON_ZERO_DIAGONAL
-    return matrix
+    return matrix;
     #else
     auto newMatrix = matrix;
     // TODO: Is this fast enough?
