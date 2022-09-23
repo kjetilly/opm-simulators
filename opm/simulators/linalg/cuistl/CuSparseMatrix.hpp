@@ -27,6 +27,7 @@
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <vector>
 #include <iostream>
+#define CUSPARSE_ASSUME_UNSAFE_SPARSITY 1
 
 namespace Opm::cuistl
 {
@@ -70,25 +71,31 @@ public:
         const int numberOfRows = matrix.N();
         const int numberOfNonzeroBlocks = matrix.nonzeroes();
         const int numberOfNonzeroElements = blockSize * blockSize * numberOfNonzeroBlocks;
+        #ifndef CUSPARSE_ASSUME_UNSAFE_SPARSITY
         std::vector<T> nonZeroElementsData;
         // TODO: [perf] Can we avoid building nonZeroElementsData?
         nonZeroElementsData.reserve(numberOfNonzeroElements);
+        #endif
         columnIndices.reserve(numberOfNonzeroBlocks);
         rowIndices.reserve(numberOfRows + 1);
         for (auto& row : matrix) {
             for (auto columnIterator = row.begin(); columnIterator != row.end(); ++columnIterator) {
                 columnIndices.push_back(columnIterator.index());
+                #ifndef CUSPARSE_ASSUME_UNSAFE_SPARSITY
                 for (int c = 0; c < blockSize; ++c) {
                     for (int d = 0; d < blockSize; ++d) {
                         nonZeroElementsData.push_back((*columnIterator)[c][d]);
                     }
                 }
+                #endif
             }
             rowIndices.push_back(columnIndices.size());
         }
-
+        #ifndef CUSPARSE_ASSUME_UNSAFE_SPARSITY
         auto nonZeroElements = nonZeroElementsData.data();
-        // const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        #else 
+        const T* nonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        #endif
         // Sanity check
         // h_rows and h_cols could be changed to 'unsigned int', but cusparse expects 'int'
         if (static_cast<unsigned int>(rowIndices[matrix.N()]) != matrix.nonzeroes()) {
@@ -184,6 +191,7 @@ public:
         const int numberOfRows = N();
         const int numberOfNonzeroBlocks =  nonzeroes();
         const int numberOfNonzeroElements = blockSize() * blockSize() * numberOfNonzeroBlocks;
+        #ifndef CUSPARSE_ASSUME_UNSAFE_SPARSITY
         std::vector<T> nonZeroElementsData;
         // TODO: [perf] Can we avoid building nonZeroElementsData?
         nonZeroElementsData.reserve(numberOfNonzeroElements);
@@ -197,7 +205,9 @@ public:
             }
         }
         auto newNonZeroElements = nonZeroElementsData.data();
-        // const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        #else 
+        const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
+        #endif
         nonZeroElements.copyFromHost(newNonZeroElements, nonzeroes() * blockSize() * blockSize());
     }
 private:

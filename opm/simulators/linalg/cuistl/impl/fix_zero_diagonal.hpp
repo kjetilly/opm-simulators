@@ -4,7 +4,7 @@
 #include <limits>
 #include <vector>
 
-
+#define CUISTL_ASSUME_NON_ZERO_DIAGONAL 1
 namespace Opm::cuistl::impl
 {
 template <class Matrix>
@@ -38,12 +38,20 @@ fixZeroDiagonal(const Matrix& matrix,
     return nonZeroes;
 }
 
+#ifdef CUISTL_ASSUME_NON_ZERO_DIAGONAL
+template <class Matrix>
+const Matrix&
+#else
 template <class Matrix>
 Matrix
+#endif
 makeMatrixWithNonzeroDiagonal(const Matrix& matrix,
                               const typename Matrix::field_type replacementValue
                               = std::numeric_limits<typename Matrix::field_type>::epsilon())
 {
+    #ifdef CUISTL_ASSUME_NON_ZERO_DIAGONAL
+    return matrix
+    #else
     auto newMatrix = matrix;
     // TODO: Is this fast enough?
     for (int row = 0; row < newMatrix.N(); ++row) {
@@ -55,6 +63,7 @@ makeMatrixWithNonzeroDiagonal(const Matrix& matrix,
     }
 
     return newMatrix;
+    #endif
 }
 } // namespace Opm::cuistl::impl
 
