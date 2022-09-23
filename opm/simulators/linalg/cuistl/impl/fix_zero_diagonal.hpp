@@ -4,7 +4,7 @@
 #include <limits>
 #include <vector>
 
-#define CUISTL_ASSUME_NON_ZERO_DIAGONAL 1
+//#define CUISTL_ASSUME_NON_ZERO_DIAGONAL 1
 namespace Opm::cuistl::impl
 {
 template <class Matrix>

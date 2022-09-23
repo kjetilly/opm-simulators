@@ -1,9 +1,11 @@
+#ifndef OPM_CUISTL_TIME_TO_FILE_HEADER
+#define OPM_CUISTL_TIME_TO_FILE_HEADER
 #include <chrono>
 #include <fstream>
 #include <mpi.h>
 #include <string>
 #include <cuda_runtime.h>
-
+//#define USE_INTRUSIVE_CUDA_TIMING
 #ifdef USE_INTRUSIVE_CUDA_TIMING
 #define OPM_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes)
 #define OPM_CU_TIME_TO_FILE(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes, true)
@@ -11,6 +13,9 @@
 #define OPM_TIME_TO_FILE(b,n)
 #define OPM_CU_TIME_TO_FILE(b,n)
 #endif
+
+#define OPM_TIME_TO_FILE_ALWAYS(basename, numberOfNonzeroes) ::Opm::cuistl::TimeToFile timer##basename (#basename, numberOfNonzeroes)
+
 
 namespace
 {
@@ -61,3 +66,5 @@ private:
     const bool doDeviceSynchronize;
 };
 } // namespace Opm::cuistl
+
+#endif

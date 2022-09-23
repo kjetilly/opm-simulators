@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(TestLoadFromFile, * boost::unit_test::tolerance(1e-7))
     using Vector = Dune::BlockVector<Dune::FieldVector<T, dim>>;
     using CuILU0 = Opm::cuistl::CuSeqILU0<SpMatrix, Opm::cuistl::CuVector<T>, Opm::cuistl::CuVector<T>>;
 
-    SpMatrix B(300, 300, 16020/9, SpMatrix::row_wise);
+    SpMatrix B;//(300, 300, 16020/9, SpMatrix::row_wise);
 
     Dune::loadMatrixMarket(B, "../matrix.mm");
     //B.compress();

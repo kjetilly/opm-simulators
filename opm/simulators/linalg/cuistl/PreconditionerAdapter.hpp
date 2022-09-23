@@ -28,6 +28,7 @@
 #include <opm/simulators/linalg/cuistl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
+#include <opm/simulators/linalg/cuistl/time_to_file.hpp>
 
 
 namespace Opm::cuistl
@@ -77,6 +78,7 @@ public:
         */
     virtual void apply(X& v, const Y& d) override
     {
+        OPM_TIME_TO_FILE_ALWAYS(preconditioneradapter, v.dim());
         if (!inputBuffer) {
             inputBuffer.reset(new CuVector<field_type>(v.dim()));
             outputBuffer.reset(new CuVector<field_type>(v.dim()));
