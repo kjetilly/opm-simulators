@@ -23,9 +23,9 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/preconditioner.hh>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
+#include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuSparseHandle.hpp>
-#include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuSparseResource.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_safe_call.hpp>

@@ -4,15 +4,15 @@
 #include "opm/simulators/linalg/matrixblock.hh"
 #include <memory>
 
+#include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/operators.hh>
+#include <dune/istl/schwarz.hh>
 #include <dune/istl/solver.hh>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/simulators/linalg/cuistl/CuOwnerOverlapCopy.hpp>
 #include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
-#include <dune/istl/schwarz.hh>
-#include <opm/simulators/linalg/cuistl/CuOwnerOverlapCopy.hpp>
-#include <dune/istl/bcrsmatrix.hh>
 
 
 
@@ -20,30 +20,37 @@
 namespace Opm::cuistl
 {
 
-namespace impl {
-template <typename T>
+namespace impl
+{
+    template <typename T>
     class has_communication
-{
-    using yes_type = char;
-    using no_type = long;
-    template <typename U> static yes_type test(decltype(&U::getCommunication));
-    template <typename U> static no_type  test(...);
-public:
-    static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
-};
+    {
+        using yes_type = char;
+        using no_type = long;
+        template <typename U>
+        static yes_type test(decltype(&U::getCommunication));
+        template <typename U>
+        static no_type test(...);
 
-template <typename T>
-class is_a_well_operator
-{
-    using yes_type = char;
-    using no_type = long;
-    template <typename U> static yes_type test(decltype(&U::addWellPressureEquations));
-    template <typename U> static no_type  test(...);
-public:
-    static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
-};
+    public:
+        static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+    };
 
-}
+    template <typename T>
+    class is_a_well_operator
+    {
+        using yes_type = char;
+        using no_type = long;
+        template <typename U>
+        static yes_type test(decltype(&U::addWellPressureEquations));
+        template <typename U>
+        static no_type test(...);
+
+    public:
+        static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
+    };
+
+} // namespace impl
 
 template <class Operator, template <class> class UnderlyingSolver, class X>
 class SolverAdapter : public Dune::IterativeSolver<X, X>
@@ -146,17 +153,20 @@ private:
         if constexpr (impl::has_communication<Operator>::value) {
             const auto& communication = opOnCPUWithMatrix.getCommunication();
             using CudaCommunication = CuOwnerOverlapCopy<real_type, block_size, decltype(communication)>;
-            using SchwarzOperator = Dune::OverlappingSchwarzOperator<CuSparseMatrix<real_type>, XGPU, XGPU, CudaCommunication>;
+            using SchwarzOperator
+                = Dune::OverlappingSchwarzOperator<CuSparseMatrix<real_type>, XGPU, XGPU, CudaCommunication>;
             const auto& cudaCommunication = CudaCommunication::getInstance(communication);
-            auto scalarProduct = std::make_shared<Dune::ParallelScalarProduct<XGPU, CudaCommunication>>(cudaCommunication, opOnCPUWithMatrix.category());
+            auto scalarProduct = std::make_shared<Dune::ParallelScalarProduct<XGPU, CudaCommunication>>(
+                cudaCommunication, opOnCPUWithMatrix.category());
             auto overlappingCudaOperator = std::make_shared<SchwarzOperator>(matrix, cudaCommunication);
 
-            return UnderlyingSolver<XGPU>(overlappingCudaOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
-        }
-        else {
+            return UnderlyingSolver<XGPU>(
+                overlappingCudaOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
+        } else {
             auto matrixOperator = std::make_shared<Dune::MatrixAdapter<CuSparseMatrix<real_type>, XGPU, XGPU>>(matrix);
             auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<XGPU>>();
-            return UnderlyingSolver<XGPU>(matrixOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
+            return UnderlyingSolver<XGPU>(
+                matrixOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
         }
     }
 

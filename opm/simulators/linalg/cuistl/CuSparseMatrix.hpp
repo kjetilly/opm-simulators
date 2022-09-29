@@ -23,9 +23,9 @@
 #include <iostream>
 #include <memory>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuSparseHandle.hpp>
-#include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <vector>
 
 namespace Opm::cuistl
@@ -55,8 +55,8 @@ public:
                    int blockSize,
                    int numberOfRows);
 
-//    CuSparseMatrix(const CuSparseMatrix<T>& other) = delete;
-//    CuSparseMatrix& operator=(const CuSparseMatrix<T>& other) = delete;
+    //    CuSparseMatrix(const CuSparseMatrix<T>& other) = delete;
+    //    CuSparseMatrix& operator=(const CuSparseMatrix<T>& other) = delete;
 
     virtual ~CuSparseMatrix();
 

@@ -18,11 +18,11 @@
 */
 #ifndef OPM_CUVECTOR_HEADER_INCLUDED
 #define OPM_CUVECTOR_HEADER_INCLUDED
+#include <dune/common/fvector.hh>
+#include <dune/istl/bvector.hh>
 #include <exception>
 #include <opm/common/ErrorMacros.hpp>
 #include <opm/simulators/linalg/cuistl/impl/CuBlasHandle.hpp>
-#include <dune/istl/bvector.hh>
-#include <dune/common/fvector.hh>
 #include <vector>
 
 namespace Opm::cuistl
@@ -102,11 +102,12 @@ public:
 
     std::vector<T> asStdVector() const;
 
-    template<int blockSize>
+    template <int blockSize>
     Dune::BlockVector<Dune::FieldVector<T, blockSize>> asDuneBlockVector() const
     {
         OPM_ERROR_IF(dim() % blockSize != 0,
-                     "blockSize is not a multiple of dim(). Given blockSize = " << blockSize << " and dim() = " << dim());
+                     "blockSize is not a multiple of dim(). Given blockSize = " << blockSize
+                                                                                << " and dim() = " << dim());
 
         Dune::BlockVector<Dune::FieldVector<T, blockSize>> returnValue(dim() / blockSize);
         copyToHost(returnValue);

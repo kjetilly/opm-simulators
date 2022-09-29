@@ -34,6 +34,6 @@ private:
     DeleterType deleter;
 };
 
-} // namespace Opm::cuistl
+} // namespace Opm::cuistl::impl
 #include <opm/simulators/linalg/cuistl/impl/CuSparseResource_impl.hpp>
 #endif // CUSPARSERESOURCE_HPP

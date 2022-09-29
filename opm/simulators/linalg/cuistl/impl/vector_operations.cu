@@ -2,11 +2,14 @@
 // TODO: [perf] Get rid of thrust.
 #include <thrust/device_ptr.h>
 #include <thrust/reduce.h>
-namespace Opm::cuistl::impl {
+namespace Opm::cuistl::impl
+{
 
-namespace {
-    template<class T>
-    __global__ void setZeroAtIndexSetKernel(T* devicePointer, size_t numberOfElements, const int* indices) {
+namespace
+{
+    template <class T>
+    __global__ void setZeroAtIndexSetKernel(T* devicePointer, size_t numberOfElements, const int* indices)
+    {
         const auto globalIndex = blockDim.x * blockIdx.x + threadIdx.x;
 
         if (globalIndex < numberOfElements) {
@@ -14,8 +17,9 @@ namespace {
         }
     }
 
-    template<class T>
-    __global__ void setVectorValueKernel(T* devicePointer, size_t numberOfElements, T value) {
+    template <class T>
+    __global__ void setVectorValueKernel(T* devicePointer, size_t numberOfElements, T value)
+    {
         const auto globalIndex = blockDim.x * blockIdx.x + threadIdx.x;
 
         if (globalIndex < numberOfElements) {
@@ -23,8 +27,10 @@ namespace {
         }
     }
 
-    template<class T>
-    __global__ void elementWiseMultiplyKernel(const T* a, const T* b, T* buffer, size_t numberOfElements, const int* indices) {
+    template <class T>
+    __global__ void
+    elementWiseMultiplyKernel(const T* a, const T* b, T* buffer, size_t numberOfElements, const int* indices)
+    {
         const auto globalIndex = blockDim.x * blockIdx.x + threadIdx.x;
 
         // TODO: [perf] Is it faster to just use a mask? Probably does not matter either way
@@ -34,39 +40,47 @@ namespace {
         }
     }
 
-    constexpr inline size_t getThreads([[maybe_unused]] size_t numberOfElements) {
+    constexpr inline size_t getThreads([[maybe_unused]] size_t numberOfElements)
+    {
         return 1024;
     }
 
-    inline size_t getBlocks(size_t numberOfElements) {
+    inline size_t getBlocks(size_t numberOfElements)
+    {
         const auto threads = getThreads(numberOfElements);
-        return (numberOfElements + threads - 1)/threads;
+        return (numberOfElements + threads - 1) / threads;
     }
-}
+} // namespace
 
-template<class T>
-void setVectorValue(T *deviceData, size_t numberOfElements, const T &value)
+template <class T>
+void
+setVectorValue(T* deviceData, size_t numberOfElements, const T& value)
 {
-    setVectorValueKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(deviceData, numberOfElements, value);
+    setVectorValueKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(
+        deviceData, numberOfElements, value);
 }
 
 template void setVectorValue(double*, size_t, const double&);
 template void setVectorValue(float*, size_t, const float&);
 template void setVectorValue(int*, size_t, const int&);
 
-template<class T>
-void setZeroAtIndexSet(T *deviceData, size_t numberOfElements, const int *indices)
+template <class T>
+void
+setZeroAtIndexSet(T* deviceData, size_t numberOfElements, const int* indices)
 {
-     setZeroAtIndexSetKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(deviceData, numberOfElements, indices);
+    setZeroAtIndexSetKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(
+        deviceData, numberOfElements, indices);
 }
 template void setZeroAtIndexSet(double*, size_t, const int*);
 template void setZeroAtIndexSet(float*, size_t, const int*);
 template void setZeroAtIndexSet(int*, size_t, const int*);
 
-template<class T>
-T innerProductAtIndices(const T *deviceA, const T *deviceB, T* buffer, size_t numberOfElements, const int *indices)
+template <class T>
+T
+innerProductAtIndices(const T* deviceA, const T* deviceB, T* buffer, size_t numberOfElements, const int* indices)
 {
-    elementWiseMultiplyKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(deviceA, deviceB, buffer, numberOfElements, indices);
+    elementWiseMultiplyKernel<<<getBlocks(numberOfElements), getThreads(numberOfElements)>>>(
+        deviceA, deviceB, buffer, numberOfElements, indices);
 
     // TODO: [perf] Get rid of thrust and use a more direct reduction here.
     auto bufferAsDevicePointer = thrust::device_pointer_cast(buffer);
@@ -77,4 +91,4 @@ template double innerProductAtIndices(const double*, const double*, double* buff
 template float innerProductAtIndices(const float*, const float*, float* buffer, size_t, const int*);
 template int innerProductAtIndices(const int*, const int*, int* buffer, size_t, const int*);
 
-}
+} // namespace Opm::cuistl::impl

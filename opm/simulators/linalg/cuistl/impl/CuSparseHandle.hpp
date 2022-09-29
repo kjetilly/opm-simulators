@@ -24,5 +24,5 @@ private:
 };
 
 using CuSparseHandlePtr = std::unique_ptr<CuSparseHandle>;
-} // namespace Opm::cuistl
+} // namespace Opm::cuistl::impl
 #endif // CUSPARSEHANDLE_HPP

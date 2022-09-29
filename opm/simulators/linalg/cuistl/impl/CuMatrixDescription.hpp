@@ -38,6 +38,6 @@ createUpperDiagonalDescription()
     return description;
 }
 
-} // namespace Opm::cuistl
+} // namespace Opm::cuistl::impl
 
 #endif // CU_MATRIX_DESCRIPTION_HPP

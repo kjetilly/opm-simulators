@@ -1,5 +1,6 @@
 #include <opm/simulators/linalg/cuistl/CuOwnerOverlapCopy.hpp>
 
-namespace Opm::cuistl {
+namespace Opm::cuistl
+{
 
 }

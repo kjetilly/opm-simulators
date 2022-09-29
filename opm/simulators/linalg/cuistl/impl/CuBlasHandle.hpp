@@ -22,5 +22,5 @@ private:
     CuBlasHandle();
     cublasHandle_t handle;
 };
-} // namespace Opm::cuistl
+} // namespace Opm::cuistl::impl
 #endif // CuBlasHandle_HPP

@@ -82,4 +82,4 @@ CuSparseResource<T>::~CuSparseResource()
     // proper name of the function being called.
     OPM_CUSPARSE_SAFE_CALL(deleter(resource));
 }
-} // namespace Opm::cuistl
+} // namespace Opm::cuistl::impl
