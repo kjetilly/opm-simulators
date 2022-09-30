@@ -141,18 +141,7 @@ CuVector<T>&
 CuVector<T>::operator*=(const T& scalar)
 {
     CHECKPOSITIVESIZE
-    // maybe this can be done more elegantly?
-    if constexpr (std::is_same<T, double>::value) {
-        OPM_CUBLAS_SAFE_CALL(cublasDscal(m_cuBlasHandle.get(), m_numberOfElements, &scalar, data(), 1));
-    } else if constexpr (std::is_same<T, float>::value) {
-        OPM_CUBLAS_SAFE_CALL(cublasSscal(m_cuBlasHandle.get(), m_numberOfElements, &scalar, data(), 1));
-    } else if constexpr (std::is_same<T, int>::value) {
-        OPM_THROW(std::runtime_error, "Scalar multiplication for integer vectors is not implemented yet.");
-    } else {
-        // TODO: Make this a static assert.
-        OPM_THROW(std::runtime_error, "This should not land here...");
-    }
-
+    OPM_CUBLAS_SAFE_CALL(impl::cublasScal(m_cuBlasHandle.get(), m_numberOfElements, &scalar, data(), 1));
     return *this;
 }
 

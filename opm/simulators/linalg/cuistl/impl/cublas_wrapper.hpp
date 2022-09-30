@@ -5,6 +5,44 @@
 
 namespace Opm::cuistl::impl
 {
+
+inline cublasStatus_t
+cublasScal(cublasHandle_t handle,
+           int n,
+           const double* alpha, /* host or device pointer */
+           double* x,
+           int incx)
+{
+    return cublasDscal(handle,
+                       n,
+                       alpha, /* host or device pointer */
+                       x,
+                       incx);
+}
+
+inline cublasStatus_t
+cublasScal(cublasHandle_t handle,
+           int n,
+           const float* alpha, /* host or device pointer */
+           float* x,
+           int incx)
+{
+    return cublasSscal(handle,
+                       n,
+                       alpha, /* host or device pointer */
+                       x,
+                       incx);
+}
+
+inline cublasStatus_t
+cublasScal(cublasHandle_t handle,
+           int n,
+           const int* alpha, /* host or device pointer */
+           int* x,
+           int incx)
+{
+    OPM_THROW(std::runtime_error, "cublasScal multiplication for integer vectors is not implemented yet.");
+}
 inline cublasStatus_t
 cublasAxpy(cublasHandle_t handle,
            int n,
