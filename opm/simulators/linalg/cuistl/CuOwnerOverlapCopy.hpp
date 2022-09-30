@@ -33,10 +33,10 @@ public:
 
     void dot(const X& x, const X& y, field_type& output) const
     {
-        std::call_once(initializedIndices, [&]() { initIndexSet(); });
+        std::call_once(m_initializedIndices, [&]() { initIndexSet(); });
 
-        const auto dotAtRank = x.dot(y, *indicesOwner);
-        output = cpuOwnerOverlapCopy.communicator().sum(dotAtRank);
+        const auto dotAtRank = x.dot(y, *m_indicesOwner);
+        output = m_cpuOwnerOverlapCopy.communicator().sum(dotAtRank);
     }
 
     field_type norm(const X& x) const
@@ -50,8 +50,8 @@ public:
 
     void project(X& x) const
     {
-        std::call_once(initializedIndices, [&]() { initIndexSet(); });
-        x.setZeroAtIndexSet(*indicesCopy);
+        std::call_once(m_initializedIndices, [&]() { initIndexSet(); });
+        x.setZeroAtIndexSet(*m_indicesCopy);
     }
 
     void copyOwnerToAll(const X& source, X& dest) const
@@ -60,28 +60,28 @@ public:
         // TODO: [perf] Maybe create a global buffer instead?
         auto sourceAsDuneVector = source.template asDuneBlockVector<block_size>();
         auto destAsDuneVector = dest.template asDuneBlockVector<block_size>();
-        cpuOwnerOverlapCopy.copyOwnerToAll(sourceAsDuneVector, destAsDuneVector);
+        m_cpuOwnerOverlapCopy.copyOwnerToAll(sourceAsDuneVector, destAsDuneVector);
         dest.copyFromHost(destAsDuneVector);
     }
 
     CuOwnerOverlapCopy(const OwnerOverlapCopyCommunicationType& cpuOwnerOverlapCopy)
-        : cpuOwnerOverlapCopy(cpuOwnerOverlapCopy)
+        : m_cpuOwnerOverlapCopy(cpuOwnerOverlapCopy)
     {
     }
 
 private:
-    mutable std::once_flag initializedIndices;
-    const OwnerOverlapCopyCommunicationType& cpuOwnerOverlapCopy;
+    mutable std::once_flag m_initializedIndices;
+    const OwnerOverlapCopyCommunicationType& m_cpuOwnerOverlapCopy;
 
-    mutable std::unique_ptr<CuVector<int>> indicesCopy;
-    mutable std::unique_ptr<CuVector<int>> indicesOwner;
+    mutable std::unique_ptr<CuVector<int>> m_indicesCopy;
+    mutable std::unique_ptr<CuVector<int>> m_indicesOwner;
 
 
     void initIndexSet() const
     {
         // We need indices that we we will use in the project, dot and norm calls.
         // TODO: [premature perf] Can this be run once per instance? Or do we need to rebuild every time?
-        const auto& pis = cpuOwnerOverlapCopy.indexSet();
+        const auto& pis = m_cpuOwnerOverlapCopy.indexSet();
         std::vector<int> indicesCopyOnCPU;
         std::vector<int> indicesOwnerCPU;
         for (const auto& index : pis) {
@@ -98,8 +98,8 @@ private:
             }
         }
 
-        indicesCopy.reset(new CuVector<int>(indicesCopyOnCPU));
-        indicesOwner.reset(new CuVector<int>(indicesOwnerCPU));
+        m_indicesCopy.reset(new CuVector<int>(indicesCopyOnCPU));
+        m_indicesOwner.reset(new CuVector<int>(indicesOwnerCPU));
     }
 };
 } // namespace Opm::cuistl

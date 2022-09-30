@@ -24,19 +24,19 @@ namespace Opm::cuistl::impl
 
 CuSparseHandle::CuSparseHandle()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseCreate(&handle));
-    OPM_CUSPARSE_SAFE_CALL(cusparseSetStream(handle, 0));
+    OPM_CUSPARSE_SAFE_CALL(cusparseCreate(&m_handle));
+    OPM_CUSPARSE_SAFE_CALL(cusparseSetStream(m_handle, 0));
 }
 
 CuSparseHandle::~CuSparseHandle()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseDestroy(handle));
+    OPM_CUSPARSE_SAFE_CALL(cusparseDestroy(m_handle));
 }
 
 cusparseHandle_t
 CuSparseHandle::get()
 {
-    return handle;
+    return m_handle;
 }
 
 CuSparseHandle&

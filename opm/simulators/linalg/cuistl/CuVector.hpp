@@ -53,27 +53,27 @@ public:
     template <int BlockDimension>
     void copyFromHost(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& vector)
     {
-        if (numberOfElements != vector.dim()) {
+        if (m_numberOfElements != vector.dim()) {
             OPM_THROW(std::runtime_error,
-                      "Given incompatible vector size. CuVector has size " + std::to_string(numberOfElements)
+                      "Given incompatible vector size. CuVector has size " + std::to_string(m_numberOfElements)
                           + ",\nhowever, BlockVector has N() = " + std::to_string(vector.N())
                           + ", and dim() = " + std::to_string(vector.dim()));
         }
         const auto dataPointer = static_cast<const T*>(&(vector[0][0]));
-        copyFromHost(dataPointer, numberOfElements);
+        copyFromHost(dataPointer, m_numberOfElements);
     }
 
     template <int BlockDimension>
     void copyToHost(Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& vector) const
     {
-        if (numberOfElements != vector.dim()) {
+        if (m_numberOfElements != vector.dim()) {
             OPM_THROW(std::runtime_error,
-                      "Given incompatible vector size. CuVector has size " + std::to_string(numberOfElements)
+                      "Given incompatible vector size. CuVector has size " + std::to_string(m_numberOfElements)
                           + ",\nhowever, the BlockVector has has N() = " + std::to_string(vector.N())
                           + ", and dim() = " + std::to_string(vector.dim()));
         }
         const auto dataPointer = static_cast<T*>(&(vector[0][0]));
-        copyToHost(dataPointer, numberOfElements);
+        copyToHost(dataPointer, m_numberOfElements);
     }
     void copyFromHost(const T* dataPointer, int numberOfElements);
     void copyToHost(T* dataPointer, int numberOfElements) const;
@@ -118,9 +118,9 @@ public:
     void setZeroAtIndexSet(const CuVector<int>& indexSet);
 
 private:
-    T* dataOnDevice = nullptr;
-    const int numberOfElements;
-    impl::CuBlasHandle& cuBlasHandle;
+    T* m_dataOnDevice = nullptr;
+    const int m_numberOfElements;
+    impl::CuBlasHandle& m_cuBlasHandle;
 };
 
 } // namespace Opm::cuistl

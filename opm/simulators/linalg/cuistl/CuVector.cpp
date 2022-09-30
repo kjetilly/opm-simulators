@@ -26,12 +26,12 @@
 #include <opm/simulators/linalg/cuistl/impl/vector_operations.hpp>
 
 #define CHECKSIZE(x)                                                                                                   \
-    if (x.numberOfElements != numberOfElements) {                                                                      \
+    if (x.m_numberOfElements != m_numberOfElements) {                                                                  \
         OPM_THROW(std::invalid_argument,                                                                               \
-                  "Given vector has " << x.numberOfElements << ", while we have " << numberOfElements);                \
+                  "Given vector has " << x.m_numberOfElements << ", while we have " << m_numberOfElements);            \
     }
 #define CHECKPOSITIVESIZE                                                                                              \
-    if (numberOfElements <= 0) {                                                                                       \
+    if (m_numberOfElements <= 0) {                                                                                     \
         OPM_THROW(std::invalid_argument, "We have 0 elements");                                                        \
     }
 
@@ -46,10 +46,10 @@ CuVector<T>::CuVector(const std::vector<T>& data)
 
 template <class T>
 CuVector<T>::CuVector(const int numberOfElements)
-    : numberOfElements(numberOfElements)
-    , cuBlasHandle(impl::CuBlasHandle::getInstance())
+    : m_numberOfElements(numberOfElements)
+    , m_cuBlasHandle(impl::CuBlasHandle::getInstance())
 {
-    OPM_CUDA_SAFE_CALL(cudaMalloc(&dataOnDevice, sizeof(T) * numberOfElements));
+    OPM_CUDA_SAFE_CALL(cudaMalloc(&m_dataOnDevice, sizeof(T) * m_numberOfElements));
 }
 
 template <class T>
@@ -57,7 +57,7 @@ CuVector<T>::CuVector(const T* dataOnHost, const int numberOfElements)
     : CuVector(numberOfElements)
 {
 
-    OPM_CUDA_SAFE_CALL(cudaMemcpy(dataOnDevice, dataOnHost, numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
+    OPM_CUDA_SAFE_CALL(cudaMemcpy(m_dataOnDevice, dataOnHost, m_numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template <class T>
@@ -65,7 +65,7 @@ CuVector<T>&
 CuVector<T>::operator=(T scalar)
 {
     CHECKPOSITIVESIZE
-    impl::setVectorValue(data(), numberOfElements, scalar);
+    impl::setVectorValue(data(), m_numberOfElements, scalar);
     return *this;
 }
 
@@ -75,49 +75,49 @@ CuVector<T>::operator=(const CuVector<T>& other)
 {
     CHECKPOSITIVESIZE
     CHECKSIZE(other)
-    if (other.numberOfElements != numberOfElements) {
+    if (other.m_numberOfElements != m_numberOfElements) {
         OPM_THROW(std::invalid_argument, "Can only copy from vector of same size.");
     }
     OPM_CUDA_SAFE_CALL(
-        cudaMemcpy(dataOnDevice, other.dataOnDevice, numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
+        cudaMemcpy(m_dataOnDevice, other.m_dataOnDevice, m_numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
     return *this;
 }
 
 template <class T>
 CuVector<T>::CuVector(const CuVector<T>& other)
-    : CuVector(other.numberOfElements)
+    : CuVector(other.m_numberOfElements)
 {
     CHECKPOSITIVESIZE
     CHECKSIZE(other)
     OPM_CUDA_SAFE_CALL(
-        cudaMemcpy(dataOnDevice, other.dataOnDevice, numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
+        cudaMemcpy(m_dataOnDevice, other.m_dataOnDevice, m_numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
 }
 
 template <class T>
 CuVector<T>::~CuVector()
 {
-    OPM_CUDA_SAFE_CALL(cudaFree(dataOnDevice));
+    OPM_CUDA_SAFE_CALL(cudaFree(m_dataOnDevice));
 }
 
 template <typename T>
 const T*
 CuVector<T>::data() const
 {
-    return dataOnDevice;
+    return m_dataOnDevice;
 }
 
 template <typename T>
 typename CuVector<T>::size_type
 CuVector<T>::dim() const
 {
-    return numberOfElements;
+    return m_numberOfElements;
 }
 
 template <typename T>
 std::vector<T>
 CuVector<T>::asStdVector() const
 {
-    std::vector<T> temporary(numberOfElements);
+    std::vector<T> temporary(m_numberOfElements);
     copyToHost(temporary);
     return temporary;
 }
@@ -126,14 +126,14 @@ template <typename T>
 void
 CuVector<T>::setZeroAtIndexSet(const CuVector<int>& indexSet)
 {
-    impl::setZeroAtIndexSet(dataOnDevice, indexSet.dim(), indexSet.data());
+    impl::setZeroAtIndexSet(m_dataOnDevice, indexSet.dim(), indexSet.data());
 }
 
 template <typename T>
 T*
 CuVector<T>::data()
 {
-    return dataOnDevice;
+    return m_dataOnDevice;
 }
 
 template <class T>
@@ -143,9 +143,9 @@ CuVector<T>::operator*=(const T& scalar)
     CHECKPOSITIVESIZE
     // maybe this can be done more elegantly?
     if constexpr (std::is_same<T, double>::value) {
-        OPM_CUBLAS_SAFE_CALL(cublasDscal(cuBlasHandle.get(), numberOfElements, &scalar, data(), 1));
+        OPM_CUBLAS_SAFE_CALL(cublasDscal(m_cuBlasHandle.get(), m_numberOfElements, &scalar, data(), 1));
     } else if constexpr (std::is_same<T, float>::value) {
-        OPM_CUBLAS_SAFE_CALL(cublasSscal(cuBlasHandle.get(), numberOfElements, &scalar, data(), 1));
+        OPM_CUBLAS_SAFE_CALL(cublasSscal(m_cuBlasHandle.get(), m_numberOfElements, &scalar, data(), 1));
     } else if constexpr (std::is_same<T, int>::value) {
         OPM_THROW(std::runtime_error, "Scalar multiplication for integer vectors is not implemented yet.");
     } else {
@@ -162,7 +162,7 @@ CuVector<T>::axpy(T alpha, const CuVector<T>& y)
 {
     CHECKPOSITIVESIZE
     CHECKSIZE(y)
-    OPM_CUBLAS_SAFE_CALL(impl::cublasAxpy(cuBlasHandle.get(), numberOfElements, &alpha, y.data(), 1, data(), 1));
+    OPM_CUBLAS_SAFE_CALL(impl::cublasAxpy(m_cuBlasHandle.get(), m_numberOfElements, &alpha, y.data(), 1, data(), 1));
     return *this;
 }
 
@@ -173,7 +173,8 @@ CuVector<T>::dot(const CuVector<T>& other) const
     CHECKPOSITIVESIZE
     CHECKSIZE(other)
     T result = T(0);
-    OPM_CUBLAS_SAFE_CALL(impl::cublasDot(cuBlasHandle.get(), numberOfElements, data(), 1, other.data(), 1, &result));
+    OPM_CUBLAS_SAFE_CALL(
+        impl::cublasDot(m_cuBlasHandle.get(), m_numberOfElements, data(), 1, other.data(), 1, &result));
     return result;
 }
 template <class T>
@@ -182,7 +183,7 @@ CuVector<T>::two_norm() const
 {
     CHECKPOSITIVESIZE
     T result = T(0);
-    OPM_CUBLAS_SAFE_CALL(impl::cublasNrm2(cuBlasHandle.get(), numberOfElements, data(), 1, &result));
+    OPM_CUBLAS_SAFE_CALL(impl::cublasNrm2(m_cuBlasHandle.get(), m_numberOfElements, data(), 1, &result));
     return result;
 }
 
@@ -190,7 +191,7 @@ template <typename T>
 T
 CuVector<T>::dot(const CuVector<T>& other, const CuVector<int>& indexSet, CuVector<T>& buffer) const
 {
-    return impl::innerProductAtIndices(dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
+    return impl::innerProductAtIndices(m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template <typename T>
@@ -206,7 +207,7 @@ T
 CuVector<T>::dot(const CuVector<T>& other, const CuVector<int>& indexSet) const
 {
     CuVector<T> buffer(indexSet.dim());
-    return impl::innerProductAtIndices(dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
+    return impl::innerProductAtIndices(m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template <typename T>

@@ -102,28 +102,28 @@ public:
 
 private:
     //! \brief Reference to the underlying matrix
-    const M& underlyingMatrix;
+    const M& m_underlyingMatrix;
     //! \brief The relaxation factor to use.
-    scalar_field_type w;
+    scalar_field_type m_w;
 
     //! This is the storage for the LU composition.
     //! Initially this will have the values of A, but will be
     //! modified in the constructor to be te proper LU decomposition.
-    CuSparseMatrix<field_type> LU;
+    CuSparseMatrix<field_type> m_LU;
 
-    CuVector<field_type> temporaryStorage;
+    CuVector<field_type> m_temporaryStorage;
 
 
-    impl::CuSparseMatrixDescriptionPtr descriptionL;
-    impl::CuSparseMatrixDescriptionPtr descriptionU;
-    impl::CuSparseResource<bsrsv2Info_t> infoL;
-    impl::CuSparseResource<bsrsv2Info_t> infoU;
-    impl::CuSparseResource<bsrilu02Info_t> infoM;
+    impl::CuSparseMatrixDescriptionPtr m_descriptionL;
+    impl::CuSparseMatrixDescriptionPtr m_descriptionU;
+    impl::CuSparseResource<bsrsv2Info_t> m_infoL;
+    impl::CuSparseResource<bsrsv2Info_t> m_infoU;
+    impl::CuSparseResource<bsrilu02Info_t> m_infoM;
 
-    std::unique_ptr<CuVector<field_type>> buffer;
-    impl::CuSparseHandle& cuSparseHandle;
+    std::unique_ptr<CuVector<field_type>> m_buffer;
+    impl::CuSparseHandle& m_cuSparseHandle;
 
-    bool analyzisDone = false;
+    bool m_analyzisDone = false;
 
     void analyzeMatrix();
     size_t findBufferSize();

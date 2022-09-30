@@ -54,8 +54,8 @@ public:
        \param w The relaxation factor.
             */
     RemakeUpdatePreconditioner(std::function<std::unique_ptr<Dune::Preconditioner<X, Y>>()> creator)
-        : creator(creator)
-        , underlyingPreconditioner(creator())
+        : m_creator(creator)
+        , m_underlyingPreconditioner(creator())
     {
     }
 
@@ -66,7 +66,7 @@ public:
         */
     virtual void pre(X& x, Y& b) override
     {
-        underlyingPreconditioner->pre(x, b);
+        m_underlyingPreconditioner->pre(x, b);
     }
 
     /*!
@@ -77,7 +77,7 @@ public:
     virtual void apply(X& v, const Y& d) override
     {
 
-        underlyingPreconditioner->apply(v, d);
+        m_underlyingPreconditioner->apply(v, d);
     }
 
     /*!
@@ -87,24 +87,24 @@ public:
         */
     virtual void post(X& x) override
     {
-        underlyingPreconditioner->post(x);
+        m_underlyingPreconditioner->post(x);
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
     {
-        return underlyingPreconditioner->category();
+        return m_underlyingPreconditioner->category();
     }
 
     virtual void update() override
     {
-        underlyingPreconditioner = creator();
+        m_underlyingPreconditioner = m_creator();
     }
 
 private:
-    std::function<std::unique_ptr<Dune::Preconditioner<X, Y>>()> creator;
+    std::function<std::unique_ptr<Dune::Preconditioner<X, Y>>()> m_creator;
     //! \brief the underlying preconditioner to use
-    std::unique_ptr<Dune::Preconditioner<X, Y>> underlyingPreconditioner;
+    std::unique_ptr<Dune::Preconditioner<X, Y>> m_underlyingPreconditioner;
 };
 } // end namespace Opm::cuistl
 

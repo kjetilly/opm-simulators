@@ -45,14 +45,14 @@ CuSparseMatrix<T>::CuSparseMatrix(const T* nonZeroElements,
                                   int numberOfNonzeroBlocks,
                                   int blockSize,
                                   int numberOfRows)
-    : nonZeroElements(nonZeroElements, numberOfNonzeroBlocks * blockSize * blockSize)
-    , columnIndices(columnIndices, numberOfNonzeroBlocks)
-    , rowIndices(rowIndices, numberOfRows + 1)
-    , numberOfNonzeroBlocks(numberOfNonzeroBlocks)
-    , numberOfRows(numberOfRows)
-    , _blockSize(blockSize)
-    , matrixDescription(impl::createMatrixDescription())
-    , cusparseHandle(impl::CuSparseHandle::getInstance())
+    : m_nonZeroElements(nonZeroElements, numberOfNonzeroBlocks * blockSize * blockSize)
+    , m_columnIndices(columnIndices, numberOfNonzeroBlocks)
+    , m_rowIndices(rowIndices, numberOfRows + 1)
+    , m_numberOfNonzeroBlocks(numberOfNonzeroBlocks)
+    , m_numberOfRows(numberOfRows)
+    , m_blockSize(blockSize)
+    , m_matrixDescription(impl::createMatrixDescription())
+    , m_cusparseHandle(impl::CuSparseHandle::getInstance())
 {
 }
 
@@ -143,35 +143,35 @@ CuSparseMatrix<T>::updateNonzeroValues(const MatrixType& matrix)
 #else
     const T* newNonZeroElements = static_cast<const T*>(&((matrix[0][0][0][0])));
 #endif
-    nonZeroElements.copyFromHost(newNonZeroElements, nonzeroes() * blockSize() * blockSize());
+    m_nonZeroElements.copyFromHost(newNonZeroElements, nonzeroes() * blockSize() * blockSize());
 }
 
 template <typename T>
 void
 CuSparseMatrix<T>::setUpperTriangular()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatFillMode(matrixDescription->get(), CUSPARSE_FILL_MODE_UPPER));
+    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatFillMode(m_matrixDescription->get(), CUSPARSE_FILL_MODE_UPPER));
 }
 
 template <typename T>
 void
 CuSparseMatrix<T>::setLowerTriangular()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatFillMode(matrixDescription->get(), CUSPARSE_FILL_MODE_LOWER));
+    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatFillMode(m_matrixDescription->get(), CUSPARSE_FILL_MODE_LOWER));
 }
 
 template <typename T>
 void
 CuSparseMatrix<T>::setUnitDiagonal()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(matrixDescription->get(), CUSPARSE_DIAG_TYPE_UNIT));
+    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(m_matrixDescription->get(), CUSPARSE_DIAG_TYPE_UNIT));
 }
 
 template <typename T>
 void
 CuSparseMatrix<T>::setNonUnitDiagonal()
 {
-    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(matrixDescription->get(), CUSPARSE_DIAG_TYPE_NON_UNIT));
+    OPM_CUSPARSE_SAFE_CALL(cusparseSetMatDiagType(m_matrixDescription->get(), CUSPARSE_DIAG_TYPE_NON_UNIT));
 }
 
 template <typename T>
@@ -193,14 +193,14 @@ CuSparseMatrix<T>::mv(const CuVector<T>& x, CuVector<T>& y) const
     auto columnIndices = getColumnIndices().data();
     T alpha = 1.0;
     T beta = 0.0;
-    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(cusparseHandle.get(),
+    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(m_cusparseHandle.get(),
                                                CUSPARSE_MATRIX_ORDER,
                                                CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                numberOfRows,
                                                numberOfRows,
                                                numberOfNonzeroBlocks,
                                                &alpha,
-                                               matrixDescription->get(),
+                                               m_matrixDescription->get(),
                                                nonzeroValues,
                                                rowIndices,
                                                columnIndices,
@@ -229,14 +229,14 @@ CuSparseMatrix<T>::umv(const CuVector<T>& x, CuVector<T>& y) const
     auto columnIndices = getColumnIndices().data();
     T alpha = 1.0;
     T beta = 1.0;
-    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(cusparseHandle.get(),
+    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(m_cusparseHandle.get(),
                                                CUSPARSE_MATRIX_ORDER,
                                                CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                numberOfRows,
                                                numberOfRows,
                                                numberOfNonzeroBlocks,
                                                &alpha,
-                                               matrixDescription->get(),
+                                               m_matrixDescription->get(),
                                                nonzeroValues,
                                                rowIndices,
                                                columnIndices,
@@ -265,14 +265,14 @@ CuSparseMatrix<T>::usmv(T alpha, const CuVector<T>& x, CuVector<T>& y) const
     auto columnIndices = getColumnIndices().data();
 
     T beta = 1.0;
-    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(cusparseHandle.get(),
+    OPM_CUSPARSE_SAFE_CALL(impl::cusparseBsrmv(m_cusparseHandle.get(),
                                                CUSPARSE_MATRIX_ORDER,
                                                CUSPARSE_OPERATION_NON_TRANSPOSE,
                                                numberOfRows,
                                                numberOfRows,
                                                numberOfNonzeroBlocks,
                                                &alpha,
-                                               matrixDescription->get(),
+                                               m_matrixDescription->get(),
                                                nonzeroValues,
                                                rowIndices,
                                                columnIndices,

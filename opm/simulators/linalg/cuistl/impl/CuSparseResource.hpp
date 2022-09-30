@@ -43,13 +43,13 @@ public:
 
     T get()
     {
-        return resource;
+        return m_resource;
     }
 
 private:
-    T resource;
+    T m_resource;
 
-    DeleterType deleter;
+    DeleterType m_deleter;
 };
 
 } // namespace Opm::cuistl::impl

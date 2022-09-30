@@ -25,18 +25,18 @@ namespace Opm::cuistl::impl
 
 CuBlasHandle::CuBlasHandle()
 {
-    OPM_CUBLAS_SAFE_CALL(cublasCreate(&handle));
+    OPM_CUBLAS_SAFE_CALL(cublasCreate(&m_handle));
 }
 
 CuBlasHandle::~CuBlasHandle()
 {
-    OPM_CUBLAS_SAFE_CALL(cublasDestroy(handle));
+    OPM_CUBLAS_SAFE_CALL(cublasDestroy(m_handle));
 }
 
 cublasHandle_t
 CuBlasHandle::get()
 {
-    return handle;
+    return m_handle;
 }
 
 CuBlasHandle&

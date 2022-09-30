@@ -57,7 +57,7 @@ public:
     //!    \param w The relaxation factor.
     //!
     PreconditionerAdapter(std::shared_ptr<CudaPreconditionerType> preconditioner_)
-        : underlyingPreconditioner(preconditioner_)
+        : m_underlyingPreconditioner(preconditioner_)
     {
     }
 
@@ -77,13 +77,13 @@ public:
     //! \copydoc Preconditioner::apply(X&,const Y&)
     virtual void apply(X& v, const Y& d) override
     {
-        if (!inputBuffer) {
-            inputBuffer.reset(new CuVector<field_type>(v.dim()));
-            outputBuffer.reset(new CuVector<field_type>(v.dim()));
+        if (!m_inputBuffer) {
+            m_inputBuffer.reset(new CuVector<field_type>(v.dim()));
+            m_outputBuffer.reset(new CuVector<field_type>(v.dim()));
         }
-        inputBuffer->copyFromHost(d);
-        underlyingPreconditioner->apply(*outputBuffer, *inputBuffer);
-        outputBuffer->copyToHost(v);
+        m_inputBuffer->copyFromHost(d);
+        m_underlyingPreconditioner->apply(*m_outputBuffer, *m_inputBuffer);
+        m_outputBuffer->copyToHost(v);
     }
 
 
@@ -99,26 +99,26 @@ public:
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
     {
-        return underlyingPreconditioner->category();
+        return m_underlyingPreconditioner->category();
     }
 
     virtual void update() override
     {
-        underlyingPreconditioner->update();
+        m_underlyingPreconditioner->update();
     }
 
     std::shared_ptr<Dune::PreconditionerWithUpdate<CuVector<field_type>, CuVector<field_type>>>
     getUnderlyingPreconditioner() override
     {
-        return underlyingPreconditioner;
+        return m_underlyingPreconditioner;
     }
 
 private:
     //! \brief the underlying preconditioner to use
-    std::shared_ptr<CudaPreconditionerType> underlyingPreconditioner;
+    std::shared_ptr<CudaPreconditionerType> m_underlyingPreconditioner;
 
-    std::unique_ptr<CuVector<field_type>> inputBuffer;
-    std::unique_ptr<CuVector<field_type>> outputBuffer;
+    std::unique_ptr<CuVector<field_type>> m_inputBuffer;
+    std::unique_ptr<CuVector<field_type>> m_outputBuffer;
 };
 } // end namespace Opm::cuistl
 

@@ -20,7 +20,7 @@ public:
 
 private:
     CuSparseHandle();
-    cusparseHandle_t handle;
+    cusparseHandle_t m_handle;
 };
 
 using CuSparseHandlePtr = std::unique_ptr<CuSparseHandle>;

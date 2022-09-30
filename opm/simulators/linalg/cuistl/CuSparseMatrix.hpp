@@ -70,53 +70,53 @@ public:
 
     size_t N() const
     {
-        return numberOfRows;
+        return m_numberOfRows;
     }
 
     size_t nonzeroes() const
     {
-        return numberOfNonzeroBlocks;
+        return m_numberOfNonzeroBlocks;
     }
 
     CuVector<T>& getNonZeroValues()
     {
-        return nonZeroElements;
+        return m_nonZeroElements;
     }
     const CuVector<T>& getNonZeroValues() const
     {
-        return nonZeroElements;
+        return m_nonZeroElements;
     }
 
     CuVector<int>& getRowIndices()
     {
-        return rowIndices;
+        return m_rowIndices;
     }
     const CuVector<int>& getRowIndices() const
     {
-        return rowIndices;
+        return m_rowIndices;
     }
 
     CuVector<int>& getColumnIndices()
     {
-        return columnIndices;
+        return m_columnIndices;
     }
     const CuVector<int>& getColumnIndices() const
     {
-        return columnIndices;
+        return m_columnIndices;
     }
 
     int dim() const
     {
-        return _blockSize * numberOfRows;
+        return m_blockSize * m_numberOfRows;
     }
     int blockSize() const
     {
-        return _blockSize;
+        return m_blockSize;
     }
 
     impl::CuSparseMatrixDescription& getDescription()
     {
-        return *matrixDescription;
+        return *m_matrixDescription;
     }
 
     virtual void mv(const CuVector<T>& x, CuVector<T>& y) const;
@@ -128,15 +128,15 @@ public:
     void updateNonzeroValues(const MatrixType& matrix);
 
 private:
-    CuVector<T> nonZeroElements;
-    CuVector<int> columnIndices;
-    CuVector<int> rowIndices;
-    const int numberOfNonzeroBlocks;
-    const int numberOfRows;
-    const int _blockSize;
+    CuVector<T> m_nonZeroElements;
+    CuVector<int> m_columnIndices;
+    CuVector<int> m_rowIndices;
+    const int m_numberOfNonzeroBlocks;
+    const int m_numberOfRows;
+    const int m_blockSize;
 
-    impl::CuSparseMatrixDescriptionPtr matrixDescription;
-    impl::CuSparseHandle& cusparseHandle;
+    impl::CuSparseMatrixDescriptionPtr m_matrixDescription;
+    impl::CuSparseHandle& m_cusparseHandle;
 };
 } // namespace Opm::cuistl
 #endif

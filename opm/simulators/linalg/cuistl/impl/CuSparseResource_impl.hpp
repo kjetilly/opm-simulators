@@ -80,11 +80,11 @@ namespace
 } // namespace
 template <class T>
 CuSparseResource<T>::CuSparseResource(CreatorType creator, DeleterType deleter)
-    : deleter(deleter)
+    : m_deleter(deleter)
 {
     // TODO: This should probably not use this macro since it will disguise the
     // proper name of the function being called.
-    OPM_CUSPARSE_SAFE_CALL(creator(&resource));
+    OPM_CUSPARSE_SAFE_CALL(creator(&m_resource));
 }
 
 template <class T>
@@ -98,6 +98,6 @@ CuSparseResource<T>::~CuSparseResource()
 {
     // TODO: This should probably not use this macro since it will disguise the
     // proper name of the function being called.
-    OPM_CUSPARSE_SAFE_CALL(deleter(resource));
+    OPM_CUSPARSE_SAFE_CALL(m_deleter(m_resource));
 }
 } // namespace Opm::cuistl::impl

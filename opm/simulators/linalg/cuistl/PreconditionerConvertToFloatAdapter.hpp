@@ -71,8 +71,8 @@ public:
        \param w The relaxation factor.
             */
     PreconditionerConvertToFloatAdapter(const M& matrix)
-        : matrix(matrix)
-        , convertedMatrix(createConvertedMatrix())
+        : m_matrix(matrix)
+        , m_convertedMatrix(createConvertedMatrix())
     {
     }
 
@@ -106,7 +106,7 @@ public:
             }
         }
 
-        underlyingPreconditioner->apply(convertedV, convertedD);
+        m_underlyingPreconditioner->apply(convertedV, convertedD);
 
         for (size_t i = 0; i < v.N(); ++i) {
             for (size_t j = 0; j < block_type::dimension; ++j) {
@@ -127,32 +127,32 @@ public:
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const
     {
-        return underlyingPreconditioner->category();
+        return m_underlyingPreconditioner->category();
     }
 
     virtual void update() override
     {
         updateMatrix();
-        underlyingPreconditioner->update();
+        m_underlyingPreconditioner->update();
     }
 
     const matrix_type_to& getConvertedMatrix() const
     {
-        return convertedMatrix;
+        return m_convertedMatrix;
     }
 
     void setUnderlyingPreconditioner(const std::shared_ptr<CudaPreconditionerType>& conditioner)
     {
-        underlyingPreconditioner = conditioner;
+        m_underlyingPreconditioner = conditioner;
     }
 
 
 private:
     void updateMatrix()
     {
-        const auto nnz = matrix.nonzeroes() * matrix[0][0].N() * matrix[0][0].N();
-        const auto dataPointerIn = static_cast<const scalar_field_type*>(&((matrix[0][0][0][0])));
-        auto dataPointerOut = static_cast<scalar_field_type_to*>(&((convertedMatrix[0][0][0][0])));
+        const auto nnz = m_matrix.nonzeroes() * m_matrix[0][0].N() * m_matrix[0][0].N();
+        const auto dataPointerIn = static_cast<const scalar_field_type*>(&((m_matrix[0][0][0][0])));
+        auto dataPointerOut = static_cast<scalar_field_type_to*>(&((m_convertedMatrix[0][0][0][0])));
 
         std::vector<scalar_field_type_to> buffer(nnz, 0);
         for (size_t i = 0; i < nnz; ++i) {
@@ -162,10 +162,10 @@ private:
     matrix_type_to createConvertedMatrix()
     {
         // TODO: Check if this whole conversion can be done more efficiently.
-        const auto N = matrix.N();
-        matrix_type_to matrixBuilder(N, N, matrix.nonzeroes(), matrix_type_to::row_wise);
+        const auto N = m_matrix.N();
+        matrix_type_to matrixBuilder(N, N, m_matrix.nonzeroes(), matrix_type_to::row_wise);
         {
-            auto rowIn = matrix.begin();
+            auto rowIn = m_matrix.begin();
             for (auto rowOut = matrixBuilder.createbegin(); rowOut != matrixBuilder.createend(); ++rowOut) {
                 for (auto column = rowIn->begin(); column != rowIn->end(); ++column) {
                     rowOut.insert(column.index());
@@ -174,12 +174,12 @@ private:
             }
         }
 
-        for (auto row = matrix.begin(); row != matrix.end(); ++row) {
+        for (auto row = m_matrix.begin(); row != m_matrix.end(); ++row) {
             for (auto column = row->begin(); column != row->end(); ++column) {
                 for (size_t i = 0; i < block_type::dimension; ++i) {
                     for (size_t j = 0; j < block_type::dimension; ++j) {
                         matrixBuilder[row.index()][column.index()][i][j]
-                            = scalar_field_type_to(matrix[row.index()][column.index()][i][j]);
+                            = scalar_field_type_to(m_matrix[row.index()][column.index()][i][j]);
                     }
                 }
             }
@@ -187,10 +187,10 @@ private:
 
         return matrixBuilder;
     }
-    const M& matrix;
-    matrix_type_to convertedMatrix;
+    const M& m_matrix;
+    matrix_type_to m_convertedMatrix;
     //! \brief the underlying preconditioner to use
-    std::shared_ptr<CudaPreconditionerType> underlyingPreconditioner;
+    std::shared_ptr<CudaPreconditionerType> m_underlyingPreconditioner;
 };
 } // end namespace Opm::cuistl
 

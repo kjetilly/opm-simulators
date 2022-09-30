@@ -58,9 +58,9 @@ public:
                   int maxit,
                   int verbose)
         : Dune::IterativeSolver<X, X>(op, *sp, *prec, reduction, maxit, verbose)
-        , opOnCPUWithMatrix(op)
-        , matrix(CuSparseMatrix<real_type>::fromMatrix(op.getmat()))
-        , underlyingSolver(constructSolver(prec, reduction, maxit, verbose))
+        , m_opOnCPUWithMatrix(op)
+        , m_matrix(CuSparseMatrix<real_type>::fromMatrix(op.getmat()))
+        , m_underlyingSolver(constructSolver(prec, reduction, maxit, verbose))
     {
     }
 
@@ -68,49 +68,49 @@ public:
     {
         // TODO: Can we do this without reimplementing the other function?
         // TODO: [perf] Do we need to update the matrix every time? Probably yes
-        matrix.updateNonzeroValues(opOnCPUWithMatrix.getmat());
+        m_matrix.updateNonzeroValues(m_opOnCPUWithMatrix.getmat());
 
-        if (!inputBuffer) {
-            inputBuffer.reset(new XGPU(b.dim()));
-            outputBuffer.reset(new XGPU(x.dim()));
+        if (!m_inputBuffer) {
+            m_inputBuffer.reset(new XGPU(b.dim()));
+            m_outputBuffer.reset(new XGPU(x.dim()));
         }
 
-        inputBuffer->copyFromHost(b);
+        m_inputBuffer->copyFromHost(b);
         // TODO: [perf] do we need to copy x here?
-        outputBuffer->copyFromHost(x);
+        m_outputBuffer->copyFromHost(x);
 
-        underlyingSolver.apply(*outputBuffer, *inputBuffer, reduction, res);
+        m_underlyingSolver.apply(*m_outputBuffer, *m_inputBuffer, reduction, res);
 
         // TODO: [perf] do we need to copy b here?
-        inputBuffer->copyToHost(b);
-        outputBuffer->copyToHost(x);
+        m_inputBuffer->copyToHost(b);
+        m_outputBuffer->copyToHost(x);
     }
     virtual void apply(X& x, X& b, Dune::InverseOperatorResult& res) override
     {
         // TODO: [perf] Do we need to update the matrix every time? Probably yes
-        matrix.updateNonzeroValues(opOnCPUWithMatrix.getmat());
+        m_matrix.updateNonzeroValues(m_opOnCPUWithMatrix.getmat());
 
-        if (!inputBuffer) {
-            inputBuffer.reset(new XGPU(b.dim()));
-            outputBuffer.reset(new XGPU(x.dim()));
+        if (!m_inputBuffer) {
+            m_inputBuffer.reset(new XGPU(b.dim()));
+            m_outputBuffer.reset(new XGPU(x.dim()));
         }
 
-        inputBuffer->copyFromHost(b);
+        m_inputBuffer->copyFromHost(b);
         // TODO: [perf] do we need to copy x here?
-        outputBuffer->copyFromHost(x);
+        m_outputBuffer->copyFromHost(x);
 
-        underlyingSolver.apply(*outputBuffer, *inputBuffer, res);
+        m_underlyingSolver.apply(*m_outputBuffer, *m_inputBuffer, res);
 
         // TODO: [perf] do we need to copy b here?
-        inputBuffer->copyToHost(b);
-        outputBuffer->copyToHost(x);
+        m_inputBuffer->copyToHost(b);
+        m_outputBuffer->copyToHost(x);
     }
 
 private:
-    Operator& opOnCPUWithMatrix;
-    CuSparseMatrix<real_type> matrix;
+    Operator& m_opOnCPUWithMatrix;
+    CuSparseMatrix<real_type> m_matrix;
 
-    UnderlyingSolver<XGPU> underlyingSolver;
+    UnderlyingSolver<XGPU> m_underlyingSolver;
 
 
     // TODO: Use a std::forward
@@ -157,7 +157,7 @@ private:
             }
             // We need to get the underlying preconditioner:
             auto preconditionerReallyOnGPU = preconditionerAdapterAsHolder->getUnderlyingPreconditioner();
-            const auto& communication = opOnCPUWithMatrix.getCommunication();
+            const auto& communication = m_opOnCPUWithMatrix.getCommunication();
 
             using CudaCommunication = CuOwnerOverlapCopy<real_type, block_size, typename Operator::communication_type>;
             using SchwarzOperator
@@ -168,7 +168,7 @@ private:
                 preconditionerReallyOnGPU, cudaCommunication);
 
             auto scalarProduct = std::make_shared<Dune::ParallelScalarProduct<XGPU, CudaCommunication>>(
-                cudaCommunication, opOnCPUWithMatrix.category());
+                cudaCommunication, m_opOnCPUWithMatrix.category());
 
 
             // NOTE: Ownsership of cudaCommunication is handled by mpiPreconditioner. However, just to make sure we
@@ -177,7 +177,7 @@ private:
             //       CuBlockPreconditioner instance. We accomedate for the fact that it could be passed around in
             //       CuBlockPreconditioner, hence we do not test for != 2
             OPM_ERROR_IF(cudaCommunication.use_count() < 2, "Internal error. Shared pointer not owned properly.");
-            auto overlappingCudaOperator = std::make_shared<SchwarzOperator>(matrix, *cudaCommunication);
+            auto overlappingCudaOperator = std::make_shared<SchwarzOperator>(m_matrix, *cudaCommunication);
 
             return UnderlyingSolver<XGPU>(
                 overlappingCudaOperator, scalarProduct, mpiPreconditioner, reduction, maxit, verbose);
@@ -194,15 +194,15 @@ private:
             }
             auto preconditionerOnGPU = precAsHolder->getUnderlyingPreconditioner();
 
-            auto matrixOperator = std::make_shared<Dune::MatrixAdapter<CuSparseMatrix<real_type>, XGPU, XGPU>>(matrix);
+            auto matrixOperator = std::make_shared<Dune::MatrixAdapter<CuSparseMatrix<real_type>, XGPU, XGPU>>(m_matrix);
             auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<XGPU>>();
             return UnderlyingSolver<XGPU>(
                 matrixOperator, scalarProduct, preconditionerOnGPU, reduction, maxit, verbose);
         }
     }
 
-    std::unique_ptr<XGPU> inputBuffer;
-    std::unique_ptr<XGPU> outputBuffer;
+    std::unique_ptr<XGPU> m_inputBuffer;
+    std::unique_ptr<XGPU> m_outputBuffer;
 };
 } // namespace Opm::cuistl
 
