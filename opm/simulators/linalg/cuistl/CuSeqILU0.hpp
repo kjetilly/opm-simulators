@@ -31,17 +31,21 @@
 
 namespace Opm::cuistl
 {
-/*!
-   \brief Sequential ILU0 preconditioner.
-
-Wraps the naked ISTL generic ILU0 preconditioner into the solver framework.
-
-     \tparam M The matrix type to operate on
-     \tparam X Type of the update
-     \tparam Y Type of the defect
-     \tparam l Ignored. Just there to have the same number of template arguments
-        as other preconditioners.
-            */
+ //! \brief Sequential ILU0 preconditioner on the GPU through the CuSparse library.
+ //!
+ //! This implementation calls the CuSparse functions, which in turn essentially
+ //! does a level decomposition to get some parallelism.
+ //!
+ //! \note This is not expected to be a fast preconditioner.
+ //!
+ //! \tparam M The matrix type to operate on
+ //! \tparam X Type of the update
+ //! \tparam Y Type of the defect
+ //! \tparam l Ignored. Just there to have the same number of template arguments
+ //!    as other preconditioners.
+ //!
+ //! \note We assume X and Y are both CuVector<real_type>, but we leave them as template
+ //! arguments in case of future additions.
 template <class M, class X, class Y, int l = 1>
 class CuSeqILU0 : public Dune::PreconditionerWithUpdate<X, Y>
 {
@@ -57,45 +61,39 @@ public:
     //! \brief scalar type underlying the field_type
     typedef Dune::SimdScalar<field_type> scalar_field_type;
 
-    /*! \brief Constructor.
-
-    Constructor gets all parameters to operate the prec.
-       \param A The matrix to operate on.
-       \param w The relaxation factor.
-            */
+    //! \brief Constructor.
+    //!
+    //!  Constructor gets all parameters to operate the prec.
+    //! \param A The matrix to operate on.
+    //! \param w The relaxation factor.
+    //!
     CuSeqILU0(const M& A, scalar_field_type w);
 
-    /*!
-       \brief Prepare the preconditioner.
-
-    \copydoc Preconditioner::pre(X&,Y&)
-        */
+    //! \brief Prepare the preconditioner.
+    //! \note Does nothing at the time being.
     virtual void pre(X& x, Y& b) override;
 
-    /*!
-       \brief Apply the preconditoner.
-
-    \copydoc Preconditioner::apply(X&,const Y&)
-        */
+    //! \brief Apply the preconditoner.
     virtual void apply(X& v, const Y& d) override;
 
-    /*!
-       \brief Clean up.
-
-    \copydoc Preconditioner::post(X&)
-        */
+    //! \brief Post processing
+    //! \note Does nothing at the moment
     virtual void post(X& x) override;
 
     //! Category of the preconditioner (see SolverCategory::Category)
     virtual Dune::SolverCategory::Category category() const override;
 
+    //! \brief Updates the matrix data.
     virtual void update() override;
 
 
+    //! \returns false
     static constexpr bool shouldCallPre()
     {
         return false;
     }
+
+    //! \returns false
     static constexpr bool shouldCallPost()
     {
         return false;
