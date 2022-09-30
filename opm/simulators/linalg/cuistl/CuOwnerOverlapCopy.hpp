@@ -1,3 +1,21 @@
+/*
+  Copyright SINTEF AS 2022
+
+  This file is part of the Open Porous Media project (OPM).
+
+  OPM is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  OPM is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with OPM.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #ifndef OPM_CUISTL_CUOWNEROVERLAPCOPY
 #define OPM_CUISTL_CUOWNEROVERLAPCOPY
 #include <dune/istl/owneroverlapcopy.hh>
@@ -46,19 +64,12 @@ public:
         dest.copyFromHost(destAsDuneVector);
     }
 
-    static CuOwnerOverlapCopy<field_type, block_size, OwnerOverlapCopyCommunicationType>&
-    getInstance(const OwnerOverlapCopyCommunicationType& communication)
-    {
-        // TODO: This is a really ugly hack. We should not have this as a singleton.
-        static CuOwnerOverlapCopy<field_type, block_size, OwnerOverlapCopyCommunicationType> instance(communication);
-        return instance;
-    }
-
-private:
     CuOwnerOverlapCopy(const OwnerOverlapCopyCommunicationType& cpuOwnerOverlapCopy)
         : cpuOwnerOverlapCopy(cpuOwnerOverlapCopy)
     {
     }
+private:
+
 
     mutable std::once_flag initializedIndices;
     const OwnerOverlapCopyCommunicationType& cpuOwnerOverlapCopy;

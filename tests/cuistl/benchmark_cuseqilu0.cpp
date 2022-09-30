@@ -1,3 +1,21 @@
+/*
+  Copyright SINTEF AS 2022
+
+  This file is part of the Open Porous Media project (OPM).
+
+  OPM is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  OPM is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with OPM.  If not, see <http://www.gnu.org/licenses/>.
+*/
 #include <config.h>
 
 #define BOOST_TEST_MODULE TestCuSeqILU0
@@ -117,7 +135,8 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
             auto durationDune = std::chrono::duration_cast<std::chrono::microseconds>(stopDune - startDune);
 
 
-            auto cuILUAdapt = Opm::cuistl::PreconditionerAdapter<Vector, Vector>(std::make_shared<CuILU0>(B, 1.0));
+            auto cuILUAdapt
+                = Opm::cuistl::PreconditionerAdapter<Vector, Vector, CuILU0>(std::make_shared<CuILU0>(B, 1.0));
             auto startcuILUAdapt = std::chrono::high_resolution_clock::now();
             for (int q = 0; q < repeats; ++q) {
                 cuILUAdapt.apply(outputVector, inputVector);

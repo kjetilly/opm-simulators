@@ -91,6 +91,11 @@ public:
 
     virtual void update() override;
 
+
+    static constexpr bool shouldCallPre() { return false; }
+    static constexpr bool shouldCallPost() { return false; }
+
+
 private:
     //! \brief Reference to the underlying matrix
     const M& underlyingMatrix;
