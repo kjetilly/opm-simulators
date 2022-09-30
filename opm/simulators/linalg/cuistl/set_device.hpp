@@ -23,7 +23,7 @@ namespace Opm::cuistl
 {
 //! @brief Sets the correct CUDA device in the setting of MPI
 //!
-//! @note This assume that every node has equally many GPUs, all of the same caliber
+//! @note This assumes that every node has equally many GPUs, all of the same caliber
 //!
 //! @note This probably needs to be called *before* MPI_Init if one uses GPUDirect transfers (see eg.
 //! https://devtalk.nvidia.com/default/topic/752046/teaching-and-curriculum-support/multi-gpu-system-running-mpi-cuda-/
