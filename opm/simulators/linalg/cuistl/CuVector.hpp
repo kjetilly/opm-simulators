@@ -122,6 +122,5 @@ private:
     const int m_numberOfElements;
     impl::CuBlasHandle& m_cuBlasHandle;
 };
-
 } // namespace Opm::cuistl
 #endif

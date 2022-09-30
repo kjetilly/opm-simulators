@@ -31,21 +31,21 @@
 
 namespace Opm::cuistl
 {
- //! \brief Sequential ILU0 preconditioner on the GPU through the CuSparse library.
- //!
- //! This implementation calls the CuSparse functions, which in turn essentially
- //! does a level decomposition to get some parallelism.
- //!
- //! \note This is not expected to be a fast preconditioner.
- //!
- //! \tparam M The matrix type to operate on
- //! \tparam X Type of the update
- //! \tparam Y Type of the defect
- //! \tparam l Ignored. Just there to have the same number of template arguments
- //!    as other preconditioners.
- //!
- //! \note We assume X and Y are both CuVector<real_type>, but we leave them as template
- //! arguments in case of future additions.
+//! \brief Sequential ILU0 preconditioner on the GPU through the CuSparse library.
+//!
+//! This implementation calls the CuSparse functions, which in turn essentially
+//! does a level decomposition to get some parallelism.
+//!
+//! \note This is not expected to be a fast preconditioner.
+//!
+//! \tparam M The matrix type to operate on
+//! \tparam X Type of the update
+//! \tparam Y Type of the defect
+//! \tparam l Ignored. Just there to have the same number of template arguments
+//!    as other preconditioners.
+//!
+//! \note We assume X and Y are both CuVector<real_type>, but we leave them as template
+//! arguments in case of future additions.
 template <class M, class X, class Y, int l = 1>
 class CuSeqILU0 : public Dune::PreconditionerWithUpdate<X, Y>
 {
