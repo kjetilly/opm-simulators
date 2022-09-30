@@ -119,6 +119,7 @@ if(CUDA_FOUND)
   list (APPEND MAIN_SOURCE_FILES opm/simulators/linalg/cuistl/impl/CuSparseHandle.cpp)
   list (APPEND MAIN_SOURCE_FILES opm/simulators/linalg/cuistl/impl/CuBlasHandle.cpp)
   list (APPEND MAIN_SOURCE_FILES opm/simulators/linalg/cuistl/impl/vector_operations.cu)
+  list (APPEND MAIN_SOURCE_FILES opm/simulators/linalg/cuistl/set_device.cpp)
 
 endif()
 if(OPENCL_FOUND)
