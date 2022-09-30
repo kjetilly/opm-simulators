@@ -66,7 +66,7 @@ public:
     {
         // TODO: [perf] Do we always need to copy, or only when we need the pre step?
         m_communication->copyOwnerToAll(x, x); // make dirichlet values consistent
-        if constexpr(impl::shouldCallPreconditionerPre<P>()) {
+        if constexpr (impl::shouldCallPreconditionerPre<P>()) {
             m_preconditioner->pre(x, b);
         }
     }
@@ -88,7 +88,7 @@ public:
 
     virtual void post(X& x) override
     {
-        if constexpr(impl::shouldCallPreconditionerPost<P>()) {
+        if constexpr (impl::shouldCallPreconditionerPost<P>()) {
             m_preconditioner->post(x);
         }
     }
@@ -99,10 +99,17 @@ public:
         return Dune::SolverCategory::overlapping;
     }
 
-    static constexpr bool shouldCallPre() { return impl::shouldCallPreconditionerPost<P>(); }
-    static constexpr bool shouldCallPost() { return impl::shouldCallPreconditionerPre<P>(); }
+    static constexpr bool shouldCallPre()
+    {
+        return impl::shouldCallPreconditionerPost<P>();
+    }
+    static constexpr bool shouldCallPost()
+    {
+        return impl::shouldCallPreconditionerPre<P>();
+    }
 
-    virtual std::shared_ptr<Dune::PreconditionerWithUpdate<X, Y>> getUnderlyingPreconditioner() override {
+    virtual std::shared_ptr<Dune::PreconditionerWithUpdate<X, Y>> getUnderlyingPreconditioner() override
+    {
         return m_preconditioner;
     }
 

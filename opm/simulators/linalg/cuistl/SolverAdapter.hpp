@@ -27,12 +27,12 @@
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/solver.hh>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/simulators/linalg/cuistl/CuBlockPreconditioner.hpp>
 #include <opm/simulators/linalg/cuistl/CuOwnerOverlapCopy.hpp>
 #include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
 #include <opm/simulators/linalg/cuistl/impl/has_function.hpp>
-#include <opm/simulators/linalg/cuistl/CuBlockPreconditioner.hpp>
 
 
 
@@ -120,10 +120,11 @@ private:
                                            int verbose)
     {
 
-        OPM_ERROR_IF(impl::is_a_well_operator<Operator>::value,
-                     "Currently we only support operators of type MatrixAdapter in the CUDA solver. "
-                     "Use --matrix-add-well-contributions=true. "
-                     "Using WellModelMatrixAdapter with SolverAdapter is not well-defined so it will not work well, or at all.");
+        OPM_ERROR_IF(
+            impl::is_a_well_operator<Operator>::value,
+            "Currently we only support operators of type MatrixAdapter in the CUDA solver. "
+            "Use --matrix-add-well-contributions=true. "
+            "Using WellModelMatrixAdapter with SolverAdapter is not well-defined so it will not work well, or at all.");
 
 
 
@@ -131,9 +132,10 @@ private:
 
         if constexpr (impl::has_communication<Operator>::value) {
             // TODO: See the below TODO over the definition of precHolder in the other branch
-            // TODO: We are currently double wrapping preconditioners in the preconditioner factory to be extra compatible
-            //       with CPU. Probably a cleaner way eventually would be to do more modifications to the flexible solver to
-            //       accomodate the pure GPU better.
+            // TODO: We are currently double wrapping preconditioners in the preconditioner factory to be extra
+            // compatible
+            //       with CPU. Probably a cleaner way eventually would be to do more modifications to the flexible
+            //       solver to accomodate the pure GPU better.
             auto precAsHolder = std::dynamic_pointer_cast<PreconditionerHolder<X, X>>(prec);
             if (!precAsHolder) {
                 OPM_THROW(std::invalid_argument,
@@ -144,7 +146,8 @@ private:
             }
 
             auto preconditionerAdapter = precAsHolder->getUnderlyingPreconditioner();
-            auto preconditionerAdapterAsHolder = std::dynamic_pointer_cast<PreconditionerHolder<XGPU, XGPU>>(preconditionerAdapter);
+            auto preconditionerAdapterAsHolder
+                = std::dynamic_pointer_cast<PreconditionerHolder<XGPU, XGPU>>(preconditionerAdapter);
             if (!preconditionerAdapterAsHolder) {
                 OPM_THROW(std::invalid_argument,
                           "The preconditioner needs to be a CUDA preconditioner (eg. CuILU0) wrapped in a "
@@ -161,16 +164,18 @@ private:
                 = Dune::OverlappingSchwarzOperator<CuSparseMatrix<real_type>, XGPU, XGPU, CudaCommunication>;
             auto cudaCommunication = std::make_shared<CudaCommunication>(communication);
 
-            auto mpiPreconditioner = std::make_shared<CuBlockPreconditioner<XGPU, XGPU, CudaCommunication>>(preconditionerReallyOnGPU, cudaCommunication);
+            auto mpiPreconditioner = std::make_shared<CuBlockPreconditioner<XGPU, XGPU, CudaCommunication>>(
+                preconditionerReallyOnGPU, cudaCommunication);
 
             auto scalarProduct = std::make_shared<Dune::ParallelScalarProduct<XGPU, CudaCommunication>>(
                 cudaCommunication, opOnCPUWithMatrix.category());
 
 
-            // NOTE: Ownsership of cudaCommunication is handled by mpiPreconditioner. However, just to make sure we remember
-            //       this, we add this check. So remember that we hold one count in this scope, and one in the CuBlockPreconditioner
-            //       instance. We accomedate for the fact that it could be passed around in CuBlockPreconditioner, hence
-            //       we do not test for != 2
+            // NOTE: Ownsership of cudaCommunication is handled by mpiPreconditioner. However, just to make sure we
+            // remember
+            //       this, we add this check. So remember that we hold one count in this scope, and one in the
+            //       CuBlockPreconditioner instance. We accomedate for the fact that it could be passed around in
+            //       CuBlockPreconditioner, hence we do not test for != 2
             OPM_ERROR_IF(cudaCommunication.use_count() < 2, "Internal error. Shared pointer not owned properly.");
             auto overlappingCudaOperator = std::make_shared<SchwarzOperator>(matrix, *cudaCommunication);
 

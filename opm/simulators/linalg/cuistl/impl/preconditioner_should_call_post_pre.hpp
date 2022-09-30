@@ -22,9 +22,12 @@
 
 #include <opm/simulators/linalg/cuistl/impl/has_function.hpp>
 
-namespace Opm::cuistl::impl {
-template<class PreconditionerType>
-constexpr bool shouldCallPreconditionerPre() {
+namespace Opm::cuistl::impl
+{
+template <class PreconditionerType>
+constexpr bool
+shouldCallPreconditionerPre()
+{
     if constexpr (has_should_call_pre<PreconditionerType>::value) {
         return PreconditionerType::shouldCallPre();
     } else {
@@ -35,8 +38,10 @@ constexpr bool shouldCallPreconditionerPre() {
     }
 }
 
-template<class PreconditionerType>
-constexpr bool shouldCallPreconditionerPost() {
+template <class PreconditionerType>
+constexpr bool
+shouldCallPreconditionerPost()
+{
     if constexpr (has_should_call_post<PreconditionerType>::value) {
         return PreconditionerType::shouldCallPost();
     } else {
@@ -46,5 +51,5 @@ constexpr bool shouldCallPreconditionerPost() {
         return true;
     }
 }
-}
+} // namespace Opm::cuistl::impl
 #endif

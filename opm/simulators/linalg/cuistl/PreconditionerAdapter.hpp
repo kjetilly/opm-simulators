@@ -36,12 +36,13 @@ namespace Opm::cuistl
 {
 //!\brief Makes a CUDA preconditioner available to a CPU simulator.
 template <class X, class Y, class CudaPreconditionerType>
-class PreconditionerAdapter : public Dune::PreconditionerWithUpdate<X, Y>,
-                              public PreconditionerHolder<CuVector<typename X::field_type>, CuVector<typename Y::field_type>>
+class PreconditionerAdapter
+    : public Dune::PreconditionerWithUpdate<X, Y>,
+      public PreconditionerHolder<CuVector<typename X::field_type>, CuVector<typename Y::field_type>>
 {
 public:
     //! \brief The domain type of the preconditioner.
-    using domain_type =  X;
+    using domain_type = X;
     //! \brief The range type of the preconditioner.
     using range_type = Y;
     //! \brief The field type of the preconditioner.
@@ -93,7 +94,6 @@ public:
     {
         static_assert(!impl::shouldCallPreconditionerPost<CudaPreconditionerType>(),
                       "We currently do not support Preconditioner::post().");
-
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)
@@ -107,7 +107,8 @@ public:
         underlyingPreconditioner->update();
     }
 
-    std::shared_ptr<Dune::PreconditionerWithUpdate<CuVector<field_type>, CuVector<field_type>>> getUnderlyingPreconditioner() override
+    std::shared_ptr<Dune::PreconditionerWithUpdate<CuVector<field_type>, CuVector<field_type>>>
+    getUnderlyingPreconditioner() override
     {
         return underlyingPreconditioner;
     }

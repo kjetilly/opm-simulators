@@ -68,9 +68,8 @@ public:
         : cpuOwnerOverlapCopy(cpuOwnerOverlapCopy)
     {
     }
+
 private:
-
-
     mutable std::once_flag initializedIndices;
     const OwnerOverlapCopyCommunicationType& cpuOwnerOverlapCopy;
 

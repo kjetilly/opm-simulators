@@ -92,8 +92,14 @@ public:
     virtual void update() override;
 
 
-    static constexpr bool shouldCallPre() { return false; }
-    static constexpr bool shouldCallPost() { return false; }
+    static constexpr bool shouldCallPre()
+    {
+        return false;
+    }
+    static constexpr bool shouldCallPost()
+    {
+        return false;
+    }
 
 
 private:
