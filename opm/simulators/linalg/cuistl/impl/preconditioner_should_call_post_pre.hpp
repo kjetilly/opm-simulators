@@ -24,6 +24,11 @@
 
 namespace Opm::cuistl::impl
 {
+
+//! @brief Tests (compile time) if the preconditioner type needs to call pre
+//!
+//! @note This is mostly used to avoid unneeded copying back and front to the GPU, as well
+//! as avoiding communication.
 template <class PreconditionerType>
 constexpr bool
 shouldCallPreconditionerPre()
@@ -38,6 +43,10 @@ shouldCallPreconditionerPre()
     }
 }
 
+//! @brief Tests (compile time) if the preconditioner type needs to call pre
+//!
+//! @note This is mostly used to avoid unneeded copying back and front to the GPU, as well
+//! as avoiding communication.
 template <class PreconditionerType>
 constexpr bool
 shouldCallPreconditionerPost()

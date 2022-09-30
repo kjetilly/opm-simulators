@@ -101,6 +101,16 @@ public:
         return Dune::SolverCategory::sequential;
     }
 
+    static constexpr bool shouldCallPre()
+    {
+        return false;
+    }
+    static constexpr bool shouldCallPost()
+    {
+        return false;
+    }
+
+
 private:
     const SpMatrixFloat& matrix;
     const XDouble& expectedInput;

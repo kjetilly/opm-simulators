@@ -113,6 +113,15 @@ public:
         return m_underlyingPreconditioner;
     }
 
+    static constexpr bool shouldCallPre()
+    {
+        return impl::shouldCallPreconditionerPost<CudaPreconditionerType>();
+    }
+    static constexpr bool shouldCallPost()
+    {
+        return impl::shouldCallPreconditionerPre<CudaPreconditionerType>();
+    }
+
 private:
     //! \brief the underlying preconditioner to use
     std::shared_ptr<CudaPreconditionerType> m_underlyingPreconditioner;

@@ -25,6 +25,9 @@
 
 namespace Opm::cuistl
 {
+//! @brief CUDA compatiable variant of Dune::OwnerOverlapCopyCommunication
+//!
+//! @note This currently has very limited functionality.
 template <class field_type, int block_size, class OwnerOverlapCopyCommunicationType>
 class CuOwnerOverlapCopy
 {

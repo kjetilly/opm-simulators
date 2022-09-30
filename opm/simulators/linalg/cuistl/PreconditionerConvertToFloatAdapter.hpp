@@ -29,11 +29,25 @@
 #include <opm/simulators/linalg/cuistl/impl/CuSparseResource.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_constants.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_safe_call.hpp>
+#include <opm/simulators/linalg/cuistl/impl/preconditioner_should_call_post_pre.hpp>
 
 
 namespace Opm::cuistl
 {
-//!\brief Makes a CUDA preconditioner available to a CPU simulator.
+//! \brief Converts double to single precision to benchmark single precision preconditioners
+//!
+//! \note This is not a fast conversion, it is simply meant to benchmark the potential of some
+//!       preconditioners on consumer grade GPUs where the double precision performance is often
+//!       artificially limited.
+//!
+//! To use this, use something like the following pseudo code
+//! \code{.cpp}
+//! auto adapter = PreconditionerFloatAdapter<args>(matrixDouble);
+//! auto underlyingPreconditioner = SomePreconditioner(adapter.getConvertedMatrix());
+//! adapter.setUnderlyingPreconditioner(underlyingPreconditioner);
+//!
+//! // Now call adapter.apply(...) with double vectors
+//! \endcode
 template <class CudaPreconditionerType, class M, class X, class Y, int l = 1>
 class PreconditionerConvertToFloatAdapter : public Dune::PreconditionerWithUpdate<X, Y>
 {
@@ -64,32 +78,23 @@ public:
     using matrix_type_to = typename Dune::BCRSMatrix<
         Dune::FieldMatrix<scalar_field_type_to, block_type::dimension, block_type::dimension>>;
 
-    /*! \brief Constructor.
-
-    Constructor gets all parameters to operate the prec.
-       \param A The matrix to operate on.
-       \param w The relaxation factor.
-            */
+    //! \brief Constructor.
+    //!
+    //! \param A The matrix to operate on.
     PreconditionerConvertToFloatAdapter(const M& matrix)
         : m_matrix(matrix)
         , m_convertedMatrix(createConvertedMatrix())
     {
     }
 
-    /*!
-       \brief Prepare the preconditioner.
-
-    \copydoc Preconditioner::pre(X&,Y&)
-        */
+    //! \brief Not used at the moment
     virtual void pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b) override
     {
+        static_assert(!impl::shouldCallPreconditionerPre<CudaPreconditionerType>(),
+                      "We currently do not support Preconditioner::pre().");
     }
 
-    /*!
-       \brief Apply the preconditoner.
-
-    \copydoc Preconditioner::apply(X&,const Y&)
-        */
+    //! \brief Apply the preconditoner.
     virtual void apply(X& v, const Y& d) override
     {
         XTo convertedV(v.N());
@@ -115,13 +120,11 @@ public:
         }
     }
 
-    /*!
-       \brief Clean up.
-
-    \copydoc Preconditioner::post(X&)
-        */
+    //! \brief Not used at the moment
     virtual void post([[maybe_unused]] X& x) override
     {
+        static_assert(!impl::shouldCallPreconditionerPost<CudaPreconditionerType>(),
+                      "We currently do not support Preconditioner::post().");
     }
 
     //! Category of the preconditioner (see SolverCategory::Category)

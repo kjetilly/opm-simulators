@@ -38,6 +38,11 @@
 
 namespace Opm::cuistl
 {
+//! @brief Wraps a CUDA solver to work with CPU data.
+//!
+//! @tparam Operator the Dune::LinearOperator to use
+//! @tparam UnderlyingSolver a Dune solver like class, eg Dune::BiCGSTABSolver
+//! @tparam X the outer type to use (eg. Dune::BlockVector<Dune::FieldVector<...>>)
 template <class Operator, template <class> class UnderlyingSolver, class X>
 class SolverAdapter : public Dune::IterativeSolver<X, X>
 {

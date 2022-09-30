@@ -39,7 +39,6 @@
 #include <memory>
 #include <random>
 
-
 using NumericTypes = boost::mpl::list<double>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
@@ -94,7 +93,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     auto cuILU = std::make_shared<CuILU0>(B, 1.0);
     auto scalarProduct = std::make_shared<Dune::SeqScalarProduct<Opm::cuistl::CuVector<T>>>();
 
-    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, 1.0, 100, 0);
+    auto solver = Dune::BiCGSTABSolver<Opm::cuistl::CuVector<T>>(BOperator, scalarProduct, cuILU, .001, 100, 0);
     std::vector<T> correct(N * 2, 2.0);
     std::vector<T> initialGuess(N * 2, 0.0);
     Opm::cuistl::CuVector<T> x(N * 2);
@@ -130,7 +129,14 @@ BOOST_AUTO_TEST_CASE(TestLoadFromFile, *boost::unit_test::tolerance(1e-7))
     std::uniform_real_distribution<T> distribution(-100.0, 100.0);
     SpMatrix B;
 
-    Dune::loadMatrixMarket(B, "../matrix.mm");
+    // TODO: Find a way to include this
+    try {
+        Dune::loadMatrixMarket(B, "../matrix.mm");
+    } catch (Dune::IOError&) {
+        // Try to load a smaller one
+        Dune::loadMatrixMarket(B, "../tests/matr33.txt");
+    }
+
     // B.compress();
     const size_t N = B.N();
     auto BonGPU = std::make_shared<Opm::cuistl::CuSparseMatrix<T>>(Opm::cuistl::CuSparseMatrix<T>::fromMatrix(B));

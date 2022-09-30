@@ -32,6 +32,13 @@
 
 namespace Opm::cuistl
 {
+//! @brief Enables updating on a preconditioner that does not have an update function (but needs one)
+//!
+//! This works by re-creating the underlying preconditioner at every update call.
+//!
+//! @note This is meant mostly for debugging and testing older Dune preconditioners
+//!
+//! @note This is currently not in use.
 template <class M, class X, class Y, int l = 1>
 class RemakeUpdatePreconditioner : public Dune::PreconditionerWithUpdate<X, Y>
 {
@@ -47,44 +54,31 @@ public:
     //! \brief scalar type underlying the field_type
     typedef Dune::SimdScalar<field_type> scalar_field_type;
 
-    /*! \brief Constructor.
-
-    Constructor gets all parameters to operate the prec.
-       \param A The matrix to operate on.
-       \param w The relaxation factor.
-            */
+    //!\brief Constructor.
+    //!
+    //! Constructor gets all parameters to operate the prec.
+    //! \param creator A functor to create the preconditioner (the functor needs to hold a reference to a matrix if
+    //! needed)
     RemakeUpdatePreconditioner(std::function<std::unique_ptr<Dune::Preconditioner<X, Y>>()> creator)
         : m_creator(creator)
         , m_underlyingPreconditioner(creator())
     {
     }
 
-    /*!
-       \brief Prepare the preconditioner.
-
-    \copydoc Preconditioner::pre(X&,Y&)
-        */
+    //! \brief Prepare the preconditioner.
     virtual void pre(X& x, Y& b) override
     {
         m_underlyingPreconditioner->pre(x, b);
     }
 
-    /*!
-       \brief Apply the preconditoner.
-
-    \copydoc Preconditioner::apply(X&,const Y&)
-        */
+    //! \brief Apply the preconditoner.
     virtual void apply(X& v, const Y& d) override
     {
 
         m_underlyingPreconditioner->apply(v, d);
     }
 
-    /*!
-       \brief Clean up.
-
-    \copydoc Preconditioner::post(X&)
-        */
+    //! \brief Clean up.
     virtual void post(X& x) override
     {
         m_underlyingPreconditioner->post(x);

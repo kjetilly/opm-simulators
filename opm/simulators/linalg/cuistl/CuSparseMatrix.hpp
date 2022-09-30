@@ -31,23 +31,21 @@
 namespace Opm::cuistl
 {
 
-/*! \brief Wrapper class for the CuSparse compatible matrix storage.
- *
- */
+//! \brief Wrapper class for the CuSparse compatible matrix storage.
 template <typename T>
 class CuSparseMatrix
 {
 public:
-    /// Create the sparse matrix specified by the raw data.
-    ///
-    /// \note Prefer to use the constructor taking a const reference to a matrix instead.
-    ///
-    /// \param[in] nonZeroElements the non-zero values of the matrix
-    /// \param[in] rowIndices      the row indices of the non-zero elements
-    /// \param[in] columnIndices   the column indices of the non-zero elements
-    /// \param[in] numberOfNonzeroElements number of nonzero elements
-    /// \param[in] blockSize size of each block matrix (typically 3)
-    /// \param[in] numberOfRows the number of rows
+    //! Create the sparse matrix specified by the raw data.
+    //!
+    //! \note Prefer to use the constructor taking a const reference to a matrix instead.
+    //!
+    //! \param[in] nonZeroElements the non-zero values of the matrix
+    //! \param[in] rowIndices      the row indices of the non-zero elements
+    //! \param[in] columnIndices   the column indices of the non-zero elements
+    //! \param[in] numberOfNonzeroElements number of nonzero elements
+    //! \param[in] blockSize size of each block matrix (typically 3)
+    //! \param[in] numberOfRows the number of rows
     CuSparseMatrix(const T* nonZeroElements,
                    const int* rowIndices,
                    const int* columnIndices,
@@ -55,8 +53,7 @@ public:
                    int blockSize,
                    int numberOfRows);
 
-    //    CuSparseMatrix(const CuSparseMatrix<T>& other) = delete;
-    //    CuSparseMatrix& operator=(const CuSparseMatrix<T>& other) = delete;
+    // TODO: Handle copy ctor and operator=
 
     virtual ~CuSparseMatrix();
 

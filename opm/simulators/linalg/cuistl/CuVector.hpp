@@ -28,9 +28,7 @@
 namespace Opm::cuistl
 {
 
-/*! \brief Simple vector class on the GPU.
- *
- */
+//! \brief Simple vector class on the GPU.
 template <typename T>
 class CuVector
 {
