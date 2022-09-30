@@ -16,25 +16,34 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <config.h>
+#include <cuda_runtime.h>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/simulators/linalg/cuistl/impl/cuda_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/set_device.hpp>
-
-namespace Opm::cuistl {
-void setDevice(const size_t mpiRank, const size_t numberOfMpiRanks) {
+namespace Opm::cuistl
+{
+void
+setDevice(int mpiRank, [[maybe_unused]] int numberOfMpiRanks)
+{
 
     int deviceCount = -1;
     OPM_CUDA_SAFE_CALL(cudaGetDeviceCount(&deviceCount));
 
     if (deviceCount == 0) {
-        // If they have CUDA enabled, this will fail later down the line.
-        // At this point in the simulator, we can not determine if CUDA is enabled, so we can only
+        // If they have CUDA enabled (ie. using a component that needs CUDA, eg. cubicgstab or CUILU0), this will fail
+        // later down the line. At this point in the simulator, we can not determine if CUDA is enabled, so we can only
         // issue a warning.
         OpmLog::warning("Could not find any CUDA devices.");
     }
 
-         // Now do a round robin kind of assignment
+    // Now do a round robin kind of assignment
+    // TODO: We need to be more sophistacted here. We have no guarantee this will pick the correct device.
     const auto deviceId = mpiRank % deviceCount;
     OPM_CUDA_SAFE_CALL(cudaDeviceReset());
     OPM_CUDA_SAFE_CALL(cudaThreadExit());
     OPM_CUDA_SAFE_CALL(cudaSetDevice(deviceId));
+    OpmLog::info("Set CUDA device to " + std::to_string(deviceId) + " (out of " + std::to_string(deviceCount)
+                 + " devices).");
 }
-}
+} // namespace Opm::cuistl

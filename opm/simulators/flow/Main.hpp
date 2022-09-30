@@ -72,6 +72,10 @@
 #include <opm/simulators/utils/ParallelEclipseState.hpp>
 #endif
 
+#if HAVE_CUDA
+#include <opm/simulators/linalg/cuistl/set_device.hpp>
+#endif
+
 #include <cassert>
 #include <cstdlib>
 #include <filesystem>
@@ -196,7 +200,9 @@ public:
         MPI_Init(&argc_, &argv_);
 #endif
         EclGenericVanguard::setCommunication(std::make_unique<Parallel::Communication>());
-
+#if HAVE_CUDA
+        Opm::cuistl::setDevice(EclGenericVanguard::comm().rank(), EclGenericVanguard::comm().size());
+#endif
         handleTestSplitCommunicatorCmdLine_();
 
 #if HAVE_MPI
@@ -207,6 +213,7 @@ public:
             MPI_Comm_split(EclGenericVanguard::comm(), color, world_rank, &new_comm);
             isSimulationRank_ = (world_rank > 0);
             EclGenericVanguard::setCommunication(std::make_unique<Parallel::Communication>(new_comm));
+
         }
 #endif // HAVE_MPI
     }
