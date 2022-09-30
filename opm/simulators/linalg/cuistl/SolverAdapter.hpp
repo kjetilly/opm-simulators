@@ -13,45 +13,12 @@
 #include <opm/simulators/linalg/cuistl/CuSparseMatrix.hpp>
 #include <opm/simulators/linalg/cuistl/CuVector.hpp>
 #include <opm/simulators/linalg/cuistl/PreconditionerAdapter.hpp>
-
+#include <opm/simulators/linalg/cuistl/impl/has_function.hpp>
 
 
 
 namespace Opm::cuistl
 {
-
-namespace impl
-{
-    template <typename T>
-    class has_communication
-    {
-        using yes_type = char;
-        using no_type = long;
-        template <typename U>
-        static yes_type test(decltype(&U::getCommunication));
-        template <typename U>
-        static no_type test(...);
-
-    public:
-        static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
-    };
-
-    template <typename T>
-    class is_a_well_operator
-    {
-        using yes_type = char;
-        using no_type = long;
-        template <typename U>
-        static yes_type test(decltype(&U::addWellPressureEquations));
-        template <typename U>
-        static no_type test(...);
-
-    public:
-        static constexpr bool value = sizeof(test<T>(0)) == sizeof(yes_type);
-    };
-
-} // namespace impl
-
 template <class Operator, template <class> class UnderlyingSolver, class X>
 class SolverAdapter : public Dune::IterativeSolver<X, X>
 {
