@@ -386,6 +386,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
                 Helper::writeSystem(simulator_, //simulator is only used to get names
                                     getMatrix(),
                                     *rhs_,
+                                    x,
                                     comm_.get());
             }
 

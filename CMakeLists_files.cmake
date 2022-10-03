@@ -203,6 +203,7 @@ if(CUDA_FOUND)
   list(APPEND TEST_SOURCE_FILES tests/cuistl/test_cubicgstab.cpp)
 
   list(APPEND TEST_SOURCE_FILES tests/cuistl/benchmark_cuseqilu0.cpp)
+  list(APPEND TEST_SOURCE_FILES tests/cuistl/run_solver_on_data.cpp)
 endif()
 if(OPENCL_FOUND)
   list(APPEND TEST_SOURCE_FILES tests/test_openclSolver.cpp)

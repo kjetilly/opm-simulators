@@ -34,6 +34,7 @@ namespace Helper
     void writeSystem(const SimulatorType& simulator,
                      const MatrixType& matrix,
                      const VectorType& rhs,
+                     const VectorType& x,
                      [[maybe_unused]] const Communicator* comm)
     {
         std::string dir = simulator.problem().outputDir();
@@ -78,6 +79,18 @@ namespace Helper
 #endif
             {
                 Dune::storeMatrixMarket(rhs, filename + ".mm");
+            }
+        }
+
+        {
+            std::string filename = prefix + "x_istl";
+#if HAVE_MPI
+            if (comm != nullptr) { // comm is not set in serial runs
+                Dune::storeMatrixMarket(rhs, filename, *comm, true);
+            } else
+#endif
+            {
+                Dune::storeMatrixMarket(x, filename + ".mm");
             }
         }
     }

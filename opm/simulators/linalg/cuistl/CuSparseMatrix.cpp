@@ -26,7 +26,6 @@
 #include <opm/simulators/linalg/cuistl/impl/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/cuistl/impl/cusparse_wrapper.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
-#define CUSPARSE_ASSUME_UNSAFE_SPARSITY 1
 
 #define CHECK_SIZE(x)                                                                                                  \
     if (x.dim() != blockSize() * N()) {                                                                                \
