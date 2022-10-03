@@ -36,19 +36,10 @@
 #include <memory>
 #include <random>
 
-int
-main(int argc, char** argv)
+template <int dim, class T = double>
+void
+readAndSolve(const auto xFilename, const auto matrixFilename, const size_t iterationMax, const auto rhsFilename)
 {
-
-
-    [[maybe_unused]] const auto& helper = Dune::MPIHelper::instance(argc, argv);
-
-    const auto matrixFilename = std::string(argv[1]);
-    const auto xFilename = std::string(argv[2]);
-    const auto rhsFilename = std::string(argv[3]);
-    const size_t iterationMax = 200;
-    using T = double;
-    static constexpr size_t dim = 3;
     using M = Dune::FieldMatrix<T, dim, dim>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, dim>>;
@@ -116,4 +107,47 @@ main(int argc, char** argv)
     }
 
     std::cout << "}\n";
+}
+
+int
+main(int argc, char** argv)
+{
+
+
+    [[maybe_unused]] const auto& helper = Dune::MPIHelper::instance(argc, argv);
+
+    const auto matrixFilename = std::string(argv[1]);
+    const auto xFilename = std::string(argv[2]);
+    const auto rhsFilename = std::string(argv[3]);
+    const size_t iterationMax = 200;
+
+    size_t dim = 3;
+
+    {
+        std::ifstream matrixfile(matrixFilename);
+        std::string line;
+        const std::string lineToFind = "% ISTL_STRUCT blocked";
+        while (std::getline(matrixfile, line)) {
+            if (line.substr(0, lineToFind.size()) == lineToFind) {
+                dim = std::atoi(line.substr(lineToFind.size() + 2).c_str()); // Yeah, max 9
+            }
+        }
+    }
+
+    switch (dim) {
+    case 1:
+        readAndSolve<1>(xFilename, matrixFilename, iterationMax, rhsFilename);
+        break;
+    case 2:
+        readAndSolve<3>(xFilename, matrixFilename, iterationMax, rhsFilename);
+        break;
+    case 3:
+        readAndSolve<3>(xFilename, matrixFilename, iterationMax, rhsFilename);
+        break;
+    case 4:
+        readAndSolve<4>(xFilename, matrixFilename, iterationMax, rhsFilename);
+        break;
+    default:
+        throw std::runtime_error("Unresolved matrix dimension " + std::to_string(dim));
+    }
 }
