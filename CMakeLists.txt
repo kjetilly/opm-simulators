@@ -164,6 +164,11 @@ endif()
 if(CUDA_FOUND)
   set(HAVE_CUDA 1)
   include_directories(${CUDA_INCLUDE_DIRS})
+
+  # FIXME: yes, this is ugly
+   set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake/modules/")
+  find_package(AmgXSolver REQUIRED) # TODO: Make not-required at some point
+  include_directories(SYSTEM ${AMGX_INCLUDE_DIRS} )
 endif()
 
 find_package(OpenCL)
@@ -528,6 +533,7 @@ add_custom_target(extra_test ${CMAKE_CTEST_COMMAND} -C ExtraTests)
 if(CUDA_FOUND)
   target_link_libraries( opmsimulators PUBLIC ${CUDA_cusparse_LIBRARY} )
   target_link_libraries( opmsimulators PUBLIC ${CUDA_cublas_LIBRARY} )
+  target_link_libraries( opmsimulators PUBLIC ${AMGX_LIBRARIES} )
 endif()
 
 if(OpenCL_FOUND)

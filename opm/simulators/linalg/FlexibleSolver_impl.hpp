@@ -31,6 +31,7 @@
 #include <opm/simulators/linalg/WellOperators.hpp>
 #if HAVE_CUDA
 #include <opm/simulators/linalg/cuistl/SolverAdapter.hpp>
+#include <opm/simulators/linalg/cuistl/AMGXSolver.hpp>
 #endif
 
 #include <dune/common/fmatrix.hh>
@@ -188,6 +189,15 @@ namespace Dune
                                                                   tol, // desired residual reduction factor
                                                                   maxiter, // maximum number of iterations
                                                                   verbosity));
+        } else if (solver_type == "amgx") {
+            linsolver_.reset(new Opm::cuistl::AMGXSolver<Operator, VectorType, VectorType>(
+                *linearoperator_for_solver_,
+                scalarproduct_,
+                preconditioner_,
+                prm.get<std::string>("amgxconfig", "amgxconfig.json"),
+                tol, // desired residual reduction factor
+                maxiter, // maximum number of iterations
+                verbosity));
 #endif
         } else {
             OPM_THROW(std::invalid_argument, "Properties: Solver " << solver_type << " not known.");
