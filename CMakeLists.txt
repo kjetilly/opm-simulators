@@ -33,6 +33,12 @@ option(USE_CHOW_PATEL_ILU_GPU_PARALLEL "Try to use more parallelism on the GPU d
 option(BUILD_FLOW_ALU_GRID "Build flow blackoil with alu grid" OFF)
 option(USE_DAMARIS_LIB "Use the Damaris library for asynchronous I/O?" OFF)
 
+  
+if (USE_DAMARIS_LIB)
+  set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} /home/kjetil/projects/sintef/across/across_review/opm-temp/damaris/cmake/Modules)
+  FIND_PACKAGE(Damaris REQUIRED)
+endif()
+
 # The following was copied from CMakeLists.txt in opm-common.
 # TODO: factor out the common parts in opm-common and opm-simulator as a cmake module
 if (OPM_ENABLE_PYTHON)
@@ -314,7 +320,7 @@ macro (config_hook)
     list(APPEND EXTRA_INCLUDES SYSTEM ${PROJECT_SOURCE_DIR}/external/fmtlib/include)
   endif()
   include_directories(${EXTRA_INCLUDES})
-
+  
   include(UseDamaris)
 endmacro (config_hook)
 

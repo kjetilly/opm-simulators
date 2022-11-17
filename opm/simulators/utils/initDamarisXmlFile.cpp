@@ -18,8 +18,11 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <fstream>
+#include <iostream>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <streambuf>
 #include <string>
-
 namespace Opm::DamarisOutput
 {
 
@@ -30,8 +33,18 @@ namespace Opm::DamarisOutput
     The entries in the map below will be filled by corresponding Damaris
     Keywords.
 */
-std::string initDamarisXmlFile()
+std::string
+initDamarisXmlFile()
 {
+    std::cout << "in initDamarisXmlFile" << std::endl;
+    const char* cs_damaris_xml_config_file = getenv("FLOW_DAMARIS_CONFIG_XML_FILE");
+    if (cs_damaris_xml_config_file != NULL) {
+        std::ifstream file(cs_damaris_xml_config_file);
+        std::string str((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+        std::cout << "Reading XML file " + std::string(cs_damaris_xml_config_file) + " for Damaris" << std::endl;
+        OpmLog::info("Reading XML file " + std::string(cs_damaris_xml_config_file) + " for Damaris");
+        return str;
+    }
     std::string init_damaris = R"V0G0N(<?xml version="1.0"?>
 <simulation name="opm-flow" language="c" xmlns="http://damaris.gforge.inria.fr/damaris/model">
 <architecture>

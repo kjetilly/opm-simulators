@@ -15,7 +15,7 @@ set (opm-simulators_CONFIG_VAR
   HAVE_DUNE_ISTL
   DUNE_ISTL_WITH_CHECKING
   DUNE_ISTL_VERSION_MAJOR
-  DUNE_ISTL_VERSION_MINOR
+  DUNE_ISTL_VERSION_MINORm
   DUNE_ISTL_VERSION_REVISION
   HAVE_SUITESPARSE_UMFPACK
   HAVE_DAMARIS
@@ -27,7 +27,7 @@ set (opm-simulators_DEPS
   "C99"
   # Various runtime library enhancements
   "Boost 1.44.0
-    COMPONENTS date_time system unit_test_framework REQUIRED"
+    COMPONENTS date_time system unit_test_framework numpy REQUIRED"
   # DUNE prerequisites
   "dune-common REQUIRED"
   "dune-istl REQUIRED"
@@ -45,7 +45,7 @@ set (opm-simulators_DEPS
   "opm-material REQUIRED"
   "opm-grid REQUIRED"
   "opm-models REQUIRED"
-  "Damaris 1.7"
+  "Damaris REQUIRED"
   )
 
 find_package_deps(opm-simulators)
