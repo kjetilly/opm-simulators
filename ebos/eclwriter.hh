@@ -308,10 +308,12 @@ public:
         if (EWOMS_GET_PARAM(TypeTag, bool, EnableDamarisOutput)) {
             // N.B. damarisUpdate_ should be set to true if at any time the model geometry changes
             if (this->damarisUpdate_) {
+                OpmLog::info("Doing damaris update");
                 const auto& gridView = simulator_.gridView();
                 const auto& interior_elements = elements(gridView, Dune::Partitions::interior);
                 const int numElements = std::distance(interior_elements.begin(), interior_elements.end());
                 Opm::DamarisOutput::setupDamarisWritingPars(simulator_.vanguard().grid().comm(), numElements);
+                OpmLog::info("Called setupDamarisWritingPars");
                 const std::vector<int>& local_to_global = this->collectToIORank_.localIdxToGlobalIdxMapping();
                 //damaris_write("GLOBAL_CELL_INDEX", local_to_global.data());
                 // By default we assume static grid
@@ -321,8 +323,14 @@ public:
             if (!isSubStep) {
                 // Output the PRESSURE field
                 if (this->eclOutputModule_->getPRESSURE_ptr() != nullptr) {
+                    std::cout << "Writing pressure to damaris" << std::endl;
+
                     damaris_write("PRESSURE", (void*)this->eclOutputModule_->getPRESSURE_ptr());
+
+                    std::cout << "Ending damaris iteration" << std::endl;
                     damaris_end_iteration();
+                    std::cout << "Ended damaris iteration" << std::endl;
+
                 }
             }
         }
