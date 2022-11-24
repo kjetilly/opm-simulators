@@ -20,6 +20,7 @@
 #include <opm/simulators/utils/DamarisKeywords.hpp>
 #include <string>
 #include <map>
+#include <cstdlib>
 
 /*
     Below is the Damaris Keywords supported by Damaris to be filled
@@ -35,11 +36,21 @@ namespace Opm::DamarisOutput
 std::map<std::string, std::string>
 DamarisKeywords(std::string OutputDir, bool enableDamarisOutputCollective)
 {
+    auto get_default = [](const std::string& key, const std::string& defaultValue) -> std::string {
+        const auto fromEnvironment = std::getenv(key.c_str());
+
+        if (fromEnvironment) {
+            return std::string(fromEnvironment);
+        }
+
+        return defaultValue;
+    };
+   
     if (enableDamarisOutputCollective) {
         std::map<std::string, std::string> damaris_keywords = {
-            {"_SHMEM_BUFFER_BYTES_REGEX_", "536870912"},
-            {"_DC_REGEX_", "1"},
-            {"_DN_REGEX_", "0"},
+            {"_SHMEM_BUFFER_BYTES_REGEX_", get_default("OPM_SHMEM_BUFFER_BYTES_REGEX", "536870912")},
+            {"_DC_REGEX_", get_default("OPM_DC_REGEX", "1")},
+            {"_DN_REGEX_", get_default("OPM_DN_REGEX", "0")},
             {"_File_Mode", "Collective"},
             {"_MORE_VARIABLES_REGEX_", ""},
             {"_PATH_REGEX_", OutputDir},
@@ -48,9 +59,9 @@ DamarisKeywords(std::string OutputDir, bool enableDamarisOutputCollective)
         return damaris_keywords;
     } else {
         std::map<std::string, std::string> damaris_keywords = {
-            {"_SHMEM_BUFFER_BYTES_REGEX_", "536870912"},
-            {"_DC_REGEX_", "1"},
-            {"_DN_REGEX_", "0"},
+            {"_SHMEM_BUFFER_BYTES_REGEX_", get_default("OPM_SHMEM_BUFFER_BYTES_REGEX", "536870912")},
+            {"_DC_REGEX_", get_default("OPM_DC_REGEX", "1")},
+            {"_DN_REGEX_", get_default("OPM_DN_REGEX", "0")},
             {"_File_Mode", "FilePerCore"},
             {"_MORE_VARIABLES_REGEX_", ""},
             {"_PATH_REGEX_", OutputDir},
