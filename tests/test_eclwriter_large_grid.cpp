@@ -22,9 +22,50 @@ along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 #define BOOST_TEST_MODULE TestEclWriterLargeGrid
 #include <boost/test/unit_test.hpp>
 
+#include <fmt/format.h>
+#include <opm/io/eclipse/EclFile.hpp>
+#include <opm/io/eclipse/EclOutput.hpp>
 #include <opm/simulators/flow/EclGenericWriter.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <string>
+#include <vector>
 
 BOOST_AUTO_TEST_CASE(TestWrite)
 {
+    const auto makeFieldname = [](size_t i) { return fmt::format("S{:03d}", i); };
+
+    const size_t size = 466 * 466 * 466;
+    const size_t numberOfOutputs = 128;
+
+    const auto makeFieldData = [](size_t i, size_t j) { return i * size + j; };
+    const auto filename = std::string("testfile.EGRID");
+    {
+        Opm::EclIO::EclOutput output(filename, false);
+
+
+        for (size_t i = 0; i < numberOfOutputs; ++i) {
+            std::cout << "#";
+            std::flush(std::cout);
+            std::vector<double> dummyOutput(size, 42.0);
+            for (size_t j = 0; j < size; ++j) {
+                dummyOutput[j] = makeFieldData(i, j);
+            }
+            output.write(makeFieldname(i), dummyOutput);
+        }
+        std::cout << std::endl;
+    }
+
+    Opm::EclIO::EclFile inputFile(filename);
+
+    for (size_t i = 0; i < numberOfOutputs; ++i) {
+        std::cout << "#";
+        std::flush(std::cout);
+        inputFile.loadData(makeFieldname(i));
+        const auto& outputField = inputFile.get<double>(fmt::format("S{:03d}", i));
+
+        for (size_t j = 0; j < size; ++j) {
+            BOOST_CHECK_EQUAL(makeFieldData(i, j), outputField[j]);
+        }
+    }
+    std::cout << std::endl;
 }
