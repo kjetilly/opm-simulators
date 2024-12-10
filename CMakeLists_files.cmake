@@ -373,6 +373,7 @@ list (APPEND TEST_SOURCE_FILES
   tests/test_ALQState.cpp
   tests/test_aquifergridutils.cpp
   tests/test_blackoil_amg.cpp
+  tests/test_cpgrid_large.cpp
   tests/test_convergenceoutputconfiguration.cpp
   tests/test_convergencereport.cpp
   tests/test_deferredlogger.cpp

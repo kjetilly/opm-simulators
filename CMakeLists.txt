@@ -221,8 +221,8 @@ if(CUDA_FOUND)
   endif()
 endif()
 
-find_package(OpenCL)
-
+#find_package(OpenCL)
+SET(OpenCL_FOUND OFF)
 if(OpenCL_FOUND)
   # the current OpenCL implementation relies on cl2.hpp, not cl.hpp
   # make sure it is available, otherwise disable OpenCL
