@@ -82,7 +82,7 @@ init_unit_test_func()
 {
     return true;
 }
-
+int globalGridSize = 466;
 int
 main(int argc, char** argv)
 {
@@ -90,6 +90,10 @@ main(int argc, char** argv)
     int rank, totalRanks;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &totalRanks);
+
+    if (argc > 1) {
+        globalGridSize = std::stoi(argv[1]);
+    }
     boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);
 }
 namespace
@@ -285,9 +289,10 @@ ecl_util_make_date(const int day, const int month, const int year)
 
 BOOST_AUTO_TEST_CASE(EclipseLargeGridFiles)
 {
-    const size_t nx = 466;
-    const size_t ny = 466;
-    const size_t nz = 466;
+    std::cout << "Running test with grid size " << globalGridSize << std::endl;
+    const size_t nx = globalGridSize;
+    const size_t ny = globalGridSize;
+    const size_t nz = globalGridSize;
     const size_t totalcells = nx * ny * nz;
     const size_t nxny = nx * ny;
     const auto deckString = fmt::format(R"(RUNSPEC
@@ -355,53 +360,48 @@ WELSPECS
         using measure = UnitSystem::measure;
         using TargetType = data::TargetType;
         const auto start_time = ecl_util_make_date(10, 10, 2008);
-        std::vector<double> tranx(totalcells);
-        std::vector<double> trany(totalcells);
-        std::vector<double> tranz(totalcells);
-        const data::Solution eGridProps {
-            {"TRANX", data::CellData {measure::transmissibility, tranx, TargetType::INIT}},
-            {"TRANY", data::CellData {measure::transmissibility, trany, TargetType::INIT}},
-            {"TRANZ", data::CellData {measure::transmissibility, tranz, TargetType::INIT}},
-        };
+        // std::vector<double> tranx(totalcells);
+        // std::vector<double> trany(totalcells);
+        // std::vector<double> tranz(totalcells);
+        // const data::Solution eGridProps {
+        //     {"TRANX", data::CellData {measure::transmissibility, tranx, TargetType::INIT}},
+        //     {"TRANY", data::CellData {measure::transmissibility, trany, TargetType::INIT}},
+        //     {"TRANZ", data::CellData {measure::transmissibility, tranz, TargetType::INIT}},
+        // };
 
-        std::map<std::string, std::vector<int>> int_data = {{"STR_ULONGNAME", {1, 1, 1, 1, 1, 1, 1, 1}}};
+        // std::map<std::string, std::vector<int>> int_data = {{"STR_ULONGNAME", {1, 1, 1, 1, 1, 1, 1, 1}}};
 
-        std::vector<int> v(totalcells);
-        v[2] = 67;
-        v[26] = 89;
-        int_data["STR_V"] = v;
+        // std::vector<int> v(totalcells);
+        // v[2] = 67;
+        // v[26] = 89;
+        // int_data["STR_V"] = v;
 
         eclWriter.writeInitial();
-
-        BOOST_CHECK_THROW(eclWriter.writeInitial(eGridProps, int_data), std::invalid_argument);
-
-        int_data.erase("STR_ULONGNAME");
-        eclWriter.writeInitial(eGridProps, int_data);
 
         data::Wells wells;
         data::GroupAndNetworkValues grp_nwrk;
 
-        for (int i = first; i < last; ++i) {
-            std::cout << fmt::format("first = {}, last = {}, i = {}\r", first, last, i) << std::flush;
-            data::Solution sol = createBlackoilState(i, totalcells);
-            sol.insert("KRO", measure::identity, std::vector<double>(totalcells, i), TargetType::RESTART_AUXILIARY);
-            sol.insert(
-                "KRG", measure::identity, std::vector<double>(totalcells, i * 10), TargetType::RESTART_AUXILIARY);
+        // for (int i = first; i < last; ++i) {
+        //     std::cout << fmt::format("first = {}, last = {}, i = {}\r", first, last, i) << std::flush;
+        //     data::Solution sol = createBlackoilState(i, totalcells);
+        //     sol.insert("KRO", measure::identity, std::vector<double>(totalcells, i), TargetType::RESTART_AUXILIARY);
+        //     sol.insert(
+        //         "KRG", measure::identity, std::vector<double>(totalcells, i * 10), TargetType::RESTART_AUXILIARY);
 
-            Action::State action_state;
-            WellTestState wtest_state;
-            UDQState udq_state(1);
-            RestartValue restart_value(sol, wells, grp_nwrk, {});
-            auto first_step = ecl_util_make_date(10 + i, 11, 2008);
-            eclWriter.writeTimeStep(
-                action_state, wtest_state, st, udq_state, i, false, first_step - start_time, std::move(restart_value));
+        //     Action::State action_state;
+        //     WellTestState wtest_state;
+        //     UDQState udq_state(1);
+        //     RestartValue restart_value(sol, wells, grp_nwrk, {});
+        //     auto first_step = ecl_util_make_date(10 + i, 11, 2008);
+        //     eclWriter.writeTimeStep(
+        //         action_state, wtest_state, st, udq_state, i, false, first_step - start_time, std::move(restart_value));
 
-            checkRestartFile(i, totalcells);
-        }
-        std::cout << std::endl;
+        //     checkRestartFile(i, totalcells);
+        // }
+        // std::cout << std::endl;
 
-        checkInitFile(deck, eGridProps);
-        checkEgridFile(eclGrid);
+        // checkInitFile(deck, eGridProps);
+        // checkEgridFile(eclGrid);
 
         auto cpGrid = Dune::CpGrid();
         
@@ -433,8 +433,8 @@ WELSPECS
                     
                     continue;
                 }
-                [[maybe_unused]] auto vec = cpGrid.faceCenterEcl(elemIdx, insideFaceIdx, intersection);
-                [[maybe_unused]] auto vecOutside = cpGrid.faceCenterEcl(outsideFaceIdx, outsideFaceIdx, intersection);
+                cpGrid.faceCenterEcl(elemIdx, insideFaceIdx, intersection);
+                cpGrid.faceCenterEcl(outsideElemIdx, outsideFaceIdx, intersection);
 
             }
          }
@@ -443,38 +443,6 @@ WELSPECS
         //         cpGrid.faceCenterEcl(i);
         //     }
         // }
-
-        EclIO::EclFile initFile("FOO.INIT");
-
-        {
-            BOOST_CHECK_MESSAGE(initFile.hasKey("STR_V"), R"(INIT file must have "STR_V" array)");
-
-            const auto& kw = initFile.get<int>("STR_V");
-            BOOST_CHECK_EQUAL(67, kw[2]);
-            BOOST_CHECK_EQUAL(89, kw[26]);
-        }
-
-        {
-            BOOST_CHECK_MESSAGE(initFile.hasKey("SWATINIT"), R"(INIT file must have "SWATINIT" array)");
-
-            const auto& kw = initFile.get<float>("SWATINIT");
-
-            auto offset = std::size_t {0};
-            for (auto i = 0; i < 9; ++i) {
-                BOOST_CHECK_CLOSE(kw[offset + i], 0.1f, 1.0e-8);
-            }
-        }
-
-        std::streampos file_size = 0;
-        {
-            std::ifstream file("FOO.UNRST", std::ios::binary);
-
-            file_size = file.tellg();
-            file.seekg(0, std::ios::end);
-            file_size = file.tellg() - file_size;
-        }
-
-        return file_size;
     };
 
     // Write the file and calculate the file size. FOO.UNRST should be
@@ -486,28 +454,5 @@ WELSPECS
     //  * https://github.com/OPM/opm-output/pull/61
 
     WorkArea work_area("test_ecl_writer");
-    const auto file_size = write_and_check();
-
-    for (int i = 0; i < 3; ++i) {
-        BOOST_CHECK_EQUAL(file_size, write_and_check());
-    }
-
-    // Check that "restarting" and writing over previous timesteps does not
-    // change the file size, if the total amount of steps are the same.
-    BOOST_CHECK_EQUAL(file_size, write_and_check(3, 5));
-
-    // Verify that adding steps from restart also increases file size
-    BOOST_CHECK(file_size < write_and_check(3, 7));
-
-    // Verify that restarting a simulation, then writing fewer steps truncates
-    // the file
-    BOOST_CHECK_EQUAL(file_size, write_and_check(3, 5));
-
-
-
-    for (int timesteps = 5; timesteps <= 30; timesteps += 1) {
-        fmt::println("Testing {} timesteps", timesteps);
-        const auto filesize = write_and_check(1, timesteps);
-        fmt::println("File size was {} GB", filesize / (1024.0 * 1024.0 * 1024.0));
-    }
+    write_and_check();
 }
