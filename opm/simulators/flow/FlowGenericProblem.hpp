@@ -126,7 +126,7 @@ public:
      *
      * This method is mainly for output.
      */
-    Scalar overburdenPressure(unsigned elementIdx) const;
+    Scalar overburdenPressure(grid_size_t elementIdx) const;
 
     /*!
      * \brief Returns the porosity of an element
@@ -136,7 +136,7 @@ public:
      * problem API because it would bake the assumption that only the elements are the
      * degrees of freedom into the interface.
      */
-    Scalar referencePorosity(unsigned elementIdx, unsigned timeIdx) const
+    Scalar referencePorosity(grid_size_t elementIdx, unsigned timeIdx) const
     { return referencePorosity_[timeIdx][elementIdx]; }
 
 
@@ -148,13 +148,13 @@ public:
      * i.e. pvmult*(1 - porosity) and thus interpret multpv as a volume
      * multiplier. This is to avoid negative rock volume for pvmult*porosity > 1
      */
-    Scalar rockFraction(unsigned elementIdx, unsigned timeIdx) const;
+    Scalar rockFraction(grid_size_t elementIdx, unsigned timeIdx) const;
 
     /*!
      * \brief Sets the porosity of an element
      *
      */
-    void setPorosity(Scalar poro, unsigned elementIdx, unsigned timeIdx = 0)
+    void setPorosity(Scalar poro, grid_size_t elementIdx, unsigned timeIdx = 0)
     { referencePorosity_[timeIdx][elementIdx] = poro; }
 
     /*!
@@ -253,7 +253,7 @@ public:
      * compressibility and water induced rock compaction) to it which depend on the
      * current physical conditions.
      */
-    Scalar porosity(unsigned globalSpaceIdx, unsigned timeIdx) const;
+    Scalar porosity(grid_size_t globalSpaceIdx, unsigned timeIdx) const;
 
     bool vapparsActive(int episodeIdx) const;
 

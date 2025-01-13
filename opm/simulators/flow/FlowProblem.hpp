@@ -1071,7 +1071,7 @@ public:
      * TODO: The API of this is a bit ad-hoc, it would be better to use context objects.
      */
     template <class LhsEval>
-    LhsEval rockCompPoroMultiplier(const IntensiveQuantities& intQuants, unsigned elementIdx) const
+    LhsEval rockCompPoroMultiplier(const IntensiveQuantities& intQuants, grid_size_t elementIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(rockCompPoroMultiplier);
         if (this->rockCompPoroMult_.empty() && this->rockCompPoroMultWc_.empty())
@@ -1115,7 +1115,7 @@ public:
      * TODO: The API of this is a bit ad-hoc, it would be better to use context objects.
      */
     template <class LhsEval>
-    LhsEval rockCompTransMultiplier(const IntensiveQuantities& intQuants, unsigned elementIdx) const
+    LhsEval rockCompTransMultiplier(const IntensiveQuantities& intQuants, grid_size_t elementIdx) const
     {
         const bool implicit = !this->explicitRockCompaction_;
         return implicit ? this->simulator().problem().template computeRockCompTransMultiplier_<LhsEval>(intQuants, elementIdx)
@@ -1127,7 +1127,7 @@ public:
      * \brief Return the well transmissibility multiplier due to rock changues.
      */
     template <class LhsEval>
-    LhsEval wellTransMultiplier(const IntensiveQuantities& intQuants, unsigned elementIdx) const
+    LhsEval wellTransMultiplier(const IntensiveQuantities& intQuants, grid_size_t elementIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(wellTransMultiplier);
         
@@ -1640,7 +1640,7 @@ protected:
      * TODO: The API of this is a bit ad-hoc, it would be better to use context objects.
      */
     template <class LhsEval>
-    LhsEval computeRockCompTransMultiplier_(const IntensiveQuantities& intQuants, unsigned elementIdx) const
+    LhsEval computeRockCompTransMultiplier_(const IntensiveQuantities& intQuants, grid_size_t elementIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(computeRockCompTransMultiplier);
         if (this->rockCompTransMult_.empty() && this->rockCompTransMultWc_.empty())

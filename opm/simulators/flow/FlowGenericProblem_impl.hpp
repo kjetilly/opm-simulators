@@ -295,7 +295,7 @@ rockCompressibility(unsigned globalSpaceIdx) const
 template<class GridView, class FluidSystem>
 typename FlowGenericProblem<GridView,FluidSystem>::Scalar
 FlowGenericProblem<GridView,FluidSystem>::
-porosity(unsigned globalSpaceIdx, unsigned timeIdx) const
+porosity(grid_size_t globalSpaceIdx, unsigned timeIdx) const
 {
     return this->referencePorosity_[timeIdx][globalSpaceIdx];
 }
@@ -303,7 +303,7 @@ porosity(unsigned globalSpaceIdx, unsigned timeIdx) const
 template<class GridView, class FluidSystem>
 typename FlowGenericProblem<GridView,FluidSystem>::Scalar
 FlowGenericProblem<GridView,FluidSystem>::
-rockFraction(unsigned elementIdx, unsigned timeIdx) const
+rockFraction(grid_size_t elementIdx, unsigned timeIdx) const
 {
     // the reference porosity is defined as the accumulated pore volume divided by the
     // geometric volume of the element. Note that it can
@@ -540,7 +540,7 @@ minOilPressure(unsigned globalDofIdx) const
 template<class GridView, class FluidSystem>
 typename FlowGenericProblem<GridView,FluidSystem>::Scalar
 FlowGenericProblem<GridView,FluidSystem>::
-overburdenPressure(unsigned elementIdx) const
+overburdenPressure(grid_size_t elementIdx) const
 {
     if (overburdenPressure_.empty())
         return 0.0;
