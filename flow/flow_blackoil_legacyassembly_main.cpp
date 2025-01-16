@@ -18,7 +18,7 @@
 #include <flow/flow_blackoil_legacyassembly.hpp>
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     return Opm::flowBlackoilMainStandalone(argc, argv);
 }

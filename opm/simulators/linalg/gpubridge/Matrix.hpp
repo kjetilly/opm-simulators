@@ -36,7 +36,7 @@ public:
     /// Allocate square Matrix and data arrays with given sizes
     /// \param[in] N               number of rows
     /// \param[in] nnzs            number of nonzeros
-    Matrix(int N_, int nnzs_)
+    Matrix(long long N_, long long nnzs_)
         : N(N_)
         , M(N_)
         , nnzs(nnzs_)
@@ -50,17 +50,17 @@ public:
     /// \param[in] N               number of rows
     /// \param[in] M               number of columns
     /// \param[in] nnzs            number of nonzeros
-    Matrix(int N_, int M_, int nnzs_)
+    Matrix(long long N_, long long M_, long long nnzs_)
         : Matrix(N_, nnzs_)
     {
         M = M_;
     }
 
     std::vector<Scalar> nnzValues;
-    std::vector<int> colIndices;
-    std::vector<int> rowPointers;
-    int N, M;
-    int nnzs;
+    std::vector<long long> colIndices;
+    std::vector<long long> rowPointers;
+    long long N, M;
+    long long nnzs;
 };
 
 } // namespace Accelerator

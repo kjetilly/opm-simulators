@@ -41,7 +41,7 @@ namespace Opm::Properties {
 template<class TypeTag>
 struct Grid <TypeTag, TTag::LensProblemEcfvAd>
 {
-  template< class ctype, unsigned int dim, unsigned int dimworld >
+  template< class ctype, size_t dim, size_t dimworld >
   class IdentityCoordFct
     : public Dune::AnalyticalCoordFunction
       < ctype, dim, dimworld, IdentityCoordFct< ctype, dim, dimworld > >
@@ -67,7 +67,7 @@ struct Grid <TypeTag, TTag::LensProblemEcfvAd>
     void evaluate( const DomainVector &x, RangeVector &y ) const
     {
       y = 0;
-      for( unsigned int i = 0; i<dim; ++i )
+      for( size_t i = 0; i<dim; ++i )
         y[ i ] = x[ i ];
     }
 
@@ -86,7 +86,7 @@ public:
 
 #include <opm/models/utils/start.hh>
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemEcfvAd;
     return Opm::start<ProblemTypeTag>(argc, argv);

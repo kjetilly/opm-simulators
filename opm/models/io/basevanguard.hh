@@ -89,7 +89,7 @@ public:
      * This basically says how often the grid has been adapted in the current simulation
      * run.
      */
-    int gridSequenceNumber () const
+    long long gridSequenceNumber () const
     {
 #if HAVE_DUNE_FEM
         using FemDofManager = Dune::Fem::DofManager< Grid >;

@@ -55,11 +55,11 @@ namespace Opm::detail {
 template<class Matrix, class Vector>
 GpuSolverInfo<Matrix,Vector>::
 GpuSolverInfo(const std::string& accelerator_mode,
-              const int linear_solver_verbosity,
-              const int maxit,
+              const long long linear_solver_verbosity,
+              const long long maxit,
               const Scalar tolerance,
-              const int platformID,
-              const int deviceID,
+              const long long platformID,
+              const long long deviceID,
               const bool opencl_ilu_parallel,
               const std::string& linsolver)
     : bridge_(std::make_unique<Bridge>(accelerator_mode,
@@ -78,8 +78,8 @@ void GpuSolverInfo<Matrix,Vector>::
 prepare(const Grid& grid,
         const Dune::CartesianIndexMapper<Grid>& cartMapper,
         const std::vector<Well>& wellsForConn,
-        const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-        const std::vector<int>& cellPartition,
+        const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
+        const std::vector<long long>& cellPartition,
         const std::size_t nonzeroes,
         const bool useWellConn)
 {
@@ -98,7 +98,7 @@ bool GpuSolverInfo<Matrix,Vector>::
 apply(Vector& rhs,
       const bool useWellConn,
       [[maybe_unused]] WellContribFunc getContribs,
-      const int rank,
+      const long long rank,
       Matrix& matrix,
       Vector& x,
       Dune::InverseOperatorResult& result)
@@ -171,7 +171,7 @@ template<class Matrix, class Vector>
 template<class Grid>
 void GpuSolverInfo<Matrix,Vector>::
 blockJacobiAdjacency(const Grid& grid,
-                     const std::vector<int>& cell_part,
+                     const std::vector<long long>& cell_part,
                      std::size_t nonzeroes)
 {
     using size_type = typename Matrix::size_type;
@@ -197,7 +197,7 @@ blockJacobiAdjacency(const Grid& grid,
             row.insert(wc);
         }
 
-        int locPart = cell_part[idx];
+        long long locPart = cell_part[idx];
 
         //Add neighbor if it is on the same part
         auto isend = gridView.iend(elem);
@@ -207,7 +207,7 @@ blockJacobiAdjacency(const Grid& grid,
             if (is->neighbor())
             {
                 size_type nid = lid.id(is->outside());
-                int nabPart = cell_part[nid];
+                long long nabPart = cell_part[nid];
                 if (locPart == nabPart) {
                     row.insert(nid);
                 }
@@ -236,9 +236,9 @@ copyMatToBlockJac(const Matrix& mat, Matrix& blockJac)
     }
 }
 
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using BM = Dune::BCRSMatrix<MatrixBlock<Scalar,Dim,Dim>>;
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
 
 #define INSTANTIATE_GRID(T, Dim, Grid)                             \
@@ -246,8 +246,8 @@ using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
     prepare(const Grid&,                                           \
             const Dune::CartesianIndexMapper<Grid>&,               \
             const std::vector<Well>&,                              \
-            const std::unordered_map<std::string, std::set<int>>&, \
-            const std::vector<int>&,                               \
+            const std::unordered_map<std::string, std::set<long long>>&, \
+            const std::vector<long long>&,                               \
             const std::size_t, const bool);
 using PolyHedralGrid3D = Dune::PolyhedralGrid<3, 3>;
 #if HAVE_DUNE_ALUGRID

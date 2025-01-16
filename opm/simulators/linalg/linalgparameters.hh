@@ -32,7 +32,7 @@
 namespace Opm::Parameters {
 
 //! number of iterations between solver restarts for the GMRES solver
-struct GMResRestart { static constexpr int value = 10; };
+struct GMResRestart { static constexpr long long value = 10; };
 
 /*!
  * \brief Maximum accepted error of the norm of the residual.
@@ -44,7 +44,7 @@ template<class Scalar>
 struct LinearSolverMaxError { static constexpr Scalar value = 1e7; };
 
 //! Maximum number of iterations eyecuted by the linear solver
-struct LinearSolverMaxIterations { static constexpr int value = 1000; };
+struct LinearSolverMaxIterations { static constexpr long long value = 1000; };
 
 /*!
  * \brief The size of the algebraic overlap of the linear solver.
@@ -68,10 +68,10 @@ struct LinearSolverTolerance { static constexpr Scalar value = 1e-3; };
  * property to 1 prints aggregated convergence rates, 2 prints the
  * convergence rate of every iteration of the scheme.
  */
-struct LinearSolverVerbosity { static constexpr int value = 0; };
+struct LinearSolverVerbosity { static constexpr long long value = 0; };
 
 //! The order of the sequential preconditioner
-struct PreconditionerOrder { static constexpr int value = 0; };
+struct PreconditionerOrder { static constexpr long long value = 0; };
 
 //! The relaxation factor of the preconditioner
 template<class Scalar>

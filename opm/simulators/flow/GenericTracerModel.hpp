@@ -58,32 +58,32 @@ public:
     using TracerMatrix = Dune::BCRSMatrix<Opm::MatrixBlock<Scalar, 2, 2>>;
     using TracerVector = Dune::BlockVector<Dune::FieldVector<Scalar, 2>>;
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
-    static constexpr int dimWorld = Grid::dimensionworld;
+    static constexpr long long dimWorld = Grid::dimensionworld;
     /*!
      * \brief Return the number of tracers considered by the tracerModel.
      */
-    int numTracers() const;
+    long long numTracers() const;
 
     /*!
      * \brief Return the tracer name
      */
-    const std::string& name(int tracerIdx) const;
-    std::string fname(int tracerIdx) const;
-    std::string sname(int tracerIdx) const;
-    std::string wellfname(int tracerIdx) const;
-    std::string wellsname(int tracerIdx) const;
+    const std::string& name(long long tracerIdx) const;
+    std::string fname(long long tracerIdx) const;
+    std::string sname(long long tracerIdx) const;
+    std::string wellfname(long long tracerIdx) const;
+    std::string wellsname(long long tracerIdx) const;
 
-    Phase phase(int tracerIdx) const;
+    Phase phase(long long tracerIdx) const;
     const std::vector<bool>& enableSolTracers() const;
 
     /*!
      * \brief Return the tracer concentration for tracer index and global DofIdx
      */
-    Scalar freeTracerConcentration(int tracerIdx, int globalDofIdx) const;
-    Scalar solTracerConcentration(int tracerIdx, int globalDofIdx) const;
-    void setFreeTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value);
-    void setSolTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value);
-    void setEnableSolTracers(int tracerIdx, bool enableSolTracer);
+    Scalar freeTracerConcentration(long long tracerIdx, long long globalDofIdx) const;
+    Scalar solTracerConcentration(long long tracerIdx, long long globalDofIdx) const;
+    void setFreeTracerConcentration(long long tracerIdx, long long globalDofIdx, Scalar value);
+    void setSolTracerConcentration(long long tracerIdx, long long globalDofIdx, Scalar value);
+    void setEnableSolTracers(long long tracerIdx, bool enableSolTracer);
 
     /*!
     * \brief Return well tracer rates
@@ -114,7 +114,7 @@ protected:
                        const EclipseState& eclState,
                        const CartesianIndexMapper& cartMapper,
                        const DofMapper& dofMapper,
-                       const std::function<std::array<double,dimWorld>(int)> centroids);
+                       const std::function<std::array<double,dimWorld>(long long)> centroids);
 
     /*!
      * \brief Initialize all internal data structures needed by the tracer module
@@ -138,7 +138,7 @@ protected:
     const CartesianIndexMapper& cartMapper_;
     const DofMapper& dofMapper_;
 
-    std::vector<int> tracerPhaseIdx_;
+    std::vector<long long> tracerPhaseIdx_;
     std::vector<bool> enableSolTracers_;
     std::vector<TracerVector> tracerConcentration_;
     std::unique_ptr<TracerMatrix> tracerMatrix_;
@@ -154,7 +154,7 @@ protected:
     std::map<std::tuple<std::string, std::string, std::size_t>, Scalar> mSwTracerRate_;
 
     /// \brief Function returning the cell centers
-    std::function<std::array<double,dimWorld>(int)> centroids_;
+    std::function<std::array<double,dimWorld>(long long)> centroids_;
 };
 
 } // namespace Opm

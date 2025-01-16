@@ -84,7 +84,7 @@ namespace {
     void setupMessageLimiter(const Opm::MessageLimits& msgLimits,
                              const std::string& stdout_log_id)
     {
-        const auto limits = std::map<std::int64_t, int> {
+        const auto limits = std::map<std::int64_t, long long> {
             {Opm::Log::MessageType::Note,     msgLimits.getCommentPrintLimit()},
             {Opm::Log::MessageType::Info,     msgLimits.getMessagePrintLimit()},
             {Opm::Log::MessageType::Warning,  msgLimits.getWarningPrintLimit()},
@@ -101,7 +101,7 @@ namespace {
                                 const Opm::Parser&                   parser,
                                 const Opm::ParseContext&             parseContext,
                                 const bool                           initFromRestart,
-                                const std::optional<int>&            outputInterval,
+                                const std::optional<long long>&            outputInterval,
                                 const bool                           lowActionParsingStrictness,
                                 const bool                           keepKeywords,
                                 Opm::EclipseState&                   eclipseState,
@@ -121,7 +121,7 @@ namespace {
         // no analytic aquifers, then 'EclipseState::loadRestartAquifers()'
         // does nothing.
         const auto& init_config = eclipseState.getInitConfig();
-        const int report_step = init_config.getRestartStep();
+        const long long report_step = init_config.getRestartStep();
         const auto rst_filename = eclipseState.getIOConfig()
             .getRestartFileName(init_config.getRestartRootName(), report_step, false);
 
@@ -208,7 +208,7 @@ namespace {
         auto keyword_validator = Opm::KeywordValidation::KeywordValidator {
             Opm::FlowKeywordValidation::unsupportedKeywords(),
             Opm::FlowKeywordValidation::partiallySupported<std::string>(),
-            Opm::FlowKeywordValidation::partiallySupported<int>(),
+            Opm::FlowKeywordValidation::partiallySupported<long long>(),
             Opm::FlowKeywordValidation::partiallySupported<double>(),
             Opm::KeywordValidation::specialValidation()
         };
@@ -248,7 +248,7 @@ namespace {
                       const bool                           treatCriticalAsNonCritical,
                       const bool                           lowActionParsingStrictness,
                       const bool                           keepKeywords,
-                      const std::optional<int>&            outputInterval,
+                      const std::optional<long long>&            outputInterval,
                       Opm::ErrorGuard&                     errorGuard)
     {
         OPM_TIMEBLOCK(readDeck);
@@ -539,11 +539,11 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
                    const bool                      initFromRestart,
                    const bool                      checkDeck,
                    const bool                      keepKeywords,
-                   const std::optional<int>&       outputInterval)
+                   const std::optional<long long>&       outputInterval)
 {
     auto errorGuard = std::make_unique<ErrorGuard>();
 
-    int parseSuccess = 1; // > 0 is success
+    long long parseSuccess = 1; // > 0 is success
     std::string failureMessage;
 
     if (parsingStrictness != "high" && parsingStrictness != "normal" && parsingStrictness != "low") {

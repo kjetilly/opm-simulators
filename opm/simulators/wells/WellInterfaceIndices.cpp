@@ -37,13 +37,13 @@ template<class FluidSystem, class Indices>
 WellInterfaceIndices<FluidSystem,Indices>::
 WellInterfaceIndices(const Well& well,
                      const ParallelWellInfo<Scalar>& parallel_well_info,
-                     const int time_step,
+                     const long long time_step,
                      const ModelParameters& param,
                      const typename WellInterfaceFluidSystem<FluidSystem>::RateConverterType& rate_converter,
-                     const int pvtRegionIdx,
-                     const int num_components,
-                     const int num_phases,
-                     const int index_of_well,
+                     const long long pvtRegionIdx,
+                     const long long num_components,
+                     const long long num_phases,
+                     const long long index_of_well,
                      const std::vector<PerforationData<Scalar>>& perf_data)
     : WellInterfaceFluidSystem<FluidSystem>(well,
                                             parallel_well_info,
@@ -59,9 +59,9 @@ WellInterfaceIndices(const Well& well,
 }
 
 template<class FluidSystem, class Indices>
-int
+long long
 WellInterfaceIndices<FluidSystem,Indices>::
-flowPhaseToModelCompIdx(const int phaseIdx) const
+flowPhaseToModelCompIdx(const long long phaseIdx) const
 {
     const auto& pu = this->phaseUsage();
     if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx) && pu.phase_pos[Water] == phaseIdx)
@@ -76,7 +76,7 @@ flowPhaseToModelCompIdx(const int phaseIdx) const
 }
 
 template<class FluidSystem, class Indices>
-int
+long long
 WellInterfaceIndices<FluidSystem,Indices>::
 modelCompIdxToFlowCompIdx(const unsigned compIdx) const
 {
@@ -95,7 +95,7 @@ modelCompIdxToFlowCompIdx(const unsigned compIdx) const
 template<class FluidSystem, class Indices>
 typename WellInterfaceIndices<FluidSystem,Indices>::Scalar
 WellInterfaceIndices<FluidSystem,Indices>::
-scalingFactor(const int phaseIdx) const
+scalingFactor(const long long phaseIdx) const
 {
     const auto& pu = this->phaseUsage();
     if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx) && pu.phase_pos[Water] == phaseIdx)

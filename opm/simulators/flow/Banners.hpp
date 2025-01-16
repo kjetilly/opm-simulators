@@ -31,17 +31,17 @@ struct SimulatorReport;
 struct SimulatorReportSingle;
 
 // Print an ASCII-art header to the PRT and DEBUG files.
-void printPRTHeader(const int nprocs, const int nthreads,
+void printPRTHeader(const long long nprocs, const long long nthreads,
                     const std::string& parameters,
                     std::string_view moduleVersion,
                     std::string_view compileTimestamp);
 
 // Print flow application banner.
-void printFlowBanner(int nprocs, int threads, std::string_view moduleVersionName);
+void printFlowBanner(long long nprocs, long long threads, std::string_view moduleVersionName);
 
 // Print flow application trailer.
-void printFlowTrailer(int nprocs,
-                      int nthreads,
+void printFlowTrailer(long long nprocs,
+                      long long nthreads,
                       const double total_setup_time,
                       const double deck_read_time,
                       const SimulatorReport& report,

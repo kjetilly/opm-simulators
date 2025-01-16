@@ -34,7 +34,7 @@
 namespace Opm {
 
 thread_local TaskletRunner* TaskletRunner::taskletRunner_ = nullptr;
-thread_local int TaskletRunner::workerThreadIndex_ = -1;
+thread_local long long TaskletRunner::workerThreadIndex_ = -1;
 
 TaskletRunner::BarrierTasklet::BarrierTasklet(unsigned numWorkers)
     : TaskletInterface(/*refCount=*/numWorkers)
@@ -91,7 +91,7 @@ bool TaskletRunner::failure() const
     return this->failureFlag_.load(std::memory_order_relaxed);
 }
 
-int TaskletRunner::workerThreadIndex() const
+long long TaskletRunner::workerThreadIndex() const
 {
     if (TaskletRunner::taskletRunner_ != this)
         return -1;
@@ -145,7 +145,7 @@ void TaskletRunner::barrier()
     barrierTasklet->wait();
 }
 
-void TaskletRunner::startWorkerThread_(TaskletRunner* taskletRunner, int workerThreadIndex)
+void TaskletRunner::startWorkerThread_(TaskletRunner* taskletRunner, long long workerThreadIndex)
 {
     TaskletRunner::taskletRunner_ = taskletRunner;
     TaskletRunner::workerThreadIndex_ = workerThreadIndex;

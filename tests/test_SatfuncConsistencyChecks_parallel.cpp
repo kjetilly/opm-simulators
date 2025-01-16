@@ -54,16 +54,16 @@ namespace {
 #if HAVE_MPI
     struct MPIError
     {
-        MPIError(std::string_view errstr, const int ec)
+        MPIError(std::string_view errstr, const long long ec)
             : errorstring { errstr }
             , errorcode   { ec }
         {}
 
         std::string errorstring;
-        int errorcode;
+        long long errorcode;
     };
 
-    void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+    void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
     {
         std::array<char, MPI_MAX_ERROR_STRING> err_string_vec{'\0'};
         auto err_length = 0;
@@ -103,7 +103,7 @@ namespace {
     class NProc_Is
     {
     public:
-        explicit NProc_Is(const int expectNP)
+        explicit NProc_Is(const long long expectNP)
             : expectNP_ { expectNP }
         {}
 
@@ -128,7 +128,7 @@ namespace {
         }
 
     private:
-        int expectNP_{};
+        long long expectNP_{};
     };
 
     bool init_unit_test_func()
@@ -2117,7 +2117,7 @@ BOOST_AUTO_TEST_SUITE_END()     // Multiple_Failing_Tests
 
 // ===========================================================================
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

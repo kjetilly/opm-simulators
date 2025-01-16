@@ -35,14 +35,14 @@ namespace Opm {
  * \return
  */
 std::string breakLines(const std::string& msg,
-                       int indentWidth,
-                       int maxWidth);
+                       long long indentWidth,
+                       long long maxWidth);
 
 /*!
  * \brief Get the width of the tty we are attached to.
  * \return Width of tty
  */
-int getTtyWidth();
+long long getTtyWidth();
 
 /*!
  * \brief Assign signal handlers that reset the terminal on errors.
@@ -60,7 +60,7 @@ void resetTerminal();
  * \brief Resets the current TTY to a usable state if the program was interrupted by
  *        SIGABRT or SIGINT.
  */
-void resetTerminal(int signum);
+void resetTerminal(long long signum);
 
 } // namespace Opm
 

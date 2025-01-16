@@ -83,7 +83,7 @@ namespace Linear {
                                                                                 \
         void prepare(IstlMatrix& matrix)                                        \
         {                                                                       \
-            int order = Parameters::Get<Parameters::PreconditionerOrder>();     \
+            long long order = Parameters::Get<Parameters::PreconditionerOrder>();     \
             Scalar relaxationFactor = Parameters::Get<Parameters::PreconditionerRelaxation<Scalar>>(); \
             seqPreCond_ = new SequentialPreconditioner(matrix, order,           \
                                                        relaxationFactor);       \
@@ -155,7 +155,7 @@ class PreconditionerWrapperILU
     using OverlappingMatrix = GetPropType<TypeTag, Properties::OverlappingMatrix>;
     using OverlappingVector = GetPropType<TypeTag, Properties::OverlappingVector>;
 
-    static constexpr int order = 0;
+    static constexpr long long order = 0;
 
 public:
     using SequentialPreconditioner = Dune::SeqILU<OverlappingMatrix, OverlappingVector, OverlappingVector, order>;

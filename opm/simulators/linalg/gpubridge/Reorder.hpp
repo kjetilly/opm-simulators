@@ -33,7 +33,7 @@ namespace Accelerator
 /// \param[in] colIndices    column indices of the matrix that the row is in
 /// \param[in] doneRows      array that for each row lists whether it is done or not
 /// \return                  true iff all dependencies are done and if the result itself was not done yet
-bool canBeStarted(const int rowIndex, const  int *rowPointers, const  int *colIndices, const std::vector<bool>& doneRows);
+bool canBeStarted(const long long rowIndex, const  long long *rowPointers, const  long long *colIndices, const std::vector<bool>& doneRows);
 
 /// Find a level scheduling reordering for an input matrix
 /// The toOrder and fromOrder arrays must be allocated already
@@ -46,7 +46,7 @@ bool canBeStarted(const int rowIndex, const  int *rowPointers, const  int *colIn
 /// \param[out] toOrder         the reorder pattern that was found, which lists for each index in the original order, to which index in the new order it should be moved
 /// \param[out] fromOrder       the reorder pattern that was found, which lists for each index in the new order, from which index in the original order it was moved
 /// \param[out] rowsPerColor    for each color, an array of all rowIndices in that color, this function uses emplace_back() to fill
-void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowIndices, int *CSCColPointers, int Nb, int *numColors, int *toOrder, int* fromOrder, std::vector<int>& rowsPerColor);
+void findLevelScheduling(long long *CSRColIndices, long long *CSRRowPointers, long long *CSCRowIndices, long long *CSCColPointers, long long Nb, long long *numColors, long long *toOrder, long long* fromOrder, std::vector<long long>& rowsPerColor);
 
 /// Convert a sparsity pattern stored in the CSR format to the CSC format
 /// CSCRowIndices and CSCColPointers arrays must be allocated already
@@ -56,7 +56,7 @@ void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowInd
 /// \param[inout] CSCRowIndices  row indices of the result CSC representation of the pattern
 /// \param[inout] CSCColPointers column pointers of the result CSC representation of the pattern
 /// \param[in] Nb                number of blockrows in the matrix
-void csrPatternToCsc(int *CSRColIndices, int *CSRRowPointers, int *CSCRowIndices, int *CSCColPointers, int Nb);
+void csrPatternToCsc(long long *CSRColIndices, long long *CSRRowPointers, long long *CSCRowIndices, long long *CSCColPointers, long long Nb);
 
 } // namespace Accelerator
 } // namespace Opm

@@ -33,7 +33,7 @@ namespace Opm {
 
 template<class Scalar>
 Scalar VFPInjProperties<Scalar>::
-bhp(const int    table_id,
+bhp(const long long    table_id,
     const Scalar aqua,
     const Scalar liquid,
     const Scalar vapour,
@@ -47,7 +47,7 @@ bhp(const int    table_id,
 
 template<class Scalar>
 Scalar VFPInjProperties<Scalar>::
-thp(const int    table_id,
+thp(const long long    table_id,
     const Scalar aqua,
     const Scalar liquid,
     const Scalar vapour,
@@ -62,7 +62,7 @@ thp(const int    table_id,
     }
 
     const auto thp_array = table.getTHPAxis();
-    int nthp = thp_array.size();
+    long long nthp = thp_array.size();
 
     /**
      * Find the function bhp_array(thp) by creating a 1D view of the data
@@ -71,7 +71,7 @@ thp(const int    table_id,
      */
     const auto flo_i = VFPHelpers<Scalar>::findInterpData(flo, table.getFloAxis());
     std::vector<Scalar> bhp_array(nthp);
-    for (int i = 0; i < nthp; ++i) {
+    for (long long i = 0; i < nthp; ++i) {
         auto thp_i = VFPHelpers<Scalar>::findInterpData(thp_array[i], thp_array);
         bhp_array[i] = VFPHelpers<Scalar>::interpolate(table, flo_i, thp_i).value;
     }
@@ -81,13 +81,13 @@ thp(const int    table_id,
 
 template<class Scalar>
 const VFPInjTable&
-VFPInjProperties<Scalar>::getTable(const int table_id) const
+VFPInjProperties<Scalar>::getTable(const long long table_id) const
 {
     return detail::getTable(m_tables, table_id);
 }
 
 template<class Scalar>
-bool VFPInjProperties<Scalar>::hasTable(const int table_id) const
+bool VFPInjProperties<Scalar>::hasTable(const long long table_id) const
 {
     return detail::hasTable(m_tables, table_id);
 }
@@ -100,7 +100,7 @@ void VFPInjProperties<Scalar>::addTable(const VFPInjTable& new_table)
 
 template<class Scalar>
 template <class EvalWell>
-EvalWell VFPInjProperties<Scalar>::bhp(const int       table_id,
+EvalWell VFPInjProperties<Scalar>::bhp(const long long       table_id,
                                        const EvalWell& aqua,
                                        const EvalWell& liquid,
                                        const EvalWell& vapour,
@@ -127,7 +127,7 @@ EvalWell VFPInjProperties<Scalar>::bhp(const int       table_id,
 
 #define INSTANTIATE(T,...)                           \
     template __VA_ARGS__                             \
-        VFPInjProperties<T>::bhp(const int,          \
+        VFPInjProperties<T>::bhp(const long long,          \
                                  const __VA_ARGS__&, \
                                  const __VA_ARGS__&, \
                                  const __VA_ARGS__&, \

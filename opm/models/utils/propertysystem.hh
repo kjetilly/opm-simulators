@@ -50,7 +50,7 @@ namespace Detail {
 
 //! check if a property P is defined
 template<class P>
-constexpr auto isDefinedProperty(int)
+constexpr auto isDefinedProperty(long long)
 -> decltype(std::integral_constant<bool, !std::is_same<typename P::type, UndefinedProperty>::value>{})
 { return {}; }
 
@@ -60,7 +60,7 @@ constexpr std::true_type isDefinedProperty(...) { return {}; }
 
 //! check if a TypeTag inherits from other TypeTags
 template<class T>
-constexpr auto hasParentTypeTag(int)
+constexpr auto hasParentTypeTag(long long)
 -> decltype(std::declval<typename T::InheritsFrom>(), std::true_type{})
 { return {}; }
 
@@ -81,19 +81,19 @@ template<class TypeTag, template<class,class> class Property, class TTagList, cl
 struct GetNextTypeTag;
 
 template<class TypeTag, template<class,class> class Property, class LastTypeTag>
-struct GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, std::enable_if_t<hasParentTypeTag<LastTypeTag>(int{}), void>>
+struct GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, std::enable_if_t<hasParentTypeTag<LastTypeTag>(long long{}), void>>
 { using type = typename GetDefined<TypeTag, Property, typename LastTypeTag::InheritsFrom>::type; };
 
 template<class TypeTag, template<class,class> class Property, class LastTypeTag>
-struct GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, std::enable_if_t<!hasParentTypeTag<LastTypeTag>(int{}), void>>
+struct GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, std::enable_if_t<!hasParentTypeTag<LastTypeTag>(long long{}), void>>
 { using type = UndefinedProperty; };
 
 template<class TypeTag, template<class,class> class Property, class FirstTypeTag, class ...Args>
-struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<hasParentTypeTag<FirstTypeTag>(int{}), void>>
+struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<hasParentTypeTag<FirstTypeTag>(long long{}), void>>
 { using type = typename GetDefined<TypeTag, Property, ConCatTuples<typename FirstTypeTag::InheritsFrom, std::tuple<Args...>>>::type; };
 
 template<class TypeTag, template<class,class> class Property, class FirstTypeTag, class ...Args>
-struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<!hasParentTypeTag<FirstTypeTag>(int{}), void>>
+struct GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<!hasParentTypeTag<FirstTypeTag>(long long{}), void>>
 { using type = typename GetDefined<TypeTag, Property, std::tuple<Args...>>::type; };
 
 template<class TypeTag, template<class,class> class Property, class LastTypeTag>
@@ -112,7 +112,7 @@ struct GetDefined<TypeTag, Property, std::tuple<LastTypeTag>>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-     using type = std::conditional_t<isDefinedProperty<LastType>(int{}), LastType,
+     using type = std::conditional_t<isDefinedProperty<LastType>(long long{}), LastType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<LastTypeTag>, void>::type>;
 };
 
@@ -128,7 +128,7 @@ struct GetDefined<TypeTag, Property, std::tuple<FirstTypeTag, Args...>>
 #ifdef __clang__
 #pragma clang diagnostic pop
 #endif
-     using type = std::conditional_t<isDefinedProperty<FirstType>(int{}), FirstType,
+     using type = std::conditional_t<isDefinedProperty<FirstType>(long long{}), FirstType,
                                      typename GetNextTypeTag<TypeTag, Property, std::tuple<FirstTypeTag, Args...>, void>::type>;
 };
 
@@ -142,24 +142,24 @@ template<class TypeTag, class TTagList, class Enable>
 struct GetNextSpliceTypeTag;
 
 template<class TypeTag, class LastTypeTag>
-struct GetNextSpliceTypeTag<TypeTag, std::tuple<LastTypeTag>, std::enable_if_t<hasParentTypeTag<LastTypeTag>(int{}), void>>
+struct GetNextSpliceTypeTag<TypeTag, std::tuple<LastTypeTag>, std::enable_if_t<hasParentTypeTag<LastTypeTag>(long long{}), void>>
 { using type = typename GetDefinedSplice<TypeTag, typename LastTypeTag::InheritsFrom>::type; };
 
 template<class TypeTag, class LastTypeTag>
-struct GetNextSpliceTypeTag<TypeTag, std::tuple<LastTypeTag>, std::enable_if_t<!hasParentTypeTag<LastTypeTag>(int{}), void>>
+struct GetNextSpliceTypeTag<TypeTag, std::tuple<LastTypeTag>, std::enable_if_t<!hasParentTypeTag<LastTypeTag>(long long{}), void>>
 { using type = std::tuple<>; };
 
 template<class TypeTag, class FirstTypeTag, class ...Args>
-struct GetNextSpliceTypeTag<TypeTag, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<hasParentTypeTag<FirstTypeTag>(int{}), void>>
+struct GetNextSpliceTypeTag<TypeTag, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<hasParentTypeTag<FirstTypeTag>(long long{}), void>>
 { using type = typename GetDefinedSplice<TypeTag, ConCatTuples<typename FirstTypeTag::InheritsFrom, std::tuple<Args...>>>::type; };
 
 template<class TypeTag, class FirstTypeTag, class ...Args>
-struct GetNextSpliceTypeTag<TypeTag, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<!hasParentTypeTag<FirstTypeTag>(int{}), void>>
+struct GetNextSpliceTypeTag<TypeTag, std::tuple<FirstTypeTag, Args...>, std::enable_if_t<!hasParentTypeTag<FirstTypeTag>(long long{}), void>>
 { using type = typename GetDefinedSplice<TypeTag, std::tuple<Args...>>::type; };
 
 //! check if a splice S is defined
 template<class S>
-constexpr auto isDefinedSplice(int)
+constexpr auto isDefinedSplice(long long)
 -> decltype(std::integral_constant<bool, !std::is_same<typename S::type, std::tuple<>>::value>{})
 { return {}; }
 
@@ -178,7 +178,7 @@ struct GetDefinedSplice<TypeTag, std::tuple<LastTypeTag>>
                                                      >,
                                                      void>::type;
 
-     using type = std::conditional_t<isDefinedSplice<LastSplice>(int{}),
+     using type = std::conditional_t<isDefinedSplice<LastSplice>(long long{}),
                                      ConCatTuples<nexttuple, typename LastSplice::type>,
                                      nexttuple>;
 };
@@ -194,7 +194,7 @@ struct GetDefinedSplice<TypeTag, std::tuple<FirstTypeTag, Args...>>
                                                      >,
                                                      void>::type;
 
-     using type = std::conditional_t<isDefinedSplice<FirstSplice>(int{}),
+     using type = std::conditional_t<isDefinedSplice<FirstSplice>(long long{}),
                                      ConCatTuples<typename FirstSplice::type, nexttuple>,
                                      nexttuple>;
 };

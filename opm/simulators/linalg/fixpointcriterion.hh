@@ -104,7 +104,7 @@ public:
      * \param outerIdx The index of the outer vector (i.e. Dune::BlockVector)
      * \param innerIdx The index of the inner vector (i.e. Dune::FieldVector)
      */
-    Scalar weight(int outerIdx, int innerIdx) const
+    Scalar weight(long long outerIdx, long long innerIdx) const
     { return (weightVec_.size() == 0) ? 1.0 : weightVec_[outerIdx][innerIdx]; }
 
     /*!

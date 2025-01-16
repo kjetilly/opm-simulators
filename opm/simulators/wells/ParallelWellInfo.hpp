@@ -50,7 +50,7 @@ public:
       overlapAbove = 4
     };
     using LocalIndex = Dune::ParallelLocalIndex<Attribute>;
-    using IndexSet = Dune::ParallelIndexSet<int,LocalIndex,50>;
+    using IndexSet = Dune::ParallelIndexSet<long long,LocalIndex,50>;
 #if HAVE_MPI
     using RI = Dune::RemoteIndices<IndexSet>;
 #endif
@@ -63,7 +63,7 @@ public:
     ///          no perforation above.
     /// \param above The ECL index of the next open perforation above.
     /// \param current The ECL index of the current open perforation.
-    void pushBackEclIndex(int above, int current, bool owner=true);
+    void pushBackEclIndex(long long above, long long current, bool owner=true);
 
     /// \brief Clear all the parallel information
     void clear();
@@ -77,7 +77,7 @@ public:
     /// Sets up the commmunication structures to be used by
     /// communicate()
     /// \return The number of local perforations
-    int endReset();
+    long long endReset();
 
     /// \brief Creates an array of values for the perforation above.
     /// \param first_value Value to use for above of the first perforation
@@ -110,7 +110,7 @@ public:
     /// \brief Get index set for the local perforations.
     const IndexSet& getIndexSet() const;
 
-    int numLocalPerfs() const;
+    long long numLocalPerfs() const;
 
 private:
     Parallel::Communication comm_;
@@ -144,7 +144,7 @@ public:
     /// \param local_indices completely set up index set for map ecl index to local index
     GlobalPerfContainerFactory(const IndexSet& local_indices,
                                const Parallel::Communication comm,
-                               int num_local_perfs);
+                               long long num_local_perfs);
 
     /// \brief Creates a container that holds values for all perforations
     /// \param local_perf_container Container with values attached to the local perforations.
@@ -161,30 +161,30 @@ public:
     void copyGlobalToLocal(const std::vector<Scalar>& global, std::vector<Scalar>& local,
                            std::size_t num_components) const;
 
-    int numGlobalPerfs() const;
-    int globalToLocal(const int globalIndex) const;
-    int localToGlobal(std::size_t localIndex) const;
+    long long numGlobalPerfs() const;
+    long long globalToLocal(const long long globalIndex) const;
+    long long localToGlobal(std::size_t localIndex) const;
 
 private:
     void buildLocalToGlobalMap() const;
     void buildGlobalToLocalMap() const;
-    mutable std::unordered_map<std::size_t, int> local_to_global_map_; // Cache for L2G mapping
-    mutable std::unordered_map<int, std::size_t> global_to_local_map_; // Cache for G2L mapping
+    mutable std::unordered_map<std::size_t, long long> local_to_global_map_; // Cache for L2G mapping
+    mutable std::unordered_map<long long, std::size_t> global_to_local_map_; // Cache for G2L mapping
     mutable bool l2g_map_built_ = false;
     mutable bool g2l_map_built_ = false;
     const IndexSet& local_indices_;
     Parallel::Communication comm_;
-    int num_global_perfs_;
+    long long num_global_perfs_;
     /// \brief sizes for allgatherv
-    std::vector<int> sizes_;
+    std::vector<long long> sizes_;
     /// \brief displacement for allgatherv
-    std::vector<int> displ_;
+    std::vector<long long> displ_;
     /// \brief Mapping for storing gathered local values at the correct index.
-    std::vector<int> map_received_;
+    std::vector<long long> map_received_;
     /// \brief The index of a perforation in the schedule of ECL
     ///
     /// This is is sorted.
-    std::vector<int> perf_ecl_index_;
+    std::vector<long long> perf_ecl_index_;
 };
 
 /// \brief Class encapsulating some information about parallel wells
@@ -194,7 +194,7 @@ template<class Scalar>
 class ParallelWellInfo
 {
 public:
-    static constexpr int INVALID_ECL_INDEX = -1;
+    static constexpr long long INVALID_ECL_INDEX = -1;
 
     /// \brief Constructs object using MPI_COMM_SELF
     ParallelWellInfo(const std::string& name = {""},
@@ -217,8 +217,8 @@ public:
     /// \brief Collectively decide which rank has first perforation.
     void communicateFirstPerforation(bool hasFirst);
 
-    int globalToLocal(const int globalIndex) const;
-    int localToGlobal(std::size_t localIndex) const;
+    long long globalToLocal(const long long globalIndex) const;
+    long long localToGlobal(std::size_t localIndex) const;
 
     /// If the well does not have any open connections the member rankWithFirstPerf
     /// is not initialized, and no broadcast is performed. In this case the argument
@@ -263,7 +263,7 @@ public:
     ///          no perforation above.
     /// \param above The ECL index of the next open perforation above.
     /// \param current The ECL index of the current open perforation.
-    void pushBackEclIndex(int above, int current);
+    void pushBackEclIndex(long long above, long long current);
 
     /// \brief Name of the well.
     const std::string& name() const
@@ -332,7 +332,7 @@ private:
     /// \brief Whether we own the well and should do reports etc.
     bool isOwner_;
     /// \brief Rank with the first perforation on it, -1 for wells with no open connections.
-    int rankWithFirstPerf_;
+    long long rankWithFirstPerf_;
     /// \brief Communication object for the well
     ///
     /// Contains only ranks where this well will perforate local cells.

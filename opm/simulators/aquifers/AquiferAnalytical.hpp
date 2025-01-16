@@ -72,7 +72,7 @@ public:
 
     enum { enableSaltPrecipitation = getPropValue<TypeTag, Properties::EnableSaltPrecipitation>() };
 
-    static constexpr int numEq = BlackoilIndices::numEq;
+    static constexpr long long numEq = BlackoilIndices::numEq;
 
     using Eval = DenseAd::Evaluation<Scalar, /*size=*/numEq>;
 
@@ -88,7 +88,7 @@ public:
                                           BlackoilIndices::numPhases>;
 
     // Constructor
-    AquiferAnalytical(const int aqID,
+    AquiferAnalytical(const long long aqID,
                       const std::vector<Aquancon::AquancCell>& connections,
                       const Simulator& simulator)
         : AquiferInterface<TypeTag>(aqID, simulator)
@@ -156,8 +156,8 @@ public:
         for (const auto& elem : elements(this->simulator_.gridView())) {
             elemCtx.updatePrimaryStencil(elem);
 
-            const int cellIdx = elemCtx.globalSpaceIndex(0, 0);
-            const int idx = cellToConnectionIdx_[cellIdx];
+            const long long cellIdx = elemCtx.globalSpaceIndex(0, 0);
+            const long long idx = cellToConnectionIdx_[cellIdx];
             if (idx < 0)
                 continue;
 
@@ -176,7 +176,7 @@ public:
     {
         const auto& model = this->simulator_.model();
 
-        const int idx = this->cellToConnectionIdx_[cellIdx];
+        const long long idx = this->cellToConnectionIdx_[cellIdx];
         if (idx < 0)
             return;
 
@@ -235,7 +235,7 @@ public:
 
 protected:
     virtual void assignRestartData(const data::AquiferData& xaq) = 0;
-    virtual void calculateInflowRate(int idx, const Simulator& simulator) = 0;
+    virtual void calculateInflowRate(long long idx, const Simulator& simulator) = 0;
     virtual void calculateAquiferCondition() = 0;
     virtual void calculateAquiferConstants() = 0;
     virtual Scalar aquiferDepth() const = 0;
@@ -245,7 +245,7 @@ protected:
         return this->simulator_.problem().gravity()[2];
     }
 
-    int compIdx_() const
+    long long compIdx_() const
     {
         if (this->co2store_or_h2store_())
             return FluidSystem::oilCompIdx;
@@ -270,7 +270,7 @@ protected:
     }
 
     void updateCellPressure(std::vector<Eval>& pressure_water,
-                            const int idx,
+                            const long long idx,
                             const IntensiveQuantities& intQuants)
     {
         const auto& fs = intQuants.fluidState();
@@ -278,7 +278,7 @@ protected:
     }
 
     void updateCellPressure(std::vector<Scalar>& pressure_water,
-                            const int idx,
+                            const long long idx,
                             const IntensiveQuantities& intQuants)
     {
         const auto& fs = intQuants.fluidState();
@@ -296,7 +296,7 @@ protected:
         const auto& gridView = this->simulator_.vanguard().gridView();
         for (std::size_t idx = 0; idx < this->size(); ++idx) {
             const auto global_index = this->connections_[idx].global_index;
-            const int cell_index = this->simulator_.vanguard().compressedIndex(global_index);
+            const long long cell_index = this->simulator_.vanguard().compressedIndex(global_index);
             if (cell_index < 0) {
                 continue;
             }
@@ -319,7 +319,7 @@ protected:
         const auto& elemMapper = this->simulator_.model().dofMapper();
         for (const auto& elem : elements(gridView)) {
             const unsigned cell_index = elemMapper.index(elem);
-            const int idx = this->cellToConnectionIdx_[cell_index];
+            const long long idx = this->cellToConnectionIdx_[cell_index];
 
             // Only deal with connections given by the aquifer
             if (idx < 0) {
@@ -372,7 +372,7 @@ protected:
 
         const auto& gridView = this->simulator_.vanguard().gridView();
         for (std::size_t idx = 0; idx < this->size(); ++idx) {
-            const int cell_index = this->simulator_.vanguard()
+            const long long cell_index = this->simulator_.vanguard()
                 .compressedIndex(this->connections_[idx].global_index);
             if (cell_index < 0) {
                 continue;
@@ -437,7 +437,7 @@ protected:
 
     // Grid variables
     std::vector<Scalar> faceArea_connected_;
-    std::vector<int> cellToConnectionIdx_;
+    std::vector<long long> cellToConnectionIdx_;
 
     // Quantities at each grid id
     std::vector<Scalar> cell_depth_;

@@ -25,11 +25,11 @@
 #include <opm/simulators/flow/Main.hpp>
 #include <opm/simulators/flow/CpGridVanguard.hpp>
 
-std::vector<int> loadBalanceInZOnly(const Dune::CpGrid& grid)
+std::vector<long long> loadBalanceInZOnly(const Dune::CpGrid& grid)
 {
     auto cartMapper = Dune::CartesianIndexMapper<Dune::CpGrid>(grid);
     auto dims = cartMapper.cartesianDimensions();
-    std::vector<int> parts(grid.leafGridView().size(0));
+    std::vector<long long> parts(grid.leafGridView().size(0));
     auto numCellsPerProc = dims[2]/grid.comm().size();
 
     if (grid.size(0)>0 && numCellsPerProc == 0)
@@ -49,7 +49,7 @@ std::vector<int> loadBalanceInZOnly(const Dune::CpGrid& grid)
         const auto& id = idSet.id(element);
         unsigned elemIdx = elemMapper.index(element);
         const auto& cartIndex = cartMapper.cartesianIndex(elemIdx);
-        std::array<int,3> cartCoord;
+        std::array<long long,3> cartCoord;
         cartMapper.cartesianCoordinate(cartIndex, cartCoord);
         using std::min;
         auto rank = min(grid.comm().size() -1, cartCoord[2] / numCellsPerProc);
@@ -58,7 +58,7 @@ std::vector<int> loadBalanceInZOnly(const Dune::CpGrid& grid)
     return parts;
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
     Opm::CpGridVanguard<Opm::Properties::TTag::FlowProblem>::setExternalLoadBalancer(loadBalanceInZOnly);

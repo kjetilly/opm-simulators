@@ -44,10 +44,10 @@ namespace Opm
         /// has been completed from the start of the run. The time
         /// after initialization but before the simulation has started
         /// is timestep number zero.
-        virtual int currentStepNum() const = 0;
+        virtual long long currentStepNum() const = 0;
 
         /// Current report step number. This might differ from currentStepNum in case of sub stepping
-        virtual int reportStepNum() const { return currentStepNum(); }
+        virtual long long reportStepNum() const { return currentStepNum(); }
 
         /// Current step length. This is the length of the step
         /// the simulator will take in the next iteration.

@@ -38,7 +38,7 @@ namespace Opm::Parameters {
 struct FlashTwoPhaseMethod { static constexpr auto value = "ssi"; };
 
 //! The verbosity level of the flash solver
-struct FlashVerbosity { static constexpr int value = 0; };
+struct FlashVerbosity { static constexpr long long value = 0; };
 
 } // namespace Opm::Parameters
 

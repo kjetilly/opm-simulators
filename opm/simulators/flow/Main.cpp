@@ -46,7 +46,7 @@
 
 namespace Opm {
 
-Main::Main(int argc, char** argv, bool ownMPI)
+Main::Main(long long argc, char** argv, bool ownMPI)
     : argc_(argc), argv_(argv), ownMPI_(ownMPI)
 {
     if (ownMPI_) {
@@ -85,11 +85,11 @@ Main::~Main()
         // Cannot use EclGenericVanguard::comm()
         // to get world size here, as it may be
         // a split communication at this point.
-        int world_size;
+        long long world_size;
         MPI_Comm_size(MPI_COMM_WORLD, &world_size);
         if (world_size > 1) {
             MPI_Comm new_comm = FlowGenericVanguard::comm();
-            int result;
+            long long result;
             MPI_Comm_compare(MPI_COMM_WORLD, new_comm, &result);
             assert(result == MPI_UNEQUAL);
             MPI_Comm_free(&new_comm);
@@ -111,7 +111,7 @@ Main::~Main()
 
 #if HAVE_DAMARIS
     if (enableDamarisOutput_) {
-        int err;
+        long long err;
         if (isSimulationRank_) {
             err = damaris_stop();
             if (err != DAMARIS_OK) {
@@ -167,8 +167,8 @@ void Main::initMPI()
 
 #if HAVE_MPI
     if (test_split_comm_ && FlowGenericVanguard::comm().size() > 1) {
-        int world_rank = FlowGenericVanguard::comm().rank();
-        int color = (world_rank == 0);
+        long long world_rank = FlowGenericVanguard::comm().rank();
+        long long color = (world_rank == 0);
         MPI_Comm new_comm;
         MPI_Comm_split(FlowGenericVanguard::comm(), color, world_rank, &new_comm);
         isSimulationRank_ = (world_rank > 0);
@@ -194,7 +194,7 @@ void Main::initMPI()
 #endif
 }
 
-void Main::handleVersionCmdLine_(int argc, char** argv,
+void Main::handleVersionCmdLine_(long long argc, char** argv,
                                  std::string_view moduleVersionName)
 {
     auto pos = std::find_if(argv, argv + argc,
@@ -229,7 +229,7 @@ void Main::readDeck(const std::string& deckFilename,
                     const std::string& inputSkipMode,
                     const bool keepKeywords,
                     const std::size_t numThreads,
-                    const int output_param,
+                    const long long output_param,
                     const std::string& parameters,
                     std::string_view moduleVersion,
                     std::string_view compileTimestamp)
@@ -246,7 +246,7 @@ void Main::readDeck(const std::string& deckFilename,
         OpmLog::info("Reading deck file '" + deckFilename + "'");
     }
 
-    std::optional<int> outputInterval;
+    std::optional<long long> outputInterval;
     if (output_param >= 0)
         outputInterval = output_param;
 
@@ -304,11 +304,11 @@ void Main::setupDamaris(const std::string& outputDir )
     DamarisOutput::initializeDamaris(FlowGenericVanguard::comm(),
                                      FlowGenericVanguard::comm().rank(),
                                      find_replace_map);
-    int is_client;
+    long long is_client;
     MPI_Comm new_comm;
     // damaris_start() is where the Damaris Server ranks will block, until damaris_stop() 
     // is called from the client ranks
-    int err = damaris_start(&is_client);  
+    long long err = damaris_start(&is_client);  
     isSimulationRank_ = (is_client > 0);
     if (isSimulationRank_ && err == DAMARIS_OK) {
         damaris_client_comm_get(&new_comm);

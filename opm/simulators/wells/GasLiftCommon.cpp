@@ -47,7 +47,7 @@ GasLiftCommon(WellState<Scalar>& well_state,
  ****************************************/
 
 template<class Scalar>
-int
+long long
 GasLiftCommon<Scalar>::debugUpdateGlobalCounter_() const
 {
     auto count = this->well_state_.gliftUpdateDebugCounter();

@@ -99,7 +99,7 @@ void readDeck(Parallel::Communication         comm,
               bool                            initFromRestart,
               bool                            checkDeck,
               bool                            keepKeywords,
-              const std::optional<int>&       outputInterval);
+              const std::optional<long long>&       outputInterval);
 
 void verifyValidCellGeometry(Parallel::Communication comm,
                              const EclipseState&     eclipseState);

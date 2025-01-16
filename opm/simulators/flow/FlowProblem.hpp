@@ -187,14 +187,14 @@ public:
     /*!
      * \copydoc FvBaseProblem::handlePositionalParameter
      */
-    static int handlePositionalParameter(std::function<void(const std::string&,
+    static long long handlePositionalParameter(std::function<void(const std::string&,
                                                             const std::string&)> addKey,
                                          std::set<std::string>& seenParams,
                                          std::string& errorMsg,
-                                         int,
+                                         long long,
                                          const char** argv,
-                                         int paramIdx,
-                                         int)
+                                         long long paramIdx,
+                                         long long)
     {
         return detail::eclPositionalParameter(addKey,
                                               seenParams,
@@ -277,7 +277,7 @@ public:
         aquiferModel_.serialize(res);
     }
 
-    int episodeIndex() const
+    long long episodeIndex() const
     {
         return std::max(this->simulator().episodeIndex(), 0);
     }
@@ -290,7 +290,7 @@ public:
         OPM_TIMEBLOCK(beginEpisode);
         // Proceed to the next report step
         auto& simulator = this->simulator();
-        int episodeIdx = simulator.episodeIndex();
+        long long episodeIdx = simulator.episodeIndex();
         auto& eclState = simulator.vanguard().eclState();
         const auto& schedule = simulator.vanguard().schedule();
         const auto& events = schedule[episodeIdx].events();
@@ -308,7 +308,7 @@ public:
             eclBroadcast(cc, eclState.getTransMult() );
 
             // Re-ordering in case of ALUGrid
-            std::function<unsigned int(unsigned int)> equilGridToGrid = [&simulator](unsigned int i) {
+            std::function<size_t(size_t)> equilGridToGrid = [&simulator](size_t i) {
                   return simulator.vanguard().gridEquilIdxToGridIdx(i);
             };
 
@@ -345,8 +345,8 @@ public:
     void beginTimeStep()
     {
         OPM_TIMEBLOCK(beginTimeStep);
-        const int episodeIdx = this->episodeIndex();
-        const int timeStepSize = this->simulator().timeStepSize();
+        const long long episodeIdx = this->episodeIndex();
+        const long long timeStepSize = this->simulator().timeStepSize();
 
         this->beginTimeStep_(enableExperiments,
                              episodeIdx,
@@ -406,7 +406,7 @@ public:
             // inside the whole reservoir must be equivalent to the fluxes
             // over the grid's boundaries plus the source rates specified by
             // the problem).
-            const int rank = this->simulator().gridView().comm().rank();
+            const long long rank = this->simulator().gridView().comm().rank();
             if (rank == 0) {
                 std::cout << "checking conservativeness of solution\n";
             }
@@ -434,7 +434,7 @@ public:
             const auto& residual = this->model().linearizer().residual();
 
             for (unsigned globalDofIdx = 0; globalDofIdx < residual.size(); globalDofIdx ++) {
-                int sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(globalDofIdx);
+                long long sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(globalDofIdx);
                 this->drift_[sfcdofIdx] = residual[sfcdofIdx] * simulator.timeStepSize();
 
                 if constexpr (getPropValue<TypeTag, Properties::UseVolumetricResidual>()) {
@@ -449,7 +449,7 @@ public:
      */
     virtual void endEpisode()
     {
-        const int episodeIdx = this->episodeIndex();
+        const long long episodeIdx = this->episodeIndex();
 
         this->wellModel_.endEpisode();
         this->aquiferModel_.endEpisode();
@@ -457,7 +457,7 @@ public:
         const auto& schedule = this->simulator().vanguard().schedule();
 
         // End simulation when completed.
-        if (episodeIdx + 1 >= static_cast<int>(schedule.size()) - 1) {
+        if (episodeIdx + 1 >= static_cast<long long>(schedule.size()) - 1) {
             this->simulator().setFinished(true);
             return;
         }
@@ -793,10 +793,10 @@ public:
                || materialLawManager_->hasDirectionalImbnum())
         {
             using Dir = FaceDir::DirEnum;
-            constexpr int ndim = 3;
+            constexpr long long ndim = 3;
             dirMob = std::make_unique<DirectionalMobility<TypeTag, Evaluation>>();
             Dir facedirs[ndim] = {Dir::XPlus, Dir::YPlus, Dir::ZPlus};
-            for (int i = 0; i<ndim; i++) {
+            for (long long i = 0; i<ndim; i++) {
                 const auto& materialParams = materialLawParams(globalSpaceIdx, facedirs[i]);
                 auto& mob_array = dirMob->getArray(i);
                 MaterialLaw::relativePermeabilities(mob_array, materialParams, fluidState);
@@ -1030,7 +1030,7 @@ public:
             return this->nextTimeStepSize_;
 
         const auto& simulator = this->simulator();
-        int episodeIdx = simulator.episodeIndex();
+        long long episodeIdx = simulator.episodeIndex();
 
         // for the initial episode, we use a fixed time step size
         if (episodeIdx < 0)
@@ -1117,7 +1117,7 @@ public:
         return trans_mult;
     }
 
-    std::pair<BCType, RateVector> boundaryCondition(const unsigned int globalSpaceIdx, const int directionId) const
+    std::pair<BCType, RateVector> boundaryCondition(const size_t globalSpaceIdx, const long long directionId) const
     {
         OPM_TIMEBLOCK_LOCAL(boundaryCondition);
         if (!nonTrivialBoundaryConditions_) {
@@ -1204,7 +1204,7 @@ protected:
     bool updateMaxOilSaturation_()
     {
         OPM_TIMEBLOCK(updateMaxOilSaturation);
-        int episodeIdx = this->episodeIndex();
+        long long episodeIdx = this->episodeIndex();
 
         // we use VAPPARS
         if (this->vapparsActive(episodeIdx)) {
@@ -1306,7 +1306,7 @@ protected:
         };
     }
 
-    // \brief Function to assign field properties of type int, unsigned int, ..., on the leaf grid view.
+    // \brief Function to assign field properties of type long long, size_t, ..., on the leaf grid view.
     //
     // For CpGrid with local grid refinement, the field property of a cell on the leaf
     // is inherited from its parent or equivalent (when has no parent) cell on level zero.
@@ -1350,7 +1350,7 @@ protected:
         materialLawManager_ = std::make_shared<EclMaterialLawManager>();
         materialLawManager_->initFromState(eclState);
         materialLawManager_->initParamsForElements(eclState, this->model().numGridDof(),
-                                                   this-> template fieldPropIntTypeOnLeafAssigner_<int>(),
+                                                   this-> template fieldPropIntTypeOnLeafAssigner_<long long>(),
                                                    this-> lookupIdxOnLevelZeroAssigner_());
         ////////////////////////////////
     }
@@ -1367,7 +1367,7 @@ protected:
             thermalLawManager_ = std::make_shared<EclThermalLawManager>();
             thermalLawManager_->initParamsForElements(eclState, this->model().numGridDof(),
                                                       this-> fieldPropDoubleOnLeafAssigner_(),
-                                                      this-> template fieldPropIntTypeOnLeafAssigner_<unsigned int>());
+                                                      this-> template fieldPropIntTypeOnLeafAssigner_<size_t>());
         }
     }
 
@@ -1384,7 +1384,7 @@ protected:
         const auto& fp = eclState.fieldProps();
         const std::vector<double> porvData = this -> fieldPropDoubleOnLeafAssigner_()(fp, "PORV");
         for (std::size_t dofIdx = 0; dofIdx < numDof; ++dofIdx) {
-            int sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(dofIdx);
+            long long sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(dofIdx);
             Scalar poreVolume = porvData[dofIdx];
 
             // we define the porosity as the accumulated pore volume divided by the
@@ -1497,7 +1497,7 @@ protected:
         pffDofData_.update(distFn);
     }
 
-    virtual void updateExplicitQuantities_(int episodeIdx, int timeStepSize, bool first_step_after_restart) = 0;
+    virtual void updateExplicitQuantities_(long long episodeIdx, long long timeStepSize, bool first_step_after_restart) = 0;
 
     void readBoundaryConditions_()
     {
@@ -1509,7 +1509,7 @@ protected:
 
             std::size_t numCartDof = vanguard.cartesianSize();
             unsigned numElems = vanguard.gridView().size(/*codim=*/0);
-            std::vector<int> cartesianToCompressedElemIdx(numCartDof, -1);
+            std::vector<long long> cartesianToCompressedElemIdx(numCartDof, -1);
 
             for (unsigned elemIdx = 0; elemIdx < numElems; ++elemIdx)
                 cartesianToCompressedElemIdx[vanguard.cartesianIndex(elemIdx)] = elemIdx;
@@ -1519,10 +1519,10 @@ protected:
                                  &vanguard](const auto& bcface,
                                             auto apply)
             {
-                for (int i = bcface.i1; i <= bcface.i2; ++i) {
-                    for (int j = bcface.j1; j <= bcface.j2; ++j) {
-                        for (int k = bcface.k1; k <= bcface.k2; ++k) {
-                            std::array<int, 3> tmp = {i,j,k};
+                for (long long i = bcface.i1; i <= bcface.i2; ++i) {
+                    for (long long j = bcface.j1; j <= bcface.j2; ++j) {
+                        for (long long k = bcface.k1; k <= bcface.k2; ++k) {
+                            std::array<long long, 3> tmp = {i,j,k};
                             auto elemIdx = cartesianToCompressedElemIdx[vanguard.cartesianIndex(tmp)];
                             if (elemIdx >= 0)
                                 apply(elemIdx);
@@ -1531,10 +1531,10 @@ protected:
                 }
             };
             for (const auto& bcface : bcconfig) {
-                std::vector<int>& data = bcindex_(bcface.dir);
-                const int index = bcface.index;
+                std::vector<long long>& data = bcindex_(bcface.dir);
+                const long long index = bcface.index;
                     loopAndApply(bcface,
-                                 [&data,index](int elemIdx)
+                                 [&data,index](long long elemIdx)
                                  { data[elemIdx] = index; });
             }
         }
@@ -1547,11 +1547,11 @@ protected:
         if constexpr (enableExperiments) {
             const auto& simulator = this->simulator();
             const auto& schedule = simulator.vanguard().schedule();
-            int episodeIdx = simulator.episodeIndex();
+            long long episodeIdx = simulator.episodeIndex();
 
             // first thing in the morning, limit the time step size to the maximum size
             Scalar maxTimeStepSize = Parameters::Get<Parameters::SolverMaxTimeStepInDays<Scalar>>() * 24 * 60 * 60;
-            int reportStepIdx = std::max(episodeIdx, 0);
+            long long reportStepIdx = std::max(episodeIdx, 0);
             if (this->enableTuning_) {
                 const auto& tuning = schedule[reportStepIdx].tuning();
                 maxTimeStepSize = tuning.TSMAXZ;
@@ -1588,7 +1588,7 @@ protected:
         return dtNext;
     }
 
-    int refPressurePhaseIdx_() const {
+    long long refPressurePhaseIdx_() const {
         if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
             return oilPhaseIdx;
         }
@@ -1683,8 +1683,8 @@ protected:
         {
             if (dir == FaceDir::DirEnum::Unknown)
                 throw std::runtime_error("Tried to access BC data for the 'Unknown' direction");
-            int idx = 0;
-            int div = static_cast<int>(dir);
+            long long idx = 0;
+            long long div = static_cast<long long>(dir);
             while ((div /= 2) >= 1)
               ++idx;
             assert(idx >= 0 && idx <= 5);
@@ -1701,7 +1701,7 @@ protected:
 
     virtual void handlePolymerBC(const BCProp::BCFace&, RateVector&) const = 0;
 
-    BCData<int> bcindex_;
+    BCData<long long> bcindex_;
     bool nonTrivialBoundaryConditions_ = false;
     bool first_step_ = true;
 

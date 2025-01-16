@@ -130,7 +130,7 @@ protected:
         solverWrapper_.cleanup();
     }
 
-    std::pair<bool, int> runSolver_(std::shared_ptr<RawLinearSolver> solver)
+    std::pair<bool, long long> runSolver_(std::shared_ptr<RawLinearSolver> solver)
     {
         Dune::InverseOperatorResult result;
         solver->apply(*this->overlappingx_, *this->overlappingb_, result);

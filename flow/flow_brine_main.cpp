@@ -18,7 +18,7 @@
 #include <flow/flow_brine.hpp>
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     return Opm::flowBrineMainStandalone(argc, argv);
 }

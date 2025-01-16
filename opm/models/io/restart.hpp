@@ -47,13 +47,13 @@ class Restart
     static std::string magicRestartCookie_(const GridView& gridView)
     {
         static const std::string gridName = "blubb"; // gridView.grid().name();
-        static const int dim = GridView::dimension;
+        static const long long dim = GridView::dimension;
 
-        int numVertices = gridView.size(dim);
-        int numElements = gridView.size(0);
-        int numEdges = gridView.size(dim - 1);
-        int numCPUs = gridView.comm().size();
-        int rank = gridView.comm().rank();
+        long long numVertices = gridView.size(dim);
+        long long numElements = gridView.size(0);
+        long long numEdges = gridView.size(dim - 1);
+        long long numCPUs = gridView.comm().size();
+        long long rank = gridView.comm().rank();
 
         std::ostringstream oss;
         oss << "eWoms restart file: "
@@ -69,7 +69,7 @@ class Restart
     /*!
      * \brief Return the restart file name.
      */
-    static std::string restartFileName_(int rank,
+    static std::string restartFileName_(long long rank,
                                         const std::string& outputDir,
                                         const std::string& simName,
                                         double t);
@@ -117,7 +117,7 @@ public:
      *
      * The actual work is done by Serializer::serialize(Entity)
      */
-    template <int codim, class Serializer, class GridView>
+    template <long long codim, class Serializer, class GridView>
     void serializeEntities(Serializer& serializer, const GridView& gridView)
     {
         std::ostringstream oss;
@@ -178,7 +178,7 @@ public:
      *
      * The actual work is done by Deserializer::deserialize(Entity)
      */
-    template <int codim, class Deserializer, class GridView>
+    template <long long codim, class Deserializer, class GridView>
     void deserializeEntities(Deserializer& deserializer, const GridView& gridView)
     {
         std::ostringstream oss;

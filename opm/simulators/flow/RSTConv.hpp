@@ -36,7 +36,7 @@ public:
     //! \brief Constructor.
     //! \param globalCell Mapping from local to global cell indices
     //! \param comm Parallel communicator
-    RSTConv(const std::vector<int>& globalCell,
+    RSTConv(const std::vector<long long>& globalCell,
             Parallel::Communication comm)
         : globalCell_(globalCell)
         , comm_(comm)
@@ -48,14 +48,14 @@ public:
     //! \param compIdx Component index for phases {OIL, GAS, WAT, POLYMER, BRINE, SOLVENT}, negative if inactive
     void init(const std::size_t numCells,
               const RSTConfig& rst_config,
-              const std::array<int,6>& compIdx);
+              const std::array<long long,6>& compIdx);
 
     //! \brief Adds the CONV output for given residual vector.
     template<class ResidualVector>
     void update(const ResidualVector& resid);
 
     //! \brief Obtain a const-ref to the accumulated data.
-    const std::vector<std::vector<int>>& getData() const
+    const std::vector<std::vector<long long>>& getData() const
     { return cnv_X_; }
 
 private:
@@ -65,14 +65,14 @@ private:
     //! \param comp Component to consider
     //! \details Handles parallel reduction
     template<class ResidualVector>
-    void gatherAndAccumulate(const std::vector<int>& lIdx,
-                             const ResidualVector& resid, int comp);
+    void gatherAndAccumulate(const std::vector<long long>& lIdx,
+                             const ResidualVector& resid, long long comp);
 
-    const std::vector<int>& globalCell_; //!< Global cell indices
+    const std::vector<long long>& globalCell_; //!< Global cell indices
     Parallel::Communication comm_; //!< Communicator
-    std::vector<std::vector<int>> cnv_X_; //!< Counts of worst cells for RPTRST CONV
-    std::array<int,6> compIdx_; //!< Component indices
-    int N_ = 0; //!< Number of cells to consider
+    std::vector<std::vector<long long>> cnv_X_; //!< Counts of worst cells for RPTRST CONV
+    std::array<long long,6> compIdx_; //!< Component indices
+    long long N_ = 0; //!< Number of cells to consider
 };
 
 } // namespace Opm

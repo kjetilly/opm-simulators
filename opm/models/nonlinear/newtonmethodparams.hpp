@@ -31,7 +31,7 @@ template<class Scalar>
 struct NewtonMaxError { static constexpr Scalar value = 1e100; };
 
 //! Number of maximum iterations for the Newton method.
-struct NewtonMaxIterations { static constexpr int value = 20; };
+struct NewtonMaxIterations { static constexpr long long value = 20; };
 
 /*!
  * \brief The number of iterations at which the Newton method
@@ -41,7 +41,7 @@ struct NewtonMaxIterations { static constexpr int value = 20; };
  * is to scale the last time-step size by the deviation of the
  * number of iterations used from the target steps.
  */
-struct NewtonTargetIterations { static constexpr int value = 10; };
+struct NewtonTargetIterations { static constexpr long long value = 10; };
 
 /*!
  * \brief The value for the error below which convergence is declared
@@ -77,8 +77,8 @@ struct NewtonMethodParams
 
     bool verbose_;
     bool writeConvergence_;
-    int targetIterations_; //!< Optimal number of iterations we want to achieve
-    int maxIterations_; //!< Maximum number of iterations we do before giving up
+    long long targetIterations_; //!< Optimal number of iterations we want to achieve
+    long long maxIterations_; //!< Maximum number of iterations we do before giving up
     Scalar tolerance_;
     Scalar maxError_;
 };

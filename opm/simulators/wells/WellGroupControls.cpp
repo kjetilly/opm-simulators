@@ -563,7 +563,7 @@ getAutoChokeGroupProductionTargetRate(const std::string& name,
                                       const SummaryState& summaryState,
                                       const std::vector<Scalar>& resv_coeff,
                                       Scalar efficiencyFactor,
-                                      const int reportStepIdx,
+                                      const long long reportStepIdx,
                                       const PhaseUsage& pu,
                                       const GuideRate* guideRate,
                                       DeferredLogger& deferred_logger)

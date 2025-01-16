@@ -90,7 +90,7 @@ Transmissibility(const EclipseState& eclState,
                  const GridView& gridView,
                  const CartesianIndexMapper& cartMapper,
                  const Grid& grid,
-                 std::function<std::array<double,dimWorld>(int)> centroids,
+                 std::function<std::array<double,dimWorld>(long long)> centroids,
                  bool enableEnergy,
                  bool enableDiffusivity,
                  bool enableDispersivity)
@@ -160,7 +160,7 @@ dispersivity(unsigned elemIdx1, unsigned elemIdx2) const
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
 update(bool global, const TransUpdateQuantities update_quantities,
-       const std::function<unsigned int(unsigned int)>& map, const bool applyNncMultregT)
+       const std::function<size_t(size_t)>& map, const bool applyNncMultregT)
 {
     // whether only update the permeability related transmissibility
     const bool onlyTrans = (update_quantities == TransUpdateQuantities::Trans);
@@ -314,8 +314,8 @@ update(bool global, const TransUpdateQuantities update_quantities,
 
             // local indices of the faces of the inside and
             // outside elements which contain the intersection
-            int insideFaceIdx  = intersection.indexInInside();
-            int outsideFaceIdx = intersection.indexInOutside();
+            long long insideFaceIdx  = intersection.indexInInside();
+            long long outsideFaceIdx = intersection.indexInOutside();
 
             if (insideFaceIdx == -1) {
                 // NNC. Set zero transmissibility, as it will be
@@ -388,8 +388,8 @@ update(bool global, const TransUpdateQuantities update_quantities,
                         auto k = cell / cartDims[1];
                         return k;
                     };
-                    int kup = find_layer(insideCartElemIdx);
-                    int kdown=find_layer(outsideCartElemIdx);
+                    long long kup = find_layer(insideCartElemIdx);
+                    long long kdown=find_layer(outsideCartElemIdx);
                     // When a grid is a CpGrid with LGRs, insideCartElemIdx coincides with outsideCartElemIdx
                     // for cells on the leaf with the same parent cell on level zero.
                     assert((kup != kdown) || (insideCartElemIdx == outsideCartElemIdx));
@@ -533,12 +533,12 @@ update(bool global, const TransUpdateQuantities update_quantities,
     this->updateFromEclState_(global);
 
     // Create mapping from global to local index
-    std::unordered_map<std::size_t,int> globalToLocal;
+    std::unordered_map<std::size_t,long long> globalToLocal;
 
     // Loop over all elements (global grid) and store Cartesian index
     for (const auto& elem : elements(grid_.leafGridView())) {
-        int elemIdx = elemMapper.index(elem);
-        int cartElemIdx =  cartMapper_.cartesianIndex(elemIdx);
+        long long elemIdx = elemMapper.index(elem);
+        long long cartElemIdx =  cartMapper_.cartesianIndex(elemIdx);
         globalToLocal[cartElemIdx] = elemIdx;
     }
 
@@ -607,7 +607,7 @@ extractPermeability_()
 
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-extractPermeability_(const std::function<unsigned int(unsigned int)>& map)
+extractPermeability_(const std::function<size_t(size_t)>& map)
 {
     unsigned numElem = gridView_.size(/*codim=*/0);
     permeability_.resize(numElem);
@@ -699,8 +699,8 @@ removeNonCartesianTransmissibilities_(bool removeAll)
         if (removeAll or trans.second < transmissibilityThreshold_) {
             const auto& id = trans.first;
             const auto& elements = details::isIdReverse(id);
-            int gc1 = std::min(cartMapper_.cartesianIndex(elements.first), cartMapper_.cartesianIndex(elements.second));
-            int gc2 = std::max(cartMapper_.cartesianIndex(elements.first), cartMapper_.cartesianIndex(elements.second));
+            long long gc1 = std::min(cartMapper_.cartesianIndex(elements.first), cartMapper_.cartesianIndex(elements.second));
+            long long gc2 = std::max(cartMapper_.cartesianIndex(elements.first), cartMapper_.cartesianIndex(elements.second));
 
             // only adjust the NNCs
             // When LGRs, all neighbors in the LGR are cartesian neighbours on the level grid representing the LGR.
@@ -721,7 +721,7 @@ applyAllZMultipliers_(Scalar& trans,
                       unsigned insideCartElemIdx,
                       unsigned outsideCartElemIdx,
                       const TransMult& transMult,
-                      const std::array<int, dimWorld>& cartDims)
+                      const std::array<long long, dimWorld>& cartDims)
 {
     if(grid_.maxLevel()> 0) {
                 OPM_THROW(std::invalid_argument, "MULTZ not support with LGRS, yet.");
@@ -830,8 +830,8 @@ createTransmissibilityArrays_(const std::array<bool,3>& is_tran)
             // cell on level zero, then gc1 == gc2.
             unsigned c1 = elemMapper.index(intersection.inside());
             unsigned c2 = elemMapper.index(intersection.outside());
-            int gc1 = cartMapper_.cartesianIndex(c1);
-            int gc2 = cartMapper_.cartesianIndex(c2);
+            long long gc1 = cartMapper_.cartesianIndex(c1);
+            long long gc2 = cartMapper_.cartesianIndex(c2);
             if (std::tie(gc1, c1) > std::tie(gc2, c2))
                 // we only need to handle each connection once, thank you.
                 // We do this when gc1 is smaller than the other to find the
@@ -898,8 +898,8 @@ resetTransmissibilityFromArrays_(const std::array<bool,3>& is_tran,
             // cell on level zero, then gc1 == gc2.
             unsigned c1 = elemMapper.index(intersection.inside());
             unsigned c2 = elemMapper.index(intersection.outside());
-            int gc1 = cartMapper_.cartesianIndex(c1);
-            int gc2 = cartMapper_.cartesianIndex(c2);
+            long long gc1 = cartMapper_.cartesianIndex(c1);
+            long long gc2 = cartMapper_.cartesianIndex(c2);
             if (std::tie(gc1, c1) > std::tie(gc2, c2))
                 // we only need to handle each connection once, thank you.
                 // We do this when gc1 is smaller than the other to find the
@@ -941,10 +941,10 @@ template<class Grid, class GridView, class ElementMapper, class CartesianIndexMa
 template<class Intersection>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
 computeFaceProperties(const Intersection& intersection,
-                      const int,
-                      const int,
-                      const int,
-                      const int,
+                      const long long,
+                      const long long,
+                      const long long,
+                      const long long,
                       DimVector& faceCenterInside,
                       DimVector& faceCenterOutside,
                       DimVector& faceAreaNormal,
@@ -963,16 +963,16 @@ template<class Grid, class GridView, class ElementMapper, class CartesianIndexMa
 template<class Intersection>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
 computeFaceProperties(const Intersection& intersection,
-                      const int insideElemIdx,
-                      const int insideFaceIdx,
-                      const int outsideElemIdx,
-                      const int outsideFaceIdx,
+                      const long long insideElemIdx,
+                      const long long insideFaceIdx,
+                      const long long outsideElemIdx,
+                      const long long outsideFaceIdx,
                       DimVector& faceCenterInside,
                       DimVector& faceCenterOutside,
                       DimVector& faceAreaNormal,
                       /*isCpGrid=*/std::true_type) const
 {
-    int faceIdx = intersection.id();
+    long long faceIdx = intersection.id();
 
     if(grid_.maxLevel() == 0) {
         faceCenterInside = grid_.faceCenterEcl(insideElemIdx, insideFaceIdx, intersection);
@@ -1027,7 +1027,7 @@ computeFaceProperties(const Intersection& intersection,
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
 Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,long long>& cartesianToCompressed)
 {
     // First scale NNCs with EDITNNC.
     const auto& nnc_input = eclState_.getPinchNNC();
@@ -1037,8 +1037,8 @@ applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianTo
         auto c2 = nncEntry.cell2;
         auto lowIt = cartesianToCompressed.find(c1);
         auto highIt = cartesianToCompressed.find(c2);
-        int low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
-        int high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
+        long long low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
+        long long high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
 
         if (low > high)
             std::swap(low, high);
@@ -1068,7 +1068,7 @@ applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianTo
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
 Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+applyNncToGridTrans_(const std::unordered_map<std::size_t,long long>& cartesianToCompressed)
 {
     // First scale NNCs with EDITNNC.
     const auto& nnc_input = eclState_.getInputNNC().input();
@@ -1078,8 +1078,8 @@ applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompr
         auto c2 = nncEntry.cell2;
         auto lowIt = cartesianToCompressed.find(c1);
         auto highIt = cartesianToCompressed.find(c2);
-        int low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
-        int high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
+        long long low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
+        long long high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
 
         if (low > high)
             std::swap(low, high);
@@ -1136,7 +1136,7 @@ applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompr
 
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal)
+applyEditNncToGridTrans_(const std::unordered_map<std::size_t,long long>& globalToLocal)
 {
     const auto& input = eclState_.getInputNNC();
     applyEditNncToGridTransHelper_(globalToLocal, "EDITNNC",
@@ -1149,7 +1149,7 @@ applyEditNncToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLoca
 
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal)
+applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,long long>& globalToLocal)
 {
     const auto& input = eclState_.getInputNNC();
     applyEditNncToGridTransHelper_(globalToLocal, "EDITNNCR",
@@ -1162,7 +1162,7 @@ applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLoc
 
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& globalToLocal,
+applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,long long>& globalToLocal,
                                const std::string& keyword,
                                const std::vector<NNCdata>& nncs,
                                const std::function<KeywordLocation(const NNCdata&)>& getLocation,
@@ -1241,7 +1241,7 @@ applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& global
 template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
 Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyNncMultreg_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+applyNncMultreg_(const std::unordered_map<std::size_t,long long>& cartesianToCompressed)
 {
     const auto& inputNNC = this->eclState_.getInputNNC();
     const auto& transMult = this->eclState_.getTransMult();
@@ -1291,7 +1291,7 @@ template<class Grid, class GridView, class ElementMapper, class CartesianIndexMa
 void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
 computeHalfTrans_(Scalar& halfTrans,
                   const DimVector& areaNormal,
-                  int faceIdx, // in the reference element that contains the intersection
+                  long long faceIdx, // in the reference element that contains the intersection
                   const DimVector& distance,
                   const DimMatrix& perm) const
 {

@@ -74,17 +74,17 @@ public:
         if constexpr (gridIsUnchanging) {
             const auto& gv = this->gridView_;
 #ifdef _OPENMP
-            const int nt = omp_get_max_threads();
+            const long long nt = omp_get_max_threads();
             if (nt > 1) {
                 const auto num_elements = gv.size(0);
-                constexpr int max_chunk_size = 1000;
-                const int chunk_size = std::clamp(num_elements / nt, 1, max_chunk_size);
+                constexpr long long max_chunk_size = 1000;
+                const long long chunk_size = std::clamp(num_elements / nt, 1, max_chunk_size);
                 OpmLog::debug("Using chunk size " + std::to_string(chunk_size) +
                               " for property evaluation with " + std::to_string(nt) + " OpenMP threads.");
                 grid_chunk_iterators_.reserve(num_elements / chunk_size + 2);
                 auto it = gv.template begin<0>();
                 const auto end = gv.template end<0>();
-                for (int count = 0; it != end; ++it, ++count) {
+                for (long long count = 0; it != end; ++it, ++count) {
                     if (count % chunk_size == 0) {
                         grid_chunk_iterators_.push_back(it);
                     }
@@ -105,11 +105,11 @@ public:
         this->invalidateIntensiveQuantitiesCache(timeIdx);
         OPM_BEGIN_PARALLEL_TRY_CATCH();
         if constexpr (gridIsUnchanging) {
-            const int num_chunks = grid_chunk_iterators_.size() - 1;
+            const long long num_chunks = grid_chunk_iterators_.size() - 1;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-            for (int chunk = 0; chunk < num_chunks; ++chunk) {
+            for (long long chunk = 0; chunk < num_chunks; ++chunk) {
                 ElementContext elemCtx(this->simulator_);
                 for (auto it = grid_chunk_iterators_[chunk]; it != grid_chunk_iterators_[chunk+1]; ++it) {
                     const Element& elem = *it;

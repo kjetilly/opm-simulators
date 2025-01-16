@@ -147,7 +147,7 @@ namespace {
     void writeTimeColumns(std::ostream&                                           os,
                           const Opm::ConvergenceOutputThread::ConvertToTimeUnits& convertTime,
                           const std::string::size_type                            firstColSize,
-                          const int                                               iter,
+                          const long long                                               iter,
                           const Opm::ConvergenceReport&                           report,
                           const Opm::ConvergenceReportQueue::OutputRequest&       request)
     {

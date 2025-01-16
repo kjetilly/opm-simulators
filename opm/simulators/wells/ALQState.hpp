@@ -41,11 +41,11 @@ public:
     bool oscillation(const std::string& wname) const;
     void update_count(const std::string& wname, bool increase);
     void reset_count();
-    int  get_increment_count(const std::string& wname) const;
-    int  get_decrement_count(const std::string& wname) const;
-    void set_debug_counter(int value);
-    int  get_debug_counter();
-    int  update_debug_counter();
+    long long  get_increment_count(const std::string& wname) const;
+    long long  get_decrement_count(const std::string& wname) const;
+    void set_debug_counter(long long value);
+    long long  get_debug_counter();
+    long long  update_debug_counter();
 
     template<class Serializer>
     void serializeOp(Serializer& serializer)
@@ -62,9 +62,9 @@ public:
 private:
     std::map<std::string, Scalar> current_alq_;
     std::map<std::string, Scalar> default_alq_;
-    std::map<std::string, int> alq_increase_count_;
-    std::map<std::string, int> alq_decrease_count_;
-    int debug_counter_ = 0;
+    std::map<std::string, long long> alq_increase_count_;
+    std::map<std::string, long long> alq_decrease_count_;
+    long long debug_counter_ = 0;
 };
 
 }

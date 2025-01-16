@@ -210,7 +210,7 @@ class FractureProblem : public GetPropType<TypeTag, Properties::BaseProblem>
     using GlobalPosition = Dune::FieldVector<Scalar, dimWorld>;
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
 
-    template <int dim>
+    template <long long dim>
     struct FaceLayout
     {
         bool contains(Dune::GeometryType gt)

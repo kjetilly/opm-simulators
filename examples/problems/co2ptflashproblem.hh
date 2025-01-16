@@ -71,7 +71,7 @@ struct NumComp { using type = UndefinedProperty; };
 
 template <class TypeTag>
 struct NumComp<TypeTag, TTag::CO2PTBaseProblem> {
-    static constexpr int value = 3;
+    static constexpr long long value = 3;
 };
 
 // Set the grid type: --->2D
@@ -101,7 +101,7 @@ struct FluidSystem<TypeTag, TTag::CO2PTBaseProblem>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    static constexpr int num_comp = getPropValue<TypeTag, Properties::NumComp>();
+    static constexpr long long num_comp = getPropValue<TypeTag, Properties::NumComp>();
 
 public:
     using type = Opm::GenericOilGasFluidSystem<Scalar, num_comp>;
@@ -393,9 +393,9 @@ public:
     template <class Context>
     Scalar porosity([[maybe_unused]] const Context& context, [[maybe_unused]] unsigned spaceIdx, [[maybe_unused]] unsigned timeIdx) const
     {
-        int spatialIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
-        int inj = 0;
-        int prod = Parameters::Get<Parameters::CellsX>() - 1;
+        long long spatialIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
+        long long inj = 0;
+        long long prod = Parameters::Get<Parameters::CellsX>() - 1;
         if (spatialIdx == inj || spatialIdx == prod) {
             return 1.0;
         } else {
@@ -445,9 +445,9 @@ private:
         // zi = [0.99, 0.01-1e-3, 1e-3]
         // p0 = 75e5
         // T0 = 423.25
-        int inj = 0;
-        int prod = Parameters::Get<Parameters::CellsX>() - 1;
-        int spatialIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
+        long long inj = 0;
+        long long prod = Parameters::Get<Parameters::CellsX>() - 1;
+        long long spatialIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         ComponentVector comp;
         comp[0] = Evaluation::createVariable(0.5, 1);
         comp[1] = Evaluation::createVariable(0.3, 2);

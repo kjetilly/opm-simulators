@@ -68,16 +68,16 @@ namespace {
 #if HAVE_MPI
     struct MPIError
     {
-        MPIError(std::string_view errstr, const int ec)
+        MPIError(std::string_view errstr, const long long ec)
             : errorstring { errstr }
             , errorcode   { ec }
         {}
 
         std::string errorstring;
-        int errorcode;
+        long long errorcode;
     };
 
-    void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+    void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
     {
         std::array<char, MPI_MAX_ERROR_STRING> err_string_vec{'\0'};
         auto err_length = 0;
@@ -129,7 +129,7 @@ namespace {
 
     constexpr auto root = 0;
     constexpr auto numSamplePoints = std::size_t{1};
-    const auto localToGlobal = [](const int) { return std::size_t{0}; };
+    const auto localToGlobal = [](const long long) { return std::size_t{0}; };
 
     Opm::Deck makeEpsDeck(std::string_view epsSpec)
     {
@@ -1607,7 +1607,7 @@ BOOST_AUTO_TEST_SUITE_END() // Oil_Phase
 
 // ===========================================================================
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

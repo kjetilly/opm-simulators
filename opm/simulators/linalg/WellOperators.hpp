@@ -62,7 +62,7 @@ public:
                                           const X& weights,
                                           const bool use_well_weights) const = 0;
     virtual void addWellPressureEquationsStruct(PressureMatrix& jacobian) const = 0;
-    virtual int getNumberOfExtraEquations() const = 0;
+    virtual long long getNumberOfExtraEquations() const = 0;
 };
 
 template <class WellModel, class X, class Y>
@@ -132,7 +132,7 @@ public:
         wellMod_.addWellPressureEquationsStruct(jacobian);
     }
 
-    int getNumberOfExtraEquations() const override
+    long long getNumberOfExtraEquations() const override
     {
         return wellMod_.numLocalWellsEnd();
     }
@@ -180,7 +180,7 @@ public:
     using field_type = typename WBase::field_type;
     using PressureMatrix = typename WBase::PressureMatrix;
 
-    void setDomainIndex(int index) { domainIndex_ = index; }
+    void setDomainIndex(long long index) { domainIndex_ = index; }
 
     void apply(const X& x, Y& y) const override
     {
@@ -203,7 +203,7 @@ public:
     }
 
 private:
-    int domainIndex_ = -1;
+    long long domainIndex_ = -1;
 };
 
 /*!
@@ -227,9 +227,9 @@ public:
     using field_type = typename X::field_type;
     using PressureMatrix = Dune::BCRSMatrix<MatrixBlock<field_type, 1, 1>>;
 #if HAVE_MPI
-    using communication_type = Dune::OwnerOverlapCopyCommunication<int,int>;
+    using communication_type = Dune::OwnerOverlapCopyCommunication<long long,long long>;
 #else
-    using communication_type = Dune::Communication<int>;
+    using communication_type = Dune::Communication<long long>;
 #endif
 
     Dune::SolverCategory::Category category() const override
@@ -292,7 +292,7 @@ public:
         wellOper_.addWellPressureEquationsStruct(jacobian);
     }
 
-    int getNumberOfExtraEquations() const
+    long long getNumberOfExtraEquations() const
     {
         return wellOper_.getNumberOfExtraEquations();
     }
@@ -321,9 +321,9 @@ public:
     using field_type = typename X::field_type;
     using PressureMatrix = Dune::BCRSMatrix<MatrixBlock<field_type, 1, 1>>;
 #if HAVE_MPI
-    using communication_type = Dune::OwnerOverlapCopyCommunication<int,int>;
+    using communication_type = Dune::OwnerOverlapCopyCommunication<long long,long long>;
 #else
-    using communication_type = Dune::Communication<int>;
+    using communication_type = Dune::Communication<long long>;
 #endif
 
     Dune::SolverCategory::Category category() const override
@@ -388,7 +388,7 @@ public:
         wellOper_.addWellPressureEquationsStruct(jacobian);
     }
 
-    int getNumberOfExtraEquations() const
+    long long getNumberOfExtraEquations() const
     {
         return wellOper_.getNumberOfExtraEquations();
     }

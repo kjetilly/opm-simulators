@@ -182,7 +182,7 @@ namespace Opm
             os << std::endl;
         }
 
-        int n = total_linearizations + (failureReport ? failureReport->total_linearizations : 0);
+        long long n = total_linearizations + (failureReport ? failureReport->total_linearizations : 0);
         os << fmt::format("Overall Linearizations:    {:7}", n);
         if (failureReport) {
           os << fmt::format("      (Wasted: {:5}; {:2.1f}%)",

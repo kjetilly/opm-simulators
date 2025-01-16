@@ -58,7 +58,7 @@ namespace Opm
     ///    stepsize_days (default 1)
     void SimulatorTimer::init(const ParameterGroup& param)
     {
-        const int num_psteps = param.getDefault("num_psteps", 1);
+        const long long num_psteps = param.getDefault("num_psteps", 1);
         const double stepsize_days = param.getDefault("stepsize_days", 1.0);
         const double stepsize = Opm::unit::convert::from(stepsize_days, Opm::unit::day);
         timesteps_.clear();
@@ -86,19 +86,19 @@ namespace Opm
     }
 
     /// Total number of steps.
-    int SimulatorTimer::numSteps() const
+    long long SimulatorTimer::numSteps() const
     {
         return timesteps_.size();
     }
 
     /// Current step number.
-    int SimulatorTimer::currentStepNum() const
+    long long SimulatorTimer::currentStepNum() const
     {
         return current_step_;
     }
 
     /// Set current step number.
-    void SimulatorTimer::setCurrentStepNum(int step)
+    void SimulatorTimer::setCurrentStepNum(long long step)
     {
         current_step_ = step;
         current_time_ = std::accumulate(timesteps_.begin(), timesteps_.begin() + step, 0.0);
@@ -167,7 +167,7 @@ namespace Opm
     /// Return true if op++() has been called numSteps() times.
     bool SimulatorTimer::done() const
     {
-        return int(timesteps_.size()) == current_step_;
+        return (long long)(timesteps_.size()) == current_step_;
     }
 
     /// return copy of object

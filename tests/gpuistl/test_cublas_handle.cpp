@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(TestGetCublasVersion)
     BOOST_CHECK(true);
 #else
     auto& cublasHandle = ::Opm::gpuistl::detail::CuBlasHandle::getInstance();
-    int cuBlasVersion = -1;
+    long long cuBlasVersion = -1;
     OPM_CUBLAS_SAFE_CALL(cublasGetVersion(cublasHandle.get(), &cuBlasVersion));
 
     BOOST_CHECK_LT(0, cuBlasVersion);

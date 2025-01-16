@@ -128,7 +128,7 @@ FlowGenericVanguard::FlowGenericVanguard(SimulationModelParams&& params)
         enableDistributedWells_ = Parameters::Get<Parameters::AllowDistributedWells>();
         allow_splitting_inactive_wells_ = Parameters::Get<Parameters::AllowSplittingInactiveWells>();
         ignoredKeywords_ = Parameters::Get<Parameters::IgnoreKeywords>();
-        int output_param = Parameters::Get<Parameters::EclOutputInterval>();
+        long long output_param = Parameters::Get<Parameters::EclOutputInterval>();
         if (output_param >= 0) {
             outputInterval_ = output_param;
         }
@@ -273,7 +273,7 @@ void FlowGenericVanguard::init()
 
         // compute the base name of the input file name
         const char directorySeparator = '/';
-        long int i;
+        long long i;
         for (i = fileName_.size(); i >= 0; -- i)
             if (fileName_[i] == directorySeparator)
                 break;
@@ -326,7 +326,7 @@ void FlowGenericVanguard::init()
     // Check whether allowing distribute wells makes sense
     if (enableDistributedWells() )
     {
-        int hasMsWell = false;
+        long long hasMsWell = false;
         const auto& comm = FlowGenericVanguard::comm();
 
         if (useMultisegmentWell_)

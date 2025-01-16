@@ -109,8 +109,8 @@ template<class Scalar> class WellContributions;
 
             constexpr static std::size_t pressureVarIndex = GetPropType<TypeTag, Properties::Indices>::pressureSwitchIdx;
 
-            static const int numEq = Indices::numEq;
-            static const int solventSaturationIdx = Indices::solventSaturationIdx;
+            static const long long numEq = Indices::numEq;
+            static const long long solventSaturationIdx = Indices::solventSaturationIdx;
             static constexpr bool has_solvent_ = getPropValue<TypeTag, Properties::EnableSolvent>();
             static constexpr bool has_polymer_ = getPropValue<TypeTag, Properties::EnablePolymer>();
             static constexpr bool has_energy_ = getPropValue<TypeTag, Properties::EnableEnergy>();
@@ -126,18 +126,18 @@ template<class Scalar> class WellContributions;
 
             // For the conversion between the surface volume rate and resrevoir voidage rate
             using RateConverterType = RateConverter::
-                SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
+                SurfaceToReservoirVoidage<FluidSystem, std::vector<long long> >;
 
             // For computing average pressured used by gpmaint
             using AverageRegionalPressureType = RegionAverageCalculator::
-                AverageRegionalPressure<FluidSystem, std::vector<int> >;
+                AverageRegionalPressure<FluidSystem, std::vector<long long> >;
 
             using Domain = SubDomain<Grid>;
 
             BlackoilWellModel(Simulator& simulator);
 
             void init();
-            void initWellContainer(const int reportStepIdx) override;
+            void initWellContainer(const long long reportStepIdx) override;
 
             void beginEpisode()
             {
@@ -190,7 +190,7 @@ template<class Scalar> class WellContributions;
             }
 
             using BlackoilWellModelGeneric<Scalar>::prepareDeserialize;
-            void prepareDeserialize(const int report_step)
+            void prepareDeserialize(const long long report_step)
             {
                 prepareDeserialize(report_step, grid().size(0),
                                    param_.use_multisegment_well_);
@@ -200,7 +200,7 @@ template<class Scalar> class WellContributions;
             {
                 auto wsrpt = this->wellState()
                     .report(simulator_.vanguard().globalCell().data(),
-                            [this](const int well_index) -> bool
+                            [this](const long long well_index) -> bool
                 {
                     return this->wasDynamicallyShutThisTimeStep(well_index);
                 });
@@ -262,7 +262,7 @@ template<class Scalar> class WellContributions;
                                          std::vector<typename SparseMatrixAdapter::MatrixBlock*>& diagMatAddress) const;
 
             // called at the beginning of a report step
-            void beginReportStep(const int time_step);
+            void beginReportStep(const long long time_step);
 
             // it should be able to go to prepareTimeStep(), however, the updateWellControls() and initPrimaryVariablesEvaluation()
             // makes it a little more difficult. unless we introduce if (iterationIdx != 0) to avoid doing the above functions
@@ -279,14 +279,14 @@ template<class Scalar> class WellContributions;
             std::pair<bool, bool>
             updateWellControls(const bool mandatory_network_balance, DeferredLogger& deferred_logger, const bool relax_network_tolerance = false);
 
-            void updateAndCommunicate(const int reportStepIdx,
-                                      const int iterationIdx,
+            void updateAndCommunicate(const long long reportStepIdx,
+                                      const long long iterationIdx,
                                       DeferredLogger& deferred_logger);
 
             bool updateGroupControls(const Group& group,
                                     DeferredLogger& deferred_logger,
-                                    const int reportStepIdx,
-                                    const int iterationIdx);
+                                    const long long reportStepIdx,
+                                    const long long iterationIdx);
 
             WellInterfacePtr getWell(const std::string& well_name) const;
 
@@ -297,7 +297,7 @@ template<class Scalar> class WellContributions;
             void addWellPressureEquationsDomain([[maybe_unused]] PressureMatrix& jacobian,
                                                 [[maybe_unused]] const BVector& weights,
                                                 [[maybe_unused]] const bool use_well_weights,
-                                                [[maybe_unused]] const int domainIndex) const;
+                                                [[maybe_unused]] const long long domainIndex) const;
 
 
             void addWellPressureEquationsStruct(PressureMatrix& jacobian) const;
@@ -310,14 +310,14 @@ template<class Scalar> class WellContributions;
 
             // prototype for assemble function for ASPIN solveLocal()
             // will try to merge back to assemble() when done prototyping
-            void assembleDomain(const int iterationIdx,
+            void assembleDomain(const long long iterationIdx,
                                 const double dt,
                                 const Domain& domain);
             void updateWellControlsDomain(DeferredLogger& deferred_logger, const Domain& domain);
 
             void setupDomains(const std::vector<Domain>& domains);
 
-            const SparseTable<int>& well_local_cells() const
+            const SparseTable<long long>& well_local_cells() const
             {
                 return well_local_cells_;
             }
@@ -327,7 +327,7 @@ template<class Scalar> class WellContributions;
 
             bool addMatrixContributions() const { return param_.matrix_add_well_contributions_; }
 
-            int compressedIndexForInterior(int cartesian_cell_idx) const override
+            long long compressedIndexForInterior(long long cartesian_cell_idx) const override
             {
                 return simulator_.vanguard().compressedIndexForInterior(cartesian_cell_idx);
             }
@@ -349,22 +349,22 @@ template<class Scalar> class WellContributions;
 
             std::vector<bool> is_cell_perforated_{};
 
-            void initializeWellState(const int timeStepIdx);
+            void initializeWellState(const long long timeStepIdx);
 
             // create the well container
-            void createWellContainer(const int report_step) override;
+            void createWellContainer(const long long report_step) override;
 
             WellInterfacePtr
-            createWellPointer(const int wellID,
-                              const int report_step) const;
+            createWellPointer(const long long wellID,
+                              const long long report_step) const;
 
             template <typename WellType>
             std::unique_ptr<WellType>
-            createTypedWellPointer(const int wellID,
-                                   const int time_step) const;
+            createTypedWellPointer(const long long wellID,
+                                   const long long time_step) const;
 
             WellInterfacePtr createWellForWellTest(const std::string& well_name,
-                                                   const int report_step,
+                                                   const long long report_step,
                                                    DeferredLogger& deferred_logger) const;
 
             const ModelParameters param_;
@@ -386,7 +386,7 @@ template<class Scalar> class WellContributions;
             std::vector<Scalar> B_avg_{};
 
             // Store the local index of the wells perforated cells in the domain, if using subdomains
-            SparseTable<int> well_local_cells_;
+            SparseTable<long long> well_local_cells_;
 
             const Grid& grid() const
             { return simulator_.vanguard().grid(); }
@@ -399,7 +399,7 @@ template<class Scalar> class WellContributions;
 
             // compute the well fluxes and assemble them in to the reservoir equations as source terms
             // and in the well equations.
-            void assemble(const int iterationIdx,
+            void assemble(const long long iterationIdx,
                           const double dt);
 
             // well controls and network pressures affect each other and are solved in an iterative manner.
@@ -426,13 +426,13 @@ template<class Scalar> class WellContributions;
             /// \param[in] enableWellPIScaling Whether or not to enable WELPI
             ///   scaling.  Typically enabled (i.e., true) only at the start
             ///   of a report step.
-            void initializeLocalWellStructure(const int  reportStepIdx,
+            void initializeLocalWellStructure(const long long  reportStepIdx,
                                               const bool enableWellPIScaling);
 
             /// Initialize group control modes/constraints and group solution state.
             ///
             /// \param[in] reportStepIdx Report step.
-            void initializeGroupStructure(const int reportStepIdx);
+            void initializeGroupStructure(const long long reportStepIdx);
 
             // called at the end of a time step
             void timeStepSucceeded(const double simulationTime, const double dt);
@@ -453,15 +453,15 @@ template<class Scalar> class WellContributions;
 
             const std::vector<Scalar>& wellPerfEfficiencyFactors() const;
 
-            void calculateProductivityIndexValuesShutWells(const int reportStepIdx, DeferredLogger& deferred_logger) override;
+            void calculateProductivityIndexValuesShutWells(const long long reportStepIdx, DeferredLogger& deferred_logger) override;
             void calculateProductivityIndexValues(DeferredLogger& deferred_logger) override;
             void calculateProductivityIndexValues(const WellInterface<TypeTag>* wellPtr,
                                                   DeferredLogger& deferred_logger);
 
             // The number of components in the model.
-            int numComponents() const;
+            long long numComponents() const;
 
-            int reportStepIndex() const;
+            long long reportStepIndex() const;
 
             void assembleWellEq(const double dt, DeferredLogger& deferred_logger);
             void assembleWellEqDomain(const double dt, const Domain& domain, DeferredLogger& deferred_logger);
@@ -478,15 +478,15 @@ template<class Scalar> class WellContributions;
             /// upate the wellTestState related to economic limits
             void updateWellTestState(const double& simulationTime, WellTestState& wellTestState) const;
 
-            void wellTesting(const int timeStepIdx, const double simulationTime, DeferredLogger& deferred_logger);
+            void wellTesting(const long long timeStepIdx, const double simulationTime, DeferredLogger& deferred_logger);
 
-            void calcResvCoeff(const int fipnum,
-                               const int pvtreg,
+            void calcResvCoeff(const long long fipnum,
+                               const long long pvtreg,
                                const std::vector<Scalar>& production_rates,
                                std::vector<Scalar>& resv_coeff) override;
 
-            void calcInjResvCoeff(const int fipnum,
-                                  const int pvtreg,
+            void calcInjResvCoeff(const long long fipnum,
+                                  const long long pvtreg,
                                   std::vector<Scalar>& resv_coeff) override;
 
             void computeWellTemperature();

@@ -38,7 +38,7 @@ namespace Opm {
  *
  * ATTENTION: This class must be instantiated in a sequential context!
  */
-template <class GridView, int codim>
+template <class GridView, long long codim>
 class ThreadedEntityIterator
 {
     using Entity = typename GridView::template Codim<codim>::Entity;

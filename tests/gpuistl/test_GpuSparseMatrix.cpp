@@ -48,8 +48,8 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
     //      0  0  0  ...1 -2  1
     //      0  0  0  ...   1 -2
 
-    const int N = 5;
-    const int nonZeroes = N * 3 - 2;
+    const long long N = 5;
+    const long long nonZeroes = N * 3 - 2;
     using M = Dune::FieldMatrix<double, 1, 1>;
     using SpMatrix = Dune::BCRSMatrix<M>;
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         B[i][i] = -2;
         if (i < N - 1) {
             B[i][i + 1] = 1;
@@ -85,16 +85,16 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
     BOOST_CHECK_EQUAL_COLLECTIONS(buffer.begin(), buffer.end(), nonZeroElements, nonZeroElements + B.nonzeroes());
     BOOST_CHECK_EQUAL(N * 3 - 2, gpuSparseMatrix.nonzeroes());
 
-    std::vector<int> rowIndicesFromCUDA(N + 1);
+    std::vector<long long> rowIndicesFromCUDA(N + 1);
     gpuSparseMatrix.getRowIndices().copyToHost(rowIndicesFromCUDA.data(), rowIndicesFromCUDA.size());
     BOOST_CHECK_EQUAL(rowIndicesFromCUDA[0], 0);
     BOOST_CHECK_EQUAL(rowIndicesFromCUDA[1], 2);
-    for (int i = 2; i < N; ++i) {
+    for (long long i = 2; i < N; ++i) {
         BOOST_CHECK_EQUAL(rowIndicesFromCUDA[i], rowIndicesFromCUDA[i - 1] + 3);
     }
 
 
-    std::vector<int> columnIndicesFromCUDA(B.nonzeroes(), 0);
+    std::vector<long long> columnIndicesFromCUDA(B.nonzeroes(), 0);
     gpuSparseMatrix.getColumnIndices().copyToHost(columnIndicesFromCUDA.data(), columnIndicesFromCUDA.size());
 
     BOOST_CHECK_EQUAL(columnIndicesFromCUDA[0], 0);
@@ -110,14 +110,14 @@ BOOST_AUTO_TEST_CASE(RandomSparsityMatrix)
     std::mt19937 generator;
     std::uniform_real_distribution<double> distribution(0.0, 1.0);
     constexpr size_t dim = 3;
-    const int N = 300;
+    const long long N = 300;
     using M = Dune::FieldMatrix<double, dim, dim>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, dim>>;
 
 
     std::vector<std::vector<size_t>> nonzerocols(N);
-    int nonZeroes = 0;
+    long long nonZeroes = 0;
     for (auto row = 0; row < N; ++row) {
         for (size_t col = 0; col < N; ++col) {
             if (distribution(generator) < nonzeroPercent) {
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(RandomSparsityMatrix)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         for (size_t j = 0; j < nonzerocols[i].size(); ++j) {
             for (size_t c1 = 0; c1 < dim; ++c1) {
                 for (size_t c2 = 0; c2 < dim; ++c2) {

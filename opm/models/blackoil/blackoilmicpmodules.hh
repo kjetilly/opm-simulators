@@ -380,12 +380,12 @@ class BlackOilMICPIntensiveQuantities
 
     using MICPModule = BlackOilMICPModule<TypeTag>;
 
-    static constexpr int microbialConcentrationIdx = Indices::microbialConcentrationIdx;
-    static constexpr int oxygenConcentrationIdx = Indices::oxygenConcentrationIdx;
-    static constexpr int ureaConcentrationIdx = Indices::ureaConcentrationIdx;
-    static constexpr int biofilmConcentrationIdx = Indices::biofilmConcentrationIdx;
-    static constexpr int calciteConcentrationIdx = Indices::calciteConcentrationIdx;
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long microbialConcentrationIdx = Indices::microbialConcentrationIdx;
+    static constexpr long long oxygenConcentrationIdx = Indices::oxygenConcentrationIdx;
+    static constexpr long long ureaConcentrationIdx = Indices::ureaConcentrationIdx;
+    static constexpr long long biofilmConcentrationIdx = Indices::biofilmConcentrationIdx;
+    static constexpr long long calciteConcentrationIdx = Indices::calciteConcentrationIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
 
 
 public:

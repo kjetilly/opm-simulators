@@ -98,10 +98,10 @@ public:
 
     virtual ~BlackoilWellModelGeneric() = default;
 
-    int numLocalWells() const;
-    int numLocalWellsEnd() const;
-    int numLocalNonshutWells() const;
-    int numPhases() const;
+    long long numLocalWells() const;
+    long long numLocalWellsEnd() const;
+    long long numLocalNonshutWells() const;
+    long long numPhases() const;
 
     /// return true if wells are available in the reservoir
     bool wellsActive() const;
@@ -120,7 +120,7 @@ public:
 
     const std::vector<Well>& eclWells() const { return wells_ecl_; }
     const Well& getWellEcl(const std::string& well_name) const;
-    std::vector<Well> getLocalWells(const int timeStepIdx) const;
+    std::vector<Well> getLocalWells(const long long timeStepIdx) const;
     const Schedule& schedule() const { return schedule_; }
     const PhaseUsage& phaseUsage() const { return phase_usage_; }
     const GroupState<Scalar>& groupState() const { return this->active_wgstate_.group_state; }
@@ -157,10 +157,10 @@ public:
 
     const WellTestState& wellTestState() const { return this->active_wgstate_.well_test_state; }
 
-    Scalar wellPI(const int well_index) const;
+    Scalar wellPI(const long long well_index) const;
     Scalar wellPI(const std::string& well_name) const;
 
-    void updateEclWells(const int timeStepIdx,
+    void updateEclWells(const long long timeStepIdx,
                         const SimulatorUpdate& sim_update,
                         const SummaryState& st);
 
@@ -169,7 +169,7 @@ public:
                              const std::size_t numCells,
                              bool handle_ms_well);
 
-    void prepareDeserialize(int report_step,
+    void prepareDeserialize(long long report_step,
                             const std::size_t numCells,
                             bool handle_ms_well);
 
@@ -184,18 +184,18 @@ public:
         this->last_valid_wgstate_ = this->active_wgstate_;
     }
 
-    data::GroupAndNetworkValues groupAndNetworkData(const int reportStepIdx) const;
+    data::GroupAndNetworkValues groupAndNetworkData(const long long reportStepIdx) const;
 
     /// Return true if any well has a THP constraint.
     bool hasTHPConstraints() const;
 
     /// Checks if network is active (at least one network well on prediction).
-    void updateNetworkActiveState(const int report_step);
+    void updateNetworkActiveState(const long long report_step);
 
     /// Checks if there are reasons to perform a pre-step network re-balance.
     /// (Currently, the only reasons are network well status changes.)
     /// (TODO: Consider if adding network change events would be helpful.)
-    bool needPreStepNetworkRebalance(const int report_step) const;
+    bool needPreStepNetworkRebalance(const long long report_step) const;
 
     /// Shut down any single well
     /// Returns true if the well was actually found and shut.
@@ -203,7 +203,7 @@ public:
                              const double simulation_time,
                              const bool dont_shut_grup_wells);
 
-    const std::vector<PerforationData<Scalar>>& perfData(const int well_idx) const
+    const std::vector<PerforationData<Scalar>>& perfData(const long long well_idx) const
     { return well_perf_data_[well_idx]; }
 
     const Parallel::Communication& comm() const { return comm_; }
@@ -217,17 +217,17 @@ public:
     const std::map<std::string, double>& wellOpenTimes() const { return well_open_times_; }
     const std::map<std::string, double>& wellCloseTimes() const { return well_close_times_; }
 
-    const std::map<std::string, int>& well_domain() const
+    const std::map<std::string, long long>& well_domain() const
     {
         return well_domain_;
     }
 
-    std::vector<int> getCellsForConnections(const Well& well) const;
+    std::vector<long long> getCellsForConnections(const Well& well) const;
 
     bool reportStepStarts() const { return report_step_starts_; }
 
-    bool shouldBalanceNetwork(const int reportStepIndex,
-                              const int iterationIdx) const;
+    bool shouldBalanceNetwork(const long long reportStepIndex,
+                              const long long iterationIdx) const;
 
     void updateClosedWellsThisStep(const std::string& well_name) const
     {
@@ -236,8 +236,8 @@ public:
     bool wasDynamicallyShutThisTimeStep(const std::string& well_name) const;
 
     void logPrimaryVars() const;
-    std::vector<Scalar> getPrimaryVarsDomain(const int domainIdx) const;
-    void setPrimaryVarsDomain(const int domainIdx, const std::vector<Scalar>& vars);
+    std::vector<Scalar> getPrimaryVarsDomain(const long long domainIdx) const;
+    void setPrimaryVarsDomain(const long long domainIdx, const std::vector<Scalar>& vars);
 
     template<class Serializer>
     void serializeOp(Serializer& serializer)
@@ -360,56 +360,56 @@ protected:
     void initializeWellProdIndCalculators();
     void initializeWellPerfData();
 
-    bool wasDynamicallyShutThisTimeStep(const int well_index) const;
+    bool wasDynamicallyShutThisTimeStep(const long long well_index) const;
 
-    Scalar updateNetworkPressures(const int reportStepIdx,
+    Scalar updateNetworkPressures(const long long reportStepIdx,
                                   const Scalar damping_factor);
 
     void updateWsolvent(const Group& group,
-                        const int reportStepIdx,
+                        const long long reportStepIdx,
                         const WellState<Scalar>& wellState);
     void setWsolvent(const Group& group,
-                     const int reportStepIdx,
+                     const long long reportStepIdx,
                      Scalar wsolvent);
-    virtual void calcResvCoeff(const int fipnum,
-                               const int pvtreg,
+    virtual void calcResvCoeff(const long long fipnum,
+                               const long long pvtreg,
                                const std::vector<Scalar>& production_rates,
                                std::vector<Scalar>& resv_coeff) = 0;
-    virtual void calcInjResvCoeff(const int fipnum,
-                                  const int pvtreg,
+    virtual void calcInjResvCoeff(const long long fipnum,
+                                  const long long pvtreg,
                                   std::vector<Scalar>& resv_coeff) = 0;
 
     void assignShutConnections(data::Wells& wsrpt,
-                               const int reportStepIndex) const;
+                               const long long reportStepIndex) const;
     void assignWellTargets(data::Wells& wsrpt) const;
     void assignProductionWellTargets(const Well& well, data::WellControlLimits& limits) const;
     void assignInjectionWellTargets(const Well& well, data::WellControlLimits& limits) const;
     void assignGroupControl(const Group& group,
                             data::GroupData& gdata) const;
-    void assignGroupValues(const int reportStepIdx,
+    void assignGroupValues(const long long reportStepIdx,
                            std::map<std::string, data::GroupData>& gvalues) const;
     void assignNodeValues(std::map<std::string, data::NodeData>& nodevalues,
-                          const int reportStepIdx) const;
+                          const long long reportStepIdx) const;
 
-    void calculateEfficiencyFactors(const int reportStepIdx);
+    void calculateEfficiencyFactors(const long long reportStepIdx);
 
     void checkGconsaleLimits(const Group& group,
                              WellState<Scalar>& well_state,
-                             const int reportStepIdx,
+                             const long long reportStepIdx,
                              DeferredLogger& deferred_logger);
 
     void checkGEconLimits(const Group& group,
                           const double simulation_time,
-                          const int report_step_idx,
+                          const long long report_step_idx,
                           DeferredLogger& deferred_logger);
 
     bool checkGroupHigherConstraints(const Group& group,
                                      DeferredLogger& deferred_logger,
-                                     const int reportStepIdx,
-                                     const int max_number_of_group_switch);
+                                     const long long reportStepIdx,
+                                     const long long max_number_of_group_switch);
 
-    void updateAndCommunicateGroupData(const int reportStepIdx,
-                                       const int iterationIdx,
+    void updateAndCommunicateGroupData(const long long reportStepIdx,
+                                       const long long iterationIdx,
                                        const Scalar tol_nupcol,
                                        DeferredLogger& deferred_logger);
 
@@ -424,7 +424,7 @@ protected:
                                    DeferredLogger& deferred_logger) = 0;
 
     // Calculating well potentials for each well
-    void updateWellPotentials(const int reportStepIdx,
+    void updateWellPotentials(const long long reportStepIdx,
                               const bool onlyAfterEvent,
                               const SummaryConfig& summaryConfig,
                               DeferredLogger& deferred_logger);
@@ -441,22 +441,22 @@ protected:
     void updateFiltrationModelsPreStep(DeferredLogger& deferred_logger);
 
     // create the well container
-    virtual void createWellContainer(const int time_step) = 0;
-    virtual void initWellContainer(const int reportStepIdx) = 0;
+    virtual void createWellContainer(const long long time_step) = 0;
+    virtual void initWellContainer(const long long reportStepIdx) = 0;
 
-    virtual void calculateProductivityIndexValuesShutWells(const int reportStepIdx,
+    virtual void calculateProductivityIndexValuesShutWells(const long long reportStepIdx,
                                                            DeferredLogger& deferred_logger) = 0;
     virtual void calculateProductivityIndexValues(DeferredLogger& deferred_logger) = 0;
 
-    void runWellPIScaling(const int reportStepIdx,
+    void runWellPIScaling(const long long reportStepIdx,
                           DeferredLogger& local_deferredLogger);
 
     /// \brief get compressed index for interior cells (-1, otherwise
-    virtual int compressedIndexForInterior(int cartesian_cell_idx) const = 0;
+    virtual long long compressedIndexForInterior(long long cartesian_cell_idx) const = 0;
 
-    std::vector<std::vector<int>> getMaxWellConnections() const;
+    std::vector<std::vector<long long>> getMaxWellConnections() const;
 
-    std::vector<std::string> getWellsForTesting(const int timeStepIdx,
+    std::vector<std::string> getWellsForTesting(const long long timeStepIdx,
                                                 const double simulationTime);
 
     using WellTracerRates = std::map<std::pair<std::string, std::string>, Scalar>;
@@ -481,7 +481,7 @@ protected:
     bool initial_step_{};
     bool report_step_starts_{};
 
-    std::optional<int> last_run_wellpi_{};
+    std::optional<long long> last_run_wellpi_{};
 
     std::vector<Well> wells_ecl_;
     std::vector<std::vector<PerforationData<Scalar>>> well_perf_data_;
@@ -498,14 +498,14 @@ protected:
     // a vector of all the wells.
     std::vector<WellInterfaceGeneric<Scalar>*> well_container_generic_{};
 
-    std::vector<int> local_shut_wells_{};
+    std::vector<long long> local_shut_wells_{};
 
     std::vector<ParallelWellInfo<Scalar>> parallel_well_info_;
     std::vector<std::reference_wrapper<ParallelWellInfo<Scalar>>> local_parallel_well_info_;
 
     std::vector<WellProdIndexCalculator<Scalar>> prod_index_calc_;
 
-    std::vector<int> pvt_region_idx_;
+    std::vector<long long> pvt_region_idx_;
 
     mutable std::unordered_set<std::string> closed_this_step_;
 
@@ -538,19 +538,19 @@ protected:
     std::map<std::string, std::pair<std::string, std::string>> closed_offending_wells_;
 
     // Keep track of the domain of each well, if using subdomains.
-    std::map<std::string, int> well_domain_;
+    std::map<std::string, long long> well_domain_;
 
 private:
     WellInterfaceGeneric<Scalar>* getGenWell(const std::string& well_name);
 
     template <typename Iter, typename Body>
-    void wellUpdateLoop(Iter first, Iter last, const int timeStepIdx, Body&& body);
+    void wellUpdateLoop(Iter first, Iter last, const long long timeStepIdx, Body&& body);
 
-    void updateEclWellsConstraints(const int timeStepIdx,
+    void updateEclWellsConstraints(const long long timeStepIdx,
                                    const SimulatorUpdate& sim_update,
                                    const SummaryState& st);
 
-    void updateEclWellsCTFFromAction(const int timeStepIdx,
+    void updateEclWellsCTFFromAction(const long long timeStepIdx,
                                      const SimulatorUpdate& sim_update);
 };
 

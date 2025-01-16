@@ -33,7 +33,7 @@ namespace Opm {
 
 template<class Scalar>
 Scalar VFPProdProperties<Scalar>::
-thp(const int    table_id,
+thp(const long long    table_id,
     const Scalar aqua,
     const Scalar liquid,
     const Scalar vapour,
@@ -54,7 +54,7 @@ thp(const int    table_id,
     }
 
     const std::vector<double> thp_array = table.getTHPAxis();
-    int nthp = thp_array.size();
+    long long nthp = thp_array.size();
 
     /**
      * Find the function bhp_array(thp) by creating a 1D view of the data
@@ -66,7 +66,7 @@ thp(const int    table_id,
     auto gfr_i = VFPHelpers<Scalar>::findInterpData( gfr, table.getGFRAxis());
     auto alq_i = VFPHelpers<Scalar>::findInterpData( alq, table.getALQAxis());
     std::vector<Scalar> bhp_array(nthp);
-    for (int i = 0; i < nthp; ++i) {
+    for (long long i = 0; i < nthp; ++i) {
         auto thp_i = VFPHelpers<Scalar>::findInterpData(thp_array[i], thp_array);
         bhp_array[i] = VFPHelpers<Scalar>::interpolate(table, flo_i, thp_i, wfr_i, gfr_i, alq_i).value;
     }
@@ -76,7 +76,7 @@ thp(const int    table_id,
 
 template<class Scalar>
 Scalar VFPProdProperties<Scalar>::
-bhp(const int     table_id,
+bhp(const long long     table_id,
      const Scalar aqua,
      const Scalar liquid,
      const Scalar vapour,
@@ -96,13 +96,13 @@ bhp(const int     table_id,
 
 template<class Scalar>
 const VFPProdTable&
-VFPProdProperties<Scalar>::getTable(const int table_id) const
+VFPProdProperties<Scalar>::getTable(const long long table_id) const
 {
     return detail::getTable(m_tables, table_id);
 }
 
 template<class Scalar>
-bool VFPProdProperties<Scalar>::hasTable(const int table_id) const
+bool VFPProdProperties<Scalar>::hasTable(const long long table_id) const
 {
     return detail::hasTable(m_tables, table_id);
 }
@@ -111,7 +111,7 @@ template<class Scalar>
 std::vector<Scalar>
 VFPProdProperties<Scalar>::
 bhpwithflo(const std::vector<Scalar>& flos,
-           const int table_id,
+           const long long table_id,
            const Scalar wfr,
            const Scalar gfr,
            const Scalar thp,
@@ -140,7 +140,7 @@ bhpwithflo(const std::vector<Scalar>& flos,
 
 template<class Scalar>
 Scalar VFPProdProperties<Scalar>::
-minimumBHP(const int table_id,
+minimumBHP(const long long table_id,
            const Scalar thp,
            const Scalar wfr,
            const Scalar gfr,
@@ -162,7 +162,7 @@ void VFPProdProperties<Scalar>::addTable(const VFPProdTable& new_table)
 template<class Scalar>
 template <class EvalWell>
 EvalWell VFPProdProperties<Scalar>::
-bhp(const int       table_id,
+bhp(const long long       table_id,
     const EvalWell& aqua,
     const EvalWell& liquid,
     const EvalWell& vapour,
@@ -203,7 +203,7 @@ bhp(const int       table_id,
 
 #define INSTANTIATE(T,...)                        \
     template __VA_ARGS__                          \
-    VFPProdProperties<T>::bhp(const int,          \
+    VFPProdProperties<T>::bhp(const long long,          \
                               const __VA_ARGS__&, \
                               const __VA_ARGS__&, \
                               const __VA_ARGS__&, \

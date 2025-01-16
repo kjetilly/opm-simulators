@@ -41,31 +41,31 @@ namespace Opm {
  *
  * \tparam PVOffset The first index in a primary variable vector.
  */
-template <class TypeTag, int PVOffset>
+template <class TypeTag, long long PVOffset>
 class PvsIndices
     : public EnergyIndices<PVOffset + getPropValue<TypeTag, Properties::NumComponents>(),
                            getPropValue<TypeTag, Properties::EnableEnergy>()>
 {
-    static constexpr int numComponents = getPropValue<TypeTag, Properties::NumComponents>();
+    static constexpr long long numComponents = getPropValue<TypeTag, Properties::NumComponents>();
     enum { enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>() };
     using EnergyIndices = Opm::EnergyIndices<PVOffset + numComponents, enableEnergy>;
 
 public:
     //! Number of partial differential equations or primary variables, respectively
-    static const int numEq = numComponents + EnergyIndices::numEq_;
+    static const long long numEq = numComponents + EnergyIndices::numEq_;
 
     // Primary variable indices
 
     //! Index for the pressure of the first phase
-    static const int pressure0Idx = PVOffset + 0;
+    static const long long pressure0Idx = PVOffset + 0;
     //! Index of the either the saturation or the mole
     //! fraction of the phase with the lowest index
-    static const int switch0Idx = PVOffset + 1;
+    static const long long switch0Idx = PVOffset + 1;
 
     // equation indices
 
     //! Index of the mass conservation equation for the first component
-    static const int conti0EqIdx = PVOffset;
+    static const long long conti0EqIdx = PVOffset;
 };
 
 } // namespace Opm

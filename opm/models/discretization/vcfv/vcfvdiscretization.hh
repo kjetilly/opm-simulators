@@ -115,7 +115,7 @@ template <class TypeTag>
 struct DummySpaceVcfv {
     using DiscreteFunctionSpace = GetPropType<TypeTag, Properties::DiscreteFunctionSpace>;
     DummySpaceVcfv(const DiscreteFunctionSpace&) {};
-    DummySpaceVcfv(const int&) {};
+    DummySpaceVcfv(const long long&) {};
 };
 
 template <class TypeTag>

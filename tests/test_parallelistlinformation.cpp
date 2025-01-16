@@ -34,8 +34,8 @@
 template<typename T>
 void runSumMaxMinTest(const T offset)
 {
-    const int N=100;
-    int start, end, istart, iend;
+    const long long N=100;
+    long long start, end, istart, iend;
     std::tie(start,istart,iend,end) = computeRegions(N);
     Opm::ParallelISTLInformation comm(MPI_COMM_WORLD);
     auto mat = create1DLaplacian(*comm.indexSet(), N, start, end, istart, iend);
@@ -65,10 +65,10 @@ void runSumMaxMinTest(const T offset)
 
 BOOST_AUTO_TEST_CASE(tupleReductionTestInt)
 {
-    runSumMaxMinTest<int>(-200);
-    runSumMaxMinTest<int>(0);
-    runSumMaxMinTest<int>(20);
-    runSumMaxMinTest<int>(-20);
+    runSumMaxMinTest<long long>(-200);
+    runSumMaxMinTest<long long>(0);
+    runSumMaxMinTest<long long>(20);
+    runSumMaxMinTest<long long>(-20);
 }
 
 BOOST_AUTO_TEST_CASE(tupleReductionTestUnsignedInt)
@@ -86,18 +86,18 @@ BOOST_AUTO_TEST_CASE(tupleReductionTestFloat)
 
 BOOST_AUTO_TEST_CASE(singleContainerReductionTest)
 {
-    int N=100;
-    int start, end, istart, iend;
+    long long N=100;
+    long long start, end, istart, iend;
     std::tie(start,istart,iend,end) = computeRegions(N);
     Opm::ParallelISTLInformation comm(MPI_COMM_WORLD);
     auto mat = create1DLaplacian(*comm.indexSet(), N, start, end, istart, iend);
-    std::vector<int> x(end-start);
+    std::vector<long long> x(end-start);
     assert(comm.indexSet()->size()==x.size());
     for(auto it=comm.indexSet()->begin(), itend=comm.indexSet()->end(); it!=itend; ++it)
         x[it->local()]=it->global();
-    int value = 1;
-    int oldvalue = value;
-    comm.computeReduction(x,Opm::Reduction::makeGlobalSumFunctor<int>(),value);
+    long long value = 1;
+    long long oldvalue = value;
+    comm.computeReduction(x,Opm::Reduction::makeGlobalSumFunctor<long long>(),value);
     BOOST_CHECK(value==oldvalue+((N-1)*N)/2);
 }
 #endif

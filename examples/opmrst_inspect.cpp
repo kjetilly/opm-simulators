@@ -32,7 +32,7 @@
 #include <iostream>
 #include <string>
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     if (argc < 2) {
         std::cerr << "Need one parameter, the .OPMRST file to inspect\n";
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
 
     Opm::HDF5Serializer ser(argv[1], Opm::HDF5File::OpenMode::READ, comm);
 
-    std::tuple<std::array<std::string,5>,int> header;
+    std::tuple<std::array<std::string,5>,long long> header;
     try {
         ser.read(header, "/", "simulator_info", Opm::HDF5File::DataSetMode::ROOT_ONLY);
     } catch(...) {
@@ -66,8 +66,8 @@ int main(int argc, char** argv)
                              strings[0], strings[1], strings[2], strings[3], procs);
 
     std::cout << fmt::format("\tLast report step: {}\n", ser.lastReportStep());
-    const std::vector<int> reportSteps = ser.reportSteps();
-    for (int step : reportSteps) {
+    const std::vector<long long> reportSteps = ser.reportSteps();
+    for (long long step : reportSteps) {
         Opm::SimulatorTimer timer;
         try {
             ser.read(timer, fmt::format("/report_step/{}", step),

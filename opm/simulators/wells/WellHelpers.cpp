@@ -54,10 +54,10 @@ mv (const X& x, Y& y) const
 #if !defined(NDEBUG) && HAVE_MPI
     // We need to make sure that all ranks are actually computing
     // for the same well. Doing this by checking the name of the well.
-    int cstring_size = parallel_well_info_.name().size()+1;
-    std::vector<int> sizes(parallel_well_info_.communication().size());
+    long long cstring_size = parallel_well_info_.name().size()+1;
+    std::vector<long long> sizes(parallel_well_info_.communication().size());
     parallel_well_info_.communication().allgather(&cstring_size, 1, sizes.data());
-    std::vector<int> offsets(sizes.size()+1, 0); //last entry will be accumulated size
+    std::vector<long long> offsets(sizes.size()+1, 0); //last entry will be accumulated size
     std::partial_sum(sizes.begin(), sizes.end(), offsets.begin() + 1);
     std::vector<char> cstrings(offsets[sizes.size()]);
     bool consistentWells = true;
@@ -215,7 +215,7 @@ bool rateControlWithZeroInjTarget(const WellInjectionControls& controls,
     }
 }
 
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using Vec = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
 template<class Scalar>
 using DynVec = Dune::BlockVector<Dune::DynamicVector<Scalar>>;

@@ -42,13 +42,13 @@ namespace Opm::gpuistl {
     */
     void printDevice()
     {
-        int mpiRank = 0;
+        long long mpiRank = 0;
 #if HAVE_CUDA
 #if HAVE_MPI
         mpiRank = FlowGenericVanguard::comm().rank();
 #endif
 
-        int deviceCount = -1;
+        long long deviceCount = -1;
         OPM_GPU_WARN_IF_ERROR(cudaGetDeviceCount(&deviceCount));
 
         auto deferred_logger = ::Opm::DeferredLogger();

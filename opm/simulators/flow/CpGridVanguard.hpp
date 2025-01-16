@@ -101,7 +101,7 @@ public:
     using EquilGrid = GetPropType<TypeTag, Properties::EquilGrid>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using TransmissibilityType = Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>;
-    static constexpr int dimensionworld = Grid::dimensionworld;
+    static constexpr long long dimensionworld = Grid::dimensionworld;
     using Indices = GetPropType<TypeTag, Properties::Indices>;
     static constexpr bool waterEnabled = Indices::waterEnabled;
     static constexpr bool gasEnabled = Indices::gasEnabled;
@@ -246,11 +246,11 @@ public:
 #endif
     }
 
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
+    size_t gridEquilIdxToGridIdx(size_t elemIndex) const {
          return elemIndex;
      }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    size_t gridIdxToEquilGridIdx(size_t elemIndex) const {
         return elemIndex;
     }
     /*!
@@ -260,13 +260,13 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,dimensionworld>(int)>
+    std::function<std::array<double,dimensionworld>(long long)>
     cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), true);
     }
 
-    const std::vector<int>& globalCell()
+    const std::vector<long long>& globalCell()
     {
         return this->grid().globalCell();
     }

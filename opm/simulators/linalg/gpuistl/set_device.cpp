@@ -27,9 +27,9 @@
 namespace Opm::gpuistl
 {
 void
-setDevice(int mpiRank, [[maybe_unused]] int numberOfMpiRanks)
+setDevice(long long mpiRank, [[maybe_unused]] long long numberOfMpiRanks)
 {
-    int deviceCount = -1;
+    long long deviceCount = -1;
     [[maybe_unused]] auto cuError = cudaGetDeviceCount(&deviceCount);
 
     if (deviceCount <= 0) {

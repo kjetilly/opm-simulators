@@ -46,19 +46,19 @@ namespace detail
     /// \param useWellConn Boolean that is true when UseWellContribusion is true
     /// \param wellGraph Cell IDs of well cells stored in a graph.
     template<class Grid, class CartMapper, class W>
-    void setWellConnections(const Grid& grid, const CartMapper& cartMapper, const W& wells, const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections, bool useWellConn, std::vector<std::set<int>>& wellGraph, int numJacobiBlocks)
+    void setWellConnections(const Grid& grid, const CartMapper& cartMapper, const W& wells, const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections, bool useWellConn, std::vector<std::set<long long>>& wellGraph, long long numJacobiBlocks)
     {
         if ( grid.comm().size() > 1 || numJacobiBlocks > 1)
         {
-            const int numCells = cartMapper.compressedSize(); // grid.numCells()
+            const long long numCells = cartMapper.compressedSize(); // grid.numCells()
             wellGraph.resize(numCells);
 
             if (useWellConn) {
                 const auto& cpgdim = cartMapper.cartesianDimensions();
 
-                std::vector<int> cart(cpgdim[0]*cpgdim[1]*cpgdim[2], -1);
+                std::vector<long long> cart(cpgdim[0]*cpgdim[1]*cpgdim[2], -1);
 
-                for( int i=0; i < numCells; ++i )
+                for( long long i=0; i < numCells; ++i )
                     cart[ cartMapper.cartesianIndex( i ) ] = i;
 
                 Dune::cpgrid::WellConnections well_indices;
@@ -89,8 +89,8 @@ namespace detail
     /// \param overlapRows List where overlap rows are stored.
     /// \param interiorRows List where overlap rows are stored.
     template<class Grid, class Mapper>
-    void findOverlapAndInterior(const Grid& grid, const Mapper& mapper, std::vector<int>& overlapRows,
-                                std::vector<int>& interiorRows)
+    void findOverlapAndInterior(const Grid& grid, const Mapper& mapper, std::vector<long long>& overlapRows,
+                                std::vector<long long>& interiorRows)
     {
         //only relevant in parallel case.
         if ( grid.comm().size() > 1)
@@ -100,7 +100,7 @@ namespace detail
             //loop over cells in mesh
             for (const auto& elem : elements(gridView))
             {
-                int lcell = mapper.index(elem);
+                long long lcell = mapper.index(elem);
 
                 if (elem.partitionType() != Dune::InteriorEntity)
                 {

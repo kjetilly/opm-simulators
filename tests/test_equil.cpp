@@ -136,14 +136,14 @@ cellVerticalExtent(const GridView& gridView)
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     ElementMapper elemMapper(gridView, Dune::mcmgElementLayout());
 
-    int numElements = gridView.size(/*codim=*/0);
+    long long numElements = gridView.size(/*codim=*/0);
     std::vector<std::pair<double,double>> cellZMinMax(numElements);
 
     auto elemIt = gridView.template begin</*codim=*/0>();
     const auto& elemEndIt = gridView.template end</*codim=*/0>();
     for (; elemIt != elemEndIt; ++elemIt) {
         const auto& element = *elemIt;
-        const unsigned int elemIdx = elemMapper.index(element);
+        const size_t elemIdx = elemMapper.index(element);
         cellZMinMax[elemIdx] = Opm::EQUIL::Details::cellZMinMax<double>(element);
     }
     return cellZMinMax;
@@ -231,7 +231,7 @@ double centerDepth(const Simulator& sim, const std::size_t cell)
 
 struct EquilFixture {
     EquilFixture() {
-        int argc = boost::unit_test::framework::master_test_suite().argc;
+        long long argc = boost::unit_test::framework::master_test_suite().argc;
         char** argv = boost::unit_test::framework::master_test_suite().argv;
 #if HAVE_DUNE_FEM
         Dune::Fem::MPIManager::initialize(argc, argv);
@@ -294,7 +294,7 @@ BOOST_AUTO_TEST_CASE(PhasePressure)
 
     auto vspan = std::array<double, 2>{};
     {
-        auto cells = std::vector<int>(simulator->vanguard().grid().size(0));
+        auto cells = std::vector<long long>(simulator->vanguard().grid().size(0));
         std::iota(cells.begin(), cells.end(), 0);
 
         Opm::EQUIL::Details::verticalExtent(cells, cellVerticalExtent(simulator->vanguard().gridView()),
@@ -377,21 +377,21 @@ BOOST_AUTO_TEST_CASE(CellSubset)
         0)
     };
 
-    const int cdim[] = { 2, 1, 2 };
-    int ncoarse = cdim[0];
+    const long long cdim[] = { 2, 1, 2 };
+    long long ncoarse = cdim[0];
     for (std::size_t d = 1; d < 3; ++d) { ncoarse *= cdim[d]; }
 
-    std::vector< std::vector<int> > cells(ncoarse);
-    for (int c = 0; c < simulator->vanguard().grid().size(0); ++c) {
-        int ci = c;
-        const int i = ci % grid.cartdims[0];  ci /= grid.cartdims[0];
-        const int j = ci % grid.cartdims[1];
-        const int k = ci / grid.cartdims[1];
+    std::vector< std::vector<long long> > cells(ncoarse);
+    for (long long c = 0; c < simulator->vanguard().grid().size(0); ++c) {
+        long long ci = c;
+        const long long i = ci % grid.cartdims[0];  ci /= grid.cartdims[0];
+        const long long j = ci % grid.cartdims[1];
+        const long long k = ci / grid.cartdims[1];
 
-        const int ic = (i / (grid.cartdims[0] / cdim[0]));
-        const int jc = (j / (grid.cartdims[1] / cdim[1]));
-        const int kc = (k / (grid.cartdims[2] / cdim[2]));
-        const int ix = ic + cdim[0]*(jc + cdim[1]*kc);
+        const long long ic = (i / (grid.cartdims[0] / cdim[0]));
+        const long long jc = (j / (grid.cartdims[1] / cdim[1]));
+        const long long kc = (k / (grid.cartdims[2] / cdim[2]));
+        const long long ix = ic + cdim[0]*(jc + cdim[1]*kc);
 
         assert ((0 <= ix) && (ix < ncoarse));
         cells[ix].push_back(c);
@@ -399,7 +399,7 @@ BOOST_AUTO_TEST_CASE(CellSubset)
 
     auto vspan = std::array<double, 2>{};
     {
-        auto vspancells = std::vector<int>(simulator->vanguard().grid().size(0));
+        auto vspancells = std::vector<long long>(simulator->vanguard().grid().size(0));
         std::iota(vspancells.begin(), vspancells.end(), 0);
 
         Opm::EQUIL::Details::verticalExtent(vspancells, cellVerticalExtent(simulator->vanguard().gridView()),
@@ -413,7 +413,7 @@ BOOST_AUTO_TEST_CASE(CellSubset)
 
     auto ppress = PPress(2, PVal(simulator->vanguard().grid().size(0), 0.0));
     for (auto r = cells.begin(), e = cells.end(); r != e; ++r) {
-        const int rno = int(r - cells.begin());
+        const long long rno = (long long)(r - cells.begin());
 
         ptable.equilibrate(region[rno], vspan);
 
@@ -426,7 +426,7 @@ BOOST_AUTO_TEST_CASE(CellSubset)
         }
     }
 
-    const int first = 0, last = simulator->vanguard().grid().size(0) - 1;
+    const long long first = 0, last = simulator->vanguard().grid().size(0) - 1;
     const double reltol = 1.0e-6;
     BOOST_CHECK_CLOSE(ppress[FluidSystem::waterPhaseIdx][first] , 105e3   , reltol);
     BOOST_CHECK_CLOSE(ppress[FluidSystem::waterPhaseIdx][last ] , 195e3   , reltol);
@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(RegMapping)
 
     auto vspan = std::array<double, 2>{};
     {
-        auto cells = std::vector<int>(simulator->vanguard().grid().size(0));
+        auto cells = std::vector<long long>(simulator->vanguard().grid().size(0));
         std::iota(cells.begin(), cells.end(), 0);
 
         Opm::EQUIL::Details::verticalExtent(cells, cellVerticalExtent(simulator->vanguard().gridView()),
@@ -505,22 +505,22 @@ BOOST_AUTO_TEST_CASE(RegMapping)
         FluidSystem, Opm::EQUIL::EquilReg<double>
     >{ grav };
 
-    std::vector<int> eqlnum(simulator->vanguard().grid().size(0));
+    std::vector<long long> eqlnum(simulator->vanguard().grid().size(0));
     // [ 0 1; 2 3]
     {
-        for (int i = 0; i < 5; ++i) {
-            for (int j = 0; j < 5; ++j) {
+        for (long long i = 0; i < 5; ++i) {
+            for (long long j = 0; j < 5; ++j) {
                 eqlnum[i*10 + j] = 0;
             }
-            for (int j = 5; j < 10; ++j) {
+            for (long long j = 5; j < 10; ++j) {
                 eqlnum[i*10 + j] = 1;
             }
         }
-        for (int i = 5; i < 10; ++i) {
-            for (int j = 0; j < 5; ++j) {
+        for (long long i = 5; i < 10; ++i) {
+            for (long long j = 0; j < 5; ++j) {
                 eqlnum[i*10 + j] = 2;
             }
-            for (int j = 5; j < 10; ++j) {
+            for (long long j = 5; j < 10; ++j) {
                 eqlnum[i*10 + j] = 3;
             }
         }
@@ -540,7 +540,7 @@ BOOST_AUTO_TEST_CASE(RegMapping)
         }
     }
 
-    const int first = 0, last = simulator->vanguard().grid().size(0) - 1;
+    const long long first = 0, last = simulator->vanguard().grid().size(0) - 1;
     const double reltol = 1.0e-6;
     BOOST_CHECK_CLOSE(ppress[FluidSystem::waterPhaseIdx][first] , 105e3   , reltol);
     BOOST_CHECK_CLOSE(ppress[FluidSystem::waterPhaseIdx][last ] , 195e3   , reltol);
@@ -563,9 +563,9 @@ BOOST_AUTO_TEST_CASE(DeckAllDead)
                                     simulator->vanguard().cartesianMapper(), 10.0);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -585,10 +585,10 @@ BOOST_AUTO_TEST_CASE(CapillaryInversion)
     auto simulator = initSimulator<TypeTag>("equil_capillary.DATA");
 
     // Test the capillary inversion for oil-water.
-    const int cell = 0;
+    const long long cell = 0;
     const double reltol = 1.0e-5;
     {
-        const int phase = FluidSystem::waterPhaseIdx;
+        const long long phase = FluidSystem::waterPhaseIdx;
         const bool increasing = false;
         const std::vector<double> pc = { 10.0e5, 0.5e5, 0.4e5, 0.3e5, 0.2e5, 0.1e5, 0.099e5, 0.0e5, -10.0e5 };
         const std::vector<double> s = { 0.2, 0.2, 0.2, 0.466666666666, 0.733333333333, 1.0, 1.0, 1.0, 1.0 };
@@ -601,7 +601,7 @@ BOOST_AUTO_TEST_CASE(CapillaryInversion)
 
     // Test the capillary inversion for gas-oil.
     {
-        const int phase = FluidSystem::gasPhaseIdx;
+        const long long phase = FluidSystem::gasPhaseIdx;
         const bool increasing = true;
         const std::vector<double> pc = { 10.0e5, 0.6e5, 0.5e5, 0.4e5, 0.3e5, 0.2e5, 0.1e5, 0.0e5, -10.0e5 };
         const std::vector<double> s = { 0.8, 0.8, 0.8, 0.533333333333, 0.266666666666, 0.0, 0.0, 0.0, 0.0 };
@@ -614,8 +614,8 @@ BOOST_AUTO_TEST_CASE(CapillaryInversion)
 
     // Test the capillary inversion for gas-water.
     {
-        const int water = FluidSystem::waterPhaseIdx;
-        const int gas = FluidSystem::gasPhaseIdx;
+        const long long water = FluidSystem::waterPhaseIdx;
+        const long long gas = FluidSystem::gasPhaseIdx;
         const std::vector<double> pc = { 0.9e5, 0.8e5, 0.6e5, 0.4e5, 0.3e5 };
         const std::vector<double> s = { 0.2, 0.333333333333, 0.6, 0.866666666666, 1.0 };
         BOOST_REQUIRE_EQUAL(pc.size(), s.size());
@@ -643,9 +643,9 @@ BOOST_AUTO_TEST_CASE(DeckWithCapillary)
 
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -660,7 +660,7 @@ BOOST_AUTO_TEST_CASE(DeckWithCapillary)
     s[FluidSystem::waterPhaseIdx] = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.42190294373815257, 0.77800802072306474, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     s[FluidSystem::oilPhaseIdx]   = { 0, 0, 0, 0.0073481611123183965, 0.79272270823081337, 0.8, 0.8, 0.8, 0.8, 0.57809705626184749, 0.22199197927693526, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s[FluidSystem::gasPhaseIdx]   = { 0.8, 0.8, 0.8, 0.79265183888768165, 0.0072772917691866562, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s[phase].size());
         for (size_t i = 0; i < s[phase].size(); ++i) {
             BOOST_CHECK_CLOSE(sats[phase][i], s[phase][i], reltol);
@@ -684,9 +684,9 @@ BOOST_AUTO_TEST_CASE(DeckWithCapillaryOverlap)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -720,7 +720,7 @@ BOOST_AUTO_TEST_CASE(DeckWithCapillaryOverlap)
     s_opm[FluidSystem::waterPhaseIdx] = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.22892931226886132,  0.53406457830052489, 0.78457075254244724, 0.91539712466977541, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     s_opm[FluidSystem::oilPhaseIdx] = { 0,   0,   0,   0,   0,   0,   0,   0,                   0,                   0.20023624994125844,   0.084602875330224592, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx] = { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.77107068773113863, 0.46593542169947511, 0.015192997516294321, 0,      0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             //std::cout << std::setprecision(10) << sats[phase][i] << '\n';
@@ -747,9 +747,9 @@ BOOST_AUTO_TEST_CASE(DeckWithLiveOil)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -782,7 +782,7 @@ BOOST_AUTO_TEST_CASE(DeckWithLiveOil)
     s_opm[FluidSystem::waterPhaseIdx] = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.22916963446461344, 0.53430490523774521, 0.78471886612242092, 0.91528324362210933, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     s_opm[FluidSystem::oilPhaseIdx] = { 0,   0,   0,   0,   0,   0,   0,   0,            0,            0.20057438297017782,   0.084716756377890667, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx] = { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.77083036553538653, 0.46569509476225479, 0.014706750907401245,  0,       0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             //std::cout << std::setprecision(10) << sats[phase][i] << '\n';
@@ -834,16 +834,16 @@ BOOST_AUTO_TEST_CASE(DeckWithCO2STORE)
     const double reltol = 1.0e-5;
     const auto& pressures_go = comp_go.press();
     BOOST_REQUIRE_EQUAL(pressures_go.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures_go[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures_go[0].size()), grid.number_of_cells);
 
     const auto& pressures_gw = comp_gw.press();
     BOOST_REQUIRE_EQUAL(pressures_gw.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures_gw[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures_gw[0].size()), grid.number_of_cells);
 
     const auto& sats_go = comp_go.saturation();
     const auto& sats_gw = comp_gw.saturation();
 
-    for (int i = 0; i < grid.number_of_cells; ++i) {
+    for (long long i = 0; i < grid.number_of_cells; ++i) {
         BOOST_CHECK_CLOSE(pressures_go[FluidSystem::gasPhaseIdx][i],  pressures_gw[FluidSystem::gasPhaseIdx][i], reltol);
         BOOST_CHECK_CLOSE(pressures_go[FluidSystem::oilPhaseIdx][i], pressures_gw[FluidSystem::waterPhaseIdx][i], reltol);
 
@@ -868,9 +868,9 @@ BOOST_AUTO_TEST_CASE(DeckWithWetGas)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -903,7 +903,7 @@ BOOST_AUTO_TEST_CASE(DeckWithWetGas)
     s_opm[FluidSystem::waterPhaseIdx] = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.24310545, 0.5388, 0.78458,    0.91540, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     s_opm[FluidSystem::oilPhaseIdx] =   { 0,   0,   0,   0,   0,   0,   0,   0,          0,      0.18288667, 0.0846,  0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx] =   { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.75689455, 0.4612, 0.03253333, 0,       0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             //std::cout << std::setprecision(10) << sats[phase][i] << '\n';
@@ -951,9 +951,9 @@ BOOST_AUTO_TEST_CASE(DeckWithHumidWetGas)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     const double reltol = 1.0e-1;
     BOOST_CHECK_CLOSE(pressures[FluidSystem::waterPhaseIdx][first], 1.480599988e7, reltol);  
     BOOST_CHECK_CLOSE(pressures[FluidSystem::waterPhaseIdx][last],  1.549297524e7, reltol);
@@ -965,7 +965,7 @@ BOOST_AUTO_TEST_CASE(DeckWithHumidWetGas)
     s_opm[FluidSystem::waterPhaseIdx] = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.35838026, 0.64069098, 0.9154626,    1, 1, 1, 1, 1, 1, 1, 1, 1, 1 };
     s_opm[FluidSystem::oilPhaseIdx] =   { 0,   0,   0,   0,   0,   0,   0,   0,          0,      0.02738364, 0,  0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx] =   { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.64161973, 0.359309012, 0.057153701, 0,       0, 0, 0, 0, 0, 0, 0, 0, 0 };
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             BOOST_CHECK_CLOSE(sats[phase][i], s_opm[phase][i], 100.*reltol);
@@ -1011,9 +1011,9 @@ BOOST_AUTO_TEST_CASE(DeckWithRSVDAndRVVD)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -1048,7 +1048,7 @@ BOOST_AUTO_TEST_CASE(DeckWithRSVDAndRVVD)
     s_opm[FluidSystem::oilPhaseIdx]   = { 0,   0,   0,   0,   0,   0,   0,   0,          0, 0.19637607881498206, 0.08183487740583717, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx]   = { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.7776954288307103, 0.47117701424054126, 0.02210249613021811,    0,          0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             //std::cout << std::setprecision(10) << sats[phase][i] << '\n';
@@ -1113,9 +1113,9 @@ BOOST_AUTO_TEST_CASE(DeckWithPBVDAndPDVD)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     // The relative tolerance is too loose to be very useful,
     // but the answer we are checking is the result of an ODE
     // solver, and it is unclear if we should check it against
@@ -1140,7 +1140,7 @@ BOOST_AUTO_TEST_CASE(DeckWithPBVDAndPDVD)
     s_opm[FluidSystem::oilPhaseIdx] =   { 0,   0,   0,   0,   0,   0,   0,   0,          0, 0.18185970596719522, 0.084716763044819343, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx] =   { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.75742662687407303, 0.46165175235637212, 0.033640411881804465,    0,          0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             //std::cout << std::setprecision(10) << sats[phase][i] << '\n';
@@ -1208,9 +1208,9 @@ BOOST_AUTO_TEST_CASE(DeckWithRSVDAndRVVDAndRVWVD)
                                    simulator->vanguard().cartesianMapper(), 9.80665);
     const auto& pressures = comp.press();
     BOOST_REQUIRE_EQUAL(pressures.size(), 3U);
-    BOOST_REQUIRE_EQUAL(int(pressures[0].size()), grid.number_of_cells);
+    BOOST_REQUIRE_EQUAL((long long)(pressures[0].size()), grid.number_of_cells);
 
-    const int first = 0, last = grid.number_of_cells - 1;
+    const long long first = 0, last = grid.number_of_cells - 1;
     const double reltol = 1.0e-4;
     BOOST_CHECK_CLOSE(pressures[FluidSystem::waterPhaseIdx][first], 1.483359963e7, reltol);  
     BOOST_CHECK_CLOSE(pressures[FluidSystem::waterPhaseIdx][last],  1.549297524e7, reltol);
@@ -1223,7 +1223,7 @@ BOOST_AUTO_TEST_CASE(DeckWithRSVDAndRVVDAndRVWVD)
     s_opm[FluidSystem::oilPhaseIdx]   = { 0,   0,   0,   0,   0,   0,   0,   0,          0, 0.054786199472198836, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     s_opm[FluidSystem::gasPhaseIdx]   = { 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.8, 0.674721224210102681, 0.37023124132333829, 0.026418562022795279,    0,          0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         BOOST_REQUIRE_EQUAL(sats[phase].size(), s_opm[phase].size());
         for (size_t i = 0; i < s_opm[phase].size(); ++i) {
             BOOST_CHECK_CLOSE(sats[phase][i], s_opm[phase][i], reltol);
@@ -1272,7 +1272,7 @@ BOOST_AUTO_TEST_CASE(DeckWithSwatinit)
     const UnstructuredGrid& grid = *(gm.c_grid());
 
     // Create material law manager.
-    std::vector<int> compressedToCartesianIdx
+    std::vector<long long> compressedToCartesianIdx
         = Opm::compressedToCartesian(grid.number_of_cells, grid.global_cell);
     MaterialLawManager materialLawManager = MaterialLawManager();
     materialLawManager.initFromDeck(deck, eclipseState, compressedToCartesianIdx);
@@ -1315,9 +1315,9 @@ BOOST_AUTO_TEST_CASE(DeckWithSwatinit)
     FluidSystem::initFromDeck(deck, eclipseState);
 
     // reference pcs
-    const int numCells = Opm::UgGridHelpers::numCells(grid);
+    const long long numCells = Opm::UgGridHelpers::numCells(grid);
     std::vector<double> pc_original(numCells * FluidSystem::numPhases);
-    for (int c = 0; c < numCells; ++c) {
+    for (long long c = 0; c < numCells; ++c) {
         std::vector<double> pc = {0,0,0};
         double sw = s[FluidSystem::waterPhaseIdx][c];
         double so = s[FluidSystem::oilPhaseIdx][c];
@@ -1357,7 +1357,7 @@ BOOST_AUTO_TEST_CASE(DeckWithSwatinit)
 
     // compute pc
     std::vector<double> pc_scaled(numCells * FluidSystem::numPhases);
-    for (int c = 0; c < numCells; ++c) {
+    for (long long c = 0; c < numCells; ++c) {
         std::vector<double> pc = {0,0,0};
         double sw = compScaled.saturation().data()[FluidSystem::waterPhaseIdx][c];
         double so = compScaled.saturation().data()[FluidSystem::oilPhaseIdx][c];
@@ -1373,7 +1373,7 @@ BOOST_AUTO_TEST_CASE(DeckWithSwatinit)
         pc_scaled[3*c + 2] = pc[FluidSystem::oilPhaseIdx] + pc[FluidSystem::gasPhaseIdx];
     }
     std::vector<double> pc_unscaled(numCells * FluidSystem::numPhases);
-    for (int c = 0; c < numCells; ++c) {
+    for (long long c = 0; c < numCells; ++c) {
         std::vector<double> pc = {0,0,0};
         double sw = compUnscaled.saturation().data()[FluidSystem::waterPhaseIdx][c];
         double so = compUnscaled.saturation().data()[FluidSystem::oilPhaseIdx][c];
@@ -1392,14 +1392,14 @@ BOOST_AUTO_TEST_CASE(DeckWithSwatinit)
 
     // test
     const double reltol = 1.0e-1;
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         for (size_t i = 0; i < 20; ++i) {
             BOOST_CHECK_CLOSE( pc_original[3*i + phase ], pc_unscaled[3*i + phase ], reltol);
             BOOST_CHECK_CLOSE( pc_scaled_truth[3*i + phase], pc_scaled[3*i + phase ], reltol);
         }
     }
 
-    for (int phase = 0; phase < 3; ++phase) {
+    for (long long phase = 0; phase < 3; ++phase) {
         for (size_t i = 0; i < 20; ++i) {
             BOOST_CHECK_CLOSE(compUnscaled.saturation()[phase][i], s[phase][i], reltol);
             BOOST_CHECK_CLOSE(compScaled.saturation()[phase][i], swatinit[phase][i], reltol);

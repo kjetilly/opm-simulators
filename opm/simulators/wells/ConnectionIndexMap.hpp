@@ -50,11 +50,11 @@ public:
     ///
     /// \param[in] connIsOpen Whether or not the connection is
     ///   open/flowing.
-    void addActiveConnection(const int  connIdx,
+    void addActiveConnection(const long long  connIdx,
                              const bool connIsOpen)
     {
         this->local_[connIdx] =
-            static_cast<int>(this->global_.size());
+            static_cast<long long>(this->global_.size());
 
         this->global_.push_back(connIdx);
 
@@ -70,7 +70,7 @@ public:
     ///
     /// Negative value (-1) for connections that don't intersect the
     /// current rank.
-    const std::vector<int>& local() const
+    const std::vector<long long>& local() const
     {
         return this->local_;
     }
@@ -80,7 +80,7 @@ public:
     /// \param[in] connIdx Local connection index.
     ///
     /// \return Global connection ID of \p connIdx.
-    int global(const int connIdx) const
+    long long global(const long long connIdx) const
     {
         return this->global_[connIdx];
     }
@@ -92,7 +92,7 @@ public:
     /// \return Open connection ID of \p connIdx.  Integer in the range
     ///   0..#open connections - 1 if the connection is open or negative
     ///   value (-1) otherwise.
-    int open(const int connIdx) const
+    long long open(const long long connIdx) const
     {
         return this->open_[connIdx];
     }
@@ -101,17 +101,17 @@ private:
     /// Local connection IDs/indices of every existing well connection.
     /// Negative value (-1) for connections that don't intersect the
     /// current rank.
-    std::vector<int> local_{};
+    std::vector<long long> local_{};
 
     /// Global connection index of each on-rank reservoir connection.
     /// Reverse/transpose mapping of \c local_.
-    std::vector<int> global_{};
+    std::vector<long long> global_{};
 
     /// Open connection index of each on-rank reservoir connection.
-    std::vector<int> open_{};
+    std::vector<long long> open_{};
 
     /// Number of open connections on this rank.
-    int num_open_conns_{0};
+    long long num_open_conns_{0};
 };
 
 } // namespace Opm

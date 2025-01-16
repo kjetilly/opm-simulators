@@ -40,7 +40,7 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // Constructor
-    AquiferInterface(int aqID,
+    AquiferInterface(long long aqID,
                      const Simulator& simulator)
         : aquiferID_(aqID)
         , simulator_(simulator)
@@ -76,7 +76,7 @@ public:
                              const unsigned cellIdx,
                              const unsigned timeIdx) = 0;
 
-    int aquiferID() const { return this->aquiferID_; }
+    long long aquiferID() const { return this->aquiferID_; }
 
 protected:
     bool co2store_or_h2store_() const
@@ -85,7 +85,7 @@ protected:
         return rspec.co2Storage() || rspec.h2Storage();
     }
 
-    int phaseIdx_() const
+    long long phaseIdx_() const
     {
         // If OIL is used to model brine the aquifer should do the same
         if (co2store_or_h2store_() && FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx))
@@ -94,7 +94,7 @@ protected:
         return FluidSystem::waterPhaseIdx;
     }
 
-    const int aquiferID_{};
+    const long long aquiferID_{};
     const Simulator& simulator_;
 };
 

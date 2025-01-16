@@ -410,10 +410,10 @@ class BlackOilExtboIntensiveQuantities
     using ExtboModule = BlackOilExtboModule<TypeTag>;
 
     enum { numPhases = getPropValue<TypeTag, Properties::NumPhases>() };
-    static constexpr int zFractionIdx = Indices::zFractionIdx;
-    static constexpr int oilPhaseIdx = FluidSystem::oilPhaseIdx;
-    static constexpr int gasPhaseIdx = FluidSystem::gasPhaseIdx;
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long zFractionIdx = Indices::zFractionIdx;
+    static constexpr long long oilPhaseIdx = FluidSystem::oilPhaseIdx;
+    static constexpr long long gasPhaseIdx = FluidSystem::gasPhaseIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
     static constexpr double cutOff = 1e-12;
 
 
@@ -645,7 +645,7 @@ class BlackOilExtboExtensiveQuantities
     using Toolbox = MathToolbox<Evaluation>;
 
     static constexpr unsigned gasPhaseIdx = FluidSystem::gasPhaseIdx;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr long long dimWorld = GridView::dimensionworld;
 
     typedef Dune::FieldVector<Scalar, dimWorld> DimVector;
     typedef Dune::FieldVector<Evaluation, dimWorld> DimEvalVector;

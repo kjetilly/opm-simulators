@@ -39,7 +39,7 @@
 
 #include <iostream>
 
-int
+long long
 main()
 try
 {

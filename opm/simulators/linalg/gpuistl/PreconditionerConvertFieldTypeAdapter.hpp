@@ -81,7 +81,7 @@ namespace Opm::gpuistl
 //! }
 //!
 //! \endcode
-template <class CudaPreconditionerType, class M, class X, class Y, int l = 1>
+template <class CudaPreconditionerType, class M, class X, class Y, long long l = 1>
 class PreconditionerConvertFieldTypeAdapter : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:

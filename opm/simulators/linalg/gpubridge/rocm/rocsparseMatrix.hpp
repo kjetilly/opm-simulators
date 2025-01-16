@@ -32,11 +32,11 @@ template<class Scalar>
 class RocmMatrix {
 public:
 
-    RocmMatrix(int Nb_, int Mb_, int nnzbs_, unsigned int block_size_);
+    RocmMatrix(long long Nb_, long long Mb_, long long nnzbs_, size_t block_size_);
 
     void upload(Scalar *vals,
-                int *cols,
-                int *rows,
+                long long *cols,
+                long long *rows,
                 hipStream_t stream);
     
     void upload(Matrix<Scalar> *matrix,
@@ -46,18 +46,18 @@ public:
                 hipStream_t stream);
 
     Scalar* nnzValues;
-    int* colIndices;
-    int* rowPointers;
-    int Nb, Mb;
-    int nnzbs;
-    unsigned int block_size;
+    long long* colIndices;
+    long long* rowPointers;
+    long long Nb, Mb;
+    long long nnzbs;
+    size_t block_size;
 };
 
 template <typename Scalar>
 class RocmVector {
 public:
 
-    RocmVector(int N);
+    RocmVector(long long N);
 
     void upload(Scalar *vals,
                 hipStream_t stream);
@@ -66,7 +66,7 @@ public:
                 hipStream_t stream);
 
     Scalar* nnzValues;
-    int size;
+    long long size;
 };
 } // namespace Opm
 

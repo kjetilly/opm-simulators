@@ -39,7 +39,7 @@ namespace Opm {
     public:
         /// Callback type for mapping a vertex/cell ID to a globally unique
         /// ID.
-        using GlobalCellID = std::function<int(int)>;
+        using GlobalCellID = std::function<(long long)(long long)>;
 
         /// Collection of parameters to control the partitioning procedure.
         using ZoltanParamMap = std::map<std::string, std::string>;
@@ -79,7 +79,7 @@ namespace Opm {
         ///
         /// \param[in] cells Cell collection.  Typically those cells which
         ///   are intersected by a single well.
-        void forceSameDomain(std::vector<int>&& cells)
+        void forceSameDomain(std::vector<long long>&& cells)
         {
             this->sameDomain_.emplace_back(std::move(cells));
         }
@@ -96,7 +96,7 @@ namespace Opm {
         /// \return Partition vector of size \p numElements.  Reachable
         ///   vertices/cells are partitioned into N blocks numbered 0..N-1.
         ///   Unreachable vertices get a block ID of -1.
-        std::vector<int>
+        std::vector<long long>
         partitionElements(const ZoltanParamMap& params) const;
 
     private:
@@ -121,7 +121,7 @@ namespace Opm {
         /// same domain/block.  All vertices within a single collection will
         /// be placed on the same domain, but cells from different
         /// collections may be placed on different domains.
-        std::vector<std::vector<int>> sameDomain_{};
+        std::vector<std::vector<long long>> sameDomain_{};
     };
 
 } // namespace Opm

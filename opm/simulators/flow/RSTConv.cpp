@@ -34,7 +34,7 @@ namespace Opm {
 
 void RSTConv::init(const std::size_t numCells,
                    const RSTConfig& rst_config,
-                   const std::array<int,6>& compIdx)
+                   const std::array<long long,6>& compIdx)
 {
     const auto kw = rst_config.keywords.find("CONV");
     if (kw == rst_config.keywords.end()) {
@@ -61,14 +61,14 @@ void RSTConv::update(const ResidualVector& resid)
         return;
     }
 
-    std::vector<int> cix(resid.size());
+    std::vector<long long> cix(resid.size());
     std::iota(cix.begin(), cix.end(), 0);
     for (std::size_t i = 0; i < cnv_X_.size(); ++i) {
         if (cnv_X_[i].empty()) {
             continue;
         }
         std::partial_sort(cix.begin(), cix.begin() + N_, cix.end(),
-                          [&resid,c = compIdx_[i]](const int a, const int b)
+                          [&resid,c = compIdx_[i]](const long long a, const long long b)
                           { return std::abs(resid[a][c]) > std::abs(resid[b][c]); });
 
         this->gatherAndAccumulate(cix, resid, i);
@@ -76,11 +76,11 @@ void RSTConv::update(const ResidualVector& resid)
 }
 
 template<class ResidualVector>
-void RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx,
-                                  const ResidualVector& resid, int comp)
+void RSTConv::gatherAndAccumulate(const std::vector<long long>& lIdx,
+                                  const ResidualVector& resid, long long comp)
 {
     if (comm_.size() == 1) {
-        for (int n = 0; n < N_; ++n) {
+        for (long long n = 0; n < N_; ++n) {
             ++cnv_X_[comp][lIdx[n]];
         }
         return;
@@ -88,9 +88,9 @@ void RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx,
 
     std::vector<double> send_values(N_);
     std::vector<double> values(comm_.rank() == 0 ? comm_.size() * N_ : 0);
-    std::vector<int> send_idx(N_);
-    std::vector<int> gIdx(comm_.rank() == 0 ? comm_.size() * N_ : 0);
-    for (int i = 0; i < N_; ++i) {
+    std::vector<long long> send_idx(N_);
+    std::vector<long long> gIdx(comm_.rank() == 0 ? comm_.size() * N_ : 0);
+    for (long long i = 0; i < N_; ++i) {
         send_values[i] = std::abs(resid[lIdx[i]][compIdx_[comp]]);
         send_idx[i] = globalCell_[lIdx[i]];
     }
@@ -101,14 +101,14 @@ void RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx,
         return;
     }
 
-    std::vector<int> valIdx(values.size());
+    std::vector<long long> valIdx(values.size());
     std::iota(valIdx.begin(), valIdx.end(), 0);
 
     std::partial_sort(valIdx.begin(), valIdx.begin() + N_, valIdx.end(),
-                      [&values](const int i1, const int i2)
+                      [&values](const long long i1, const long long i2)
                       { return values[i1] > values[i2]; });
 
-    for (int n = 0; n < N_; ++n) {
+    for (long long n = 0; n < N_; ++n) {
         ++cnv_X_[comp][gIdx[valIdx[n]]];
     }
 }
@@ -118,8 +118,8 @@ using BFV = Dune::BlockVector<Dune::FieldVector<Scalar,Size>>;
 
 #define INSTANTIATE(T,SIZE)                                              \
     template void RSTConv::update(const BFV<T,SIZE>&);                   \
-    template void RSTConv::gatherAndAccumulate(const std::vector<int>&,  \
-                                               const BFV<T,SIZE>&, int);
+    template void RSTConv::gatherAndAccumulate(const std::vector<long long>&,  \
+                                               const BFV<T,SIZE>&, long long);
 
 #define INSTANTIATE_TYPE(T) \
     INSTANTIATE(T,1)        \

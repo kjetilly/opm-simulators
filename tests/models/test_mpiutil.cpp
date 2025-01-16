@@ -27,15 +27,15 @@
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -43,7 +43,7 @@ void MPI_err_handler(MPI_Comm*, int* err_code, ...)
 }
 #endif
 
-bool noStrings(int, int)
+bool noStrings(long long, long long)
 {
     std::string empty;
     auto res = Opm::gatherStrings(empty);
@@ -51,30 +51,30 @@ bool noStrings(int, int)
     return true;
 }
 
-bool oddRankStrings(int size, int rank)
+bool oddRankStrings(long long size, long long rank)
 {
     std::string what = (rank % 2 == 1) ? "An error on rank " + std::to_string(rank) : std::string();
     auto res = Opm::gatherStrings(what);
-    assert(int(res.size()) == size/2);
-    for (int i = 0; i < size/2; ++i) {
+    assert((long long)(res.size()) == size/2);
+    for (long long i = 0; i < size/2; ++i) {
         assert(res[i] == "An error on rank " + std::to_string(2*i + 1));
     }
     return true;
 }
 
-bool allRankStrings(int size, int rank)
+bool allRankStrings(long long size, long long rank)
 {
     std::string what = "An error on rank " + std::to_string(rank);
     auto res = Opm::gatherStrings(what);
-    assert(int(res.size()) == size);
-    for (int i = 0; i < size; ++i) {
+    assert((long long)(res.size()) == size);
+    for (long long i = 0; i < size; ++i) {
         assert(res[i] == "An error on rank " + std::to_string(i));
     }
     return true;
 }
 
 
-int testMain(int size, int rank)
+long long testMain(long long size, long long rank)
 {
     bool ok = noStrings(size, rank);
     ok = ok && oddRankStrings(size, rank);
@@ -87,11 +87,11 @@ int testMain(int size, int rank)
 }
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     const auto& mpiHelper = Dune::MPIHelper::instance(argc, argv);
-    int mpiSize = mpiHelper.size();
-    int mpiRank = mpiHelper.rank();
+    long long mpiSize = mpiHelper.size();
+    long long mpiRank = mpiHelper.rank();
 #if HAVE_MPI
     // register a throwing error handler to allow for
     // debugging with "catch throw" in gdb

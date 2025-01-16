@@ -76,7 +76,7 @@ class VtkMultiPhaseModule : public BaseOutputModule<TypeTag>
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using DiscBaseOutputModule = GetPropType<TypeTag, Properties::DiscBaseOutputModule>;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     enum { dimWorld = GridView::dimensionworld };

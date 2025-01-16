@@ -73,7 +73,7 @@ struct Scalar<TypeTag, TTag::Co2InjectionFlashNiVcfvProblem>
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using VcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionFlashNiVcfvProblem;
 #if ! HAVE_QUAD

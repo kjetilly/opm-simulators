@@ -45,14 +45,14 @@ template <typename IJKString>
 void logUniqueFailedCells(const std::string& messageTag,
                           std::string_view   prefix,
                           const std::size_t  maxNumCellsFaillog,
-                          const std::vector<int>& cells,
+                          const std::vector<long long>& cells,
                           IJKString&&        ijkString)
 {
     if (cells.empty()) {
         return;
     }
 
-    std::vector<int> sorted(cells);
+    std::vector<long long> sorted(cells);
     std::sort(sorted.begin(), sorted.end());
     auto u = std::unique(sorted.begin(), sorted.end());
 
@@ -232,8 +232,8 @@ cumulative(const std::size_t reportStepNum) const
 
 template<class Scalar>
 void LogOutputHelper<Scalar>::
-error(const std::vector<int>& failedCellsPbub,
-      const std::vector<int>& failedCellsPdew) const
+error(const std::vector<long long>& failedCellsPbub,
+      const std::vector<long long>& failedCellsPdew) const
 {
     auto ijkString = [this](const std::size_t globalIndex)
     {
@@ -355,7 +355,7 @@ fipResv(const Inplace& inplace, const std::string& name) const
 
 template<class Scalar>
 void LogOutputHelper<Scalar>::
-timeStamp(const std::string& lbl, double elapsed, int rstep, boost::posix_time::ptime currentDate) const
+timeStamp(const std::string& lbl, double elapsed, long long rstep, boost::posix_time::ptime currentDate) const
 {
 
     std::ostringstream ss;
@@ -832,7 +832,7 @@ outputRegionFluidInPlace_(std::unordered_map<Inplace::Phase, Scalar> oip,
                           std::unordered_map<Inplace::Phase, Scalar> cip,
                           const Scalar pav,
                           const std::string& name,
-                          const int reg) const
+                          const long long reg) const
 {
     // don't output FIPNUM report if the region has no porv.
     if (! (cip[Inplace::Phase::PoreVolume] > Scalar{0})) {
@@ -905,7 +905,7 @@ outputRegionFluidInPlace_(std::unordered_map<Inplace::Phase, Scalar> oip,
 template<class Scalar>
 void LogOutputHelper<Scalar>::
 outputResvFluidInPlace_(std::unordered_map<Inplace::Phase, Scalar> cipr,
-                        const int reg) const
+                        const long long reg) const
 {
     const UnitSystem& units = eclState_.getUnits();
     std::ostringstream ss;

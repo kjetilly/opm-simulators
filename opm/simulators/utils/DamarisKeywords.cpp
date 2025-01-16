@@ -54,7 +54,7 @@ bool FileExists(const std::string& filename_in,
 {
     // From c++17  : std::filesystem::exists(filename_in);
     
-    int retint = 1;
+    long long retint = 1;
     std::ifstream filestr;
     bool file_exists = false;
     
@@ -90,8 +90,8 @@ void DamarisSettings::SetRandString(void)
     std::random_device r;
     // Choose a random number between 0 and MAX_INT
     std::default_random_engine e1(r());
-    std::uniform_int_distribution<int> uniform_dist(0, std::numeric_limits<int>::max());
-    int rand_int = uniform_dist(e1);
+    std::uniform_int_distribution<long long> uniform_dist(0, std::numeric_limits<long long>::max());
+    long long rand_int = uniform_dist(e1);
     
     rand_value_str_ = std::to_string(rand_int) ;
 }

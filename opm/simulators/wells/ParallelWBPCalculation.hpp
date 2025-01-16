@@ -114,7 +114,7 @@ public:
     std::size_t
     createCalculator(const Well&             well,
                      const ParallelWellInfo<Scalar>& parallelWellInfo,
-                     const std::vector<int>& localConnIdx,
+                     const std::vector<long long>& localConnIdx,
                      EvaluatorFactory        makeWellSourceEvaluator);
 
     /// Set up communication patterns for both cell and connection level
@@ -182,7 +182,7 @@ private:
         ///   active connection on the current rank.  Use a negative value
         ///   to identify a connection that is either not flowing or which
         ///   does not intersect the current MPI rank.
-        explicit LocalConnSet(const std::vector<int>& localConnIdx);
+        explicit LocalConnSet(const std::vector<long long>& localConnIdx);
 
         /// Retrieve local, on-rank connection index of a well's global
         /// connection index.
@@ -192,7 +192,7 @@ private:
         /// \return Local, on-rank, connection index of well's global index.
         ///   Negative value if \p connIdx does not intersect the current
         ///   rank.
-        int localIndex(const std::size_t connIdx) const;
+        long long localIndex(const std::size_t connIdx) const;
 
     private:
         /// Local (on-rank) connection index.  Sized according to total
@@ -203,7 +203,7 @@ private:
         /// current rank.  Use a negative value to identify a connection
         /// that is either not flowing or which does not intersect the
         /// current MPI rank.
-        std::vector<int> localConnIdx_{};
+        std::vector<long long> localConnIdx_{};
     };
 
     /// Parallel collection of individual source terms
@@ -290,7 +290,7 @@ private:
         /// \return Local, on-rank, indices for each index in \p
         ///   globalIndex.  Negative local index value for global indices
         ///   which are either not active or not on the current MPI rank.
-        std::vector<int>
+        std::vector<long long>
         getLocalIndex(const std::vector<std::size_t>& globalIndex) const;
 
     private:

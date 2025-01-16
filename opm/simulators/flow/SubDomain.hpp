@@ -62,10 +62,10 @@ namespace Opm
     {
         // The index of a subdomain is arbitrary, but can be used by the
         // solvers to keep track of well locations etc.
-        int index;
+        long long index;
         // The set of cells that make up a SubDomain, stored as cell indices
         // in the local numbering of the current MPI rank.
-        std::vector<int> cells;
+        std::vector<long long> cells;
         // Flag for each cell of the current MPI rank, true if the cell is part
         // of the subdomain. If empty, assumed to be all true. Not required for
         // all nonlinear solver algorithms.
@@ -74,7 +74,7 @@ namespace Opm
         // approach (i.e. FvBaseLinearizer as opposed to TpfaLinearizer).
         Dune::SubGridPart<Grid> view;
         // Constructor that moves from its argument.
-        SubDomain(const int i, std::vector<int>&& c, std::vector<bool>&& in, Dune::SubGridPart<Grid>&& v)
+        SubDomain(const long long i, std::vector<long long>&& c, std::vector<bool>&& in, Dune::SubGridPart<Grid>&& v)
             : index(i), cells(std::move(c)), interior(std::move(in)), view(std::move(v))
         {}
     };

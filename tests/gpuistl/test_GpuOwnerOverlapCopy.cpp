@@ -39,11 +39,11 @@ init_unit_test_func()
     return true;
 }
 
-int
-main(int argc, char** argv)
+long long
+main(long long argc, char** argv)
 {
     [[maybe_unused]] const auto& helper = Dune::MPIHelper::instance(argc, argv);
-    int rank, totalRanks;
+    long long rank, totalRanks;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &totalRanks);
     Opm::gpuistl::setDevice(rank, totalRanks);
@@ -55,19 +55,19 @@ BOOST_AUTO_TEST_CASE(TestProject)
 
     // We're going to have three points: Centered is owned, left and right is copied. We assume a periodic domain
     // ([0,1]/0~1)
-    auto indexInfo = Dune::IndexInfoFromGrid<int, int>();
+    auto indexInfo = Dune::IndexInfoFromGrid<long long, long long>();
     indexInfo.addLocalIndex(std::make_tuple(0, 0, Dune::OwnerOverlapCopyAttributeSet::copy));
     indexInfo.addLocalIndex(std::make_tuple(1, 1, Dune::OwnerOverlapCopyAttributeSet::owner));
     indexInfo.addLocalIndex(std::make_tuple(2, 2, Dune::OwnerOverlapCopyAttributeSet::copy));
 
-    auto ownerOverlapCopy = Dune::OwnerOverlapCopyCommunication<int>(indexInfo, MPI_COMM_WORLD);
+    auto ownerOverlapCopy = Dune::OwnerOverlapCopyCommunication<long long>(indexInfo, MPI_COMM_WORLD);
     auto xCPU = std::vector<double> {{1.0, 2.0, 3.0}};
     auto xGPU = Opm::gpuistl::GpuVector<double>(xCPU);
 
-    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(ownerOverlapCopy);
+    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<long long>>>(ownerOverlapCopy);
     
     auto GpuOwnerOverlapCopy
-        = Opm::gpuistl::GpuOwnerOverlapCopy<double, 1, Dune::OwnerOverlapCopyCommunication<int>>(gpuComm);
+        = Opm::gpuistl::GpuOwnerOverlapCopy<double, 1, Dune::OwnerOverlapCopyCommunication<long long>>(gpuComm);
 
     GpuOwnerOverlapCopy.project(xGPU);
 
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestDot)
 
     // We're going to have three points: Centered is owned, left and right is copied. We assume a periodic domain
     // ([0,1]/0~1)
-    auto indexInfo = Dune::IndexInfoFromGrid<int, int>();
+    auto indexInfo = Dune::IndexInfoFromGrid<long long, long long>();
     indexInfo.addLocalIndex(std::make_tuple(0, 0, Dune::OwnerOverlapCopyAttributeSet::copy));
     indexInfo.addLocalIndex(std::make_tuple(1, 1, Dune::OwnerOverlapCopyAttributeSet::owner));
     indexInfo.addLocalIndex(std::make_tuple(2, 2, Dune::OwnerOverlapCopyAttributeSet::copy));
@@ -92,14 +92,14 @@ BOOST_AUTO_TEST_CASE(TestDot)
     indexInfo.addRemoteIndex(std::make_tuple(0, 0, Dune::OwnerOverlapCopyAttributeSet::copy));
     indexInfo.addRemoteIndex(std::make_tuple(0, 1, Dune::OwnerOverlapCopyAttributeSet::owner));
     indexInfo.addRemoteIndex(std::make_tuple(0, 2, Dune::OwnerOverlapCopyAttributeSet::copy));
-    auto ownerOverlapCopy = Dune::OwnerOverlapCopyCommunication<int>(indexInfo, MPI_COMM_WORLD);
+    auto ownerOverlapCopy = Dune::OwnerOverlapCopyCommunication<long long>(indexInfo, MPI_COMM_WORLD);
     auto xCPU = std::vector<double> {{1.0, 2.0, 3.0}};
     auto xGPU = Opm::gpuistl::GpuVector<double>(xCPU);
 
-    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(ownerOverlapCopy);
+    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<long long>>>(ownerOverlapCopy);
 
     auto GpuOwnerOverlapCopy
-        = Opm::gpuistl::GpuOwnerOverlapCopy<double, 1, Dune::OwnerOverlapCopyCommunication<int>>(gpuComm);
+        = Opm::gpuistl::GpuOwnerOverlapCopy<double, 1, Dune::OwnerOverlapCopyCommunication<long long>>(gpuComm);
 
     double outputDune = -1.0;
     auto xDune = xGPU.asDuneBlockVector<1>();

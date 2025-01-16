@@ -34,15 +34,15 @@
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(BroadCast)
     if (cc.rank() == 1)
         std::iota(d.begin(), d.end(), 1.0);
 
-    std::vector<int> i(3);
+    std::vector<long long> i(3);
     if (cc.rank() == 1)
         std::iota(i.begin(), i.end(), 4);
 
@@ -82,7 +82,7 @@ BOOST_AUTO_TEST_CASE(BroadCast)
     BOOST_CHECK_EQUAL(i1, 8);
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

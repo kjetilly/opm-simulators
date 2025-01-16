@@ -45,7 +45,7 @@ checkConvergenceControlEq(const WellState<Scalar>& well_state,
     using CR = ConvergenceReport;
     CR::WellFailure::Type ctrltype = CR::WellFailure::Type::Invalid;
 
-    const int well_index = well_.indexOfWell();
+    const long long well_index = well_.indexOfWell();
     const auto& ws = well_state.well(well_index);
     if (well_is_stopped) {
         ctrltype = CR::WellFailure::Type::ControlRate;
@@ -110,7 +110,7 @@ checkConvergenceControlEq(const WellState<Scalar>& well_state,
         }
     }
 
-    const int dummy_component = -1;
+    const long long dummy_component = -1;
     if (std::isnan(well_control_residual)) {
         report.setWellFailed({ctrltype, CR::Severity::NotANumber, dummy_component, well_.name()});
     } else if (well_control_residual > tolerances.max_residual_allowed * 10.) {
@@ -123,17 +123,17 @@ checkConvergenceControlEq(const WellState<Scalar>& well_state,
 template<class Scalar>
 void WellConvergence<Scalar>::
 checkConvergencePolyMW(const std::vector<Scalar>& res,
-                       const int Bhp,
+                       const long long Bhp,
                        const Scalar maxResidualAllowed,
                        ConvergenceReport& report) const
 {
   if (well_.isInjector()) {
       //  checking the convergence of the perforation rates
       const Scalar wat_vel_tol = 1.e-8;
-      const int dummy_component = -1;
+      const long long dummy_component = -1;
       using CR = ConvergenceReport;
       const auto wat_vel_failure_type = CR::WellFailure::Type::MassBalance;
-      for (int perf = 0; perf < well_.numPerfs(); ++perf) {
+      for (long long perf = 0; perf < well_.numPerfs(); ++perf) {
           const Scalar wat_vel_residual = res[Bhp + 1 + perf];
           if (std::isnan(wat_vel_residual)) {
               report.setWellFailed({wat_vel_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});
@@ -147,7 +147,7 @@ checkConvergencePolyMW(const std::vector<Scalar>& res,
       // checking the convergence of the skin pressure
       const Scalar pskin_tol = 1000.; // 1000 pascal
       const auto pskin_failure_type = CR::WellFailure::Type::Pressure;
-      for (int perf = 0; perf < well_.numPerfs(); ++perf) {
+      for (long long perf = 0; perf < well_.numPerfs(); ++perf) {
           const Scalar pskin_residual = res[Bhp + 1 + perf + well_.numPerfs()];
           if (std::isnan(pskin_residual)) {
               report.setWellFailed({pskin_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});

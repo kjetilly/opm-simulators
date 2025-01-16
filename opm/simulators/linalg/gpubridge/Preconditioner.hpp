@@ -36,17 +36,17 @@ enum PreconditionerType {
 
 template<class Scalar> class BlockedMatrix;
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class Preconditioner
 {
 protected:
-    int N = 0;       // number of rows of the matrix
-    int Nb = 0;      // number of blockrows of the matrix
-    int nnz = 0;     // number of nonzeroes of the matrix (scalar)
-    int nnzb = 0;    // number of blocks of the matrix
-    int verbosity = 0;
+    long long N = 0;       // number of rows of the matrix
+    long long Nb = 0;      // number of blockrows of the matrix
+    long long nnz = 0;     // number of nonzeroes of the matrix (scalar)
+    long long nnzb = 0;    // number of blocks of the matrix
+    long long verbosity = 0;
 
-    Preconditioner(int verbosity_) :
+    Preconditioner(long long verbosity_) :
     verbosity(verbosity_)
     {};
 
@@ -56,7 +56,7 @@ public:
     
     static std::unique_ptr<Preconditioner> create(PreconditionerType type,
                                                   bool opencl_ilu_parallel,
-                                                  int verbosity);
+                                                  long long verbosity);
 
 #if HAVE_OPENCL
     // apply preconditioner, x = prec(y)

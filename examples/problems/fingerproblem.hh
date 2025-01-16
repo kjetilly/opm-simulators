@@ -128,7 +128,7 @@ struct MaterialLaw<TypeTag, TTag::FingerBaseProblem>
 
 // Enable constraints
 template<class TypeTag>
-struct EnableConstraints<TypeTag, TTag::FingerBaseProblem> { static constexpr int value = true; };
+struct EnableConstraints<TypeTag, TTag::FingerBaseProblem> { static constexpr long long value = true; };
 
 } // namespace Opm::Properties
 

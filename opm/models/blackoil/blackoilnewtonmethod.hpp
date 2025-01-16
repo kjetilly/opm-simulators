@@ -124,7 +124,7 @@ protected:
 #if HAVE_MPI
         // in the MPI enabled case we need to add up the number of DOF
         // for which the interpretation changed over all processes.
-        int localSwitched = numPriVarsSwitched_;
+        long long localSwitched = numPriVarsSwitched_;
         MPI_Allreduce(&localSwitched,
                       &numPriVarsSwitched_,
                       /*num=*/1,
@@ -147,7 +147,7 @@ public:
     {
         const auto& comm = this->simulator_.gridView().comm();
 
-        int succeeded;
+        long long succeeded;
         try {
             ParentType::update_(nextSolution,
                                 currentSolution,
@@ -243,7 +243,7 @@ protected:
             satAlpha = bparams_.dsMax_ / maxSatDelta;
         }
 
-        for (int pvIdx = 0; pvIdx < int(numEq); ++pvIdx) {
+        for (long long pvIdx = 0; pvIdx < (long long)(numEq); ++pvIdx) {
             // calculate the update of the current primary variable. For the black-oil
             // model we limit the pressure delta relative to the pressure's current
             // absolute value (Default: 30%) and saturation deltas to an absolute change
@@ -423,7 +423,7 @@ protected:
     }
 
 private:
-    int numPriVarsSwitched_{};
+    long long numPriVarsSwitched_{};
 
     BlackoilNewtonParams<Scalar> bparams_{};
 

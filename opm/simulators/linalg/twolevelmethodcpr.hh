@@ -175,13 +175,13 @@ public:
 
     aggregatesMap_.reset(new AggregatesMap(pg.maxVertex()+1));
 
-    int noAggregates, isoAggregates, oneAggregates, skippedAggregates;
+    long long noAggregates, isoAggregates, oneAggregates, skippedAggregates;
 
     std::tie(noAggregates, isoAggregates, oneAggregates, skippedAggregates) =
        aggregatesMap_->buildAggregates(fineOperator.getmat(), pg, criterion_, true);
      std::cout<<"no aggregates="<<noAggregates<<" iso="<<isoAggregates<<" one="<<oneAggregates<<" skipped="<<skippedAggregates<<std::endl;
     // misuse coarsener to renumber aggregates
-    Dune::Amg::IndicesCoarsener<Dune::Amg::SequentialInformation,int> renumberer;
+    Dune::Amg::IndicesCoarsener<Dune::Amg::SequentialInformation,long long> renumberer;
     typedef std::vector<bool>::iterator Iterator;
     typedef Dune::IteratorPropertyMap<Iterator, Dune::IdentityMap> VisitedMap;
     std::vector<bool> excluded(fineOperator.getmat().N(), false);
@@ -234,7 +234,7 @@ private:
                PG& pg,
                VM& vm,
                AM& aggregatesMap,
-               int noAggregates,
+               long long noAggregates,
                bool useFixedOrder) ->
                decltype(renumberer.coarsen(pinfo, pg, vm, aggregatesMap, pinfo, noAggregates, useFixedOrder))
   {
@@ -247,7 +247,7 @@ private:
                PG& pg,
                VM& vm,
                AM& aggregatesMap,
-               int noAggregates, ...)
+               long long noAggregates, ...)
   {
     return renumberer.coarsen(pinfo, pg, vm, aggregatesMap, pinfo, noAggregates);
   }

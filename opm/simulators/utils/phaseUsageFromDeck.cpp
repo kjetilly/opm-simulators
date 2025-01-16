@@ -45,8 +45,8 @@ PhaseUsage phaseUsage(const Phases& phases)
     pu.phase_used[BlackoilPhases::Vapour] = phases.active(Phase::GAS);
 
     pu.num_phases = 0;
-    int activePhaseIdx = -1;
-    for (int phaseIdx = 0; phaseIdx < BlackoilPhases::MaxNumPhases; ++phaseIdx) {
+    long long activePhaseIdx = -1;
+    for (long long phaseIdx = 0; phaseIdx < BlackoilPhases::MaxNumPhases; ++phaseIdx) {
         if (!pu.phase_used[phaseIdx]) {
             pu.phase_pos[phaseIdx] = -1;
         }

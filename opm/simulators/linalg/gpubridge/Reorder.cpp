@@ -36,9 +36,9 @@ namespace Accelerator
 /* Check is operations on a node in the matrix can be started
  * A node can only be started if all nodes that it depends on during sequential execution have already completed.*/
 
-bool canBeStarted(const int rowIndex, const int *rowPointers, const int *colIndices, const std::vector<bool>& doneRows) {
+bool canBeStarted(const long long rowIndex, const long long *rowPointers, const long long *colIndices, const std::vector<bool>& doneRows) {
     bool canStart = !doneRows[rowIndex];
-    int i, thisDependency;
+    long long i, thisDependency;
     if (canStart) {
         for (i = rowPointers[rowIndex]; i < rowPointers[rowIndex + 1]; i++) {
             thisDependency = colIndices[i];
@@ -60,11 +60,11 @@ bool canBeStarted(const int rowIndex, const int *rowPointers, const int *colIndi
  * "Iterative methods for Sparse Linear Systems" by Yousef Saad in section 11.6.3
  */
 
-void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowIndices, int *CSCColPointers, int Nb, int *numColors, int *toOrder, int* fromOrder, std::vector<int>& rowsPerColor) {
-    int activeRowIndex = 0, colorEnd, nextActiveRowIndex = 0;
-    int thisRow;
+void findLevelScheduling(long long *CSRColIndices, long long *CSRRowPointers, long long *CSCRowIndices, long long *CSCColPointers, long long Nb, long long *numColors, long long *toOrder, long long* fromOrder, std::vector<long long>& rowsPerColor) {
+    long long activeRowIndex = 0, colorEnd, nextActiveRowIndex = 0;
+    long long thisRow;
     std::vector<bool> doneRows(Nb, false);
-    std::vector <int> rowsToStart;
+    std::vector <long long> rowsToStart;
 
     // since emplace_back() is used to fill, the vector must be empty
     assert(rowsPerColor.empty());
@@ -89,8 +89,8 @@ void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowInd
         for (; activeRowIndex < colorEnd; activeRowIndex++) {
             thisRow = fromOrder[activeRowIndex];
 
-            for (int i = CSCColPointers[thisRow]; i < CSCColPointers[thisRow + 1]; i++) {
-                int thatRow = CSCRowIndices[i];
+            for (long long i = CSCColPointers[thisRow]; i < CSCColPointers[thisRow + 1]; i++) {
+                long long thatRow = CSCRowIndices[i];
 
                 if (canBeStarted(thatRow, CSRRowPointers, CSRColIndices, doneRows)) {
                     rowsToStart.emplace_back(thatRow);
@@ -98,7 +98,7 @@ void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowInd
             }
         }
         // 'do' compute on all active rows
-        for (unsigned int i = 0; i < rowsToStart.size(); i++) {
+        for (size_t i = 0; i < rowsToStart.size(); i++) {
             thisRow = rowsToStart[i];
             if (!doneRows[thisRow]) {
                 doneRows[thisRow] = true;
@@ -117,36 +117,36 @@ void findLevelScheduling(int *CSRColIndices, int *CSRRowPointers, int *CSCRowInd
 
 
 // based on the scipy package from python, scipy/sparse/sparsetools/csr.h on github
-void csrPatternToCsc(int *CSRColIndices, int *CSRRowPointers, int *CSCRowIndices, int *CSCColPointers, int Nb) {
+void csrPatternToCsc(long long *CSRColIndices, long long *CSRRowPointers, long long *CSCRowIndices, long long *CSCColPointers, long long Nb) {
 
-    int nnz = CSRRowPointers[Nb];
+    long long nnz = CSRRowPointers[Nb];
 
     // compute number of nnzs per column
     std::fill(CSCColPointers, CSCColPointers + Nb, 0);
 
-    for (int n = 0; n < nnz; ++n) {
+    for (long long n = 0; n < nnz; ++n) {
         CSCColPointers[CSRColIndices[n]]++;
     }
 
     // cumsum the nnz per col to get CSCColPointers
-    for (int col = 0, cumsum = 0; col < Nb; ++col) {
-        int temp = CSCColPointers[col];
+    for (long long col = 0, cumsum = 0; col < Nb; ++col) {
+        long long temp = CSCColPointers[col];
         CSCColPointers[col] = cumsum;
         cumsum += temp;
     }
     CSCColPointers[Nb] = nnz;
 
-    for (int row = 0; row < Nb; ++row) {
-        for (int j = CSRRowPointers[row]; j < CSRRowPointers[row + 1]; ++j) {
-            int col = CSRColIndices[j];
-            int dest = CSCColPointers[col];
+    for (long long row = 0; row < Nb; ++row) {
+        for (long long j = CSRRowPointers[row]; j < CSRRowPointers[row + 1]; ++j) {
+            long long col = CSRColIndices[j];
+            long long dest = CSCColPointers[col];
             CSCRowIndices[dest] = row;
             CSCColPointers[col]++;
         }
     }
 
-    for (int col = 0, last = 0; col <= Nb; ++col) {
-        int temp = CSCColPointers[col];
+    for (long long col = 0, last = 0; col <= Nb; ++col) {
+        long long temp = CSCColPointers[col];
         CSCColPointers[col] = last;
         last = temp;
     }

@@ -55,12 +55,12 @@ public:
 
     WellInterfaceGeneric(const Well& well,
                          const ParallelWellInfo<Scalar>& parallel_well_info,
-                         const int time_step,
+                         const long long time_step,
                          const ModelParameters& param,
-                         const int pvtRegionIdx,
-                         const int num_components,
-                         const int num_phases,
-                         const int index_of_well,
+                         const long long pvtRegionIdx,
+                         const long long num_components,
+                         const long long num_phases,
+                         const long long index_of_well,
                          const std::vector<PerforationData<Scalar>>& perf_data);
 
     /// \brief Get the perforations of the well
@@ -76,10 +76,10 @@ public:
     bool isProducer() const;
 
     /// Well cells.
-    const std::vector<int>& cells() const { return well_cells_; }
+    const std::vector<long long>& cells() const { return well_cells_; }
 
     /// Index of well in the wells struct and wellState
-    int indexOfWell() const;
+    long long indexOfWell() const;
 
     void adaptRatesForVFP(std::vector<Scalar>& rates) const;
 
@@ -118,17 +118,17 @@ public:
 
     bool wellIsStopped() const { return this->wellStatus_ == Well::Status::STOP; }
 
-    int currentStep() const { return this->current_step_; }
+    long long currentStep() const { return this->current_step_; }
 
-    int pvtRegionIdx() const { return pvtRegionIdx_; }
+    long long pvtRegionIdx() const { return pvtRegionIdx_; }
 
     const GuideRate* guideRate() const { return guide_rate_; }
 
-    int numComponents() const { return num_components_; }
+    long long numComponents() const { return num_components_; }
 
-    int numPhases() const { return number_of_phases_; }
+    long long numPhases() const { return number_of_phases_; }
 
-    int numPerfs() const { return number_of_perforations_; }
+    long long numPerfs() const { return number_of_perforations_; }
 
     Scalar refDepth() const { return ref_depth_; }
 
@@ -144,7 +144,7 @@ public:
 
     const std::vector<Scalar>& wellIndex() const { return well_index_; }
 
-    const std::map<int,std::vector<int>>& getCompletions() const { return completions_; }
+    const std::map<long long,std::vector<long long>>& getCompletions() const { return completions_; }
 
     Scalar getTHPConstraint(const SummaryState& summaryState) const;
     Scalar getALQ(const WellState<Scalar>& well_state) const;
@@ -160,7 +160,7 @@ public:
 
     // Note:: for multisegment wells, bhp is actually segment pressure in practice based on observation
     // it might change in the future
-    Scalar getInjMult(const int perf, const Scalar bhp, const Scalar perf_pres, DeferredLogger& dlogger) const;
+    Scalar getInjMult(const long long perf, const Scalar bhp, const Scalar perf_pres, DeferredLogger& dlogger) const;
 
     // whether a well is specified with a non-zero and valid VFP table number
     bool isVFPActive(DeferredLogger& deferred_logger) const;
@@ -195,13 +195,13 @@ public:
         return {};
     }
 
-    virtual int setPrimaryVars(typename std::vector<Scalar>::const_iterator)
+    virtual long long setPrimaryVars(typename std::vector<Scalar>::const_iterator)
     {
         return 0;
     }
 
-    virtual Scalar connectionDensity(const int globalConnIdx,
-                                     const int openConnIdx) const = 0;
+    virtual Scalar connectionDensity(const long long globalConnIdx,
+                                     const long long openConnIdx) const = 0;
 
 protected:
     bool getAllowCrossFlow() const;
@@ -213,9 +213,9 @@ protected:
     Scalar wsalt_() const;
     Scalar wurea_() const;
 
-    int polymerTable_() const;
-    int polymerInjTable_() const;
-    int polymerWaterTable_() const;
+    long long polymerTable_() const;
+    long long polymerInjTable_() const;
+    long long polymerWaterTable_() const;
 
     bool wellUnderZeroRateTargetIndividual(const SummaryState& summary_state,
                                            const WellState<Scalar>& well_state) const;
@@ -295,20 +295,20 @@ protected:
     Well well_ecl_;
 
     const ParallelWellInfo<Scalar>& parallel_well_info_;
-    const int current_step_;
+    const long long current_step_;
     const ModelParameters& param_;
 
     // The pvt region of the well. We assume
     // We assume a well to not penetrate more than one pvt region.
-    const int pvtRegionIdx_;
+    const long long pvtRegionIdx_;
 
-    const int num_components_;
+    const long long num_components_;
 
     // number of phases
-    int number_of_phases_;
+    long long number_of_phases_;
 
     // the index of well in Wells struct
-    int index_of_well_;
+    long long index_of_well_;
 
     const std::vector<PerforationData<Scalar>>* perf_data_;
 
@@ -320,13 +320,13 @@ protected:
     mutable std::vector<Scalar> ipr_b_;
 
     // cell index for each well perforation
-    std::vector<int> well_cells_;
+    std::vector<long long> well_cells_;
 
     // well index for each perforation
     std::vector<Scalar> well_index_;
 
     // number of the perforations for this well on this process
-    int number_of_perforations_;
+    long long number_of_perforations_;
 
     // depth for each perforation
     std::vector<Scalar> perf_depth_;
@@ -355,13 +355,13 @@ protected:
      *   Since the connections not OPEN is not included in the Wells, so they will not be considered
      *   in this mapping relation.
      */
-    std::map<int, std::vector<int>> completions_;
+    std::map<long long, std::vector<long long>> completions_;
 
     // reference depth for the BHP
     Scalar ref_depth_;
 
     // saturation table nubmer for each well perforation
-    std::vector<int> saturation_table_number_;
+    std::vector<long long> saturation_table_number_;
 
     Well::Status wellStatus_;
 

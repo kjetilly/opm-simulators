@@ -63,26 +63,26 @@ public:
 protected:
     bool allocated = false;
 
-    unsigned int N;                          // number of rows (not blockrows) in vectors x and y
-    unsigned int dim;                        // number of columns in blocks in B and C, equal to StandardWell::numEq
-    unsigned int dim_wells;                  // number of rows in blocks in B and C, equal to StandardWell::numStaticWellEq
-    unsigned int num_blocks = 0;             // total number of blocks in all wells
-    unsigned int num_std_wells = 0;          // number of StandardWells in this object
-    unsigned int num_ms_wells = 0;           // number of MultisegmentWells in this object, must equal multisegments.size()
-    unsigned int num_blocks_so_far = 0;      // keep track of where next data is written
-    unsigned int num_std_wells_so_far = 0;   // keep track of where next data is written
-    std::vector<unsigned int> val_pointers;    // val_pointers[wellID] == index of first block for this well in Ccols and Bcols
+    size_t N;                          // number of rows (not blockrows) in vectors x and y
+    size_t dim;                        // number of columns in blocks in B and C, equal to StandardWell::numEq
+    size_t dim_wells;                  // number of rows in blocks in B and C, equal to StandardWell::numStaticWellEq
+    size_t num_blocks = 0;             // total number of blocks in all wells
+    size_t num_std_wells = 0;          // number of StandardWells in this object
+    size_t num_ms_wells = 0;           // number of MultisegmentWells in this object, must equal multisegments.size()
+    size_t num_blocks_so_far = 0;      // keep track of where next data is written
+    size_t num_std_wells_so_far = 0;   // keep track of where next data is written
+    std::vector<size_t> val_pointers;    // val_pointers[wellID] == index of first block for this well in Ccols and Bcols
 
     std::vector<std::unique_ptr<MultisegmentWellContribution<Scalar>>> multisegments;
 
 public:
-    unsigned int getNumWells(){
+    size_t getNumWells(){
         return num_std_wells + num_ms_wells;
     }
 
     /// Indicate how large the next StandardWell is, this function cannot be called after alloc() is called
     /// \param[in] numBlocks   number of blocks in C and B of next StandardWell
-    void addNumBlocks(unsigned int numBlocks);
+    void addNumBlocks(size_t numBlocks);
 
     /// Allocate memory for the StandardWells
     void alloc();
@@ -93,7 +93,7 @@ public:
     /// Indicate how large the blocks of the StandardWell (C and B) are
     /// \param[in] dim         number of columns
     /// \param[in] dim_wells   number of rows
-    void setBlockSize(unsigned int dim, unsigned int dim_wells);
+    void setBlockSize(size_t dim, size_t dim_wells);
 
     /// Set size of vector that the wells are applied to
     /// \param[in] N          size of vector
@@ -104,7 +104,7 @@ public:
     /// \param[in] colIndices  columnindices of blocks in C or B, ignored for D
     /// \param[in] values      array of nonzeroes
     /// \param[in] val_size    number of blocks in C or B, ignored for D
-    void addMatrix(MatrixType type, int* colIndices, Scalar* values, unsigned int val_size);
+    void addMatrix(MatrixType type, long long* colIndices, Scalar* values, size_t val_size);
 
     /// Add a MultisegmentWellContribution, actually creates an object on heap that is destroyed in the destructor
     /// Matrices C and B are passed in Blocked CSR, matrix D in CSC
@@ -119,13 +119,13 @@ public:
     /// \param[in] DcolPointers     columnpointers of matrix D
     /// \param[in] DrowIndices      rowindices of matrix D
     /// \param[in] Cvalues          nonzero values of matrix C
-    void addMultisegmentWellContribution(unsigned int dim,
-                                         unsigned int dim_wells,
-                                         unsigned int Mb,
+    void addMultisegmentWellContribution(size_t dim,
+                                         size_t dim_wells,
+                                         size_t Mb,
                                          std::vector<Scalar>& Bvalues,
-                                         std::vector<unsigned int>& BcolIndices,
-                                         std::vector<unsigned int>& BrowPointers,
-                                         unsigned int DnumBlocks,
+                                         std::vector<size_t>& BcolIndices,
+                                         std::vector<size_t>& BrowPointers,
+                                         size_t DnumBlocks,
                                          Scalar* Dvalues,
                                          UMFPackIndex* DcolPointers,
                                          UMFPackIndex* DrowIndices,
@@ -135,7 +135,7 @@ protected:
     virtual void APIalloc() {}
 
     /// Api specific upload of matrix.
-    virtual void APIaddMatrix(MatrixType, int*, Scalar*, unsigned int) {}
+    virtual void APIaddMatrix(MatrixType, long long*, Scalar*, size_t) {}
 };
 
 } //namespace Opm

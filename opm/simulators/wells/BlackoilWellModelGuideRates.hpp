@@ -52,11 +52,11 @@ public:
 
     //! \brief Assign well guide rates.
     void assignWellGuideRates(data::Wells& wsrpt,
-                              const int    reportStepIdx) const;
+                              const long long    reportStepIdx) const;
 
     //! \brief Calculates guide rate for all groups.
     std::unordered_map<std::string, data::GroupGuideRates>
-    calculateAllGroupGuideRates(const int reportStepIdx) const;
+    calculateAllGroupGuideRates(const long long reportStepIdx) const;
 
     //! \brief Assign group guide rates.
     void assignGroupGuideRates(const Group& group,
@@ -64,7 +64,7 @@ public:
                                data::GroupData& gdata) const;
 
     //! \brief Check if a guide rate update is needed.
-    bool guideRateUpdateIsNeeded(const int reportStepIdx) const;
+    bool guideRateUpdateIsNeeded(const long long reportStepIdx) const;
 
 private:
     //! \brief Obtain guide rate values.

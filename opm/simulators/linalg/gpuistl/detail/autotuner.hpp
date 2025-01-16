@@ -32,7 +32,7 @@ namespace Opm::gpuistl::detail
 /// @tparam The type of the function to tune
 /// @param f the function to tune, which takes the thread block size as the input
 template <typename func>
-int
+long long
 tuneThreadBlockSize(func& f, std::string descriptionOfFunction)
 {
     // This threadblock-tuner is very simple, it tests all valid block sizes divisble by 64
@@ -42,25 +42,25 @@ tuneThreadBlockSize(func& f, std::string descriptionOfFunction)
     // that gave the fastest invidivual run.
 
     // TODO: figure out a more rigorous way of deciding how many runs will suffice?
-    constexpr const int runs = 2;
+    constexpr const long long runs = 2;
     cudaEvent_t events[runs + 1];
 
     // create the events
-    for (int i = 0; i < runs + 1; ++i) {
+    for (long long i = 0; i < runs + 1; ++i) {
         OPM_GPU_SAFE_CALL(cudaEventCreate(&events[i]));
     }
 
     // Initialize helper variables
     float bestTime = std::numeric_limits<float>::max();
-    int bestBlockSize = -1;
-    int interval = 64;
+    long long bestBlockSize = -1;
+    long long interval = 64;
 
     // try each possible blocksize
-    for (int thrBlockSize = interval; thrBlockSize <= 1024; thrBlockSize += interval) {
+    for (long long thrBlockSize = interval; thrBlockSize <= 1024; thrBlockSize += interval) {
 
         // record a first event, and then an event after each kernel
         OPM_GPU_SAFE_CALL(cudaEventRecord(events[0]));
-        for (int i = 0; i < runs; ++i) {
+        for (long long i = 0; i < runs; ++i) {
             f(thrBlockSize); // runs an arbitrary function with the provided arguments
             OPM_GPU_SAFE_CALL(cudaEventRecord(events[i + 1]));
         }
@@ -71,7 +71,7 @@ tuneThreadBlockSize(func& f, std::string descriptionOfFunction)
         // kernel launch was valid
         if (cudaSuccess == cudaGetLastError()) {
             // check if we beat the record for the fastest kernel
-            for (int i = 0; i < runs; ++i) {
+            for (long long i = 0; i < runs; ++i) {
                 float candidateBlockSizeTime;
                 OPM_GPU_SAFE_CALL(cudaEventElapsedTime(&candidateBlockSizeTime, events[i], events[i + 1]));
                 if (candidateBlockSizeTime < bestTime) { // checks if this configuration beat the current best

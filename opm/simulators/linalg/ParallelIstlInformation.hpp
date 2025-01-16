@@ -44,9 +44,9 @@ class ParallelISTLInformation
 {
 public:
     /// \brief The type of the parallel index set used.
-    using ParallelIndexSet = Dune::OwnerOverlapCopyCommunication<int, int>::ParallelIndexSet;
+    using ParallelIndexSet = Dune::OwnerOverlapCopyCommunication<long long, long long>::ParallelIndexSet;
     /// \brief The type of the remote indices information used.
-    using RemoteIndices = Dune::OwnerOverlapCopyCommunication<int, int>::RemoteIndices;
+    using RemoteIndices = Dune::OwnerOverlapCopyCommunication<long long, long long>::RemoteIndices;
 
     /// \brief Constructs an empty parallel information object using MPI_COMM_WORLD
     ParallelISTLInformation();

@@ -86,9 +86,9 @@ public:
     {
 #if HAVE_MPI
         MPI_Isend(data_,
-                  static_cast<int>(mpiDataSize_),
+                  static_cast<long long>(mpiDataSize_),
                   mpiDataType_,
-                  static_cast<int>(peerRank),
+                  static_cast<long long>(peerRank),
                   0, // tag
                   MPI_COMM_WORLD,
                   &mpiRequest_);
@@ -112,9 +112,9 @@ public:
     {
 #if HAVE_MPI
         MPI_Recv(data_,
-                 static_cast<int>(mpiDataSize_),
+                 static_cast<long long>(mpiDataSize_),
                  mpiDataType_,
-                 static_cast<int>(peerRank),
+                 static_cast<long long>(peerRank),
                  0, // tag
                  MPI_COMM_WORLD,
                  MPI_STATUS_IGNORE);
@@ -190,7 +190,7 @@ private:
             mpiDataType_ = MPI_SHORT;
         else if (std::is_same<DataType, unsigned short>::value)
             mpiDataType_ = MPI_UNSIGNED_SHORT;
-        else if (std::is_same<DataType, int>::value)
+        else if (std::is_same<DataType, long long>::value)
             mpiDataType_ = MPI_INT;
         else if (std::is_same<DataType, unsigned>::value)
             mpiDataType_ = MPI_UNSIGNED;

@@ -37,7 +37,7 @@ namespace Opm::gpuistl::detail
  * @return a human readable string.
  */
 inline std::string
-getCusparseErrorCodeToString(int code)
+getCusparseErrorCodeToString(long long code)
 {
     CHECK_CUSPARSE_ERROR_TYPE(code, CUSPARSE_STATUS_SUCCESS);
     CHECK_CUSPARSE_ERROR_TYPE(code, CUSPARSE_STATUS_NOT_INITIALIZED);

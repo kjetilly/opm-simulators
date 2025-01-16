@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowPolymerMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_polymer binary.
-int flowPolymerMainStandalone(int argc, char** argv);
+long long flowPolymerMainStandalone(long long argc, char** argv);
 
 }
 

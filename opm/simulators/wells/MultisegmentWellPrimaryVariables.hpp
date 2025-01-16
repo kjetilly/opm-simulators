@@ -60,13 +60,13 @@ public:
     static constexpr bool has_wfrac_variable = Indices::waterEnabled && Indices::oilEnabled;
     static constexpr bool has_gfrac_variable = Indices::gasEnabled && Indices::numPhases > 1;
 
-    static constexpr int WQTotal = 0;
-    static constexpr int WFrac = has_wfrac_variable ? 1 : -1000;
-    static constexpr int GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
-    static constexpr int SPres = has_wfrac_variable + has_gfrac_variable + 1;
+    static constexpr long long WQTotal = 0;
+    static constexpr long long WFrac = has_wfrac_variable ? 1 : -1000;
+    static constexpr long long GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
+    static constexpr long long SPres = has_wfrac_variable + has_gfrac_variable + 1;
 
     //  the number of well equations  TODO: it should have a more general strategy for it
-    static constexpr int numWellEq = Indices::numPhases + 1;
+    static constexpr long long numWellEq = Indices::numPhases + 1;
 
     using Scalar = typename FluidSystem::Scalar;
     using EvalWell = DenseAd::Evaluation<Scalar, /*size=*/Indices::numEq + numWellEq>;
@@ -79,7 +79,7 @@ public:
     {}
 
     //! \brief Resize values and evaluations.
-    void resize(const int numSegments);
+    void resize(const long long numSegments);
 
     //! \brief Initialize evaluations from values.
     void init();
@@ -104,45 +104,45 @@ public:
 
     //! \brief Returns scaled volume fraction for a component in a segment.
     //! \details F_p / g_p, the basic usage of this value is because Q_p = G_t * F_p / G_p
-    EvalWell volumeFractionScaled(const int seg,
-                                  const int compIdx) const;
+    EvalWell volumeFractionScaled(const long long seg,
+                                  const long long compIdx) const;
 
     //! \brief Returns surface volume fraction for a component in a segment.
     //! \details basically Q_p / \sigma_p Q_p
-    EvalWell surfaceVolumeFraction(const int seg,
-                                   const int compIdx) const;
+    EvalWell surfaceVolumeFraction(const long long seg,
+                                   const long long compIdx) const;
 
     //! \brief Returns upwinding rate for a component in a segment.
-    EvalWell getSegmentRateUpwinding(const int seg,
-                                     const int seg_upwind,
+    EvalWell getSegmentRateUpwinding(const long long seg,
+                                     const long long seg_upwind,
                                      const std::size_t comp_idx) const;
 
     //! \brief Get bottomhole pressure.
     EvalWell getBhp() const;
 
     //! \brief Get pressure for a segment.
-    EvalWell getSegmentPressure(const int seg) const;
+    EvalWell getSegmentPressure(const long long seg) const;
 
     //! \brief Get rate for a component in a segment.
-    EvalWell getSegmentRate(const int seg,
-                            const int comp_idx) const;
+    EvalWell getSegmentRate(const long long seg,
+                            const long long comp_idx) const;
 
     //! \brief Returns scaled rate for a component.
-    EvalWell getQs(const int comp_idx) const;
+    EvalWell getQs(const long long comp_idx) const;
 
     //! \brief Get WQTotal.
     EvalWell getWQTotal() const;
 
     //! \brief Returns a const ref to an array of evaluations.
-    const std::array<EvalWell, numWellEq>& eval(const int idx) const
+    const std::array<EvalWell, numWellEq>& eval(const long long idx) const
     { return evaluation_[idx]; }
 
     //! \brief Returns a value array.
-    const std::array<Scalar, numWellEq>& value(const int idx) const
+    const std::array<Scalar, numWellEq>& value(const long long idx) const
     { return value_[idx]; }
 
     //! \brief Set a value array. Note that this does not also set the corresponding evaluation.
-    void setValue(const int idx, const std::array<Scalar, numWellEq>& val)
+    void setValue(const long long idx, const std::array<Scalar, numWellEq>& val)
     { value_[idx] = val; }
 
     //! output the segments with pressure close to lower pressure limit for debugging purpose
@@ -150,10 +150,10 @@ public:
 
 private:
     //! \brief Handle non-reasonable fractions due to numerical overshoot.
-    void processFractions(const int seg);
+    void processFractions(const long long seg);
 
     //! \brief Returns volume fraction for component in a segment.
-    EvalWell volumeFraction(const int seg,
+    EvalWell volumeFraction(const long long seg,
                             const unsigned compIdx) const;
 
     //! \brief The values for the primary variables

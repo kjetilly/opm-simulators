@@ -39,7 +39,7 @@ void setVectorValue(T* deviceData, size_t numberOfElements, const T& value);
  * @param indices the indices to use (device memory)
  */
 template <class T>
-void setZeroAtIndexSet(T* deviceData, size_t numberOfElements, const int* indices);
+void setZeroAtIndexSet(T* deviceData, size_t numberOfElements, const long long* indices);
 
 /**
  * @brief innerProductAtIndices computes the inner product between deviceA[indices] and deviceB[indices]
@@ -55,12 +55,12 @@ void setZeroAtIndexSet(T* deviceData, size_t numberOfElements, const int* indice
  * of those projected vectors.
  */
 template <class T>
-T innerProductAtIndices(cublasHandle_t cublasHandle, const T* deviceA, const T* deviceB, T* buffer, size_t numberOfElements, const int* indices);
+T innerProductAtIndices(cublasHandle_t cublasHandle, const T* deviceA, const T* deviceB, T* buffer, size_t numberOfElements, const long long* indices);
 
 template <class T>
-void prepareSendBuf(const T* deviceA, T* buffer, size_t numberOfElements, const int* indices);
+void prepareSendBuf(const T* deviceA, T* buffer, size_t numberOfElements, const long long* indices);
 template <class T>
-void syncFromRecvBuf(T* deviceA, T* buffer, size_t numberOfElements, const int* indices);
+void syncFromRecvBuf(T* deviceA, T* buffer, size_t numberOfElements, const long long* indices);
 
 /**
  * @brief Compue the weighted matrix vector product where the matrix is diagonal, the diagonal is a vector, meaning we

@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_SUITE (RelPermDiagnostics)
 BOOST_AUTO_TEST_CASE(diagnosis)
 {
     // MPI setup.
-    int argcDummy = 1;
+    long long argcDummy = 1;
     const char *tmp[] = {"test_relpermdiagnostic"};
     char **argvDummy = const_cast<char**>(tmp);
 

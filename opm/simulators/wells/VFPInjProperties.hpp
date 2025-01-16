@@ -55,7 +55,7 @@ public:
      * input ADB objects.
      */
     template <class EvalWell>
-    EvalWell bhp(const int       table_id,
+    EvalWell bhp(const long long       table_id,
                  const EvalWell& aqua,
                  const EvalWell& liquid,
                  const EvalWell& vapour,
@@ -65,12 +65,12 @@ public:
      * Returns the table associated with the ID, or throws an exception if
      * the table does not exist
      */
-    const VFPInjTable& getTable(const int table_id) const;
+    const VFPInjTable& getTable(const long long table_id) const;
 
     /**
      * Check whether there is table associated with ID
      */
-    bool hasTable(const int table_id) const;
+    bool hasTable(const long long table_id) const;
 
     /**
      * Returns true if no vfp tables are in the current map
@@ -91,7 +91,7 @@ public:
      * @return The bottom hole pressure, interpolated/extrapolated linearly using
      * the above parameters from the values in the input table.
      */
-    Scalar bhp(const int    table_id,
+    Scalar bhp(const long long    table_id,
                const Scalar aqua,
                const Scalar liquid,
                const Scalar vapour,
@@ -108,7 +108,7 @@ public:
      * @return The tubing hole pressure, interpolated/extrapolated linearly using
      * the above parameters from the values in the input table.
      */
-    Scalar thp(const int    table_id,
+    Scalar thp(const long long    table_id,
                const Scalar aqua,
                const Scalar liquid,
                const Scalar vapour,
@@ -116,7 +116,7 @@ public:
 
 protected:
     // Map which connects the table number with the table itself
-    std::map<int, std::reference_wrapper<const VFPInjTable>> m_tables;
+    std::map<long long, std::reference_wrapper<const VFPInjTable>> m_tables;
 };
 
 } //namespace

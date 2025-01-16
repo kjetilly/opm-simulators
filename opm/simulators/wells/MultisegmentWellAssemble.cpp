@@ -42,7 +42,7 @@
 namespace Opm {
 
 //! \brief Class administering assembler access to equation system.
-template<class Scalar, int numWellEq, int numEq>
+template<class Scalar, long long numWellEq, long long numEq>
 class MultisegmentWellEquationAccess {
 public:
     //! \brief Constructor initializes reference to the equation system.
@@ -100,9 +100,9 @@ assembleControlEq(const WellState<Scalar>& well_state,
         This function assembles the control equation, similar as for StandardWells.
         It does *not* need communication.
     */
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     EvalWell control_eq(0.0);
 
@@ -198,16 +198,16 @@ assembleControlEq(const WellState<Scalar>& well_state,
     MultisegmentWellEquationAccess<Scalar,numWellEq,Indices::numEq> eqns(eqns1);
     // using control_eq to update the matrix and residuals
     eqns.residual()[0][SPres] = control_eq.value();
-    for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         eqns.D()[0][0][SPres][pv_idx] = control_eq.derivative(pv_idx + Indices::numEq);
     }
 }
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleAccelerationTerm(const int seg_target,
-                         const int seg,
-                         const int seg_upwind,
+assembleAccelerationTerm(const long long seg_target,
+                         const long long seg,
+                         const long long seg_upwind,
                          const EvalWell& accelerationTerm,
                          Equations& eqns1) const
 {   // seg_target:  segment for which we are assembling the acc term
@@ -236,8 +236,8 @@ assembleAccelerationTerm(const int seg_target,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleHydroPressureLoss(const int seg,
-                          const int seg_density,
+assembleHydroPressureLoss(const long long seg,
+                          const long long seg_density,
                           const EvalWell& hydro_pressure_drop_seg,
                           Equations& eqns1) const
 {
@@ -248,7 +248,7 @@ assembleHydroPressureLoss(const int seg,
 
     MultisegmentWellEquationAccess<Scalar,numWellEq,Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][SPres] -= hydro_pressure_drop_seg.value();
-    for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         eqns.D()[seg][seg_density][SPres][pv_idx] -= hydro_pressure_drop_seg.derivative(pv_idx + Indices::numEq);
     }
 
@@ -256,8 +256,8 @@ assembleHydroPressureLoss(const int seg,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePressureEqExtraDerivatives(const int seg,
-                                   const int seg_upwind,
+assemblePressureEqExtraDerivatives(const long long seg,
+                                   const long long seg_upwind,
                                    const EvalWell& extra_derivatives,
                                    Equations& eqns1) const
 {
@@ -274,9 +274,9 @@ assemblePressureEqExtraDerivatives(const int seg,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePressureEq(const int seg,
-                   const int seg_upwind,
-                   const int outlet_segment_index,
+assemblePressureEq(const long long seg,
+                   const long long seg_upwind,
+                   const long long outlet_segment_index,
                    const EvalWell& pressure_equation,
                    const EvalWell& outlet_pressure,
                    Equations& eqns1) const
@@ -297,14 +297,14 @@ assemblePressureEq(const int seg,
 
     // contribution from the outlet segment
     eqns.residual()[seg][SPres] -= outlet_pressure.value();
-    for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         eqns.D()[seg][outlet_segment_index][SPres][pv_idx] -= outlet_pressure.derivative(pv_idx + Indices::numEq);
     }
 }
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleTrivialEq(const int seg,
+assembleTrivialEq(const long long seg,
                   const Scalar value,
                   Equations& eqns1) const
 {
@@ -322,8 +322,8 @@ assembleTrivialEq(const int seg,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleAccumulationTerm(const int seg,
-                         const int comp_idx,
+assembleAccumulationTerm(const long long seg,
+                         const long long comp_idx,
                          const EvalWell& accumulation_term,
                          Equations& eqns1) const
 {
@@ -333,16 +333,16 @@ assembleAccumulationTerm(const int seg,
     */
     MultisegmentWellEquationAccess<Scalar,numWellEq,Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][comp_idx] += accumulation_term.value();
-    for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
       eqns.D()[seg][seg][comp_idx][pv_idx] += accumulation_term.derivative(pv_idx + Indices::numEq);
     }
 }
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleOutflowTerm(const int seg,
-                    const int seg_upwind,
-                    const int comp_idx,
+assembleOutflowTerm(const long long seg,
+                    const long long seg_upwind,
+                    const long long comp_idx,
                     const EvalWell& segment_rate,
                     Equations& eqns1) const
 {
@@ -364,10 +364,10 @@ assembleOutflowTerm(const int seg,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleInflowTerm(const int seg,
-                   const int inlet,
-                   const int inlet_upwind,
-                   const int comp_idx,
+assembleInflowTerm(const long long seg,
+                   const long long inlet,
+                   const long long inlet_upwind,
+                   const long long comp_idx,
                    const EvalWell& inlet_rate,
                    Equations& eqns1) const
  {
@@ -389,9 +389,9 @@ assembleInflowTerm(const int seg,
 
 template<class FluidSystem, class Indices>
 void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePerforationEq(const int seg,
-                      const int local_perf_index,
-                      const int comp_idx,
+assemblePerforationEq(const long long seg,
+                      const long long local_perf_index,
+                      const long long comp_idx,
                       const EvalWell& cq_s_effective,
                       Equations& eqns1) const
 {
@@ -406,7 +406,7 @@ assemblePerforationEq(const int seg,
     eqns.residual()[seg][comp_idx] += cq_s_effective.value();
 
     // assemble the jacobians
-    for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         // also need to consider the efficiency factor when manipulating the jacobians.
         eqns.C()[seg][local_perf_index][pv_idx][comp_idx] -= cq_s_effective.derivative(pv_idx + Indices::numEq); // input in transformed matrix
 
@@ -414,7 +414,7 @@ assemblePerforationEq(const int seg,
         eqns.D()[seg][seg][comp_idx][pv_idx] += cq_s_effective.derivative(pv_idx + Indices::numEq);
     }
 
-    for (int pv_idx = 0; pv_idx < Indices::numEq; ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < Indices::numEq; ++pv_idx) {
         // also need to consider the efficiency factor when manipulating the jacobians.
         eqns.B()[seg][local_perf_index][comp_idx][pv_idx] += cq_s_effective.derivative(pv_idx);
     }

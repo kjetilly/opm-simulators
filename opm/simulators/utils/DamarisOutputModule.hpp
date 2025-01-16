@@ -43,7 +43,7 @@ std::string initDamarisXmlFile();
 *  2/ Reading a file specified by the environment variable FLOW_DAMARIS_XML_FILE 
 *  
 */
-void initializeDamaris(const Parallel::Communication comm, const int mpiRank,
+void initializeDamaris(const Parallel::Communication comm, const long long mpiRank,
                        const std::map<std::string, std::string>& find_replace_map);
 
 } // namespace Opm::DamarisOutput

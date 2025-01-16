@@ -45,7 +45,7 @@ namespace Opm::gpuistl
  * The view will typically provide a view into a GpuBuffer and be able to
  * manipulate the data within it
  *
- * @param T Type of the data we store, typically int/float/double w/o const specifier
+ * @param T Type of the data we store, typically long long/float/double w/o const specifier
  *
  **/
 template <typename T>
@@ -243,7 +243,7 @@ public:
         }
 
         /// @brief Post-increment operator
-        /// @param no parameter, int is placeholder for c++ implementation to differentiate from pre-increment
+        /// @param no parameter, long long is placeholder for c++ implementation to differentiate from pre-increment
         /// @return Iterator before it is incremented
         __host__ __device__ iterator operator++(int) {
             iterator tmp = *this;
@@ -259,7 +259,7 @@ public:
         }
 
         /// @brief Post-decrement operator
-        /// @param no parameter, int is placeholder for c++ implementation to differentiate from pre-decrement
+        /// @param no parameter, long long is placeholder for c++ implementation to differentiate from pre-decrement
         /// @return Iterator before it is decremented
         __host__ __device__ iterator operator--(int) {
             iterator tmp = *this;

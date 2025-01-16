@@ -69,7 +69,7 @@ public:
         if (comm.rank() == 0)
         {
             const FieldPropsManager& globalProps = eclState.globalFieldProps();
-            m_intKeys = globalProps.keys<int>();
+            m_intKeys = globalProps.keys<long long>();
             m_doubleKeys = globalProps.keys<double>();
             m_distributed_fieldProps.copyTran(globalProps);
         }
@@ -147,7 +147,7 @@ public:
             for (const auto& intKey : m_intKeys)
             {
                 const auto& pair = data->second[counter++];
-                m_distributed_fieldProps.m_intProps[intKey].data[index] = static_cast<int>(pair.first);
+                m_distributed_fieldProps.m_intProps[intKey].data[index] = static_cast<long long>(pair.first);
                 m_distributed_fieldProps.m_intProps[intKey].value_status[index] = static_cast<value::status>(pair.second);
             }
 
@@ -160,16 +160,16 @@ public:
         }
     }
 
-    bool contains(int /* dim */, int codim)
+    bool contains(long long /* dim */, long long codim)
     {
         return codim == 0;
     }
 
-    bool fixedsize(int /* dim */, int /* codim */)
+    bool fixedsize(long long /* dim */, long long /* codim */)
     {
         return true;
     }
-    bool fixedSize(int /* dim */, int /* codim */)
+    bool fixedSize(long long /* dim */, long long /* codim */)
     {
         return true;
     }

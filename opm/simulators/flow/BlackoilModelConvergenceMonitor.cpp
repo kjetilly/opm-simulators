@@ -40,11 +40,11 @@ BlackoilModelConvergenceMonitor(const MonitorParams& param)
 
 template<class Scalar>
 void BlackoilModelConvergenceMonitor<Scalar>::
-checkPenaltyCard(ConvergenceReport& report, int iteration)
+checkPenaltyCard(ConvergenceReport& report, long long iteration)
 {
     const auto& current_metrics = report.reservoirConvergence();
     auto distances = std::vector<double>(current_metrics.size(), 0.0);
-    int current_above_tolerance = 0;
+    long long current_above_tolerance = 0;
 
     for (size_t i = 0; i < current_metrics.size(); ++i) {
         distances[i] = std::max(std::log10(current_metrics[i].value() /

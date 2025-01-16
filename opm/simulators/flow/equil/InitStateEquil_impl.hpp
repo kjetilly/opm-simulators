@@ -88,7 +88,7 @@ void verticalExtent(const CellRange&      cells,
 template<class Scalar>
 void subdivisionCentrePoints(const Scalar left,
                              const Scalar right,
-                             const int                               numIntervals,
+                             const long long                               numIntervals,
                              std::vector<std::pair<Scalar, Scalar>>& subdiv)
 {
     const auto h = (right - left) / numIntervals;
@@ -106,7 +106,7 @@ template <typename CellID, typename Scalar>
 std::vector<std::pair<Scalar, Scalar>>
 horizontalSubdivision(const CellID cell,
                       const std::pair<Scalar, Scalar> topbot,
-                      const int    numIntervals)
+                      const long long    numIntervals)
 {
     auto subdiv = std::vector<std::pair<Scalar, Scalar>>{};
     subdiv.reserve(2 * numIntervals);
@@ -128,12 +128,12 @@ template <class Scalar, class Element>
 Scalar cellCenterDepth(const Element& element)
 {
     typedef typename Element::Geometry Geometry;
-    static constexpr int zCoord = Element::dimension - 1;
+    static constexpr long long zCoord = Element::dimension - 1;
     Scalar zz = 0.0;
 
     const Geometry& geometry = element.geometry();
-    const int corners = geometry.corners();
-    for (int i=0; i < corners; ++i)
+    const long long corners = geometry.corners();
+    for (long long i=0; i < corners; ++i)
         zz += geometry.corner(i)[zCoord];
 
     return zz/corners;
@@ -143,16 +143,16 @@ template <class Scalar, class Element>
 std::pair<Scalar,Scalar> cellZSpan(const Element& element)
 {
     typedef typename Element::Geometry Geometry;
-    static constexpr int zCoord = Element::dimension - 1;
+    static constexpr long long zCoord = Element::dimension - 1;
     Scalar bot = 0.0;
     Scalar top = 0.0;
 
     const Geometry& geometry = element.geometry();
-    const int corners = geometry.corners();
+    const long long corners = geometry.corners();
     assert(corners == 8);
-    for (int i=0; i < 4; ++i)
+    for (long long i=0; i < 4; ++i)
         bot += geometry.corner(i)[zCoord];
-    for (int i=4; i < corners; ++i)
+    for (long long i=4; i < corners; ++i)
         top += geometry.corner(i)[zCoord];
 
     return std::make_pair(bot/4, top/4);
@@ -162,15 +162,15 @@ template <class Scalar, class Element>
 std::pair<Scalar,Scalar> cellZMinMax(const Element& element)
 {
     typedef typename Element::Geometry Geometry;
-    static constexpr int zCoord = Element::dimension - 1;
+    static constexpr long long zCoord = Element::dimension - 1;
     const Geometry& geometry = element.geometry();
-    const int corners = geometry.corners();
+    const long long corners = geometry.corners();
     assert(corners == 8);
     auto min = std::numeric_limits<Scalar>::max();
     auto max = std::numeric_limits<Scalar>::lowest();
 
 
-    for (int i=0; i < corners; ++i) {
+    for (long long i=0; i < corners; ++i) {
         min = std::min(min, static_cast<Scalar>(geometry.corner(i)[zCoord]));
         max = std::max(max, static_cast<Scalar>(geometry.corner(i)[zCoord]));
     }
@@ -181,7 +181,7 @@ template<class Scalar, class RHS>
 RK4IVP<Scalar,RHS>::RK4IVP(const RHS& f,
                            const std::array<Scalar,2>& span,
                            const Scalar y0,
-                           const int N)
+                           const long long N)
     : N_(N)
     , span_(span)
 {
@@ -195,7 +195,7 @@ RK4IVP<Scalar,RHS>::RK4IVP(const RHS& f,
     y_.push_back(y0);
     f_.push_back(f(span_[0], y0));
 
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         const Scalar x = span_[0] + i*h;
         const Scalar y = y_.back();
 
@@ -218,7 +218,7 @@ operator()(const Scalar x) const
     // Dense output (O(h**3)) according to Shampine
     // (Hermite interpolation)
     const Scalar h = stepsize();
-    int i = (x - span_[0]) / h;
+    long long i = (x - span_[0]) / h;
     const Scalar t = (x - (span_[0] + i*h)) / h;
 
     // Crude handling of evaluation point outside "span_";
@@ -249,7 +249,7 @@ template<class FluidSystem>
 Water<FluidSystem>::
 Water(const TabulatedFunction& tempVdTable,
       const TabulatedFunction& saltVdTable,
-      const int pvtRegionIdx,
+      const long long pvtRegionIdx,
       const Scalar normGrav)
     : tempVdTable_(tempVdTable)
     , saltVdTable_(saltVdTable)
@@ -289,7 +289,7 @@ template<class FluidSystem, class RS>
 Oil<FluidSystem,RS>::
 Oil(const TabulatedFunction& tempVdTable,
     const RS& rs,
-    const int pvtRegionIdx,
+    const long long pvtRegionIdx,
     const Scalar normGrav)
     : tempVdTable_(tempVdTable)
     , rs_(rs)
@@ -338,7 +338,7 @@ Gas<FluidSystem,RV,RVW>::
 Gas(const TabulatedFunction& tempVdTable,
     const RV& rv,
     const RVW& rvw,
-    const int pvtRegionIdx,
+    const long long pvtRegionIdx,
     const Scalar normGrav)
     : tempVdTable_(tempVdTable)
     , rv_(rv)
@@ -436,7 +436,7 @@ template<class ODE>
 PressureTable<FluidSystem,Region>::
 PressureFunction<ODE>::PressureFunction(const ODE&      ode,
                                         const InitCond& ic,
-                                        const int       nsample,
+                                        const long long       nsample,
                                         const VSpan&    span)
     : initial_(ic)
 {
@@ -966,7 +966,7 @@ fromDepthTable(const Scalar   contactdepth,
 {
     return satFromDepth<FluidSystem>
         (this->matLawMgr_, this->evalPt_.position->depth,
-         contactdepth, static_cast<int>(phasePos),
+         contactdepth, static_cast<long long>(phasePos),
          this->evalPt_.position->cell, isincr);
 }
 
@@ -978,14 +978,14 @@ invertCapPress(const Scalar pc,
                const bool     isincr) const
 {
     return satFromPc<FluidSystem>
-        (this->matLawMgr_, static_cast<int>(phasePos),
+        (this->matLawMgr_, static_cast<long long>(phasePos),
          this->evalPt_.position->cell, pc, isincr);
 }
 
 template<class FluidSystem, class Region>
 PressureTable<FluidSystem,Region>::
 PressureTable(const Scalar gravity,
-              const int    samplePoints)
+              const long long    samplePoints)
     : gravity_(gravity)
     , nsample_(samplePoints)
 {
@@ -1301,22 +1301,22 @@ getEquil(const EclipseState& state)
 }
 
 template<class GridView>
-std::vector<int>
+std::vector<long long>
 equilnum(const EclipseState& eclipseState,
          const GridView& gridview)
 {
-    std::vector<int> eqlnum(gridview.size(0), 0);
+    std::vector<long long> eqlnum(gridview.size(0), 0);
 
     if (eclipseState.fieldProps().has_int("EQLNUM")) {
         const auto& e = eclipseState.fieldProps().get_int("EQLNUM");
-        std::transform(e.begin(), e.end(), eqlnum.begin(), [](int n){ return n - 1;});
+        std::transform(e.begin(), e.end(), eqlnum.begin(), [](long long n){ return n - 1;});
     }
     OPM_BEGIN_PARALLEL_TRY_CATCH();
-    const int num_regions = eclipseState.getTableManager().getEqldims().getNumEquilRegions();
-    if ( std::any_of(eqlnum.begin(), eqlnum.end(), [num_regions](int n){return n >= num_regions;}) ) {
+    const long long num_regions = eclipseState.getTableManager().getEqldims().getNumEquilRegions();
+    if ( std::any_of(eqlnum.begin(), eqlnum.end(), [num_regions](long long n){return n >= num_regions;}) ) {
         throw std::runtime_error("Values larger than maximum Equil regions " + std::to_string(num_regions) + " provided in EQLNUM");
     }
-    if ( std::any_of(eqlnum.begin(), eqlnum.end(), [](int n){return n < 0;}) ) {
+    if ( std::any_of(eqlnum.begin(), eqlnum.end(), [](long long n){return n < 0;}) ) {
         throw std::runtime_error("zero or negative values provided in EQLNUM");
     }
     OPM_END_PARALLEL_TRY_CATCH("Invalied EQLNUM numbers: ", gridview.comm());
@@ -1341,7 +1341,7 @@ InitialStateComputer(MaterialLawManager& materialLawManager,
                      const GridView& gridView,
                      const CartesianIndexMapper& cartMapper,
                      const Scalar grav,
-                     const int num_pressure_points,
+                     const long long num_pressure_points,
                      const bool applySwatInit)
     : temperature_(grid.size(/*codim=*/0), eclipseState.getTableManager().rtemp()),
       saltConcentration_(grid.size(/*codim=*/0)),
@@ -1379,7 +1379,7 @@ InitialStateComputer(MaterialLawManager& materialLawManager,
     const auto& tables = eclipseState.getTableManager();
     // Create (inverse) region mapping.
     const RegionMapping<> eqlmap(equilnum(eclipseState, grid));
-    const int invalidRegion = -1;
+    const long long invalidRegion = -1;
     regionPvtIdx_.resize(rec.size(), invalidRegion);
     setRegionPvtIdx(eclipseState, eqlmap);
 
@@ -1404,7 +1404,7 @@ InitialStateComputer(MaterialLawManager& materialLawManager,
                 rsFunc_.push_back(std::shared_ptr<Miscibility::RsVD<FluidSystem>>());
                 continue;
             }
-            const int pvtIdx = regionPvtIdx_[i];
+            const long long pvtIdx = regionPvtIdx_[i];
             if (!rec[i].liveOilInitConstantRs()) {
                 const TableContainer& rsvdTables = tables.getRsvdTables();
                 const TableContainer& pbvdTables = tables.getPbvdTables();
@@ -1451,7 +1451,7 @@ InitialStateComputer(MaterialLawManager& materialLawManager,
                 rvFunc_.push_back(std::shared_ptr<Miscibility::RvVD<FluidSystem>>());
                 continue;
             }
-            const int pvtIdx = regionPvtIdx_[i];
+            const long long pvtIdx = regionPvtIdx_[i];
             if (!rec[i].wetGasInitConstantRv()) {
                 const TableContainer& rvvdTables = tables.getRvvdTables();
                 const TableContainer& pdvdTables = tables.getPdvdTables();
@@ -1498,7 +1498,7 @@ InitialStateComputer(MaterialLawManager& materialLawManager,
                 rvwFunc_.push_back(std::shared_ptr<Miscibility::RvwVD<FluidSystem>>());
                 continue;
             }
-            const int pvtIdx = regionPvtIdx_[i];
+            const long long pvtIdx = regionPvtIdx_[i];
             if (!rec[i].humidGasInitConstantRvw()) {
                 const TableContainer& rvwvdTables = tables.getRvwvdTables();
 
@@ -1588,7 +1588,7 @@ void InitialStateComputer<FluidSystem,
                           CartesianIndexMapper>::
 updateInitialTemperature_(const EclipseState& eclState, const RMap& reg)
 {
-    const int numEquilReg = rsFunc_.size();
+    const long long numEquilReg = rsFunc_.size();
     tempVdTable_.resize(numEquilReg);
     const auto& tables = eclState.getTableManager();
     if (!tables.hasTables("RTEMPVD")) {
@@ -1625,7 +1625,7 @@ void InitialStateComputer<FluidSystem,
                           CartesianIndexMapper>::
 updateInitialSaltConcentration_(const EclipseState& eclState, const RMap& reg)
 {
-    const int numEquilReg = rsFunc_.size();
+    const long long numEquilReg = rsFunc_.size();
     saltVdTable_.resize(numEquilReg);
     const auto& tables = eclState.getTableManager();
     const TableContainer& saltvdTables = tables.getSaltvdTables();
@@ -1664,7 +1664,7 @@ void InitialStateComputer<FluidSystem,
                           CartesianIndexMapper>::
 updateInitialSaltSaturation_(const EclipseState& eclState, const RMap& reg)
 {
-    const int numEquilReg = rsFunc_.size();
+    const long long numEquilReg = rsFunc_.size();
     saltpVdTable_.resize(numEquilReg);
     const auto& tables = eclState.getTableManager();
     const TableContainer& saltpvdTables = tables.getSaltpvdTables();
@@ -1696,7 +1696,7 @@ updateCellProps_(const GridView& gridView,
                  const NumericalAquifers& aquifer)
 {
     ElementMapper elemMapper(gridView, Dune::mcmgElementLayout());
-    int numElements = gridView.size(/*codim=*/0);
+    long long numElements = gridView.size(/*codim=*/0);
     cellCenterDepth_.resize(numElements);
     cellZSpan_.resize(numElements);
     cellZMinMax_.resize(numElements);
@@ -1706,7 +1706,7 @@ updateCellProps_(const GridView& gridView,
     const auto num_aqu_cells = aquifer.allAquiferCells();
     for (; elemIt != elemEndIt; ++elemIt) {
         const Element& element = *elemIt;
-        const unsigned int elemIdx = elemMapper.index(element);
+        const size_t elemIdx = elemMapper.index(element);
         cellCenterDepth_[elemIdx] = Details::cellCenterDepth<Scalar>(element);
         const auto cartIx = cartesianIndexMapper_.cartesianIndex(elemIdx);
         cellZSpan_[elemIdx] = Details::cellZSpan<Scalar>(element);
@@ -1757,7 +1757,7 @@ applyNumericalAquifers_(const GridView& gridView,
     const auto gasPos = FluidSystem::gasPhaseIdx;
     for (; elemIt != elemEndIt; ++elemIt) {
         const Element& element = *elemIt;
-        const unsigned int elemIdx = elemMapper.index(element);
+        const size_t elemIdx = elemMapper.index(element);
         const auto cartIx = cartesianIndexMapper_.cartesianIndex(elemIdx);
         const auto search = num_aqu_cells.find(cartIx);
         if (search != num_aqu_cells.end()) {
@@ -1839,7 +1839,7 @@ calcPressSatRsRv(const RMap& reg,
     auto psat   = PhaseSat { materialLawManager, this->swatInit_ };
     auto vspan  = std::array<Scalar, 2>{};
 
-    std::vector<int> regionIsEmpty(rec.size(), 0);
+    std::vector<long long> regionIsEmpty(rec.size(), 0);
     for (std::size_t r = 0; r < rec.size(); ++r) {
         const auto& cells = reg.cells(r);
 
@@ -2011,7 +2011,7 @@ void InitialStateComputer<FluidSystem,
                           CartesianIndexMapper>::
 equilibrateHorizontal(const CellRange&        cells,
                       const EquilReg<Scalar>& eqreg,
-                      const int               acc,
+                      const long long               acc,
                       const PressTable&       ptable,
                       PhaseSat&               psat)
 {

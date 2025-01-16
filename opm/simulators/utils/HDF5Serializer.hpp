@@ -74,7 +74,7 @@ public:
                      const std::string& time_stamp,
                      const std::string& case_name,
                      const std::string& params,
-                     int num_procs);
+                     long long num_procs);
 
     //! \brief Read data and deserialize from restart file.
     //! \tparam T Type of class to read
@@ -90,10 +90,10 @@ public:
     }
 
     //! \brief Returns the last report step stored in file.
-    int lastReportStep() const;
+    long long lastReportStep() const;
 
     //! \brief Returns a list of report steps stored in restart file.
-    std::vector<int> reportSteps() const;
+    std::vector<long long> reportSteps() const;
 
 private:
     const Serialization::MemPacker m_packer_priv{}; //!< Packer instance

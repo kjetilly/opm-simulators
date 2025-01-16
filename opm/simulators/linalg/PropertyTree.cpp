@@ -102,8 +102,8 @@ template double PropertyTree::get<double>(const std::string& key) const;
 template double PropertyTree::get<double>(const std::string& key, const double& defValue) const;
 template float PropertyTree::get<float>(const std::string& key) const;
 template float PropertyTree::get<float>(const std::string& key, const float& defValue) const;
-template int PropertyTree::get<int>(const std::string& key) const;
-template int PropertyTree::get<int>(const std::string& key, const int& defValue) const;
+template long long PropertyTree::get<long long>(const std::string& key) const;
+template long long PropertyTree::get<long long>(const std::string& key, const long long& defValue) const;
 template size_t PropertyTree::get<size_t>(const std::string& key) const;
 template size_t PropertyTree::get<size_t>(const std::string& key, const size_t& defValue) const;
 template bool PropertyTree::get<bool>(const std::string& key) const;
@@ -112,7 +112,7 @@ template bool PropertyTree::get<bool>(const std::string& key, const bool& defVal
 template void PropertyTree::put<std::string>(const std::string& key, const std::string& value);
 template void PropertyTree::put<float>(const std::string& key, const float& value);
 template void PropertyTree::put<double>(const std::string& key, const double& value);
-template void PropertyTree::put<int>(const std::string& key, const int& value);
+template void PropertyTree::put<long long>(const std::string& key, const long long& value);
 
 
 } // namespace Opm

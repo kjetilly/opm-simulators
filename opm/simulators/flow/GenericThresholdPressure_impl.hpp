@@ -62,7 +62,7 @@ GenericThresholdPressure(const CartesianIndexMapper& cartMapper,
 
 template<class Grid, class GridView, class ElementMapper,class Scalar>
 Scalar GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-thresholdPressure(int elem1Idx, int elem2Idx) const
+thresholdPressure(long long elem1Idx, long long elem2Idx) const
 {
     if (!enableThresholdPressure_)
         return 0.0;
@@ -70,8 +70,8 @@ thresholdPressure(int elem1Idx, int elem2Idx) const
     // threshold pressure accross faults
     if (!thpresftValues_.empty()) {
 
-        int fault1Idx = lookUpCartesianData_(elem1Idx, cartElemFaultIdx_);
-        int fault2Idx = lookUpCartesianData_(elem2Idx, cartElemFaultIdx_);
+        long long fault1Idx = lookUpCartesianData_(elem1Idx, cartElemFaultIdx_);
+        long long fault2Idx = lookUpCartesianData_(elem2Idx, cartElemFaultIdx_);
 
         if (fault1Idx != -1 && fault1Idx == fault2Idx)
             // inside a fault there's no threshold pressure, even accross EQUIL
@@ -129,7 +129,7 @@ finishInit()
     }
 
     // internalize the data specified using the EQLNUM keyword
-    elemEquilRegion_ = lookUpData_.template assignFieldPropsIntOnLeaf<short unsigned int>(eclState_.fieldProps(),
+    elemEquilRegion_ = lookUpData_.template assignFieldPropsIntOnLeaf<short size_t>(eclState_.fieldProps(),
                                                                                           "EQLNUM", true);
 
     /*
@@ -203,8 +203,8 @@ configureThpresft_()
     const auto& thpres = simConfig.getThresholdPressure();
 
     // extract the multipliers
-    int numFaults = faults.size();
-    int numCartesianElem = eclState_.getInputGrid().getCartesianSize();
+    long long numFaults = faults.size();
+    long long numCartesianElem = eclState_.getInputGrid().getCartesianSize();
     thpresftValues_.resize(numFaults, -1.0);
     cartElemFaultIdx_.resize(numCartesianElem, -1);
     for (std::size_t faultIdx = 0; faultIdx < faults.size(); faultIdx++) {

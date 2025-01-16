@@ -68,7 +68,7 @@ public:
 
 #if HAVE_MPI
         {
-            int tmp;
+            long long tmp;
             MPI_Comm_rank(MPI_COMM_WORLD, &tmp);
             myRank_ = static_cast<ProcessRank>(tmp);
             MPI_Comm_size(MPI_COMM_WORLD, &tmp);
@@ -147,7 +147,7 @@ public:
         MPI_Send(&sendBuf,                     // buff
                  sizeof(PeerIndexGlobalIndex), // count
                  MPI_BYTE,                     // data type
-                 static_cast<int>(peerRank),   // peer process
+                 static_cast<long long>(peerRank),   // peer process
                  0,                            // tag
                  MPI_COMM_WORLD);              // communicator
 #endif
@@ -164,7 +164,7 @@ public:
         MPI_Recv(&recvBuf,                     // buff
                  sizeof(PeerIndexGlobalIndex), // count
                  MPI_BYTE,                     // data type
-                 static_cast<int>(peerRank),   // peer process
+                 static_cast<long long>(peerRank),   // peer process
                  0,                            // tag
                  MPI_COMM_WORLD,               // communicator
                  MPI_STATUS_IGNORE);           // status
@@ -220,7 +220,7 @@ protected:
             MPI_Recv(&domesticOffset_, // buffer
                      1,                // count
                      MPI_INT,          // data type
-                     static_cast<int>(myRank_ - 1), // peer rank
+                     static_cast<long long>(myRank_ - 1), // peer rank
                      0,                // tag
                      MPI_COMM_WORLD,   // communicator
                      MPI_STATUS_IGNORE);
@@ -228,7 +228,7 @@ protected:
 
         // create maps for all indices for which the current process
         // is the master
-        int numMaster = 0;
+        long long numMaster = 0;
         for (unsigned i = 0; i < foreignOverlap_.numLocal(); ++i) {
             if (!foreignOverlap_.iAmMasterOf(static_cast<Index>(i)))
                 continue;
@@ -241,11 +241,11 @@ protected:
         if (myRank_ < mpiSize_ - 1) {
             // send the domestic offset plus the number of master
             // indices to the process which is one rank higher
-            int tmp = domesticOffset_ + numMaster;
+            long long tmp = domesticOffset_ + numMaster;
             MPI_Send(&tmp,            // buff
                      1,               // count
                      MPI_INT,         // data type
-                     static_cast<int>(myRank_ + 1), // peer rank
+                     static_cast<long long>(myRank_ + 1), // peer rank
                      0,               // tag
                      MPI_COMM_WORLD); // communicator
         }
@@ -335,7 +335,7 @@ protected:
     ProcessRank myRank_;
     size_t mpiSize_;
 
-    int domesticOffset_;
+    long long domesticOffset_;
     size_t numDomestic_;
     const ForeignOverlap& foreignOverlap_;
 

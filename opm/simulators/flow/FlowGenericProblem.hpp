@@ -81,7 +81,7 @@ public:
     /*!
      * \copydoc FvBaseProblem::helpPreamble
      */
-    static std::string helpPreamble(int,
+    static std::string helpPreamble(long long,
                                     const char **argv);
 
     /*!
@@ -168,7 +168,7 @@ public:
     /*!
      * \brief Returns the dynamic drsdt convective mixing value
      */
-    Scalar drsdtcon(unsigned elemIdx, int episodeIdx) const;
+    Scalar drsdtcon(unsigned elemIdx, long long episodeIdx) const;
 
     /*!
      * \brief Returns the initial polymer concentration for a given a cell index
@@ -211,7 +211,7 @@ public:
      */
     unsigned pvtRegionIndex(unsigned elemIdx) const;
 
-//    const std::vector<int>& pvtRegionArray() const
+//    const std::vector<long long>& pvtRegionArray() const
 //    { return pvtnum_; }
 
     /*!
@@ -253,9 +253,9 @@ public:
      */
     Scalar porosity(unsigned globalSpaceIdx, unsigned timeIdx) const;
 
-    bool vapparsActive(int episodeIdx) const;
+    bool vapparsActive(long long episodeIdx) const;
 
-    int numPressurePointsEquil() const
+    long long numPressurePointsEquil() const
     { return numPressurePointsEquil_; }
 
     bool operator==(const FlowGenericProblem& rhs) const;
@@ -292,17 +292,17 @@ protected:
     { return false; }
 
     bool beginEpisode_(bool enableExperiments,
-                       int episodeIdx);
+                       long long episodeIdx);
     void beginTimeStep_(bool enableExperiments,
-                        int episodeIdx,
-                        int timeStepIndex,
+                        long long episodeIdx,
+                        long long timeStepIndex,
                         Scalar startTime,
                         Scalar time,
                         Scalar timeStepSize,
                         Scalar endTime);
 
     void readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
-                             std::function<std::array<int,3>(const unsigned)> ijkIndex);
+                             std::function<std::array<long long,3>(const unsigned)> ijkIndex);
     void readRockCompactionParameters_();
 
     void readBlackoilExtentionsInitialConditions_(std::size_t numDof,
@@ -323,7 +323,7 @@ protected:
     static inline std::string briefDescription_;
     std::array<std::vector<Scalar>, 2> referencePorosity_;
 
-    std::vector<int> pvtnum_;
+    std::vector<long long> pvtnum_;
     std::vector<unsigned short> satnum_;
     std::vector<unsigned short> miscnum_;
     std::vector<unsigned short> plmixnum_;
@@ -351,7 +351,7 @@ protected:
     Scalar maxTimeStepAfterWellEvent_;
     
     // equilibration parameters
-    int numPressurePointsEquil_;
+    long long numPressurePointsEquil_;
 
     bool enableDriftCompensation_;
     bool explicitRockCompaction_;

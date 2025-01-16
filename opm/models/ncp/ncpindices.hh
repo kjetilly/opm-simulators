@@ -39,7 +39,7 @@ namespace Opm {
  * \brief The primary variable and equation indices for the
  *        compositional multi-phase NCP model.
  */
-template <class TypeTag, int PVOffset = 0>
+template <class TypeTag, long long PVOffset = 0>
 struct NcpIndices
     : public EnergyIndices<PVOffset
                            + getPropValue<TypeTag, Properties::NumComponents>()
@@ -48,8 +48,8 @@ struct NcpIndices
 {
 private:
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-    static constexpr int numPhases = FluidSystem::numPhases;
-    static constexpr int numComponents = FluidSystem::numComponents;
+    static constexpr long long numPhases = FluidSystem::numPhases;
+    static constexpr long long numComponents = FluidSystem::numComponents;
     enum { enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>() };
 
     using EnergyIndices = Opm::EnergyIndices<PVOffset + numComponents + numPhases, enableEnergy>;
@@ -58,7 +58,7 @@ public:
     /*!
      * \brief The number of primary variables / equations.
      */
-    static const int numEq = numComponents + numPhases + EnergyIndices::numEq_;
+    static const long long numEq = numComponents + numPhases + EnergyIndices::numEq_;
 
     /*!
      * \brief Index of the equation for the continuity of mass of the
@@ -66,14 +66,14 @@ public:
      *
      * numComponents equations follow...
      */
-    static const int conti0EqIdx = PVOffset;
+    static const long long conti0EqIdx = PVOffset;
 
     /*!
      * \brief Index of the first phase NCP equation.
      *
      * The index for the remaining phases are consecutive.
      */
-    static const int ncp0EqIdx = conti0EqIdx + numComponents;
+    static const long long ncp0EqIdx = conti0EqIdx + numComponents;
 
     /*!
      * \brief Index of the primary variable for the fugacity of the
@@ -81,7 +81,7 @@ public:
      *
      * numComponents primary variables follow...
      */
-    static const int fugacity0Idx = PVOffset;
+    static const long long fugacity0Idx = PVOffset;
 
     /*!
      * \brief Index of the saturation of the first phase in a vector
@@ -90,13 +90,13 @@ public:
      * The following (numPhases - 1) primary variables represent the
      * saturations for the phases [1, ..., numPhases - 1]
      */
-    static const int saturation0Idx = fugacity0Idx + numComponents;
+    static const long long saturation0Idx = fugacity0Idx + numComponents;
 
     /*!
      * \brief Index of the first phase' pressure in a vector of
      *        primary variables.
      */
-    static const int pressure0Idx = saturation0Idx + numPhases - 1;
+    static const long long pressure0Idx = saturation0Idx + numPhases - 1;
 };
 
 } // namespace Opm

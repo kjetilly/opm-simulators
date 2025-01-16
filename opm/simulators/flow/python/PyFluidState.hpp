@@ -49,14 +49,14 @@ namespace Opm::Pybind
     public:
         PyFluidState(Simulator* simulator);
         std::vector<double> getFluidStateVariable(const std::string &name) const;
-        std::vector<int> getPrimaryVarMeaning(const std::string &variable) const;
-        std::map<std::string, int> getPrimaryVarMeaningMap(const std::string &variable) const;
+        std::vector<long long> getPrimaryVarMeaning(const std::string &variable) const;
+        std::map<std::string, long long> getPrimaryVarMeaningMap(const std::string &variable) const;
         std::vector<double> getPrimaryVariable(const std::string &idx_name) const;
         void setPrimaryVariable(const std::string &idx_name, const double *data, std::size_t size);
 
     private:
         std::size_t getPrimaryVarIndex_(const std::string &idx_name) const;
-        int getVariableMeaning_(PrimaryVariables &primary_vars, const std::string &variable) const;
+        long long getVariableMeaning_(PrimaryVariables &primary_vars, const std::string &variable) const;
         VariableType getVariableType_(const std::string &name) const;
         template <class FluidState> double getVariableValue_(
             FluidState &fs, VariableType var_type, const std::string &name) const;

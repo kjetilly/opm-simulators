@@ -46,12 +46,12 @@ void handleExtraConvergenceOutput(SimulatorReport& report,
 template<class Scalar>
 void hideUnusedParameters();
 
-int eclPositionalParameter(std::function<void(const std::string&,
+long long eclPositionalParameter(std::function<void(const std::string&,
                                               const std::string&)> addKey,
                            std::set<std::string>& seenParams,
                            std::string& errorMsg,
                            const char** argv,
-                           int paramIdx);
+                           long long paramIdx);
 
 } // namespace Opm::detail
 

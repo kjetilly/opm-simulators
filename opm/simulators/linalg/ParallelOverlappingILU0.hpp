@@ -52,17 +52,17 @@ class ParallelOverlappingILU0Args
     {
         return milu_;
     }
-    void setN(int n)
+    void setN(long long n)
     {
         n_ = n;
     }
-    int getN() const
+    long long getN() const
     {
         return n_;
     }
  private:
     MILU_VARIANT milu_;
-    int n_;
+    long long n_;
 };
 } // end namespace Opm
 
@@ -218,7 +218,7 @@ public:
                             the vertices with the same color.
     */
     ParallelOverlappingILU0 (const Matrix& A,
-                             const int n, const field_type w,
+                             const long long n, const field_type w,
                              MILU_VARIANT milu, bool redblack = false,
                              bool reorder_sphere = true);
 
@@ -235,7 +235,7 @@ public:
                             the vertices with the same color.
     */
     ParallelOverlappingILU0 (const Matrix& A,
-                             const ParallelInfo& comm, const int n, const field_type w,
+                             const ParallelInfo& comm, const long long n, const field_type w,
                              MILU_VARIANT milu, bool redblack = false,
                              bool reorder_sphere = true);
 
@@ -349,7 +349,7 @@ protected:
     const bool relaxation_;
     size_type interiorSize_;
     const Matrix* A_;
-    int iluIteration_;
+    long long iluIteration_;
     MILU_VARIANT milu_;
     bool redBlack_;
     bool reorderSphere_;

@@ -51,7 +51,7 @@ namespace Opm::Parameters {
 // Do not merge parallel output files or warn about them
 struct EnableLoggingFalloutWarning { static constexpr bool value = false; };
 
-struct OutputInterval { static constexpr int value = 1; };
+struct OutputInterval { static constexpr long long value = 1; };
 
 } // namespace Opm::Parameters
 
@@ -74,7 +74,7 @@ namespace Opm {
 
         using Simulator = SimulatorFullyImplicitBlackoil<TypeTag>;
 
-        FlowMain(int argc, char **argv, bool output_cout, bool output_files )
+        FlowMain(long long argc, char **argv, bool output_cout, bool output_files )
             : argc_{argc}, argv_{argv},
               output_cout_{output_cout}, output_files_{output_files}
         {
@@ -82,7 +82,7 @@ namespace Opm {
         }
 
         // Read the command line parameters. Throws an exception if something goes wrong.
-        static int setupParameters_(int argc, char** argv, Parallel::Communication comm)
+        static long long setupParameters_(long long argc, char** argv, Parallel::Communication comm)
         {
             if (!Parameters::IsRegistrationOpen()) {
                 // We have already successfully run setupParameters_().
@@ -111,10 +111,10 @@ namespace Opm {
 
             Parameters::endRegistration();
 
-            int mpiRank = comm.rank();
+            long long mpiRank = comm.rank();
 
             // read in the command line parameters
-            int status = ::Opm::setupParameters_<TypeTag>(argc,
+            long long status = ::Opm::setupParameters_<TypeTag>(argc,
                                                           const_cast<const char**>(argv),
                                                           /*doRegistration=*/false,
                                                           /*allowUnused=*/true,
@@ -123,11 +123,11 @@ namespace Opm {
 
                 // deal with unknown parameters.
 
-                int unknownKeyWords = 0;
+                long long unknownKeyWords = 0;
                 if (mpiRank == 0) {
                     unknownKeyWords = Parameters::printUnused(std::cerr);
                 }
-                int globalUnknownKeyWords = comm.sum(unknownKeyWords);
+                long long globalUnknownKeyWords = comm.sum(unknownKeyWords);
                 unknownKeyWords = globalUnknownKeyWords;
                 if ( unknownKeyWords )
                 {
@@ -162,26 +162,26 @@ namespace Opm {
         /// This is the main function of Flow.  It runs a complete simulation with the
         /// given grid and simulator classes, based on the user-specified command-line
         /// input.
-        int execute()
+        long long execute()
         {
             return execute_(&FlowMain::runSimulator, /*cleanup=*/true);
         }
 
-        int executeInitStep()
+        long long executeInitStep()
         {
             return execute_(&FlowMain::runSimulatorInit, /*cleanup=*/false);
         }
 
         // Returns true unless "EXIT" was encountered in the schedule
         //   section of the input datafile.
-        int executeStep()
+        long long executeStep()
         {
             return simulator_->runStep(*simtimer_);
         }
 
         // Called from Python to cleanup after having executed the last
         // executeStep()
-        int executeStepsCleanup()
+        long long executeStepsCleanup()
         {
             SimulatorReport report = simulator_->finalize();
             runSimulatorAfterSim_(report);
@@ -206,7 +206,7 @@ namespace Opm {
 
     private:
         // called by execute() or executeInitStep()
-        int execute_(int (FlowMain::* runOrInitFunc)(), bool cleanup)
+        long long execute_(long long (FlowMain::* runOrInitFunc)(), bool cleanup)
         {
             auto logger = [this](const std::exception& e, const std::string& message_start) {
                 std::ostringstream message;
@@ -232,7 +232,7 @@ namespace Opm {
                 Dune::Timer setupTimerAfterReadingDeck;
                 setupTimerAfterReadingDeck.start();
 
-                int status = setupParameters_(this->argc_, this->argv_, FlowGenericVanguard::comm());
+                long long status = setupParameters_(this->argc_, this->argv_, FlowGenericVanguard::comm());
                 if (status) {
                     return status;
                 }
@@ -245,7 +245,7 @@ namespace Opm {
                 this->total_setup_time_ = setupTimerAfterReadingDeck.elapsed() + this->deck_read_time_;
 
                 // if run, do the actual work, else just initialize
-                int exitCode = (this->*runOrInitFunc)();
+                long long exitCode = (this->*runOrInitFunc)();
                 if (cleanup) {
                     executeCleanup_();
                 }
@@ -283,13 +283,13 @@ namespace Opm {
             // OMP_NUM_THREADS is set or command line --threads-per-process used.
             // Issue a warning if both OMP_NUM_THREADS and --threads-per-process are set,
             // but let the environment variable take precedence.
-            constexpr int default_threads = 2;
-            const int requested_threads = Parameters::Get<Parameters::ThreadsPerProcess>();
-            int threads = requested_threads > 0 ? requested_threads : default_threads;
+            constexpr long long default_threads = 2;
+            const long long requested_threads = Parameters::Get<Parameters::ThreadsPerProcess>();
+            long long threads = requested_threads > 0 ? requested_threads : default_threads;
 
             const char* env_var = getenv("OMP_NUM_THREADS");
             if (env_var) {
-                int omp_num_threads = -1;
+                long long omp_num_threads = -1;
                 auto result = std::from_chars(env_var, env_var + std::strlen(env_var), omp_num_threads);
                 if (result.ec == std::errc() && omp_num_threads > 0) {
                     // Set threads to omp_num_threads if it was successfully parsed and is positive
@@ -344,19 +344,19 @@ namespace Opm {
         { return modelSimulator_->vanguard().schedule(); }
 
         // Run the simulator.
-        int runSimulator()
+        long long runSimulator()
         {
             return runSimulatorInitOrRun_(&FlowMain::runSimulatorRunCallback_);
         }
 
-        int runSimulatorInit()
+        long long runSimulatorInit()
         {
             return runSimulatorInitOrRun_(&FlowMain::runSimulatorInitCallback_);
         }
 
     private:
         // Callback that will be called from runSimulatorInitOrRun_().
-        int runSimulatorRunCallback_()
+        long long runSimulatorRunCallback_()
         {
             SimulatorReport report = simulator_->run(*simtimer_);
             runSimulatorAfterSim_(report);
@@ -364,7 +364,7 @@ namespace Opm {
         }
 
         // Callback that will be called from runSimulatorInitOrRun_().
-        int runSimulatorInitCallback_()
+        long long runSimulatorInitCallback_()
         {
             simulator_->init(*simtimer_);
             return EXIT_SUCCESS;
@@ -377,7 +377,7 @@ namespace Opm {
                 return;
             }
 
-            const int threads
+            const long long threads
 #if !defined(_OPENMP) || !_OPENMP
                 = 1;
 #else
@@ -394,7 +394,7 @@ namespace Opm {
         }
 
         // Run the simulator.
-        int runSimulatorInitOrRun_(int (FlowMain::* initOrRunFunc)())
+        long long runSimulatorInitOrRun_(long long (FlowMain::* initOrRunFunc)())
         {
 
             const auto& schedule = this->schedule();
@@ -451,12 +451,12 @@ namespace Opm {
 
     private:
         std::unique_ptr<ModelSimulator> modelSimulator_;
-        int  mpi_rank_ = 0;
-        int  mpi_size_ = 1;
+        long long  mpi_rank_ = 0;
+        long long  mpi_size_ = 1;
         std::any parallel_information_;
         std::unique_ptr<Simulator> simulator_;
         std::unique_ptr<SimulatorTimer> simtimer_;
-        int argc_;
+        long long argc_;
         char **argv_;
         bool output_cout_;
         bool output_files_;

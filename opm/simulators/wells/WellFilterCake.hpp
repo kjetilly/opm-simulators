@@ -58,7 +58,7 @@ private:
                                          const std::size_t water_index,
                                          DeferredLogger& deferred_logger);
     template<class Conn>
-    void updateMultiplier(const Conn& conn, const int perf);
+    void updateMultiplier(const Conn& conn, const long long perf);
 
     //! \brief Apply cleaning multipliers to skin factors and reduce cake thickness accordingly
     //! \details The cake thickness is re-computed to give the new (reduced) skin factor with current cake properties

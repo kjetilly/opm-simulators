@@ -61,10 +61,10 @@ namespace Opm
         bool initialStep () const;
 
         /// \brief \copydoc SimulationTimer::currentStepNum
-        int currentStepNum () const;
+        long long currentStepNum () const;
 
         /// \brief return current report step
-        int reportStepNum() const;
+        long long reportStepNum() const;
 
         /// \brief \copydoc SimulationTimer::currentStepLength
         double currentStepLength () const;
@@ -113,12 +113,12 @@ namespace Opm
         std::shared_ptr<boost::posix_time::ptime> start_date_time_;
         const double start_time_;
         const double total_time_;
-        const int report_step_;
+        const long long report_step_;
         const double max_time_step_;
 
         double current_time_;
         double dt_;
-        int current_step_;
+        long long current_step_;
 
         std::vector< double > steps_;
         bool lastStepFailed_;

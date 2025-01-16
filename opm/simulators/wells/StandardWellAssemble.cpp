@@ -41,7 +41,7 @@
 namespace Opm {
 
 //! \brief Class administering assembler access to equation system.
-template<class Scalar, int numEq>
+template<class Scalar, long long numEq>
 class StandardWellEquationAccess {
 public:
     //! \brief Constructor initializes reference to the equation system.
@@ -96,9 +96,9 @@ assembleControlEq(const WellState<Scalar>& well_state,
                   const bool stopped_or_zero_target,
                   DeferredLogger& deferred_logger) const
 {
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
     EvalWell control_eq(primary_variables.numWellEq() + Indices::numEq, 0.0);
 
     const auto& well = well_.wellEcl();
@@ -176,7 +176,7 @@ assembleControlEq(const WellState<Scalar>& well_state,
     // TODO: we should use a different index system for the well equations
     StandardWellEquationAccess eqns(eqns1);
     eqns.residual()[0][PrimaryVariables::Bhp] = control_eq.value();
-    for (int pv_idx = 0; pv_idx < primary_variables.numWellEq(); ++pv_idx) {
+    for (long long pv_idx = 0; pv_idx < primary_variables.numWellEq(); ++pv_idx) {
         eqns.D()[0][0][PrimaryVariables::Bhp][pv_idx] = control_eq.derivative(pv_idx + Indices::numEq);
     }
 }
@@ -185,22 +185,22 @@ template<class FluidSystem, class Indices>
 void StandardWellAssemble<FluidSystem,Indices>::
 assembleInjectivityEq(const EvalWell& eq_pskin,
                       const EvalWell& eq_wat_vel,
-                      const int pskin_index,
-                      const int wat_vel_index,
-                      const int cell_idx,
-                      const int numWellEq,
+                      const long long pskin_index,
+                      const long long wat_vel_index,
+                      const long long cell_idx,
+                      const long long numWellEq,
                       StandardWellEquations<Scalar,Indices::numEq>& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
     eqns.residual()[0][pskin_index] = eq_pskin.value();
     eqns.residual()[0][wat_vel_index] = eq_wat_vel.value();
-    for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
         eqns.D()[0][0][wat_vel_index][pvIdx] = eq_wat_vel.derivative(pvIdx+Indices::numEq);
         eqns.D()[0][0][pskin_index][pvIdx] = eq_pskin.derivative(pvIdx+Indices::numEq);
     }
 
          // the water velocity is impacted by the reservoir primary varaibles. It needs to enter matrix B
-    for (int pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
         eqns.B()[0][cell_idx][wat_vel_index][pvIdx] = eq_wat_vel.derivative(pvIdx);
     }
 }
@@ -208,9 +208,9 @@ assembleInjectivityEq(const EvalWell& eq_pskin,
 template<class FluidSystem, class Indices>
 void StandardWellAssemble<FluidSystem,Indices>::
 assemblePerforationEq(const EvalWell& cq_s_effective,
-                      const int componentIdx,
-                      const int cell_idx,
-                      const int numWellEq,
+                      const long long componentIdx,
+                      const long long cell_idx,
+                      const long long numWellEq,
                       StandardWellEquations<Scalar,Indices::numEq>& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
@@ -219,13 +219,13 @@ assemblePerforationEq(const EvalWell& cq_s_effective,
     eqns.residual()[0][componentIdx] += cq_s_effective.value();
 
        // assemble the jacobians
-    for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
         // also need to consider the efficiency factor when manipulating the jacobians.
         eqns.C()[0][cell_idx][pvIdx][componentIdx] -= cq_s_effective.derivative(pvIdx+Indices::numEq); // intput in transformed matrix
         eqns.D()[0][0][componentIdx][pvIdx] += cq_s_effective.derivative(pvIdx+Indices::numEq);
     }
 
-    for (int pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
         eqns.B()[0][cell_idx][componentIdx][pvIdx] += cq_s_effective.derivative(pvIdx);
     }
 }
@@ -233,12 +233,12 @@ assemblePerforationEq(const EvalWell& cq_s_effective,
 template<class FluidSystem, class Indices>
 void StandardWellAssemble<FluidSystem,Indices>::
 assembleSourceEq(const EvalWell& resWell_loc,
-                 const int componentIdx,
-                 const int numWellEq,
+                 const long long componentIdx,
+                 const long long numWellEq,
                  StandardWellEquations<Scalar,Indices::numEq>& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
-    for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
         eqns.D()[0][0][componentIdx][pvIdx] += resWell_loc.derivative(pvIdx+Indices::numEq);
     }
     eqns.residual()[0][componentIdx] += resWell_loc.value();
@@ -247,12 +247,12 @@ assembleSourceEq(const EvalWell& resWell_loc,
 template<class FluidSystem, class Indices>
 void StandardWellAssemble<FluidSystem,Indices>::
 assembleZFracEq(const EvalWell& cq_s_zfrac_effective,
-                const int cell_idx,
-                const int numWellEq,
+                const long long cell_idx,
+                const long long numWellEq,
                 StandardWellEquations<Scalar,Indices::numEq>& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
-    for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
+    for (long long pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
         eqns.C()[0][cell_idx][pvIdx][Indices::contiZfracEqIdx] -= cq_s_zfrac_effective.derivative(pvIdx+Indices::numEq);
     }
 }

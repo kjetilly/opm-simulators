@@ -33,7 +33,7 @@
  * Provides various utilities for doing signed to unsigned conversion, unsigned to signed, 32 bits to 64 bits and 64
  * bits to 32 bits.
  *
- * The main use case within cuistl is that the cusparse library requires signed int for all its size parameters,
+ * The main use case within cuistl is that the cusparse library requires signed long long for all its size parameters,
  * while Dune::BlockVector (and relatives) use unsigned size_t.
  */
 
@@ -41,41 +41,41 @@ namespace Opm::gpuistl::detail
 {
 
 /**
- * @brief to_int converts a (on most relevant platforms) 64 bits unsigned size_t to a signed 32 bits signed  int
+ * @brief to_int converts a (on most relevant platforms) 64 bits unsigned size_t to a signed 32 bits signed  long long
  * @param s the unsigned integer
- * @throw std::invalid_argument exception if s is out of range for an int
- * @return converted s to int if s is within the range of int
+ * @throw std::invalid_argument exception if s is out of range for an long long
+ * @return converted s to long long if s is within the range of long long
  *
  * @todo This can be done for more generic types, but then it is probably wise to wait for C++20's cmp-functions
  */
-inline int
+inline long long
 to_int(std::size_t s)
 {
     static_assert(
-        std::is_signed_v<int>,
+        std::is_signed_v<long long>,
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
     static_assert(
         !std::is_signed_v<std::size_t>,
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
 
     static_assert(
-        sizeof(int) <= sizeof(std::size_t),
+        sizeof(long long) <= sizeof(std::size_t),
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
 
 
-    if (s > std::size_t(std::numeric_limits<int>::max())) {
+    if (s > std::size_t(std::numeric_limits<long long>::max())) {
         OPM_THROW(std::invalid_argument,
-                  fmt::format("Trying to convert {} to int, but it is out of range. Maximum possible int: {}. ",
+                  fmt::format("Trying to convert {} to long long, but it is out of range. Maximum possible long long: {}. ",
                               s,
-                              std::numeric_limits<int>::max()));
+                              std::numeric_limits<long long>::max()));
     }
 
     // We know it will be in range here:
-    return int(s);
+    return (long long)(s);
 }
 
 /**
- * @brief to_size_t converts a (on most relevant platforms) a 32 bit signed int to a 64 bits unsigned int
+ * @brief to_size_t converts a (on most relevant platforms) a 32 bit signed long long to a 64 bits size_t
  * @param i the signed integer
  * @return converted i to size_t if it is a non-negative integer.
  *
@@ -83,23 +83,23 @@ to_int(std::size_t s)
  * @todo This can be done for more generic types, but then it is probably wise to wait for C++20's cmp-functions
  */
 __host__ __device__ inline std::size_t
-to_size_t(int i)
+to_size_t(long long i)
 {
     static_assert(
-        std::is_signed_v<int>,
+        std::is_signed_v<long long>,
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
     static_assert(
         !std::is_signed_v<std::size_t>,
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
 
     static_assert(
-        sizeof(int) <= sizeof(std::size_t),
+        sizeof(long long) <= sizeof(std::size_t),
         "Weird architecture or my understanding of the standard is flawed. Better have a look at this function.");
 
 #if defined(__CUDA_ARCH__) || defined(__HIP_DEVICE_COMPILE__)
-    assert(i >= int(0));
+    assert(i >= (long long)(0));
 #else
-    if (i < int(0)) {
+    if (i < (long long)(0)) {
         OPM_THROW(std::invalid_argument, fmt::format("Trying to convert the negative number {} to size_t.", i));
     }
 #endif

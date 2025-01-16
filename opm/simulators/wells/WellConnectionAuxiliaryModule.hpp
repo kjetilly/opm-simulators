@@ -77,18 +77,18 @@ public:
         // initialize the additional cell connections introduced by wells.
         for (const auto& well : schedule_wells)
         {
-            std::vector<int> wellCells = model_.getCellsForConnections(well);
+            std::vector<long long> wellCells = model_.getCellsForConnections(well);
             // Now add the cells of the possible future connections
             const auto possibleFutureConnectionSetIt = possibleFutureConnections.find(well.name());
             if (possibleFutureConnectionSetIt != possibleFutureConnections.end()) {
                 for (auto& global_index : possibleFutureConnectionSetIt->second) {
-                    int compressed_idx = model_.compressedIndexForInterior(global_index);
+                    long long compressed_idx = model_.compressedIndexForInterior(global_index);
                     if (compressed_idx >= 0) { // Ignore connections in inactive/remote cells.
                         wellCells.push_back(compressed_idx);
                     }
                 }
             }
-            for (int cellIdx : wellCells) {
+            for (long long cellIdx : wellCells) {
                 neighbors[cellIdx].insert(wellCells.begin(),
                                           wellCells.end());
             }

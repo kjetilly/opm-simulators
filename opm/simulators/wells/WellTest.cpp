@@ -41,10 +41,10 @@ checkMaxRatioLimitWell(const SingleWellState<Scalar>& ws,
                        const Scalar max_ratio_limit,
                        const RatioFunc& ratioFunc) const
 {
-    const int np = well_.numPhases();
+    const long long np = well_.numPhases();
 
     std::vector<Scalar> well_rates(np, 0.0);
-    for (int p = 0; p < np; ++p) {
+    for (long long p = 0; p < np; ++p) {
         well_rates[p] = ws.surface_rates[p];
     }
 
@@ -60,12 +60,12 @@ checkMaxRatioLimitCompletions(const SingleWellState<Scalar>& ws,
                               const RatioFunc& ratioFunc,
                               RatioLimitCheckReport& report) const
 {
-    int worst_offending_completion = RatioLimitCheckReport::INVALIDCOMPLETION;
+    long long worst_offending_completion = RatioLimitCheckReport::INVALIDCOMPLETION;
 
     // the maximum water cut value of the completions
     // it is used to identify the most offending completion
     Scalar max_ratio_completion = 0;
-    const int np = well_.numPhases();
+    const long long np = well_.numPhases();
 
     const auto& perf_data = ws.perf_data;
     const auto& perf_phase_rates = perf_data.phase_rates;
@@ -74,13 +74,13 @@ checkMaxRatioLimitCompletions(const SingleWellState<Scalar>& ws,
         std::vector<Scalar> completion_rates(np, 0.0);
 
         // looping through the connections associated with the completion
-        const std::vector<int>& conns = completion.second;
-        for (const int c : conns) {
-            for (int p = 0; p < np; ++p) {
+        const std::vector<long long>& conns = completion.second;
+        for (const long long c : conns) {
+            for (long long p = 0; p < np; ++p) {
                 const Scalar connection_rate = perf_phase_rates[c * np + p];
                 completion_rates[p] += connection_rate;
             }
-        } // end of for (const int c : conns)
+        } // end of for (const long long c : conns)
 
         well_.parallelWellInfo().communication().sum(completion_rates.data(), completion_rates.size());
         const Scalar ratio_completion = ratioFunc(completion_rates, well_.phaseUsage());
@@ -105,8 +105,8 @@ checkMaxGORLimit(const WellEconProductionLimits& econ_production_limits,
                  const SingleWellState<Scalar>& ws,
                  RatioLimitCheckReport& report) const
 {
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     // function to calculate gor based on rates
     auto gor = [](const std::vector<Scalar>& rates,
@@ -139,8 +139,8 @@ checkMaxWGRLimit(const WellEconProductionLimits& econ_production_limits,
                  const SingleWellState<Scalar>& ws,
                  RatioLimitCheckReport& report) const
 {
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     // function to calculate wgr based on rates
     auto wgr = [](const std::vector<Scalar>& rates,
@@ -173,8 +173,8 @@ checkMaxWaterCutLimit(const WellEconProductionLimits& econ_production_limits,
                       const SingleWellState<Scalar>& ws,
                       RatioLimitCheckReport& report) const
 {
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     // function to calculate water cut based on rates
     auto waterCut = [](const std::vector<Scalar>& rates,
@@ -213,9 +213,9 @@ checkRateEconLimits(const WellEconProductionLimits& econ_production_limits,
                     const std::vector<Scalar>& rates_or_potentials,
                     DeferredLogger& deferred_logger) const
 {
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     const PhaseUsage& pu = well_.phaseUsage();
 
@@ -395,7 +395,7 @@ updateWellTestStateEconomic(const SingleWellState<Scalar>& ws,
         switch (workover) {
         case WellEconProductionLimits::EconWorkover::CON:
             {
-                const int worst_offending_completion = ratio_report.worst_offending_completion;
+                const long long worst_offending_completion = ratio_report.worst_offending_completion;
 
                 well_test_state.close_completion(well_.name(), worst_offending_completion, simulation_time);
                 if (write_message_to_opmlog) {

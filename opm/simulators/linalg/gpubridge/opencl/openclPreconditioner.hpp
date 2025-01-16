@@ -27,7 +27,7 @@ namespace Opm::Accelerator {
 
 template<class Scalar> class BlockedMatrix;
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 class openclPreconditioner : public Preconditioner<Scalar, block_size>
 {
 
@@ -37,14 +37,14 @@ protected:
     std::vector<cl::Event> events;
     cl_int err;
 
-    openclPreconditioner(int verbosity_) :
+    openclPreconditioner(long long verbosity_) :
     Preconditioner<Scalar, block_size>(verbosity_)
     {};
 
 public:
     virtual ~openclPreconditioner() = default;
 
-    static std::unique_ptr<openclPreconditioner<Scalar, block_size>> create(PreconditionerType type, int verbosity, bool opencl_ilu_parallel);
+    static std::unique_ptr<openclPreconditioner<Scalar, block_size>> create(PreconditionerType type, long long verbosity, bool opencl_ilu_parallel);
 
     // nested Preconditioners might need to override this
     virtual void setOpencl(std::shared_ptr<cl::Context>& context, std::shared_ptr<cl::CommandQueue>& queue);

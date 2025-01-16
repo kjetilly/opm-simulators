@@ -117,16 +117,16 @@ namespace Ewoms {
 
                 // read the data attached to the edge
                 std::istringstream iss(curLine);
-                int dataVal;
+                long long dataVal;
                 std::string tmp;
                 iss >> dataVal;
                 iss >> tmp;
                 assert(tmp == ":");
 
                 // read the vertex indices of an edge
-                std::vector<unsigned int> vertIndices;
+                std::vector<size_t> vertIndices;
                 while (iss) {
-                    unsigned int tmp2;
+                    size_t tmp2;
                     iss >> tmp2;
                     if (!iss)
                         break;
@@ -150,7 +150,7 @@ namespace Ewoms {
             else if (curParseMode == Element) {
                 // skip the data attached to an element
                 std::istringstream iss(curLine);
-                int dataVal;
+                long long dataVal;
                 std::string tmp;
                 iss >> dataVal;
                 iss >> tmp;
@@ -263,7 +263,7 @@ namespace Ewoms {
 
 } // namespace Ewoms
 
-int main( int argc, char** argv )
+long long main( long long argc, char** argv )
 {
     if (argc != 2) {
         std::cout << "Converts a grid file from the ART file format to DGF (Dune grid format)\n"

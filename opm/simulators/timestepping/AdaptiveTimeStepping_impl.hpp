@@ -96,7 +96,7 @@ AdaptiveTimeStepping<TypeTag>::
 step(const SimulatorTimer& simulatorTimer,
      Solver& solver,
      const bool isEvent,
-     const std::function<bool(const double, const double, const int)> tuningUpdater)
+     const std::function<bool(const double, const double, const long long)> tuningUpdater)
 {
     // Maybe update tuning
     tuningUpdater(simulatorTimer.simulationTimeElapsed(), suggestedNextTimestep_, 0);
@@ -124,7 +124,7 @@ step(const SimulatorTimer& simulatorTimer,
     AdaptiveSimulatorTimer substepTimer(simulatorTimer, suggestedNextTimestep_, maxTimeStep_);
 
     // counter for solver restarts
-    int restarts = 0;
+    long long restarts = 0;
 
     // sub step time loop
     while (!substepTimer.done()) {
@@ -227,7 +227,7 @@ step(const SimulatorTimer& simulatorTimer,
             SolutionTimeErrorSolverWrapper<Solver> relativeChange(solver);
 
             // compute new time step estimate
-            const int iterations = useNewtonIteration_ ? substepReport.total_newton_iterations
+            const long long iterations = useNewtonIteration_ ? substepReport.total_newton_iterations
                 : substepReport.total_linear_iterations;
             double dtEstimate = timeStepControl_->computeTimeStepSize(dt, iterations, relativeChange,
                                                                        substepTimer.simulationTimeElapsed());

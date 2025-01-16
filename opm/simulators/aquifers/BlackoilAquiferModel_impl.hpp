@@ -289,7 +289,7 @@ template <typename AquiferType, typename AquiferData>
 std::unique_ptr<AquiferType>
 BlackoilAquiferModel<TypeTag>::
 createAnalyticAquiferPointer(const AquiferData& aqData,
-                             const int          aquiferID,
+                             const long long          aquiferID,
                              std::string_view   aqType) const
 {
     const auto& connections =
@@ -309,7 +309,7 @@ createAnalyticAquiferPointer(const AquiferData& aqData,
 }
 
 template <typename TypeTag>
-void BlackoilAquiferModel<TypeTag>::createDynamicAquifers(const int episode_index)
+void BlackoilAquiferModel<TypeTag>::createDynamicAquifers(const long long episode_index)
 {
     const auto& sched = this->simulator_.vanguard().schedule()[episode_index];
 
@@ -358,7 +358,7 @@ void BlackoilAquiferModel<TypeTag>::computeConnectionAreaFraction() const
 {
     auto maxAquID =
         std::accumulate(this->aquifers.begin(), this->aquifers.end(), 0,
-                        [](const int aquID, const auto& aquifer)
+                        [](const long long aquID, const auto& aquifer)
                         { return std::max(aquID, aquifer->aquiferID()); });
 
     maxAquID = this->simulator_.vanguard().grid().comm().max(maxAquID);

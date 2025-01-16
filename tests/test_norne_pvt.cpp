@@ -107,7 +107,7 @@ void verify_norne_oil_pvt_region1(const Opm::EclipseState& eclState, const Opm::
                                       0.77691738473};
 
     {
-        std::vector<int> tableIndex(P.size() , 0);
+        std::vector<long long> tableIndex(P.size() , 0);
 
         // convert the pressures to SI units (bar to Pascal)
         for (auto& value : P)

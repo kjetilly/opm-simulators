@@ -37,17 +37,17 @@
 class MPIError {
 public:
   /** @brief Constructor. */
-  MPIError(std::string s, int e) : errorstring(s), errorcode(e){}
+  MPIError(std::string s, long long e) : errorstring(s), errorcode(e){}
   /** @brief The error string. */
   std::string errorstring;
   /** @brief The mpi error code. */
-  int errorcode;
+  long long errorcode;
 };
 
 #ifdef HAVE_MPI
-void MPI_err_handler(MPI_Comm *, int *err_code, ...){
+void MPI_err_handler(MPI_Comm *, long long *err_code, ...){
   char *err_string=new char[MPI_MAX_ERROR_STRING];
-  int err_length;
+  long long err_length;
   MPI_Error_string(*err_code, err_string, &err_length);
   std::string s(err_string, err_length);
   std::cerr << "An MPI Error ocurred:"<<std::endl<<s<<std::endl;
@@ -61,7 +61,7 @@ struct MPIFixture
     MPIFixture()
     {
 #if HAVE_MPI
-    int m_argc = boost::unit_test::framework::master_test_suite().argc;
+    long long m_argc = boost::unit_test::framework::master_test_suite().argc;
     char** m_argv = boost::unit_test::framework::master_test_suite().argv;
     helper = &Dune::MPIHelper::instance(m_argc, m_argv);
 #ifdef MPI_2
@@ -104,11 +104,11 @@ std::ostream& operator<<(std::ostream& os, const Opm::ParallelWellInfo<double>& 
 }
 }
 
-constexpr int numPerProc = 3;
+constexpr long long numPerProc = 3;
 
 BOOST_AUTO_TEST_CASE(ParallelWellComparison)
 {
-    int argc = 0;
+    long long argc = 0;
     char** argv = nullptr;
     const auto& helper = Dune::MPIHelper::instance(argc, argv);
     std::vector<std::pair<std::string,bool>> pairs;
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(CommunicateAboveBelowSelf)
     Opm::CommunicateAboveBelow<double> commAboveBelow{ comm };
     for(std::size_t count=0; count < 2; ++count)
     {
-        std::vector<int> eclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
+        std::vector<long long> eclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
         std::vector<double> current(eclIndex.size());
         std::transform(eclIndex.begin(), eclIndex.end(), current.begin(),
                        [](double v){ return 1+10.0*v;});
@@ -209,7 +209,7 @@ BOOST_AUTO_TEST_CASE(CommunicateAboveBelowSelf1)
     Opm::CommunicateAboveBelow<double> commAboveBelow{ comm };
     for(std::size_t count=0; count < 2; ++count)
     {
-        std::vector<int> eclIndex = {0};
+        std::vector<long long> eclIndex = {0};
         std::vector<double> current(eclIndex.size());
         std::transform(eclIndex.begin(), eclIndex.end(), current.begin(),
                        [](double v){ return 1+10.0*v;});
@@ -237,9 +237,9 @@ BOOST_AUTO_TEST_CASE(CommunicateAboveBelowSelf1)
     }
 }
 
-std::vector<int> createGlobalEclIndex(const Opm::Parallel::Communication& comm)
+std::vector<long long> createGlobalEclIndex(const Opm::Parallel::Communication& comm)
 {
-    std::vector<int> globalEclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
+    std::vector<long long> globalEclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
     auto oldSize = globalEclIndex.size();
     std::size_t globalSize = numPerProc * comm.size();
     auto lastIndex = globalEclIndex.back();
@@ -259,9 +259,9 @@ std::vector<int> createGlobalEclIndex(const Opm::Parallel::Communication& comm)
 template<class C>
 std::vector<double> populateCommAbove(C& commAboveBelow,
                                       const Opm::Parallel::Communication& comm,
-                                      const std::vector<int>& globalEclIndex,
+                                      const std::vector<long long>& globalEclIndex,
                                       const std::vector<double> globalCurrent,
-                                      int num_component = 1,
+                                      long long num_component = 1,
                                       bool local_consecutive = false)
 {
     auto size = numPerProc * num_component;
@@ -280,7 +280,7 @@ std::vector<double> populateCommAbove(C& commAboveBelow,
         {
             commAboveBelow.pushBackEclIndex(globalEclIndex[gi-1], globalEclIndex[gi]);
         }
-        for(int c = 0; c < num_component; ++c)
+        for(long long c = 0; c < num_component; ++c)
         current[i * num_component + c] = globalCurrent[gi * num_component + c];
     }
     commAboveBelow.endReset();
@@ -337,7 +337,7 @@ void initRandomNumbers(Iter begin, Iter end, C comm)
     // Initialize with random numbers.
     std::random_device rndDevice;
     std::mt19937 mersenneEngine {rndDevice()};  // Generates random integers
-    std::uniform_int_distribution<int> dist {1, 100};
+    std::uniform_int_distribution<long long> dist {1, 100};
 
     auto gen = [&dist, &mersenneEngine](){
                    return dist(mersenneEngine);
@@ -352,7 +352,7 @@ BOOST_AUTO_TEST_CASE(PartialSumself)
     auto comm = Dune::MPIHelper::getLocalCommunicator();
 
     Opm::CommunicateAboveBelow<double> commAboveBelow{ comm };
-    std::vector<int> eclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
+    std::vector<long long> eclIndex = {0, 1, 2, 3, 7 , 8, 10, 11};
     std::vector<double> current(eclIndex.size());
     std::transform(eclIndex.begin(), eclIndex.end(), current.begin(),
                    [](double v){ return 1+10.0*v;});
@@ -407,7 +407,7 @@ BOOST_AUTO_TEST_CASE(PartialSumParallel)
     }
 }
 
-void testGlobalPerfFactoryParallel(int num_component, bool local_consecutive = false)
+void testGlobalPerfFactoryParallel(long long num_component, bool local_consecutive = false)
 {
     auto comm = Opm::Parallel::Communication(Dune::MPIHelper::getCommunicator());
 
@@ -458,7 +458,7 @@ void testGlobalPerfFactoryParallel(int num_component, bool local_consecutive = f
     {
         auto gi = local_consecutive ? comm.rank() * numPerProc + i :
             comm.rank() + comm.size() * i;
-        for (int c = 0; c < num_component; ++c)
+        for (long long c = 0; c < num_component; ++c)
         {
             BOOST_CHECK(localCurrent[i * num_component + c]==globalSol[gi * num_component + c]);
             BOOST_CHECK(localSol[i * num_component + c] == localCurrent[i * num_component + c]);

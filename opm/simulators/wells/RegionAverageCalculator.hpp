@@ -54,7 +54,7 @@ namespace Opm {
          * to provide indexed access through \code operator[]()
          * \endcode as well as inner types \c value_type, \c
          * size_type, and \c const_iterator.  Typically \code
-         * std::vector<int> \endcode.
+         * std::vector<long long> \endcode.
          */
         template <class FluidSystem, class Region>
         class AverageRegionalPressure {
@@ -82,20 +82,20 @@ namespace Opm {
             template <typename ElementContext, class Simulator>
             void defineState(const Simulator& simulator)
             {
-                int numRegions = 0;
+                long long numRegions = 0;
                 const auto& gridView = simulator.gridView();
                 const auto& comm = gridView.comm();
                 for (const auto& reg : rmap_.activeRegions()) {
                     numRegions = std::max(numRegions, reg);
                 }
                 numRegions = comm.max(numRegions);
-                for (int reg = 1; reg <= numRegions ; ++ reg) {
+                for (long long reg = 1; reg <= numRegions ; ++ reg) {
                     if (!attr_.has(reg))
                         attr_.insert(reg, Attributes());
                 }
                 // create map from cell to region
                 // and set all attributes to zero
-                for (int reg = 1; reg <= numRegions ; ++ reg) {
+                for (long long reg = 1; reg <= numRegions ; ++ reg) {
                     auto& ra = attr_.attributes(reg);
                     ra.pressure = 0.0;
                     ra.pv = 0.0;
@@ -108,7 +108,7 @@ namespace Opm {
                 // quantities for hydrocarbon volume average
                 std::unordered_map<RegionId, Attributes> attributes_hpv;
 
-                for (int reg = 1; reg <= numRegions ; ++ reg) {
+                for (long long reg = 1; reg <= numRegions ; ++ reg) {
                     attributes_pv.insert({reg, Attributes()});
                     attributes_hpv.insert({reg, Attributes()});
                 }
@@ -134,7 +134,7 @@ namespace Opm {
                         hydrocarbon -= fs.saturation(FluidSystem::waterPhaseIdx).value();
                     }
 
-                    const int reg = rmap_.region(cellIdx);
+                    const long long reg = rmap_.region(cellIdx);
                     assert(reg >= 0);
 
                     // sum p, rs, rv, and T.
@@ -165,7 +165,7 @@ namespace Opm {
                 }
                 OPM_END_PARALLEL_TRY_CATCH("AverageRegionalPressure::defineState(): ", simulator.vanguard().grid().comm());
 
-                for (int reg = 1; reg <= numRegions ; ++ reg) {
+                for (long long reg = 1; reg <= numRegions ; ++ reg) {
                       auto& ra = attr_.attributes(reg);
                       const Scalar hpv_sum = comm.sum(attributes_hpv[reg].pv);
                       // TODO: should we have some epsilon here instead of zero?
@@ -203,7 +203,7 @@ namespace Opm {
                 if (r == 0 ) // region 0 is the whole field
                 {
                     Scalar pressure = 0.0;
-                    int num_active_regions = 0;
+                    long long num_active_regions = 0;
                     for (const auto& attr :  attr_.attributes()) {
                         const auto& value = *attr.second;
                         const auto& ra = value.attr_;

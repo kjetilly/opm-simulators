@@ -82,7 +82,7 @@ public:
     #if HAVE_ECL_INPUT
     static void beginEpisode(const EclipseState&,
                              const Schedule&,
-                             const int,
+                             const long long,
                              ConvectiveMixingModuleParam&)
     {}
     #endif
@@ -95,7 +95,7 @@ public:
     static void modifyAvgDensity(Evaluation&,
                                  const IntensiveQuantities&,
                                  const IntensiveQuantities&,
-                                 const unsigned int,
+                                 const size_t,
                                  const ConvectiveMixingModuleParam&) {
     }
 
@@ -153,7 +153,7 @@ public:
     #if HAVE_ECL_INPUT
     static void beginEpisode(const EclipseState& eclState,
                              const Schedule& schedule,
-                             const int episodeIdx,
+                             const long long episodeIdx,
                              ConvectiveMixingModuleParam& info)
     {
         // check that Xhi and Psi didn't change

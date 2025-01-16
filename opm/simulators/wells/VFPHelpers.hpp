@@ -65,7 +65,7 @@ template<class Scalar>
 struct InterpData
 {
     InterpData() : ind_{0, 0}, inv_dist_(0.0), factor_(0.0) {}
-    int ind_[2]; //[First element greater than or equal to value, Last element smaller than or equal to value]
+    long long ind_[2]; //[First element greater than or equal to value, Last element smaller than or equal to value]
     Scalar inv_dist_; // 1 / distance between the two end points of the segment. Used to calculate derivatives and uses 1.0 / 0.0 = 0.0 as a convention
     Scalar factor_; // Interpolation factor
 };
@@ -116,13 +116,13 @@ T getGFR(const VFPProdTable& table,
  * Returns the table from the map if found, or throws an exception
  */
 template <typename T>
-const T& getTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id);
+const T& getTable(const std::map<long long, std::reference_wrapper<const T>>& tables, long long table_id);
 
 /**
  * Check whether we have a table with the table number
  */
 template <typename T>
-bool hasTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id) {
+bool hasTable(const std::map<long long, std::reference_wrapper<const T>>& tables, long long table_id) {
     const auto entry = tables.find(table_id);
     return (entry != tables.end() );
 }

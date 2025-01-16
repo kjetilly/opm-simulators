@@ -135,7 +135,7 @@ public:
     void clearRow(const size_t row, const Scalar diag = 1.0)
     {
         MatrixBlock diagBlock(Scalar(0));
-        for (int i = 0; i < diagBlock.rows; ++i)
+        for (long long i = 0; i < diagBlock.rows; ++i)
             diagBlock[i][i] = diag;
 
         auto& matRow = (*istlMatrix_)[row];

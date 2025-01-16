@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(testcsrtocscoffsetmap){
     Matrix matrix_copy(matrix);
     Matrix matrix_transposed_copy(matrix_transposed);
 
-    std::vector<int> rowPointers, colIndices, map;
+    std::vector<long long> rowPointers, colIndices, map;
 
     auto* nnzValues = &matrix_copy[0][0];
     auto* nnzValues_transposed = &matrix_transposed_copy[0][0];
@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(testcsrtocscoffsetmap){
 
     map = Opm::Accelerator::buildCsrToCscOffsetMap(rowPointers, colIndices);
 
-    for (unsigned int i = 0; i < colIndices.size(); i++){
+    for (size_t i = 0; i < colIndices.size(); i++){
         BOOST_CHECK_EQUAL(nnzValues[i], nnzValues_transposed[map[i]]);
     }
 }

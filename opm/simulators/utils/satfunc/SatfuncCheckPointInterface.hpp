@@ -54,7 +54,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// latter is running a region based check and the region already
         /// having been visited.
         virtual std::optional<std::size_t>
-        pointID(const int cellIdx) const = 0;
+        pointID(const long long cellIdx) const = 0;
 
         /// Populate check point values for a particular cell.
         ///
@@ -64,7 +64,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// Member function populateCheckPoint() assigns all data members
         /// and derived classes must abide by this requirement.
         virtual void
-        populateCheckPoint(const int                        cellIdx,
+        populateCheckPoint(const long long                        cellIdx,
                            EclEpsScalingPointsInfo<Scalar>& endPoints) const = 0;
     };
 

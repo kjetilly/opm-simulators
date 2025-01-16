@@ -11,7 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 struct Column : public std::vector<std::string> {
-		Column(const std::string& name_, const int size = 0, const int num_rows_estimate = 1000) : 
+		Column(const std::string& name_, const long long size = 0, const long long num_rows_estimate = 1000) : 
 				std::vector<std::string>(size), name(name_)
 		{
 				this->reserve(num_rows_estimate);
@@ -36,17 +36,17 @@ struct Column : public std::vector<std::string> {
 				return vec;
 		}
 
-		// Return vector of double values values, invalid elements set to std::numeric_limits<int>::min()
-		std::vector<int> ivalues() const {
-				std::vector<int> vec;
+		// Return vector of double values values, invalid elements set to std::numeric_limits<long long>::min()
+		std::vector<long long> ivalues() const {
+				std::vector<long long> vec;
 				vec.reserve(this->size());
 				
 				const auto& conv_func = [](const std::string& strval) {
-						int ival;
+						long long ival;
 						try {
 								ival = std::stoi(strval);
 						} catch (std::invalid_argument& exc) {
-								ival = std::numeric_limits<int>::min();
+								ival = std::numeric_limits<long long>::min();
 						}
 						return ival;
 				};
@@ -60,7 +60,7 @@ struct Column : public std::vector<std::string> {
 
 
 struct ColumnData {
-		ColumnData(const std::string& file_name, const int num_columns_estimate=20) {
+		ColumnData(const std::string& file_name, const long long num_columns_estimate=20) {
 				raw_columns.reserve(num_columns_estimate);
 				load_file(file_name);
 		}
@@ -77,13 +77,13 @@ struct ColumnData {
 						raw_columns.emplace_back(colname);
 						columns[colname] = &(raw_columns.back());
 				}
-				const int num_columns = column_names.size();
+				const long long num_columns = column_names.size();
 
 				// Read remaining lines into std::string vectors
-				int lineno = 1;
+				long long lineno = 1;
 				while (std::getline(ifs, line)) {
 						iss.str(line); iss.clear();
-						int i=0;
+						long long i=0;
 						while (iss >> colname && i < num_columns) {
 								raw_columns[i].push_back(colname);
 								++i;
@@ -97,7 +97,7 @@ struct ColumnData {
 
 		// Get data vectors of different types
 		std::vector<double> get_dvector(const std::string& colname) const { return columns.at(colname)->dvalues(); }
-		std::vector<int> get_ivector(const std::string& colname) const { return columns.at(colname)->ivalues(); }
+		std::vector<long long> get_ivector(const std::string& colname) const { return columns.at(colname)->ivalues(); }
 		// Default is to return double values
 		std::vector<double> operator[](const std::string& colname) const { return columns.at(colname)->dvalues(); }
 		
@@ -119,17 +119,17 @@ BOOST_AUTO_TEST_CASE(CheckMassBalanceWithinXXXMBE)
 		auto mbw = data["MB_Water"];
 		auto mbg = data["MB_Gas"];
 
-		const int num_reports = 1 + *std::max_element(rstep.begin(), rstep.end());
+		const long long num_reports = 1 + *std::max_element(rstep.begin(), rstep.end());
 		std::vector<double> max_mb;
 		max_mb.reserve(num_reports);
 
 
 		// Find the maximum mass balance error at each converged time step for each report step.. 
-		const int nrows = rstep.size();
-		int rcur = 0;
-		int tcur = 0;
+		const long long nrows = rstep.size();
+		long long rcur = 0;
+		long long tcur = 0;
 		double max_mb_step = std::numeric_limits<double>::min();
-		for (int i=0; i<(nrows-1); ++i) {
+		for (long long i=0; i<(nrows-1); ++i) {
 				if (tcur != tstep[i+1] || rcur != rstep[i+1]) {
 						max_mb_step = std::max({mbo[i], mbw[i], mbg[i], max_mb_step});
 						tcur = tstep[i+1];

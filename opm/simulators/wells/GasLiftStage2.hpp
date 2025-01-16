@@ -55,12 +55,12 @@ class GasLiftStage2 : public GasLiftCommon<Scalar>
     using GradMap = std::map<std::string, GradInfo>;
     using MessageType = typename GasLiftCommon<Scalar>::MessageType;
 
-    static const int Water = BlackoilPhases::Aqua;
-    static const int Oil = BlackoilPhases::Liquid;
-    static const int Gas = BlackoilPhases::Vapour;
+    static const long long Water = BlackoilPhases::Aqua;
+    static const long long Oil = BlackoilPhases::Liquid;
+    static const long long Gas = BlackoilPhases::Vapour;
 
 public:
-    GasLiftStage2(const int report_step_idx,
+    GasLiftStage2(const long long report_step_idx,
                   const Parallel::Communication& comm,
                   const Schedule& schedule,
                   const SummaryState& summary_state,
@@ -154,14 +154,14 @@ protected:
     GasLiftGroupInfo<Scalar>& group_info_;
     GLiftWellStateMap& well_state_map_;
 
-    int report_step_idx_;
+    long long report_step_idx_;
     const SummaryState& summary_state_;
     const Schedule& schedule_;
     const GasLiftOpt& glo_;
     GradMap inc_grads_;
     GradMap dec_grads_;
-    int max_iterations_ = 1000;
-    //int time_step_idx_;
+    long long max_iterations_ = 1000;
+    //long long time_step_idx_;
 
     struct OptimizeState
     {
@@ -173,7 +173,7 @@ protected:
 
         GasLiftStage2& parent;
         const Group& group;
-        int it;
+        long long it;
 
         using GradInfo = typename GasLiftStage2::GradInfo;
         using GradPair = typename GasLiftStage2::GradPair;
@@ -252,7 +252,7 @@ protected:
         const Scalar liquid_target;
         std::optional<Scalar> max_glift;
         std::optional<Scalar> max_total_gas;
-        int it;
+        long long it;
 
         void addOrRemoveALQincrement(GradMap &grad_map,
                                      const std::string& well_name,

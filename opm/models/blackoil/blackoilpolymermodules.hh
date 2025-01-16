@@ -92,7 +92,7 @@ public:
     /*!
     * \brief get the PLYMWINJ table
     */
-    static TabulatedTwoDFunction& getPlymwinjTable(const int tableNumber)
+    static TabulatedTwoDFunction& getPlymwinjTable(const long long tableNumber)
     {
         const auto iterTable = params_.plymwinjTables_.find(tableNumber);
         if (iterTable != params_.plymwinjTables_.end()) {
@@ -106,7 +106,7 @@ public:
     /*!
     * \brief get the SKPRWAT table
     */
-    static TabulatedTwoDFunction& getSkprwatTable(const int tableNumber)
+    static TabulatedTwoDFunction& getSkprwatTable(const long long tableNumber)
     {
         const auto iterTable = params_.skprwatTables_.find(tableNumber);
         if (iterTable != params_.skprwatTables_.end()) {
@@ -121,7 +121,7 @@ public:
     * \brief get the SKPRPOLY table
     */
     static typename BlackOilPolymerParams<Scalar>::SkprpolyTable&
-    getSkprpolyTable(const int tableNumber)
+    getSkprpolyTable(const long long tableNumber)
     {
         const auto iterTable = params_.skprpolyTables_.find(tableNumber);
         if (iterTable != params_.skprpolyTables_.end()) {
@@ -508,7 +508,7 @@ public:
         auto u = v0AbsLog;
         bool converged = false;
         // TODO make this into parameters
-        for (int i = 0; i < 20; ++i) {
+        for (long long i = 0; i < 20; ++i) {
             auto f = F(u);
             auto df = dF(u);
             u -= f/df;
@@ -563,10 +563,10 @@ class BlackOilPolymerIntensiveQuantities
     using PolymerModule = BlackOilPolymerModule<TypeTag>;
 
     enum { numPhases = getPropValue<TypeTag, Properties::NumPhases>() };
-    static constexpr int polymerConcentrationIdx = Indices::polymerConcentrationIdx;
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long polymerConcentrationIdx = Indices::polymerConcentrationIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
     static constexpr bool enablePolymerMolarWeight = getPropValue<TypeTag, Properties::EnablePolymerMW>();
-    static constexpr int polymerMoleWeightIdx = Indices::polymerMoleWeightIdx;
+    static constexpr long long polymerMoleWeightIdx = Indices::polymerMoleWeightIdx;
 
 
 public:
@@ -591,7 +591,7 @@ public:
         const Scalar& maxAdsorbtion = PolymerModule::plyrockMaxAdsorbtion(elemCtx, dofIdx, timeIdx);
         const auto& plyadsAdsorbedPolymer = PolymerModule::plyadsAdsorbedPolymer(elemCtx, dofIdx, timeIdx);
         polymerAdsorption_ = plyadsAdsorbedPolymer.eval(polymerConcentration_, /*extrapolate=*/true);
-        if (static_cast<int>(PolymerModule::plyrockAdsorbtionIndex(elemCtx, dofIdx, timeIdx)) ==
+        if (static_cast<long long>(PolymerModule::plyrockAdsorbtionIndex(elemCtx, dofIdx, timeIdx)) ==
             BlackOilPolymerParams<Scalar>::NoDesorption)
         {
             const Scalar& maxPolymerAdsorption = elemCtx.problem().maxPolymerAdsorption(elemCtx, dofIdx, timeIdx);
@@ -747,7 +747,7 @@ class BlackOilPolymerExtensiveQuantities
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
     static constexpr unsigned gasPhaseIdx = FluidSystem::gasPhaseIdx;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr long long dimWorld = GridView::dimensionworld;
     static constexpr unsigned waterPhaseIdx =  FluidSystem::waterPhaseIdx;
 
     using Toolbox = MathToolbox<Evaluation>;

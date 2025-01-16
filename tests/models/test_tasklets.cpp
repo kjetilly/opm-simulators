@@ -42,7 +42,7 @@ std::unique_ptr<Opm::TaskletRunner> runner{};
 class SleepTasklet : public Opm::TaskletInterface
 {
 public:
-    SleepTasklet(int mseconds)
+    SleepTasklet(long long mseconds)
         : mseconds_(mseconds)
     {
         n_ = numInstantiated_;
@@ -58,32 +58,32 @@ public:
     }
 
 private:
-    static int numInstantiated_;
-    int n_;
-    int mseconds_;
+    static long long numInstantiated_;
+    long long n_;
+    long long mseconds_;
 };
 
 void sleepAndPrintFunction();
 void sleepAndPrintFunction()
 {
-    int ms = 100;
+    long long ms = 100;
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
     std::lock_guard<std::mutex> guard(outputMutex);
     std::cout << "Sleep completed by worker thread " << runner->workerThreadIndex() << std::endl;
 }
 
-int SleepTasklet::numInstantiated_ = 0;
+long long SleepTasklet::numInstantiated_ = 0;
 
-int main()
+long long main()
 {
-    int numWorkers = 2;
+    long long numWorkers = 2;
     runner = std::make_unique<Opm::TaskletRunner>(numWorkers);
 
     // the master thread is not a worker thread
     assert(runner->workerThreadIndex() < 0);
     assert(runner->numWorkerThreads() == numWorkers);
 
-    for (int i = 0; i < 5; ++ i) {
+    for (long long i = 0; i < 5; ++ i) {
         //auto st = std::make_shared<SleepTasklet>((i + 1)*1000);
         auto st = std::make_shared<SleepTasklet>(100);
         runner->dispatch(st);

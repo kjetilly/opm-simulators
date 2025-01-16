@@ -87,7 +87,7 @@ namespace {
 
         /// Start pointers into rankBuffers_ for each rank's local
         /// convergence report object.
-        std::vector<int> rankStart_{};
+        std::vector<long long> rankStart_{};
 
         /// Reconstitute a convergence report from byte stream representation.
         ///
@@ -98,7 +98,7 @@ namespace {
         ///   On entry, a default constructed object usable as a destination
         ///   for deserialisation.  On exit, a fully populated convergence
         ///   report object filled from the byte stream of \p rank.
-        void deserialise(const std::vector<int>::size_type rank,
+        void deserialise(const std::vector<long long>::size_type rank,
                          Opm::ConvergenceReport&           report);
     };
 
@@ -112,7 +112,7 @@ namespace {
         std::tie(this->rankBuffers_, this->rankStart_) =
             Opm::allGatherv(this->m_buffer, this->comm_);
 
-        auto rank = std::vector<int>::size_type{0};
+        auto rank = std::vector<long long>::size_type{0};
         for (auto& rankReport : rankReports) {
             this->deserialise(rank++, rankReport);
         }
@@ -120,7 +120,7 @@ namespace {
         return rankReports;
     }
 
-    void CollectConvReports::deserialise(const std::vector<int>::size_type rank,
+    void CollectConvReports::deserialise(const std::vector<long long>::size_type rank,
                                          Opm::ConvergenceReport&           report)
     {
         auto begin = this->rankBuffers_.begin() + this->rankStart_[rank + 0];

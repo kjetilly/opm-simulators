@@ -48,7 +48,7 @@ struct SerializableSim {
     virtual std::array<std::string,5> getHeader() const = 0;
 
     //! \brief Obtain local-to-global cell mapping.
-    virtual const std::vector<int>& getCellMapping() const = 0;
+    virtual const std::vector<long long>& getCellMapping() const = 0;
 };
 
 //! \brief Class handling simulator serialization.
@@ -63,7 +63,7 @@ public:
                         Parallel::Communication& comm,
                         const IOConfig& ioconfig,
                         const std::string& saveSpec,
-                        int loadStep,
+                        long long loadStep,
                         const std::string& saveFile,
                         const std::string& loadFile);
 
@@ -71,7 +71,7 @@ public:
     bool shouldLoad() const { return loadStep_ > -1; }
 
     //! \brief Returns step to load.
-    int loadStep() const { return loadStep_; }
+    long long loadStep() const { return loadStep_; }
 
     //! \brief Save data to file if appropriate.
     void save(SimulatorTimer& timer);
@@ -89,9 +89,9 @@ private:
 
     SerializableSim& simulator_; //!< Reference to simulator to be use
     Parallel::Communication& comm_; //!< Communication to use
-    int saveStride_ = 0; //!< Stride to save serialized state at, negative to only keep last
-    int saveStep_ = -1; //!< Specific step to save serialized state at
-    int loadStep_ = -1; //!< Step to load serialized state from
+    long long saveStride_ = 0; //!< Stride to save serialized state at, negative to only keep last
+    long long saveStep_ = -1; //!< Specific step to save serialized state at
+    long long loadStep_ = -1; //!< Step to load serialized state from
     std::string saveFile_; //!< File to save serialized state to
     std::string loadFile_; //!< File to load serialized state from
 };

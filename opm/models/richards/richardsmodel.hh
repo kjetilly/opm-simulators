@@ -65,11 +65,11 @@ struct Richards { using InheritsFrom = std::tuple<MultiPhaseBaseModel>; };
 
 //! By default, assume that the first phase is the liquid one
 template<class TypeTag>
-struct LiquidPhaseIndex<TypeTag, TTag::Richards> { static constexpr int value = 0; };
+struct LiquidPhaseIndex<TypeTag, TTag::Richards> { static constexpr long long value = 0; };
 
 //! By default, assume that the non-liquid phase is gaseos
 template<class TypeTag>
-struct GasPhaseIndex<TypeTag, TTag::Richards> { static constexpr int value = 1 - getPropValue<TypeTag, Properties::LiquidPhaseIndex>(); };
+struct GasPhaseIndex<TypeTag, TTag::Richards> { static constexpr long long value = 1 - getPropValue<TypeTag, Properties::LiquidPhaseIndex>(); };
 
 /*!
  * \brief By default, assume that component which the liquid is made of has
@@ -81,11 +81,11 @@ struct GasPhaseIndex<TypeTag, TTag::Richards> { static constexpr int value = 1 -
  * prefer Ethanol of H2O??)
  */
 template<class TypeTag>
-struct LiquidComponentIndex<TypeTag, TTag::Richards> { static constexpr int value = getPropValue<TypeTag, Properties::LiquidPhaseIndex>(); };
+struct LiquidComponentIndex<TypeTag, TTag::Richards> { static constexpr long long value = getPropValue<TypeTag, Properties::LiquidPhaseIndex>(); };
 
 //! By default, assume that the gas component is the other than the liquid one
 template<class TypeTag>
-struct GasComponentIndex<TypeTag, TTag::Richards> { static constexpr int value = 1 - getPropValue<TypeTag, Properties::LiquidComponentIndex>(); };
+struct GasComponentIndex<TypeTag, TTag::Richards> { static constexpr long long value = 1 - getPropValue<TypeTag, Properties::LiquidComponentIndex>(); };
 
 //! The local residual operator
 template<class TypeTag>

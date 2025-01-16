@@ -29,7 +29,7 @@
 #include <stdexcept>
 
 Opm::InterRegFlowMapSingleFIP::
-InterRegFlowMapSingleFIP(const std::vector<int>& region)
+InterRegFlowMapSingleFIP(const std::vector<long long>& region)
     : region_(region.size(), 0)
 {
     if (! region.empty()) {
@@ -39,7 +39,7 @@ InterRegFlowMapSingleFIP(const std::vector<int>& region)
 
     std::transform(region.begin(), region.end(),
                    this->region_.begin(),
-                   [](const int regID) { return regID - 1; });
+                   [](const long long regID) { return regID - 1; });
 }
 
 void

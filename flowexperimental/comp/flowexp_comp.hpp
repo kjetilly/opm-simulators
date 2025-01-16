@@ -39,22 +39,22 @@
 // suggestTimeStep is taken from newton solver in problem.limitTimestep
 namespace Opm {
 
-template<int numComp>
-int dispatchFlowExpComp(int argc, char** argv);
+template<long long numComp>
+long long dispatchFlowExpComp(long long argc, char** argv);
 
 }
 
 namespace Opm::Properties {
 namespace TTag {
 
-template<int NumComp>
+template<long long NumComp>
 struct FlowExpCompProblem {
    using InheritsFrom = std::tuple<FlowBaseProblemComp, FlashModel>;
 };
 
 }
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct SparseMatrixAdapter<TypeTag, TTag::FlowExpCompProblem<NumComp>>
 {
 private:
@@ -109,29 +109,29 @@ struct LocalLinearizerSplice<TypeTag, TTag::FlowExpCompProblem>
 #endif
 
 // Set the problem property
-template <class TypeTag, int NumComp>
+template <class TypeTag, long long NumComp>
 struct Problem<TypeTag, TTag::FlowExpCompProblem<NumComp>>
 {
     using type = FlowProblemComp<TypeTag>;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct AquiferModel<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     using type = EmptyModel<TypeTag>;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct WellModel<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     using type = EmptyModel<TypeTag>;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct TracerModel<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     using type = EmptyModel<TypeTag>;
 };
 
 
-template <class TypeTag, int NumComp>
+template <class TypeTag, long long NumComp>
 struct FlashSolver<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -147,9 +147,9 @@ template <class TypeTag, class MyTypeTag>
 struct NumComp { using type = UndefinedProperty; };
 
 // TODO: this is unfortunate, have to check why we need to hard-code it
-template <class TypeTag, int NumComp_>
+template <class TypeTag, long long NumComp_>
 struct NumComp<TypeTag, TTag::FlowExpCompProblem<NumComp_>> {
-    static constexpr int value = NumComp_;
+    static constexpr long long value = NumComp_;
 };
 #if 0
 struct Temperature { using type = UndefinedProperty; };
@@ -161,25 +161,25 @@ struct Temperature { using type = UndefinedProperty; };
  };
 #endif
 
-template <class TypeTag, int NumComp_>
+template <class TypeTag, long long NumComp_>
 struct FluidSystem<TypeTag, TTag::FlowExpCompProblem<NumComp_>>
 {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-    static constexpr int num_comp = getPropValue<TypeTag, Properties::NumComp>();
+    static constexpr long long num_comp = getPropValue<TypeTag, Properties::NumComp>();
 
 public:
     using type = Opm::GenericOilGasFluidSystem<Scalar, num_comp>;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableMech<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableDisgasInWater<TypeTag, TTag::FlowExpCompProblem<NumComp>> { static constexpr bool value = false; };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct Stencil<TypeTag, TTag::FlowExpCompProblem<NumComp>>
 {
 private:
@@ -190,61 +190,61 @@ public:
     using type = EcfvStencil<Scalar, GridView>;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableApiTracking<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableTemperature<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableSaltPrecipitation<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnablePolymerMW<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnablePolymer<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableDispersion<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableBrine<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableVapwat<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableSolvent<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableEnergy<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableFoam<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableExtbo<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };
-template<class TypeTag, int NumComp>
+template<class TypeTag, long long NumComp>
 struct EnableMICP<TypeTag, TTag::FlowExpCompProblem<NumComp>> {
     static constexpr bool value = false;
 };

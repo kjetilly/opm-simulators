@@ -111,7 +111,7 @@ public:
         const auto& problem = elemCtx.problem();
 
         const Scalar flashTolerance = Parameters::Get<Parameters::FlashTolerance<Scalar>>();
-        const int flashVerbosity = Parameters::Get<Parameters::FlashVerbosity>();
+        const long long flashVerbosity = Parameters::Get<Parameters::FlashVerbosity>();
         const std::string flashTwoPhaseMethod = Parameters::Get<Parameters::FlashTwoPhaseMethod>();
         // TODO: the formulation here is still to begin with XMF and YMF values to derive ZMF value
         // TODO: we should check how we update ZMF in the newton update, since it is the primary variables.
@@ -139,7 +139,7 @@ public:
         }
 
         Evaluation p = priVars.makeEvaluation(pressure0Idx, timeIdx);
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (long long phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             fluidState_.setPressure(phaseIdx, p);
 
         // Get initial K and L from storage initially (if enabled)
@@ -175,14 +175,14 @@ public:
         // Compute the phase compositions and densities
         /////////////
         if (flashVerbosity >= 1) {
-            const int spatialIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
+            const long long spatialIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
             std::cout << " updating the intensive quantities for Cell " << spatialIdx << std::endl;
         }
         FlashSolver::solve(fluidState_, z, flashTwoPhaseMethod, flashTolerance, flashVerbosity);
 
         if (flashVerbosity >= 5) {
             // printing of flash result after solve
-            const int spatialIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
+            const long long spatialIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
             std::cout << " \n After flash solve for cell " << spatialIdx << std::endl;
             ComponentVector x, y;
             for (unsigned comp_idx = 0; comp_idx < numComponents; ++comp_idx) {

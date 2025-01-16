@@ -40,15 +40,15 @@ using namespace Opm;
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -158,14 +158,14 @@ BOOST_AUTO_TEST_CASE(AllHaveOneMessage)
         BOOST_CHECK_EQUAL( cc.size() , counter->numMessages(Log::MessageType::Info) );
 
         std::string expected;
-        for (int i=0; i<cc.size(); i++) {
+        for (long long i=0; i<cc.size(); i++) {
             expected += Log::prefixMessage(Log::MessageType::Info, "info from rank "+std::to_string(i)) + "\n";
         }
         BOOST_CHECK_EQUAL(log_stream.str(), expected);
     }
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

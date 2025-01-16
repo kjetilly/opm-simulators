@@ -63,37 +63,37 @@ class LevelCartesianIndexMapper<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconform
 #endif //HAVE_MPI
 
  public:
-    static constexpr int dimension = 3 ;
+    static constexpr long long dimension = 3 ;
 
     explicit LevelCartesianIndexMapper(const Dune::CartesianIndexMapper<Grid>& cartesianIndexMapper)
         : cartesianIndexMapper_{std::make_unique<Dune::CartesianIndexMapper<Grid>>(cartesianIndexMapper)}
     {}
 
-    const std::array<int,3>& cartesianDimensions(int level) const
+    const std::array<long long,3>& cartesianDimensions(long long level) const
     {
         throwIfLevelPositive(level);
         return cartesianIndexMapper_ ->cartesianDimensions();
     }
 
-    int cartesianSize(int level) const
+    long long cartesianSize(long long level) const
     {
         throwIfLevelPositive(level);
         return cartesianIndexMapper_->cartesianSize();
     }
 
-    int compressedSize(int level) const
+    long long compressedSize(long long level) const
     {
         throwIfLevelPositive(level);
         return cartesianIndexMapper_-> compressedSize();
     }
 
-    int cartesianIndex( const int compressedElementIndex, const int level) const
+    long long cartesianIndex( const long long compressedElementIndex, const long long level) const
     {
         throwIfLevelPositive(level);;
         return cartesianIndexMapper_->cartesianIndex(compressedElementIndex);
     }
 
-    void cartesianCoordinate(const int compressedElementIndex, std::array<int,dimension>& coords, int level) const
+    void cartesianCoordinate(const long long compressedElementIndex, std::array<long long,dimension>& coords, long long level) const
     {
         throwIfLevelPositive(level);
         cartesianIndexMapper_->cartesianCoordinate(compressedElementIndex, coords);
@@ -102,7 +102,7 @@ class LevelCartesianIndexMapper<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconform
  private:
     std::unique_ptr<Dune::CartesianIndexMapper<Grid>> cartesianIndexMapper_;
     
-    void throwIfLevelPositive(int level) const
+    void throwIfLevelPositive(long long level) const
     {
         if (level) {
             throw std::invalid_argument("Invalid level.\n");

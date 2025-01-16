@@ -156,7 +156,7 @@ struct PvsMoleFractionsBaseWeight<TypeTag, TTag::PvsModel>
 namespace Opm::Parameters {
 
 //! The verbosity of the model (0 -> do not print anything, 2 -> spam stdout a lot)
-struct PvsVerbosity { static constexpr int value = 1; };
+struct PvsVerbosity { static constexpr long long value = 1; };
 
 } // namespace Opm::Parameters
 
@@ -507,7 +507,7 @@ public:
     {
         numSwitched_ = 0;
 
-        int succeeded;
+        long long succeeded;
         try {
             std::vector<bool> visited(this->numGridDof(), false);
             ElementContext elemCtx(this->simulator_);
@@ -629,7 +629,7 @@ public:
     unsigned numSwitched_;
 
     // verbosity of the model
-    int verbosity_;
+    long long verbosity_;
 };
 }
 

@@ -51,7 +51,7 @@ namespace Opm
         //  \param decayrate          decayrate of time step when target iterations are not met (should be <= 1)
         //  \param growthrate         growthrate of time step when target iterations are not met (should be >= 1)
         /// \param verbose            if true get some output (default = false)
-        SimpleIterationCountTimeStepControl( const int target_iterations,
+        SimpleIterationCountTimeStepControl( const long long target_iterations,
                                              const double decayrate,
                                              const double growthrate,
                                              const bool verbose = false);
@@ -59,7 +59,7 @@ namespace Opm
         static SimpleIterationCountTimeStepControl serializationTestObject();
 
         /// \brief \copydoc TimeStepControlInterface::computeTimeStepSize
-        double computeTimeStepSize( const double dt, const int iterations, const RelativeChangeInterface& /* relativeChange */, const double /*simulationTimeElapsed */ ) const;
+        double computeTimeStepSize( const double dt, const long long iterations, const RelativeChangeInterface& /* relativeChange */, const double /*simulationTimeElapsed */ ) const;
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)
@@ -73,7 +73,7 @@ namespace Opm
         bool operator==(const SimpleIterationCountTimeStepControl&) const;
 
     protected:
-        const int     target_iterations_ = 0;
+        const long long     target_iterations_ = 0;
         const double  decayrate_ = 0.0;
         const double  growthrate_ = 0.0;
         const bool    verbose_ = false;
@@ -107,7 +107,7 @@ namespace Opm
         static PIDTimeStepControl serializationTestObject();
 
         /// \brief \copydoc TimeStepControlInterface::computeTimeStepSize
-        double computeTimeStepSize( const double dt, const int /* iterations */, const RelativeChangeInterface& relativeChange, const double /*simulationTimeElapsed */ ) const;
+        double computeTimeStepSize( const double dt, const long long /* iterations */, const RelativeChangeInterface& relativeChange, const double /*simulationTimeElapsed */ ) const;
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)
@@ -143,7 +143,7 @@ namespace Opm
         /// \param tol        tolerance for the relative changes of the numerical solution to be accepted
         ///                   in one time step (default is 1e-3)
         /// \param verbose    if true get some output (default = false)
-        PIDAndIterationCountTimeStepControl( const int target_iterations = 20,
+        PIDAndIterationCountTimeStepControl( const long long target_iterations = 20,
                                              const double decayDampingFactor = 1.0,
                                              const double growthDampingFactor = 1.0/1.2,
                                              const double tol = 1e-3,
@@ -153,7 +153,7 @@ namespace Opm
         static PIDAndIterationCountTimeStepControl serializationTestObject();
 
         /// \brief \copydoc TimeStepControlInterface::computeTimeStepSize
-        double computeTimeStepSize( const double dt, const int iterations, const RelativeChangeInterface& relativeChange, const double /*simulationTimeElapsed */ ) const;
+        double computeTimeStepSize( const double dt, const long long iterations, const RelativeChangeInterface& relativeChange, const double /*simulationTimeElapsed */ ) const;
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)
@@ -168,7 +168,7 @@ namespace Opm
         bool operator==(const PIDAndIterationCountTimeStepControl&) const;
 
     protected:
-        const int     target_iterations_;
+        const long long     target_iterations_;
         const double  decayDampingFactor_;
         const double  growthDampingFactor_;
         const double  minTimeStepBasedOnIterations_;
@@ -196,7 +196,7 @@ namespace Opm
         static HardcodedTimeStepControl serializationTestObject();
 
         /// \brief \copydoc TimeStepControlInterface::computeTimeStepSize
-        double computeTimeStepSize( const double dt, const int /* iterations */, const RelativeChangeInterface& /*relativeChange */, const double simulationTimeElapsed) const;
+        double computeTimeStepSize( const double dt, const long long /* iterations */, const RelativeChangeInterface& /*relativeChange */, const double simulationTimeElapsed) const;
 
         template<class Serializer>
         void serializeOp(Serializer& serializer)

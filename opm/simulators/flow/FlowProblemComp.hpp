@@ -133,7 +133,7 @@ public:
                 return;
             }
             this->transmissibilities_.finishInit(
-                [&vg = this->simulator().vanguard()](const unsigned int it) { return vg.gridIdxToEquilGridIdx(it); });
+                [&vg = this->simulator().vanguard()](const size_t it) { return vg.gridIdxToEquilGridIdx(it); });
             updated = true;
         };
         // TODO: we might need to do the same with FlowProblemBlackoil for parallel
@@ -142,7 +142,7 @@ public:
 
         if (enableEclOutput_) {
             eclWriter_->setTransmissibilities(&simulator.problem().eclTransmissibilities());
-            std::function<unsigned int(unsigned int)> equilGridToGrid = [&simulator](unsigned int i) {
+            std::function<size_t(size_t)> equilGridToGrid = [&simulator](size_t i) {
                 return simulator.vanguard().gridEquilIdxToGridIdx(i);
             };
             eclWriter_->extractOutputTransAndNNC(equilGridToGrid);
@@ -187,7 +187,7 @@ public:
         }
 
         this->readRockParameters_(simulator.vanguard().cellCenterDepths(), [&simulator](const unsigned idx) {
-            std::array<int, dim> coords;
+            std::array<long long, dim> coords;
             simulator.vanguard().cartesianCoordinate(idx, coords);
             for (auto& c : coords) {
                 ++c;
@@ -213,7 +213,7 @@ public:
         if constexpr (getPropValue<TypeTag, Properties::EnablePolymer>()) {
             const auto& vanguard = this->simulator().vanguard();
             const auto& gridView = vanguard.gridView();
-            int numElements = gridView.size(/*codim=*/0);
+            long long numElements = gridView.size(/*codim=*/0);
             this->polymer_.maxAdsorption.resize(numElements, 0.0);
         }
 
@@ -421,7 +421,7 @@ public:
     }
 protected:
 
-    void updateExplicitQuantities_(int /* episodeIdx*/, int /* timeStepSize */, bool /* first_step_after_restart */) override
+    void updateExplicitQuantities_(long long /* episodeIdx*/, long long /* timeStepSize */, bool /* first_step_after_restart */) override
     {
         // we do nothing here for now
     }

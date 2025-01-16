@@ -55,21 +55,21 @@ public:
     bool operator==(const MixingRateControls& rhs) const;
     MixingRateControls& operator=(const MixingRateControls& rhs);
 
-    void init(std::size_t numDof, int episodeIdx, const unsigned ntpvt);
+    void init(std::size_t numDof, long long episodeIdx, const unsigned ntpvt);
 
-    bool drsdtActive(int episodeIdx) const;
-    bool drvdtActive(int episodeIdx) const;
-    bool drsdtConvective(int episodeIdx) const;
+    bool drsdtActive(long long episodeIdx) const;
+    bool drvdtActive(long long episodeIdx) const;
+    bool drsdtConvective(long long episodeIdx) const;
     
-    bool drsdtActive(int episodeIdx, std::size_t pvtRegionIdx) const;
-    bool drvdtActive(int episodeIdx, std::size_t pvtRegionIdx) const;
-    bool drsdtConvective(int episodeIdx, std::size_t pvtRegionIdx) const;
+    bool drsdtActive(long long episodeIdx, std::size_t pvtRegionIdx) const;
+    bool drvdtActive(long long episodeIdx, std::size_t pvtRegionIdx) const;
+    bool drsdtConvective(long long episodeIdx, std::size_t pvtRegionIdx) const;
     /*!
      * \brief Returns the dynamic drsdt convective mixing value
      */
     Scalar drsdtcon(const unsigned elemIdx,
-                    int episodeIdx,
-                    const int pvtRegionIdx) const;
+                    long long episodeIdx,
+                    const long long pvtRegionIdx) const;
 
     /*!
      * \brief Returns the maximum value of the gas dissolution factor at the current time
@@ -77,8 +77,8 @@ public:
      */
     Scalar maxGasDissolutionFactor(unsigned timeIdx,
                                    unsigned globalDofIdx,
-                                   const int episodeIdx,
-                                   const int pvtRegionIdx) const;
+                                   const long long episodeIdx,
+                                   const long long pvtRegionIdx) const;
 
     /*!
      * \brief Returns the maximum value of the oil vaporization factor at the current
@@ -86,17 +86,17 @@ public:
      */
     Scalar maxOilVaporizationFactor(const unsigned timeIdx,
                                     const unsigned globalDofIdx,
-                                    const int episodeIdx,
-                                    const int pvtRegionIdx) const;
+                                    const long long episodeIdx,
+                                    const long long pvtRegionIdx) const;
 
-    void updateExplicitQuantities(const int episodeIdx,
+    void updateExplicitQuantities(const long long episodeIdx,
                                   const Scalar timeStepSize);
 
     void updateLastValues(const unsigned elemIdx,
                           const Scalar Rs,
                           const Scalar Rv);
 
-    void updateMaxValues(const int episodeIdx,
+    void updateMaxValues(const long long episodeIdx,
                          const Scalar timeStepSize);
 
     template<class Serializer>
@@ -113,11 +113,11 @@ public:
     template<class IntensiveQuantities>
     void update(unsigned compressedDofIdx,
                 const IntensiveQuantities& iq,
-                const int episodeIdx,
+                const long long episodeIdx,
                 const Scalar gravity,
                 const Scalar permZ,
                 const Scalar distZ,
-                const int pvtRegionIdx)
+                const long long pvtRegionIdx)
     {
         const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
 
@@ -197,7 +197,7 @@ private:
                                 const Scalar Xhi,
                                 const Scalar Psi,
                                 const Scalar omegainn,
-                                const int pvtRegionIndex);
+                                const long long pvtRegionIndex);
 
     std::vector<Scalar> lastRv_;
     std::vector<Scalar> maxDRv_;

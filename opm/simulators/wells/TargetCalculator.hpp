@@ -109,7 +109,7 @@ private:
     Scalar sales_target_;
     const GroupState<Scalar>& group_state_;
     bool use_gpmaint_;
-    int pos_;
+    long long pos_;
     GuideRateModel::Target target_;
 };
 

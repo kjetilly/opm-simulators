@@ -49,7 +49,7 @@ namespace Opm::gpuistl
  *     auto stdVectorOnCPU = dataOnGPU.asStdVector();
  * }
  *
- * @tparam T the type to store. Can be either float, double or int.
+ * @tparam T the type to store. Can be either float, double or long long.
  */
 template <typename T>
 class GpuBuffer
@@ -126,7 +126,7 @@ public:
      * @note This does synchronous transfer.
      * @note This assumes that the size of this vector is equal to the size of the input vector.
      */
-    template <int BlockDimension>
+    template <long long BlockDimension>
     void copyFromHost(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector)
     {
         // TODO: [perf] vector.size() can be replaced by bvector.N() * BlockDimension
@@ -149,7 +149,7 @@ public:
      * @note This does synchronous transfer.
      * @note This assumes that the size of this vector is equal to the size of the input vector.
      */
-    template <int BlockDimension>
+    template <long long BlockDimension>
     void copyToHost(Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector) const
     {
         // TODO: [perf] vector.size() can be replaced by bvector.N() * BlockDimension

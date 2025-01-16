@@ -38,11 +38,11 @@ namespace Detail {
 template <class Graph>
 std::size_t colorGraphWelshPowell(const Graph& graph,
                                   std::deque<typename Graph::VertexDescriptor>& orderedVertices,
-                                  std::vector<int>& colors,
-                                  int color,
-                                  int noVertices)
+                                  std::vector<long long>& colors,
+                                  long long color,
+                                  long long noVertices)
 {
-    std::vector<int> forbidden(noVertices, false);
+    std::vector<long long> forbidden(noVertices, false);
     std::size_t noColored = 0;
 
     for (auto vertex = orderedVertices.begin(),
@@ -77,7 +77,7 @@ std::size_t breadthFirstSearch(const Graph& graph,
                                typename Graph::VertexDescriptor root,
                                Functor functor)
 {
-    std::vector<int> visited(graph.maxVertex() + 1, false);
+    std::vector<long long> visited(graph.maxVertex() + 1, false);
     using Vertex = typename Graph::VertexDescriptor;
     std::queue<Vertex> nextVertices;
     std::size_t noVisited = 0;
@@ -109,14 +109,14 @@ std::size_t breadthFirstSearch(const Graph& graph,
 /// \return A pair of a vector with the colors of the vertices and the number of colors
 ///         assigned
 template <class Graph>
-std::tuple<std::vector<int>, int, std::vector<std::size_t>>
+std::tuple<std::vector<long long>, long long, std::vector<std::size_t>>
 colorVerticesWelshPowell(const Graph& graph)
 {
     using Vertex = typename Graph::VertexDescriptor;
     std::deque<Vertex> orderedVertices;
     auto noVertices = graph.maxVertex() + 1;
-    std::vector<int> degrees(noVertices, 0);
-    int maxDegree = 0;
+    std::vector<long long> degrees(noVertices, 0);
+    long long maxDegree = 0;
     std::ptrdiff_t firstDegreeChange = 0;
 
     // populate deque
@@ -152,7 +152,7 @@ colorVerticesWelshPowell(const Graph& graph)
     auto& colors = degrees;
     std::fill(colors.begin(), colors.end(), -1);
 
-    int color = 0;
+    long long color = 0;
     std::vector<std::size_t> verticesPerColor;
     verticesPerColor.reserve(10);
 
@@ -166,8 +166,8 @@ colorVerticesWelshPowell(const Graph& graph)
 /// \! Reorder colored graph preserving order of vertices with the same color.
 template <class Graph>
 std::vector<std::size_t>
-reorderVerticesPreserving(const std::vector<int>& colors,
-                          int noColors,
+reorderVerticesPreserving(const std::vector<long long>& colors,
+                          long long noColors,
                           const std::vector<std::size_t>& verticesPerColor,
                           const Graph& graph)
 {
@@ -186,8 +186,8 @@ reorderVerticesPreserving(const std::vector<int>& colors,
 /// \! Reorder Vetrices in spheres
 template <class Graph>
 std::vector<std::size_t>
-reorderVerticesSpheres(const std::vector<int>& colors,
-                       int noColors,
+reorderVerticesSpheres(const std::vector<long long>& colors,
+                       long long noColors,
                        const std::vector<std::size_t>& verticesPerColor,
                        const Graph& graph,
                        typename Graph::VertexDescriptor root)

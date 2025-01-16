@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowBrineSaltPrecipitationMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_brine binary.
-int flowBrineSaltPrecipitationMainStandalone(int argc, char** argv);
+long long flowBrineSaltPrecipitationMainStandalone(long long argc, char** argv);
 
 }
 

@@ -35,7 +35,7 @@
 template <typename Scalar>
 std::optional<std::size_t>
 Opm::Satfunc::PhaseChecks::UnscaledSatfuncCheckPoint<Scalar>::
-pointID(const int cellIdx) const
+pointID(const long long cellIdx) const
 {
     const auto& [regPos, inserted] =
         this->seen_.insert((*this->region_)[cellIdx]);
@@ -50,7 +50,7 @@ pointID(const int cellIdx) const
 template <typename Scalar>
 void
 Opm::Satfunc::PhaseChecks::UnscaledSatfuncCheckPoint<Scalar>::
-populateCheckPoint(const int                        cellIdx,
+populateCheckPoint(const long long                        cellIdx,
                    EclEpsScalingPointsInfo<Scalar>& endPoints) const
 {
     endPoints.extractUnscaled(*this->unscaledEndPoints_.rtep,

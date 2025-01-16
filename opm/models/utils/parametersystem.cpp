@@ -214,7 +214,7 @@ void printParamUsage(std::ostream& os,
 {
     std::string paramMessage, paramType, paramDescription;
 
-    int ttyWidth = Opm::getTtyWidth();
+    long long ttyWidth = Opm::getTtyWidth();
 
     // convert the CamelCase name to a command line --parameter-name.
     std::string cmdLineName = "-";
@@ -247,8 +247,8 @@ void printParamUsage(std::ostream& os,
             ) {
         paramMessage += "=SCALAR";
     }
-    else if (paramInfo.paramTypeName == Dune::className<int>()
-             || paramInfo.paramTypeName == Dune::className<unsigned int>()
+    else if (paramInfo.paramTypeName == Dune::className<long long>()
+             || paramInfo.paramTypeName == Dune::className<size_t>()
              || paramInfo.paramTypeName == Dune::className<short>()
              || paramInfo.paramTypeName == Dune::className<unsigned short>()) {
         paramMessage += "=INTEGER";
@@ -632,14 +632,14 @@ bool parseParameterFile(const std::string& fileName, bool overwrite)
     return true;
 }
 
-std::string parseCommandLineOptions(int argc,
+std::string parseCommandLineOptions(long long argc,
                                     const char **argv,
                                     const PositionalArgumentCallback& posArgCallback,
                                     const std::string& helpPreamble)
 {
     // handle the "--help" parameter
     if (!helpPreamble.empty()) {
-        for (int i = 1; i < argc; ++i) {
+        for (long long i = 1; i < argc; ++i) {
             if (std::string("-h") == argv[i] ||
                 std::string("--help") == argv[i]) {
                 printUsage(helpPreamble, std::cout, /*errorMsg=*/"");
@@ -653,15 +653,15 @@ std::string parseCommandLineOptions(int argc,
     }
 
     std::set<std::string> seenKeys;
-    int numPositionalParams = 0;
-    for (int i = 1; i < argc; ++i) {
+    long long numPositionalParams = 0;
+    for (long long i = 1; i < argc; ++i) {
         // All non-positional command line options need to start with '-'
         if (strlen(argv[i]) < 4
             || argv[i][0] != '-'
             || argv[i][1] != '-')
         {
             std::string errorMsg;
-            int numHandled = posArgCallback([](const std::string& k, const std::string& v)
+            long long numHandled = posArgCallback([](const std::string& k, const std::string& v)
                                             {
                                                 MetaData::tree()[k] = v;
                                             }, seenKeys, errorMsg,
@@ -817,7 +817,7 @@ namespace detail {
 template bool Get_(const std::string&, bool, bool);
 template double Get_(const std::string&, double, bool);
 template float Get_(const std::string&, float, bool);
-template int Get_(const std::string&, int, bool);
+template long long Get_(const std::string&, long long, bool);
 template long Get_(const std::string&, long, bool);
 template std::string Get_(const std::string&, std::string, bool);
 template unsigned Get_(const std::string&, unsigned, bool);

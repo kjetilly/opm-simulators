@@ -90,9 +90,9 @@ void WellContributionsOCL<Scalar>::apply(cl::Buffer d_x, cl::Buffer d_y)
 template<class Scalar>
 void WellContributionsOCL<Scalar>::
 APIaddMatrix(MatrixType type,
-             int* colIndices,
+             long long* colIndices,
              Scalar* values,
-             unsigned int val_size)
+             size_t val_size)
 {
     if (!this->allocated) {
         OPM_THROW(std::logic_error, "Error cannot add wellcontribution before allocating memory in WellContributions");
@@ -106,8 +106,8 @@ APIaddMatrix(MatrixType type,
                                   sizeof(Scalar) * val_size * this->dim * this->dim_wells,
                                   values, nullptr, &events[0]);
         queue->enqueueWriteBuffer(*d_Ccols_ocl, CL_FALSE,
-                                  sizeof(int) * this->num_blocks_so_far,
-                                  sizeof(int) * val_size, colIndices, nullptr, &events[1]);
+                                  sizeof(long long) * this->num_blocks_so_far,
+                                  sizeof(long long) * val_size, colIndices, nullptr, &events[1]);
         cl::WaitForEvents(events);
         events.clear();
         break;
@@ -129,7 +129,7 @@ APIaddMatrix(MatrixType type,
                                   sizeof(Scalar) * val_size * this->dim * this->dim_wells,
                                   values, nullptr, &events[0]);
         queue->enqueueWriteBuffer(*d_Bcols_ocl, CL_FALSE,
-                                  sizeof(int) * this->num_blocks_so_far, sizeof(int) * val_size,
+                                  sizeof(long long) * this->num_blocks_so_far, sizeof(long long) * val_size,
                                   colIndices, nullptr, &events[1]);
         cl::WaitForEvents(events);
         events.clear();
@@ -139,7 +139,7 @@ APIaddMatrix(MatrixType type,
             this->val_pointers[this->num_std_wells] = this->num_blocks;
             events.resize(1);
             queue->enqueueWriteBuffer(*d_val_pointers_ocl, CL_FALSE, 0,
-                                      sizeof(unsigned int) * (this->num_std_wells + 1),
+                                      sizeof(size_t) * (this->num_std_wells + 1),
                                       this->val_pointers.data(), nullptr, &events[0]);
             events[0].wait();
             events.clear();
@@ -160,10 +160,10 @@ void WellContributionsOCL<Scalar>::APIalloc()
                                                sizeof(Scalar) * this->num_std_wells * this->dim_wells * this->dim_wells);
     d_Bnnzs_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE,
                                                sizeof(Scalar) * this->num_blocks * this->dim * this->dim_wells);
-    d_Ccols_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(int) * this->num_blocks);
-    d_Bcols_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(int) * this->num_blocks);
+    d_Ccols_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(long long) * this->num_blocks);
+    d_Bcols_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(long long) * this->num_blocks);
     d_val_pointers_ocl = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE,
-                                                      sizeof(unsigned int) * (this->num_std_wells + 1));
+                                                      sizeof(size_t) * (this->num_std_wells + 1));
 }
 
 template class WellContributionsOCL<double>;

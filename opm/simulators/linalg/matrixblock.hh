@@ -38,7 +38,7 @@
 namespace Opm {
 namespace detail {
 
-template <typename K, int m, int n>
+template <typename K, long long m, long long n>
 static inline void invertMatrix(Dune::FieldMatrix<K,m,n>& matrix)
 {
     matrix.invert();
@@ -222,7 +222,7 @@ static inline void invertMatrix(Dune::DynamicMatrix<K>& matrix)
 
 } // namespace detail
 
-template <class Scalar, int n, int m>
+template <class Scalar, long long n, long long m>
 class MatrixBlock : public Dune::FieldMatrix<Scalar, n, m>
 {
 public:
@@ -254,16 +254,16 @@ public:
 
 namespace Dune {
 
-template<class K, int n, int m>
+template<class K, long long n, long long m>
 void print_row(std::ostream& s, const Opm::MatrixBlock<K, n, m>& A,
                typename FieldMatrix<K, n, m>::size_type I,
                typename FieldMatrix<K, n, m>::size_type J,
                typename FieldMatrix<K, n, m>::size_type therow,
-               int width,
-               int precision)
+               long long width,
+               long long precision)
 { print_row(s, A.asBase(), I, J, therow, width, precision); }
 
-template <typename Scalar, int n, int m>
+template <typename Scalar, long long n, long long m>
 struct MatrixDimension<Opm::MatrixBlock<Scalar, n, m> >
     : public MatrixDimension<typename Opm::MatrixBlock<Scalar, n, m>::BaseType>
 { };
@@ -273,7 +273,7 @@ struct MatrixDimension<Opm::MatrixBlock<Scalar, n, m> >
 /// \brief UMFPack specialization for Opm::MatrixBlock to make AMG happy
 ///
 /// Without this the empty default implementation would be used.
-template <typename T, typename A, int n, int m>
+template <typename T, typename A, long long n, long long m>
 class UMFPack<BCRSMatrix<Opm::MatrixBlock<T, n, m>, A> >
     : public UMFPack<BCRSMatrix<FieldMatrix<T, n, m>, A> >
 {
@@ -283,7 +283,7 @@ class UMFPack<BCRSMatrix<Opm::MatrixBlock<T, n, m>, A> >
 public:
     using RealMatrix = BCRSMatrix<Opm::MatrixBlock<T, n, m>, A>;
 
-    UMFPack(const RealMatrix& matrix, int verbose, bool)
+    UMFPack(const RealMatrix& matrix, long long verbose, bool)
         : Base(reinterpret_cast<const Matrix&>(matrix), verbose)
     {}
 };
@@ -293,7 +293,7 @@ public:
 /// \brief SuperLU specialization for Opm::MatrixBlock to make AMG happy
 ///
 /// Without this the empty default implementation would be used.
-template <typename T, typename A, int n, int m>
+template <typename T, typename A, long long n, long long m>
 class SuperLU<BCRSMatrix<Opm::MatrixBlock<T, n, m>, A> >
     : public SuperLU<BCRSMatrix<FieldMatrix<T, n, m>, A> >
 {
@@ -303,13 +303,13 @@ class SuperLU<BCRSMatrix<Opm::MatrixBlock<T, n, m>, A> >
 public:
     using RealMatrix = BCRSMatrix<Opm::MatrixBlock<T, n, m>, A>;
 
-    SuperLU(const RealMatrix& matrix, int verb, bool reuse=true)
+    SuperLU(const RealMatrix& matrix, long long verb, bool reuse=true)
         : Base(reinterpret_cast<const Matrix&>(matrix), verb, reuse)
     {}
 };
 #endif
 
-template<typename T, int n, int m>
+template<typename T, long long n, long long m>
 struct IsNumber<Opm::MatrixBlock<T, n, m>>
     : public IsNumber<Dune::FieldMatrix<T,n,m>>
 {};

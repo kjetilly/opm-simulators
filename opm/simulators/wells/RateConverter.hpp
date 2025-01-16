@@ -65,7 +65,7 @@ namespace Opm {
          * \tparam Region Type of a forward region mapping.  Expected to
          *    provide indexed access through \code operator[]() \endcode as
          *    well as inner types \c value_type, \c size_type, and \c
-         *    const_iterator.  Typically \code std::vector<int> \endcode.
+         *    const_iterator.  Typically \code std::vector<long long> \endcode.
          */
         template <class FluidSystem, class Region>
         class SurfaceToReservoirVoidage {
@@ -144,7 +144,7 @@ namespace Opm {
                         hydrocarbon -= fs.saturation(FluidSystem::waterPhaseIdx).value();
                     }
 
-                    const int reg = rmap_.region(cellIdx);
+                    const long long reg = rmap_.region(cellIdx);
                     assert(reg >= 0);
 
                     // sum p, rs, rv, and T.
@@ -244,15 +244,15 @@ namespace Opm {
              */
             template <class Coeff>
             void
-            calcCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const;
+            calcCoeff(const RegionId r, const long long pvtRegionIdx, Coeff& coeff) const;
 
             template <class Coeff , class Rates>
             void
-            calcCoeff(const RegionId r, const int pvtRegionIdx, const Rates& surface_rates, Coeff& coeff) const;
+            calcCoeff(const RegionId r, const long long pvtRegionIdx, const Rates& surface_rates, Coeff& coeff) const;
 
             template <class Coeff>
             void
-            calcCoeff(  const int     pvtRegionIdx,
+            calcCoeff(  const long long     pvtRegionIdx,
                         const Scalar  p,
                         const Scalar  rs,
                         const Scalar  rv,
@@ -264,7 +264,7 @@ namespace Opm {
 
             template <class Coeff>
             void
-            calcInjCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const;
+            calcInjCoeff(const RegionId r, const long long pvtRegionIdx, Coeff& coeff) const;
 
             /**
              * Convert surface volume flow rates to reservoir voidage flow
@@ -290,7 +290,7 @@ namespace Opm {
              */
             template <class Rates>
             void calcReservoirVoidageRates(const RegionId r,
-                                           const int      pvtRegionIdx,
+                                           const long long      pvtRegionIdx,
                                            const Rates&   surface_rates,
                                            Rates&         voidage_rates) const;
 
@@ -329,7 +329,7 @@ namespace Opm {
              *    active phases.
              */
             template <typename SurfaceRates, typename VoidageRates>
-            void calcReservoirVoidageRates(const int           pvtRegionIdx,
+            void calcReservoirVoidageRates(const long long           pvtRegionIdx,
                                            const Scalar        p,
                                            const Scalar        rs,
                                            const Scalar        rv,
@@ -360,7 +360,7 @@ namespace Opm {
              */
             template <class SolventModule>
             void
-            calcCoeffSolvent(const RegionId r, const int pvtRegionIdx, Scalar& coeff) const
+            calcCoeffSolvent(const RegionId r, const long long pvtRegionIdx, Scalar& coeff) const
             {
                 const auto& ra = attr_.attributes(r);
                 const Scalar p = ra.pressure;

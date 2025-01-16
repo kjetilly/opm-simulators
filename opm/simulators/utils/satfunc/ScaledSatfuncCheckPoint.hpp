@@ -47,7 +47,7 @@ namespace Opm::Satfunc::PhaseChecks {
     public:
         /// Callback for translating active cell index to globally unique
         /// point ID.
-        using LocalToGlobal = std::function<std::size_t(const int)>;
+        using LocalToGlobal = std::function<std::size_t(const long long)>;
 
         /// Constructor
         ///
@@ -78,7 +78,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// \param[in] cellIdx Active cell index on current rank.
         ///
         /// \return Globally unique point ID for \p cellIdx
-        std::optional<std::size_t> pointID(const int cellIdx) const override
+        std::optional<std::size_t> pointID(const long long cellIdx) const override
         {
             return { this->localToGlobal_(cellIdx) };
         }
@@ -88,7 +88,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// \param[in] cellIdx Active cell index on current rank.
         ///
         /// \param[out] endPoints Set of saturation function end-points.
-        void populateCheckPoint(const int                        cellIdx,
+        void populateCheckPoint(const long long                        cellIdx,
                                 EclEpsScalingPointsInfo<Scalar>& endPoints) const override;
 
     private:

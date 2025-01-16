@@ -58,29 +58,29 @@ RateType TargetCalculator<Scalar>::calcModeRateFromRates(const RateType* rates) 
     switch (cmode_) {
     case Group::ProductionCMode::ORAT: {
         assert(pu_.phase_used[BlackoilPhases::Liquid]);
-        const int pos = pu_.phase_pos[BlackoilPhases::Liquid];
+        const long long pos = pu_.phase_pos[BlackoilPhases::Liquid];
         return rates[pos];
     }
     case Group::ProductionCMode::WRAT: {
         assert(pu_.phase_used[BlackoilPhases::Aqua]);
-        const int pos = pu_.phase_pos[BlackoilPhases::Aqua];
+        const long long pos = pu_.phase_pos[BlackoilPhases::Aqua];
         return rates[pos];
     }
     case Group::ProductionCMode::GRAT: {
         assert(pu_.phase_used[BlackoilPhases::Vapour]);
-        const int pos = pu_.phase_pos[BlackoilPhases::Vapour];
+        const long long pos = pu_.phase_pos[BlackoilPhases::Vapour];
         return rates[pos];
     }
     case Group::ProductionCMode::LRAT: {
         assert(pu_.phase_used[BlackoilPhases::Liquid]);
         assert(pu_.phase_used[BlackoilPhases::Aqua]);
-        const int opos = pu_.phase_pos[BlackoilPhases::Liquid];
-        const int wpos = pu_.phase_pos[BlackoilPhases::Aqua];
+        const long long opos = pu_.phase_pos[BlackoilPhases::Liquid];
+        const long long wpos = pu_.phase_pos[BlackoilPhases::Aqua];
         return rates[opos] + rates[wpos];
     }
     case Group::ProductionCMode::RESV: {
         auto mode_rate = rates[0] * resv_coeff_[0];
-        for (int phase = 1; phase < pu_.num_phases; ++phase) {
+        for (long long phase = 1; phase < pu_.num_phases; ++phase) {
             mode_rate += rates[phase] * resv_coeff_[phase];
         }
         return mode_rate;

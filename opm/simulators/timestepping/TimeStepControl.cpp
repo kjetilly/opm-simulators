@@ -45,7 +45,7 @@ namespace Opm
     ////////////////////////////////////////////////////////
 
     SimpleIterationCountTimeStepControl::
-    SimpleIterationCountTimeStepControl( const int target_iterations,
+    SimpleIterationCountTimeStepControl( const long long target_iterations,
                                          const double decayrate,
                                          const double growthrate,
                                          const bool verbose)
@@ -73,7 +73,7 @@ namespace Opm
     }
 
     double SimpleIterationCountTimeStepControl::
-    computeTimeStepSize( const double dt, const int iterations, const RelativeChangeInterface& /* relativeChange */, const double /*simulationTimeElapsed */) const
+    computeTimeStepSize( const double dt, const long long iterations, const RelativeChangeInterface& /* relativeChange */, const double /*simulationTimeElapsed */) const
     {
         double dtEstimate = dt ;
 
@@ -134,7 +134,7 @@ namespace Opm
     }
 
     double HardcodedTimeStepControl::
-    computeTimeStepSize( const double /*dt */, const int /*iterations */, const RelativeChangeInterface& /* relativeChange */ , const double simulationTimeElapsed) const
+    computeTimeStepSize( const double /*dt */, const long long /*iterations */, const RelativeChangeInterface& /* relativeChange */ , const double simulationTimeElapsed) const
     {
         auto nextTime = std::upper_bound(subStepTime_.begin(), subStepTime_.end(), simulationTimeElapsed);
         return (*nextTime - simulationTimeElapsed);
@@ -170,17 +170,17 @@ namespace Opm
     }
 
     double PIDTimeStepControl::
-    computeTimeStepSize( const double dt, const int /* iterations */, const RelativeChangeInterface& relChange, const double /*simulationTimeElapsed */) const
+    computeTimeStepSize( const double dt, const long long /* iterations */, const RelativeChangeInterface& relChange, const double /*simulationTimeElapsed */) const
     {
         // shift errors
-        for( int i=0; i<2; ++i ) {
+        for( long long i=0; i<2; ++i ) {
             errors_[ i ] = errors_[i+1];
         }
 
         // store new error
         const double error = relChange.relativeChange();
         errors_[ 2 ] = error;
-        for( int i=0; i<2; ++i ) {
+        for( long long i=0; i<2; ++i ) {
             assert(std::isfinite(errors_[i]));
         }
 
@@ -229,7 +229,7 @@ namespace Opm
     ////////////////////////////////////////////////////////////
 
     PIDAndIterationCountTimeStepControl::
-    PIDAndIterationCountTimeStepControl( const int target_iterations,
+    PIDAndIterationCountTimeStepControl( const long long target_iterations,
                                          const double decayDampingFactor,
                                          const double growthDampingFactor,
                                          const double tol,
@@ -249,7 +249,7 @@ namespace Opm
     }
 
     double PIDAndIterationCountTimeStepControl::
-    computeTimeStepSize( const double dt, const int iterations, const RelativeChangeInterface& relChange,  const double simulationTimeElapsed ) const
+    computeTimeStepSize( const double dt, const long long iterations, const RelativeChangeInterface& relChange,  const double simulationTimeElapsed ) const
     {
         double dtEstimatePID = PIDTimeStepControl :: computeTimeStepSize( dt, iterations, relChange, simulationTimeElapsed);
 

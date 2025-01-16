@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(CreateTimer)
     BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime, Opm::unit::day),
                        Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day) );
 
-    for ( int i = 0; i < simtimer.numSteps(); ++i ) {
+    for ( long long i = 0; i < simtimer.numSteps(); ++i ) {
         BOOST_CHECK_EQUAL( i, simtimer.currentStepNum() );
         BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime, Opm::unit::minute),
                            Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute) );
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(CreateTimer)
         ++simtimer;
     }
 
-    for ( int i = 0; i <= simtimer.numSteps(); ++i ) {
+    for ( long long i = 0; i <= simtimer.numSteps(); ++i ) {
         simtimer.setCurrentStepNum(i);
         BOOST_CHECK_EQUAL( i, simtimer.currentStepNum() );
     }
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(CreateTimer)
     boost::gregorian::date endDate( 7014, 3, 14);
     BOOST_CHECK_EQUAL ( simtimer.currentDateTime(), boost::posix_time::ptime(endDate));
 
-    int i = 0;
+    long long i = 0;
     double testCurrentTime1 = 0.;
     double testCurrentTime2 = 0.;
     simtimer.setCurrentStepNum(0);

@@ -43,20 +43,20 @@ getBlocks(size_t numberOfRows)
 
 // Kernel here is the function object of the cuda kernel
 template <class Kernel>
-inline int
-getCudaRecomendedThreadBlockSize(Kernel k, int suggestedThrBlockSize = -1)
+inline long long
+getCudaRecomendedThreadBlockSize(Kernel k, long long suggestedThrBlockSize = -1)
 {
     if (suggestedThrBlockSize != -1) {
         return suggestedThrBlockSize;
     }
-    int blockSize;
-    int tmpGridSize;
+    long long blockSize;
+    long long tmpGridSize;
     OPM_GPU_SAFE_CALL(cudaOccupancyMaxPotentialBlockSize(&tmpGridSize, &blockSize, k, 0, 0));
     return blockSize;
 }
 
-inline int
-getNumberOfBlocks(int wantedThreads, int threadBlockSize)
+inline long long
+getNumberOfBlocks(long long wantedThreads, long long threadBlockSize)
 {
     return (wantedThreads + threadBlockSize - 1) / threadBlockSize;
 }

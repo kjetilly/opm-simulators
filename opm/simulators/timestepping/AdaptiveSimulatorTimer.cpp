@@ -103,10 +103,10 @@ namespace Opm
         }
     }
 
-    int AdaptiveSimulatorTimer::
+    long long AdaptiveSimulatorTimer::
     currentStepNum () const { return current_step_; }
 
-    int AdaptiveSimulatorTimer::
+    long long AdaptiveSimulatorTimer::
     reportStepNum () const { return report_step_; }
 
     double AdaptiveSimulatorTimer::currentStepLength () const
@@ -137,7 +137,7 @@ namespace Opm
 
     double AdaptiveSimulatorTimer::averageStepLength() const
     {
-        const int size = steps_.size();
+        const long long size = steps_.size();
         if( size == 0 ) return 0.0;
 
         const double sum = std::accumulate(steps_.begin(), steps_.end(), 0.0);

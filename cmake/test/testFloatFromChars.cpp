@@ -3,7 +3,7 @@
 #include <charconv>
 #include <string_view>
 
-int main()
+long long main()
 {
     const auto s = std::string_view { "2.71828" };
     auto e = 0.0;

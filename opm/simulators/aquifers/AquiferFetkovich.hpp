@@ -135,7 +135,7 @@ protected:
         this->rhow_ = this->aqufetp_data_.waterDensity();
     }
 
-    inline Eval dpai(int idx)
+    inline Eval dpai(long long idx)
     {
         const auto gdz =
             this->gravity_() * (this->cell_depth_[idx] - this->aquiferDepth());
@@ -164,7 +164,7 @@ protected:
     }
 
     // This function implements Eq 5.14 of the EclipseTechnicalDescription
-    inline void calculateInflowRate(int idx, const Simulator& simulator) override
+    inline void calculateInflowRate(long long idx, const Simulator& simulator) override
     {
         const Scalar td_Tc_ = simulator.timeStepSize() / this->Tc_;
         const Scalar coef = (1 - exp(-td_Tc_)) / td_Tc_;

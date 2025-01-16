@@ -233,7 +233,7 @@ public:
 
         auto& simulator = this->simulator();
 
-        const int episodeIdx = simulator.episodeIndex();
+        const long long episodeIdx = simulator.episodeIndex();
         const auto& schedule = simulator.vanguard().schedule();
 
         // Evaluate UDQ assign statements to make sure the settings are
@@ -271,7 +271,7 @@ public:
         {
             if (updated) { return; }
 
-            this->transmissibilities_.finishInit([&vg = this->simulator().vanguard()](const unsigned int it) {
+            this->transmissibilities_.finishInit([&vg = this->simulator().vanguard()](const size_t it) {
                 return vg.gridIdxToEquilGridIdx(it);
             });
 
@@ -291,7 +291,7 @@ public:
                 eclWriter_->setTransmissibilities(&simulator.problem().eclTransmissibilities());
             }
 
-            std::function<unsigned int(unsigned int)> equilGridToGrid = [&simulator](unsigned int i) {
+            std::function<size_t(size_t)> equilGridToGrid = [&simulator](size_t i) {
                 return simulator.vanguard().gridEquilIdxToGridIdx(i);
             };
 
@@ -342,7 +342,7 @@ public:
         this->readRockParameters_(simulator.vanguard().cellCenterDepths(),
                                   [&simulator](const unsigned idx)
                                   {
-                                      std::array<int,dim> coords;
+                                      std::array<long long,dim> coords;
                                       simulator.vanguard().cartesianCoordinate(idx, coords);
                                       for (auto& c : coords) {
                                           ++c;
@@ -376,7 +376,7 @@ public:
         if constexpr (getPropValue<TypeTag, Properties::EnablePolymer>()) {
             const auto& vanguard = this->simulator().vanguard();
             const auto& gridView = vanguard.gridView();
-            const int numElements = gridView.size(/*codim=*/0);
+            const long long numElements = gridView.size(/*codim=*/0);
             this->polymer_.maxAdsorption.resize(numElements, 0.0);
         }
 
@@ -454,7 +454,7 @@ public:
         {
             OPM_TIMEBLOCK(applyActions);
 
-            const int episodeIdx = this->episodeIndex();
+            const long long episodeIdx = this->episodeIndex();
             auto& simulator = this->simulator();
 
             // Re-ordering in case of Alugrid
@@ -468,7 +468,7 @@ public:
                 this->transmissibilities_
                     .update(global, TransUpdateQuantities::All,
                             [&vg = this->simulator().vanguard()]
-                            (const unsigned int i)
+                            (const size_t i)
                     {
                         return vg.gridIdxToEquilGridIdx(i);
                     });
@@ -583,14 +583,14 @@ public:
 
         // Add source term from deck
         const auto& source = this->simulator().vanguard().schedule()[this->episodeIndex()].source();
-        std::array<int,3> ijk;
+        std::array<long long,3> ijk;
         this->simulator().vanguard().cartesianCoordinate(globalDofIdx, ijk);
 
         if (source.hasSource(ijk)) {
-            const int pvtRegionIdx = this->pvtRegionIndex(globalDofIdx);
+            const long long pvtRegionIdx = this->pvtRegionIndex(globalDofIdx);
             static std::array<SourceComponent, 3> sc_map = {SourceComponent::WATER, SourceComponent::OIL, SourceComponent::GAS};
-            static std::array<int, 3> phidx_map = {FluidSystem::waterPhaseIdx, FluidSystem::oilPhaseIdx, FluidSystem::gasPhaseIdx};
-            static std::array<int, 3> cidx_map = {waterCompIdx, oilCompIdx, gasCompIdx};
+            static std::array<long long, 3> phidx_map = {FluidSystem::waterPhaseIdx, FluidSystem::oilPhaseIdx, FluidSystem::gasPhaseIdx};
+            static std::array<long long, 3> cidx_map = {waterCompIdx, oilCompIdx, gasCompIdx};
 
             for (unsigned i = 0; i < phidx_map.size(); ++i) {
                 const auto phaseIdx = phidx_map[i];
@@ -710,7 +710,7 @@ public:
     void setSimulationReport(const SimulatorReport& report)
     { return eclWriter_->setSimulationReport(report); }
 
-    InitialFluidState boundaryFluidState(unsigned globalDofIdx, const int directionId) const
+    InitialFluidState boundaryFluidState(unsigned globalDofIdx, const long long directionId) const
     {
         OPM_TIMEBLOCK_LOCAL(boundaryFluidState);
         const auto& bcprop = this->simulator().vanguard().schedule()[this->episodeIndex()].bcprop;
@@ -726,7 +726,7 @@ public:
             if (bc.bctype == BCType::DIRICHLET )
             {
                 InitialFluidState fluidState;
-                const int pvtRegionIdx = this->pvtRegionIndex(globalDofIdx);
+                const long long pvtRegionIdx = this->pvtRegionIndex(globalDofIdx);
                 fluidState.setPvtRegionIndex(pvtRegionIdx);
 
                 switch (bc.component) {
@@ -820,7 +820,7 @@ public:
         return eclWriter_;
     }
 
-    void setConvData(const std::vector<std::vector<int>>& data)
+    void setConvData(const std::vector<std::vector<long long>>& data)
     {
         eclWriter_->mutableOutputModule().setCnvData(data);
     }
@@ -857,7 +857,7 @@ public:
      */
     bool recycleFirstIterationStorage() const
     {
-        int episodeIdx = this->episodeIndex();
+        long long episodeIdx = this->episodeIndex();
         return !this->mixControls_.drsdtActive(episodeIdx) &&
                !this->mixControls_.drvdtActive(episodeIdx) &&
                this->rockCompPoroMultWc_.empty() &&
@@ -909,7 +909,7 @@ public:
     }
 
 
-    Scalar drsdtcon(unsigned elemIdx, int episodeIdx) const
+    Scalar drsdtcon(unsigned elemIdx, long long episodeIdx) const
     {
         return this->mixControls_.drsdtcon(elemIdx, episodeIdx,
                                            this->pvtRegionIndex(elemIdx));
@@ -985,7 +985,7 @@ public:
     }
 
 protected:
-    void updateExplicitQuantities_(int episodeIdx, int timeStepSize, const bool first_step_after_restart) override
+    void updateExplicitQuantities_(long long episodeIdx, long long timeStepSize, const bool first_step_after_restart) override
     {
         this->updateExplicitQuantities_(first_step_after_restart);
 
@@ -1024,7 +1024,7 @@ protected:
         ElementContext elemCtx(this->simulator());
         for(const auto& elem: elements(gridView, Dune::Partitions::interior)) {
             elemCtx.updatePrimaryStencil(elem);
-            int elemIdx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
+            long long elemIdx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
             const auto& dofFluidState = this->initialFluidStates_[elemIdx];
             for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 if (!FluidSystem::phaseIsActive(phaseIdx))
@@ -1056,7 +1056,7 @@ protected:
         OPM_TIMEBLOCK(updateCompositionChangeLimits);
         // update the "last Rs" values for all elements, including the ones in the ghost
         // and overlap regions
-        int episodeIdx = this->episodeIndex();
+        long long episodeIdx = this->episodeIndex();
         std::array<bool,3> active{this->mixControls_.drsdtConvective(episodeIdx),
                                   this->mixControls_.drsdtActive(episodeIdx),
                                   this->mixControls_.drvdtActive(episodeIdx)};
@@ -1070,7 +1070,7 @@ protected:
                               {
                                   const DimMatrix& perm = this->intrinsicPermeability(compressedDofIdx);
                                   const Scalar distZ = active[0] ? this->simulator().vanguard().cellThickness(compressedDofIdx) : 0.0;
-                                  const int pvtRegionIdx = this->pvtRegionIndex(compressedDofIdx);
+                                  const long long pvtRegionIdx = this->pvtRegionIndex(compressedDofIdx);
                                   this->mixControls_.update(compressedDofIdx,
                                                             iq,
                                                             episodeIdx,
@@ -1097,7 +1097,7 @@ protected:
         const auto& schedule = simulator.vanguard().schedule();
         const auto& eclState = simulator.vanguard().eclState();
         const auto& initconfig = eclState.getInitConfig();
-        const int restart_step = initconfig.getRestartStep();
+        const long long restart_step = initconfig.getRestartStep();
         {
             simulator.setTime(schedule.seconds(restart_step));
 
@@ -1182,7 +1182,7 @@ protected:
             // if we need to restart for polymer molecular weight simulation, we need to add related here
         }
 
-        const int episodeIdx = this->episodeIndex();
+        const long long episodeIdx = this->episodeIndex();
         this->mixControls_.updateMaxValues(episodeIdx, simulator.timeStepSize());
 
         // assign the restart solution to the current solution. note that we still need
@@ -1193,7 +1193,7 @@ protected:
         ElementContext elemCtx(simulator);
         for (const auto& elem : elements(gridView, Dune::Partitions::interior)) {
             elemCtx.updatePrimaryStencil(elem);
-            int elemIdx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
+            long long elemIdx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
             this->initial(sol[elemIdx], elemCtx, /*spaceIdx=*/0, /*timeIdx=*/0);
         }
 
@@ -1522,7 +1522,7 @@ protected:
         auto sfuncConsistencyChecks =
             Satfunc::PhaseChecks::SatfuncConsistencyCheckManager<Scalar> {
             numSamplePoints, this->simulator().vanguard().eclState(),
-            [&cmap = this->simulator().vanguard().cartesianIndexMapper()](const int elemIdx)
+            [&cmap = this->simulator().vanguard().cartesianIndexMapper()](const long long elemIdx)
             { return cmap.cartesianIndex(elemIdx); }
         };
 

@@ -193,7 +193,7 @@ size_t set_interiorSize( [[maybe_unused]] size_t N, size_t interiorSize, [[maybe
 
 #if HAVE_MPI
 template<>
-size_t set_interiorSize(size_t N, size_t interiorSize, const Dune::OwnerOverlapCopyCommunication<int,int>& comm)
+size_t set_interiorSize(size_t N, size_t interiorSize, const Dune::OwnerOverlapCopyCommunication<long long,long long>& comm)
 {
     if (interiorSize<N)
         return interiorSize;
@@ -228,7 +228,7 @@ ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfoT>::category() const
 template<class Matrix, class Domain, class Range, class ParallelInfoT>
 ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfoT>::
 ParallelOverlappingILU0(const Matrix& A,
-                        const int n, const field_type w,
+                        const long long n, const field_type w,
                         MILU_VARIANT milu, bool redblack,
                         bool reorder_sphere)
     : lower_(),
@@ -248,7 +248,7 @@ ParallelOverlappingILU0(const Matrix& A,
 template<class Matrix, class Domain, class Range, class ParallelInfoT>
 ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfoT>::
 ParallelOverlappingILU0(const Matrix& A,
-                        const ParallelInfo& comm, const int n, const field_type w,
+                        const ParallelInfo& comm, const long long n, const field_type w,
                         MILU_VARIANT milu, bool redblack,
                         bool reorder_sphere)
     : lower_(),
@@ -405,9 +405,9 @@ update()
         }
     }
 
-    int ilu_setup_successful = 1;
+    long long ilu_setup_successful = 1;
     std::string message;
-    const int rank = comm_ ? comm_->communicator().rank() : 0;
+    const long long rank = comm_ ? comm_->communicator().rank() : 0;
 
     if (redBlack_)
     {

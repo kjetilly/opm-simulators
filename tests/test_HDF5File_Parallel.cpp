@@ -72,7 +72,7 @@ bool init_unit_test_func()
     return true;
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

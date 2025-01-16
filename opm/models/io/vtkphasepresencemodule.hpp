@@ -53,7 +53,7 @@ class VtkPhasePresenceModule : public BaseOutputModule<TypeTag>
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     using ScalarBuffer = typename ParentType::ScalarBuffer;
@@ -97,7 +97,7 @@ public:
 
         for (unsigned i = 0; i < elemCtx.numPrimaryDof(/*timeIdx=*/0); ++i) {
             // calculate the phase presence
-            int phasePresence = elemCtx.primaryVars(i, /*timeIdx=*/0).phasePresence();
+            long long phasePresence = elemCtx.primaryVars(i, /*timeIdx=*/0).phasePresence();
             unsigned I = elemCtx.globalSpaceIndex(i, /*timeIdx=*/0);
 
             if (params_.phasePresenceOutput_) {

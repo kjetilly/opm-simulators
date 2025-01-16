@@ -147,7 +147,7 @@
 #include <opm/simulators/utils/MPISerializer.hpp>
 
 template<class T>
-std::tuple<T,int,int> PackUnpack(T& in)
+std::tuple<T,long long,long long> PackUnpack(T& in)
 {
     const auto& comm = Dune::MPIHelper::getCommunication();
 
@@ -337,7 +337,7 @@ bool init_unit_test_func()
 }
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

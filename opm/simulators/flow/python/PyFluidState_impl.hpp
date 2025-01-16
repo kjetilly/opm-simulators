@@ -31,14 +31,14 @@ PyFluidState(Simulator* simulator) : simulator_(simulator)
 // ------------------------------------
 
 template <class TypeTag>
-std::vector<int>
+std::vector<long long>
 PyFluidState<TypeTag>::
 getPrimaryVarMeaning(const std::string& variable) const
 {
     Model& model = this->simulator_->model();
     auto& sol = model.solution(/*timeIdx*/0);
     auto size = model.numGridDof();
-    std::vector<int> array(size);
+    std::vector<long long> array(size);
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {
         auto primary_vars = sol[dof_idx];
         array[dof_idx] = getVariableMeaning_(primary_vars, variable);
@@ -47,31 +47,31 @@ getPrimaryVarMeaning(const std::string& variable) const
 }
 
 template <class TypeTag>
-std::map<std::string, int>
+std::map<std::string, long long>
 PyFluidState<TypeTag>::
 getPrimaryVarMeaningMap(const std::string& variable) const
 {
     if (variable.compare("pressure") == 0) {
-        return {{ "Po", static_cast<int>(PrimaryVariables::PressureMeaning::Po) },
-                { "Pw", static_cast<int>(PrimaryVariables::PressureMeaning::Pw) },
-                { "Pg", static_cast<int>(PrimaryVariables::PressureMeaning::Pg) }};
+        return {{ "Po", static_cast<long long>(PrimaryVariables::PressureMeaning::Po) },
+                { "Pw", static_cast<long long>(PrimaryVariables::PressureMeaning::Pw) },
+                { "Pg", static_cast<long long>(PrimaryVariables::PressureMeaning::Pg) }};
     }
     else if (variable.compare("water") == 0) {
-        return {{ "Sw", static_cast<int>(PrimaryVariables::WaterMeaning::Sw) },
-                { "Rvw", static_cast<int>(PrimaryVariables::WaterMeaning::Rvw) },
-                { "Rsw", static_cast<int>(PrimaryVariables::WaterMeaning::Rsw) },
-                { "Disabled", static_cast<int>(PrimaryVariables::WaterMeaning::Disabled) }};
+        return {{ "Sw", static_cast<long long>(PrimaryVariables::WaterMeaning::Sw) },
+                { "Rvw", static_cast<long long>(PrimaryVariables::WaterMeaning::Rvw) },
+                { "Rsw", static_cast<long long>(PrimaryVariables::WaterMeaning::Rsw) },
+                { "Disabled", static_cast<long long>(PrimaryVariables::WaterMeaning::Disabled) }};
     }
     else if (variable.compare("gas") == 0) {
-        return {{ "Sg", static_cast<int>(PrimaryVariables::GasMeaning::Sg) },
-                { "Rs", static_cast<int>(PrimaryVariables::GasMeaning::Rs) },
-                { "Rv", static_cast<int>(PrimaryVariables::GasMeaning::Rv) },
-                { "Disabled", static_cast<int>(PrimaryVariables::GasMeaning::Disabled) }};
+        return {{ "Sg", static_cast<long long>(PrimaryVariables::GasMeaning::Sg) },
+                { "Rs", static_cast<long long>(PrimaryVariables::GasMeaning::Rs) },
+                { "Rv", static_cast<long long>(PrimaryVariables::GasMeaning::Rv) },
+                { "Disabled", static_cast<long long>(PrimaryVariables::GasMeaning::Disabled) }};
     }
     else if (variable.compare("brine") == 0) {
-        return {{ "Cs", static_cast<int>(PrimaryVariables::BrineMeaning::Cs) },
-                { "Sp", static_cast<int>(PrimaryVariables::BrineMeaning::Sp) },
-                { "Disabled", static_cast<int>(PrimaryVariables::BrineMeaning::Disabled) }};
+        return {{ "Cs", static_cast<long long>(PrimaryVariables::BrineMeaning::Cs) },
+                { "Sp", static_cast<long long>(PrimaryVariables::BrineMeaning::Sp) },
+                { "Disabled", static_cast<long long>(PrimaryVariables::BrineMeaning::Disabled) }};
     }
     else {
         const std::string msg = fmt::format(
@@ -195,21 +195,21 @@ getPrimaryVarIndex_(const std::string &idx_name) const
 }
 
 template <class TypeTag>
-int
+long long
 PyFluidState<TypeTag>::
 getVariableMeaning_(PrimaryVariables& primary_vars, const std::string& variable) const
 {
     if (variable.compare("pressure") == 0) {
-        return static_cast<int>(primary_vars.primaryVarsMeaningPressure());
+        return static_cast<long long>(primary_vars.primaryVarsMeaningPressure());
     }
     else if(variable.compare("water") == 0) {
-        return static_cast<int>(primary_vars.primaryVarsMeaningWater());
+        return static_cast<long long>(primary_vars.primaryVarsMeaningWater());
     }
     else if (variable.compare("gas") == 0) {
-        return static_cast<int>(primary_vars.primaryVarsMeaningGas());
+        return static_cast<long long>(primary_vars.primaryVarsMeaningGas());
     }
     else if (variable.compare("brine") == 0) {
-        return static_cast<int>(primary_vars.primaryVarsMeaningBrine());
+        return static_cast<long long>(primary_vars.primaryVarsMeaningBrine());
     }
     else {
         const std::string msg = fmt::format(

@@ -132,7 +132,7 @@ public:
             this->createLocalRegion_(region_pair.second);
         }
 
-        auto isCartIdxOnThisRank = [&collectToIORank](const int idx) {
+        auto isCartIdxOnThisRank = [&collectToIORank](const long long idx) {
             return collectToIORank.isCartIdxOnThisRank(idx);
         };
 
@@ -668,7 +668,7 @@ public:
             // tracers
             const auto& tracerModel = simulator_.problem().tracerModel();
             if (! this->freeTracerConcentrations_.empty()) {
-                for (int tracerIdx = 0; tracerIdx < tracerModel.numTracers(); ++tracerIdx) {
+                for (long long tracerIdx = 0; tracerIdx < tracerModel.numTracers(); ++tracerIdx) {
                     if (this->freeTracerConcentrations_[tracerIdx].empty()) {
                         continue;
                     }
@@ -677,7 +677,7 @@ public:
                 }
             }
             if (! this->solTracerConcentrations_.empty()) {
-                for (int tracerIdx = 0; tracerIdx < tracerModel.numTracers(); ++tracerIdx) {
+                for (long long tracerIdx = 0; tracerIdx < tracerModel.numTracers(); ++tracerIdx) {
                     if (this->solTracerConcentrations_[tracerIdx].empty()) {
                         continue;
                     }
@@ -688,7 +688,7 @@ public:
             }
 
             // output residual
-            for ( int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx )
+            for ( long long phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx )
             {
                 if (!this->residual_[phaseIdx].empty()) {
                     const unsigned activeCompIdx = Indices::canonicalToActiveComponentIndex(FluidSystem::solventComponentIndex(phaseIdx));
@@ -1020,7 +1020,7 @@ public:
      *    particular cell/element.  Must support a function call operator of
      *    the form
      \code
-        int operator()(const Element& elem) const
+        long long operator()(const Element& elem) const
      \endcode
      *
      * \tparam CartesianIndex Callable type, typically a lambda, that
@@ -1028,7 +1028,7 @@ public:
      *    particular cell/element given its active index on the local MPI
      *    rank.  Must support a function call operator of the form
      \code
-        int operator()(const int activeIndex) const
+        long long operator()(const long long activeIndex) const
      \endcode
      *
      * \param[in] elemCtx Primary lookup structure for per-cell/element
@@ -1052,7 +1052,7 @@ public:
             const auto cellIndex = activeIndex(elem);
 
             return {
-                static_cast<int>(cellIndex),
+                static_cast<long long>(cellIndex),
                 cartesianIndex(cellIndex),
                 elem.partitionType() == Dune::InteriorEntity
             };
@@ -1258,7 +1258,7 @@ private:
         }
     }
 
-    void createLocalRegion_(std::vector<int>& region)
+    void createLocalRegion_(std::vector<long long>& region)
     {
         std::size_t elemIdx = 0;
         for (const auto& elem : elements(simulator_.gridView())) {
@@ -1272,7 +1272,7 @@ private:
 
     template <typename FluidState>
     void aggregateAverageDensityContributions_(const FluidState&  fs,
-                                               const unsigned int globalDofIdx,
+                                               const size_t globalDofIdx,
                                                const double       porv)
     {
         auto pvCellValue = RegionPhasePoreVolAverage::CellValue{};

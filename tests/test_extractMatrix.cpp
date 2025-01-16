@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(extractMatrix)
 {
     auto m1 = build3x3BlockMatrix();
     BOOST_CHECK_EQUAL(m1[2][1][1][1], 7.0);
-    std::vector<int> indices = {1, 2};
+    std::vector<long long> indices = {1, 2};
     auto m2 = Opm::Details::extractMatrix(m1, indices);
     BOOST_CHECK_EQUAL(m2[0][0], m1[1][1]);
     BOOST_CHECK_EQUAL(m2[1][1], m1[2][2]);
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(extractMatrix)
 BOOST_AUTO_TEST_CASE(copySubMatrixAndMatrixEqual)
 {
     auto m1 = build3x3BlockMatrix();
-    std::vector<int> indices = {1, 2};
+    std::vector<long long> indices = {1, 2};
     auto m2 = Opm::Details::extractMatrix(m1, indices);
     m1[2][1][0][0] = 0.1234;
     auto m3 = Opm::Details::extractMatrix(m1, indices);
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(vectorOps)
     v1[1] = { 0.3, 0.4 };
     v1[2] = { 0.5, 0.6 };
     v1[3] = { 0.6, 0.8 };
-    std::vector<int> indices = { 0, 2, 3 };
+    std::vector<long long> indices = { 0, 2, 3 };
 
     V vref(3);
     vref[0] = { 0.1, 0.2 };

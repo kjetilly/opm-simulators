@@ -42,7 +42,7 @@ using B2x2Vec = Dune::BlockVector<Dune::FieldVector<double, 2>>;
 using Sp1x1BlockMatrix = Dune::BCRSMatrix<FM1x1>;
 using Sp2x2BlockMatrix = Dune::BCRSMatrix<FM2x2>;
 using CuMatrix = Opm::gpuistl::GpuSparseMatrix<T>;
-using CuIntVec = Opm::gpuistl::GpuVector<int>;
+using CuIntVec = Opm::gpuistl::GpuVector<long long>;
 using CuFloatingPointVec = Opm::gpuistl::GpuVector<T>;
 using GpuDilu1x1 = Opm::gpuistl::GpuDILU<Sp1x1BlockMatrix, CuFloatingPointVec, CuFloatingPointVec>;
 using GpuDilu2x2 = Opm::gpuistl::GpuDILU<Sp2x2BlockMatrix, CuFloatingPointVec, CuFloatingPointVec>;
@@ -83,8 +83,8 @@ get1x1BlockTestMatrix()
         0  0  0  0  0  0
     */
 
-    const int N = 6;
-    const int nonZeroes = 16;
+    const long long N = 6;
+    const long long nonZeroes = 16;
 
     // Create the Dune A matrix
     Sp1x1BlockMatrix matA(N, N, nonZeroes, Sp1x1BlockMatrix::row_wise);
@@ -149,8 +149,8 @@ get2x2BlockTestMatrix()
     0 15    0  0    0 16
 
     */
-    const int N = 3;
-    const int nonZeroes = 9;
+    const long long N = 3;
+    const long long nonZeroes = 9;
 
     // Create the Dune A matrix
     Sp2x2BlockMatrix matA(N, N, nonZeroes, Sp2x2BlockMatrix::row_wise);

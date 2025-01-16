@@ -215,7 +215,7 @@ public:
             resetSystem_(domain);
         }
 
-        int succeeded;
+        long long succeeded;
         try {
             linearize_(domain);
             succeeded = 1;
@@ -678,9 +678,9 @@ private:
 
     struct FlowInfo
     {
-        int faceId;
+        long long faceId;
         VectorBlock flow;
-        unsigned int nncId;
+        size_t nncId;
     };
     SparseTable<FlowInfo> flowsInfo_;
     SparseTable<FlowInfo> floresInfo_;
@@ -695,7 +695,7 @@ private:
 
     std::mutex globalMatrixMutex_;
 
-    std::vector<std::set<unsigned int>> sparsityPattern_;
+    std::vector<std::set<size_t>> sparsityPattern_;
 
     struct FullDomain
     {

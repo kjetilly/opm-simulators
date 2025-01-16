@@ -129,13 +129,13 @@ public:
     /// Constructor
     WellInterface(const Well& well,
                   const ParallelWellInfo<Scalar>& pw_info,
-                  const int time_step,
+                  const long long time_step,
                   const ModelParameters& param,
                   const RateConverterType& rate_converter,
-                  const int pvtRegionIdx,
-                  const int num_components,
-                  const int num_phases,
-                  const int index_of_well,
+                  const long long pvtRegionIdx,
+                  const long long num_components,
+                  const long long num_phases,
+                  const long long index_of_well,
                   const std::vector<PerforationData<Scalar>>& perf_data);
 
     /// Virtual destructor
@@ -278,13 +278,13 @@ public:
 
     virtual void addWellPressureEquations(PressureMatrix& mat,
                                           const BVector& x,
-                                          const int pressureVarIndex,
+                                          const long long pressureVarIndex,
                                           const bool use_well_weights,
                                           const WellState<Scalar>& well_state) const = 0;
 
-    void addCellRates(RateVector& rates, int cellIdx) const;
+    void addCellRates(RateVector& rates, long long cellIdx) const;
 
-    Scalar volumetricSurfaceRateForConnection(int cellIdx, int phaseIdx) const;
+    Scalar volumetricSurfaceRateForConnection(long long cellIdx, long long phaseIdx) const;
 
     // TODO: theoretically, it should be a const function
     // Simulator is not const is because that assembleWellEq is non-const Simulator
@@ -352,7 +352,7 @@ public:
         return connectionRates_;
     }
 
-    std::vector<Scalar> wellIndex(const int perf,
+    std::vector<Scalar> wellIndex(const long long perf,
                                   const IntensiveQuantities& intQuants,
                                   const Scalar trans_mult,
                                   const SingleWellState<Scalar>& ws) const;
@@ -480,7 +480,7 @@ protected:
     // get the mobility for specific perforation
     template<class Value, class Callback>
     void getMobility(const Simulator& simulator,
-                     const int perf,
+                     const long long perf,
                      std::vector<Value>& mob,
                      Callback& extendEval,
                      [[maybe_unused]] DeferredLogger& deferred_logger) const;
@@ -497,7 +497,7 @@ protected:
                                 Scalar* connII,
                                 DeferredLogger& deferred_logger) const;
 
-    Scalar computeConnectionDFactor(const int perf,
+    Scalar computeConnectionDFactor(const long long perf,
                                     const IntensiveQuantities& intQuants,
                                     const SingleWellState<Scalar>& ws) const;
 };

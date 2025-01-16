@@ -25,7 +25,7 @@
 namespace Opm {
 
     namespace PVUtil {
-        constexpr int fbits = 4;
+        constexpr long long fbits = 4;
 
         template <class PV>
         std::size_t pack(const PV& privar) {

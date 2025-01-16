@@ -110,7 +110,7 @@ public:
             this->createLocalRegion_(region_pair.second);
         }
 
-        auto isCartIdxOnThisRank = [&collectToIORank](const int idx) {
+        auto isCartIdxOnThisRank = [&collectToIORank](const long long idx) {
             return collectToIORank.isCartIdxOnThisRank(idx);
         };
 
@@ -254,7 +254,7 @@ public:
      *    particular cell/element.  Must support a function call operator of
      *    the form
      \code
-        int operator()(const Element& elem) const
+        long long operator()(const Element& elem) const
      \endcode
      *
      * \tparam CartesianIndex Callable type, typically a lambda, that
@@ -262,7 +262,7 @@ public:
      *    particular cell/element given its active index on the local MPI
      *    rank.  Must support a function call operator of the form
      \code
-        int operator()(const int activeIndex) const
+        long long operator()(const long long activeIndex) const
      \endcode
      *
      * \param[in] elemCtx Primary lookup structure for per-cell/element
@@ -326,7 +326,7 @@ private:
         return candidate == parallelWells.end() || *candidate != value;
     }
 
-    void createLocalRegion_(std::vector<int>& region)
+    void createLocalRegion_(std::vector<long long>& region)
     {
         std::size_t elemIdx = 0;
         for (const auto& elem : elements(simulator_.gridView())) {

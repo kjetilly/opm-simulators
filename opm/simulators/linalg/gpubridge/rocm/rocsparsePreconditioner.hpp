@@ -28,7 +28,7 @@ namespace Opm::Accelerator {
 
 template<class Scalar> class BlockedMatrix;
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 class rocsparsePreconditioner : public Preconditioner<Scalar, block_size>
 {
 
@@ -40,20 +40,20 @@ protected:
     
     hipStream_t stream;
     
-    rocsparsePreconditioner(int verbosity_) :
+    rocsparsePreconditioner(long long verbosity_) :
     Preconditioner<Scalar, block_size>(verbosity_)
     {};
             
 public:
     
-    int nnzbs_prec = 0; // number of nnz blocks in preconditioner matrix M
+    long long nnzbs_prec = 0; // number of nnz blocks in preconditioner matrix M
     bool useJacMatrix = false;
     std::shared_ptr<BlockedMatrix<Scalar>> jacMat{}; // matrix for preconditioner
     
     virtual ~rocsparsePreconditioner() = default;
 
     static std::unique_ptr<rocsparsePreconditioner<Scalar, block_size>> create(PreconditionerType type, 
-                                                                               int verbosity);
+                                                                               long long verbosity);
 
     // apply preconditioner, x = prec(y)
     virtual void apply(Scalar& y, Scalar& x) = 0;

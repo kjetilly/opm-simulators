@@ -45,16 +45,16 @@ std::string initDamarisXmlFile()
 </architecture>
 
   <data>
-    <parameter name="n_elements_total"     type="int" value="1" />
-    <parameter name="n_elements_local"     type="int" value="1" />
-    <parameter name="n"     type="int" value="1" />
-    <parameter name="path_string_length"     type="int" value="1" />
+    <parameter name="n_elements_total"     type="long long" value="1" />
+    <parameter name="n_elements_local"     type="long long" value="1" />
+    <parameter name="n"     type="long long" value="1" />
+    <parameter name="path_string_length"     type="long long" value="1" />
     
     <layout   name="path_string_layout"  type="char" dimensions="path_string_length"    comment="The length of the output directory path string"  />
     <variable name="OUTPUTDIR"  layout="path_string_layout"  type="scalar"  visualizable="false" mesh="#"  unit=""  time-varying="false"  store="#"  script="_MAKE_AVAILABLE_IN_PYTHON_" />
     
     
-    <layout   name="zonal_layout_usmesh_integer"             type="int" dimensions="n_elements_local"   global="n_elements_total"   comment="For the field data e.g. Pressure"  />
+    <layout   name="zonal_layout_usmesh_integer"             type="long long" dimensions="n_elements_local"   global="n_elements_total"   comment="For the field data e.g. Pressure"  />
     <variable name="GLOBAL_CELL_INDEX"    layout="zonal_layout_usmesh_integer"     type="scalar"  visualizable="false"  time-varying="false"  centering="zonal" store="_MYSTORE_OR_EMPTY_REGEX_" script="_MAKE_AVAILABLE_IN_PYTHON_" />
     <layout   name="zonal_layout_usmesh"             type="double" dimensions="n_elements_local"   global="n_elements_total"   comment="For the field data e.g. Pressure"  />
     <variable name="PRESSURE"    layout="zonal_layout_usmesh"     type="scalar"  visualizable="true"  mesh="us_mesh"   unit="_PRESSURE_UNIT_"   centering="zonal" select-file="GLOBAL_CELL_INDEX" store="_MYSTORE_OR_EMPTY_REGEX_"  script="_MAKE_AVAILABLE_IN_PYTHON_" />
@@ -125,7 +125,7 @@ std::string initDamarisXmlFile()
     <variable name="WIPL"  layout="zonal_layout_usmesh"  type="scalar"  visualizable="true" mesh="us_mesh"  unit=""  centering="zonal"  time-varying="true"  select-file="GLOBAL_CELL_INDEX"  store="_MYSTORE_OR_EMPTY_REGEX_"  script="_MAKE_AVAILABLE_IN_PYTHON_" />     
     <variable name="WIPR"  layout="zonal_layout_usmesh"  type="scalar"  visualizable="true" mesh="us_mesh"  unit=""  centering="zonal"  time-varying="true"  select-file="GLOBAL_CELL_INDEX"  store="_MYSTORE_OR_EMPTY_REGEX_"  script="_MAKE_AVAILABLE_IN_PYTHON_" />     
 
-    <parameter name="n_coords_local"     type="int" value="1" />
+    <parameter name="n_coords_local"     type="long long" value="1" />
     <layout    name="n_coords_layout"    type="double" dimensions="n_coords_local"   comment="For the individual x, y and z coordinates of the mesh vertices, these values are referenced in the topologies/topo/subelements/connectivity_pg data"  />
     <group name="coordset/coords/values"> 
         <variable name="x"    layout="n_coords_layout"  type="scalar"  visualizable="false"  unit="m"   script="_MAKE_AVAILABLE_IN_PYTHON_" time-varying="false" store="_MYSTORE_MESH_OR_EMPTY_REGEX_" />
@@ -133,10 +133,10 @@ std::string initDamarisXmlFile()
         <variable name="z"    layout="n_coords_layout"  type="scalar"  visualizable="false"  unit="m"   script="_MAKE_AVAILABLE_IN_PYTHON_" time-varying="false" store="_MYSTORE_MESH_OR_EMPTY_REGEX_" />
     </group>
 
-    <parameter name="n_connectivity_ph"        type="int"  value="1" />
-    <layout    name="n_connections_layout_ph"  type="int"  dimensions="n_connectivity_ph"   comment="Layout for connectivities "  />
-    <parameter name="n_offsets_types_ph"       type="int"  value="1" />
-    <layout    name="n_offsets_layout_ph"      type="int"  dimensions="n_offsets_types_ph"  comment="Layout for the offsets_ph"  />
+    <parameter name="n_connectivity_ph"        type="long long"  value="1" />
+    <layout    name="n_connections_layout_ph"  type="long long"  dimensions="n_connectivity_ph"   comment="Layout for connectivities "  />
+    <parameter name="n_offsets_types_ph"       type="long long"  value="1" />
+    <layout    name="n_offsets_layout_ph"      type="long long"  dimensions="n_offsets_types_ph"  comment="Layout for the offsets_ph"  />
     <layout    name="n_types_layout_ph"        type="char" dimensions="n_offsets_types_ph"  comment="Layout for the types_ph "  />
     <group name="topologies/topo/elements">
         <variable name="connectivity" layout="n_connections_layout_ph"  type="scalar"  visualizable="false"    script="_MAKE_AVAILABLE_IN_PYTHON_" time-varying="false" store="_MYSTORE_MESH_OR_EMPTY_REGEX_" />

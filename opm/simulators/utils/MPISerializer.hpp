@@ -43,7 +43,7 @@ public:
     //! \param data Class to broadcast
     //! \param root Process to broadcast from
     template<class T>
-    void broadcast(T& data, int root = 0)
+    void broadcast(T& data, long long root = 0)
     {
         if (m_comm.size() == 1)
             return;
@@ -70,7 +70,7 @@ public:
     }
 
     template<typename... Args>
-    void broadcast(int root, Args&&... args)
+    void broadcast(long long root, Args&&... args)
     {
         if (m_comm.size() == 1)
             return;
@@ -103,7 +103,7 @@ public:
     //! \param data Class to broadcast
     //! \param root Process to broadcast from
     template<class T>
-    void append(T& data, int root = 0)
+    void append(T& data, long long root = 0)
     {
         if (m_comm.size() == 1)
             return;
@@ -117,8 +117,8 @@ public:
     }
 
 private:
-    void broadcast_chunked(int root) {
-        const int maxChunkSize = std::numeric_limits<int>::max();
+    void broadcast_chunked(long long root) {
+        const long long maxChunkSize = std::numeric_limits<long long>::max();
         std::size_t remainingSize = m_packSize;
         std::size_t pos = 0;
         while (remainingSize > maxChunkSize) {
@@ -126,7 +126,7 @@ private:
             pos += maxChunkSize;
             remainingSize -= maxChunkSize;
         }
-        m_comm.broadcast(m_buffer.data()+pos, static_cast<int>(remainingSize), root);
+        m_comm.broadcast(m_buffer.data()+pos, static_cast<long long>(remainingSize), root);
     }
 
     const Mpi::Packer m_packer; //!< Packer instance

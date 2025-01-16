@@ -280,7 +280,7 @@ initFromState(const EclipseState& eclState)
                // handling PLYMWINJ keyword
         const auto& plymwinjTables = tableManager.getPlymwinjTables();
         for (const auto& table : plymwinjTables) {
-            const int tableNumber = table.first;
+            const long long tableNumber = table.first;
             const auto& plymwinjtable = table.second;
             const std::vector<double>& throughput = plymwinjtable.getThroughputs();
             const std::vector<double>& watervelocity = plymwinjtable.getVelocities();
@@ -300,7 +300,7 @@ initFromState(const EclipseState& eclState)
                // handling SKPRWAT keyword
         const auto& skprwatTables = tableManager.getSkprwatTables();
         for (const auto& table : skprwatTables) {
-            const int tableNumber = table.first;
+            const long long tableNumber = table.first;
             const auto& skprwattable = table.second;
             const std::vector<double>& throughput = skprwattable.getThroughputs();
             const std::vector<double>& watervelocity = skprwattable.getVelocities();
@@ -320,7 +320,7 @@ initFromState(const EclipseState& eclState)
                // handling SKPRPOLY keyword
         const auto& skprpolyTables = tableManager.getSkprpolyTables();
         for (const auto& table : skprpolyTables) {
-            const int tableNumber = table.first;
+            const long long tableNumber = table.first;
             const auto& skprpolytable = table.second;
             const std::vector<double>& throughput = skprpolytable.getThroughputs();
             const std::vector<double>& watervelocity = skprpolytable.getVelocities();

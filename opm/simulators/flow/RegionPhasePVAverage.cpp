@@ -146,27 +146,27 @@ double Opm::RegionPhasePoreVolAverage::averageValue(const Ix      start,
 }
 
 Opm::RegionPhasePoreVolAverage::Ix
-Opm::RegionPhasePoreVolAverage::fieldStartIx(const unsigned int phase) const
+Opm::RegionPhasePoreVolAverage::fieldStartIx(const size_t phase) const
 {
     return this->startIx(0, phase);
 }
 
 Opm::RegionPhasePoreVolAverage::Ix
 Opm::RegionPhasePoreVolAverage::rsetStartIx(const std::size_t  rset,
-                                            const int          region,
-                                            const unsigned int phase) const
+                                            const long long          region,
+                                            const size_t phase) const
 {
     return this->startIx(this->rsStart_[rset] + region, phase);
 }
 
 Opm::RegionPhasePoreVolAverage::Ix
 Opm::RegionPhasePoreVolAverage::startIx(const std::size_t offset,
-                                        const unsigned int phase) const
+                                        const size_t phase) const
 {
     return (offset*this->np_ + phase) * AvgType::NumTypes * Element::NumElem;
 }
 
-int Opm::RegionPhasePoreVolAverage::regionIndex(const std::size_t rset,
+long long Opm::RegionPhasePoreVolAverage::regionIndex(const std::size_t rset,
                                                 const std::size_t activeCell) const
 {
     return this->getRegionArray_(this->rsetNames_[rset])[activeCell];

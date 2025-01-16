@@ -18,7 +18,7 @@
 #include <flow/flow_solvent_foam.hpp>
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     return Opm::flowSolventFoamMainStandalone(argc, argv);
 }

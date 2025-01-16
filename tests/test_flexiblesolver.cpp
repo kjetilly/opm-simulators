@@ -35,7 +35,7 @@
 #include <iostream>
 
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 testSolver(const Opm::PropertyTree& prm, const std::string& matrix_filename, const std::string& rhs_filename)
 {
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(TestFlexibleSolver)
 
     // Test with 1x1 block solvers.
     {
-        const int bz = 1;
+        const long long bz = 1;
         auto sol = testSolver<bz>(prm, "matr33.txt", "rhs3.txt");
         Dune::BlockVector<Dune::FieldVector<double, bz>> expected {-1.62493,
                                                                    -1.76435e-06,
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(TestFlexibleSolver)
                                                                    -1.049e-05};
         BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
         for (size_t i = 0; i < sol.size(); ++i) {
-            for (int row = 0; row < bz; ++row) {
+            for (long long row = 0; row < bz; ++row) {
                 BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
             }
         }
@@ -105,14 +105,14 @@ BOOST_AUTO_TEST_CASE(TestFlexibleSolver)
 
     // Test with 3x3 block solvers.
     {
-        const int bz = 3;
+        const long long bz = 3;
         auto sol = testSolver<bz>(prm, "matr33.txt", "rhs3.txt");
         Dune::BlockVector<Dune::FieldVector<double, bz>> expected {{-1.62493, -1.76435e-06, 1.86991e-10},
                                                                    {-458.542, 2.28308e-06, -2.45341e-07},
                                                                    {-1.48005, -5.02264e-07, -1.049e-05}};
         BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
         for (size_t i = 0; i < sol.size(); ++i) {
-            for (int row = 0; row < bz; ++row) {
+            for (long long row = 0; row < bz; ++row) {
                 BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
             }
         }

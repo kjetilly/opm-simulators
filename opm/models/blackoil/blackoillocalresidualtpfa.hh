@@ -519,7 +519,7 @@ public:
         } else if (bdyInfo.type == BCType::THERMAL) {
             computeBoundaryThermal(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
         } else {
-            throw std::logic_error("Unknown boundary condition type " + std::to_string(static_cast<int>(bdyInfo.type)) + " in computeBoundaryFlux()." );
+            throw std::logic_error("Unknown boundary condition type " + std::to_string(static_cast<long long>(bdyInfo.type)) + " in computeBoundaryFlux()." );
         }
     }
 
@@ -851,7 +851,7 @@ public:
     }
 
 
-    static FaceDir::DirEnum faceDirFromDirId(const int dirId)
+    static FaceDir::DirEnum faceDirFromDirId(const long long dirId)
     {
         // NNC does not have a direction
         if (dirId < 0 ) {

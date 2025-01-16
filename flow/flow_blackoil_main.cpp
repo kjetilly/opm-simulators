@@ -19,7 +19,7 @@
 
 #include <flow/flow_blackoil.hpp>
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     return Opm::flowBlackoilTpfaMainStandalone(argc, argv);
 }

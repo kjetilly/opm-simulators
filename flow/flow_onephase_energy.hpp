@@ -25,10 +25,10 @@
 namespace Opm {
 
 //! \brief Main functon used in main flow binary.
-int flowWaterOnlyEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowWaterOnlyEnergyMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_onephase_energy binary.
-int flowWaterOnlyEnergyMainStandalone(int argc, char** argv);
+long long flowWaterOnlyEnergyMainStandalone(long long argc, char** argv);
 
 }
 

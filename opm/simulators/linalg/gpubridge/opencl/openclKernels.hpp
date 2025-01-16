@@ -28,48 +28,48 @@
 
 namespace Opm::Accelerator {
 
-using spmv_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         const cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>;
-using spmv_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
+using spmv_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t,
+                                         const cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg>;
+using spmv_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t,
                                          const cl::Buffer&, cl::Buffer&, cl::LocalSpaceArg>;
-using residual_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         cl::Buffer&, const cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>;
-using residual_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
+using residual_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t,
+                                         cl::Buffer&, const cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg>;
+using residual_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t,
                                          cl::Buffer&, const cl::Buffer&, cl::Buffer&, cl::LocalSpaceArg>;
 using ilu_apply1_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, const cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int, cl::LocalSpaceArg>;
+                                               cl::Buffer&, cl::Buffer&, const size_t, const size_t, cl::LocalSpaceArg>;
 using ilu_apply2_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int, cl::LocalSpaceArg>;
+                                               cl::Buffer&, cl::Buffer&, const size_t, const size_t, cl::LocalSpaceArg>;
 using stdwell_apply_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
                                                              cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                             const unsigned int, const unsigned int, cl::Buffer&,
+                                                             const size_t, const size_t, cl::Buffer&,
                                                              cl::LocalSpaceArg, cl::LocalSpaceArg, cl::LocalSpaceArg>;
-using ilu_decomp_kernel_type = cl::KernelFunctor<const unsigned int, const unsigned int, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, cl::Buffer&, const int, cl::LocalSpaceArg>;
+using ilu_decomp_kernel_type = cl::KernelFunctor<const size_t, const size_t, cl::Buffer&, cl::Buffer&, cl::Buffer&,
+                                               cl::Buffer&, cl::Buffer&, cl::Buffer&, const long long, cl::LocalSpaceArg>;
 using isaiL_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>;
+                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t>;
 using isaiU_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>;
+                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t>;
 
 template<class Scalar>
 class OpenclKernels
 {
 private:
-    static int verbosity;
+    static long long verbosity;
     static cl::CommandQueue *queue;
     static std::vector<Scalar> tmp;     // used as tmp CPU buffer for dot() and norm()
     static bool initialized;
     static std::size_t preferred_workgroup_size_multiple; // stores CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
 
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > dot_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > norm_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int> > axpy_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int> > scale_k;
-    static std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > vmul_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int> > custom_k;
-    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > full_to_pressure_restriction_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int> > add_coarse_pressure_correction_k;
-    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int> > prolongate_vector_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg> > dot_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg> > norm_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const size_t> > axpy_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const size_t> > scale_k;
+    static std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t> > vmul_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const size_t> > custom_k;
+    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t> > full_to_pressure_restriction_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, const size_t> > add_coarse_pressure_correction_k;
+    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const size_t> > prolongate_vector_k;
     static std::unique_ptr<spmv_blocked_kernel_type> spmv_blocked_k;
     static std::unique_ptr<spmv_blocked_kernel_type> spmv_blocked_add_k;
     static std::unique_ptr<spmv_kernel_type> spmv_k;
@@ -113,39 +113,39 @@ public:
     static const std::string isaiL_str;
     static const std::string isaiU_str;
 
-    static void init(cl::Context *context, cl::CommandQueue *queue, std::vector<cl::Device>& devices, int verbosity);
+    static void init(cl::Context *context, cl::CommandQueue *queue, std::vector<cl::Device>& devices, long long verbosity);
 
-    static Scalar dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N);
-    static Scalar norm(cl::Buffer& in, cl::Buffer& out, int N);
-    static void axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, int N);
-    static void scale(cl::Buffer& in, const Scalar a, int N);
-    static void vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N);
-    static void custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r, const Scalar omega, const Scalar beta, int N);
-    static void full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, int Nb);
-    static void add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, int pressure_idx, int Nb);
-    static void prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, int N);
-    static void spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, const cl::Buffer& x, cl::Buffer& b, int Nb, unsigned int block_size, bool reset = true, bool add = false);
-    static void residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& x, const cl::Buffer& rhs, cl::Buffer& out, int Nb, unsigned int block_size);
+    static Scalar dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, long long N);
+    static Scalar norm(cl::Buffer& in, cl::Buffer& out, long long N);
+    static void axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, long long N);
+    static void scale(cl::Buffer& in, const Scalar a, long long N);
+    static void vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, long long N);
+    static void custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r, const Scalar omega, const Scalar beta, long long N);
+    static void full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, long long Nb);
+    static void add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, long long pressure_idx, long long Nb);
+    static void prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, long long N);
+    static void spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, const cl::Buffer& x, cl::Buffer& b, long long Nb, size_t block_size, bool reset = true, bool add = false);
+    static void residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& x, const cl::Buffer& rhs, cl::Buffer& out, long long Nb, size_t block_size);
 
     static void ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& diagIndex,
-        const cl::Buffer& y, cl::Buffer& x, cl::Buffer& rowsPerColor, int color, int Nb, unsigned int block_size);
+        const cl::Buffer& y, cl::Buffer& x, cl::Buffer& rowsPerColor, long long color, long long Nb, size_t block_size);
 
     static void ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& diagIndex,
-        cl::Buffer& invDiagVals, cl::Buffer& x, cl::Buffer& rowsPerColor, int color, int Nb, unsigned int block_size);
+        cl::Buffer& invDiagVals, cl::Buffer& x, cl::Buffer& rowsPerColor, long long color, long long Nb, size_t block_size);
 
-    static void ILU_decomp(int firstRow, int lastRow, cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-        cl::Buffer& diagIndex, cl::Buffer& invDiagVals, int Nb, unsigned int block_size);
+    static void ILU_decomp(long long firstRow, long long lastRow, cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
+        cl::Buffer& diagIndex, cl::Buffer& invDiagVals, long long Nb, size_t block_size);
 
     static void apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &d_Dnnzs_ocl, cl::Buffer &d_Bnnzs_ocl,
         cl::Buffer &d_Ccols_ocl, cl::Buffer &d_Bcols_ocl, cl::Buffer &d_x, cl::Buffer &d_y,
-        int dim, int dim_wells, cl::Buffer &d_val_pointers_ocl, int num_std_wells);
+        long long dim, long long dim_wells, cl::Buffer &d_val_pointers_ocl, long long num_std_wells);
 
     static void isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& mapping, cl::Buffer& nvc,
-            cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, unsigned int Nb);
+            cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, size_t Nb);
 
     static void isaiU(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& rowIndices, cl::Buffer& mapping,
             cl::Buffer& nvc, cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals,
-            cl::Buffer& invDiagVals, cl::Buffer& invUvals, unsigned int Nb);
+            cl::Buffer& invDiagVals, cl::Buffer& invUvals, size_t Nb);
 };
 
 #if CHOW_PATEL

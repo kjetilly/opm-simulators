@@ -48,7 +48,7 @@ struct DirectionalMobility {
     DirectionalMobility(const array_type& mX, const array_type& mY, const array_type& mZ)
         : mobilityX_{mX}, mobilityY_{mY}, mobilityZ_{mZ} {}
     DirectionalMobility() : mobilityX_{}, mobilityY_{}, mobilityZ_{} {}
-    array_type& getArray(int index) {
+    array_type& getArray(long long index) {
         switch(index) {
             case 0:
                 return mobilityX_;

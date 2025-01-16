@@ -40,7 +40,7 @@
 namespace Opm::gpuistl
 {
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 GpuSeqILU0<M, X, Y, l>::GpuSeqILU0(const M& A, field_type w)
     : m_underlyingMatrix(A)
     , m_w(w)
@@ -68,13 +68,13 @@ GpuSeqILU0<M, X, Y, l>::GpuSeqILU0(const M& A, field_type w)
     updateILUConfiguration();
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::apply(X& v, const Y& d)
 {
@@ -131,20 +131,20 @@ GpuSeqILU0<M, X, Y, l>::apply(X& v, const Y& d)
     v *= m_w;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::post([[maybe_unused]] X& x)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 Dune::SolverCategory::Category
 GpuSeqILU0<M, X, Y, l>::category() const
 {
     return Dune::SolverCategory::sequential;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::update()
 {
@@ -152,7 +152,7 @@ GpuSeqILU0<M, X, Y, l>::update()
     createILU();
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::analyzeMatrix()
 {
@@ -183,7 +183,7 @@ GpuSeqILU0<M, X, Y, l>::analyzeMatrix()
                                                              m_buffer->data()));
 
     // Make sure we can decompose the matrix.
-    int structuralZero;
+    long long structuralZero;
     auto statusPivot = cusparseXbsrilu02_zeroPivot(m_cuSparseHandle.get(), m_infoM.get(), &structuralZero);
     OPM_ERROR_IF(statusPivot != CUSPARSE_STATUS_SUCCESS,
                  fmt::format("Found a structural zero at A({}, {}). Could not decompose LU \\approx A.\n\n A has "
@@ -224,7 +224,7 @@ GpuSeqILU0<M, X, Y, l>::analyzeMatrix()
     m_analysisDone = true;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 size_t
 GpuSeqILU0<M, X, Y, l>::findBufferSize()
 {
@@ -241,7 +241,7 @@ GpuSeqILU0<M, X, Y, l>::findBufferSize()
     auto rowIndices = m_LU.getRowIndices().data();
     auto columnIndices = m_LU.getColumnIndices().data();
 
-    int bufferSizeM = 0;
+    long long bufferSizeM = 0;
     OPM_CUSPARSE_SAFE_CALL(detail::cusparseBsrilu02_bufferSize(m_cuSparseHandle.get(),
                                                                detail::CUSPARSE_MATRIX_ORDER,
                                                                numberOfRows,
@@ -253,7 +253,7 @@ GpuSeqILU0<M, X, Y, l>::findBufferSize()
                                                                blockSize,
                                                                m_infoM.get(),
                                                                &bufferSizeM));
-    int bufferSizeL = 0;
+    long long bufferSizeL = 0;
     OPM_CUSPARSE_SAFE_CALL(detail::cusparseBsrsv2_bufferSize(m_cuSparseHandle.get(),
                                                              detail::CUSPARSE_MATRIX_ORDER,
                                                              CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -267,7 +267,7 @@ GpuSeqILU0<M, X, Y, l>::findBufferSize()
                                                              m_infoL.get(),
                                                              &bufferSizeL));
 
-    int bufferSizeU = 0;
+    long long bufferSizeU = 0;
     OPM_CUSPARSE_SAFE_CALL(detail::cusparseBsrsv2_bufferSize(m_cuSparseHandle.get(),
                                                              detail::CUSPARSE_MATRIX_ORDER,
                                                              CUSPARSE_OPERATION_NON_TRANSPOSE,
@@ -288,7 +288,7 @@ GpuSeqILU0<M, X, Y, l>::findBufferSize()
     return size_t(std::max(bufferSizeL, std::max(bufferSizeU, bufferSizeM)));
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::createILU()
 {
@@ -317,7 +317,7 @@ GpuSeqILU0<M, X, Y, l>::createILU()
 
     // We need to do this here as well. The first call was to check that we could decompose the system A=LU
     // the second call here is to make sure we can solve LUx=y
-    int structuralZero;
+    long long structuralZero;
     // cusparseXbsrilu02_zeroPivot() calls cudaDeviceSynchronize()
     auto statusPivot = cusparseXbsrilu02_zeroPivot(m_cuSparseHandle.get(), m_infoM.get(), &structuralZero);
 
@@ -326,7 +326,7 @@ GpuSeqILU0<M, X, Y, l>::createILU()
         fmt::format("Found a structucal zero at LU({}, {}). Could not solve LUx = y.", structuralZero, structuralZero));
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuSeqILU0<M, X, Y, l>::updateILUConfiguration()
 {

@@ -39,7 +39,7 @@ namespace Opm::Accelerator {
 template<class Scalar> class BlockedMatrix;
 
 /// This class implements a Constrained Pressure Residual (CPR) preconditioner
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class openclCPR : public openclPreconditioner<Scalar,block_size>, public CprCreation<Scalar, block_size>
 {
     using Base = openclPreconditioner<Scalar,block_size>;
@@ -79,10 +79,10 @@ private:
     // apply pressure correction to vector
     void apply_amg(const cl::Buffer& y, cl::Buffer& x);
 
-    void amg_cycle_gpu(const int level, cl::Buffer &y, cl::Buffer &x);
+    void amg_cycle_gpu(const long long level, cl::Buffer &y, cl::Buffer &x);
 
 public:
-    openclCPR(bool opencl_ilu_parallel, int verbosity);
+    openclCPR(bool opencl_ilu_parallel, long long verbosity);
 
     bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
     bool analyze_matrix(BlockedMatrix<Scalar>* mat,

@@ -170,7 +170,7 @@ warnIfDirectionalOrIrreversibleEPS() const
 
 template <typename Scalar>
 void Opm::Satfunc::PhaseChecks::SatfuncConsistencyCheckManager<Scalar>::
-runCellChecks(const int cellIdx)
+runCellChecks(const long long cellIdx)
 {
     this->curveLoop([cellIdx, endPoints = EclEpsScalingPointsInfo<Scalar>{}]
                     (auto& curve) mutable

@@ -85,9 +85,9 @@ private:
     std::vector<std::size_t> local_map;    // local_index -> global_index
 
     std::map<std::string, std::size_t> name_map; // string -> global_index
-    std::vector<int> m_in_injecting_group;       // global_index -> int/bool
-    std::vector<int> m_in_producing_group;       // global_index -> int/bool
-    std::vector<int> m_is_open;                  // global_index -> int/bool
+    std::vector<long long> m_in_injecting_group;       // global_index -> long long/bool
+    std::vector<long long> m_in_producing_group;       // global_index -> long long/bool
+    std::vector<long long> m_is_open;                  // global_index -> long long/bool
     std::vector<Scalar> m_efficiency_scaling_factors; // global_index --> double
 };
 

@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowEnergyMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_energy binary.
-int flowEnergyMainStandalone(int argc, char** argv);
+long long flowEnergyMainStandalone(long long argc, char** argv);
 
 }
 

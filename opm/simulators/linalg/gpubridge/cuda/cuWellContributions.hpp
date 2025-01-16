@@ -54,8 +54,8 @@ protected:
     /// \param[in] colIndices  columnindices of blocks in C or B, ignored for D
     /// \param[in] values      array of nonzeroes
     /// \param[in] val_size    number of blocks in C or B, ignored for D
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, long long* colIndices,
+                      Scalar* values, size_t val_size) override;
 
     cudaStream_t stream;
 
@@ -63,11 +63,11 @@ protected:
     Scalar* d_Cnnzs = nullptr;
     Scalar* d_Dnnzs = nullptr;
     Scalar* d_Bnnzs = nullptr;
-    int* d_Ccols = nullptr;
-    int* d_Bcols = nullptr;
+    long long* d_Ccols = nullptr;
+    long long* d_Bcols = nullptr;
     Scalar* d_z1 = nullptr;
     Scalar* d_z2 = nullptr;
-    unsigned int *d_val_pointers = nullptr;
+    size_t *d_val_pointers = nullptr;
     Scalar* h_x = nullptr;
     Scalar* h_y = nullptr;
 };

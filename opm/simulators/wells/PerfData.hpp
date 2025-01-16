@@ -95,7 +95,7 @@ public:
     std::vector<Scalar> connection_transmissibility_factor{};
     std::vector<Scalar> connection_d_factor{};
     std::vector<Scalar> connection_compaction_tmult{};
-    std::vector<int> satnum_id{};
+    std::vector<long long> satnum_id{};
     std::vector<std::size_t> ecl_index{};
 
     // The water_throughput, skin_pressure and water_velocity variables are

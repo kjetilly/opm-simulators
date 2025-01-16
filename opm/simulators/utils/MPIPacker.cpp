@@ -39,7 +39,7 @@ std::size_t mpi_buffer_size(const std::size_t bufsize, const std::size_t positio
     }
 
     return std::min(bufsize - position,
-                    static_cast<std::size_t>(std::numeric_limits<int>::max()));
+                    static_cast<std::size_t>(std::numeric_limits<long long>::max()));
 }
 
 template<std::size_t Size>
@@ -75,9 +75,9 @@ unpack(std::bitset<Size>& data,
 std::size_t Packing<false,std::string>::
 packSize(const std::string& data, Parallel::MPIComm comm)
 {
-    int size;
+    long long size;
     MPI_Pack_size(1, Dune::MPITraits<std::size_t>::getType(), comm, &size);
-    int totalSize = size;
+    long long totalSize = size;
     MPI_Pack_size(data.size(), MPI_CHAR, comm, &size);
     return totalSize + size;
 }
@@ -89,7 +89,7 @@ pack(const std::string& data,
      Parallel::MPIComm comm)
 {
     std::size_t length = data.size();
-    int int_position = 0;
+    long long int_position = 0;
     MPI_Pack(&length, 1, Dune::MPITraits<std::size_t>::getType(), buffer.data()+position,
              mpi_buffer_size(buffer.size(), position), &int_position, comm);
     MPI_Pack(data.data(), length, MPI_CHAR, buffer.data()+position, mpi_buffer_size(buffer.size(), position),
@@ -104,7 +104,7 @@ unpack(std::string& data,
        Opm::Parallel::MPIComm comm)
 {
     std::size_t length = 0;
-    int int_position = 0;
+    long long int_position = 0;
     MPI_Unpack(buffer.data()+position, mpi_buffer_size(buffer.size(), position), &int_position, &length, 1,
                Dune::MPITraits<std::size_t>::getType(), comm);
     std::vector<char> cStr(length+1, '\0');
@@ -144,7 +144,7 @@ unpack(time_point& data,
 template struct Packing<false,std::bitset<3>>;
 template struct Packing<false,std::bitset<4>>;
 template struct Packing<false,std::bitset<10>>;
-constexpr int NumFip = static_cast<int>(FIPConfig::OutputField::NUM_FIP_REPORT);
+constexpr long long NumFip = static_cast<long long>(FIPConfig::OutputField::NUM_FIP_REPORT);
 template struct Packing<false,std::bitset<NumFip>>;
 
 } // end namespace Opm::Mpi::detail

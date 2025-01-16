@@ -34,7 +34,7 @@ namespace Opm
 {
 
 class DeferredLogger;
-using RegionId = int;
+using RegionId = long long;
 class Rates;
 template<class Scalar> class SingleWellState;
 class SummaryState;
@@ -49,7 +49,7 @@ public:
     //! \brief Constructor sets reference to well.
     WellConstraints(const WellInterfaceGeneric<Scalar>& well) : well_(well) {}
 
-    using RateConvFunc = std::function<void(const RegionId, const int,
+    using RateConvFunc = std::function<void(const RegionId, const long long,
                                             const std::vector<Scalar>&,
                                             std::vector<Scalar>&)>;
 

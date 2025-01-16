@@ -54,7 +54,7 @@ struct LocalLinearizerSplice<TypeTag, TTag::RichardsLensEcfvProblem>
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::RichardsLensEcfvProblem;
     return Opm::start<ProblemTypeTag>(argc, argv);

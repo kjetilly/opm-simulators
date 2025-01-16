@@ -71,7 +71,7 @@ protected:
                                    GLiftOptWells& glift_wells,
                                    GasLiftGroupInfo<Scalar>& group_info,
                                    GLiftWellStateMap& map,
-                                   const int episodeIndex,
+                                   const long long episodeIndex,
                                    DeferredLogger& deferred_logger);
 
     bool terminal_output_;

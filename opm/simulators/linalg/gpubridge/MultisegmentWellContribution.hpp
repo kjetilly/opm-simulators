@@ -44,10 +44,10 @@ class MultisegmentWellContribution
 {
 
 private:
-    unsigned int dim;                        // size of blockvectors in vectors x and y, equal to MultisegmentWell::numEq
-    unsigned int dim_wells;                  // size of blocks in C, B and D, equal to MultisegmentWell::numWellEq
-    unsigned int M;                          // number of rows, M == dim_wells*Mb
-    unsigned int Mb;                         // number of blockrows in C, D and B
+    size_t dim;                        // size of blockvectors in vectors x and y, equal to MultisegmentWell::numEq
+    size_t dim_wells;                  // size of blocks in C, B and D, equal to MultisegmentWell::numWellEq
+    size_t M;                          // number of rows, M == dim_wells*Mb
+    size_t Mb;                         // number of blockrows in C, D and B
 
 #if HAVE_CUDA
     cudaStream_t stream; // not actually used yet, will be when MultisegmentWellContribution are applied on GPU
@@ -55,21 +55,21 @@ private:
 
     // C and B are stored in BCRS format, D is stored in CSC format (Dune::UMFPack)
     // Sparsity pattern for C is not stored, since it is the same as B
-    unsigned int DnumBlocks;             // number of blocks in D
+    size_t DnumBlocks;             // number of blocks in D
     std::vector<Scalar> Cvals;
     std::vector<Scalar> Dvals;
     std::vector<Scalar> Bvals;
-    std::vector<int> Dcols;              // Columnpointers, contains M+1 entries
-    std::vector<unsigned int> Bcols;
-    std::vector<int> Drows;              // Rowindicies, contains DnumBlocks*dim*dim_wells entries
-    std::vector<unsigned int> Brows;
+    std::vector<long long> Dcols;              // Columnpointers, contains M+1 entries
+    std::vector<size_t> Bcols;
+    std::vector<long long> Drows;              // Rowindicies, contains DnumBlocks*dim*dim_wells entries
+    std::vector<size_t> Brows;
     std::vector<Scalar> z1;          // z1 = B * x
     std::vector<Scalar> z2;          // z2 = D^-1 * B * x
     void *UMFPACK_Symbolic, *UMFPACK_Numeric;
 
     /// Translate the columnIndex if needed
     /// Some preconditioners reorder the rows of the matrix, this means the columnIndices of the wellcontributions need to be reordered as well
-    unsigned int getColIdx(unsigned int idx);
+    size_t getColIdx(size_t idx);
 
 public:
     using UMFPackIndex = SuiteSparse_long;
@@ -94,12 +94,12 @@ public:
     /// \param[in] DcolPointers     columnpointers of matrix D
     /// \param[in] DrowIndices      rowindices of matrix D
     /// \param[in] Cvalues          nonzero values of matrix C
-    MultisegmentWellContribution(unsigned int dim, unsigned int dim_wells,
-                                 unsigned int Mb,
+    MultisegmentWellContribution(size_t dim, size_t dim_wells,
+                                 size_t Mb,
                                  std::vector<Scalar>& Bvalues,
-                                 std::vector<unsigned int>& BcolIndices,
-                                 std::vector<unsigned int>& BrowPointers,
-                                 unsigned int DnumBlocks,
+                                 std::vector<size_t>& BcolIndices,
+                                 std::vector<size_t>& BrowPointers,
+                                 size_t DnumBlocks,
                                  Scalar* Dvalues,
                                  UMFPackIndex* DcolPointers,
                                  UMFPackIndex* DrowIndices,

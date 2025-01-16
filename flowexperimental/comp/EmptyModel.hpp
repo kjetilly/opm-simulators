@@ -83,7 +83,7 @@ public:
     auto wellBlockAveragePressures() const {
         return data::WellBlockAveragePressures{};
     }
-    auto groupAndNetworkData(const int&) const {
+    auto groupAndNetworkData(const long long&) const {
         return data::GroupAndNetworkValues{};
     }
     auto wellTestState() const {

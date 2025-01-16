@@ -63,9 +63,9 @@ class WellState
 public:
     static const uint64_t event_mask = ScheduleEvents::WELL_STATUS_CHANGE + ScheduleEvents::PRODUCTION_UPDATE + ScheduleEvents::INJECTION_UPDATE;
     // TODO: same definition with WellInterface, eventually they should go to a common header file.
-    static const int Water = BlackoilPhases::Aqua;
-    static const int Oil = BlackoilPhases::Liquid;
-    static const int Gas = BlackoilPhases::Vapour;
+    static const long long Water = BlackoilPhases::Aqua;
+    static const long long Oil = BlackoilPhases::Liquid;
+    static const long long Gas = BlackoilPhases::Vapour;
 
     // Only usable for testing purposes
     explicit WellState(const ParallelWellInfo<Scalar>& pinfo);
@@ -86,7 +86,7 @@ public:
         return this->wells_.wells();
     }
 
-    int numWells() const
+    long long numWells() const
     {
         return this->size();
     }
@@ -101,7 +101,7 @@ public:
               const Schedule& schedule,
               const std::vector<Well>& wells_ecl,
               const std::vector<std::reference_wrapper<ParallelWellInfo<Scalar>>>& parallel_well_info,
-              const int report_step,
+              const long long report_step,
               const WellState* prevState,
               const std::vector<std::vector<PerforationData<Scalar>>>& well_perf_data,
               const SummaryState& summary_state,
@@ -140,24 +140,24 @@ public:
                              const Parallel::Communication& comm) const;
 
     data::Wells
-    report(const int* globalCellIdxMap,
-           const std::function<bool(const int)>& wasDynamicallyClosed) const;
+    report(const long long* globalCellIdxMap,
+           const std::function<bool(const long long)>& wasDynamicallyClosed) const;
 
     void reportConnections(std::vector<data::Connection>& connections,
                            const PhaseUsage &pu,
                            std::size_t well_index,
-                           const int* globalCellIdxMap) const;
+                           const long long* globalCellIdxMap) const;
 
     /// init the MS well related.
     void initWellStateMSWell(const std::vector<Well>& wells_ecl,
                              const WellState* prev_well_state);
 
     static void calculateSegmentRates(const ParallelWellInfo<Scalar>&      pw_info,
-                                      const std::vector<std::vector<int>>& segment_inlets,
-                                      const std::vector<std::vector<int>>& segment_perforations,
+                                      const std::vector<std::vector<long long>>& segment_inlets,
+                                      const std::vector<std::vector<long long>>& segment_perforations,
                                       const std::vector<Scalar>&           perforation_rates,
-                                      const int                            np,
-                                      const int                            segment,
+                                      const long long                            np,
+                                      const long long                            segment,
                                       std::vector<Scalar>&                 segment_rates);
 
 
@@ -197,17 +197,17 @@ public:
         this->alq_state.set(name, value);
     }
 
-    int gliftGetDebugCounter()
+    long long gliftGetDebugCounter()
     {
         return this->alq_state.get_debug_counter();
     }
 
-    void gliftSetDebugCounter(int value)
+    void gliftSetDebugCounter(long long value)
     {
         return this->alq_state.set_debug_counter(value);
     }
 
-    int gliftUpdateDebugCounter()
+    long long gliftUpdateDebugCounter()
     {
         return this->alq_state.update_debug_counter();
     }
@@ -217,12 +217,12 @@ public:
         return this->alq_state.oscillation(name);
     }
 
-    int gliftGetAlqDecreaseCount(const std::string &name)
+    long long gliftGetAlqDecreaseCount(const std::string &name)
     {
         return this->alq_state.get_decrement_count(name);
     }
 
-    int gliftGetAlqIncreaseCount(const std::string &name)
+    long long gliftGetAlqIncreaseCount(const std::string &name)
     {
         return this->alq_state.get_increment_count(name);
     }
@@ -242,15 +242,15 @@ public:
     // constant lift gas injection and for gas lift optimization
     // (THP controlled wells).
     void updateWellsDefaultALQ(const Schedule& schedule,
-                              const int report_step,
+                              const long long report_step,
                               const SummaryState& summary_state);
 
-    int wellNameToGlobalIdx(const std::string& name)
+    long long wellNameToGlobalIdx(const std::string& name)
     {
         return this->global_well_info.value().well_index(name);
     }
 
-    std::string globalIdxToWellName(const int index)
+    std::string globalIdxToWellName(const long long index)
     {
         return this->global_well_info.value().well_name(index);
     }
@@ -260,14 +260,14 @@ public:
 
     bool wellIsOwned(const std::string& wellName) const;
 
-    void updateStatus(int well_index, WellStatus status);
+    void updateStatus(long long well_index, WellStatus status);
 
-    void openWell(int well_index);
-    void shutWell(int well_index);
-    void stopWell(int well_index);
+    void openWell(long long well_index);
+    void shutWell(long long well_index);
+    void stopWell(long long well_index);
 
     /// The number of phases present.
-    int numPhases() const
+    long long numPhases() const
     {
         return this->phase_usage_.num_phases;
     }
@@ -392,9 +392,9 @@ private:
     std::vector<std::string> permanently_inactive_well_names_;
 
     data::Segment
-    reportSegmentResults(const int         well_id,
-                         const int         seg_ix,
-                         const int         seg_no) const;
+    reportSegmentResults(const long long         well_id,
+                         const long long         seg_ix,
+                         const long long         seg_no) const;
 
 
     /// Allocate and initialize if wells is non-null.
@@ -430,11 +430,11 @@ private:
                             const SummaryState& summary_state);
 
     static void calculateSegmentRatesBeforeSum(const ParallelWellInfo<Scalar>&      pw_info,
-                                               const std::vector<std::vector<int>>& segment_inlets,
-                                               const std::vector<std::vector<int>>& segment_perforations,
+                                               const std::vector<std::vector<long long>>& segment_inlets,
+                                               const std::vector<std::vector<long long>>& segment_perforations,
                                                const std::vector<Scalar>&           perforation_rates,
-                                               const int                            np,
-                                               const int                            segment,
+                                               const long long                            np,
+                                               const long long                            segment,
                                                std::vector<Scalar>&                 segment_rates);
 
 };

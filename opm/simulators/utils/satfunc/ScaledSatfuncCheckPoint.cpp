@@ -32,7 +32,7 @@
 template <typename Scalar>
 void
 Opm::Satfunc::PhaseChecks::ScaledSatfuncCheckPoint<Scalar>::
-populateCheckPoint(const int                        cellIdx,
+populateCheckPoint(const long long                        cellIdx,
                    EclEpsScalingPointsInfo<Scalar>& endPoints) const
 {
     this->unscaled_.populateCheckPoint(cellIdx, endPoints);

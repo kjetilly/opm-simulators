@@ -41,7 +41,7 @@ namespace Linear {
 /*!
  * \brief The type of an index of a degree of freedom.
  */
-using Index = int;
+using Index = long long;
 
 /*!
  * \brief The type of the rank of a process.

@@ -31,7 +31,7 @@
 namespace Opm::Accelerator {
 
 /// This class implements a cusparse-based ilu0-bicgstab solver on GPU
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class cusparseSolverBackend : public GpuSolver<Scalar,block_size>
 {
     using Base = GpuSolver<Scalar,block_size>;
@@ -55,8 +55,8 @@ private:
     bsrsv2Info_t info_L, info_U;
     // b: bsr matrix, m: preconditioner
     Scalar *d_bVals, *d_mVals;
-    int *d_bCols, *d_mCols;
-    int *d_bRows, *d_mRows;
+    long long *d_bCols, *d_mCols;
+    long long *d_bRows, *d_mRows;
     Scalar *d_x, *d_b, *d_r, *d_rw, *d_p;     // vectors, used during linear solve
     Scalar *d_pw, *d_s, *d_t, *d_v;
     void *d_buffer;
@@ -65,7 +65,7 @@ private:
     bool analysis_done = false;
 
     bool useJacMatrix = false;
-    int nnzbs_prec;             // number of nonzero blocks in the matrix for preconditioner
+    long long nnzbs_prec;             // number of nonzero blocks in the matrix for preconditioner
                                 // could be jacMatrix or matrix
                                 
     double c_copy = 0.0; // cummulative timer measuring the total time it takes to transfer the data to the GPU
@@ -121,8 +121,8 @@ public:
     /// \param[in] maxit                      maximum number of iterations for cusparseSolver
     /// \param[in] tolerance                  required relative tolerance for cusparseSolver
     /// \param[in] deviceID                   the device to be used
-    cusparseSolverBackend(int linear_solver_verbosity, int maxit,
-                          Scalar tolerance, unsigned int deviceID);
+    cusparseSolverBackend(long long linear_solver_verbosity, long long maxit,
+                          Scalar tolerance, size_t deviceID);
 
     /// Destroy a cusparseSolver, and free memory
     ~cusparseSolverBackend();

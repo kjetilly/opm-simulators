@@ -36,7 +36,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(FlattenAndInvertDiagonalWith3By3Blocks, T, Numeric
 {
     const size_t blocksize = 3;
     const size_t N = 2;
-    const int nonZeroes = 3;
+    const long long nonZeroes = 3;
     using M = Dune::FieldMatrix<T, blocksize, blocksize>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     /*
@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(FlattenAndInvertDiagonalWith2By2Blocks, T, Numeric
 {
     const size_t blocksize = 2;
     const size_t N = 2;
-    const int nonZeroes = 3;
+    const long long nonZeroes = 3;
     using M = Dune::FieldMatrix<T, blocksize, blocksize>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     /*

@@ -19,7 +19,7 @@
 #define FLOW_BRINE_ENERGY_HPP
 
 namespace Opm {
-  int flowBrineEnergyMain(int argc, char** argv);
+  long long flowBrineEnergyMain(long long argc, char** argv);
 }
 
 #endif

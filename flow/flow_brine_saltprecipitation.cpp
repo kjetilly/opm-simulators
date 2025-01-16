@@ -44,7 +44,7 @@ struct EnableSaltPrecipitation<TypeTag, TTag::FlowBrineSaltPrecipitationProblem>
 namespace Opm {
 
 // ----------------- Main program -----------------
-int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowBrineSaltPrecipitationMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -55,7 +55,7 @@ int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool 
     return mainfunc.execute();
 }
 
-int flowBrineSaltPrecipitationMainStandalone(int argc, char** argv)
+long long flowBrineSaltPrecipitationMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowBrineSaltPrecipitationProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

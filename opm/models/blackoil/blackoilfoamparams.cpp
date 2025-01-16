@@ -67,9 +67,9 @@ initFromState(const EclipseState& eclState)
     }
 
     const auto& tableManager = eclState.getTableManager();
-    const unsigned int numSatRegions = tableManager.getTabdims().getNumSatTables();
+    const size_t numSatRegions = tableManager.getTabdims().getNumSatTables();
     setNumSatRegions(numSatRegions);
-    const unsigned int numPvtRegions = tableManager.getTabdims().getNumPVTTables();
+    const size_t numPvtRegions = tableManager.getTabdims().getNumPVTTables();
     gasMobilityMultiplierTable_.resize(numPvtRegions);
 
     // Get and check FOAMROCK data.

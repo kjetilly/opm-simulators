@@ -44,7 +44,7 @@
 struct MPIFixture {
     MPIFixture()
     {
-        int m_argc = boost::unit_test::framework::master_test_suite().argc;
+        long long m_argc = boost::unit_test::framework::master_test_suite().argc;
         char** m_argv = boost::unit_test::framework::master_test_suite().argv;
         MPI_Init(&m_argc, &m_argv);
     }
@@ -68,12 +68,12 @@ struct MyMatrix
     {}
 
     std::vector<double> data;
-    std::vector<int> rowStart;
-    std::vector<int> colIndex;
+    std::vector<long long> rowStart;
+    std::vector<long long> colIndex;
 };
 
-typedef int LocalId;
-typedef int GlobalId;
+typedef long long LocalId;
+typedef long long GlobalId;
 typedef Dune::OwnerOverlapCopyCommunication<GlobalId,LocalId> Communication;
 typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;
 typedef GridAttributes::AttributeSet GridFlag;
@@ -93,17 +93,17 @@ typedef Dune::ParallelLocalIndex<GridFlag> LocalIndex;
 /// \param istart The first index that the process owns.
 /// \param iend One past the last index the process owns.
 template<class I>
-std::shared_ptr<MyMatrix> create1DLaplacian(I& indexset, int N, int start, int end,
-                                            int istart, int iend)
+std::shared_ptr<MyMatrix> create1DLaplacian(I& indexset, long long N, long long start, long long end,
+                                            long long istart, long long iend)
 {
     indexset.beginResize();
     MyMatrix* mm=new MyMatrix(end-start, (end-start)*3);
-    int nnz=0;
+    long long nnz=0;
     mm->rowStart[0]=0;
     assert(start==0||start<istart);
     assert(end==N||iend<end);
 
-    for(int row=start, localRow=0; row<end; row++, localRow++)
+    for(long long row=start, localRow=0; row<end; row++, localRow++)
     {
         if(row<istart || row>=iend)
         {
@@ -150,7 +150,7 @@ std::shared_ptr<MyMatrix> create1DLaplacian(I& indexset, int N, int start, int e
 }
 
 template<class O>
-void createRandomVectors(O& pinfo, int NN, std::vector<double>& x, std::vector<double>& b,
+void createRandomVectors(O& pinfo, long long NN, std::vector<double>& x, std::vector<double>& b,
                          const MyMatrix& mat)
 {
     x.resize(NN);
@@ -165,7 +165,7 @@ void createRandomVectors(O& pinfo, int NN, std::vector<double>& x, std::vector<d
     std::fill(b.begin(), b.end(), 0.0);
     for(std::size_t row=0; row<mat.rowStart.size()-1; ++row)
     {
-        for(int i=mat.rowStart[row], end=mat.rowStart[row+1]; i!=end; ++i)
+        for(long long i=mat.rowStart[row], end=mat.rowStart[row+1]; i!=end; ++i)
         {
             b[row]+= mat.data[i]*x[mat.colIndex[i]];
         }
@@ -173,16 +173,16 @@ void createRandomVectors(O& pinfo, int NN, std::vector<double>& x, std::vector<d
     pinfo.copyOwnerToAll(b,b);
 }
 
-inline std::tuple<int,int,int,int> computeRegions(int N=100)
+inline std::tuple<long long,long long,long long,long long> computeRegions(long long N=100)
 {
-    int procs, rank;
+    long long procs, rank;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &procs);
-    int n = N/procs; // number of unknowns per process
-    int bigger = N%procs; // number of process with n+1 unknows
+    long long n = N/procs; // number of unknowns per process
+    long long bigger = N%procs; // number of process with n+1 unknows
 
 
-    int start, end, istart, iend;
+    long long start, end, istart, iend;
     // Compute owner region
     if(rank<bigger) {
         start = rank*(n+1);

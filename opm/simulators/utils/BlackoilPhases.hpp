@@ -29,14 +29,14 @@ namespace Opm
     class BlackoilPhases
     {
     public:
-        static const int MaxNumPhases = 3;
+        static const long long MaxNumPhases = 3;
 
         // "Crypto phases" are "phases" (or rather "conservation quantities") in the
         // sense that they can be active or not and canonical indices can be translated
         // to and from active ones. That said, they are not considered by num_phases or
         // MaxNumPhases. The crypto phases which are currently implemented are solvent,
         // polymer, energy, polymer molecular weight, foam and brine.
-        static const int NumCryptoPhases = 7;
+        static const long long NumCryptoPhases = 7;
 
         // enum ComponentIndex { Water = 0, Oil = 1, Gas = 2 };
         enum PhaseIndex { Aqua = 0, Liquid = 1, Vapour = 2, Solvent = 3, Polymer = 4, Energy = 5, PolymerMW = 6, Foam = 7, Brine = 8, ZFraction = 9 };
@@ -48,10 +48,10 @@ namespace Opm
         explicit PhaseUsage(std::vector<BlackoilPhases::PhaseIndex> phases);
 
 
-        std::array<int, MaxNumPhases + NumCryptoPhases> phase_used;
-        std::array<int, MaxNumPhases + NumCryptoPhases> phase_pos;
+        std::array<long long, MaxNumPhases + NumCryptoPhases> phase_used;
+        std::array<long long, MaxNumPhases + NumCryptoPhases> phase_pos;
 
-        int num_phases;
+        long long num_phases;
         bool has_solvent{};
         bool has_polymer{};
         bool has_energy{};

@@ -31,12 +31,12 @@ namespace Opm {
 
 template<class Scalar>
 MultisegmentWellContribution<Scalar>::
-MultisegmentWellContribution(unsigned int dim_, unsigned int dim_wells_,
-                             unsigned int Mb_,
+MultisegmentWellContribution(size_t dim_, size_t dim_wells_,
+                             size_t Mb_,
                              std::vector<Scalar>& Bvalues,
-                             std::vector<unsigned int>& BcolIndices,
-                             std::vector<unsigned int>& BrowPointers,
-                             unsigned int DnumBlocks_,
+                             std::vector<size_t>& BcolIndices,
+                             std::vector<size_t>& BrowPointers,
+                             size_t DnumBlocks_,
                              Scalar* Dvalues,
                              UMFPackIndex* DcolPointers,
                              UMFPackIndex* DrowIndices,
@@ -88,13 +88,13 @@ void MultisegmentWellContribution<Scalar>::apply(Scalar* h_x, Scalar* h_y)
     std::fill(z2.begin(), z2.end(), 0.0);
 
     // z1 = B * x
-    for (unsigned int row = 0; row < Mb; ++row) {
+    for (size_t row = 0; row < Mb; ++row) {
         // for every block in the row
-        for (unsigned int blockID = Brows[row]; blockID < Brows[row + 1]; ++blockID) {
-            unsigned int colIdx = Bcols[blockID];
-            for (unsigned int j = 0; j < dim_wells; ++j) {
+        for (size_t blockID = Brows[row]; blockID < Brows[row + 1]; ++blockID) {
+            size_t colIdx = Bcols[blockID];
+            for (size_t j = 0; j < dim_wells; ++j) {
                 Scalar temp = 0.0;
-                for (unsigned int k = 0; k < dim; ++k) {
+                for (size_t k = 0; k < dim; ++k) {
                     temp += Bvals[blockID * dim * dim_wells + j * dim + k] * h_x[colIdx * dim + k];
                 }
                 z1[row * dim_wells + j] += temp;
@@ -112,13 +112,13 @@ void MultisegmentWellContribution<Scalar>::apply(Scalar* h_x, Scalar* h_y)
 
     // y -= (C^T * z2)
     // y -= (C^T * (D^-1 * (B * x)))
-    for (unsigned int row = 0; row < Mb; ++row) {
+    for (size_t row = 0; row < Mb; ++row) {
         // for every block in the row
-        for (unsigned int blockID = Brows[row]; blockID < Brows[row + 1]; ++blockID) {
-            unsigned int colIdx = Bcols[blockID];
-            for (unsigned int j = 0; j < dim; ++j) {
+        for (size_t blockID = Brows[row]; blockID < Brows[row + 1]; ++blockID) {
+            size_t colIdx = Bcols[blockID];
+            for (size_t j = 0; j < dim; ++j) {
                 Scalar temp = 0.0;
-                for (unsigned int k = 0; k < dim_wells; ++k) {
+                for (size_t k = 0; k < dim_wells; ++k) {
                     temp += Cvals[blockID * dim * dim_wells + j + k * dim] * z2[row * dim_wells + k];
                 }
                 h_y[colIdx * dim + j] -= temp;

@@ -14,7 +14,7 @@
 ///! \brief check that all indices are represented in the new ordering.
 void checkAllIndices(const std::vector<std::size_t>& ordering)
 {
-    std::vector<int> counters(ordering.size(), 0);
+    std::vector<long long> counters(ordering.size(), 0);
     for (auto index : ordering) {
         ++counters[index];
     }
@@ -28,10 +28,10 @@ BOOST_AUTO_TEST_CASE(TestWelschPowell)
 {
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>;
     using Graph = Dune::Amg::MatrixGraph<Matrix>;
-    int N = 10;
+    long long N = 10;
     Matrix matrix(N*N, N*N, 5, 0.4, Matrix::implicit);
-    for (int j = 0; j < N; j++) {
-        for (int i = 0; i < N; i++) {
+    for (long long j = 0; j < N; j++) {
+        for (long long i = 0; i < N; i++) {
             auto index = j * 10 + i;
             matrix.entry(index,index) = 1;
 
@@ -63,10 +63,10 @@ BOOST_AUTO_TEST_CASE(TestWelschPowell)
 
     // Check for checkerboard coloring
 
-    for (int j = 0, index = 0; j < N; j++) {
+    for (long long j = 0, index = 0; j < N; j++) {
         auto expectedColor = firstCornerColor;
 
-        for (int i = 0; i < N; i++) {
+        for (long long i = 0; i < N; i++) {
             BOOST_CHECK(colors[index] == expectedColor);
             index++;
             expectedColor = (expectedColor + 1) % 2;
@@ -101,9 +101,9 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms3x3Matrix)
     We only expect a DILU dependency from the second to the third row,
     hence row 1 and 2 should have color 0, row 3 should have color 1
     */
-    const int N = 3;
-    constexpr int bz = 3;
-    const int nonZeroes = 5;
+    const long long N = 3;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 5;
 
     // creating some shorthand typenames
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
@@ -165,9 +165,9 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Simple)
     |   x |
     |   xx|
     */
-    const int N = 5;
-    constexpr int bz = 3;
-    const int nonZeroes = 11;
+    const long long N = 5;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 11;
 
     // creating some shorthand typenames
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
@@ -245,9 +245,9 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Tridiagonal)
     |   xx|
     The tridiagonal structure will force a strictly serial computation stage
     */
-    const int N = 5;
-    constexpr int bz = 3;
-    const int nonZeroes = 13;
+    const long long N = 5;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 13;
 
     // creating some shorthand typenames
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
@@ -320,9 +320,9 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Complex)
     | x x |
     |x x x|
     */
-    const int N = 5;
-    constexpr int bz = 3;
-    const int nonZeroes = 15;
+    const long long N = 5;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 15;
 
     // creating some shorthand typenames
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;

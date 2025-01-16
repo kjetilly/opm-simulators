@@ -61,7 +61,7 @@ namespace Opm {
  * simplifies writing datasets consisting of multiple files. (i.e.
  * multiple time steps or grid refinements within a time step.)
  */
-template <class GridView, int vtkFormat>
+template <class GridView, long long vtkFormat>
 class VtkMultiWriter : public BaseOutputWriter
 {
     class WriteDataTasklet : public TaskletInterface
@@ -152,7 +152,7 @@ public:
     /*!
      * \brief Returns the number of the current VTK file.
      */
-    int curWriterNum() const
+    long long curWriterNum() const
     { return curWriterNum_; }
 
     /*!
@@ -552,13 +552,13 @@ private:
     std::ofstream multiFile_;
     std::string multiFileName_;
 
-    int commSize_; // number of processes in the communicator
-    int commRank_; // rank of the current process in the communicator
+    long long commSize_; // number of processes in the communicator
+    long long commRank_; // rank of the current process in the communicator
 
     VtkWriter *curWriter_;
     double curTime_;
     std::string curOutFileName_;
-    int curWriterNum_;
+    long long curWriterNum_;
 
     std::list<ScalarBuffer *> managedScalarBuffers_;
     std::list<VectorBuffer *> managedVectorBuffers_;

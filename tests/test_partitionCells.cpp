@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(FileBased)
 {
     auto [part, num_part] = Opm::partitionCellsFromFile("test10.partition", 10);
     BOOST_CHECK_EQUAL(num_part, 3);
-    std::vector<int> expected = { 0, 0, 1, 1, 2, 2, 1, 1, 0, 0 };
+    std::vector<long long> expected = { 0, 0, 1, 1, 2, 2, 1, 1, 0, 0 };
     BOOST_CHECK_EQUAL_COLLECTIONS(expected.begin(), expected.end(), part.begin(), part.end());
 }
 
@@ -43,7 +43,7 @@ BOOST_AUTO_TEST_CASE(Simple1)
 {
     auto [part, num_part]  = Opm::partitionCellsSimple(10, 3);
     BOOST_CHECK_EQUAL(num_part, 3);
-    std::vector<int> expected = { 0, 0, 0, 0, 1, 1, 1, 2, 2, 2 };
+    std::vector<long long> expected = { 0, 0, 0, 0, 1, 1, 1, 2, 2, 2 };
     BOOST_CHECK_EQUAL_COLLECTIONS(expected.begin(), expected.end(), part.begin(), part.end());
 
 }
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(Simple2)
 {
     auto [part, num_part]  = Opm::partitionCellsSimple(10, 7);
     BOOST_CHECK_EQUAL(num_part, 7);
-    std::vector<int> expected = { 0, 0, 1, 1, 2, 2, 3, 4, 5, 6 };
+    std::vector<long long> expected = { 0, 0, 1, 1, 2, 2, 3, 4, 5, 6 };
     BOOST_CHECK_EQUAL_COLLECTIONS(expected.begin(), expected.end(), part.begin(), part.end());
 
 }

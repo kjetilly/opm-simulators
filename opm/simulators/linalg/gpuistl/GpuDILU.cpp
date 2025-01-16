@@ -40,8 +40,8 @@
 namespace Opm::gpuistl
 {
 
-template <class M, class X, class Y, int l>
-GpuDILU<M, X, Y, l>::GpuDILU(const M& A, bool splitMatrix, bool tuneKernels, int mixedPrecisionScheme)
+template <class M, class X, class Y, long long l>
+GpuDILU<M, X, Y, l>::GpuDILU(const M& A, bool splitMatrix, bool tuneKernels, long long mixedPrecisionScheme)
     : m_cpuMatrix(A)
     , m_levelSets(Opm::getMatrixRowColoring(m_cpuMatrix, Opm::ColoringType::LOWER))
     , m_reorderedToNatural(detail::createReorderedToNatural(m_levelSets))
@@ -100,13 +100,13 @@ GpuDILU<M, X, Y, l>::GpuDILU(const M& A, bool splitMatrix, bool tuneKernels, int
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuDILU<M, X, Y, l>::pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuDILU<M, X, Y, l>::apply(X& v, const Y& d)
 {
@@ -116,13 +116,13 @@ GpuDILU<M, X, Y, l>::apply(X& v, const Y& d)
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-GpuDILU<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, int upperSolveThreadBlockSize)
+GpuDILU<M, X, Y, l>::apply(X& v, const Y& d, long long lowerSolveThreadBlockSize, long long upperSolveThreadBlockSize)
 {
-    int levelStartIdx = 0;
-    for (int level = 0; level < m_levelSets.size(); ++level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    long long levelStartIdx = 0;
+    for (long long level = 0; level < m_levelSets.size(); ++level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme == MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG) {
                 detail::DILU::solveLowerLevelSetSplit<blocksize_, field_type, float, float>(
@@ -179,8 +179,8 @@ GpuDILU<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, int 
 
     levelStartIdx = m_cpuMatrix.N();
     //  upper triangular solve: (D + U_A) v = Dy
-    for (int level = m_levelSets.size() - 1; level >= 0; --level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    for (long long level = m_levelSets.size() - 1; level >= 0; --level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
         levelStartIdx -= numOfRowsInLevel;
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme == MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG){
@@ -233,20 +233,20 @@ GpuDILU<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, int 
 }
 
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuDILU<M, X, Y, l>::post([[maybe_unused]] X& x)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 Dune::SolverCategory::Category
 GpuDILU<M, X, Y, l>::category() const
 {
     return Dune::SolverCategory::sequential;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuDILU<M, X, Y, l>::update()
 {
@@ -256,17 +256,17 @@ GpuDILU<M, X, Y, l>::update()
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-GpuDILU<M, X, Y, l>::update(int moveThreadBlockSize, int factorizationBlockSize)
+GpuDILU<M, X, Y, l>::update(long long moveThreadBlockSize, long long factorizationBlockSize)
 {
     m_gpuMatrix.updateNonzeroValues(m_cpuMatrix, true); // send updated matrix to the gpu
     computeDiagAndMoveReorderedData(moveThreadBlockSize, factorizationBlockSize);
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-GpuDILU<M, X, Y, l>::computeDiagAndMoveReorderedData(int moveThreadBlockSize, int factorizationBlockSize)
+GpuDILU<M, X, Y, l>::computeDiagAndMoveReorderedData(long long moveThreadBlockSize, long long factorizationBlockSize)
 {
     if (m_splitMatrix) {
         detail::copyMatDataToReorderedSplit<field_type, blocksize_>(
@@ -291,9 +291,9 @@ GpuDILU<M, X, Y, l>::computeDiagAndMoveReorderedData(int moveThreadBlockSize, in
                                                                 moveThreadBlockSize);
     }
 
-    int levelStartIdx = 0;
-    for (int level = 0; level < m_levelSets.size(); ++level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    long long levelStartIdx = 0;
+    for (long long level = 0; level < m_levelSets.size(); ++level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme == MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG) {
                 detail::DILU::computeDiluDiagonalSplit<blocksize_, field_type, float, MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG>(
@@ -367,17 +367,17 @@ GpuDILU<M, X, Y, l>::computeDiagAndMoveReorderedData(int moveThreadBlockSize, in
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuDILU<M, X, Y, l>::tuneThreadBlockSizes()
 {
     // tune the thread-block size of the update function
-    auto tuneMoveThreadBlockSizeInUpdate = [this](int moveThreadBlockSize){
+    auto tuneMoveThreadBlockSizeInUpdate = [this](long long moveThreadBlockSize){
         this->update(moveThreadBlockSize, m_DILUFactorizationThreadBlockSize);
     };
     m_moveThreadBlockSize = detail::tuneThreadBlockSize(tuneMoveThreadBlockSizeInUpdate, "(in DILU update) Move data to reordered matrix");
 
-    auto tuneFactorizationThreadBlockSizeInUpdate = [this](int factorizationThreadBlockSize){
+    auto tuneFactorizationThreadBlockSizeInUpdate = [this](long long factorizationThreadBlockSize){
         this->update(m_moveThreadBlockSize, factorizationThreadBlockSize);
     };
     m_DILUFactorizationThreadBlockSize = detail::tuneThreadBlockSize(tuneFactorizationThreadBlockSizeInUpdate, "(in DILU update) DILU factorization");
@@ -387,12 +387,12 @@ GpuDILU<M, X, Y, l>::tuneThreadBlockSizes()
     GpuVector<field_type> tmpD(m_gpuMatrix.N() * m_gpuMatrix.blockSize());
     tmpD = 1;
 
-    auto tuneLowerSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](int lowerSolveThreadBlockSize){
+    auto tuneLowerSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](long long lowerSolveThreadBlockSize){
         this->apply(tmpV, tmpD, lowerSolveThreadBlockSize, m_DILUFactorizationThreadBlockSize);
     };
     m_lowerSolveThreadBlockSize = detail::tuneThreadBlockSize(tuneLowerSolveThreadBlockSizeInApply, "(in DILU apply) Triangular lower solve");
 
-    auto tuneUpperSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](int upperSolveThreadBlockSize){
+    auto tuneUpperSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](long long upperSolveThreadBlockSize){
         this->apply(tmpV, tmpD, m_lowerSolveThreadBlockSize, upperSolveThreadBlockSize);
     };
     m_upperSolveThreadBlockSize = detail::tuneThreadBlockSize(tuneUpperSolveThreadBlockSizeInApply, "(in DILU apply) Triangular upper solve");

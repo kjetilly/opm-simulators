@@ -50,7 +50,7 @@ unsigned long long getTotalSystemMemory()
 
 namespace Opm {
 
-void printPRTHeader(const int nprocs, const int nthreads,
+void printPRTHeader(const long long nprocs, const long long nthreads,
                     const std::string& parameters,
                     std::string_view moduleVersion,
                     std::string_view compileTimestamp)
@@ -92,13 +92,13 @@ void printPRTHeader(const int nprocs, const int nthreads,
     OpmLog::note(ss.str());
 }
 
-void printFlowBanner(int nprocs, int nthreads, std::string_view moduleVersionName)
+void printFlowBanner(long long nprocs, long long nthreads, std::string_view moduleVersionName)
 {
-    const int lineLen = 70;
+    const long long lineLen = 70;
     std::string banner = "This is flow ";
     banner += moduleVersionName;
-    const int bannerPreLen = (lineLen - 2 - banner.size())/2;
-    const int bannerPostLen = bannerPreLen + (lineLen - 2 - banner.size())%2;
+    const long long bannerPreLen = (lineLen - 2 - banner.size())/2;
+    const long long bannerPostLen = bannerPreLen + (lineLen - 2 - banner.size())%2;
     std::cout << "**********************************************************************\n";
     std::cout << "*                                                                    *\n";
     std::cout << "*" << std::string(bannerPreLen, ' ') << banner << std::string(bannerPostLen, ' ') << "*\n";
@@ -112,8 +112,8 @@ void printFlowBanner(int nprocs, int nthreads, std::string_view moduleVersionNam
     std::cout << "Using "<< nprocs << " MPI processes with "<< nthreads <<" OMP threads on each \n\n";
 }
 
-void printFlowTrailer(int nprocs,
-                      int nthreads,
+void printFlowTrailer(long long nprocs,
+                      long long nthreads,
                       const double total_setup_time,
                       const double deck_read_time,
                       const SimulatorReport& report,

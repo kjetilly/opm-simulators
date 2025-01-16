@@ -47,17 +47,17 @@ public:
         std::shared_ptr<Opm::EclipseState> state,
         std::shared_ptr<Opm::Schedule> schedule,
         std::shared_ptr<Opm::SummaryConfig> summary_config);
-    void advance(int report_step);
+    void advance(long long report_step);
     bool checkSimulationFinished();
-    int currentStep();
+    long long currentStep();
     py::array_t<double> getFluidStateVariable(const std::string &name) const;
     py::array_t<double> getCellVolumes();
     double getDT();
     py::array_t<double> getPorosity();
     py::array_t<double> getPrimaryVariable(const std::string &variable) const;
-    py::array_t<int> getPrimaryVarMeaning(const std::string &variable) const;
-    std::map<std::string, int> getPrimaryVarMeaningMap(const std::string &variable) const;
-    int run();
+    py::array_t<long long> getPrimaryVarMeaning(const std::string &variable) const;
+    std::map<std::string, long long> getPrimaryVarMeaningMap(const std::string &variable) const;
+    long long run();
     void setPorosity(
          py::array_t<double, py::array::c_style | py::array::forcecast> array);
     void setPrimaryVariable(
@@ -65,9 +65,9 @@ public:
         py::array_t<double,
         py::array::c_style | py::array::forcecast> array);
     void setupMpi(bool init_mpi, bool finalize_mpi);
-    int step();
-    int stepCleanup();
-    int stepInit();
+    long long step();
+    long long stepCleanup();
+    long long stepInit();
 
 private:
     Opm::FlowMain<TypeTag>& getFlowMain() const;

@@ -69,12 +69,12 @@ public:
     RK4IVP(const RHS& f,
            const std::array<Scalar,2>& span,
            const Scalar y0,
-           const int N);
+           const long long N);
 
     Scalar operator()(const Scalar x) const;
 
 private:
-    int N_;
+    long long N_;
     std::array<Scalar,2> span_;
     std::vector<Scalar>  y_;
     std::vector<Scalar>  f_;
@@ -92,7 +92,7 @@ class Water
 public:
     Water(const TabulatedFunction& tempVdTable,
           const TabulatedFunction& saltVdTable,
-          const int pvtRegionIdx,
+          const long long pvtRegionIdx,
           const Scalar normGrav);
 
     Scalar operator()(const Scalar depth,
@@ -101,7 +101,7 @@ public:
 private:
     const TabulatedFunction& tempVdTable_;
     const TabulatedFunction& saltVdTable_;
-    const int pvtRegionIdx_;
+    const long long pvtRegionIdx_;
     const Scalar g_;
 
     Scalar density(const Scalar depth,
@@ -117,7 +117,7 @@ class Oil
 public:
     Oil(const TabulatedFunction& tempVdTable,
         const RS& rs,
-        const int pvtRegionIdx,
+        const long long pvtRegionIdx,
         const Scalar normGrav);
 
     Scalar operator()(const Scalar depth,
@@ -126,7 +126,7 @@ public:
 private:
     const TabulatedFunction& tempVdTable_;
     const RS& rs_;
-    const int pvtRegionIdx_;
+    const long long pvtRegionIdx_;
     const Scalar g_;
 
     Scalar density(const Scalar depth,
@@ -143,7 +143,7 @@ public:
     Gas(const TabulatedFunction& tempVdTable,
         const RV& rv,
         const RVW& rvw,
-        const int pvtRegionIdx,
+        const long long pvtRegionIdx,
         const Scalar normGrav);
 
     Scalar operator()(const Scalar depth,
@@ -153,7 +153,7 @@ private:
     const TabulatedFunction& tempVdTable_;
     const RV& rv_;
     const RVW& rvw_;
-    const int pvtRegionIdx_;
+    const long long pvtRegionIdx_;
     const Scalar g_;
 
     Scalar density(const Scalar depth,
@@ -178,7 +178,7 @@ public:
     /// \param[in] samplePoints Number of equally spaced depth sample points
     ///    in each internal phase pressure table.
     explicit PressureTable(const Scalar gravity,
-                           const int    samplePoints = 2000);
+                           const long long    samplePoints = 2000);
 
     /// Copy constructor
     ///
@@ -259,7 +259,7 @@ private:
 
         explicit PressureFunction(const ODE&      ode,
                                   const InitCond& ic,
-                                  const int       nsample,
+                                  const long long       nsample,
                                   const VSpan&    span);
 
         PressureFunction(const PressureFunction& rhs);
@@ -300,7 +300,7 @@ private:
         (const Region&, const VSpan&);
 
     Scalar gravity_;
-    int    nsample_;
+    long long    nsample_;
 
     std::unique_ptr<OPress> oil_{};
     std::unique_ptr<GPress> gas_{};
@@ -699,7 +699,7 @@ public:
                          const GridView& gridView,
                          const CartesianIndexMapper& cartMapper,
                          const Scalar grav,
-                         const int num_pressure_points = 2000,
+                         const long long num_pressure_points = 2000,
                          const bool applySwatInit = true);
 
     using Vec = std::vector<Scalar>;
@@ -754,7 +754,7 @@ private:
     template <class CellRange, class PressTable, class PhaseSat>
     void equilibrateHorizontal(const CellRange&        cells,
                                const EquilReg<Scalar>& eqreg,
-                               const int               acc,
+                               const long long               acc,
                                const PressTable&       ptable,
                                PhaseSat&               psat);
 
@@ -765,7 +765,7 @@ private:
     std::vector<TabulatedFunction> tempVdTable_;
     std::vector<TabulatedFunction> saltVdTable_;
     std::vector<TabulatedFunction> saltpVdTable_;
-    std::vector<int> regionPvtIdx_;
+    std::vector<long long> regionPvtIdx_;
     Vec temperature_;
     Vec saltConcentration_;
     Vec saltSaturation_;
@@ -779,7 +779,7 @@ private:
     Vec cellCenterDepth_;
     std::vector<std::pair<Scalar,Scalar>> cellZSpan_;
     std::vector<std::pair<Scalar,Scalar>> cellZMinMax_;
-    int num_pressure_points_;
+    long long num_pressure_points_;
 };
 
 } // namespace DeckDependent

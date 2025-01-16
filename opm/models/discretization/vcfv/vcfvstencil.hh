@@ -639,47 +639,47 @@ private:
 
     void getEdgeIndices(unsigned numElemVertices, unsigned face, unsigned vert, unsigned& leftEdge, unsigned& rightEdge)
     {
-        static const int faceAndVertexToLeftEdgeTet[4][4] = {
+        static const long long faceAndVertexToLeftEdgeTet[4][4] = {
                 { 0, 0, 2, -1},
                 { 0, 0, -1, 3},
                 { 1, -1, 1, 3},
                 {-1, 2, 2, 4}
         };
-        static const int faceAndVertexToRightEdgeTet[4][4] = {
+        static const long long faceAndVertexToRightEdgeTet[4][4] = {
                 { 1, 2, 1, -1},
                 { 3, 4, -1, 4},
                 { 3, -1, 5, 5},
                 {-1, 4, 5, 5}
         };
-        static const int faceAndVertexToLeftEdgePyramid[5][5] = {
+        static const long long faceAndVertexToLeftEdgePyramid[5][5] = {
             { 0, 2, 3, 1, -1},
             { 0, -1, 0, -1, 4},
             {-1, 1, -1, 1, 5},
             { 2, 2, -1, -1, 4},
             {-1, -1, 3, 3, 7}
         };
-        static const int faceAndVertexToRightEdgePyramid[5][5] = {
+        static const long long faceAndVertexToRightEdgePyramid[5][5] = {
             { 2, 1, 0, 3, -1},
             { 4, -1, 6, -1, 6},
             {-1, 5, -1, 7, 7},
             { 4, 5, -1, -1, 5},
             {-1, -1, 6, 7, 6}
         };
-        static const int faceAndVertexToLeftEdgePrism[5][6] = {
+        static const long long faceAndVertexToLeftEdgePrism[5][6] = {
             { 3, 3, -1, 0, 1, -1},
             { 4, -1, 4, 0, -1, 2},
             {-1, 5, 5, -1, 1, 2},
             { 3, 3, 5, -1, -1, -1},
             {-1, -1, -1, 6, 6, 8}
         };
-        static const int faceAndVertexToRightEdgePrism[5][6] = {
+        static const long long faceAndVertexToRightEdgePrism[5][6] = {
             { 0, 1, -1, 6, 6, -1},
             { 0, -1, 2, 7, -1, 7},
             {-1, 1, 2, -1, 8, 8},
             { 4, 5, 4, -1, -1, -1},
             {-1, -1, -1, 7, 8, 7}
         };
-        static const int faceAndVertexToLeftEdgeHex[6][8] = {
+        static const long long faceAndVertexToLeftEdgeHex[6][8] = {
             { 0, -1, 4, -1, 8, -1, 2, -1},
             {-1, 5, -1, 3, -1, 1, -1, 9},
             { 6, 1, -1, -1, 0, 10, -1, -1},
@@ -687,7 +687,7 @@ private:
             { 4, 6, 7, 5, -1, -1, -1, -1},
             {-1, -1, -1, -1, 10, 9, 8, 11}
         };
-        static const int faceAndVertexToRightEdgeHex[6][8] = {
+        static const long long faceAndVertexToRightEdgeHex[6][8] = {
             { 4, -1, 2, -1, 0, -1, 8, -1},
             {-1, 1, -1, 5, -1, 9, -1, 3},
             { 0, 6, -1, -1, 10, 1, -1, -1},
@@ -814,7 +814,7 @@ public:
         , element_(*gridView.template begin</*codim=*/0>())
     {
         // try to check if the mapper really maps the vertices
-        assert(static_cast<int>(gridView.size(/*codim=*/dimWorld)) == static_cast<int>(mapper.size()));
+        assert(static_cast<long long>(gridView.size(/*codim=*/dimWorld)) == static_cast<long long>(mapper.size()));
 
         static bool localGeometriesInitialized = false;
         if (!localGeometriesInitialized) {
@@ -848,8 +848,8 @@ public:
         geometryType_ = geometry.type();
         const auto& referenceElement = Dune::ReferenceElements<CoordScalar,dim>::general(geometryType_);
         for (unsigned vertexIdx = 0; vertexIdx < numVertices; vertexIdx++) {
-            subContVol[vertexIdx].local = referenceElement.position(static_cast<int>(vertexIdx), dim);
-            subContVol[vertexIdx].global = geometry.corner(static_cast<int>(vertexIdx));
+            subContVol[vertexIdx].local = referenceElement.position(static_cast<long long>(vertexIdx), dim);
+            subContVol[vertexIdx].global = geometry.corner(static_cast<long long>(vertexIdx));
         }
     }
 
@@ -876,18 +876,18 @@ public:
 
         // corners:
         for (unsigned vert = 0; vert < numVertices; vert++) {
-            subContVol[vert].local = referenceElement.position(static_cast<int>(vert), dim);
+            subContVol[vert].local = referenceElement.position(static_cast<long long>(vert), dim);
             subContVol[vert].global = geometry.global(subContVol[vert].local);
         }
 
         // edges:
         for (unsigned edge = 0; edge < numEdges; edge++) {
-            edgeCoord[edge] = geometry.global(referenceElement.position(static_cast<int>(edge), dim-1));
+            edgeCoord[edge] = geometry.global(referenceElement.position(static_cast<long long>(edge), dim-1));
         }
 
         // faces:
         for (unsigned face = 0; face < numFaces; face++) {
-            faceCoord[face] = geometry.global(referenceElement.position(static_cast<int>(face), 1));
+            faceCoord[face] = geometry.global(referenceElement.position(static_cast<long long>(face), 1));
         }
 
         // fill sub control volume data use specialization for this
@@ -899,8 +899,8 @@ public:
 
         // fill sub control volume face data:
         for (unsigned k = 0; k < numEdges; k++) { // begin loop over edges / sub control volume faces
-            unsigned short i = static_cast<unsigned short>(referenceElement.subEntity(static_cast<int>(k), dim-1, 0, dim));
-            unsigned short j = static_cast<unsigned short>(referenceElement.subEntity(static_cast<int>(k), dim-1, 1, dim));
+            unsigned short i = static_cast<unsigned short>(referenceElement.subEntity(static_cast<long long>(k), dim-1, 0, dim));
+            unsigned short j = static_cast<unsigned short>(referenceElement.subEntity(static_cast<long long>(k), dim-1, 1, dim));
             if (numEdges == 4 && (i == 2 || j == 2))
                 std::swap(i, j);
             subContVolFace[k].i = i;
@@ -920,7 +920,7 @@ public:
                 ipLocal_ = subContVolFace[k].ipLocal_;
             }
             else if (dim==2) {
-                ipLocal_ = referenceElement.position(static_cast<int>(k), dim-1) + elementLocal;
+                ipLocal_ = referenceElement.position(static_cast<long long>(k), dim-1) + elementLocal;
                 ipLocal_ *= 0.5;
                 subContVolFace[k].ipLocal_ = ipLocal_;
                 for (unsigned m = 0; m < dimWorld; ++m)
@@ -941,9 +941,9 @@ public:
                 unsigned leftFace;
                 unsigned rightFace;
                 getFaceIndices(numVertices, k, leftFace, rightFace);
-                ipLocal_ = referenceElement.position(static_cast<int>(k), dim-1) + elementLocal
-                    + referenceElement.position(static_cast<int>(leftFace), 1)
-                    + referenceElement.position(static_cast<int>(rightFace), 1);
+                ipLocal_ = referenceElement.position(static_cast<long long>(k), dim-1) + elementLocal
+                    + referenceElement.position(static_cast<long long>(leftFace), 1)
+                    + referenceElement.position(static_cast<long long>(rightFace), 1);
                 ipLocal_ *= 0.25;
                 subContVolFace[k].ipLocal_ = ipLocal_;
                 normalOfQuadrilateral3D(subContVolFace[k].normal_,
@@ -966,20 +966,20 @@ public:
                 continue;
 
             unsigned face = static_cast<unsigned>(intersection.indexInInside());
-            unsigned numVerticesOfFace = static_cast<unsigned>(referenceElement.size(static_cast<int>(face), 1, dim));
+            unsigned numVerticesOfFace = static_cast<unsigned>(referenceElement.size(static_cast<long long>(face), 1, dim));
             for (unsigned vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
             {
-                unsigned short vertInElement = static_cast<unsigned short>(referenceElement.subEntity(static_cast<int>(face), 1, static_cast<int>(vertInFace), dim));
+                unsigned short vertInElement = static_cast<unsigned short>(referenceElement.subEntity(static_cast<long long>(face), 1, static_cast<long long>(vertInFace), dim));
                 unsigned bfIdx = numBoundarySegments_;
                 ++numBoundarySegments_;
 
                 if (dim == 1) {
-                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<int>(vertInElement), dim);
+                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<long long>(vertInElement), dim);
                     boundaryFace_[bfIdx].area_ = 1.0;
                 }
                 else if (dim == 2) {
-                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<int>(vertInElement), dim)
-                        + referenceElement.position(static_cast<int>(face), 1);
+                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<long long>(vertInElement), dim)
+                        + referenceElement.position(static_cast<long long>(face), 1);
                     boundaryFace_[bfIdx].ipLocal_ *= 0.5;
                     boundaryFace_[bfIdx].area_ = 0.5 * intersection.geometry().volume();
                 }
@@ -987,10 +987,10 @@ public:
                     unsigned leftEdge;
                     unsigned rightEdge;
                     getEdgeIndices(numVertices, face, vertInElement, leftEdge, rightEdge);
-                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<int>(vertInElement), dim)
-                        + referenceElement.position(static_cast<int>(face), 1)
-                        + referenceElement.position(static_cast<int>(leftEdge), dim-1)
-                        + referenceElement.position(static_cast<int>(rightEdge), dim-1);
+                    boundaryFace_[bfIdx].ipLocal_ = referenceElement.position(static_cast<long long>(vertInElement), dim)
+                        + referenceElement.position(static_cast<long long>(face), 1)
+                        + referenceElement.position(static_cast<long long>(leftEdge), dim-1)
+                        + referenceElement.position(static_cast<long long>(rightEdge), dim-1);
                     boundaryFace_[bfIdx].ipLocal_ *= 0.25;
                     boundaryFace_[bfIdx].area_ =
                         quadrilateralArea3D(subContVol[vertInElement].global,
@@ -1092,7 +1092,7 @@ public:
     {
         assert(dofIdx < numDof());
 
-        return static_cast<unsigned>(vertexMapper_.subIndex(element_, static_cast<int>(dofIdx), /*codim=*/dim));
+        return static_cast<unsigned>(vertexMapper_.subIndex(element_, static_cast<long long>(dofIdx), /*codim=*/dim));
     }
 
     /*!
@@ -1102,7 +1102,7 @@ public:
     Entity entity(unsigned dofIdx) const
     {
         assert(dofIdx < numDof());
-        return element_.template subEntity<dim>(static_cast<int>(dofIdx));
+        return element_.template subEntity<dim>(static_cast<long long>(dofIdx));
     }
 
 private:

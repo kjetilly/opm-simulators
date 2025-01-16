@@ -74,7 +74,7 @@ void Opm::ParallelPAvgDynamicSourceData<Scalar>::synchroniseSources()
 {
     this->comm_.get()
         .allgatherv(this->localSrc_.data(),       // Input (from)
-                    static_cast<int>(this->localSrc_.size()),
+                    static_cast<long long>(this->localSrc_.size()),
                     this->src_.data(),            // Output (to)
                     this->allSizes_.data(),       // #elements per rank
                     this->startPointers_.data()); // Output offsets
@@ -138,7 +138,7 @@ void Opm::ParallelPAvgDynamicSourceData<Scalar>::defineCommunication()
     this->startPointers_.resize(allIxStart.size());
     std::transform(allIxStart.begin(), allIxStart.end(),
                    this->startPointers_.begin(),
-                   [](const int start)
+                   [](const long long start)
                    {
                        return numItems * start;
                    });

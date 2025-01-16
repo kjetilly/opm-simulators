@@ -73,7 +73,7 @@ namespace Opm::Properties {
 }
 
 template<class T>
-std::tuple<T,int,int> PackUnpack(T& in)
+std::tuple<T,long long,long long> PackUnpack(T& in)
 {
     Opm::Serialization::MemPacker packer;
     Opm::Serializer ser(packer);
@@ -330,10 +330,10 @@ public:
         closed_offending_wells_ = {{"test4", {"test5", "test6"}}};
     }
 
-    void calcResvCoeff(const int, const int, const std::vector<double>&, std::vector<double>&) override
+    void calcResvCoeff(const long long, const long long, const std::vector<double>&, std::vector<double>&) override
     {}
 
-    void calcInjResvCoeff(const int, const int, std::vector<double>&) override
+    void calcInjResvCoeff(const long long, const long long, std::vector<double>&) override
     {}
 
     void computePotentials(const std::size_t,
@@ -343,13 +343,13 @@ public:
                            DeferredLogger&) override
     {}
 
-    void createWellContainer(const int) override
+    void createWellContainer(const long long) override
     {}
 
-    void initWellContainer(const int) override
+    void initWellContainer(const long long) override
     {}
 
-    void calculateProductivityIndexValuesShutWells(const int,
+    void calculateProductivityIndexValuesShutWells(const long long,
                                                    DeferredLogger&) override
     {}
 
@@ -357,7 +357,7 @@ public:
     {}
 
 
-    int compressedIndexForInterior(int) const override
+    long long compressedIndexForInterior(long long) const override
     {
         return 0;
     }
@@ -399,7 +399,7 @@ public:
                               const Opm::EclipseState& eclState,
                               const Dune::CartesianIndexMapper<Grid>& cartMapper,
                               const DofMapper& dofMapper,
-                              const std::function<std::array<double,Grid::dimensionworld>(int)> centroids) :
+                              const std::function<std::array<double,Grid::dimensionworld>(long long)> centroids) :
         Base(gridView, eclState, cartMapper, dofMapper, centroids)
     {}
 
@@ -408,7 +408,7 @@ public:
                             const Opm::EclipseState& eclState,
                             const Dune::CartesianIndexMapper<Grid>& cartMapper,
                             const DofMapper& dofMapper,
-                            const std::function<std::array<double,Grid::dimensionworld>(int)> centroids)
+                            const std::function<std::array<double,Grid::dimensionworld>(long long)> centroids)
     {
         GenericTracerModelTest result(gridView, eclState, cartMapper, dofMapper, centroids);
         result.tracerConcentration_ = {{{1.0, 2.0}}, {{3.0, 4.0}}, {{5.0, 6.0}}};
@@ -439,7 +439,7 @@ BOOST_AUTO_TEST_CASE(FlowGenericTracerModel)
     Dune::CpGrid grid;
     Opm::EclipseState eclState;
     Dune::CartesianIndexMapper<Dune::CpGrid> mapper(grid);
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
+    auto centroids = [](long long) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
     using GridView = Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>;
     auto gridView = grid.leafGridView();
     Dune::MultipleCodimMultipleGeomTypeMapper<GridView> dofMapper(gridView, Dune::mcmgElementLayout());
@@ -467,7 +467,7 @@ BOOST_AUTO_TEST_CASE(FlowGenericTracerModelFem)
     Dune::CpGrid grid;
     Opm::EclipseState eclState;
     Dune::CartesianIndexMapper<Dune::CpGrid> mapper(grid);
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
+    auto centroids = [](long long) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
     using GridPart = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, Dune::PartitionIteratorType(4), false>;
     using GridView = GridPart::GridViewType;
     auto gridPart = GridPart(grid);
@@ -589,10 +589,10 @@ bool init_unit_test_func()
     return true;
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     // MPI setup.
-    int argcDummy = 1;
+    long long argcDummy = 1;
     const char *tmp[] = {"test_RestartSerialization"};
     char **argvDummy = const_cast<char**>(tmp);
 #if HAVE_DUNE_FEM

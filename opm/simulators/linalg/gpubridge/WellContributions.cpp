@@ -90,9 +90,9 @@ WellContributions<Scalar>::create(const std::string& accelerator_mode, bool useW
 template<class Scalar>
 void WellContributions<Scalar>::
 addMatrix([[maybe_unused]] MatrixType type,
-          [[maybe_unused]] int* colIndices,
+          [[maybe_unused]] long long* colIndices,
           [[maybe_unused]] Scalar* values,
-          [[maybe_unused]] unsigned int val_size)
+          [[maybe_unused]] size_t val_size)
 {
 #if !HAVE_CUDA && !HAVE_OPENCL
     OPM_THROW(std::logic_error, "Error cannot add StandardWell matrix on GPU because neither CUDA nor OpenCL were found by cmake");
@@ -111,7 +111,7 @@ addMatrix([[maybe_unused]] MatrixType type,
 }
 
 template<class Scalar>
-void WellContributions<Scalar>::setBlockSize(unsigned int dim_, unsigned int dim_wells_)
+void WellContributions<Scalar>::setBlockSize(size_t dim_, size_t dim_wells_)
 {
     dim = dim_;
     dim_wells = dim_wells_;
@@ -132,7 +132,7 @@ void WellContributions<Scalar>::setVectorSize(unsigned N_)
 }
 
 template<class Scalar>
-void WellContributions<Scalar>::addNumBlocks(unsigned int numBlocks)
+void WellContributions<Scalar>::addNumBlocks(size_t numBlocks)
 {
     if (allocated) {
         OPM_THROW(std::logic_error, "Error cannot add more sizes after allocated in WellContributions");
@@ -154,13 +154,13 @@ void WellContributions<Scalar>::alloc()
 
 template<class Scalar>
 void WellContributions<Scalar>::
-addMultisegmentWellContribution(unsigned int dim_,
-                                unsigned int dim_wells_,
-                                unsigned int Mb,
+addMultisegmentWellContribution(size_t dim_,
+                                size_t dim_wells_,
+                                size_t Mb,
                                 std::vector<Scalar>& Bvalues,
-                                std::vector<unsigned int>& BcolIndices,
-                                std::vector<unsigned int>& BrowPointers,
-                                unsigned int DnumBlocks,
+                                std::vector<size_t>& BcolIndices,
+                                std::vector<size_t>& BrowPointers,
+                                size_t DnumBlocks,
                                 Scalar* Dvalues,
                                 UMFPackIndex* DcolPointers,
                                 UMFPackIndex* DrowIndices,

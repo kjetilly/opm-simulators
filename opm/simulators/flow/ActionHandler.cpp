@@ -59,7 +59,7 @@
 
 namespace {
     std::string formatActionDate(const Opm::TimeStampUTC& timePoint,
-                                 const int                reportStep)
+                                 const long long                reportStep)
     {
         auto time_point = std::tm{};
 
@@ -123,7 +123,7 @@ namespace {
         Opm::OpmLog::debug("NAMED_ACTION_NOT_TRIGGERED", message);
     }
 
-    void logInactiveActions(const int          numInactive,
+    void logInactiveActions(const long long          numInactive,
                             const std::string& timeString)
     {
         const auto message =
@@ -137,7 +137,7 @@ namespace {
 
     template <typename Scalar, class WellModel>
     std::unordered_map<std::string, Scalar>
-    fetchWellPI(const int                                    reportStep,
+    fetchWellPI(const long long                                    reportStep,
                 const Opm::Schedule&                         schedule,
                 const WellModel&                             wellModel,
                 const Opm::Action::ActionX&                  action,
@@ -190,7 +190,7 @@ ActionHandler(EclipseState& ecl_state,
 
 template<class Scalar>
 void ActionHandler<Scalar>::
-applyActions(const int reportStep,
+applyActions(const long long reportStep,
              const double sim_time,
              const TransFunc& transUp)
 {
@@ -263,7 +263,7 @@ applyActions(const int reportStep,
 
 template<class Scalar>
 void ActionHandler<Scalar>::
-applySimulatorUpdate(const int report_step,
+applySimulatorUpdate(const long long report_step,
                      const SimulatorUpdate& sim_update,
                      const TransFunc& updateTrans,
                      bool& commit_wellstate)

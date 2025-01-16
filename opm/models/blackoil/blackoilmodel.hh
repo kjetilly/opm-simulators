@@ -342,7 +342,7 @@ public:
     /*!
      * \copydoc FvBaseDiscretization::primaryVarName
      */
-    std::string primaryVarName(int pvIdx) const
+    std::string primaryVarName(long long pvIdx) const
     {
         std::ostringstream oss;
 
@@ -350,7 +350,7 @@ public:
             oss << "water_switching";
         else if (pvIdx == Indices::pressureSwitchIdx)
             oss << "pressure_switching";
-        else if (static_cast<int>(pvIdx) == Indices::compositionSwitchIdx)
+        else if (static_cast<long long>(pvIdx) == Indices::compositionSwitchIdx)
             oss << "composition_switching";
         else if (SolventModule::primaryVarApplies(pvIdx))
             return SolventModule::primaryVarName(pvIdx);
@@ -369,7 +369,7 @@ public:
     /*!
      * \copydoc FvBaseDiscretization::eqName
      */
-    std::string eqName(int eqIdx) const
+    std::string eqName(long long eqIdx) const
     {
         std::ostringstream oss;
 
@@ -400,12 +400,12 @@ public:
             return 1.0;
 
         // saturations are always in the range [0, 1]!
-        if (int(Indices::waterSwitchIdx) == int(pvIdx))
+        if ((long long)(Indices::waterSwitchIdx) == (long long)(pvIdx))
             return 1.0;
 
         // oil pressures usually are in the range of 100 to 500 bars for typical oil
         // reservoirs (which is the only relevant application for the black-oil model).
-        else if (int(Indices::pressureSwitchIdx) == int(pvIdx))
+        else if ((long long)(Indices::pressureSwitchIdx) == (long long)(pvIdx))
             return 1.0/300e5;
 
         // deal with primary variables stemming from the solvent module
@@ -425,7 +425,7 @@ public:
             return EnergyModule::primaryVarWeight(pvIdx);
 
         // if the primary variable is either the gas saturation, Rs or Rv
-        assert(int(Indices::compositionSwitchIdx) == int(pvIdx));
+        assert((long long)(Indices::compositionSwitchIdx) == (long long)(pvIdx));
 
         auto pvMeaning = this->solution(0)[globalDofIdx].primaryVarsMeaningGas();
         if (pvMeaning == PrimaryVariables::GasMeaning::Sg)
@@ -479,9 +479,9 @@ public:
             outstream << priVars[eqIdx] << " ";
 
         // write the pseudo primary variables
-        outstream << static_cast<int>(priVars.primaryVarsMeaningGas()) << " ";
-        outstream << static_cast<int>(priVars.primaryVarsMeaningWater()) << " ";
-        outstream << static_cast<int>(priVars.primaryVarsMeaningPressure()) << " ";
+        outstream << static_cast<long long>(priVars.primaryVarsMeaningGas()) << " ";
+        outstream << static_cast<long long>(priVars.primaryVarsMeaningWater()) << " ";
+        outstream << static_cast<long long>(priVars.primaryVarsMeaningPressure()) << " ";
 
         outstream << priVars.pvtRegionIndex() << " ";
 

@@ -77,13 +77,13 @@ struct SpatialDiscretizationSplice<TypeTag, TTag::MultiPhaseBaseModel> { using t
 
 //! set the number of equations to the number of phases
 template<class TypeTag>
-struct NumEq<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr int value = GetPropType<TypeTag, Properties::Indices>::numEq; };
+struct NumEq<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr long long value = GetPropType<TypeTag, Properties::Indices>::numEq; };
 //! The number of phases is determined by the fluid system
 template<class TypeTag>
-struct NumPhases<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numPhases; };
+struct NumPhases<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr long long value = GetPropType<TypeTag, Properties::FluidSystem>::numPhases; };
 //! Number of chemical species in the system
 template<class TypeTag>
-struct NumComponents<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr int value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
+struct NumComponents<TypeTag, TTag::MultiPhaseBaseModel> { static constexpr long long value = GetPropType<TypeTag, Properties::FluidSystem>::numComponents; };
 
 //! The type of the base base class for actual problems
 template<class TypeTag>

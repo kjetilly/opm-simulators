@@ -137,7 +137,7 @@ public:
         if (verbose_)
             std::cout << "Allocating the simulation vanguard\n" << std::flush;
 
-        int exceptionThrown = 0;
+        long long exceptionThrown = 0;
         std::string what;
 
         auto catchAction =
@@ -154,7 +154,7 @@ public:
 
         auto checkParallelException =
             [comm](const std::string& prefix,
-                   int exceptionThrown_,
+                   long long exceptionThrown_,
                    const std::string& what_)
         {
             if (comm.max(exceptionThrown_)) {
@@ -444,7 +444,7 @@ public:
      * \brief Returns number of time steps which have been
      *        executed since the beginning of the simulation.
      */
-    int timeStepIndex() const
+    long long timeStepIndex() const
     { return timeStepIdx_; }
 
     /*!
@@ -528,7 +528,7 @@ public:
      *
      * Use this method with care!
      */
-    void setEpisodeIndex(int episodeIdx)
+    void setEpisodeIndex(long long episodeIdx)
     { episodeIdx_ = episodeIdx; }
 
     /*!
@@ -536,7 +536,7 @@ public:
      *
      * The first episode has the index 0.
      */
-    int episodeIndex() const
+    long long episodeIndex() const
     { return episodeIdx_; }
 
     /*!
@@ -661,7 +661,7 @@ public:
                           << "\" problem\n" << std::flush;
 
             Scalar oldTimeStepSize = timeStepSize_;
-            int oldTimeStepIdx = timeStepIdx_;
+            long long oldTimeStepIdx = timeStepIdx_;
             timeStepSize_ = 0.0;
             timeStepIdx_ = -1;
 
@@ -776,7 +776,7 @@ public:
             }
             else {
                 Scalar dt;
-                if (timeStepIdx_ < static_cast<int>(forcedTimeSteps_.size()))
+                if (timeStepIdx_ < static_cast<long long>(forcedTimeSteps_.size()))
                     // use the next time step size from the input file
                     dt = forcedTimeSteps_[timeStepIdx_];
                 else
@@ -889,7 +889,7 @@ private:
     std::unique_ptr<Model> model_;
     std::unique_ptr<Problem> problem_;
 
-    int episodeIdx_;
+    long long episodeIdx_;
     Scalar episodeStartTime_;
     Scalar episodeLength_;
 
@@ -907,7 +907,7 @@ private:
     Scalar endTime_;
 
     Scalar timeStepSize_;
-    int timeStepIdx_;
+    long long timeStepIdx_;
 
     bool finished_;
     bool verbose_;

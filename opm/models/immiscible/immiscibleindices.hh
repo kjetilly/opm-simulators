@@ -38,31 +38,31 @@ namespace Opm {
  *
  * \brief The indices for the isothermal multi-phase model.
  */
-template <class TypeTag, int PVOffset>
+template <class TypeTag, long long PVOffset>
 struct ImmiscibleIndices
     : public EnergyIndices<PVOffset + getPropValue<TypeTag, Properties::NumPhases>(),
                            getPropValue<TypeTag, Properties::EnableEnergy>()>
 {
-    static constexpr int numPhases = getPropValue<TypeTag, Properties::NumPhases>();
+    static constexpr long long numPhases = getPropValue<TypeTag, Properties::NumPhases>();
     enum { enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>() };
     using EnergyIndices = Opm::EnergyIndices<PVOffset + numPhases, enableEnergy>;
 
 public:
     // number of equations/primary variables
-    static const int numEq = numPhases + EnergyIndices::numEq_;
+    static const long long numEq = numPhases + EnergyIndices::numEq_;
 
     // Primary variable indices
 
     //! Index for wetting/non-wetting phase pressure
     //! (depending on formulation) in a solution vector
-    static const int pressure0Idx = PVOffset + 0;
+    static const long long pressure0Idx = PVOffset + 0;
     //! Index of the saturation of the non-wetting/wetting phase
-    static const int saturation0Idx = PVOffset + 1;
+    static const long long saturation0Idx = PVOffset + 1;
 
     // indices of the equations
 
     //! Index of the continuity equation of the first phase
-    static const int conti0EqIdx = PVOffset + 0;
+    static const long long conti0EqIdx = PVOffset + 0;
 };
 } // namespace Opm
 

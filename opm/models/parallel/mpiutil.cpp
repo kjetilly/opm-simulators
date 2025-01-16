@@ -35,9 +35,9 @@
 namespace {
 
 template <typename T>
-int packSize()
+long long packSize()
 {
-    int pack_size;
+    long long pack_size;
     MPI_Pack_size(1, Dune::MPITraits<T>::getType(), MPI_COMM_WORLD, &pack_size);
     return pack_size;
 }
@@ -46,17 +46,17 @@ int packSize()
 template <typename T>
 struct Packer
 {
-    static int size(const T&)
+    static long long size(const T&)
     {
         return packSize<T>();
     }
 
-    static void pack(const T& content, std::vector<char>& buf, int& offset)
+    static void pack(const T& content, std::vector<char>& buf, long long& offset)
     {
         MPI_Pack(&content, 1, Dune::MPITraits<T>::getType(), buf.data(), buf.size(), &offset, MPI_COMM_WORLD);
     }
 
-    static T unpack(const std::vector<char>& recv_buffer, int& offset)
+    static T unpack(const std::vector<char>& recv_buffer, long long& offset)
     {
         T content;
         auto* data = const_cast<char*>(recv_buffer.data());
@@ -69,23 +69,23 @@ struct Packer
 template <>
 struct Packer<std::string>
 {
-    static int size(const std::string& content)
+    static long long size(const std::string& content)
     {
-        return packSize<unsigned int>() + content.size()*packSize<char>();
+        return packSize<size_t>() + content.size()*packSize<char>();
     }
 
-    static void pack(const std::string& content, std::vector<char>& buf, int& offset)
+    static void pack(const std::string& content, std::vector<char>& buf, long long& offset)
     {
-        unsigned int size = content.size();
-        Packer<unsigned int>::pack(size, buf, offset);
+        size_t size = content.size();
+        Packer<size_t>::pack(size, buf, offset);
         if (size > 0) {
             MPI_Pack(const_cast<char*>(content.c_str()), size, MPI_CHAR, buf.data(), buf.size(), &offset, MPI_COMM_WORLD);
         }
     }
 
-    static std::string unpack(const std::vector<char>& recv_buffer, int& offset)
+    static std::string unpack(const std::vector<char>& recv_buffer, long long& offset)
     {
-        unsigned int size = Packer<unsigned int>::unpack(recv_buffer, offset);
+        size_t size = Packer<size_t>::unpack(recv_buffer, offset);
         std::string text;
         if (size > 0) {
             auto* data = const_cast<char*>(recv_buffer.data());
@@ -101,31 +101,31 @@ struct Packer<std::string>
 template <typename T>
 struct Packer<std::vector<T>>
 {
-    static int size(const std::string& content)
+    static long long size(const std::string& content)
     {
-        int sz = 0;
-        sz += packSize<unsigned int>();
+        long long sz = 0;
+        sz += packSize<size_t>();
         for (const T& elem : content) {
             sz += Packer<T>::size(elem);
         }
         return sz;
     }
 
-    static void pack(const std::vector<T>& content, std::vector<char>& buf, int& offset)
+    static void pack(const std::vector<T>& content, std::vector<char>& buf, long long& offset)
     {
-        unsigned int size = content.size();
-        Packer<unsigned int>::pack(size, buf, offset);
+        size_t size = content.size();
+        Packer<size_t>::pack(size, buf, offset);
         for (const T& elem : content) {
             Packer<T>::pack(elem);
         }
     }
 
-    static std::vector<T> unpack(const std::vector<char>& recv_buffer, int& offset)
+    static std::vector<T> unpack(const std::vector<char>& recv_buffer, long long& offset)
     {
-        unsigned int size = Packer<T>::unpack(recv_buffer, offset);
+        size_t size = Packer<T>::unpack(recv_buffer, offset);
         std::vector<T> content;
         content.reserve(size);
-        for (unsigned int i = 0; i < size; ++i) {
+        for (size_t i = 0; i < size; ++i) {
             content.push_back(Packer<T>::unpack(recv_buffer, offset));
         }
         return content;
@@ -144,18 +144,18 @@ std::vector<std::string> gatherStrings(const std::string& local_string)
     using StringPacker = Packer<std::string>;
 
     // Pack local messages.
-    const int message_size = StringPacker::size(local_string);
+    const long long message_size = StringPacker::size(local_string);
     std::vector<char> buffer(message_size);
-    int offset = 0;
+    long long offset = 0;
     StringPacker::pack(local_string, buffer, offset);
     assert(offset == message_size);
 
     // Get message sizes and create offset/displacement array for gathering.
-    int num_processes = -1;
+    long long num_processes = -1;
     MPI_Comm_size(MPI_COMM_WORLD, &num_processes);
-    std::vector<int> message_sizes(num_processes);
+    std::vector<long long> message_sizes(num_processes);
     MPI_Allgather(&message_size, 1, MPI_INT, message_sizes.data(), 1, MPI_INT, MPI_COMM_WORLD);
-    std::vector<int> displ(num_processes + 1, 0);
+    std::vector<long long> displ(num_processes + 1, 0);
     std::partial_sum(message_sizes.begin(), message_sizes.end(), displ.begin() + 1);
 
     // Gather.
@@ -167,7 +167,7 @@ std::vector<std::string> gatherStrings(const std::string& local_string)
 
     // Unpack and return.
     std::vector<std::string> ret;
-    for (int process = 0; process < num_processes; ++process) {
+    for (long long process = 0; process < num_processes; ++process) {
         offset = displ[process];
         std::string s = StringPacker::unpack(recv_buffer, offset);
         if (!s.empty()) {

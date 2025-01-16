@@ -58,8 +58,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     //      0  0  0  ...1 -2  1
     //      0  0  0  ...   1 -2
 
-    const int N = 5;
-    const int nonZeroes = N * 3 - 2;
+    const long long N = 5;
+    const long long nonZeroes = N * 3 - 2;
     using M = Dune::FieldMatrix<T, 1, 1>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, 1>>;
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         B[i][i] = -2;
         if (i < N - 1) {
             B[i][i + 1] = 1;
@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
 
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         Vector inputVector(N);
         inputVector[i][0] = 1.0;
         Vector outputVectorDune(N);
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
         duneILU.apply(outputVectorDune, inputVector);
         gpuILU.apply(outputVectorCuistl, inputVector);
 
-        for (int component = 0; component < N; ++component) {
+        for (long long component = 0; component < N; ++component) {
             BOOST_CHECK_CLOSE(outputVectorDune[component][0],
                               outputVectorCuistl[component][0],
                               std::numeric_limits<T>::epsilon() * 1000);
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
     gpuILU.update();
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         Vector inputVector(N);
         inputVector[i][0] = 1.0;
         Vector outputVectorDune(N);
@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifference1D, T, NumericTypes)
         duneILUNew.apply(outputVectorDune, inputVector);
         gpuILU.apply(outputVectorCuistl, inputVector);
 
-        for (int component = 0; component < N; ++component) {
+        for (long long component = 0; component < N; ++component) {
             BOOST_CHECK_CLOSE(outputVectorDune[component][0],
                               outputVectorCuistl[component][0],
                               std::numeric_limits<T>::epsilon() * 1000);
@@ -153,8 +153,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
     //      0  0  0  ...1 -2  1
     //      0  0  0  ...   1 -2
 
-    const int N = 5;
-    const int nonZeroes = N * 3 - 2;
+    const long long N = 5;
+    const long long nonZeroes = N * 3 - 2;
     using M = Dune::FieldMatrix<T, 2, 2>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, 2>>;
@@ -171,7 +171,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         B[i][i][0][0] = -2;
         B[i][i][1][1] = -2;
         B[i][i][0][1] = 1;
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
 
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         Vector inputVector(N);
         inputVector[i][0] = 1.0;
         Vector outputVectorDune(N);
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
         duneILU.apply(outputVectorDune, inputVector);
         gpuILU.apply(outputVectorCuistl, inputVector);
 
-        for (int component = 0; component < N; ++component) {
+        for (long long component = 0; component < N; ++component) {
             BOOST_CHECK_CLOSE(outputVectorDune[component][0],
                               outputVectorCuistl[component][0],
                               std::numeric_limits<T>::epsilon() * 1000);
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
     gpuILU.update();
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         Vector inputVector(N);
         inputVector[i][0] = 1.0;
         Vector outputVectorDune(N);
@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(TestFiniteDifferenceBlock2, T, NumericTypes)
         duneILUNew.apply(outputVectorDune, inputVector);
         gpuILU.apply(outputVectorCuistl, inputVector);
 
-        for (int component = 0; component < N; ++component) {
+        for (long long component = 0; component < N; ++component) {
             BOOST_CHECK_CLOSE(outputVectorDune[component][0],
                               outputVectorCuistl[component][0],
                               std::numeric_limits<T>::epsilon() * 1000);
@@ -227,8 +227,8 @@ init_unit_test_func()
     return true;
 }
 
-int
-main(int argc, char** argv)
+long long
+main(long long argc, char** argv)
 {
     [[maybe_unused]] const auto& helper = Dune::MPIHelper::instance(argc, argv);
     boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

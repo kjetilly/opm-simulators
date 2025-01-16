@@ -39,13 +39,13 @@ namespace Opm::Accelerator {
 using Opm::OpmLog;
 using Dune::Timer;
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 CprCreation<Scalar, block_size>::CprCreation()
 {
     diagIndices.resize(1);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void CprCreation<Scalar, block_size>::
 create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
 {
@@ -67,9 +67,9 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         // find diagonal index for each row
         if (diagIndices[0].empty()) {
             diagIndices[0].resize(cprNb);
-            for (int row = 0; row < cprNb; ++row) {
-                int start = mat->rowPointers[row];
-                int end = mat->rowPointers[row + 1];
+            for (long long row = 0; row < cprNb; ++row) {
+                long long start = mat->rowPointers[row];
+                long long end = mat->rowPointers[row + 1];
                 auto candidate = std::find(mat->colIndices + start, mat->colIndices + end, row);
                 assert(candidate != mat->colIndices + end);
                 diagIndices[0][row] = candidate - mat->colIndices;
@@ -77,28 +77,28 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         }
 
         // calculate weights for each row
-        for (int row = 0; row < cprNb; ++row) {
+        for (long long row = 0; row < cprNb; ++row) {
             // solve to find weights
             Scalar *row_weights = weights.data() + block_size * row; // weights for this row
             solve_transposed_3x3(mat->nnzValues + block_size * block_size * diagIndices[0][row], rhs, row_weights);
 
             // normalize weights for this row
             Scalar abs_max = get_absmax(row_weights, block_size);
-            for(unsigned int i = 0; i < block_size; i++){
+            for(size_t i = 0; i < block_size; i++){
                 row_weights[i] /= abs_max;
             }
         }
 
         // extract pressure
         // transform blocks to scalars to create scalar linear system
-        for (int row = 0; row < cprNb; ++row) {
-            int start = mat->rowPointers[row];
-            int end = mat->rowPointers[row + 1];
-            for (int idx = start; idx < end; ++idx) {
+        for (long long row = 0; row < cprNb; ++row) {
+            long long start = mat->rowPointers[row];
+            long long end = mat->rowPointers[row + 1];
+            for (long long idx = start; idx < end; ++idx) {
                 Scalar *block = mat->nnzValues + idx * block_size * block_size;
                 Scalar *row_weights = weights.data() + block_size * row;
                 Scalar value = 0.0;
-                for (unsigned int i = 0; i < block_size; ++i) {
+                for (size_t i = 0; i < block_size; ++i) {
                     value += block[block_size * i + pressure_idx] * row_weights[i];
                 }
                 coarse_vals[idx] = value;
@@ -106,7 +106,7 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         }
 
 #if HAVE_MPI
-        using Communication = Dune::OwnerOverlapCopyCommunication<int, int>;
+        using Communication = Dune::OwnerOverlapCopyCommunication<long long, long long>;
 #else
         using Communication = Dune::Amg::SequentialInformation;
 #endif
@@ -119,20 +119,20 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
 
             // setup sparsity pattern
             for(Iter row = dune_coarse->createbegin(); row != dune_coarse->createend(); ++row){
-                int start = mat->rowPointers[row.index()];
-                int end = mat->rowPointers[row.index() + 1];
-                for (int idx = start; idx < end; ++idx) {
-                    int col = mat->colIndices[idx];
+                long long start = mat->rowPointers[row.index()];
+                long long end = mat->rowPointers[row.index() + 1];
+                for (long long idx = start; idx < end; ++idx) {
+                    long long col = mat->colIndices[idx];
                     row.insert(col);
                 }
             }
 
             // set values
-            for (int row = 0; row < cprNb; ++row) {
-                int start = mat->rowPointers[row];
-                int end = mat->rowPointers[row + 1];
-                for (int idx = start; idx < end; ++idx) {
-                    int col = mat->colIndices[idx];
+            for (long long row = 0; row < cprNb; ++row) {
+                long long start = mat->rowPointers[row];
+                long long end = mat->rowPointers[row + 1];
+                for (long long idx = start; idx < end; ++idx) {
+                    long long col = mat->colIndices[idx];
                     (*dune_coarse)[row][col] = coarse_vals[idx];
                 }
             }
@@ -163,11 +163,11 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         } else {
             // update values of coarsest level in AMG
             // this works because that level is actually a reference to the DuneMat held by dune_coarse
-            for (int row = 0; row < cprNb; ++row) {
-                int start = mat->rowPointers[row];
-                int end = mat->rowPointers[row + 1];
-                for (int idx = start; idx < end; ++idx) {
-                    int col = mat->colIndices[idx];
+            for (long long row = 0; row < cprNb; ++row) {
+                long long start = mat->rowPointers[row];
+                long long end = mat->rowPointers[row + 1];
+                for (long long idx = start; idx < end; ++idx) {
+                    long long col = mat->colIndices[idx];
                     (*dune_coarse)[row][col] = coarse_vals[idx];
                 }
             }
@@ -183,7 +183,7 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
     }
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void CprCreation<Scalar, block_size>::
 analyzeHierarchy()
 {
@@ -210,7 +210,7 @@ analyzeHierarchy()
     // matrixIter.dereference() returns MatrixAdapter
     // matrixIter.dereference().getmat() returns BCRSMat
     typename DuneAmg::ParallelMatrixHierarchy::ConstIterator matrixIter = matrixHierarchy.finest();
-    for(int level = 0; level < num_levels; ++matrixIter, ++level) {
+    for(long long level = 0; level < num_levels; ++matrixIter, ++level) {
         const auto& A = matrixIter.dereference().getmat();
         level_sizes[level] = A.N();
         diagIndices[level].reserve(A.N());
@@ -220,7 +220,7 @@ analyzeHierarchy()
         // contiguous copy is not possible
         // std::copy(&(A[0][0][0][0]), &(A[0][0][0][0]) + A.nonzeroes(), Amatrices.back().nnzValues.data());
         // also update diagonal indices if needed, level 0 is already filled in create_preconditioner()
-        int nnz_idx = 0;
+        long long nnz_idx = 0;
         const bool fillDiagIndices = diagIndices[level].empty();
         for (typename DuneMat::const_iterator r = A.begin(); r != A.end(); ++r) {
             for (auto c = r->begin(); c != r->end(); ++c) {
@@ -236,14 +236,14 @@ analyzeHierarchy()
 
         // compute inverse diagonal values for current level
         invDiags.emplace_back(A.N());
-        for (unsigned int row = 0; row < A.N(); ++row) {
+        for (size_t row = 0; row < A.N(); ++row) {
             invDiags.back()[row] = 1 / Amatrices.back().nnzValues[diagIndices[level][row]];
         }
     }
 }
 
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void CprCreation<Scalar, block_size>::
 analyzeAggregateMaps() 
 {
@@ -253,7 +253,7 @@ analyzeAggregateMaps()
     const typename DuneAmg::AggregatesMapList& aggregatesMaps = dune_amg->aggregatesMaps();
 
     typename DuneAmg::AggregatesMapList::const_iterator mapIter = aggregatesMaps.begin();
-    for(int level = 0; level < num_levels - 1; ++mapIter, ++level) {
+    for(long long level = 0; level < num_levels - 1; ++mapIter, ++level) {
         typename DuneAmg::AggregatesMap *map = *mapIter;
 
         Rmatrices.emplace_back(level_sizes[level+1], level_sizes[level], level_sizes[level]);
@@ -266,16 +266,16 @@ analyzeAggregateMaps()
         using AggregateIterator = typename DuneAmg::AggregatesMap::const_iterator;
         for(AggregateIterator ai = map->begin(); ai != map->end(); ++ai){
             if (*ai != DuneAmg::AggregatesMap::ISOLATED) {
-                const long int diff = ai - map->begin();
+                const long long diff = ai - map->begin();
                 PcolIndices[level][diff] = *ai;
                 indicesR[*ai].emplace_back(diff);
             }
         }
 
-        int col_idx = 0;
+        long long col_idx = 0;
         // set sparsity pattern of R
         Rmatrices.back().rowPointers[0] = 0;
-        for (unsigned int i = 0; i < indicesR.size(); ++i) {
+        for (size_t i = 0; i < indicesR.size(); ++i) {
             Rmatrices.back().rowPointers[i + 1] = Rmatrices.back().rowPointers[i] + indicesR[i].size();
             for (auto it = indicesR[i].begin(); it != indicesR[i].end(); ++it) {
                 Rmatrices.back().colIndices[col_idx++] = *it;

@@ -77,8 +77,8 @@ public:
 
         for (auto row = m_matrix.begin(); row != m_matrix.end(); ++row) {
             for (auto column = row->begin(); column != row->end(); ++column) {
-                for (int i = 0; i < MFloat::rows; ++i) {
-                    for (int j = 0; j < MFloat::cols; ++j) {
+                for (long long i = 0; i < MFloat::rows; ++i) {
+                    for (long long j = 0; j < MFloat::cols; ++j) {
                         BOOST_CHECK_EQUAL(float(m_expectedMatrix[i][j][i][j]), m_matrix[i][j][i][j]);
                     }
                 }
@@ -129,8 +129,8 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
 {
 
 
-    const int N = 5;
-    const int nonZeroes = N * 3 - 2;
+    const long long N = 5;
+    const long long nonZeroes = N * 3 - 2;
 
     SpMatrixDouble B(N, N, nonZeroes, SpMatrixDouble::row_wise);
     for (auto row = B.createbegin(); row != B.createend(); ++row) {
@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
         }
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         B[i][i] = -2;
         if (i < N - 1) {
             B[i][i + 1] = 1;
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestFiniteDifference1D)
 
     // check for the standard basis {e_i}
     // (e_i=(0,...,0, 1 (i-th place), 0, ..., 0))
-    for (int i = 0; i < N; ++i) {
+    for (long long i = 0; i < N; ++i) {
         XDouble inputVector(N);
         XDouble outputVector(N);
         XDouble expectedOutputVector(N);
@@ -188,8 +188,8 @@ init_unit_test_func()
     return true;
 }
 
-int
-main(int argc, char** argv)
+long long
+main(long long argc, char** argv)
 {
     [[maybe_unused]] const auto& helper = Dune::MPIHelper::instance(argc, argv);
     boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

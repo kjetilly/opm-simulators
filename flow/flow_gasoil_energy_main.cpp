@@ -18,7 +18,7 @@
 #include <flow/flow_gasoil_energy.hpp>
 
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     return Opm::flowGasOilEnergyMainStandalone(argc, argv);
 }

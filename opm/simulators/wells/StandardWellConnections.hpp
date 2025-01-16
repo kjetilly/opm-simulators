@@ -59,17 +59,17 @@ public:
 
     struct PressurePropertyFunctions
     {
-        std::function<Scalar(int,int)> getTemperature{};
-        std::function<Scalar(int)>     getSaltConcentration{};
-        std::function<int(int)>        pvtRegionIdx{};
-        std::function<Scalar(int)>     solventInverseFormationVolumeFactor{};
-        std::function<Scalar(int)>     solventRefDensity{};
+        std::function<Scalar(long long,long long)> getTemperature{};
+        std::function<Scalar(long long)>     getSaltConcentration{};
+        std::function<(long long)(long long)>        pvtRegionIdx{};
+        std::function<Scalar(long long)>     solventInverseFormationVolumeFactor{};
+        std::function<Scalar(long long)>     solventRefDensity{};
     };
 
     struct DensityPropertyFunctions
     {
-        std::function<void(int, const std::vector<int>&, std::vector<Scalar>&)> mobility{};
-        std::function<void(int, const std::vector<int>&, std::vector<Scalar>&)> densityInCell{};
+        std::function<void(long long, const std::vector<long long>&, std::vector<Scalar>&)> mobility{};
+        std::function<void(long long, const std::vector<long long>&, std::vector<Scalar>&)> densityInCell{};
     };
 
     Properties
@@ -149,8 +149,8 @@ private:
     std::vector<Scalar>
     calculatePerforationOutflow(const std::vector<Scalar>& perfComponentRates) const;
 
-    void initialiseConnectionMixture(const int                  num_comp,
-                                     const int                  perf,
+    void initialiseConnectionMixture(const long long                  num_comp,
+                                     const long long                  perf,
                                      const std::vector<Scalar>& q_out_perf,
                                      const std::vector<Scalar>& currentMixture,
                                      std::vector<Scalar>&       previousMixture) const;

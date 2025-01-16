@@ -32,7 +32,7 @@
 
 namespace Opm {
 
-int ThreadManager::numThreads_ = 1;
+long long ThreadManager::numThreads_ = 1;
 
 void ThreadManager::registerParameters()
 {

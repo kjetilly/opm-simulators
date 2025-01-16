@@ -32,15 +32,15 @@
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -111,7 +111,7 @@ namespace {
     class NProc_Is_Not
     {
     public:
-        explicit NProc_Is_Not(const int rejectNP)
+        explicit NProc_Is_Not(const long long rejectNP)
             : rejectNP_ { rejectNP }
         {}
 
@@ -135,7 +135,7 @@ namespace {
         }
 
     private:
-        int rejectNP_{};
+        long long rejectNP_{};
     };
 
 } // Anonymous namespace
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, * boost::unit_test::precondition(NProc_Is_Not
     BOOST_CHECK_EQUAL(cellCnt[2],    7);
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

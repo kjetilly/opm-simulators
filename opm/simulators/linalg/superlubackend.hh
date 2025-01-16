@@ -114,7 +114,7 @@ public:
     {
         Vector bTmp(b);
 
-        int verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
+        long long verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
         Dune::InverseOperatorResult result;
         Dune::SuperLU<Matrix> solver(A, verbosity > 0);
         solver.apply(x, bTmp, result);
@@ -147,7 +147,7 @@ public:
                        Vector& x,
                        const Vector& b)
     {
-        static const int numEq = getPropValue<TypeTag, Properties::NumEq>();
+        static const long long numEq = getPropValue<TypeTag, Properties::NumEq>();
         using DoubleEqVector = Dune::FieldVector<double, numEq>;
         using DoubleEqMatrix = Dune::FieldMatrix<double, numEq, numEq>;
         using DoubleVector = Dune::BlockVector<DoubleEqVector>;
@@ -178,7 +178,7 @@ namespace Opm::Properties {
 
 template<class TypeTag>
 struct LinearSolverVerbosity<TypeTag, TTag::SuperLULinearSolver>
-{ static constexpr int value = 0; };
+{ static constexpr long long value = 0; };
 
 template<class TypeTag>
 struct LinearSolverBackend<TypeTag, TTag::SuperLULinearSolver>

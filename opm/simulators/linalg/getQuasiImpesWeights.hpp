@@ -36,8 +36,8 @@ namespace Details
     DenseMatrix transposeDenseMatrix(const DenseMatrix& M)
     {
         DenseMatrix tmp;
-        for (int i = 0; i < M.rows; ++i)
-            for (int j = 0; j < M.cols; ++j)
+        for (long long i = 0; i < M.rows; ++i)
+            for (long long j = 0; j < M.cols; ++j)
                 tmp[j][i] = M[i][j];
 
         return tmp;
@@ -47,7 +47,7 @@ namespace Details
 namespace Amg
 {
     template <class Matrix, class Vector>
-    void getQuasiImpesWeights(const Matrix& matrix, const int pressureVarIndex, const bool transpose, Vector& weights)
+    void getQuasiImpesWeights(const Matrix& matrix, const long long pressureVarIndex, const bool transpose, Vector& weights)
     {
         using VectorBlockType = typename Vector::block_type;
         using MatrixBlockType = typename Matrix::block_type;
@@ -80,7 +80,7 @@ namespace Amg
     }
 
     template <class Matrix, class Vector>
-    Vector getQuasiImpesWeights(const Matrix& matrix, const int pressureVarIndex, const bool transpose)
+    Vector getQuasiImpesWeights(const Matrix& matrix, const long long pressureVarIndex, const bool transpose)
     {
         Vector weights(matrix.N());
         getQuasiImpesWeights(matrix, pressureVarIndex, transpose, weights);
@@ -88,18 +88,18 @@ namespace Amg
     }
 
     template<class Vector, class GridView, class ElementContext, class Model>
-    void getTrueImpesWeights(int pressureVarIndex, Vector& weights, const GridView& gridView,
+    void getTrueImpesWeights(long long pressureVarIndex, Vector& weights, const GridView& gridView,
                              ElementContext& elemCtx, const Model& model, std::size_t threadId)
     {
         using VectorBlockType = typename Vector::block_type;
         using Matrix = typename std::decay_t<decltype(model.linearizer().jacobian())>;
         using MatrixBlockType = typename Matrix::MatrixBlock;
-        constexpr int numEq = VectorBlockType::size();
+        constexpr long long numEq = VectorBlockType::size();
         using Evaluation = typename std::decay_t<decltype(model.localLinearizer(threadId).localResidual().residual(0))>
             ::block_type;
         VectorBlockType rhs(0.0);
         rhs[pressureVarIndex] = 1.0;
-        int index = 0;
+        long long index = 0;
         OPM_BEGIN_PARALLEL_TRY_CATCH();
         for (const auto& elem : elements(gridView)) {
             elemCtx.updatePrimaryStencil(elem);
@@ -111,8 +111,8 @@ namespace Amg
             auto storage_scale = scvVolume / elemCtx.simulator().timeStepSize();
             MatrixBlockType block;
             double pressure_scale = 50e5;
-            for (int ii = 0; ii < numEq; ++ii) {
-                for (int jj = 0; jj < numEq; ++jj) {
+            for (long long ii = 0; ii < numEq; ++ii) {
+                for (long long jj = 0; jj < numEq; ++jj) {
                     block[ii][jj] = storage[ii].derivative(jj)/storage_scale;
                     if (jj == pressureVarIndex) {
                         block[ii][jj] *= pressure_scale;
@@ -134,7 +134,7 @@ namespace Amg
     }
 
     template <class Vector, class GridView, class ElementContext, class Model>
-    void getTrueImpesWeightsAnalytic(int /*pressureVarIndex*/,
+    void getTrueImpesWeightsAnalytic(long long /*pressureVarIndex*/,
                                      Vector& weights,
                                      const GridView& gridView,
                                      ElementContext& elemCtx,

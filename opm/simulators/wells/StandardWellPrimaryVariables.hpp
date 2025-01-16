@@ -59,28 +59,28 @@ protected:
     // Spres     3      2      2      2                       1
 
     //! \brief Number of the well control equations.
-    static constexpr int numWellControlEq = 1;
+    static constexpr long long numWellControlEq = 1;
 
 public:
     //! \brief Number of the conservation equations.
-    static constexpr int numWellConservationEq = Indices::numPhases + Indices::numSolvents;
+    static constexpr long long numWellConservationEq = Indices::numPhases + Indices::numSolvents;
 
     //! \brief Number of the well equations that will always be used.
     //! \details Based on the solution strategy, there might be other well equations be introduced.
-    static constexpr int numStaticWellEq = numWellConservationEq + numWellControlEq;
+    static constexpr long long numStaticWellEq = numWellConservationEq + numWellControlEq;
 
-    static constexpr int WQTotal = 0; //!< The index for the weighted total rate
+    static constexpr long long WQTotal = 0; //!< The index for the weighted total rate
 
     //! \brief The index for Bhp in primary variables and the index of well control equation.
     //! \details They both will be the last one in their respective system.
     //! \todo: We should have indices for the well equations and well primary variables separately.
-    static constexpr int Bhp = numStaticWellEq - numWellControlEq;
+    static constexpr long long Bhp = numStaticWellEq - numWellControlEq;
 
     static constexpr bool has_wfrac_variable = Indices::waterEnabled && Indices::oilEnabled;
     static constexpr bool has_gfrac_variable = Indices::gasEnabled && Indices::numPhases > 1;
-    static constexpr int WFrac = has_wfrac_variable ? 1 : -1000;
-    static constexpr int GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
-    static constexpr int SFrac = !Indices::enableSolvent ? -1000 : has_wfrac_variable+has_gfrac_variable+1;
+    static constexpr long long WFrac = has_wfrac_variable ? 1 : -1000;
+    static constexpr long long GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
+    static constexpr long long SFrac = !Indices::enableSolvent ? -1000 : has_wfrac_variable+has_gfrac_variable+1;
 
     using Scalar = typename FluidSystem::Scalar;
     //! \brief Evaluation for the well equations.
@@ -96,10 +96,10 @@ public:
     void init();
 
     //! \brief Resize values and evaluations.
-    void resize(const int numWellEq);
+    void resize(const long long numWellEq);
 
     //! \brief Returns number of well equations.
-    int numWellEq() const { return numWellEq_; }
+    long long numWellEq() const { return numWellEq_; }
 
     //! \brief Copy values from well state.
     void update(const WellState<Scalar>& well_state,
@@ -130,24 +130,24 @@ public:
     void copyToWellStatePolyMW(WellState<Scalar>& well_state) const;
 
     //! \brief Returns scaled volume fraction for a component.
-    EvalWell volumeFractionScaled(const int compIdx) const;
+    EvalWell volumeFractionScaled(const long long compIdx) const;
 
     //! \brief Returns surface volume fraction for a component.
-    EvalWell surfaceVolumeFraction(const int compIdx) const;
+    EvalWell surfaceVolumeFraction(const long long compIdx) const;
 
     //! \brief Returns scaled rate for a component.
-    EvalWell getQs(const int compIdx) const;
+    EvalWell getQs(const long long compIdx) const;
 
     //! \brief Returns a value.
-    Scalar value(const int idx) const
+    Scalar value(const long long idx) const
     { return value_[idx]; }
 
     //! \brief Returns a const ref to an evaluation.
-    const EvalWell& eval(const int idx) const
+    const EvalWell& eval(const long long idx) const
     { return evaluation_[idx]; }
 
     //! \brief Set a value. Note that this does not also set the corresponding evaluation.
-    void setValue(const int idx, const Scalar val)
+    void setValue(const long long idx, const Scalar val)
     { value_[idx] = val; }
 
 private:
@@ -174,7 +174,7 @@ private:
 
     //! \brief Total number of the well equations and primary variables.
     //! \details There might be extra equations be used, numWellEq will be updated during the initialization
-    int numWellEq_ = numStaticWellEq;
+    long long numWellEq_ = numStaticWellEq;
 };
 
 }

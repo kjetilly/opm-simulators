@@ -108,14 +108,14 @@ public:
         return collectOnIORank_;
     }
 
-    void extractOutputTransAndNNC(const std::function<unsigned int(unsigned int)>& map);
+    void extractOutputTransAndNNC(const std::function<size_t(size_t)>& map);
 
 protected:
     const TransmissibilityType& globalTrans() const;
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const;
+    size_t gridEquilIdxToGridIdx(size_t elemIndex) const;
 
-    void doWriteOutput(const int                          reportStepNum,
-                       const std::optional<int>           timeStepNum,
+    void doWriteOutput(const long long                          reportStepNum,
+                       const std::optional<long long>           timeStepNum,
                        const bool                         isSubStep,
                        data::Solution&&                   localCellData,
                        data::Wells&&                      localWellData,
@@ -134,13 +134,13 @@ protected:
                        bool                               isFloresn,
                        std::array<FlowsData<double>, 3>&& floresn);
 
-    void evalSummary(int                                                  reportStepNum,
+    void evalSummary(long long                                                  reportStepNum,
                      Scalar                                               curTime,
                      const data::Wells&                                   localWellData,
                      const data::WellBlockAveragePressures&               localWBPData,
                      const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
-                     const std::map<int,data::AquiferData>&               localAquiferData,
-                     const std::map<std::pair<std::string, int>, double>& blockData,
+                     const std::map<long long,data::AquiferData>&               localAquiferData,
+                     const std::map<std::pair<std::string, long long>, double>& blockData,
                      const std::map<std::string, double>&                 miscSummaryData,
                      const std::map<std::string, std::vector<double>>&    regionData,
                      const Inplace&                                       inplace,
@@ -167,8 +167,8 @@ protected:
     mutable std::unique_ptr<data::Solution> outputTrans_;
 
 private:
-    void computeTrans_(const std::unordered_map<int,int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const;
-    std::vector<NNCdata> exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const;
+    void computeTrans_(const std::unordered_map<long long,long long>& cartesianToActive, const std::function<size_t(size_t)>& map) const;
+    std::vector<NNCdata> exportNncStructure_(const std::unordered_map<long long,long long>& cartesianToActive, const std::function<size_t(size_t)>& map) const;
 };
 
 } // namespace Opm

@@ -94,8 +94,8 @@ public:
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
 protected:
-    static const int dimension = Grid::dimension;
-    static const int dimensionworld = Grid::dimensionworld;
+    static const long long dimension = Grid::dimension;
+    static const long long dimensionworld = Grid::dimensionworld;
     using Element = typename GridView::template Codim<0>::Entity;
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
 
@@ -134,19 +134,19 @@ public:
     /*!
      * \brief Returns the number of logically Cartesian cells in each direction
      */
-    const std::array<int, dimension>& cartesianDimensions() const
+    const std::array<long long, dimension>& cartesianDimensions() const
     { return asImp_().cartesianIndexMapper().cartesianDimensions(); }
 
     /*!
      * \brief Returns the overall number of cells of the logically Cartesian grid
      */
-    int cartesianSize() const
+    long long cartesianSize() const
     { return asImp_().cartesianIndexMapper().cartesianSize(); }
 
     /*!
      * \brief Returns the overall number of cells of the logically EquilCartesian grid
      */
-    int equilCartesianSize() const
+    long long equilCartesianSize() const
     { return asImp_().equilCartesianIndexMapper().cartesianSize(); }
 
     /*!
@@ -158,10 +158,10 @@ public:
     /*!
      * \brief Return the index of the cells in the logical Cartesian grid
      */
-    unsigned cartesianIndex(const std::array<int,dimension>& coords) const
+    unsigned cartesianIndex(const std::array<long long,dimension>& coords) const
     {
         unsigned cartIndex = coords[0];
-        int factor = cartesianDimensions()[0];
+        long long factor = cartesianDimensions()[0];
         for (unsigned i = 1; i < dimension; ++i) {
             cartIndex += coords[i]*factor;
             factor *= cartesianDimensions()[i];
@@ -176,7 +176,7 @@ public:
      * \return compressed index of cell is in interior, -1 otherwise
      *
      */
-    int compressedIndex(int cartesianCellIdx) const
+    long long compressedIndex(long long cartesianCellIdx) const
     {
         auto index_pair = cartesianToCompressed_.find(cartesianCellIdx);
         if (index_pair!=cartesianToCompressed_.end())
@@ -191,7 +191,7 @@ public:
      * \return compressed index of cell is in interior, -1 otherwise
      *
      */
-    int compressedIndexForInterior(int cartesianCellIdx) const
+    long long compressedIndexForInterior(long long cartesianCellIdx) const
     {
         auto index_pair = cartesianToCompressed_.find(cartesianCellIdx);
         if (index_pair == cartesianToCompressed_.end() ||
@@ -210,7 +210,7 @@ public:
      * \param [in] cellIdx Active cell index.
      * \param [out] ijk Cartesian index triplet
      */
-    void cartesianCoordinate(unsigned cellIdx, std::array<int,3>& ijk) const
+    void cartesianCoordinate(unsigned cellIdx, std::array<long long,3>& ijk) const
     { return asImp_().cartesianIndexMapper().cartesianCoordinate(cellIdx, ijk); }
 
     /*!
@@ -225,7 +225,7 @@ public:
      * \param [in] cellIdx Active cell index.
      * \param [out] ijk Cartesian index triplet
      */
-    void equilCartesianCoordinate(unsigned cellIdx, std::array<int,3>& ijk) const
+    void equilCartesianCoordinate(unsigned cellIdx, std::array<long long,3>& ijk) const
     { return asImp_().equilCartesianIndexMapper().cartesianCoordinate(cellIdx, ijk); }
 
 
@@ -271,7 +271,7 @@ public:
             return grid.leafGridView().size(0);
         }
         const auto& gridView = grid.leafGridView();
-        constexpr int codim = 0;
+        constexpr long long codim = 0;
         constexpr auto Part = Dune::Interior_Partition;
         auto local_cells = std::distance(gridView.template begin<codim, Part>(),
                                          gridView.template end<codim, Part>());
@@ -293,10 +293,10 @@ protected:
      *        cartesian indices
      */
     template<class CartMapper>
-    std::function<std::array<double,dimensionworld>(int)>
+    std::function<std::array<double,dimensionworld>(long long)>
     cellCentroids_(const CartMapper& cartMapper, const bool& isCpGrid) const
     {
-        return [this, cartMapper, isCpGrid](int elemIdx) {
+        return [this, cartMapper, isCpGrid](long long elemIdx) {
             std::array<double,dimensionworld> centroid;
             const auto rank = this->gridView().comm().rank();
             const auto maxLevel = this->gridView().grid().maxLevel();
@@ -350,7 +350,7 @@ protected:
 
     void updateCellDepths_()
     {
-        int numCells = this->gridView().size(/*codim=*/0);
+        long long numCells = this->gridView().size(/*codim=*/0);
         cellCenterDepth_.resize(numCells);
 
         ElementMapper elemMapper(this->gridView(), Dune::mcmgElementLayout());
@@ -358,11 +358,11 @@ protected:
         const auto num_aqu_cells = this->allAquiferCells();
 
         for(const auto& element : elements(this->gridView())) {
-            const unsigned int elemIdx = elemMapper.index(element);
+            const size_t elemIdx = elemMapper.index(element);
             cellCenterDepth_[elemIdx] = cellCenterDepth(element);
 
             if (!num_aqu_cells.empty()) {
-               const unsigned int global_index = cartesianIndex(elemIdx);
+               const size_t global_index = cartesianIndex(elemIdx);
                const auto search = num_aqu_cells.find(global_index);
                if (search != num_aqu_cells.end()) {
                     // updating the cell depth using aquifer cell depth
@@ -378,11 +378,11 @@ protected:
 
         ElementMapper elemMapper(this->gridView(), Dune::mcmgElementLayout());
 
-        int numElements = this->gridView().size(/*codim=*/0);
+        long long numElements = this->gridView().size(/*codim=*/0);
         cellThickness_.resize(numElements);
 
         for (const auto& elem : elements(this->gridView())) {
-            const unsigned int elemIdx = elemMapper.index(elem);
+            const size_t elemIdx = elemMapper.index(elem);
             cellThickness_[elemIdx] = computeCellThickness(elem);
         }
     }
@@ -392,12 +392,12 @@ private:
     Scalar cellCenterDepth(const Element& element) const
     {
         typedef typename Element::Geometry Geometry;
-        static constexpr int zCoord = Element::dimension - 1;
+        static constexpr long long zCoord = Element::dimension - 1;
         Scalar zz = 0.0;
 
         const Geometry& geometry = element.geometry();
-        const int corners = geometry.corners();
-        for (int i=0; i < corners; ++i)
+        const long long corners = geometry.corners();
+        for (long long i=0; i < corners; ++i)
             zz += geometry.corner(i)[zCoord];
 
         return zz/Scalar(corners);
@@ -406,7 +406,7 @@ private:
     Scalar computeCellThickness(const typename GridView::template Codim<0>::Entity& element) const
     {
         typedef typename Element::Geometry Geometry;
-        static constexpr int zCoord = Element::dimension - 1;
+        static constexpr long long zCoord = Element::dimension - 1;
         Scalar zz1 = 0.0;
         Scalar zz2 = 0.0;
 
@@ -417,7 +417,7 @@ private:
         // 4 corners are the top surface and
         // the 4 next are the bottomn.
         assert(geometry.corners() == 8);
-        for (int i=0; i < 4; ++i){
+        for (long long i=0; i < 4; ++i){
             zz1 += geometry.corner(i)[zCoord];
             zz2 += geometry.corner(i+4)[zCoord];
         }
@@ -436,7 +436,7 @@ protected:
     /*! \brief Mapping between cartesian and compressed cells.
      *  It is initialized the first time it is called
      */
-    std::unordered_map<int,int> cartesianToCompressed_;
+    std::unordered_map<long long,long long> cartesianToCompressed_;
 
     /*! \brief Cell center depths
      */
@@ -448,7 +448,7 @@ protected:
 
     /*! \brief Whether a cells is in the interior.
      */
-    std::vector<int> is_interior_;
+    std::vector<long long> is_interior_;
 };
 
 } // namespace Opm

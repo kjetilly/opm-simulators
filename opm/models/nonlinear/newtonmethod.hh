@@ -176,7 +176,7 @@ public:
      * \brief Returns the number of iterations done since the Newton method
      *        was invoked.
      */
-    int numIterations() const
+    long long numIterations() const
     { return numIterations_; }
 
     /*!
@@ -186,7 +186,7 @@ public:
      * implemented externally, it needs to be set in order for the model to do the Right
      * Thing (TM) while linearizing.
      */
-    void setIterationIndex(int value)
+    void setIterationIndex(long long value)
     { numIterations_ = value; }
 
     /*!
@@ -833,7 +833,7 @@ protected:
     NewtonMethodParams<Scalar> params_;
 
     // actual number of iterations done so far
-    int numIterations_;
+    long long numIterations_;
 
     // the linear solver
     LinearSolverBackend linearSolver_;

@@ -29,7 +29,7 @@ namespace Opm::Parameters {
 struct SimpleParamBool { static constexpr bool value = false; };
 struct SimpleParamDouble { static constexpr double value = 1.0; };
 struct SimpleParamFloat { static constexpr float value = 2.0; };
-struct SimpleParamInt { static constexpr int value = 1; };
+struct SimpleParamInt { static constexpr long long value = 1; };
 struct SimpleParamString  { static constexpr auto value = "foo"; };
 struct SimpleParamBoolN2
 {
@@ -50,7 +50,7 @@ struct Fixture
         Opm::Parameters::Register<Opm::Parameters::SimpleParamBoolN2>("Simpler bool parameter");
         Opm::Parameters::Register<Opm::Parameters::SimpleParamDouble>("Simple double parameter");
         Opm::Parameters::Register<Opm::Parameters::SimpleParamFloat>("Simple float parameter");
-        Opm::Parameters::Register<Opm::Parameters::SimpleParamInt>("Simple int parameter");
+        Opm::Parameters::Register<Opm::Parameters::SimpleParamInt>("Simple long long parameter");
         Opm::Parameters::Register<Opm::Parameters::SimpleParamString>("Simple string parameter");
         Opm::Parameters::SetDefault<Opm::Parameters::SimpleParamInt>(10);
         Opm::Parameters::Hide<Opm::Parameters::SimpleParamInt>();
@@ -82,10 +82,10 @@ BOOST_FIXTURE_TEST_CASE(GetLists, Fixture)
                                               const std::string&)>,
                            std::set<std::string>&,
                            std::string&,
-                           int,
+                           long long,
                            const char**,
-                           int,
-                           int) -> int
+                           long long,
+                           long long) -> long long
                         {
                             assert("Should not be here!");
                             return 0;
@@ -162,7 +162,7 @@ Recognized options:
     --simple-param-bool=BOOLEAN                   Simple bool parameter. Default: false
     --simple-param-double=SCALAR                  Simple double parameter. Default: 1
     --simple-param-float=SCALAR                   Simple float parameter. Default: 2
-    --simple-param-int=INTEGER                    Simple int parameter. Default: 10
+    --simple-param-long long=INTEGER                    Simple long long parameter. Default: 10
     --simple-param-string=STRING                  Simple string parameter. Default: "foo"
 )"));
 }

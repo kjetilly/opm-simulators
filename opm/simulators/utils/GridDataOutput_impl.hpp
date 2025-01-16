@@ -30,7 +30,7 @@
 
 namespace Opm::GridDataOutput {
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 SimMeshDataAccessor<GridView,partitions>::
  SimMeshDataAccessor(const GridView& gridView, Dune::PartitionSet<partitions> dunePartition)
     : gridView_(gridView)
@@ -41,7 +41,7 @@ SimMeshDataAccessor<GridView,partitions>::
     countEntities();
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 bool SimMeshDataAccessor<GridView,partitions>::polyhedralCellPresent() const
 {
     for (const auto& cit : elements(gridView_, dunePartition_)) {
@@ -53,7 +53,7 @@ bool SimMeshDataAccessor<GridView,partitions>::polyhedralCellPresent() const
     return false;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 void SimMeshDataAccessor<GridView,partitions>::countEntities()
 {
     // We include all the vertices for this ranks partition
@@ -70,7 +70,7 @@ void SimMeshDataAccessor<GridView,partitions>::countEntities()
     }
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename T>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints(T* x_inout, T* y_inout, T* z_inout, long max_size) const
@@ -106,7 +106,7 @@ writeGridPoints(T* x_inout, T* y_inout, T* z_inout, long max_size) const
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints(VectType& x_inout, VectType& y_inout, VectType& z_inout) const
@@ -153,7 +153,7 @@ writeGridPoints(VectType& x_inout, VectType& y_inout, VectType& z_inout) const
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename T>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints_AOS(T* xyz_inout, long max_size) const
@@ -185,7 +185,7 @@ writeGridPoints_AOS(T* xyz_inout, long max_size) const
     return i / 3;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints_AOS(VectType& xyz_inout) const
@@ -223,7 +223,7 @@ writeGridPoints_AOS(VectType& xyz_inout) const
     return i / 3;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename T>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints_SOA(T* xyz_inout, long max_size) const
@@ -261,7 +261,7 @@ writeGridPoints_SOA(T* xyz_inout, long max_size) const
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeGridPoints_SOA(VectType& xyz_inout) const
@@ -305,7 +305,7 @@ writeGridPoints_SOA(VectType& xyz_inout) const
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename Integer>
 long SimMeshDataAccessor<GridView,partitions>::
 writeConnectivity(Integer* connectivity_inout,
@@ -325,7 +325,7 @@ writeConnectivity(Integer* connectivity_inout,
         for (const auto& cit : elements(gridView_, dunePartition_)) {
             auto cell_corners = cit.geometry().corners();
             for (auto vx = 0; vx < cell_corners; ++vx) {
-                const int vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
+                const long long vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
                 connectivity_inout[i + vx] = vxIdx;
             }
             i += cell_corners;
@@ -335,8 +335,8 @@ writeConnectivity(Integer* connectivity_inout,
         for (const auto& cit : elements(gridView_, dunePartition_)) {
             auto cell_corners = cit.geometry().corners();
             for (auto vx = 0; vx < cell_corners; ++vx) {
-                const int vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
-                int vtkOrder;
+                const long long vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
+                long long vtkOrder;
                 vtkOrder = Dune::VTK::renumber(cit.type(), vx);
                 connectivity_inout[i + vtkOrder] = vxIdx;
             }
@@ -346,7 +346,7 @@ writeConnectivity(Integer* connectivity_inout,
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeConnectivity(VectType& connectivity_inout,
@@ -369,7 +369,7 @@ writeConnectivity(VectType& connectivity_inout,
         for (const auto& cit : elements(gridView_, dunePartition_)) {
             auto cell_corners = cit.geometry().corners();
             for (auto vx = 0; vx < cell_corners; ++vx) {
-                const int vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
+                const long long vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
                 connectivity_inout.data()[i + vx] = vxIdx;
             }
             i += cell_corners;
@@ -379,8 +379,8 @@ writeConnectivity(VectType& connectivity_inout,
         for (const auto& cit : elements(gridView_, dunePartition_)) {
             auto cell_corners = cit.geometry().corners();
             for (auto vx = 0; vx < cell_corners; ++vx) {
-                const int vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
-                int vtkOrder;
+                const long long vxIdx = gridView_.indexSet().subIndex(cit, vx, 3);
+                long long vtkOrder;
                 vtkOrder = Dune::VTK::renumber(cit.type(), vx);
                 connectivity_inout.data()[i + vtkOrder] = vxIdx;
             }
@@ -390,7 +390,7 @@ writeConnectivity(VectType& connectivity_inout,
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename Integer>
 long SimMeshDataAccessor<GridView,partitions>::
 writeOffsetsCells(Integer* offsets_inout, long max_size) const
@@ -412,7 +412,7 @@ writeOffsetsCells(Integer* offsets_inout, long max_size) const
     return i; // This should be 1 greater than ncells_
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeOffsetsCells(VectType& offsets_inout) const
@@ -439,7 +439,7 @@ writeOffsetsCells(VectType& offsets_inout) const
     return i; // This should be 1 greater than ncells_
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename Integer>
 long SimMeshDataAccessor<GridView,partitions>::
 writeCellTypes(Integer* types_inout, long max_size) const
@@ -451,7 +451,7 @@ writeCellTypes(Integer* types_inout, long max_size) const
                       + std::to_string(max_size) + ") is not sufficient to fit the ncells_ values ("
                       + std::to_string(ncells_) + ")");
     }
-    int i = 0;
+    long long i = 0;
     for (const auto& cit : elements(gridView_, dunePartition_)) {
         Integer vtktype = static_cast<Integer>(Dune::VTK::geometryType(cit.type()));
         types_inout[i++] = vtktype;
@@ -459,7 +459,7 @@ writeCellTypes(Integer* types_inout, long max_size) const
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 template <typename VectType>
 long SimMeshDataAccessor<GridView,partitions>::
 writeCellTypes(VectType& types_inout) const
@@ -473,15 +473,15 @@ writeCellTypes(VectType& types_inout) const
                       + std::to_string(ncells_) + ")");
     }
 
-    int i = 0;
+    long long i = 0;
     for (const auto& cit : elements(gridView_, dunePartition_)) {
-        int vtktype = static_cast<int>(Dune::VTK::geometryType(cit.type()));
+        long long vtktype = static_cast<long long>(Dune::VTK::geometryType(cit.type()));
         types_inout.data()[i++] = vtktype;
     }
     return i;
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 std::string SimMeshDataAccessor<GridView,partitions>::
 getPartitionTypeString() const
 {
@@ -513,7 +513,7 @@ getPartitionTypeString() const
     return "Unknown Dune::PartitionSet<>";
 }
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 void SimMeshDataAccessor<GridView,partitions>::
 printGridDetails(std::ostream& outstr) const
 {

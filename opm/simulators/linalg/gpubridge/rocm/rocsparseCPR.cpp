@@ -42,14 +42,14 @@ namespace Opm::Accelerator {
 using Opm::OpmLog;
 using Dune::Timer;
 
-template <class Scalar, unsigned int block_size>
-rocsparseCPR<Scalar, block_size>::rocsparseCPR(int verbosity_) :
+template <class Scalar, size_t block_size>
+rocsparseCPR<Scalar, block_size>::rocsparseCPR(long long verbosity_) :
     rocsparsePreconditioner<Scalar, block_size>(verbosity_)
 {
     bilu0 = std::make_unique<rocsparseBILU0<Scalar, block_size> >(verbosity_);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseCPR<Scalar, block_size>::
 initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
            std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
@@ -67,19 +67,19 @@ initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     return true;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 copy_system_to_gpu(Scalar *b) {
     bilu0->copy_system_to_gpu(b);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 update_system_on_gpu(Scalar *vals) {
     bilu0->update_system_on_gpu(vals);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseCPR<Scalar, block_size>::
 analyze_matrix(BlockedMatrix<Scalar> *mat_) {
     this->Nb = mat_->Nb;
@@ -94,7 +94,7 @@ analyze_matrix(BlockedMatrix<Scalar> *mat_) {
     return success;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseCPR<Scalar, block_size>::
 analyze_matrix(BlockedMatrix<Scalar> *mat_,
                BlockedMatrix<Scalar> *jacMat_)
@@ -110,7 +110,7 @@ analyze_matrix(BlockedMatrix<Scalar> *mat_,
     return success;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseCPR<Scalar, block_size>::
 create_preconditioner(BlockedMatrix<Scalar> *mat_,
                       BlockedMatrix<Scalar> *jacMat_)
@@ -141,7 +141,7 @@ create_preconditioner(BlockedMatrix<Scalar> *mat_,
     return result;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseCPR<Scalar, block_size>::
 create_preconditioner(BlockedMatrix<Scalar> *mat_) {
     Dune::Timer t_bilu0;
@@ -170,7 +170,7 @@ create_preconditioner(BlockedMatrix<Scalar> *mat_) {
     return result;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 init_rocm_buffers() {
     d_Amatrices.reserve(this->num_levels);
@@ -197,34 +197,34 @@ init_rocm_buffers() {
     d_coarse_x.emplace_back(this->Nb);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 rocm_upload() {
      d_mat->upload(this->mat, this->stream);
      
      HIP_CHECK(hipMemcpyAsync(d_weights.data()->nnzValues, this->weights.data(), sizeof(Scalar) * this->N, hipMemcpyHostToDevice, this->stream));
     
-    for (unsigned int i = 0; i < this->Rmatrices.size(); ++i) {
+    for (size_t i = 0; i < this->Rmatrices.size(); ++i) {
         d_Amatrices[i].upload(&this->Amatrices[i], this->stream);
         
         HIP_CHECK(hipMemcpyAsync(d_invDiags[i].nnzValues, this->invDiags[i].data(), sizeof(Scalar) * this->Amatrices[i].N, hipMemcpyHostToDevice, this->stream));
-        HIP_CHECK(hipMemcpyAsync(d_PcolIndices[i].nnzValues, this->PcolIndices[i].data(), sizeof(int) * this->Amatrices[i].N, hipMemcpyHostToDevice, this->stream));
+        HIP_CHECK(hipMemcpyAsync(d_PcolIndices[i].nnzValues, this->PcolIndices[i].data(), sizeof(long long) * this->Amatrices[i].N, hipMemcpyHostToDevice, this->stream));
     }
     
-    for (unsigned int i = 0; i < this->Rmatrices.size(); ++i) {
+    for (size_t i = 0; i < this->Rmatrices.size(); ++i) {
         d_Rmatrices[i].upload(&this->Rmatrices[i], this->stream);
     }
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
-amg_cycle_gpu(const int level,
+amg_cycle_gpu(const long long level,
               Scalar &y,
               Scalar &x)
 {
     RocmMatrix<Scalar> *A = &d_Amatrices[level];
     RocmMatrix<Scalar> *R = &d_Rmatrices[level];
-    int Ncur = A->Nb;
+    long long Ncur = A->Nb;
     
     rocsparse_mat_info spmv_info;
     rocsparse_mat_descr descr_R;
@@ -238,7 +238,7 @@ amg_cycle_gpu(const int level,
         HIP_CHECK(hipMemcpyAsync(h_y.data(), &y, sizeof(Scalar) * Ncur, hipMemcpyDeviceToHost, this->stream));
         
         // The if constexpr is needed to make the code compile
-        // since the umfpack member is an 'int' with float Scalar.
+        // since the umfpack member is an 'long long' with float Scalar.
         // We will never get here with float Scalar as we throw earlier.
         // Solve coarsest level using umfpack
         if constexpr (std::is_same_v<Scalar,double>) {
@@ -250,7 +250,7 @@ amg_cycle_gpu(const int level,
         return;
     }
     
-    int Nnext = d_Amatrices[level+1].Nb;
+    long long Nnext = d_Amatrices[level+1].Nb;
 
     RocmVector<Scalar>& t = d_t[level];
     RocmVector<Scalar>& f = d_f[level];
@@ -284,14 +284,14 @@ amg_cycle_gpu(const int level,
 }
 
 // x = prec(y)
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 apply_amg(const Scalar& y, 
           Scalar& x)
 {
     HIP_CHECK(hipMemsetAsync(d_coarse_x.data()->nnzValues, 0, sizeof(Scalar) * this->Nb, this->stream));
     
-    for (unsigned int i = 0; i < d_u.size(); ++i) {
+    for (size_t i = 0; i < d_u.size(); ++i) {
         d_u[i].upload(this->Rmatrices[i].nnzValues.data(), this->stream);
     }
     
@@ -304,7 +304,7 @@ apply_amg(const Scalar& y,
     HipKernels<Scalar>::add_coarse_pressure_correction(d_coarse_x.data()->nnzValues, &x, this->pressure_idx, Nb, this->stream);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseCPR<Scalar, block_size>::
 apply(Scalar& y,
       Scalar& x)

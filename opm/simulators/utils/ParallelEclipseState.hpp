@@ -56,27 +56,27 @@ public:
 
     //! \brief Returns actnum vector.
     //! \details If called on non-root process an empty vector is returned
-    std::vector<int> actnum() const override;
+    std::vector<long long> actnum() const override;
 
     //! \brief Reset the actnum vector.
     //! \details Can only be called on root process
-    void reset_actnum(const std::vector<int>& actnum) override;
+    void reset_actnum(const std::vector<long long>& actnum) override;
 
     //! \brief Returns the pore volume vector.
     std::vector<double> porv(bool global = false) const override;
 
-    //! \brief Returns an int property using compressed indices.
+    //! \brief Returns an long long property using compressed indices.
     //! \param keyword Name of property
-    const std::vector<int>& get_int(const std::string& keyword) const override;
+    const std::vector<long long>& get_int(const std::string& keyword) const override;
 
     //! \brief Returns a double property using compressed indices.
     //! \param keyword Name of property
     const std::vector<double>& get_double(const std::string& keyword) const override;
 
-    //! \brief Returns an int property using global cartesian indices.
+    //! \brief Returns an long long property using global cartesian indices.
     //! \param keyword Name of property
     //! \details The vector is broadcast from root process
-    std::vector<int> get_global_int(const std::string& keyword) const override;
+    std::vector<long long> get_global_int(const std::string& keyword) const override;
 
     //! \brief Returns a double property using global cartesian indices.
     //! \param keyword Name of property
@@ -123,12 +123,12 @@ public:
     }
 
 protected:
-    std::map<std::string, Fieldprops::FieldData<int>> m_intProps; //!< Map of integer properties in process-local compressed indices.
+    std::map<std::string, Fieldprops::FieldData<long long>> m_intProps; //!< Map of integer properties in process-local compressed indices.
     std::map<std::string, Fieldprops::FieldData<double>> m_doubleProps; //!< Map of double properties in process-local compressed indices.
     FieldPropsManager& m_manager; //!< Underlying field property manager (only used on root process).
     Parallel::Communication m_comm; //!< Collective communication handler.
-    std::function<int(void)> m_activeSize; //!< active size function of the grid
-    std::function<int(const int)> m_local2Global; //!< mapping from local to global cartesian indices
+    std::function<(long long)(void)> m_activeSize; //!< active size function of the grid
+    std::function<(long long)(const long long)> m_local2Global; //!< mapping from local to global cartesian indices
     std::unordered_map<std::string, Fieldprops::TranCalculator> m_tran; //!< calculators map
 };
 

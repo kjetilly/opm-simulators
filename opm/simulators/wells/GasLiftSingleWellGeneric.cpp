@@ -46,7 +46,7 @@ GasLiftSingleWellGeneric(DeferredLogger& deferred_logger,
                          GasLiftGroupInfo<Scalar>& group_info,
                          const PhaseUsage& phase_usage,
                          const Schedule& schedule,
-                         const int report_step_idx,
+                         const long long report_step_idx,
                          GLiftSyncGroups& sync_groups,
                          const Parallel::Communication& comm,
                          bool glift_debug)
@@ -136,7 +136,7 @@ calcIncOrDecGradient(Scalar oil_rate,
 template<class Scalar>
 std::unique_ptr<GasLiftWellState<Scalar>>
 GasLiftSingleWellGeneric<Scalar>::
-runOptimize(const int iteration_idx)
+runOptimize(const long long iteration_idx)
 {
     std::unique_ptr<GasLiftWellState<Scalar>> state;
     if (this->optimize_) {
@@ -548,7 +548,7 @@ template<class Scalar>
 void GasLiftSingleWellGeneric<Scalar>::
 debugShowProducerControlMode() const
 {
-    const int well_index = this->well_state_.index(this->well_name_).value();
+    const long long well_index = this->well_state_.index(this->well_name_).value();
     const Well::ProducerCMode& control_mode = this->well_state_.well(well_index).production_cmode;
     const std::string msg = fmt::format("Current control mode is: {}", WellProducerCMode2String(control_mode));
     displayDebugMessage_(msg);
@@ -1002,7 +1002,7 @@ typename GasLiftSingleWellGeneric<Scalar>::BasicRates
 GasLiftSingleWellGeneric<Scalar>::
 getWellStateRates_() const
 {
-    const int well_index = this->well_state_.index(this->well_name_).value();
+    const long long well_index = this->well_state_.index(this->well_name_).value();
     const auto& pu = this->phase_usage_;
     const auto& ws = this->well_state_.well(well_index);
     const auto& wrate = ws.well_potentials;
@@ -1101,7 +1101,7 @@ increaseALQtoMinALQ_(const Scalar orig_alq,
 
 template<class Scalar>
 void GasLiftSingleWellGeneric<Scalar>::
-logSuccess_(Scalar alq, const int iteration_idx)
+logSuccess_(Scalar alq, const long long iteration_idx)
 {
     const std::string message = fmt::format("GLIFT, IT={}, WELL {} : {} ALQ from {} to {}",
                                             iteration_idx,
@@ -1444,8 +1444,8 @@ std::unique_ptr<GasLiftWellState<Scalar>>
 GasLiftSingleWellGeneric<Scalar>::runOptimize1_()
 {
     std::unique_ptr<GasLiftWellState<Scalar>> state;
-    int inc_count = this->well_state_.gliftGetAlqIncreaseCount(this->well_name_);
-    int dec_count = this->well_state_.gliftGetAlqDecreaseCount(this->well_name_);
+    long long inc_count = this->well_state_.gliftGetAlqIncreaseCount(this->well_name_);
+    long long dec_count = this->well_state_.gliftGetAlqDecreaseCount(this->well_name_);
     if (dec_count == 0 && inc_count == 0) {
         state = tryIncreaseLiftGas_();
         if (!state || !(state->alqChanged())) {
@@ -1532,7 +1532,7 @@ updateGroupRates_(const LimitedRates& rates,
     Scalar delta_water = new_rates.water - rates.water;
     const auto& pairs = this->group_info_.getWellGroups(this->well_name_);
     for (const auto& [group_name, efficiency] : pairs) {
-        int idx = this->group_info_.getGroupIdx(group_name);
+        long long idx = this->group_info_.getGroupIdx(group_name);
         // This will notify the optimize loop in BlackoilWellModel, see
         //   gasLiftOptimizationStage1() in BlackoilWellModel_impl.hpp
         // that this group_info needs to be synchronized to the other MPI ranks

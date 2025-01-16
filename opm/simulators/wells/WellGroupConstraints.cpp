@@ -136,7 +136,7 @@ checkGroupConstraints(WellState<Scalar>& well_state,
                       DeferredLogger& deferred_logger) const
 {
     const auto& well = well_.wellEcl();
-    const int well_index = well_.indexOfWell();
+    const long long well_index = well_.indexOfWell();
     auto& ws = well_state.well(well_index);
 
     if (well.isInjector()) {
@@ -162,8 +162,8 @@ checkGroupConstraints(WellState<Scalar>& well_state,
             // be GRUP.
             if (group_constraint.first) {
                 ws.injection_cmode = Well::InjectorCMode::GRUP;
-                const int np = well_state.numPhases();
-                for (int p = 0; p<np; ++p) {
+                const long long np = well_state.numPhases();
+                for (long long p = 0; p<np; ++p) {
                     ws.surface_rates[p] *= group_constraint.second;
                 }
             }
@@ -193,8 +193,8 @@ checkGroupConstraints(WellState<Scalar>& well_state,
             // be GRUP.
             if (group_constraint.first) {
                 ws.production_cmode = Well::ProducerCMode::GRUP;
-                const int np = well_state.numPhases();
-                for (int p = 0; p<np; ++p) {
+                const long long np = well_state.numPhases();
+                for (long long p = 0; p<np; ++p) {
                     ws.surface_rates[p] *= group_constraint.second;
                 }
             }

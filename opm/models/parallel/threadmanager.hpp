@@ -72,7 +72,7 @@ public:
     static unsigned threadId();
 
 private:
-    static int numThreads_;
+    static long long numThreads_;
 };
 
 } // namespace Opm

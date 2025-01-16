@@ -76,7 +76,7 @@ class SupportsFaceTag<Dune::PolyhedralGrid<3, 3>>
 
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowProblemPoly;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

@@ -91,7 +91,7 @@ public:
     using ISTLSolverType = ISTLSolver<TypeTag>;
     using Mat = typename BlackoilModel<TypeTag>::Mat;
 
-    static constexpr int numEq = Indices::numEq;
+    static constexpr long long numEq = Indices::numEq;
 
     //! \brief The constructor sets up the subdomains.
     //! \param model BlackOil model to solve for
@@ -104,7 +104,7 @@ public:
         const auto& [partition_vector, num_domains] = this->partitionCells();
 
         // Scan through partitioning to get correct size for each.
-        std::vector<int> sizes(num_domains, 0);
+        std::vector<long long> sizes(num_domains, 0);
         for (const auto& p : partition_vector) {
             ++sizes[p];
         }
@@ -112,8 +112,8 @@ public:
         // Set up correctly sized vectors of entity seeds and of indices for each partition.
         using EntitySeed = typename Grid::template Codim<0>::EntitySeed;
         std::vector<std::vector<EntitySeed>> seeds(num_domains);
-        std::vector<std::vector<int>> partitions(num_domains);
-        for (int domain = 0; domain < num_domains; ++domain) {
+        std::vector<std::vector<long long>> partitions(num_domains);
+        for (long long domain = 0; domain < num_domains; ++domain) {
             seeds[domain].resize(sizes[domain]);
             partitions[domain].resize(sizes[domain]);
         }
@@ -122,13 +122,13 @@ public:
         // Note: owned cells only!
         const auto& grid = model_.simulator().vanguard().grid();
 
-        std::vector<int> count(num_domains, 0);
+        std::vector<long long> count(num_domains, 0);
         const auto& gridView = grid.leafGridView();
         const auto beg = gridView.template begin<0, Dune::Interior_Partition>();
         const auto end = gridView.template end<0, Dune::Interior_Partition>();
-        int cell = 0;
+        long long cell = 0;
         for (auto it = beg; it != end; ++it, ++cell) {
-            const int p = partition_vector[cell];
+            const long long p = partition_vector[cell];
             seeds[p][count[p]] = it->seed();
             partitions[p][count[p]] = cell;
             ++count[p];
@@ -136,9 +136,9 @@ public:
         assert(count == sizes);
 
         // Create the domains.
-        for (int index = 0; index < num_domains; ++index) {
+        for (long long index = 0; index < num_domains; ++index) {
             std::vector<bool> interior(partition_vector.size(), false);
-            for (int ix : partitions[index]) {
+            for (long long ix : partitions[index]) {
                 interior[ix] = true;
             }
 
@@ -154,7 +154,7 @@ public:
         domain_matrices_.resize(num_domains);
 
         // Set up container for the local linear solvers.
-        for (int index = 0; index < num_domains; ++index) {
+        for (long long index = 0; index < num_domains; ++index) {
             // TODO: The ISTLSolver constructor will make
             // parallel structures appropriate for the full grid
             // only. This must be addressed before going parallel.
@@ -172,7 +172,7 @@ public:
             domain_linsolvers_.back().setDomainIndex(index);
         }
 
-        assert(int(domains_.size()) == num_domains);
+        assert((long long)(domains_.size()) == num_domains);
     }
 
     //! \brief Called before starting a time step.
@@ -184,7 +184,7 @@ public:
 
     //! \brief Do one non-linear NLDD iteration.
     template <class NonlinearSolverType>
-    SimulatorReportSingle nonlinearIterationNldd(const int iteration,
+    SimulatorReportSingle nonlinearIterationNldd(const long long iteration,
                                                  const SimulatorTimerInterface& timer,
                                                  NonlinearSolverType& nonlinear_solver)
     {
@@ -210,7 +210,7 @@ public:
         // -----------   Solve each domain separately   -----------
         DeferredLogger logger;
         std::vector<SimulatorReportSingle> domain_reports(domains_.size());
-        for (const int domain_index : domain_order) {
+        for (const long long domain_index : domain_order) {
             const auto& domain = domains_[domain_index];
             SimulatorReportSingle local_report;
             try {
@@ -247,11 +247,11 @@ public:
         // Accumulate local solve data.
         // Putting the counts in a single array to avoid multiple
         // comm.sum() calls. Keeping the named vars for readability.
-        std::array<int, 4> counts{ 0, 0, 0, static_cast<int>(domain_reports.size()) };
-        int& num_converged = counts[0];
-        int& num_converged_already = counts[1];
-        int& num_local_newtons = counts[2];
-        int& num_domains = counts[3];
+        std::array<long long, 4> counts{ 0, 0, 0, static_cast<long long>(domain_reports.size()) };
+        long long& num_converged = counts[0];
+        long long& num_converged_already = counts[1];
+        long long& num_local_newtons = counts[2];
+        long long& num_domains = counts[3];
         {
             SimulatorReportSingle rep;
             for (const auto& dr : domain_reports) {
@@ -338,7 +338,7 @@ public:
 
         const auto& grid = this->model_.simulator().vanguard().grid();
         const auto& comm = grid.comm();
-        const auto nDigit = 1 + static_cast<int>(std::floor(std::log10(comm.size())));
+        const auto nDigit = 1 + static_cast<long long>(std::floor(std::log10(comm.size())));
 
         std::ofstream pfile { odir / fmt::format("{1:0>{0}}", nDigit, comm.rank()) };
 
@@ -358,7 +358,7 @@ private:
     solveDomain(const Domain& domain,
                 const SimulatorTimerInterface& timer,
                 DeferredLogger& logger,
-                [[maybe_unused]] const int global_iteration,
+                [[maybe_unused]] const long long global_iteration,
                 const bool initial_assembly_required)
     {
         auto& modelSimulator = model_.simulator();
@@ -374,7 +374,7 @@ private:
         // with the initial values, we only need to check
         // for local convergence. Otherwise, we must do a local
         // assembly.
-        int iter = 0;
+        long long iter = 0;
         if (initial_assembly_required) {
             detailTimer.start();
             modelSimulator.model().newtonMethod().setIterationIndex(iter);
@@ -409,7 +409,7 @@ private:
         report.assemble_time_well += tt1;
 
         // Local Newton loop.
-        const int max_iter = model_.param().max_local_solve_iterations_;
+        const long long max_iter = model_.param().max_local_solve_iterations_;
         const auto& grid = modelSimulator.vanguard().grid();
         double damping_factor = 1.0;
         std::vector<std::vector<Scalar>> convergence_history;
@@ -418,7 +418,7 @@ private:
         do {
             // Solve local linear system.
             // Note that x has full size, we expect it to be nonzero only for in-domain cells.
-            const int nc = grid.size(0);
+            const long long nc = grid.size(0);
             BVector x(nc);
             detailTimer.reset();
             detailTimer.start();
@@ -473,7 +473,7 @@ private:
             if (!convreport.converged() && !convreport.wellFailed()) {
                 bool oscillate = false;
                 bool stagnate = false;
-                const int numPhases = convergence_history.front().size();
+                const long long numPhases = convergence_history.front().size();
                 detail::detectOscillations(convergence_history, iter, numPhases,
                                            Scalar{0.2}, 1, oscillate, stagnate);
                 if (oscillate) {
@@ -558,7 +558,7 @@ private:
                                                          std::vector<Scalar>& R_sum,
                                                          std::vector<Scalar>& maxCoeff,
                                                          std::vector<Scalar>& B_avg,
-                                                         std::vector<int>& maxCoeffCell)
+                                                         std::vector<long long>& maxCoeffCell)
     {
         const auto& modelSimulator = model_.simulator();
 
@@ -603,8 +603,8 @@ private:
         }
 
         // compute local average in terms of global number of elements
-        const int bSize = B_avg.size();
-        for ( int i = 0; i<bSize; ++i )
+        const long long bSize = B_avg.size();
+        for ( long long i = 0; i<bSize; ++i )
         {
             B_avg[ i ] /= Scalar(domain.cells.size());
         }
@@ -614,7 +614,7 @@ private:
 
     ConvergenceReport getDomainReservoirConvergence(const double reportTime,
                                                     const double dt,
-                                                    const int iteration,
+                                                    const long long iteration,
                                                     const Domain& domain,
                                                     DeferredLogger& logger,
                                                     std::vector<Scalar>& B_avg,
@@ -622,10 +622,10 @@ private:
     {
         using Vector = std::vector<Scalar>;
 
-        const int numComp = numEq;
+        const long long numComp = numEq;
         Vector R_sum(numComp, 0.0 );
         Vector maxCoeff(numComp, std::numeric_limits<Scalar>::lowest() );
-        std::vector<int> maxCoeffCell(numComp, -1);
+        std::vector<long long> maxCoeffCell(numComp, -1);
         const auto [ pvSum, numAquiferPvSum]
             = this->localDomainConvergenceData(domain, R_sum, maxCoeff, B_avg, maxCoeffCell);
 
@@ -650,7 +650,7 @@ private:
         // Finish computation
         std::vector<Scalar> CNV(numComp);
         std::vector<Scalar> mass_balance_residual(numComp);
-        for (int compIdx = 0; compIdx < numComp; ++compIdx )
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx )
         {
             CNV[compIdx]                    = B_avg[compIdx] * dt * maxCoeff[compIdx];
             mass_balance_residual[compIdx]  = std::abs(B_avg[compIdx]*R_sum[compIdx]) * dt / pvSum;
@@ -660,12 +660,12 @@ private:
         // Create convergence report.
         ConvergenceReport report{reportTime};
         using CR = ConvergenceReport;
-        for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
             Scalar res[2] = { mass_balance_residual[compIdx], CNV[compIdx] };
             CR::ReservoirFailure::Type types[2] = { CR::ReservoirFailure::Type::MassBalance,
                                                     CR::ReservoirFailure::Type::Cnv };
             Scalar tol[2] = { tol_mb, tol_cnv };
-            for (int ii : {0, 1}) {
+            for (long long ii : {0, 1}) {
                 if (std::isnan(res[ii])) {
                     report.setReservoirFailed({types[ii], CR::Severity::NotANumber, compIdx});
                     logger.debug("NaN residual for " + model_.compNames().name(compIdx) + " equation.");
@@ -690,12 +690,12 @@ private:
                 // Log header.
                 std::string msg = fmt::format("Domain {} on rank {}, size {}, containing cell {}\n| Iter",
                                               domain.index, this->rank_, domain.cells.size(), domain.cells[0]);
-                for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+                for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                     msg += "    MB(";
                     msg += model_.compNames().name(compIdx)[0];
                     msg += ")  ";
                 }
-                for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+                for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                     msg += "    CNV(";
                     msg += model_.compNames().name(compIdx)[0];
                     msg += ") ";
@@ -708,10 +708,10 @@ private:
             const std::streamsize oprec = ss.precision(3);
             const std::ios::fmtflags oflags = ss.setf(std::ios::scientific);
             ss << std::setw(4) << iteration;
-            for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+            for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                 ss << std::setw(11) << mass_balance_residual[compIdx];
             }
-            for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+            for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                 ss << std::setw(11) << CNV[compIdx];
             }
             ss.precision(oprec);
@@ -724,7 +724,7 @@ private:
 
     ConvergenceReport getDomainConvergence(const Domain& domain,
                                            const SimulatorTimerInterface& timer,
-                                           const int iteration,
+                                           const long long iteration,
                                            DeferredLogger& logger,
                                            std::vector<Scalar>& residual_norms)
     {
@@ -741,12 +741,12 @@ private:
     }
 
     //! \brief Returns subdomain ordered according to method and ordering measure.
-    std::vector<int> getSubdomainOrder()
+    std::vector<long long> getSubdomainOrder()
     {
         const auto& modelSimulator = model_.simulator();
         const auto& solution = modelSimulator.model().solution(0);
 
-        std::vector<int> domain_order(domains_.size());
+        std::vector<long long> domain_order(domains_.size());
         std::iota(domain_order.begin(), domain_order.end(), 0);
 
         if (model_.param().local_solve_approach_ == DomainSolveApproach::Jacobi) {
@@ -760,7 +760,7 @@ private:
                 // Use average pressures to order domains.
                 for (const auto& domain : domains_) {
                     Scalar press_sum = 0.0;
-                    for (const int c : domain.cells) {
+                    for (const long long c : domain.cells) {
                         press_sum += solution[c][Indices::pressureSwitchIdx];
                     }
                     const Scalar avgpress = press_sum / domain.cells.size();
@@ -772,7 +772,7 @@ private:
                 // Use max pressures to order domains.
                 for (const auto& domain : domains_) {
                     Scalar maxpress = 0.0;
-                    for (const int c : domain.cells) {
+                    for (const long long c : domain.cells) {
                         maxpress = std::max(maxpress, solution[c][Indices::pressureSwitchIdx]);
                     }
                     measure_per_domain[domain.index] = maxpress;
@@ -782,11 +782,11 @@ private:
             case DomainOrderingMeasure::Residual: {
                 // Use maximum residual to order domains.
                 const auto& residual = modelSimulator.model().linearizer().residual();
-                const int num_vars = residual[0].size();
+                const long long num_vars = residual[0].size();
                 for (const auto& domain : domains_) {
                     Scalar maxres = 0.0;
-                    for (const int c : domain.cells) {
-                        for (int ii = 0; ii < num_vars; ++ii) {
+                    for (const long long c : domain.cells) {
+                        for (long long ii = 0; ii < num_vars; ++ii) {
                             maxres = std::max(maxres, std::fabs(residual[c][ii]));
                         }
                     }
@@ -799,7 +799,7 @@ private:
             // Sort by largest measure, keeping index order if equal.
             const auto& m = measure_per_domain;
             std::stable_sort(domain_order.begin(), domain_order.end(),
-                             [&m](const int i1, const int i2){ return m[i1] > m[i2]; });
+                             [&m](const long long i1, const long long i2){ return m[i1] > m[i2]; });
             return domain_order;
         } else {
             throw std::logic_error("Domain solve approach must be Jacobi or Gauss-Seidel");
@@ -811,7 +811,7 @@ private:
                            GlobalEqVector& locally_solved,
                            SimulatorReportSingle& local_report,
                            DeferredLogger& logger,
-                           const int iteration,
+                           const long long iteration,
                            const SimulatorTimerInterface& timer,
                            const Domain& domain)
     {
@@ -836,7 +836,7 @@ private:
                                 GlobalEqVector& locally_solved,
                                 SimulatorReportSingle& local_report,
                                 DeferredLogger& logger,
-                                const int iteration,
+                                const long long iteration,
                                 const SimulatorTimerInterface& timer,
                                 const Domain& domain)
     {
@@ -896,7 +896,7 @@ private:
         const auto& problem = simulator.problem();
         const auto& residual = simulator.model().linearizer().residual();
 
-        for (const int cell_idx : domain.cells) {
+        for (const long long cell_idx : domain.cells) {
             const Scalar pvValue = problem.referencePorosity(cell_idx, /*timeIdx=*/0) *
                                    model.dofTotalVolume(cell_idx);
             const auto& cellResidual = residual[cell_idx];
@@ -940,7 +940,7 @@ private:
 
         zoltan_ctrl.local_to_global =
             [cartMapper = &this->model_.simulator().vanguard().cartesianIndexMapper()]
-            (const int elemIdx)
+            (const long long elemIdx)
         {
             return cartMapper->cartesianIndex(elemIdx);
         };
@@ -954,11 +954,11 @@ private:
 
         const auto& possibleFutureConnectionSet = need_wells
             ? this->model_.simulator().vanguard().schedule().getPossibleFutureConnections()
-            : std::unordered_map<std::string, std::set<int>> {};
+            : std::unordered_map<std::string, std::set<long long>> {};
 
         // If defaulted parameter for number of domains, choose a reasonable default.
-        constexpr int default_cells_per_domain = 1000;
-        const int num_domains = (param.num_local_domains_ > 0)
+        constexpr long long default_cells_per_domain = 1000;
+        const long long num_domains = (param.num_local_domains_ > 0)
             ? param.num_local_domains_
             : detail::countGlobalCells(grid) / default_cells_per_domain;
 
@@ -967,17 +967,17 @@ private:
                                      possibleFutureConnectionSet, zoltan_ctrl);
     }
 
-    std::vector<int> reconstitutePartitionVector() const
+    std::vector<long long> reconstitutePartitionVector() const
     {
         const auto& grid = this->model_.simulator().vanguard().grid();
 
-        auto numD = std::vector<int>(grid.comm().size() + 1, 0);
-        numD[grid.comm().rank() + 1] = static_cast<int>(this->domains_.size());
+        auto numD = std::vector<long long>(grid.comm().size() + 1, 0);
+        numD[grid.comm().rank() + 1] = static_cast<long long>(this->domains_.size());
         grid.comm().sum(numD.data(), numD.size());
         std::partial_sum(numD.begin(), numD.end(), numD.begin());
 
-        auto p = std::vector<int>(grid.size(0));
-        auto maxCellIdx = std::numeric_limits<int>::min();
+        auto p = std::vector<long long>(grid.size(0));
+        auto maxCellIdx = std::numeric_limits<long long>::min();
 
         auto d = numD[grid.comm().rank()];
         for (const auto& domain : this->domains_) {
@@ -1000,7 +1000,7 @@ private:
     std::vector<std::unique_ptr<Mat>> domain_matrices_; //!< Vector of matrix operator for each subdomain
     std::vector<ISTLSolverType> domain_linsolvers_; //!< Vector of linear solvers for each domain
     SimulatorReportSingle local_reports_accumulated_; //!< Accumulated convergence report for subdomain solvers
-    int rank_ = 0; //!< MPI rank of this process
+    long long rank_ = 0; //!< MPI rank of this process
 };
 
 } // namespace Opm

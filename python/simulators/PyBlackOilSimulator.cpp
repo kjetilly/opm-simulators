@@ -37,7 +37,7 @@
 namespace Opm {
 
 std::unique_ptr<FlowMain<Properties::TTag::FlowProblemTPFA>>
-flowBlackoilTpfaMainInit(int argc, char** argv, bool outputCout, bool outputFiles)
+flowBlackoilTpfaMainInit(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -75,7 +75,7 @@ PyBlackOilSimulator::PyBlackOilSimulator(
 // Public methods alphabetically sorted
 // ------------------------------------
 
-void PyBlackOilSimulator::advance(int report_step)
+void PyBlackOilSimulator::advance(long long report_step)
 {
     while (currentStep() < report_step) {
         step();
@@ -89,7 +89,7 @@ bool PyBlackOilSimulator::checkSimulationFinished()
 
 // This returns the report step number that will be executed next time step()
 //   is called.
-int PyBlackOilSimulator::currentStep()
+long long PyBlackOilSimulator::currentStep()
 {
     return getFlowMain().getSimTimer()->currentStepNum();
     // NOTE: this->simulator_->episodeIndex() would also return the current
@@ -129,7 +129,7 @@ getPrimaryVariable(const std::string &variable) const
     return py::array(vector.size(), vector.data());
 }
 
-py::array_t<int>
+py::array_t<long long>
 PyBlackOilSimulator::
 getPrimaryVarMeaning(const std::string &variable) const
 {
@@ -137,7 +137,7 @@ getPrimaryVarMeaning(const std::string &variable) const
     return py::array(vector.size(), vector.data());
 }
 
-std::map<std::string, int>
+std::map<std::string, long long>
 PyBlackOilSimulator::
 getPrimaryVarMeaningMap(const std::string &variable) const
 {
@@ -145,7 +145,7 @@ getPrimaryVarMeaningMap(const std::string &variable) const
     return getFluidState().getPrimaryVarMeaningMap(variable);
 }
 
-int PyBlackOilSimulator::run()
+long long PyBlackOilSimulator::run()
 {
     auto main_object = Opm::Main( this->deck_filename_ );
     return main_object.runStatic<Opm::Properties::TTag::FlowProblemTPFA>();
@@ -181,7 +181,7 @@ void PyBlackOilSimulator::setupMpi(bool mpi_init, bool mpi_finalize)
     this->mpi_finalize_ = mpi_finalize;
 }
 
-int PyBlackOilSimulator::step()
+long long PyBlackOilSimulator::step()
 {
     if (!this->has_run_init_) {
         throw std::logic_error("step() called before step_init()");
@@ -198,13 +198,13 @@ int PyBlackOilSimulator::step()
     return result;
 }
 
-int PyBlackOilSimulator::stepCleanup()
+long long PyBlackOilSimulator::stepCleanup()
 {
     this->has_run_cleanup_ = true;
     return getFlowMain().executeStepsCleanup();
 }
 
-int PyBlackOilSimulator::stepInit()
+long long PyBlackOilSimulator::stepInit()
 {
 
     if (this->has_run_init_) {
@@ -234,10 +234,10 @@ int PyBlackOilSimulator::stepInit()
         );
     }
     this->main_->setArguments(args_);
-    int exit_code = EXIT_SUCCESS;
+    long long exit_code = EXIT_SUCCESS;
     this->flow_main_ = this->main_->initFlowBlackoil(exit_code);
     if (this->flow_main_) {
-        int result = this->flow_main_->executeInitStep();
+        long long result = this->flow_main_->executeInitStep();
         this->has_run_init_ = true;
         this->simulator_ = this->flow_main_->getSimulatorPtr();
         this->fluid_state_ = std::make_unique<PyFluidState<TypeTag>>(this->simulator_);

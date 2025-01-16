@@ -49,7 +49,7 @@ struct EnableVapwat<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
 namespace Opm {
 
 // ----------------- Main program -----------------
-int flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowBrinePrecsaltVapwatMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -60,7 +60,7 @@ int flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool out
     return mainfunc.execute();
 }
 
-int flowBrinePrecsaltVapwatMainStandalone(int argc, char** argv)
+long long flowBrinePrecsaltVapwatMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowBrinePrecsaltVapwatProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

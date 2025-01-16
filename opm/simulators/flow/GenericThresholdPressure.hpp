@@ -59,7 +59,7 @@ public:
      * they should be different for the fluid phase but are not. Anyway, this seems to be
      * E100's way of doing things, so we do it the same way.
      */
-    Scalar thresholdPressure(int elem1Idx, int elem2Idx) const;
+    Scalar thresholdPressure(long long elem1Idx, long long elem2Idx) const;
 
     /*!
      * \brief Return the raw array with the threshold pressures
@@ -114,7 +114,7 @@ protected:
 
     // threshold pressure accross faults. EXPERIMENTAL!
     std::vector<Scalar> thpresftValues_;
-    std::vector<int> cartElemFaultIdx_;
+    std::vector<long long> cartElemFaultIdx_;
 
     bool enableThresholdPressure_ {false};
     bool restart_ {false};

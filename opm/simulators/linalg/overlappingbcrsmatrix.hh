@@ -170,9 +170,9 @@ public:
         for (unsigned i = 0; i < idMatrix.size(); ++i)
             idMatrix[i][i] = 1.0;
 
-        int numLocal = overlap_->numLocal();
-        int numDomestic = overlap_->numDomestic();
-        for (int domRowIdx = numLocal; domRowIdx < numDomestic; ++domRowIdx) {
+        long long numLocal = overlap_->numLocal();
+        long long numDomestic = overlap_->numDomestic();
+        for (long long domRowIdx = numLocal; domRowIdx < numDomestic; ++domRowIdx) {
             if (overlap_->isFront(domRowIdx)) {
                 // set the front rows to a diagonal 1
                 (*this)[domRowIdx] = 0.0;
@@ -185,7 +185,7 @@ public:
     {
         overlap_->print();
 
-        for (int i = 0; i < this->N(); ++i) {
+        for (long long i = 0; i < this->N(); ++i) {
             if (overlap_->isLocal(i))
                 std::cout << " ";
             else
@@ -195,7 +195,7 @@ public:
             using ColIt = typename BCRSMatrix::ConstColIterator;
             ColIt colIt = (*this)[i].begin();
             ColIt colEndIt = (*this)[i].end();
-            for (int j = 0; j < this->M(); ++j) {
+            for (long long j = 0; j < this->M(); ++j) {
                 if (colIt != colEndIt && j == colIt.index()) {
                     ++colIt;
                     if (overlap_->isBorder(j))
@@ -343,14 +343,14 @@ private:
         /////////
         entries_.resize(overlap_->numDomestic());
         for (unsigned nativeRowIdx = 0; nativeRowIdx < nativeMatrix.N(); ++nativeRowIdx) {
-            int domesticRowIdx = overlap_->nativeToDomestic(static_cast<Index>(nativeRowIdx));
+            long long domesticRowIdx = overlap_->nativeToDomestic(static_cast<Index>(nativeRowIdx));
             if (domesticRowIdx < 0)
                 continue;
 
             auto nativeColIt = nativeMatrix[nativeRowIdx].begin();
             const auto& nativeColEndIt = nativeMatrix[nativeRowIdx].end();
             for (; nativeColIt != nativeColEndIt; ++nativeColIt) {
-                int domesticColIdx = overlap_->nativeToDomestic(static_cast<Index>(nativeColIt.index()));
+                long long domesticColIdx = overlap_->nativeToDomestic(static_cast<Index>(nativeColIt.index()));
 
                 // make sure to include all off-diagonal entries, even those which belong
                 // to DOFs which are managed by a peer process. For this, we have to
@@ -463,8 +463,8 @@ private:
         rowSizesSendBuff_[peerRank] = new MpiBuffer<unsigned>(numOverlapRows);
 
         // compute the sets of the indices of the entries which need to be send to the peer
-        using ColumnIndexSet = std::set<int>;
-        using EntryTuples = std::map<int, ColumnIndexSet>;
+        using ColumnIndexSet = std::set<long long>;
+        using EntryTuples = std::map<long long, ColumnIndexSet>;
 
         EntryTuples entryIndices;
         unsigned numEntries = 0; // <- total number of matrix entries to be send to the peer
@@ -511,7 +511,7 @@ private:
             auto* rssb = rowSizesSendBuff_[peerRank];
             (*rssb)[overlapOffset] = static_cast<unsigned>(colIndexSet.size());
             for (auto it = colIndexSet.begin(); it != colIndexSet.end(); ++it) {
-                int globalColIdx = *it;
+                long long globalColIdx = *it;
 
                 (*entryColIndicesSendBuff_[peerRank])[static_cast<unsigned>(overlapEntryIdx)] = globalColIdx;
                 ++ overlapEntryIdx;
@@ -635,7 +635,7 @@ private:
 #endif // HAVE_MPI
     }
 
-    void receiveCopyEntries_([[maybe_unused]] int peerRank)
+    void receiveCopyEntries_([[maybe_unused]] long long peerRank)
     {
 #if HAVE_MPI
         MpiBuffer<block_type> &mpiRecvBuff = *entryValuesRecvBuff_[peerRank];
@@ -669,7 +669,7 @@ private:
             idxBuff[i] = overlap_->globalToDomestic(idxBuff[i]);
     }
 
-    int myRank_;
+    long long myRank_;
     Entries entries_;
     std::shared_ptr<Overlap> overlap_;
 

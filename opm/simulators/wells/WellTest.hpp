@@ -58,9 +58,9 @@ public:
 
 private:
     struct RatioLimitCheckReport {
-        static constexpr int INVALIDCOMPLETION = std::numeric_limits<int>::max();
+        static constexpr long long INVALIDCOMPLETION = std::numeric_limits<long long>::max();
         bool ratio_limit_violated = false;
-        int worst_offending_completion = INVALIDCOMPLETION;
+        long long worst_offending_completion = INVALIDCOMPLETION;
         Scalar violation_extent = 0.0;
     };
 

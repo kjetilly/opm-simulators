@@ -101,7 +101,7 @@ public:
     void injection_control(const std::string& gname, Phase phase, Group::InjectionCMode cmode);
     Group::InjectionCMode injection_control(const std::string& gname, Phase phase) const;
 
-    void update_gconsump(const Schedule& schedule, const int report_step, const SummaryState& summary_state);
+    void update_gconsump(const Schedule& schedule, const long long report_step, const SummaryState& summary_state);
     const std::pair<Scalar, Scalar>& gconsump_rates(const std::string& gname) const;
 
 

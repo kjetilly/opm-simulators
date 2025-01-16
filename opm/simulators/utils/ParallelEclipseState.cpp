@@ -57,7 +57,7 @@ ParallelFieldPropsManager::ParallelFieldPropsManager(FieldPropsManager& manager,
 }
 
 
-std::vector<int> ParallelFieldPropsManager::actnum() const
+std::vector<long long> ParallelFieldPropsManager::actnum() const
 {
     if (m_comm.rank() == 0)
         return m_manager.actnum();
@@ -66,7 +66,7 @@ std::vector<int> ParallelFieldPropsManager::actnum() const
 }
 
 
-void ParallelFieldPropsManager::reset_actnum(const std::vector<int>& actnum)
+void ParallelFieldPropsManager::reset_actnum(const std::vector<long long>& actnum)
 {
     if (m_comm.rank() != 0)
         OPM_THROW(std::runtime_error, "reset_actnum should only be called on root process.");
@@ -88,7 +88,7 @@ std::vector<double> ParallelFieldPropsManager::porv(bool global) const
         return global_porv;
 
     std::vector<double> local_porv(this->m_activeSize());
-    for (int i = 0; i < m_activeSize(); ++i)
+    for (long long i = 0; i < m_activeSize(); ++i)
     {
         local_porv[i] = global_porv[this->m_local2Global(i)];
     }
@@ -96,7 +96,7 @@ std::vector<double> ParallelFieldPropsManager::porv(bool global) const
 }
 
 
-const std::vector<int>& ParallelFieldPropsManager::get_int(const std::string& keyword) const
+const std::vector<long long>& ParallelFieldPropsManager::get_int(const std::string& keyword) const
 {
     auto it = m_intProps.find(keyword);
     if (it == m_intProps.end())
@@ -104,11 +104,11 @@ const std::vector<int>& ParallelFieldPropsManager::get_int(const std::string& ke
         // Some of the keywords might be defaulted.
         // We will let rank 0 create them and distribute them using get_global_int
         auto data = get_global_int(keyword);
-        auto& local_data = const_cast<std::map<std::string, Fieldprops::FieldData<int>>&>(m_intProps)[keyword];
+        auto& local_data = const_cast<std::map<std::string, Fieldprops::FieldData<long long>>&>(m_intProps)[keyword];
         local_data.data.resize(m_activeSize());
         local_data.value_status.resize(m_activeSize());
 
-        for (int i = 0; i < m_activeSize(); ++i)
+        for (long long i = 0; i < m_activeSize(); ++i)
         {
             local_data.data[i] = data[m_local2Global(i)];
         }
@@ -118,10 +118,10 @@ const std::vector<int>& ParallelFieldPropsManager::get_int(const std::string& ke
     return it->second.data;
 }
 
-std::vector<int> ParallelFieldPropsManager::get_global_int(const std::string& keyword) const
+std::vector<long long> ParallelFieldPropsManager::get_global_int(const std::string& keyword) const
 {
-    std::vector<int> result;
-    int exceptionThrown{};
+    std::vector<long long> result;
+    long long exceptionThrown{};
 
     if (m_comm.rank() == 0) {
         try {
@@ -165,7 +165,7 @@ const std::vector<double>& ParallelFieldPropsManager::get_double(const std::stri
         auto& local_data = const_cast<std::map<std::string, Fieldprops::FieldData<double>>&>(m_doubleProps)[keyword];
         local_data.data.resize(m_activeSize());
         local_data.value_status.resize(m_activeSize());
-        for (int i = 0; i < m_activeSize(); ++i)
+        for (long long i = 0; i < m_activeSize(); ++i)
         {
             local_data.data[i] = data[m_local2Global(i)];
         }
@@ -179,7 +179,7 @@ const std::vector<double>& ParallelFieldPropsManager::get_double(const std::stri
 std::vector<double> ParallelFieldPropsManager::get_global_double(const std::string& keyword) const
 {
     std::vector<double> result;
-    int exceptionThrown{};
+    long long exceptionThrown{};
 
     if (m_comm.rank() == 0)
     {
@@ -291,7 +291,7 @@ void ParallelEclipseState::computeFipRegionStatistics()
         this->fipRegionStatistics_
             .emplace(declaredMaxRegionID(this->runspec()),
                      this->fieldProps(),
-                     [this](std::vector<int>& maxRegionID)
+                     [this](std::vector<long long>& maxRegionID)
                      {
                          this->m_comm.max(maxRegionID.data(), maxRegionID.size());
                      });

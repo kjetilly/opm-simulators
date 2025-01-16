@@ -178,10 +178,10 @@ bool init_unit_test_func()
     return true;
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     // MPI setup.
-    int argcDummy = 1;
+    long long argcDummy = 1;
     const char *tmp[] = {"test_outputdir"};
     char **argvDummy = const_cast<char**>(tmp);
 #if HAVE_DUNE_FEM

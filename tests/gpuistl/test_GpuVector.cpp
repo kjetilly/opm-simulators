@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(TestDocumentedUsage)
 
 BOOST_AUTO_TEST_CASE(TestConstructionSize)
 {
-    const int numberOfElements = 1234;
+    const long long numberOfElements = 1234;
     auto vectorOnGPU = Opm::gpuistl::GpuVector<double>(numberOfElements);
     BOOST_CHECK_EQUAL(numberOfElements, vectorOnGPU.dim());
 }
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(RandomVectors)
         BOOST_CHECK_CLOSE(twoNorm, correctTwoNorm, 1e-12);
 
         aGPU = GVector(a);
-        std::vector<int> indexSet;
+        std::vector<long long> indexSet;
         const double rejectCriteria = 0.2;
         for (size_t i = 0; i < N; ++i) {
             const auto reject = distribution01(generator);
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(RandomVectors)
                 indexSet.push_back(i);
             }
         }
-        auto indexSetGPU = Opm::gpuistl::GpuVector<int>(indexSet);
+        auto indexSetGPU = Opm::gpuistl::GpuVector<long long>(indexSet);
 
         aGPU.setZeroAtIndexSet(indexSetGPU);
         auto projectedA = aGPU.asStdVector();

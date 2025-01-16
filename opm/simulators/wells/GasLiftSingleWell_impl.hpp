@@ -239,7 +239,7 @@ bool
 GasLiftSingleWell<TypeTag>::
 checkThpControl_() const
 {
-    const int well_index = this->well_state_.index(this->well_name_).value();
+    const long long well_index = this->well_state_.index(this->well_name_).value();
     const Well::ProducerCMode& control_mode =
                          this->well_state_.well(well_index).production_cmode;
     bool thp_control = control_mode == Well::ProducerCMode::THP;

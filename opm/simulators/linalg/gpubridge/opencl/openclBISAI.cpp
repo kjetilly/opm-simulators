@@ -39,8 +39,8 @@ namespace Opm::Accelerator {
 using Opm::OpmLog;
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-openclBISAI<Scalar,block_size>::openclBISAI(bool opencl_ilu_parallel_, int verbosity_)
+template<class Scalar, size_t block_size>
+openclBISAI<Scalar,block_size>::openclBISAI(bool opencl_ilu_parallel_, long long verbosity_)
     : Base(verbosity_)
 {
 #if CHOW_PATEL
@@ -49,7 +49,7 @@ openclBISAI<Scalar,block_size>::openclBISAI(bool opencl_ilu_parallel_, int verbo
     bilu0 = std::make_unique<openclBILU0<Scalar,block_size>>(opencl_ilu_parallel_, verbosity_);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclBISAI<Scalar,block_size>::
 setOpencl(std::shared_ptr<cl::Context>& context_,
           std::shared_ptr<cl::CommandQueue>& queue_)
@@ -60,16 +60,16 @@ setOpencl(std::shared_ptr<cl::Context>& context_,
     bilu0->setOpencl(context, queue);
 }
 
-std::vector<int>
-buildCsrToCscOffsetMap(std::vector<int> colPointers, std::vector<int> rowIndices)
+std::vector<long long>
+buildCsrToCscOffsetMap(std::vector<long long> colPointers, std::vector<long long> rowIndices)
 {
-    std::vector<int> aux(colPointers); // colPointers must be copied to this vector
-    std::vector<int> csrToCscOffsetMap(rowIndices.size()); // map must have the same size as the indices vector
+    std::vector<long long> aux(colPointers); // colPointers must be copied to this vector
+    std::vector<long long> csrToCscOffsetMap(rowIndices.size()); // map must have the same size as the indices vector
 
-    for(unsigned int row = 0; row < colPointers.size() - 1; row++){
-        for(int jj = colPointers[row]; jj < colPointers[row+1]; jj++){
-            int col = rowIndices[jj];
-            int dest = aux[col];
+    for(size_t row = 0; row < colPointers.size() - 1; row++){
+        for(long long jj = colPointers[row]; jj < colPointers[row+1]; jj++){
+            long long col = rowIndices[jj];
+            long long dest = aux[col];
             csrToCscOffsetMap[dest] = jj;
             aux[col]++;
         }
@@ -78,17 +78,17 @@ buildCsrToCscOffsetMap(std::vector<int> colPointers, std::vector<int> rowIndices
     return csrToCscOffsetMap;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBISAI<Scalar,block_size>::analyze_matrix(BlockedMatrix<Scalar>* mat)
 {
     return analyze_matrix(mat, nullptr);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBISAI<Scalar,block_size>::
 analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 {
-    const unsigned int bs = block_size;
+    const size_t bs = block_size;
     auto *m = mat;
 
     if (jacMat) {
@@ -107,22 +107,22 @@ analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
     }
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclBISAI<Scalar,block_size>::buildLowerSubsystemsStructures()
 {
     lower.subsystemPointers.assign(Nb + 1, 0);
 
     Dune::Timer t_buildLowerSubsystemsStructures;
 
-    for (int tcol = 0; tcol < Nb; tcol++) {
-        int frow = diagIndex[tcol] + 1;
-        int lrow = colPointers[tcol + 1];
-        int nx = lrow - frow;
-        int nv = 0;
+    for (long long tcol = 0; tcol < Nb; tcol++) {
+        long long frow = diagIndex[tcol] + 1;
+        long long lrow = colPointers[tcol + 1];
+        long long nx = lrow - frow;
+        long long nv = 0;
 
-        for (int sweep = 0; sweep < nx - 1; sweep++) {
-            for (int xid = sweep + 1; xid < nx; xid++) {
-                for( int ptr = diagIndex[rowIndices[frow + sweep]] + 1; ptr < colPointers[rowIndices[frow + sweep + 1]]; ptr++) {
+        for (long long sweep = 0; sweep < nx - 1; sweep++) {
+            for (long long xid = sweep + 1; xid < nx; xid++) {
+                for( long long ptr = diagIndex[rowIndices[frow + sweep]] + 1; ptr < colPointers[rowIndices[frow + sweep + 1]]; ptr++) {
                     if(rowIndices[ptr] == rowIndices[frow + xid]){
                         lower.nzIndices.push_back(csrToCscOffsetMap[ptr]);
                         lower.knownRhsIndices.push_back(csrToCscOffsetMap[frow + sweep]);
@@ -144,22 +144,22 @@ void openclBISAI<Scalar,block_size>::buildLowerSubsystemsStructures()
     }
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclBISAI<Scalar,block_size>::buildUpperSubsystemsStructures()
 {
     upper.subsystemPointers.assign(Nb + 1, 0);
 
     Dune::Timer t_buildUpperSubsystemsStructures;
 
-    for (int tcol = 0; tcol < Nb; tcol++) {
-        int frow = colPointers[tcol];
-        int lrow = diagIndex[tcol];
-        int nx = lrow - frow + 1;
-        int nv = 0;
+    for (long long tcol = 0; tcol < Nb; tcol++) {
+        long long frow = colPointers[tcol];
+        long long lrow = diagIndex[tcol];
+        long long nx = lrow - frow + 1;
+        long long nv = 0;
 
-        for (int sweep = 0; sweep < nx - 1; sweep++) {
-            for (int xid = 0; xid < nx; xid++) {
-                for (int ptr = colPointers[rowIndices[lrow - sweep]]; ptr < diagIndex[rowIndices[lrow - sweep]]; ptr++) {
+        for (long long sweep = 0; sweep < nx - 1; sweep++) {
+            for (long long xid = 0; xid < nx; xid++) {
+                for (long long ptr = colPointers[rowIndices[lrow - sweep]]; ptr < diagIndex[rowIndices[lrow - sweep]]; ptr++) {
                     if (rowIndices[ptr] == rowIndices[lrow - xid]) {
                         upper.nzIndices.push_back(csrToCscOffsetMap[ptr]);
                         upper.knownRhsIndices.push_back(csrToCscOffsetMap[lrow - sweep]);
@@ -181,11 +181,11 @@ void openclBISAI<Scalar,block_size>::buildUpperSubsystemsStructures()
     }
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBISAI<Scalar,block_size>::
 create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 {
-    const unsigned int bs = block_size;
+    const size_t bs = block_size;
 
     if (bs != 3) {
         OPM_THROW(std::logic_error, "Creation of ISAI preconditioner on GPU only supports block_size = 3");
@@ -207,13 +207,13 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
         buildUpperSubsystemsStructures();
 
         d_colPointers = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                   sizeof(int) * colPointers.size());
+                                   sizeof(long long) * colPointers.size());
         d_rowIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                  sizeof(int) * rowIndices.size());
+                                  sizeof(long long) * rowIndices.size());
         d_csrToCscOffsetMap = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                         sizeof(int) * csrToCscOffsetMap.size());
+                                         sizeof(long long) * csrToCscOffsetMap.size());
         d_diagIndex = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                 sizeof(int) * diagIndex.size());
+                                 sizeof(long long) * diagIndex.size());
         d_invLvals = cl::Buffer(*context, CL_MEM_READ_WRITE,
                                 sizeof(Scalar) * nnzb * bs * bs);
         d_invUvals = cl::Buffer(*context, CL_MEM_READ_WRITE,
@@ -221,60 +221,60 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
         d_invL_x = cl::Buffer(*context, CL_MEM_READ_WRITE,
                               sizeof(Scalar) * Nb * bs);
         d_lower.subsystemPointers = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                               sizeof(int) * lower.subsystemPointers.size());
+                                               sizeof(long long) * lower.subsystemPointers.size());
         d_upper.subsystemPointers = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                               sizeof(int) * upper.subsystemPointers.size());
+                                               sizeof(long long) * upper.subsystemPointers.size());
 
         if (!lower.nzIndices.empty()) { // knownRhsIndices and unknownRhsIndices will also be empty if nzIndices is empty
             d_lower.nzIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                           sizeof(int) * lower.nzIndices.size());
+                                           sizeof(long long) * lower.nzIndices.size());
             d_lower.knownRhsIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                                 sizeof(int) * lower.knownRhsIndices.size());
+                                                 sizeof(long long) * lower.knownRhsIndices.size());
             d_lower.unknownRhsIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                                   sizeof(int) * lower.unknownRhsIndices.size());
+                                                   sizeof(long long) * lower.unknownRhsIndices.size());
         }
 
         if (!upper.nzIndices.empty()) { // knownRhsIndices and unknownRhsIndices will also be empty if nzIndices is empty
             d_upper.nzIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                           sizeof(int) * upper.nzIndices.size());
+                                           sizeof(long long) * upper.nzIndices.size());
             d_upper.knownRhsIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                                 sizeof(int) * upper.knownRhsIndices.size());
+                                                 sizeof(long long) * upper.knownRhsIndices.size());
             d_upper.unknownRhsIndices = cl::Buffer(*context, CL_MEM_READ_WRITE,
-                                                   sizeof(int) * upper.unknownRhsIndices.size());
+                                                   sizeof(long long) * upper.unknownRhsIndices.size());
         }
 
         events.resize(6);
         err = queue->enqueueWriteBuffer(d_colPointers, CL_FALSE, 0,
-                                        colPointers.size() * sizeof(int),
+                                        colPointers.size() * sizeof(long long),
                                         colPointers.data(), nullptr, &events[0]);
         err |= queue->enqueueWriteBuffer(d_rowIndices, CL_FALSE, 0,
-                                         rowIndices.size() * sizeof(int),
+                                         rowIndices.size() * sizeof(long long),
                                          rowIndices.data(), nullptr, &events[1]);
         err |= queue->enqueueWriteBuffer(d_csrToCscOffsetMap, CL_FALSE, 0,
-                                         csrToCscOffsetMap.size() * sizeof(int),
+                                         csrToCscOffsetMap.size() * sizeof(long long),
                                          csrToCscOffsetMap.data(), nullptr, &events[2]);
         err |= queue->enqueueWriteBuffer(d_diagIndex, CL_FALSE, 0,
-                                         diagIndex.size() * sizeof(int),
+                                         diagIndex.size() * sizeof(long long),
                                          diagIndex.data(), nullptr, &events[3]);
         err |= queue->enqueueWriteBuffer(d_lower.subsystemPointers, CL_FALSE, 0,
-                                         sizeof(int) * lower.subsystemPointers.size(),
+                                         sizeof(long long) * lower.subsystemPointers.size(),
                                          lower.subsystemPointers.data(), nullptr, &events[4]);
         err |= queue->enqueueWriteBuffer(d_upper.subsystemPointers, CL_FALSE, 0,
-                                         sizeof(int) * upper.subsystemPointers.size(),
+                                         sizeof(long long) * upper.subsystemPointers.size(),
                                          upper.subsystemPointers.data(), nullptr, &events[5]);
 
         if (!lower.nzIndices.empty()) {
             events.resize(events.size() + 3);
             err |= queue->enqueueWriteBuffer(d_lower.nzIndices, CL_FALSE, 0,
-                                             sizeof(int) * lower.nzIndices.size(),
+                                             sizeof(long long) * lower.nzIndices.size(),
                                              lower.nzIndices.data(), nullptr,
                                              &events[events.size() - 3]);
             err |= queue->enqueueWriteBuffer(d_lower.knownRhsIndices, CL_FALSE, 0,
-                                             sizeof(int) * lower.knownRhsIndices.size(),
+                                             sizeof(long long) * lower.knownRhsIndices.size(),
                                              lower.knownRhsIndices.data(), nullptr,
                                              &events[events.size() - 2]);
             err |= queue->enqueueWriteBuffer(d_lower.unknownRhsIndices, CL_FALSE, 0,
-                                             sizeof(int) * lower.unknownRhsIndices.size(),
+                                             sizeof(long long) * lower.unknownRhsIndices.size(),
                                              lower.unknownRhsIndices.data(), nullptr,
                                              &events[events.size() - 1]);
         }
@@ -282,15 +282,15 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
         if (!upper.nzIndices.empty()) {
             events.resize(events.size() + 3);
             err |= queue->enqueueWriteBuffer(d_upper.nzIndices, CL_FALSE,
-                                             0, sizeof(int) * upper.nzIndices.size(),
+                                             0, sizeof(long long) * upper.nzIndices.size(),
                                              upper.nzIndices.data(), nullptr,
                                              &events[events.size() - 3]);
             err |= queue->enqueueWriteBuffer(d_upper.knownRhsIndices, CL_FALSE, 0,
-                                             sizeof(int) * upper.knownRhsIndices.size(),
+                                             sizeof(long long) * upper.knownRhsIndices.size(),
                                              upper.knownRhsIndices.data(), nullptr,
                                              &events[events.size() - 2]);
             err |= queue->enqueueWriteBuffer(d_upper.unknownRhsIndices, CL_FALSE, 0,
-                                             sizeof(int) * upper.unknownRhsIndices.size(),
+                                             sizeof(long long) * upper.unknownRhsIndices.size(),
                                              upper.unknownRhsIndices.data(), nullptr,
                                              &events[events.size() - 1]);
         }
@@ -333,17 +333,17 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
     return true;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBISAI<Scalar,block_size>::
 create_preconditioner(BlockedMatrix<Scalar>* mat)
 {
     return create_preconditioner(mat, nullptr);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclBISAI<Scalar,block_size>::apply(const cl::Buffer& x, cl::Buffer& y)
 {
-    const unsigned int bs = block_size;
+    const size_t bs = block_size;
 
     OpenclKernels<Scalar>::spmv(d_invLvals, d_rowIndices, d_colPointers,
                                 x, d_invL_x, Nb, bs, true, true); // application of isaiL is a simple spmv with addition

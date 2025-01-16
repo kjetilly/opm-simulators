@@ -28,7 +28,7 @@
 
 namespace Opm
 {
-template<class K, int n, int m>
+template<class K, long long n, long long m>
 #if DUNE_VERSION_GTE(DUNE_GRID, 2, 8)
 K& firstMatrixElement(MatrixBlock<K, n, m>& A)
 #else

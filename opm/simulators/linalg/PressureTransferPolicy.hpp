@@ -63,7 +63,7 @@ public:
     PressureTransferPolicy(const Communication& comm,
                            const FineVectorType& weights,
                            const PropertyTree& /*prm*/,
-                           int pressure_var_index)
+                           long long pressure_var_index)
         : communication_(&const_cast<Communication&>(comm))
         , weights_(weights)
         , pressure_var_index_(pressure_var_index)

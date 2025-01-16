@@ -57,10 +57,10 @@ class CollectDataOnIORank
 public:
     using CollectiveCommunication = typename Grid::CollectiveCommunication;
     using P2PCommunicatorType = Dune::Point2PointCommunicator<Dune::SimpleMessageBuffer>;
-    using IndexMapType = std::vector<int>;
+    using IndexMapType = std::vector<long long>;
     using IndexMapStorageType = std::vector<IndexMapType>;
 
-    static constexpr int dimension = Grid::dimension;
+    static constexpr long long dimension = Grid::dimension;
 
     enum { ioRank = 0 };
 
@@ -76,7 +76,7 @@ public:
 
     // gather solution to rank 0 for EclipseWriter
     void collect(const data::Solution&                                localCellData,
-                 const std::map<std::pair<std::string, int>, double>& localBlockData,
+                 const std::map<std::pair<std::string, long long>, double>& localBlockData,
                  const data::Wells&                                   localWellData,
                  const data::WellBlockAveragePressures&               localWBPData,
                  const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
@@ -86,7 +86,7 @@ public:
                  const std::array<FlowsData<double>, 3>&              localFlowsn,
                  const std::array<FlowsData<double>, 3>&              localFloresn);
 
-    const std::map<std::pair<std::string, int>, double>& globalBlockData() const
+    const std::map<std::pair<std::string, long long>, double>& globalBlockData() const
     { return globalBlockData_; }
 
     const data::Solution& globalCellData() const
@@ -128,9 +128,9 @@ public:
     bool isParallel() const
     { return toIORankComm_.size() > 1; }
 
-    int localIdxToGlobalIdx(unsigned localIdx) const;
+    long long localIdxToGlobalIdx(unsigned localIdx) const;
 
-    const std::vector<int>& localIdxToGlobalIdxMapping() const
+    const std::vector<long long>& localIdxToGlobalIdxMapping() const
     {
         return localIdxToGlobalIdx_;
     }
@@ -141,10 +141,10 @@ public:
     std::size_t numCells () const
     { return globalCartesianIndex_.size(); }
 
-    const std::vector<int>& globalRanks() const
+    const std::vector<long long>& globalRanks() const
     { return globalRanks_; }
 
-    bool isCartIdxOnThisRank(int cartIdx) const;
+    bool isCartIdxOnThisRank(long long cartIdx) const;
 
 protected:
     P2PCommunicatorType toIORankComm_;
@@ -152,21 +152,21 @@ protected:
     IndexMapType globalCartesianIndex_;
     IndexMapType localIndexMap_;
     IndexMapStorageType indexMaps_;
-    std::vector<int> globalRanks_;
+    std::vector<long long> globalRanks_;
     data::Solution globalCellData_;
-    std::map<std::pair<std::string, int>, double> globalBlockData_;
+    std::map<std::pair<std::string, long long>, double> globalBlockData_;
     data::Wells globalWellData_;
     data::WellBlockAveragePressures globalWBPData_;
     data::GroupAndNetworkValues globalGroupAndNetworkData_;
     data::Aquifers globalAquiferData_;
     WellTestState globalWellTestState_;
-    std::vector<int> localIdxToGlobalIdx_;
+    std::vector<long long> localIdxToGlobalIdx_;
     std::array<FlowsData<double>, 3> globalFlowsn_;
     std::array<FlowsData<double>, 3> globalFloresn_;
     /// \brief sorted list of cartesian indices present-
     ///
     /// non-empty only when running in parallel
-    std::vector<int> sortedCartesianIdx_;
+    std::vector<long long> sortedCartesianIdx_;
 };
 
 } // end namespace Opm

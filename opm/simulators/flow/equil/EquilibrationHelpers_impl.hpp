@@ -55,7 +55,7 @@ using SatOnlyFluidState = SimpleModularFluidState<double,
 namespace Miscibility {
 
 template<class FluidSystem>
-RsVD<FluidSystem>::RsVD(const int pvtRegionIdx,
+RsVD<FluidSystem>::RsVD(const long long pvtRegionIdx,
                         const std::vector<Scalar>& depth,
                         const std::vector<Scalar>& rs)
     : pvtRegionIdx_(pvtRegionIdx)
@@ -93,7 +93,7 @@ satRs(const Scalar press, const Scalar temp) const
 }
 
 template<class FluidSystem>
-PBVD<FluidSystem>::PBVD(const int pvtRegionIdx,
+PBVD<FluidSystem>::PBVD(const long long pvtRegionIdx,
                         const std::vector<Scalar>& depth,
                         const std::vector<Scalar>& pbub)
     : pvtRegionIdx_(pvtRegionIdx)
@@ -130,7 +130,7 @@ satRs(const Scalar press, const Scalar temp) const
 }
 
 template<class FluidSystem>
-PDVD<FluidSystem>::PDVD(const int pvtRegionIdx,
+PDVD<FluidSystem>::PDVD(const long long pvtRegionIdx,
                         const std::vector<Scalar>& depth,
                         const std::vector<Scalar>& pdew)
     : pvtRegionIdx_(pvtRegionIdx)
@@ -167,7 +167,7 @@ satRv(const Scalar press, const Scalar temp) const
 }
 
 template<class FluidSystem>
-RvVD<FluidSystem>::RvVD(const int pvtRegionIdx,
+RvVD<FluidSystem>::RvVD(const long long pvtRegionIdx,
                         const std::vector<Scalar>& depth,
                         const std::vector<Scalar>& rv)
     : pvtRegionIdx_(pvtRegionIdx)
@@ -210,7 +210,7 @@ satRv(const Scalar press, const Scalar temp) const
 }
 
 template<class FluidSystem>
-RvwVD<FluidSystem>::RvwVD(const int pvtRegionIdx,
+RvwVD<FluidSystem>::RvwVD(const long long pvtRegionIdx,
                           const std::vector<Scalar>& depth,
                           const std::vector<Scalar>& rvw)
     : pvtRegionIdx_(pvtRegionIdx)
@@ -255,7 +255,7 @@ satRvw(const Scalar press, const Scalar temp) const
 
 template<class FluidSystem>
 RsSatAtContact<FluidSystem>::
-RsSatAtContact(const int pvtRegionIdx, const Scalar pContact,  const Scalar T_contact)
+RsSatAtContact(const long long pvtRegionIdx, const Scalar pContact,  const Scalar T_contact)
     : pvtRegionIdx_(pvtRegionIdx)
 {
     rsSatContact_ = satRs(pContact, T_contact);
@@ -287,7 +287,7 @@ satRs(const Scalar press, const Scalar temp) const
 
 template<class FluidSystem>
 RvSatAtContact<FluidSystem>::
-RvSatAtContact(const int pvtRegionIdx, const Scalar pContact, const Scalar T_contact)
+RvSatAtContact(const long long pvtRegionIdx, const Scalar pContact, const Scalar T_contact)
     : pvtRegionIdx_(pvtRegionIdx)
 {
     rvSatContact_ = satRv(pContact, T_contact);
@@ -319,7 +319,7 @@ satRv(const Scalar press, const Scalar temp) const
 
 template<class FluidSystem>
 RvwSatAtContact<FluidSystem>::
-RvwSatAtContact(const int pvtRegionIdx, const Scalar pContact, const Scalar T_contact)
+RvwSatAtContact(const long long pvtRegionIdx, const Scalar pContact, const Scalar T_contact)
     : pvtRegionIdx_(pvtRegionIdx)
 {
     rvwSatContact_ = satRvw(pContact, T_contact);
@@ -358,7 +358,7 @@ EquilReg<Scalar>::EquilReg(const EquilRecord& rec,
                            std::shared_ptr<Miscibility::RsFunction<Scalar>> rvw,
                            const TabulatedFunction& tempVdTable,
                            const TabulatedFunction& saltVdTable,
-                           const int pvtIdx)
+                           const long long pvtIdx)
     : rec_    (rec)
     , rs_     (rs)
     , rv_     (rv)
@@ -406,7 +406,7 @@ Scalar EquilReg<Scalar>::pcgoGoc() const
 }
 
 template<class Scalar>
-int EquilReg<Scalar>::equilibrationAccuracy() const
+long long EquilReg<Scalar>::equilibrationAccuracy() const
 {
     return this->rec_.initializationTargetAccuracy();
 }
@@ -447,7 +447,7 @@ EquilReg<Scalar>::tempVdTable() const
 }
 
 template<class Scalar>
-int EquilReg<Scalar>::pvtIdx() const
+long long EquilReg<Scalar>::pvtIdx() const
 {
     return this->pvtIdx_;
 }
@@ -455,8 +455,8 @@ int EquilReg<Scalar>::pvtIdx() const
 template<class FluidSystem, class MaterialLawManager>
 PcEq<FluidSystem,MaterialLawManager>::
 PcEq(const MaterialLawManager& materialLawManager,
-     const int phase,
-     const int cell,
+     const long long phase,
+     const long long cell,
      const Scalar targetPc)
     : materialLawManager_(materialLawManager)
     , phase_(phase)
@@ -495,9 +495,9 @@ operator()(Scalar s) const
 template<class FluidSystem, class MaterialLawManager>
 PcEqSum<FluidSystem,MaterialLawManager>::
 PcEqSum(const MaterialLawManager& materialLawManager,
-        const int phase1,
-        const int phase2,
-        const int cell,
+        const long long phase1,
+        const long long phase2,
+        const long long cell,
         const Scalar targetPc)
     : materialLawManager_(materialLawManager)
     , phase1_(phase1)
@@ -534,7 +534,7 @@ operator()(Scalar s) const
 template <class FluidSystem, class MaterialLawManager>
 typename FluidSystem::Scalar
 minSaturations(const MaterialLawManager& materialLawManager,
-                      const int phase, const int cell)
+                      const long long phase, const long long cell)
 {
     const auto& scaledDrainageInfo =
         materialLawManager.oilWaterScaledEpsInfoDrainage(cell);
@@ -559,7 +559,7 @@ minSaturations(const MaterialLawManager& materialLawManager,
 template <class FluidSystem, class MaterialLawManager>
 typename FluidSystem::Scalar
 maxSaturations(const MaterialLawManager& materialLawManager,
-               const int phase, const int cell)
+               const long long phase, const long long cell)
 {
     const auto& scaledDrainageInfo =
         materialLawManager.oilWaterScaledEpsInfoDrainage(cell);
@@ -584,8 +584,8 @@ maxSaturations(const MaterialLawManager& materialLawManager,
 template <class FluidSystem, class MaterialLawManager>
 typename FluidSystem::Scalar
 satFromPc(const MaterialLawManager& materialLawManager,
-          const int phase,
-          const int cell,
+          const long long phase,
+          const long long cell,
           const typename FluidSystem::Scalar targetPc,
           const bool increasing)
 {
@@ -608,8 +608,8 @@ satFromPc(const MaterialLawManager& materialLawManager,
 
     const Scalar tol = 1e-10;
     // should at least converge in 2 times bisection but some safety here:
-    const int maxIter = -2*static_cast<int>(std::log2(tol)) + 10;
-    int usedIterations = -1;
+    const long long maxIter = -2*static_cast<long long>(std::log2(tol)) + 10;
+    long long usedIterations = -1;
     const Scalar root = RegulaFalsiBisection<ThrowOnError>::solve(f, s0, s1, maxIter, tol, usedIterations);
     return root;
 }
@@ -617,9 +617,9 @@ satFromPc(const MaterialLawManager& materialLawManager,
 template<class FluidSystem, class MaterialLawManager>
 typename FluidSystem::Scalar
 satFromSumOfPcs(const MaterialLawManager& materialLawManager,
-                const int phase1,
-                const int phase2,
-                const int cell,
+                const long long phase1,
+                const long long phase2,
+                const long long cell,
                 const typename FluidSystem::Scalar targetPc)
 {
     using Scalar = typename FluidSystem::Scalar;
@@ -639,8 +639,8 @@ satFromSumOfPcs(const MaterialLawManager& materialLawManager,
     assert(f0 > 0.0 && f1 < 0.0);
     const Scalar tol = 1e-10;
     // should at least converge in 2 times bisection but some safety here:
-    const int maxIter = -2*static_cast<int>(std::log2(tol)) + 10;
-    int usedIterations = -1;
+    const long long maxIter = -2*static_cast<long long>(std::log2(tol)) + 10;
+    long long usedIterations = -1;
     const Scalar root = RegulaFalsiBisection<ThrowOnError>::solve(f, s0, s1, maxIter, tol, usedIterations);
     return root;
 }
@@ -650,8 +650,8 @@ typename FluidSystem::Scalar
 satFromDepth(const MaterialLawManager& materialLawManager,
              const typename FluidSystem::Scalar cellDepth,
              const typename FluidSystem::Scalar contactDepth,
-             const int phase,
-             const int cell,
+             const long long phase,
+             const long long cell,
              const bool increasing)
 {
     using Scalar = typename FluidSystem::Scalar;
@@ -668,8 +668,8 @@ satFromDepth(const MaterialLawManager& materialLawManager,
 
 template<class FluidSystem, class MaterialLawManager>
 bool isConstPc(const MaterialLawManager& materialLawManager,
-               const int phase,
-               const int cell)
+               const long long phase,
+               const long long cell)
 {
     using Scalar = typename FluidSystem::Scalar;
     // Create the equation f(s) = pc(s);

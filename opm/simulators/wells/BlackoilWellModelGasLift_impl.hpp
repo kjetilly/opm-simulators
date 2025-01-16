@@ -46,7 +46,7 @@ maybeDoGasLiftOptimize(const Simulator& simulator,
                        DeferredLogger& deferred_logger)
 {
     bool do_glift_optimization = false;
-    int num_wells_changed = 0;
+    long long num_wells_changed = 0;
     const double simulation_time = simulator.time();
     const Scalar min_wait = simulator.vanguard().schedule().glo(simulator.episodeIndex()).min_wait();
     // We only optimize if a min_wait time has past.
@@ -140,7 +140,7 @@ gasLiftOptimizationStage1(const Simulator& simulator,
                           DeferredLogger& deferred_logger)
 {
     auto comm = simulator.vanguard().grid().comm();
-    int num_procs = comm.size();
+    long long num_procs = comm.size();
     // NOTE: Gas lift optimization stage 1 seems to be difficult
     //  to do in parallel since the wells are optimized on different
     //  processes and each process needs to know the current ALQ allocated
@@ -166,8 +166,8 @@ gasLiftOptimizationStage1(const Simulator& simulator,
     //    processes could take ownership of all the wells.  Then there
     //    would be no need for synchronization here..
     //
-    for (int i = 0; i< num_procs; i++) {
-        int num_rates_to_sync = 0;  // communication variable
+    for (long long i = 0; i< num_procs; i++) {
+        long long num_rates_to_sync = 0;  // communication variable
         GLiftSyncGroups groups_to_sync;
         if (comm.rank() ==  i) {
             // Run stage1: Optimize single wells while also checking group limits
@@ -190,7 +190,7 @@ gasLiftOptimizationStage1(const Simulator& simulator,
         }
         num_rates_to_sync = comm.sum(num_rates_to_sync);
         if (num_rates_to_sync > 0) {
-            std::vector<int> group_indexes;
+            std::vector<long long> group_indexes;
             group_indexes.reserve(num_rates_to_sync);
             std::vector<Scalar> group_alq_rates;
             group_alq_rates.reserve(num_rates_to_sync);
@@ -222,7 +222,7 @@ gasLiftOptimizationStage1(const Simulator& simulator,
                           group_gas_rates, group_water_rates, group_alq_rates);
 #endif
             if (comm.rank() != i) {
-                for (int j = 0; j < num_rates_to_sync; ++j) {
+                for (long long j = 0; j < num_rates_to_sync; ++j) {
                     group_info.updateRate(group_indexes[j],
                                           group_oil_rates[j],
                                           group_gas_rates[j],
@@ -231,7 +231,7 @@ gasLiftOptimizationStage1(const Simulator& simulator,
                 }
             }
             if constexpr (glift_debug) {
-                int counter = 0;
+                long long counter = 0;
                 if (comm.rank() == i) {
                     counter = wellState.gliftGetDebugCounter();
                 }

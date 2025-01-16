@@ -32,11 +32,11 @@
 
 namespace Opm::Accelerator {
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 std::unique_ptr<openclPreconditioner<Scalar,block_size>>
 openclPreconditioner<Scalar,block_size>::
 create(PreconditionerType type,
-       int verbosity,
+       long long verbosity,
        bool opencl_ilu_parallel)
 {
     switch (type ) {
@@ -49,10 +49,10 @@ create(PreconditionerType type,
     }
 
     OPM_THROW(std::logic_error,
-              "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
+              "Invalid preconditioner type " + std::to_string(static_cast<long long>(type)));
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclPreconditioner<Scalar,block_size>::
 setOpencl(std::shared_ptr<cl::Context>& context_,
           std::shared_ptr<cl::CommandQueue>& queue_)

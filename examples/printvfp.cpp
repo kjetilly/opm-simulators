@@ -64,7 +64,7 @@ struct Setup
         , schedule   { std::make_unique<Schedule>(deck, *ecl_state, std::make_shared<Python>()) }
         , well_state { std::make_unique<WellState<double>>(phaseUsage(ecl_state->runspec().phases())) }
     {
-        const int step = 0;
+        const long long step = 0;
         const auto& sched_state = (*this->schedule)[step];
 
         this->vfp_properties = std::make_unique<VFPProperties<double>>
@@ -101,7 +101,7 @@ double computeBhp(const VFPProdTable& table,
 
 } // Anonymous namespace
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     if (argc < 2) {
         return EXIT_FAILURE;
@@ -109,13 +109,13 @@ int main(int argc, char** argv)
 
     const Setup setup(argv[1]);
 
-//     const int table_id = 1;
-    const int table_id = 4;
+//     const long long table_id = 1;
+    const long long table_id = 4;
     const double wct = 0.0;
 //    const double gor = 35.2743;
     const double gor = 0.0;
     const double alq = 0.0;
-    const int n = 51;
+    const long long n = 51;
     const double m3pd = unit::cubic(unit::meter)/unit::day;
     const double rate_min = 20.0 * m3pd;
     const double rate_max = 2000.0 * m3pd;
@@ -125,7 +125,7 @@ int main(int argc, char** argv)
     const double thp_max = 35.0 * unit::barsa;
     std::vector<double> rates(n);
     std::vector<double> thps(n);
-    for (int ii = 0; ii < n; ++ii) {
+    for (long long ii = 0; ii < n; ++ii) {
         const double q = double(ii) / double(n-1);
         rates[ii] = (1.0 - q) * rate_min + q * rate_max;
         thps[ii] = (1.0 - q) * thp_min + q * thp_max;

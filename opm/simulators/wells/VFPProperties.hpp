@@ -74,7 +74,7 @@ public:
         return &m_prod;
     }
 
-    Scalar getExplicitWFR(const int table_id, const std::size_t well_index) const
+    Scalar getExplicitWFR(const long long table_id, const std::size_t well_index) const
     {
         const auto& rates = well_state_.well(well_index).prev_surface_rates;
         const auto& pu = well_state_.phaseUsage();
@@ -85,7 +85,7 @@ public:
         return detail::getWFR(table, aqua, liquid, vapour);
     }
 
-    Scalar getExplicitGFR(const int table_id, const std::size_t well_index) const
+    Scalar getExplicitGFR(const long long table_id, const std::size_t well_index) const
     {
         const auto& rates = well_state_.well(well_index).prev_surface_rates;
         const auto& pu = well_state_.phaseUsage();

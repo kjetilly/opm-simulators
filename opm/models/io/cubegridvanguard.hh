@@ -98,7 +98,7 @@ public:
     CubeGridVanguard(Simulator& simulator)
         : ParentType(simulator)
     {
-        std::array<unsigned int, dim> cellRes;
+        std::array<size_t, dim> cellRes;
         GlobalPosition upperRight(0.0);
         GlobalPosition lowerLeft(0.0);
 
@@ -119,7 +119,7 @@ public:
 
         unsigned numRefinements = Parameters::Get<Parameters::GridGlobalRefinements>();
         cubeGrid_ = Dune::StructuredGridFactory<Grid>::createCubeGrid(lowerLeft, upperRight, cellRes);
-        cubeGrid_->globalRefine(static_cast<int>(numRefinements));
+        cubeGrid_->globalRefine(static_cast<long long>(numRefinements));
 
         this->finalizeInit_();
     }

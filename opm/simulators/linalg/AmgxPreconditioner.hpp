@@ -41,32 +41,32 @@ namespace Amgx {
  * This structure holds the configuration parameters for the AMGX solver.
  */
 struct AmgxConfig {
-    int determinism_flag = 0;
-    int print_grid_stats = 0;
-    int print_solve_stats = 0;
+    long long determinism_flag = 0;
+    long long print_grid_stats = 0;
+    long long print_solve_stats = 0;
     std::string solver = "AMG";
     std::string algorithm = "CLASSICAL";
     std::string interpolator = "D2";
     std::string selector = "PMIS";
     std::string smoother = "BLOCK_JACOBI";
-    int presweeps = 3;
-    int postsweeps = 3;
+    long long presweeps = 3;
+    long long postsweeps = 3;
     double strength_threshold = 0.5;
-    int max_iters = 1;
+    long long max_iters = 1;
 
     explicit AmgxConfig(const Opm::PropertyTree& prm) {
-        determinism_flag = prm.get<int>("determinism_flag", determinism_flag);
-        print_grid_stats = prm.get<int>("print_grid_stats", print_grid_stats);
-        print_solve_stats = prm.get<int>("print_solve_stats", print_solve_stats);
+        determinism_flag = prm.get<long long>("determinism_flag", determinism_flag);
+        print_grid_stats = prm.get<long long>("print_grid_stats", print_grid_stats);
+        print_solve_stats = prm.get<long long>("print_solve_stats", print_solve_stats);
         solver = prm.get<std::string>("solver", solver);
         algorithm = prm.get<std::string>("algorithm", algorithm);
         interpolator = prm.get<std::string>("interpolator", interpolator);
         selector = prm.get<std::string>("selector", selector);
         smoother = prm.get<std::string>("smoother", smoother);
-        presweeps = prm.get<int>("presweeps", presweeps);
-        postsweeps = prm.get<int>("postsweeps", postsweeps);
+        presweeps = prm.get<long long>("presweeps", presweeps);
+        postsweeps = prm.get<long long>("postsweeps", postsweeps);
         strength_threshold = prm.get<double>("strength_threshold", strength_threshold);
-        max_iters = prm.get<int>("max_iters", max_iters);
+        max_iters = prm.get<long long>("max_iters", max_iters);
     }
 
     std::string toString() const {
@@ -112,7 +112,7 @@ public:
     //! \brief The field type of the vectors
     using vector_field_type = typename X::field_type;
 
-    static constexpr int block_size = 1;
+    static constexpr long long block_size = 1;
 
     /**
      * @brief Constructor for the AmgxPreconditioner class.
@@ -135,7 +135,7 @@ public:
         AMGX_SAFE_CALL(AMGX_resources_create_simple(&rsrc_, cfg_));
 
         // Setup frequency is set in the property tree
-        setup_frequency_ = prm.get<int>("setup_frequency", 30);
+        setup_frequency_ = prm.get<long long>("setup_frequency", 30);
 
         // Select appropriate AMGX mode based on matrix and vector scalar types
         AMGX_Mode amgx_mode;
@@ -156,8 +156,8 @@ public:
         AMGX_SAFE_CALL(AMGX_vector_create(&b_amgx_, rsrc_, amgx_mode));
 
         // Setup matrix structure
-        std::vector<int> row_ptrs(N_ + 1);
-        std::vector<int> col_indices(nnz_);
+        std::vector<long long> row_ptrs(N_ + 1);
+        std::vector<long long> col_indices(nnz_);
         setupSparsityPattern(row_ptrs, col_indices);
 
         // initialize matrix with values
@@ -296,9 +296,9 @@ private:
      * @param row_ptrs The row pointers for the AMGX matrix.
      * @param col_indices The column indices for the AMGX matrix.
      */
-    void setupSparsityPattern(std::vector<int>& row_ptrs, std::vector<int>& col_indices)
+    void setupSparsityPattern(std::vector<long long>& row_ptrs, std::vector<long long>& col_indices)
     {
-        int pos = 0;
+        long long pos = 0;
         row_ptrs[0] = 0;
         for (auto row = A_.begin(); row != A_.end(); ++row) {
             for (auto col = row->begin(); col != row->end(); ++col) {
@@ -329,11 +329,11 @@ private:
     }
 
     const M& A_; //!< The matrix for which the preconditioner is constructed.
-    const int N_; //!< Number of rows in the matrix.
-    const int nnz_; //!< Number of non-zero elements in the matrix.
+    const long long N_; //!< Number of rows in the matrix.
+    const long long nnz_; //!< Number of non-zero elements in the matrix.
     // Internal variables to control AMGX setup and reuse frequency
-    int setup_frequency_ = -1; //!< Frequency of updating the AMG hierarchy
-    int update_counter_ = 0; //!< Counter for setup updates.
+    long long setup_frequency_ = -1; //!< Frequency of updating the AMG hierarchy
+    long long update_counter_ = 0; //!< Counter for setup updates.
 
     AMGX_config_handle cfg_ = nullptr; //!< The AMGX configuration handle.
     AMGX_resources_handle rsrc_ = nullptr; //!< The AMGX resources handle.

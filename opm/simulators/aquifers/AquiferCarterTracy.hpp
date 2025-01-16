@@ -176,7 +176,7 @@ protected:
         return std::make_pair(PItd, PItdprime);
     }
 
-    Scalar dpai(const int idx) const
+    Scalar dpai(const long long idx) const
     {
         const auto gdz =
             this->gravity_() * (this->cell_depth_.at(idx) - this->aquiferDepth());
@@ -189,7 +189,7 @@ protected:
 
     // This function implements Eqs 5.8 and 5.9 of the EclipseTechnicalDescription
     std::pair<Scalar, Scalar>
-    calculateEqnConstants(const int idx, const Simulator& simulator)
+    calculateEqnConstants(const long long idx, const Simulator& simulator)
     {
         const Scalar td_plus_dt = (simulator.timeStepSize() + simulator.time()) / this->Tc_;
         this->dimensionless_time_ = simulator.time() / this->Tc_;
@@ -209,7 +209,7 @@ protected:
     }
 
     // This function implements Eq 5.7 of the EclipseTechnicalDescription
-    void calculateInflowRate(int idx, const Simulator& simulator) override
+    void calculateInflowRate(long long idx, const Simulator& simulator) override
     {
         const auto [a, b] = this->calculateEqnConstants(idx, simulator);
 

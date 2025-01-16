@@ -38,10 +38,10 @@
 
 namespace Dune {
 namespace cpgrid {
-template <int codim>
+template <long long codim>
 class Entity;
 
-template <int codim>
+template <long long codim>
 class EntityPointer;
 }
 
@@ -53,7 +53,7 @@ namespace Fem {
 //  GridEntityAccess for CpGrid entities
 //
 ////////////////////////////////////////////////////////////
-template<int codim>
+template<long long codim>
 struct GridEntityAccess<Dune::cpgrid::Entity<codim> >
 {
     using EntityType = Dune::cpgrid::Entity<codim>;

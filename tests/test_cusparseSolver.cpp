@@ -42,12 +42,12 @@ public:
     DeviceInitException(std::string msg) : logic_error(msg){};
 };
 
-template <int bz>
+template <long long bz>
 using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
-template <int bz>
+template <long long bz>
 using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
-template <int bz>
+template <long long bz>
 void readLinearSystem(const std::string& matrix_filename, const std::string& rhs_filename, Matrix<bz>& matrix, Vector<bz>& rhs)
 {
     {
@@ -66,7 +66,7 @@ void readLinearSystem(const std::string& matrix_filename, const std::string& rhs
     }
 }
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 getDuneSolution(Matrix<bz>& matrix, Vector<bz>& rhs)
 {
@@ -79,23 +79,23 @@ getDuneSolution(Matrix<bz>& matrix, Vector<bz>& rhs)
     double relaxation = 0.9;
     Dune::SeqILU<Matrix<bz>,Vector<bz>,Vector<bz> > prec(matrix, relaxation);
     double reduction = 1e-2;
-    int maxit = 10;
-    int verbosity = 0;
+    long long maxit = 10;
+    long long verbosity = 0;
     Dune::BiCGSTABSolver<Vector<bz> > solver(fop, prec, reduction, maxit, verbosity);
     solver.apply(x, rhs, result);
     return x;
 }
 
-template <int bz>
+template <long long bz>
 void
 createBridge(const boost::property_tree::ptree& prm, std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >& bridge)
 {
-    const int linear_solver_verbosity = prm.get<int>("verbosity");
-    const int maxit = prm.get<int>("maxiter");
+    const long long linear_solver_verbosity = prm.get<long long>("verbosity");
+    const long long maxit = prm.get<long long>("maxiter");
     const double tolerance = prm.get<double>("tol");
     const bool opencl_ilu_parallel(true);
-    const int platformID = 0;
-    const int deviceID = 0;
+    const long long platformID = 0;
+    const long long deviceID = 0;
     const std::string accelerator_mode("cusparse");
     const std::string linsolver("ilu0");
 
@@ -117,7 +117,7 @@ createBridge(const boost::property_tree::ptree& prm, std::unique_ptr<Opm::GpuBri
     }
 }
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 testCusparseSolver(Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>& bridge, Matrix<bz>& matrix, Vector<bz>& rhs)
 {
@@ -132,7 +132,7 @@ testCusparseSolver(Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>& bridge, Matrix<bz
     return x;
 } 
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 testCusparseSolverJacobi(Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>& bridge, Matrix<bz>& matrix, Vector<bz>& rhs)
 {
@@ -153,7 +153,7 @@ namespace pt = boost::property_tree;
 
 void test3(const pt::ptree& prm)
 {
-    const int bz = 3;
+    const long long bz = 3;
     Matrix<bz> matrix;
     Vector<bz> rhs;
     std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> > bridge;
@@ -168,7 +168,7 @@ void test3(const pt::ptree& prm)
     auto sol = testCusparseSolver<bz>(*bridge, matrix, rhs2);
     BOOST_REQUIRE_EQUAL(sol.size(), duneSolution.size());
     for (size_t i = 0; i < sol.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(sol[i][row], duneSolution[i][row], 1e-3);
         }
     }
@@ -177,7 +177,7 @@ void test3(const pt::ptree& prm)
     auto solJacobi = testCusparseSolverJacobi<bz>(*bridge, matrix, rhs2);
     BOOST_REQUIRE_EQUAL(solJacobi.size(), duneSolution.size());
     for (size_t i = 0; i < solJacobi.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(solJacobi[i][row], duneSolution[i][row], 1e-3);
         }
     }

@@ -43,7 +43,7 @@ namespace Opm::Parameters {
 template<class Scalar>
 struct NewtonMaxRelax { static constexpr Scalar value = 0.5; };
 
-struct NewtonMinIterations { static constexpr int value = 2; };
+struct NewtonMinIterations { static constexpr long long value = 2; };
 struct NewtonRelaxationType { static constexpr auto value = "dampen"; };
 
 } // namespace Opm::Parameters
@@ -61,8 +61,8 @@ namespace detail {
 /// Detect oscillation or stagnation in a given residual history.
 template<class Scalar>
 void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
-                        const int it, const int numPhases, const Scalar relaxRelTol,
-                        const int minimumOscillatingPhases,
+                        const long long it, const long long numPhases, const Scalar relaxRelTol,
+                        const long long minimumOscillatingPhases,
                         bool& oscillate, bool& stagnate);
 
 /// Apply a stabilization to dx, depending on dxOld and relaxation parameters.
@@ -81,8 +81,8 @@ struct NonlinearSolverParameters
     Scalar relaxMax_;
     Scalar relaxIncrement_;
     Scalar relaxRelTol_;
-    int maxIter_; // max nonlinear iterations
-    int minIter_; // min nonlinear iterations
+    long long maxIter_; // max nonlinear iterations
+    long long minIter_; // min nonlinear iterations
 
     NonlinearSolverParameters();
 
@@ -137,7 +137,7 @@ struct NonlinearSolverParameters
             // Do model-specific once-per-step calculations.
             report += model_->prepareStep(timer);
 
-            int iteration = 0;
+            long long iteration = 0;
 
             // Let the model do one nonlinear iteration.
 
@@ -186,35 +186,35 @@ struct NonlinearSolverParameters
         { return failureReport_; }
 
         /// Number of linearizations used in all calls to step().
-        int linearizations() const
+        long long linearizations() const
         { return linearizations_; }
 
         /// Number of full nonlinear solver iterations used in all calls to step().
-        int nonlinearIterations() const
+        long long nonlinearIterations() const
         { return nonlinearIterations_; }
 
         /// Number of linear solver iterations used in all calls to step().
-        int linearIterations() const
+        long long linearIterations() const
         { return linearIterations_; }
 
         /// Number of well iterations used in all calls to step().
-        int wellIterations() const
+        long long wellIterations() const
         { return wellIterations_; }
 
         /// Number of nonlinear solver iterations used in the last call to step().
-        int nonlinearIterationsLastStep() const
+        long long nonlinearIterationsLastStep() const
         { return nonlinearIterationsLast_; }
 
         /// Number of linear solver iterations used in the last call to step().
-        int linearIterationsLastStep() const
+        long long linearIterationsLastStep() const
         { return linearIterationsLast_; }
 
         /// Number of well iterations used in all calls to step().
-        int wellIterationsLastStep() const
+        long long wellIterationsLastStep() const
         { return wellIterationsLast_; }
 
         std::vector<std::vector<Scalar> >
-        computeFluidInPlace(const std::vector<int>& fipnum) const
+        computeFluidInPlace(const std::vector<long long>& fipnum) const
         { return model_->computeFluidInPlace(fipnum); }
 
         /// Reference to physical model.
@@ -227,7 +227,7 @@ struct NonlinearSolverParameters
 
         /// Detect oscillation or stagnation in a given residual history.
         void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
-                                const int it, bool& oscillate, bool& stagnate) const
+                                const long long it, bool& oscillate, bool& stagnate) const
         {
             detail::detectOscillations(residualHistory, it, model_->numPhases(),
                                        this->relaxRelTol(), 2, oscillate, stagnate);
@@ -259,11 +259,11 @@ struct NonlinearSolverParameters
         { return param_.relaxRelTol_; }
 
         /// The maximum number of nonlinear iterations allowed.
-        int maxIter() const
+        long long maxIter() const
         { return param_.maxIter_; }
 
         /// The minimum number of nonlinear iterations allowed.
-        int minIter() const
+        long long minIter() const
         { return param_.minIter_; }
 
         /// Set parameters to override those given at construction time.
@@ -275,13 +275,13 @@ struct NonlinearSolverParameters
         SimulatorReportSingle failureReport_;
         SolverParameters param_;
         std::unique_ptr<PhysicalModel> model_;
-        int linearizations_;
-        int nonlinearIterations_;
-        int linearIterations_;
-        int wellIterations_;
-        int nonlinearIterationsLast_;
-        int linearIterationsLast_;
-        int wellIterationsLast_;
+        long long linearizations_;
+        long long nonlinearIterations_;
+        long long linearIterations_;
+        long long wellIterations_;
+        long long nonlinearIterationsLast_;
+        long long linearIterationsLast_;
+        long long wellIterationsLast_;
     };
 
 } // namespace Opm

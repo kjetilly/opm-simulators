@@ -34,7 +34,7 @@ namespace Opm {
 
 class Well;
 
-template<class Matrix, class Vector, int block_size> class GpuBridge;
+template<class Matrix, class Vector, long long block_size> class GpuBridge;
 template<class Scalar> class WellContributions;
 namespace detail {
 
@@ -46,11 +46,11 @@ struct GpuSolverInfo
     using Bridge = GpuBridge<Matrix,Vector,Matrix::block_type::rows>;
 
     GpuSolverInfo(const std::string& accelerator_mode,
-                  const int linear_solver_verbosity,
-                  const int maxit,
+                  const long long linear_solver_verbosity,
+                  const long long maxit,
                   const Scalar tolerance,
-                  const int platformID,
-                  const int deviceID,
+                  const long long platformID,
+                  const long long deviceID,
                   const bool opencl_ilu_parallel,
                   const std::string& linsolver);
 
@@ -60,29 +60,29 @@ struct GpuSolverInfo
     void prepare(const Grid& grid,
                  const Dune::CartesianIndexMapper<Grid>& cartMapper,
                  const std::vector<Well>& wellsForConn,
-                 const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-                 const std::vector<int>& cellPartition,
+                 const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
+                 const std::vector<long long>& cellPartition,
                  const std::size_t nonzeroes,
                  const bool useWellConn);
 
     bool apply(Vector& rhs,
                const bool useWellConn,
                WellContribFunc getContribs,
-               const int rank,
+               const long long rank,
                Matrix& matrix,
                Vector& x,
                Dune::InverseOperatorResult& result);
 
     bool gpuActive();
 
-    int numJacobiBlocks_ = 0;
+    long long numJacobiBlocks_ = 0;
 
 private:
     /// Create sparsity pattern for block-Jacobi matrix based on partitioning of grid.
     /// Do not initialize the values, that is done in copyMatToBlockJac()
     template<class Grid>
     void blockJacobiAdjacency(const Grid& grid,
-                              const std::vector<int>& cell_part,
+                              const std::vector<long long>& cell_part,
                               std::size_t nonzeroes);
 
     void copyMatToBlockJac(const Matrix& mat, Matrix& blockJac);
@@ -90,7 +90,7 @@ private:
     std::unique_ptr<Bridge> bridge_;
     std::string accelerator_mode_;
     std::unique_ptr<Matrix> blockJacobiForGPUILU0_;
-    std::vector<std::set<int>> wellConnectionsGraph_;
+    std::vector<std::set<long long>> wellConnectionsGraph_;
 };
 
 }
@@ -122,9 +122,9 @@ protected:
     constexpr static std::size_t pressureIndex = GetPropType<TypeTag, Properties::Indices>::pressureSwitchIdx;
 
 #if HAVE_MPI
-    using CommunicationType = Dune::OwnerOverlapCopyCommunication<int,int>;
+    using CommunicationType = Dune::OwnerOverlapCopyCommunication<long long,long long>;
 #else
-    using CommunicationType = Dune::Communication<int>;
+    using CommunicationType = Dune::Communication<long long>;
 #endif
 
 public:
@@ -167,12 +167,12 @@ public:
         }
 
         // Initialize the GpuBridge
-        const int platformID = Parameters::Get<Parameters::OpenclPlatformId>();
-        const int deviceID = Parameters::Get<Parameters::GpuDeviceId>();
-        const int maxit = Parameters::Get<Parameters::LinearSolverMaxIter>();
+        const long long platformID = Parameters::Get<Parameters::OpenclPlatformId>();
+        const long long deviceID = Parameters::Get<Parameters::GpuDeviceId>();
+        const long long maxit = Parameters::Get<Parameters::LinearSolverMaxIter>();
         const double tolerance = Parameters::Get<Parameters::LinearSolverReduction>();
         const bool opencl_ilu_parallel = Parameters::Get<Parameters::OpenclIluParallel>();
-        const int linear_solver_verbosity = this->parameters_[0].linear_solver_verbosity_;
+        const long long linear_solver_verbosity = this->parameters_[0].linear_solver_verbosity_;
         std::string linsolver = Parameters::Get<Parameters::LinearSolver>();
         gpuBridge_ = std::make_unique<detail::GpuSolverInfo<Matrix,Vector>>(accelerator_mode,
                                                                             linear_solver_verbosity,
@@ -240,7 +240,7 @@ public:
         OPM_TIMEBLOCK(istlSolverGpuBridgeSolve);
         this->solveCount_ += 1;
         // Write linear system if asked for.
-        const int verbosity = this->prm_[this->activeSolverNum_].template get<int>("verbosity", 0);
+        const long long verbosity = this->prm_[this->activeSolverNum_].template get<long long>("verbosity", 0);
         const bool write_matrix = verbosity > 10;
         if (write_matrix) {
             Helper::writeSystem(this->simulator_, //simulator is only used to get names

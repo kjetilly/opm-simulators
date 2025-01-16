@@ -66,10 +66,10 @@ struct LinearSolverReduction { static constexpr double value = 1e-2; };
 struct NlddLocalLinearSolverReduction { static constexpr double value = 1e-2; };
 struct RelaxedLinearSolverReduction { static constexpr double value = 1e-2; };
 struct IluRelaxation { static constexpr double value = 0.9; };
-struct LinearSolverMaxIter { static constexpr int value = 200; };
-struct NlddLocalLinearSolverMaxIter { static constexpr int value = 200; };
-struct LinearSolverRestart { static constexpr int value = 40; };
-struct IluFillinLevel { static constexpr int value = 0; };
+struct LinearSolverMaxIter { static constexpr long long value = 200; };
+struct NlddLocalLinearSolverMaxIter { static constexpr long long value = 200; };
+struct LinearSolverRestart { static constexpr long long value = 40; };
+struct IluFillinLevel { static constexpr long long value = 0; };
 struct MiluVariant { static constexpr auto value = "ILU"; };
 struct IluRedblack { static constexpr bool value = false; };
 struct IluReorderSpheres { static constexpr bool value = false; };
@@ -79,11 +79,11 @@ struct ScaleLinearSystem { static constexpr bool value = false; };
 struct LinearSolver { static constexpr auto value = "cprw"; };
 struct NlddLocalLinearSolver { static constexpr auto value = "ilu0"; };
 struct LinearSolverPrintJsonDefinition { static constexpr auto value = true; };
-struct CprReuseSetup { static constexpr int value = 4; };
-struct CprReuseInterval { static constexpr int value = 30; };
+struct CprReuseSetup { static constexpr long long value = 4; };
+struct CprReuseInterval { static constexpr long long value = 30; };
 struct AcceleratorMode { static constexpr auto value = "none"; };
-struct GpuDeviceId { static constexpr int value = 0; };
-struct OpenclPlatformId { static constexpr int value = 0; };
+struct GpuDeviceId { static constexpr long long value = 0; };
+struct OpenclPlatformId { static constexpr long long value = 0; };
 struct OpenclIluParallel { static constexpr bool value = true; }; // note: false should only be used in debug
 
 } // namespace Opm::Parameters
@@ -95,11 +95,11 @@ struct FlowLinearSolverParameters
 {
     double linear_solver_reduction_;
     double relaxed_linear_solver_reduction_;
-    int    linear_solver_maxiter_;
-    int    linear_solver_restart_;
-    int    linear_solver_verbosity_;
+    long long    linear_solver_maxiter_;
+    long long    linear_solver_restart_;
+    long long    linear_solver_verbosity_;
     double ilu_relaxation_;
-    int    ilu_fillin_level_;
+    long long    ilu_fillin_level_;
     MILU_VARIANT   ilu_milu_;
     bool   ilu_redblack_;
     bool   ilu_reorder_sphere_;
@@ -109,11 +109,11 @@ struct FlowLinearSolverParameters
     bool is_nldd_local_solver_;
     std::string linsolver_;
     bool linear_solver_print_json_definition_;
-    int cpr_reuse_setup_;
-    int cpr_reuse_interval_;
+    long long cpr_reuse_setup_;
+    long long cpr_reuse_interval_;
     std::string accelerator_mode_;
-    int gpu_device_id_;
-    int opencl_platform_id_;
+    long long gpu_device_id_;
+    long long opencl_platform_id_;
     bool opencl_ilu_parallel_;
 
     FlowLinearSolverParameters() { reset(); }

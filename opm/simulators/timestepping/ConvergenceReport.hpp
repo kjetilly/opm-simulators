@@ -55,11 +55,11 @@ namespace Opm
         };
 
         struct PenaltyCard {
-            int nonConverged{0};
-            int distanceDecay{0};
-            int largeWellResiduals{0};
+            long long nonConverged{0};
+            long long distanceDecay{0};
+            long long largeWellResiduals{0};
 
-            int total() const {
+            long long total() const {
                 return nonConverged + distanceDecay + largeWellResiduals;
             }
 
@@ -88,7 +88,7 @@ namespace Opm
 
         using CnvPvSplit = std::pair<
             std::vector<double>,
-            std::vector<int>>;
+            std::vector<long long>>;
 
         class ReservoirFailure
         {
@@ -99,13 +99,13 @@ namespace Opm
             // use this for anything else.
             ReservoirFailure() = default;
 
-            ReservoirFailure(Type t, Severity s, int phase)
+            ReservoirFailure(Type t, Severity s, long long phase)
                 : type_(t), severity_(s), phase_(phase)
             {}
 
             Type type() const { return type_; }
             Severity severity() const { return severity_; }
-            int phase() const { return phase_; }
+            long long phase() const { return phase_; }
 
             template <typename Serializer>
             void serializeOp(Serializer& serializer)
@@ -120,7 +120,7 @@ namespace Opm
             // then please update serializeOp() accordingly.
             Type type_ { Type::Invalid };
             Severity severity_ { Severity::None };
-            int phase_ { -1 };
+            long long phase_ { -1 };
         };
 
         class ReservoirConvergenceMetric
@@ -130,12 +130,12 @@ namespace Opm
             // use this for anything else.
             ReservoirConvergenceMetric() = default;
 
-            ReservoirConvergenceMetric(ReservoirFailure::Type t, int phase, double value, double tolerance)
+            ReservoirConvergenceMetric(ReservoirFailure::Type t, long long phase, double value, double tolerance)
                 : type_(t), phase_(phase), value_(value), tolerance_(tolerance)
             {}
 
             ReservoirFailure::Type type() const { return type_; }
-            int phase() const { return phase_; }
+            long long phase() const { return phase_; }
             double value() const { return value_; }
             double tolerance() const { return tolerance_; }
 
@@ -152,7 +152,7 @@ namespace Opm
             // Note to maintainers: If you change this list of data members,
             // then please update serializeOp() accordingly.
             ReservoirFailure::Type type_ { ReservoirFailure::Type::Invalid };
-            int phase_ { -1 };
+            long long phase_ { -1 };
             double value_ { 0.0 };
             double tolerance_ { 0.0 };
         };
@@ -175,13 +175,13 @@ namespace Opm
             // use this for anything else.
             WellFailure() = default;
 
-            WellFailure(Type t, Severity s, int phase, const std::string& well_name)
+            WellFailure(Type t, Severity s, long long phase, const std::string& well_name)
                 : type_(t), severity_(s), phase_(phase), well_name_(well_name)
             {}
 
             Type type() const { return type_; }
             Severity severity() const { return severity_; }
-            int phase() const { return phase_; }
+            long long phase() const { return phase_; }
             const std::string& wellName() const { return well_name_; }
 
             template <typename Serializer>
@@ -198,7 +198,7 @@ namespace Opm
             // then please update serializeOp() accordingly.
             Type type_ { Type::Invalid };
             Severity severity_ { Severity::None };
-            int phase_ { -1 };
+            long long phase_ { -1 };
             std::string well_name_ {};
         };
 
@@ -209,13 +209,13 @@ namespace Opm
             // use this for anything else.
             WellConvergenceMetric() = default;
 
-            WellConvergenceMetric(WellFailure::Type t, Severity s, int phase, double value, const std::string& well_name)
+            WellConvergenceMetric(WellFailure::Type t, Severity s, long long phase, double value, const std::string& well_name)
                 : type_(t), severity_(s), phase_(phase), value_(value), well_name_(well_name)
             {}
 
             WellFailure::Type type() const { return type_; }
             Severity severity() const { return severity_; }
-            int phase() const { return phase_; }
+            long long phase() const { return phase_; }
             double value() const { return value_; }
             const std::string& wellName() const { return well_name_; }
 
@@ -234,7 +234,7 @@ namespace Opm
             // then please update serializeOp() accordingly.
             WellFailure::Type type_ { WellFailure::Type::Invalid };
             Severity severity_ { Severity::None };
-            int phase_ { -1 };
+            long long phase_ { -1 };
             double value_ { 0.0 };
             std::string well_name_ {};
         };
@@ -445,8 +445,8 @@ namespace Opm
 
     struct StepReport
     {
-        int report_step;
-        int current_step;
+        long long report_step;
+        long long current_step;
         std::vector<ConvergenceReport> report;
     };
 

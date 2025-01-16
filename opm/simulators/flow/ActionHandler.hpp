@@ -86,7 +86,7 @@ public:
     /// \param[in] updateTrans Call-back for affecting transmissibility
     /// updates.  Typically invoked if the action triggers a keyword like
     /// MULTZ.
-    void applyActions(int reportStep,
+    void applyActions(long long reportStep,
                       double sim_time,
                       const TransFunc& updateTrans);
 
@@ -120,7 +120,7 @@ private:
     /// simulation wells which, in turn, may require rebuilding internal
     /// data structures in the simulator and therefore would require
     /// preserving the dynamic well and group states prior to doing so.
-    void applySimulatorUpdate(int report_step,
+    void applySimulatorUpdate(long long report_step,
                               const SimulatorUpdate& sim_update,
                               const TransFunc& updateTrans,
                               bool& commit_wellstate);

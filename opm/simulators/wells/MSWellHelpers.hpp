@@ -81,8 +81,8 @@ namespace mswellhelpers
     /// Applies umfpack and checks for singularity
     template <typename VectorType, typename MatrixType>
     Dune::Matrix<typename MatrixType::block_type>
-    invertWithUMFPack(const int size,
-                      const int bsize,
+    invertWithUMFPack(const long long size,
+                      const long long bsize,
                       Dune::UMFPack<MatrixType>& linsolver);
 
 

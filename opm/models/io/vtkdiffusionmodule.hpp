@@ -68,7 +68,7 @@ class VtkDiffusionModule : public BaseOutputModule<TypeTag>
     using PhaseComponentBuffer = typename ParentType::PhaseComponentBuffer;
     using PhaseBuffer = typename ParentType::PhaseBuffer;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     enum { numPhases = getPropValue<TypeTag, Properties::NumPhases>() };

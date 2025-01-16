@@ -274,13 +274,13 @@ public:
                 {
                     const auto& dofVal = quantityCallback(vertIdx);
                     const auto& tmp = p1Gradient_[fapIdx][vertIdx];
-                    for (int dimIdx = 0; dimIdx < dim; ++ dimIdx)
+                    for (long long dimIdx = 0; dimIdx < dim; ++ dimIdx)
                         quantityGrad[dimIdx] += dofVal*tmp[dimIdx];
                 }
                 else {
                     const auto& dofVal = quantityCallback(vertIdx);
                     const auto& tmp = p1Gradient_[fapIdx][vertIdx];
-                    for (int dimIdx = 0; dimIdx < dim; ++ dimIdx)
+                    for (long long dimIdx = 0; dimIdx < dim; ++ dimIdx)
                         quantityGrad[dimIdx] += scalarValue(dofVal)*tmp[dimIdx];
                 }
             }

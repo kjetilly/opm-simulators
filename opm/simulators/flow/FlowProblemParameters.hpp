@@ -44,17 +44,17 @@ struct CheckSatfuncConsistency { static constexpr bool value = false; };
 
 // Maximum number of reported failures for each saturation function
 // consistency check.
-struct NumSatfuncConsistencySamplePoints { static constexpr int value = 5; };
+struct NumSatfuncConsistencySamplePoints { static constexpr long long value = 5; };
 
 // Parameterize equilibration accuracy
 struct NumPressurePointsEquil
-{ static constexpr int value = ParserKeywords::EQLDIMS::DEPTH_NODES_P::defaultValue; };
+{ static constexpr long long value = ParserKeywords::EQLDIMS::DEPTH_NODES_P::defaultValue; };
 
 struct OutputMode { static constexpr auto value = "all"; };
 
 // The frequency of writing restart (*.ers) files. This is the number of time steps
 // between writing restart files
-struct RestartWritingInterval { static constexpr int value = 0xffffff; }; // disable
+struct RestartWritingInterval { static constexpr long long value = 0xffffff; }; // disable
 
 } // namespace Opm::Parameters
 

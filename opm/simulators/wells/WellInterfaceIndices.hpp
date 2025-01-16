@@ -40,16 +40,16 @@ public:
     using Eval = DenseAd::Evaluation<Scalar, /*size=*/Indices::numEq>;
     using ModelParameters = typename WellInterfaceFluidSystem<FluidSystem>::ModelParameters;
 
-    int flowPhaseToModelCompIdx(const int phaseIdx) const;
-    int modelCompIdxToFlowCompIdx(const unsigned compIdx) const;
-    Scalar scalingFactor(const int phaseIdx) const;
+    long long flowPhaseToModelCompIdx(const long long phaseIdx) const;
+    long long modelCompIdxToFlowCompIdx(const unsigned compIdx) const;
+    Scalar scalingFactor(const long long phaseIdx) const;
 
     template <class EvalWell>
     Eval restrictEval(const EvalWell& in) const
     {
         Eval out = 0.0;
         out.setValue(in.value());
-        for (int eqIdx = 0; eqIdx < Indices::numEq; ++eqIdx) {
+        for (long long eqIdx = 0; eqIdx < Indices::numEq; ++eqIdx) {
             out.setDerivative(eqIdx, in.derivative(eqIdx));
         }
         return out;
@@ -58,13 +58,13 @@ public:
 protected:
     WellInterfaceIndices(const Well& well,
                          const ParallelWellInfo<Scalar>& parallel_well_info,
-                         const int time_step,
+                         const long long time_step,
                          const ModelParameters& param,
                          const typename WellInterfaceFluidSystem<FluidSystem>::RateConverterType& rate_converter,
-                         const int pvtRegionIdx,
-                         const int num_components,
-                         const int num_phases,
-                         const int index_of_well,
+                         const long long pvtRegionIdx,
+                         const long long num_components,
+                         const long long num_phases,
+                         const long long index_of_well,
                          const std::vector<PerforationData<Scalar>>& perf_data);
 };
 

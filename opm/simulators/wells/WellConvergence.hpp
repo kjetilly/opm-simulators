@@ -58,7 +58,7 @@ public:
                                    DeferredLogger& deferred_logger) const;
 
     void checkConvergencePolyMW(const std::vector<Scalar>& res,
-                                const int Bhp,
+                                const long long Bhp,
                                 const Scalar maxResidualAllowed,
                                 ConvergenceReport& report) const;
 

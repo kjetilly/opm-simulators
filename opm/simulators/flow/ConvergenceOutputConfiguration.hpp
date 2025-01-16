@@ -80,7 +80,7 @@ public:
     /// \param[in] opt Specific convergence output type.
     bool want(const Option opt) const
     {
-        return std::to_integer<int>(this->flag_ & static_cast<std::byte>(opt)) != 0;
+        return std::to_integer<long long>(this->flag_ & static_cast<std::byte>(opt)) != 0;
     }
 
 private:

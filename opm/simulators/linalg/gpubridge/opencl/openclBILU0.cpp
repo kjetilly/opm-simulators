@@ -42,8 +42,8 @@ namespace Opm::Accelerator {
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-openclBILU0<Scalar,block_size>::openclBILU0(bool opencl_ilu_parallel_, int verbosity_)
+template<class Scalar, size_t block_size>
+openclBILU0<Scalar,block_size>::openclBILU0(bool opencl_ilu_parallel_, long long verbosity_)
     : Base(verbosity_)
     , opencl_ilu_parallel(opencl_ilu_parallel_)
 {
@@ -52,25 +52,25 @@ openclBILU0<Scalar,block_size>::openclBILU0(bool opencl_ilu_parallel_, int verbo
 #endif
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBILU0<Scalar,block_size>::analyze_matrix(BlockedMatrix<Scalar>* mat)
 {
     return analyze_matrix(mat, nullptr);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBILU0<Scalar,block_size>::
 analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 {
-    const unsigned int bs = block_size;
+    const size_t bs = block_size;
 
     this->N = mat->Nb * block_size;
     this->Nb = mat->Nb;
     this->nnz = mat->nnzbs * block_size * block_size;
     this->nnzb = mat->nnzbs;
 
-    std::vector<int> CSCRowIndices;
-    std::vector<int> CSCColPointers;
+    std::vector<long long> CSCRowIndices;
+    std::vector<long long> CSCColPointers;
 
     auto *matToDecompose = jacMat ? jacMat : mat; // decompose jacMat if valid, otherwise decompose mat
 
@@ -106,7 +106,7 @@ analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
         // numColors = 1;
         // rowsPerColor.emplace_back(Nb);
         numColors = Nb;
-        for (int i = 0; i < Nb; ++i) {
+        for (long long i = 0; i < Nb; ++i) {
             rowsPerColor.emplace_back(1);
         }
     }
@@ -129,20 +129,20 @@ analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 #endif
 
     s.invDiagVals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * bs * bs * mat->Nb);
-    s.rowsPerColor = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (numColors + 1));
-    s.diagIndex = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * LUmat->Nb);
+    s.rowsPerColor = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * (numColors + 1));
+    s.diagIndex = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * LUmat->Nb);
     s.rowIndices = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(unsigned) * LUmat->Nb);
 #if CHOW_PATEL
     s.Lvals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * bs * bs * Lmat->nnzbs);
-    s.Lcols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * Lmat->nnzbs);
-    s.Lrows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Lmat->Nb + 1));
+    s.Lcols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * Lmat->nnzbs);
+    s.Lrows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * (Lmat->Nb + 1));
     s.Uvals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * bs * bs * Lmat->nnzbs);
-    s.Ucols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * Lmat->nnzbs);
-    s.Urows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Lmat->Nb + 1));
+    s.Ucols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * Lmat->nnzbs);
+    s.Urows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * (Lmat->Nb + 1));
 #else
     s.LUvals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * bs * bs * LUmat->nnzbs);
-    s.LUcols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * LUmat->nnzbs);
-    s.LUrows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (LUmat->Nb + 1));
+    s.LUcols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * LUmat->nnzbs);
+    s.LUrows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * (LUmat->Nb + 1));
 #endif
 
     events.resize(3);
@@ -151,12 +151,12 @@ analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
                                     invDiagVals.data(), nullptr, &events[0]);
 
     rowsPerColorPrefix.resize(numColors + 1); // resize initializes value 0.0
-    for (int i = 0; i < numColors; ++i) {
+    for (long long i = 0; i < numColors; ++i) {
         rowsPerColorPrefix[i + 1] = rowsPerColorPrefix[i] + rowsPerColor[i];
     }
 
     err |= queue->enqueueWriteBuffer(s.rowsPerColor, CL_FALSE, 0,
-                                     (numColors + 1) * sizeof(int),
+                                     (numColors + 1) * sizeof(long long),
                                      rowsPerColorPrefix.data(), nullptr, &events[1]);
 
     if (opencl_ilu_parallel) {
@@ -182,17 +182,17 @@ analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
     return true;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBILU0<Scalar,block_size>::create_preconditioner(BlockedMatrix<Scalar>* mat)
 {
     return create_preconditioner(mat, nullptr);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclBILU0<Scalar,block_size>::
 create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 {
-    const unsigned int bs = block_size;
+    const size_t bs = block_size;
 
     auto *matToDecompose = jacMat ? jacMat : mat;
     bool use_multithreading = true;
@@ -234,9 +234,9 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 
     std::call_once(pattern_uploaded, [&](){
         // find the positions of each diagonal block
-        for (int row = 0; row < Nb; ++row) {
-            int rowStart = LUmat->rowPointers[row];
-            int rowEnd = LUmat->rowPointers[row+1];
+        for (long long row = 0; row < Nb; ++row) {
+            long long rowStart = LUmat->rowPointers[row];
+            long long rowEnd = LUmat->rowPointers[row+1];
 
             auto candidate = std::find(LUmat->colIndices + rowStart,
                                        LUmat->colIndices + rowEnd, row);
@@ -244,11 +244,11 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
             diagIndex[row] = candidate - LUmat->colIndices;
         }
         events.resize(4);
-        queue->enqueueWriteBuffer(s.diagIndex, CL_FALSE, 0, Nb * sizeof(int),
+        queue->enqueueWriteBuffer(s.diagIndex, CL_FALSE, 0, Nb * sizeof(long long),
                                   diagIndex.data(), nullptr, &events[1]);
-        queue->enqueueWriteBuffer(s.LUcols, CL_FALSE, 0, LUmat->nnzbs * sizeof(int),
+        queue->enqueueWriteBuffer(s.LUcols, CL_FALSE, 0, LUmat->nnzbs * sizeof(long long),
                                   LUmat->colIndices, nullptr, &events[2]);
-        queue->enqueueWriteBuffer(s.LUrows, CL_FALSE, 0, (LUmat->Nb + 1) * sizeof(int),
+        queue->enqueueWriteBuffer(s.LUrows, CL_FALSE, 0, (LUmat->Nb + 1) * sizeof(long long),
                                   LUmat->rowPointers, nullptr, &events[3]);
     });
 
@@ -267,9 +267,9 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 
     Timer t_decomposition;
     std::ostringstream out;
-    for (int color = 0; color < numColors; ++color) {
-        const unsigned int firstRow = rowsPerColorPrefix[color];
-        const unsigned int lastRow = rowsPerColorPrefix[color + 1];
+    for (long long color = 0; color < numColors; ++color) {
+        const size_t firstRow = rowsPerColorPrefix[color];
+        const size_t lastRow = rowsPerColorPrefix[color + 1];
         if (verbosity >= 5) {
             out << "color " << color << ": " << firstRow << " - " << lastRow
                 << " = " << lastRow - firstRow << "\n";
@@ -292,14 +292,14 @@ create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat)
 // kernels are blocking on an NVIDIA GPU, so waiting for events is not needed
 // however, if individual kernel calls are timed, waiting for events is needed
 // behavior on other GPUs is untested
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclBILU0<Scalar,block_size>::apply(const cl::Buffer& y, cl::Buffer& x)
 {
     const Scalar relaxation = 0.9;
     cl::Event event;
     Timer t_apply;
 
-    for (int color = 0; color < numColors; ++color) {
+    for (long long color = 0; color < numColors; ++color) {
 #if CHOW_PATEL
         OpenclKernels<Scalar>::ILU_apply1(s.rowIndices, s.Lvals, s.Lcols, s.Lrows,
                                           s.diagIndex, y, x, s.rowsPerColor,
@@ -311,7 +311,7 @@ void openclBILU0<Scalar,block_size>::apply(const cl::Buffer& y, cl::Buffer& x)
 #endif
     }
 
-    for (int color = numColors - 1; color >= 0; --color) {
+    for (long long color = numColors - 1; color >= 0; --color) {
 #if CHOW_PATEL
         OpenclKernels<Scalar>::ILU_apply2(s.rowIndices, s.Uvals, s.Ucols, s.Urows,
                                           s.diagIndex, s.invDiagVals, x, s.rowsPerColor,

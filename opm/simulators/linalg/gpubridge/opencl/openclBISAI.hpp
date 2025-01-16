@@ -32,7 +32,7 @@ template<class Scalar> class BlockedMatrix;
 
 /// This class implements a Blocked version of the Incomplete Sparse Approximate Inverse (ISAI) preconditioner.
 /// Inspired by the paper "Incomplete Sparse Approximate Inverses for Parallel Preconditioning" by Anzt et. al.
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class openclBISAI : public openclPreconditioner<Scalar,block_size>
 {
     using Base = openclPreconditioner<Scalar,block_size>;
@@ -50,10 +50,10 @@ class openclBISAI : public openclPreconditioner<Scalar,block_size>
 private:
     std::once_flag initialize;
 
-    std::vector<int> colPointers;
-    std::vector<int> rowIndices;
-    std::vector<int> diagIndex;
-    std::vector<int> csrToCscOffsetMap;
+    std::vector<long long> colPointers;
+    std::vector<long long> rowIndices;
+    std::vector<long long> diagIndex;
+    std::vector<long long> csrToCscOffsetMap;
     std::vector<Scalar> invLvals;
     std::vector<Scalar> invUvals;
 
@@ -74,17 +74,17 @@ private:
     struct subsystemStructure {
         /// This vector holds the cumulative sum for the number of non-zero blocks for each subsystem.
         /// Works similarly to row and column pointers for the CSR and CSC matrix representations.
-        std::vector<int> subsystemPointers;
+        std::vector<long long> subsystemPointers;
         /// This vector holds the indices of the non-zero blocks for the target subsystem. These blocks are
         /// the ones that are present in the shadow set of the non-zero blocks of column j of the main matrix,
         /// as described in section 2.3 of the paper. The amount of non-zero blocks for j-th subsystem is
         /// given by subsystemPointers[j+1] - subsystemPointers[j].
-        std::vector<int> nzIndices;
+        std::vector<long long> nzIndices;
         /// This vector holds the indices of the already known values of the right hand sides of the subsystems.
         /// Its purpose is to aid in the parallel solution of the subsystems.
-        std::vector<int> knownRhsIndices;
+        std::vector<long long> knownRhsIndices;
         /// This vector holds the indices of the unknown values of the right hand sides of the subsystems.
-        std::vector<int> unknownRhsIndices;
+        std::vector<long long> unknownRhsIndices;
     };
 
     /// GPU version of subsystemStructure
@@ -107,7 +107,7 @@ private:
     void buildUpperSubsystemsStructures();
 
 public:
-    openclBISAI(bool opencl_ilu_parallel, int verbosity);
+    openclBISAI(bool opencl_ilu_parallel, long long verbosity);
 
     // set own Opencl variables, but also that of the bilu0 preconditioner
     void setOpencl(std::shared_ptr<cl::Context>& context,
@@ -131,7 +131,7 @@ public:
 /// Similar function to csrPatternToCsc. It gives an offset map from CSR to CSC instead of the full CSR to CSC conversion.
 /// The map works as follows: if an element 'e' of the matrix is in the i-th position in the CSR representation, it will be
 /// in the csrToCscOffsetMap[i]-th position in the CSC representation.
-std::vector<int> buildCsrToCscOffsetMap(std::vector<int> colPointers, std::vector<int> rowIndices);
+std::vector<long long> buildCsrToCscOffsetMap(std::vector<long long> colPointers, std::vector<long long> rowIndices);
 
 } // namespace Opm::Accelerator
 

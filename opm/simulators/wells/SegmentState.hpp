@@ -34,7 +34,7 @@ class SegmentState
 {
 public:
     SegmentState() = default;
-    SegmentState(int num_phases, const WellSegments& segments);
+    SegmentState(long long num_phases, const WellSegments& segments);
 
     static SegmentState serializationTestObject();
 
@@ -42,7 +42,7 @@ public:
     bool empty() const;
     void scale_pressure(Scalar bhp);
 
-    const std::vector<int>& segment_number() const;
+    const std::vector<long long>& segment_number() const;
     std::size_t size() const;
 
     template<class Serializer>
@@ -105,7 +105,7 @@ public:
     std::vector<Scalar> pressure_drop_accel;
 
 private:
-    std::vector<int>    m_segment_number;
+    std::vector<long long>    m_segment_number;
 };
 
 } // namepace Opm

@@ -234,7 +234,7 @@ struct Linearizer<TypeTag, TTag::FvBaseDiscretization>
 //! Set the format of the VTK output to ASCII by default
 template<class TypeTag>
 struct VtkOutputFormat<TypeTag, TTag::FvBaseDiscretization>
-{ static constexpr int value = Dune::VTK::ascii; };
+{ static constexpr long long value = Dune::VTK::ascii; };
 
 // disable constraints by default
 template<class TypeTag>
@@ -244,7 +244,7 @@ struct EnableConstraints<TypeTag, TTag::FvBaseDiscretization>
 //! Set the history size of the time discretization to 2 (for implicit euler)
 template<class TypeTag>
 struct TimeDiscHistorySize<TypeTag, TTag::FvBaseDiscretization>
-{ static constexpr int value = 2; };
+{ static constexpr long long value = 2; };
 
 //! Most models use extensive quantities for their storage term (so far, only the Stokes
 //! model does), so we disable this by default.
@@ -1136,14 +1136,14 @@ public:
     { return solution_[timeIdx]->blockVector(); }
 
     /*!
-     * \copydoc solution(int) const
+     * \copydoc solution(long long) const
      */
     SolutionVector& solution(unsigned timeIdx)
     { return solution_[timeIdx]->blockVector(); }
 
   protected:
     /*!
-     * \copydoc solution(int) const
+     * \copydoc solution(long long) const
      */
     SolutionVector& mutableSolution(unsigned timeIdx) const
     { return solution_[timeIdx]->blockVector(); }

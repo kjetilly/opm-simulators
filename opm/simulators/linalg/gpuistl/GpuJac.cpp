@@ -29,7 +29,7 @@
 namespace Opm::gpuistl
 {
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 GpuJac<M, X, Y, l>::GpuJac(const M& A, field_type w)
     : m_cpuMatrix(A)
     , m_relaxationFactor(w)
@@ -56,13 +56,13 @@ GpuJac<M, X, Y, l>::GpuJac(const M& A, field_type w)
     invertDiagonalAndFlatten();
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuJac<M, X, Y, l>::pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuJac<M, X, Y, l>::apply(X& v, const Y& d)
 {
@@ -75,20 +75,20 @@ GpuJac<M, X, Y, l>::apply(X& v, const Y& d)
         m_diagInvFlattened.data(), m_gpuMatrix.N(), m_gpuMatrix.blockSize(), m_relaxationFactor, d.data(), v.data());
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuJac<M, X, Y, l>::post([[maybe_unused]] X& x)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 Dune::SolverCategory::Category
 GpuJac<M, X, Y, l>::category() const
 {
     return Dune::SolverCategory::sequential;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuJac<M, X, Y, l>::update()
 {
@@ -96,7 +96,7 @@ GpuJac<M, X, Y, l>::update()
     invertDiagonalAndFlatten();
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 GpuJac<M, X, Y, l>::invertDiagonalAndFlatten()
 {

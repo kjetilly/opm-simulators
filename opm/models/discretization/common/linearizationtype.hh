@@ -35,7 +35,7 @@ struct LinearizationType
 {
     enum VarType { implicit, pressure, seqtransport };
     VarType type = implicit;
-    unsigned int time = 0;
+    size_t time = 0;
 };
 
 } // namespace Opm

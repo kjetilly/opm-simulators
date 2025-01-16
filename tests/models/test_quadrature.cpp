@@ -35,10 +35,10 @@
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #if HAVE_MPI
-template<int dim, Dune::ALUGridElementType elType>
+template<long long dim, Dune::ALUGridElementType elType>
 using AluGrid = Dune::ALUGrid<dim, dim, elType, Dune::nonconforming, Dune::ALUGridMPIComm>;
 #else
-template<int dim, Dune::ALUGridElementType elType>
+template<long long dim, Dune::ALUGridElementType elType>
 using AluGrid = Dune::ALUGrid<dim, dim, elType, Dune::nonconforming, Dune::ALUGridNoComm>;
 #endif //HAVE_MPI
 #endif
@@ -180,7 +180,7 @@ void testTetrahedron()
             pos[j] = corners[i][j];
         gf.insertVertex(pos);
     }
-    std::vector<unsigned int> v = { 0, 1, 2, 3 };
+    std::vector<size_t> v = { 0, 1, 2, 3 };
     // in Dune >= 2.6 topologyIds seem to be opaque integers. WTF!?
     gf.insertElement(Dune::GeometryType(/*topologyId=*/0, dim), v);
     const auto grid = gf.createGrid();
@@ -228,7 +228,7 @@ void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
             const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
-            std::vector<unsigned int> vertexIndices;
+            std::vector<size_t> vertexIndices;
             for (unsigned i = 0; i < scvLocalGeom.numCorners; ++i) {
                 vertexIndices.push_back(cornerOffset);
                 ++cornerOffset;
@@ -267,7 +267,7 @@ void testCube()
             pos[j] = corners[i][j];
         gf.insertVertex(pos);
     }
-    std::vector<unsigned int> v = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    std::vector<size_t> v = { 0, 1, 2, 3, 4, 5, 6, 7 };
     // in Dune >= 2.6 topologyIds seem to be opaque integers. WTF!?
     gf.insertElement(Dune::GeometryType((1 << dim) - 1, dim), v);
     const auto grid = gf.createGrid();
@@ -281,7 +281,7 @@ void testQuadrature()
 {
     std::cout << "testing SCV quadrature...\n";
 
-    std::array<int, dim> cellRes;
+    std::array<long long, dim> cellRes;
 
     std::fill(cellRes.begin(), cellRes.end(), 10);
 
@@ -337,7 +337,7 @@ void testQuadrature()
               << " (expected value: " << 1.0 / (1 << dim) << ")\n";
 }
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);

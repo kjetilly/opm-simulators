@@ -35,7 +35,7 @@ namespace Opm::Accelerator {
 
 /// This class implements a rocalution based linear solver solver on GPU
 /// It uses ilu0-bicgstab
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class rocalutionSolverBackend : public GpuSolver<Scalar,block_size>
 {
     using Base = GpuSolver<Scalar,block_size>;
@@ -53,8 +53,8 @@ class rocalutionSolverBackend : public GpuSolver<Scalar,block_size>
 
 private:
     std::vector<Scalar> h_x; // store solution vector on host
-    int *tmp_rowpointers;    // store matrix on host, this pointer is given to and freed by rocalution
-    int *tmp_colindices;     // store matrix on host, this pointer is given to and freed by rocalution
+    long long *tmp_rowpointers;    // store matrix on host, this pointer is given to and freed by rocalution
+    long long *tmp_colindices;     // store matrix on host, this pointer is given to and freed by rocalution
     Scalar* tmp_nnzvalues;   // store matrix on host, this pointer is given to and freed by rocalution
 
     using Mat = rocalution::LocalMatrix<Scalar>;
@@ -78,8 +78,8 @@ public:
     /// \param[in] linear_solver_verbosity    verbosity of rocalutionSolver
     /// \param[in] maxit                      maximum number of iterations for rocalutionSolver
     /// \param[in] tolerance                  required relative tolerance for rocalutionSolver
-    rocalutionSolverBackend(int linear_solver_verbosity,
-                            int maxit, Scalar tolerance);
+    rocalutionSolverBackend(long long linear_solver_verbosity,
+                            long long maxit, Scalar tolerance);
 
     /// Destroy a rocalutionSolver, and free memory
     ~rocalutionSolverBackend();

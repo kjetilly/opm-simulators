@@ -363,8 +363,8 @@ protected:
         if (problem.model().linearizer().getVelocityInfo().empty()) {
             return;
         }
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
+        const std::array<long long, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
+        const std::array<long long, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
         const auto& velocityInf = problem.model().linearizer().getVelocityInfo();
         unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
         auto velocityInfos = velocityInf[globalDofIdx];

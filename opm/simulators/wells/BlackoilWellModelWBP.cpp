@@ -140,7 +140,7 @@ makeWellSourceEvaluatorFactory(const std::vector<Well>::size_type wellIdx) const
     {
         if (! this->wbpCalcMap_[wellIdx].openWellIdx_.has_value()) {
             // Well is stopped/shut.  Return evaluator for stopped wells.
-            return []([[maybe_unused]] const int connIdx, Span sourceTerm)
+            return []([[maybe_unused]] const long long connIdx, Span sourceTerm)
             {
                 // Well/connection is stopped/shut.  Set all items to
                 // zero.
@@ -156,7 +156,7 @@ makeWellSourceEvaluatorFactory(const std::vector<Well>::size_type wellIdx) const
 
         // Well is open.  Return an evaluator for open wells/open connections.
         return [this, wellPtr = well_model_.genericWells()[*this->wbpCalcMap_[wellIdx].openWellIdx_]]
-            (const int connIdx, Span sourceTerm)
+            (const long long connIdx, Span sourceTerm)
         {
             // Note: The only item which actually matters for the WBP
             // calculation at the well reservoir connection level is the

@@ -59,8 +59,8 @@ namespace Opm
 
 template<class FluidSystem, class Indices>
 MultisegmentWellSegments<FluidSystem,Indices>::
-MultisegmentWellSegments(const int numSegments,
-                         const int num_perfs_whole_mswell,
+MultisegmentWellSegments(const long long numSegments,
+                         const long long num_perfs_whole_mswell,
                          WellInterfaceGeneric<Scalar>& well)
     : perforations_(numSegments)
     , perforation_depth_diffs_(num_perfs_whole_mswell, 0.0)
@@ -85,14 +85,14 @@ MultisegmentWellSegments(const int numSegments,
     // well_ecl_ and wells struct different
     // the current implementation is a temporary solution for now, it should be corrected from the parser
     // side
-    int i_perf_wells = 0;
+    long long i_perf_wells = 0;
     // The perfDepth vector will contain the depths of all perforations across all processes of this well!
     well.perfDepth().resize(num_perfs_whole_mswell, 0.0);
     const auto& segment_set = well_.wellEcl().getSegments();
     for (std::size_t perf = 0; perf < completion_set.size(); ++perf) {
         const Connection& connection = completion_set.get(perf);
         if (connection.state() == Connection::State::OPEN) {
-            const int segment_index = segment_set.segmentNumberToIndex(connection.segment());
+            const long long segment_index = segment_set.segmentNumberToIndex(connection.segment());
             if (segment_index == -1) {
                 OPM_THROW(std::logic_error,
                           fmt::format("COMPSEGS: Well {} has connection in cell {}, {}, {} "
@@ -110,20 +110,20 @@ MultisegmentWellSegments(const int numSegments,
 
     // initialize the segment_inlets_
     for (const Segment& segment : segment_set) {
-        const int segment_number = segment.segmentNumber();
-        const int outlet_segment_number = segment.outletSegment();
+        const long long segment_number = segment.segmentNumber();
+        const long long outlet_segment_number = segment.outletSegment();
         if (outlet_segment_number > 0) {
-            const int segment_index = segment_set.segmentNumberToIndex(segment_number);
-            const int outlet_segment_index = segment_set.segmentNumberToIndex(outlet_segment_number);
+            const long long segment_index = segment_set.segmentNumberToIndex(segment_number);
+            const long long outlet_segment_index = segment_set.segmentNumberToIndex(outlet_segment_number);
             inlets_[outlet_segment_index].push_back(segment_index);
         }
     }
 
     // calculating the depth difference between the segment and its oulet_segments
     // for the top segment, we will make its zero unless we find other purpose to use this value
-    for (int seg = 1; seg < numSegments; ++seg) {
+    for (long long seg = 1; seg < numSegments; ++seg) {
         const Scalar segment_depth = segment_set[seg].depth();
-        const int outlet_segment_number = segment_set[seg].outletSegment();
+        const long long outlet_segment_number = segment_set[seg].outletSegment();
         const Segment& outlet_segment = segment_set[segment_set.segmentNumberToIndex(outlet_segment_number)];
         const Scalar outlet_depth = outlet_segment.depth();
         depth_diffs_[seg] = segment_depth - outlet_depth;
@@ -135,7 +135,7 @@ void MultisegmentWellSegments<FluidSystem,Indices>::
 computeFluidProperties(const EvalWell& temperature,
                        const EvalWell& saltConcentration,
                        const PrimaryVariables& primary_variables,
-                       int pvt_region_index,
+                       long long pvt_region_index,
                        DeferredLogger& deferred_logger)
 {
     std::vector<Scalar> surf_dens(well_.numComponents());
@@ -152,7 +152,7 @@ computeFluidProperties(const EvalWell& temperature,
     for (std::size_t seg = 0; seg < perforations_.size(); ++seg) {
         // the compostion of the components inside wellbore under surface condition
         std::vector<EvalWell> mix_s(well_.numComponents(), 0.0);
-        for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+        for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
             mix_s[comp_idx] = primary_variables.surfaceVolumeFraction(seg, comp_idx);
         }
 
@@ -276,13 +276,13 @@ computeFluidProperties(const EvalWell& temperature,
         }
 
         EvalWell volrat(0.0);
-        for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+        for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
             volrat += mix[comp_idx] / b[comp_idx];
         }
 
         viscosities_[seg] = 0.;
         // calculate the average viscosity
-        for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+        for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
             const EvalWell fraction =  mix[comp_idx] / b[comp_idx] / volrat;
             // TODO: a little more work needs to be done to handle the negative fractions here
             phase_fractions_[seg][comp_idx] = fraction; // >= 0.0 ? fraction : 0.0;
@@ -290,15 +290,15 @@ computeFluidProperties(const EvalWell& temperature,
         }
 
         EvalWell density(0.0);
-        for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+        for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
             density += surf_dens[comp_idx] * mix_s[comp_idx];
         }
         densities_[seg] = density / volrat;
 
         // calculate the mass rates
         mass_rates_[seg] = 0.;
-        for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
-            const int upwind_seg = upwinding_segments_[seg];
+        for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+            const long long upwind_seg = upwinding_segments_[seg];
             const EvalWell rate = primary_variables.getSegmentRateUpwinding(seg,
                                                                             upwind_seg,
                                                                             comp_idx);
@@ -326,7 +326,7 @@ updateUpwindingSegments(const PrimaryVariables& primary_variables)
             upwinding_segments_[seg] = seg;
         } else {
             const auto& segment_set = well_.wellEcl().getSegments();
-            const int outlet_segment_index = segment_set.segmentNumberToIndex(segment_set[seg].outletSegment());
+            const long long outlet_segment_index = segment_set.segmentNumberToIndex(segment_set[seg].outletSegment());
             upwinding_segments_[seg] = outlet_segment_index;
         }
     }
@@ -335,8 +335,8 @@ updateUpwindingSegments(const PrimaryVariables& primary_variables)
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-getHydroPressureLoss(const int seg,
-                     const int seg_density) const
+getHydroPressureLoss(const long long seg,
+                     const long long seg_density) const
 {
     return densities_[seg_density] * well_.gravity() * depth_diffs_[seg];
 }
@@ -344,8 +344,8 @@ getHydroPressureLoss(const int seg,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::Scalar
 MultisegmentWellSegments<FluidSystem,Indices>::
-getPressureDiffSegPerf(const int seg,
-                       const int perf) const
+getPressureDiffSegPerf(const long long seg,
+                       const long long perf) const
 {
     return well_.gravity() * densities_[seg].value() * perforation_depth_diffs_[perf];
 }
@@ -356,13 +356,13 @@ MultisegmentWellSegments<FluidSystem,Indices>::
 getSurfaceVolume(const EvalWell& temperature,
                  const EvalWell& saltConcentration,
                  const PrimaryVariables& primary_variables,
-                 const int pvt_region_index,
-                 const int seg_idx) const
+                 const long long pvt_region_index,
+                 const long long seg_idx) const
 {
     const EvalWell seg_pressure = primary_variables.getSegmentPressure(seg_idx);
 
     std::vector<EvalWell> mix_s(well_.numComponents(), 0.0);
-    for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+    for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
         mix_s[comp_idx] = primary_variables.surfaceVolumeFraction(seg_idx, comp_idx);
     }
 
@@ -487,7 +487,7 @@ getSurfaceVolume(const EvalWell& temperature,
     }
 
     EvalWell vol_ratio(0.0);
-    for (int comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
+    for (long long comp_idx = 0; comp_idx < well_.numComponents(); ++comp_idx) {
         vol_ratio += mix[comp_idx] / b[comp_idx];
     }
 
@@ -500,11 +500,11 @@ getSurfaceVolume(const EvalWell& temperature,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-getFrictionPressureLoss(const int seg, 
+getFrictionPressureLoss(const long long seg, 
                         const bool extra_reverse_flow_derivatives /*false*/) const
 {
     EvalWell mass_rate = mass_rates_[seg];
-    const int seg_upwind = upwinding_segments_[seg];
+    const long long seg_upwind = upwinding_segments_[seg];
     EvalWell density = densities_[seg_upwind];
     EvalWell visc = viscosities_[seg_upwind];
     // In the reverse flow case, we don't have enough slots for all derivatives, e.g.,
@@ -515,20 +515,20 @@ getFrictionPressureLoss(const int seg,
 
     if (seg != seg_upwind) {
         if (!extra_reverse_flow_derivatives) {
-            constexpr int WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
-            constexpr int SPres = Indices::numEq + PrimaryVariables::SPres;
+            constexpr long long WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
+            constexpr long long SPres = Indices::numEq + PrimaryVariables::SPres;
             density.setDerivative(WQTotal, 0.0);
             density.setDerivative(SPres, 0.0);
             visc.setDerivative(WQTotal, 0.0);
             visc.setDerivative(SPres, 0.0);
         } else {
             if constexpr (PrimaryVariables::has_wfrac_variable) {
-                constexpr int WFrac = Indices::numEq + PrimaryVariables::WFrac;
+                constexpr long long WFrac = Indices::numEq + PrimaryVariables::WFrac;
                 density.setDerivative(WFrac, 0.0);
                 visc.setDerivative(WFrac, 0.0);
             }
             if constexpr (PrimaryVariables::has_gfrac_variable) {
-                constexpr int GFrac = Indices::numEq + PrimaryVariables::GFrac;
+                constexpr long long GFrac = Indices::numEq + PrimaryVariables::GFrac;
                 density.setDerivative(GFrac, 0.0);
                 visc.setDerivative(GFrac, 0.0);
             }
@@ -537,7 +537,7 @@ getFrictionPressureLoss(const int seg,
     }
 
     const auto& segment_set = well_.wellEcl().getSegments();
-    const int outlet_segment_index = segment_set.segmentNumberToIndex(segment_set[seg].outletSegment());
+    const long long outlet_segment_index = segment_set.segmentNumberToIndex(segment_set[seg].outletSegment());
     const Scalar length = segment_set[seg].totalLength() - segment_set[outlet_segment_index].totalLength();
     assert(length > 0.);
     const Scalar roughness = segment_set[seg].roughness();
@@ -552,20 +552,20 @@ getFrictionPressureLoss(const int seg,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-pressureDropSpiralICD(const int seg,
+pressureDropSpiralICD(const long long seg,
                       const bool extra_reverse_flow_derivatives /*false*/) const
 {
     const auto& segment_set = well_.wellEcl().getSegments();
     const SICD& sicd = segment_set[seg].spiralICD();
 
-    const int seg_upwind = upwinding_segments_[seg];
+    const long long seg_upwind = upwinding_segments_[seg];
     const std::vector<EvalWell>& phase_fractions = phase_fractions_[seg_upwind];
     const std::vector<EvalWell>& phase_viscosities = phase_viscosities_[seg_upwind];
 
     EvalWell water_fraction = 0.;
     EvalWell water_viscosity = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) {
-        const int water_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
+        const long long water_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
         water_fraction = phase_fractions[water_pos];
         water_viscosity = phase_viscosities[water_pos];
     }
@@ -573,7 +573,7 @@ pressureDropSpiralICD(const int seg,
     EvalWell oil_fraction = 0.;
     EvalWell oil_viscosity = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx)) {
-        const int oil_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
+        const long long oil_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
         oil_fraction = phase_fractions[oil_pos];
         oil_viscosity = phase_viscosities[oil_pos];
     }
@@ -581,7 +581,7 @@ pressureDropSpiralICD(const int seg,
     EvalWell gas_fraction = 0.;
     EvalWell gas_viscosity = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx)) {
-        const int gas_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
+        const long long gas_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
         gas_fraction = phase_fractions[gas_pos];
         gas_viscosity = phase_viscosities[gas_pos];
     }
@@ -594,7 +594,7 @@ pressureDropSpiralICD(const int seg,
     // For reference: the pressure equation assumes pressure/flow derivatives are given 
     // at segment node while fraction derivatives are given at upwind node.   
     if (seg != seg_upwind) {
-        constexpr int nvar = FluidSystem::numPhases + 1;
+        constexpr long long nvar = FluidSystem::numPhases + 1;
         std::vector<bool> zero_mask(nvar, false);
         if (!extra_reverse_flow_derivatives){
             zero_mask[PrimaryVariables::WQTotal] = true;
@@ -609,7 +609,7 @@ pressureDropSpiralICD(const int seg,
             // mass_rate has no extra derivatives (they are organized as in equations)
             mass_rate.clearDerivatives();
         }
-        for (int ii = 0; ii < nvar; ++ii) {
+        for (long long ii = 0; ii < nvar; ++ii) {
             if (zero_mask[ii]) {
                 water_fraction.setDerivative(Indices::numEq + ii, 0.0);
                 water_viscosity.setDerivative(Indices::numEq + ii, 0.0);
@@ -656,14 +656,14 @@ pressureDropSpiralICD(const int seg,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-pressureDropAutoICD(const int seg,
+pressureDropAutoICD(const long long seg,
                     const UnitSystem& unit_system, 
                     const bool extra_reverse_flow_derivatives /*false*/) const
 {
     const auto& segment_set = well_.wellEcl().getSegments();
     const AutoICD& aicd = segment_set[seg].autoICD();
 
-    const int seg_upwind = upwinding_segments_[seg];
+    const long long seg_upwind = upwinding_segments_[seg];
     const std::vector<EvalWell>& phase_fractions = phase_fractions_[seg_upwind];
     const std::vector<EvalWell>& phase_viscosities = phase_viscosities_[seg_upwind];
     const std::vector<EvalWell>& phase_densities = phase_densities_[seg_upwind];
@@ -672,7 +672,7 @@ pressureDropAutoICD(const int seg,
     EvalWell water_viscosity = 0.;
     EvalWell water_density = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) {
-        const int water_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
+        const long long water_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
         water_fraction = phase_fractions[water_pos];
         water_viscosity = phase_viscosities[water_pos];
         water_density = phase_densities[water_pos];
@@ -682,7 +682,7 @@ pressureDropAutoICD(const int seg,
     EvalWell oil_viscosity = 0.;
     EvalWell oil_density = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx)) {
-        const int oil_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
+        const long long oil_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
         oil_fraction = phase_fractions[oil_pos];
         oil_viscosity = phase_viscosities[oil_pos];
         oil_density = phase_densities[oil_pos];
@@ -692,7 +692,7 @@ pressureDropAutoICD(const int seg,
     EvalWell gas_viscosity = 0.;
     EvalWell gas_density = 0.;
     if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx)) {
-        const int gas_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
+        const long long gas_pos = Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
         gas_fraction = phase_fractions[gas_pos];
         gas_viscosity = phase_viscosities[gas_pos];
         gas_density = phase_densities[gas_pos];
@@ -706,7 +706,7 @@ pressureDropAutoICD(const int seg,
     // For reference: the pressure equation assumes pressure/flow derivatives are given 
     // at segment node while fraction derivatives are given at upwind node.   
     if (seg != seg_upwind) {
-        constexpr int nvar = FluidSystem::numPhases + 1;
+        constexpr long long nvar = FluidSystem::numPhases + 1;
         std::vector<bool> zero_mask(nvar, false);
         if (!extra_reverse_flow_derivatives){
             zero_mask[PrimaryVariables::WQTotal] = true;
@@ -721,7 +721,7 @@ pressureDropAutoICD(const int seg,
             // mass_rate has no extra derivatives (they are organized as in equations)
             mass_rate.clearDerivatives();
         }
-        for (int ii = 0; ii < nvar; ++ii) {
+        for (long long ii = 0; ii < nvar; ++ii) {
             if (zero_mask[ii]) {
                 water_fraction.setDerivative(Indices::numEq + ii, 0.0);
                 water_viscosity.setDerivative(Indices::numEq + ii, 0.0);
@@ -770,7 +770,7 @@ pressureDropAutoICD(const int seg,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-pressureDropValve(const int seg,
+pressureDropValve(const long long seg,
                   const SummaryState& summary_state,
                   const bool extra_reverse_flow_derivatives /*false*/) const
 {
@@ -778,7 +778,7 @@ pressureDropValve(const int seg,
     const Valve& valve = segment_set[seg].valve();
 
     EvalWell mass_rate = mass_rates_[seg];
-    const int seg_upwind = upwinding_segments_[seg];
+    const long long seg_upwind = upwinding_segments_[seg];
     EvalWell visc = viscosities_[seg_upwind];
     EvalWell density = densities_[seg_upwind];
     // In the reverse flow case, we don't have enough slots for all derivatives, e.g.,
@@ -788,20 +788,20 @@ pressureDropValve(const int seg,
     // at segment node while fraction derivatives are given at upwind node. 
     if (seg != seg_upwind) {
         if (!extra_reverse_flow_derivatives) {
-            constexpr int WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
-            constexpr int SPres = Indices::numEq + PrimaryVariables::SPres;
+            constexpr long long WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
+            constexpr long long SPres = Indices::numEq + PrimaryVariables::SPres;
             density.setDerivative(WQTotal, 0.0);
             density.setDerivative(SPres, 0.0);
             visc.setDerivative(WQTotal, 0.0);
             visc.setDerivative(SPres, 0.0);
         } else {
             if constexpr (PrimaryVariables::has_wfrac_variable) {
-                constexpr int WFrac = Indices::numEq + PrimaryVariables::WFrac;
+                constexpr long long WFrac = Indices::numEq + PrimaryVariables::WFrac;
                 density.setDerivative(WFrac, 0.0);
                 visc.setDerivative(WFrac, 0.0);
             }
             if constexpr (PrimaryVariables::has_gfrac_variable) {
-                constexpr int GFrac = Indices::numEq + PrimaryVariables::GFrac;
+                constexpr long long GFrac = Indices::numEq + PrimaryVariables::GFrac;
                 density.setDerivative(GFrac, 0.0);
                 visc.setDerivative(GFrac, 0.0);
             }
@@ -831,28 +831,28 @@ pressureDropValve(const int seg,
 template<class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::EvalWell
 MultisegmentWellSegments<FluidSystem,Indices>::
-accelerationPressureLossContribution(const int seg,
+accelerationPressureLossContribution(const long long seg,
                                      const Scalar area,
                                      const bool extra_reverse_flow_derivatives /*false*/) const
 {
     // Compute the *signed* velocity head for given segment (sign is positive for flow towards surface, i.e., negative rate) 
     // Optionally return derivatives for reversed flow case
     EvalWell mass_rate = mass_rates_[seg];
-    const int seg_upwind = upwinding_segments_[seg];
+    const long long seg_upwind = upwinding_segments_[seg];
     EvalWell density = densities_[seg_upwind];    
     if (seg != seg_upwind) {
         if (!extra_reverse_flow_derivatives) {
-            constexpr int WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
-            constexpr int SPres = Indices::numEq + PrimaryVariables::SPres;
+            constexpr long long WQTotal = Indices::numEq + PrimaryVariables::WQTotal;
+            constexpr long long SPres = Indices::numEq + PrimaryVariables::SPres;
             density.setDerivative(WQTotal, 0.0);
             density.setDerivative(SPres, 0.0);
         } else {
             if constexpr (PrimaryVariables::has_wfrac_variable) {
-                constexpr int WFrac = Indices::numEq + PrimaryVariables::WFrac;
+                constexpr long long WFrac = Indices::numEq + PrimaryVariables::WFrac;
                 density.setDerivative(WFrac, 0.0);
             }
             if constexpr (PrimaryVariables::has_gfrac_variable) {
-                constexpr int GFrac = Indices::numEq + PrimaryVariables::GFrac;
+                constexpr long long GFrac = Indices::numEq + PrimaryVariables::GFrac;
                 density.setDerivative(GFrac, 0.0);
             }
             mass_rate.clearDerivatives();
@@ -916,7 +916,7 @@ copyPhaseDensities(const unsigned    phaseIdx,
 template <class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::Scalar
 MultisegmentWellSegments<FluidSystem,Indices>::
-mixtureDensity(const int seg) const
+mixtureDensity(const long long seg) const
 {
     auto mixDens = 0.0;
 
@@ -945,7 +945,7 @@ mixtureDensity(const int seg) const
 template <class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::Scalar
 MultisegmentWellSegments<FluidSystem,Indices>::
-mixtureDensityWithExponents(const int seg) const
+mixtureDensityWithExponents(const long long seg) const
 {
     if (const auto& segment = this->well_.wellEcl().getSegments()[seg];
         segment.isAICD())
@@ -961,7 +961,7 @@ mixtureDensityWithExponents(const int seg) const
 template <class FluidSystem, class Indices>
 typename MultisegmentWellSegments<FluidSystem,Indices>::Scalar
 MultisegmentWellSegments<FluidSystem,Indices>::
-mixtureDensityWithExponents(const AutoICD& aicd, const int seg) const
+mixtureDensityWithExponents(const AutoICD& aicd, const long long seg) const
 {
     auto mixDens = 0.0;
 

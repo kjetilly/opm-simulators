@@ -34,13 +34,13 @@ namespace Opm {
  * This function does not change the semantics of the code, but used correctly it will
  * improve performace because the number of cache misses will be reduced.
  */
-template <int temporalLocality = 3, int writeOnly = 0, class T = void>
+template <long long temporalLocality = 3, long long writeOnly = 0, class T = void>
 void prefetch(const T& val, unsigned n = 1)
 {
 #if __clang__ || __GNUC__
     // this value is architecture specific, but a cache line size of 64 bytes seems to be
     // used by all contemporary architectures.
-    static const int cacheLineSize = 64;
+    static const long long cacheLineSize = 64;
 
     const char *beginPtr = reinterpret_cast<const char*>(&val);
     const char *endPtr = reinterpret_cast<const char*>(&val + n);

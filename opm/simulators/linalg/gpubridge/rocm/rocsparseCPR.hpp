@@ -35,7 +35,7 @@ namespace Opm::Accelerator {
 template<class Scalar> class BlockedMatrix;
 
 /// This class implements a Constrained Pressure Residual (CPR) preconditioner
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 class rocsparseCPR : public rocsparsePreconditioner<Scalar, block_size>, public CprCreation<Scalar, block_size>
 {
     typedef rocsparsePreconditioner<Scalar, block_size> Base;
@@ -49,7 +49,7 @@ class rocsparseCPR : public rocsparsePreconditioner<Scalar, block_size>, public 
 private:
     std::vector<RocmMatrix<Scalar>> d_Amatrices, d_Rmatrices; // scalar matrices that represent the AMG hierarchy
     
-    std::vector<RocmVector<int>> d_PcolIndices; // prolongation does not need a full matrix, only store colIndices
+    std::vector<RocmVector<long long>> d_PcolIndices; // prolongation does not need a full matrix, only store colIndices
     std::vector<RocmVector<Scalar>> d_invDiags; // inverse of diagonal of Amatrices
     std::vector<RocmVector<Scalar>> d_t, d_f; // intermediate vectors used during amg cycle
     std::vector<RocmVector<Scalar>> d_u; // intermediate vectors used during amg cycle
@@ -73,11 +73,11 @@ private:
     void apply_amg(const Scalar& y, Scalar& x);
 
     // Apply the AMG preconditioner
-    void amg_cycle_gpu(const int level, Scalar &y, Scalar &x);
+    void amg_cycle_gpu(const long long level, Scalar &y, Scalar &x);
     
 public:
 
-    rocsparseCPR(int verbosity);
+    rocsparseCPR(long long verbosity);
 
     /// Initialize GPU and allocate memory
     /// \param[in] matrix     matrix A

@@ -59,14 +59,14 @@ namespace Opm {
 
 namespace DamarisOutput {
 
-int endIteration();
-int setParameter(const char* field, int value);
-int setPosition(const char* field, int64_t pos);
-int write(const char* field, const void* data);
-int setupWritingPars(Parallel::Communication comm,
-                     const int n_elements_local_grid,
+long long endIteration();
+long long setParameter(const char* field, long long value);
+long long setPosition(const char* field, int64_t pos);
+long long write(const char* field, const void* data);
+long long setupWritingPars(Parallel::Communication comm,
+                     const long long n_elements_local_grid,
                      std::vector<unsigned long long>& elements_rank_offsets);
-void handleError(const int dam_err, Parallel::Communication comm, const std::string& message);
+void handleError(const long long dam_err, Parallel::Communication comm, const std::string& message);
 }
 
 /*!
@@ -98,7 +98,7 @@ class DamarisWriter : public EclGenericWriter<GetPropType<TypeTag, Properties::G
     using ElementMapper = GetPropType<TypeTag, Properties::ElementMapper>;
     
     using BaseType = EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>;
-    using DamarisVarInt = DamarisOutput::DamarisVar<int>;
+    using DamarisVarInt = DamarisOutput::DamarisVar<long long>;
     using DamarisVarChar = DamarisOutput::DamarisVar<char>;
     using DamarisVarDbl = DamarisOutput::DamarisVar<double>;
 
@@ -172,7 +172,7 @@ public:
     void writeOutput(data::Solution& localCellData , bool isSubStep)
     {
         OPM_TIMEBLOCK(writeOutput);
-        const int reportStepNum = simulator_.episodeIndex() + 1;
+        const long long reportStepNum = simulator_.episodeIndex() + 1;
         const auto& cc = simulator_.vanguard().grid().comm();
 
         // added this as localCellData was not being written
@@ -214,7 +214,7 @@ public:
             }
 
             
-            int cell_data_written = 0 ;
+            long long cell_data_written = 0 ;
             // Call damaris_write() for all available variables
             for ( const auto& damVar : localCellData ) 
             {
@@ -232,7 +232,7 @@ public:
                   // see initDamarisTemplateXmlFile.cpp for the Damaris XML descriptions.
                   dam_err_ = DamarisOutput::setPosition(name.c_str(), this->elements_rank_offsets_[rank_]);
 
-                  // It does not seem I can test for what type of data is present (double or int)
+                  // It does not seem I can test for what type of data is present (double or long long)
                   // in the std::variant within the data::CellData, so I will use a try catch block. 
                   try {
                     if (dataCol.data<double>().size() >= static_cast<std::vector<double>::size_type>(this->numElements_)) {
@@ -242,11 +242,11 @@ public:
                     }
                   }
                   catch (std::bad_variant_access const& ex) {
-                    // Not a std::vector<double>, must be a std::vector<int>
-                    if (dataCol.data<int>().size() >= static_cast<std::vector<int>::size_type>(this->numElements_)) {
-                        dam_err_ = DamarisOutput::write(name.c_str(), dataCol.data<int>().data()) ;
+                    // Not a std::vector<double>, must be a std::vector<long long>
+                    if (dataCol.data<long long>().size() >= static_cast<std::vector<long long>::size_type>(this->numElements_)) {
+                        dam_err_ = DamarisOutput::write(name.c_str(), dataCol.data<long long>().data()) ;
                     } else {
-                        OpmLog::info(fmt::format("( rank:{}) The variable \"{}\" was found to be of a different size {} (not {}).",  rank_, name, dataCol.data<int>().size(), this->numElements_ ));
+                        OpmLog::info(fmt::format("( rank:{}) The variable \"{}\" was found to be of a different size {} (not {}).",  rank_, name, dataCol.data<long long>().size(), this->numElements_ ));
                     }
                   }
                   ++cell_data_written ;
@@ -266,7 +266,7 @@ public:
             for ( auto damVar : mybloc ) {
                // std::map<std::string, data::CellData>
               const std::string name = std::get<0>(damVar.first) ;
-              const int part = std::get<1>(damVar.first) ;
+              const long long part = std::get<1>(damVar.first) ;
               double  dataCol = damVar.second ;
               std::cout << "Name of Damaris Block Varaiable : (" << rank_ << ")  "  << name  << "  part : " << part << "  Value : "  << dataCol <<  std::endl ;  
             } 
@@ -283,10 +283,10 @@ public:
     }
 
 private:
-    int dam_err_ ;
-    int rank_  ;       
-    int nranks_ ;
-    int numElements_ ;  ///<  size of the unique vector elements
+    long long dam_err_ ;
+    long long rank_  ;       
+    long long nranks_ ;
+    long long numElements_ ;  ///<  size of the unique vector elements
     std::unordered_set<std::string> wanted_vars_set_ ;
     
     Simulator& simulator_;
@@ -319,11 +319,11 @@ private:
         // GLOBAL_CELL_INDEX is used to reorder variable data when writing to disk 
         // This is enabled using select-file="GLOBAL_CELL_INDEX" in the <variable> XML tag
         if (this->collectOnIORank_.isParallel()) {
-            const std::vector<int>& local_to_global =
+            const std::vector<long long>& local_to_global =
                 this->collectOnIORank_.localIdxToGlobalIdxMapping();
             dam_err_ = DamarisOutput::write("GLOBAL_CELL_INDEX", local_to_global.data());
         } else {
-            std::vector<int> local_to_global_filled ;
+            std::vector<long long> local_to_global_filled ;
             local_to_global_filled.resize(this->numElements_) ;
             std::iota(local_to_global_filled.begin(), local_to_global_filled.end(), 0);
             dam_err_ = DamarisOutput::write("GLOBAL_CELL_INDEX", local_to_global_filled.data());
@@ -358,8 +358,8 @@ private:
 
             // This is the template XML model for x,y,z coordinates defined in initDamarisXmlFile.cpp which is used to 
             // build the internally generated Damaris XML configuration file.
-            // <parameter name="n_coords_local"     type="int" value="1" />
-            // <parameter name="n_coords_global"    type="int" value="1" comment="only needed if we need to write to HDF5 in Collective mode"/>
+            // <parameter name="n_coords_local"     type="long long" value="1" />
+            // <parameter name="n_coords_global"    type="long long" value="1" comment="only needed if we need to write to HDF5 in Collective mode"/>
             // <layout    name="n_coords_layout"    type="double" dimensions="n_coords_local"   comment="For the individual x, y and z coordinates of the mesh vertices"  />
             // <group name="coordset/coords/values"> 
             //     <variable name="x"    layout="n_coords_layout"  type="scalar"  visualizable="false"  unit="m"   script="PythonConduitTest" time-varying="false" />
@@ -385,10 +385,10 @@ private:
             
             //  This is the template XML model for connectivity, offsets and types, as defined in initDamarisXmlFile.cpp which is used to 
             //  build the internally generated Damaris XML configuration file.
-            // <parameter name="n_connectivity_ph"        type="int"  value="1" />
-            // <layout    name="n_connections_layout_ph"  type="int"  dimensions="n_connectivity_ph"   comment="Layout for connectivities "  />
-            // <parameter name="n_offsets_types_ph"       type="int"  value="1" />
-            // <layout    name="n_offsets_layout_ph"      type="int"  dimensions="n_offsets_types_ph+1"  comment="Layout for the offsets_ph"  />
+            // <parameter name="n_connectivity_ph"        type="long long"  value="1" />
+            // <layout    name="n_connections_layout_ph"  type="long long"  dimensions="n_connectivity_ph"   comment="Layout for connectivities "  />
+            // <parameter name="n_offsets_types_ph"       type="long long"  value="1" />
+            // <layout    name="n_offsets_layout_ph"      type="long long"  dimensions="n_offsets_types_ph+1"  comment="Layout for the offsets_ph"  />
             // <layout    name="n_types_layout_ph"        type="char" dimensions="n_offsets_types_ph"  comment="Layout for the types_ph "  />
             // <group name="topologies/topo/elements">
             //     <variable name="connectivity" layout="n_connections_layout_ph"  type="scalar"  visualizable="false"  unit=""   script="PythonConduitTest" time-varying="false" />
@@ -429,7 +429,7 @@ private:
     }
 
     void prepareLocalCellData(const bool isSubStep,
-                              const int  reportStepNum)
+                              const long long  reportStepNum)
     {
         OPM_TIMEBLOCK(prepareLocalCellData);
         if (damarisOutputModule_->localDataValid()) {
@@ -437,7 +437,7 @@ private:
         }
 
         const auto& gridView = simulator_.vanguard().gridView();
-        const int num_interior = detail::
+        const long long num_interior = detail::
             countLocalInteriorCellsGridView(gridView);
         const bool log = this->collectOnIORank_.isIORank();
 
@@ -476,7 +476,7 @@ private:
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int dofIdx=0; dofIdx < num_interior; ++dofIdx){
+        for (long long dofIdx=0; dofIdx < num_interior; ++dofIdx){
                 const auto& intQuants = *(simulator_.model().cachedIntensiveQuantities(dofIdx, /*timeIdx=*/0));
                 const auto totVolume = simulator_.model().dofTotalVolume(dofIdx);
                 damarisOutputModule_->updateFluidInPlace(dofIdx, intQuants, totVolume);

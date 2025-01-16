@@ -53,9 +53,9 @@
 
         geomData.printGridDetails();
 
-        int nvert = geomData.getNVertices();
+        long long nvert = geomData.getNVertices();
         // example using seperate x, y and z arrays
-        int nvert = geomData.getNVertices();
+        long long nvert = geomData.getNVertices();
         double * x_vert = new double[nvert];
         double * y_vert = new double[nvert];
         double * z_vert = new double[nvert];
@@ -92,7 +92,7 @@ namespace Opm::GridDataOutput
  */
 enum ConnectivityVertexOrder { DUNE = 0, VTK = 1 };
 
-template <class GridView, unsigned int partitions>
+template <class GridView, size_t partitions>
 class SimMeshDataAccessor
 {
 public:
@@ -322,17 +322,17 @@ public:
 
     void printGridDetails(std::ostream& outstr) const;
 
-    int getNCells() const
+    long long getNCells() const
     {
         return ncells_;
     }
 
-    int getNVertices() const
+    long long getNVertices() const
     {
         return nvertices_;
     }
 
-    int getNCorners() const
+    long long getNCorners() const
     {
         return ncorners_;
     }
@@ -356,22 +356,22 @@ protected:
     GridView gridView_; // the grid
 
     Dune::PartitionSet<partitions> dunePartition_;
-    unsigned int partition_value_;
+    size_t partition_value_;
 
     /**
     Current partition grid information
     */
-    int ncells_;
+    long long ncells_;
     /**
     Current partition grid information
     */
-    int nvertices_;
+    long long nvertices_;
     /**
     Current partition grid information
     */
-    int ncorners_;
+    long long ncorners_;
 
-    int dimw_; // dimensions of the input grid
+    long long dimw_; // dimensions of the input grid
 
 private:
     std::string error_;

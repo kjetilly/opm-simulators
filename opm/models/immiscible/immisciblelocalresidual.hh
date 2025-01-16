@@ -102,7 +102,7 @@ public:
                         unsigned timeIdx) const
     {
         storage = 0.0;
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+        for (long long phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
             asImp_().addPhaseStorage(storage, elemCtx, dofIdx, timeIdx, phaseIdx);
 
         EnergyModule::addSolidEnergyStorage(storage, elemCtx.intensiveQuantities(dofIdx, timeIdx));

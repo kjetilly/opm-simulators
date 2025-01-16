@@ -96,13 +96,13 @@ struct SetupTest {
     std::unique_ptr<const Opm::Schedule> schedule;
     std::unique_ptr<Opm::SummaryState> summaryState;
     std::vector<std::vector<Opm::PerforationData<double>>> well_perf_data;
-    int current_timestep;
+    long long current_timestep;
 };
 
 struct GlobalFixture {
     GlobalFixture()
     {
-        int argcDummy = 1;
+        long long argcDummy = 1;
         const char *tmp[] = {"test_wellmodel"};
         char **argvDummy = const_cast<char**>(tmp);
 
@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE(TestStandardWellInput) {
     // For the conversion between the surface volume rate and resrevoir voidage rate
     typedef Opm::BlackOilFluidSystem<double> FluidSystem;
     using RateConverterType = Opm::RateConverter::
-        SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
+        SurfaceToReservoirVoidage<FluidSystem, std::vector<long long> >;
     // Compute reservoir volumes for RESV controls.
     Opm::PhaseUsage phaseUsage;
     std::unique_ptr<RateConverterType> rateConverter;
     // Compute reservoir volumes for RESV controls.
     rateConverter.reset(new RateConverterType (phaseUsage,
-                                     std::vector<int>(10, 0)));
+                                     std::vector<long long>(10, 0)));
 
     Opm::PerforationData<double> dummy;
     std::vector<Opm::PerforationData<double>> pdata(well.getConnections().size(), dummy);
@@ -151,18 +151,18 @@ BOOST_AUTO_TEST_CASE(TestStandardWellInput) {
 BOOST_AUTO_TEST_CASE(TestBehavoir) {
     const SetupTest setup_test;
     const auto& wells_ecl = setup_test.schedule->getWells(setup_test.current_timestep);
-    const int current_timestep = setup_test.current_timestep;
+    const long long current_timestep = setup_test.current_timestep;
     std::vector<std::unique_ptr<const StandardWell> >  wells;
 
     {
-        const int nw = wells_ecl.size();
+        const long long nw = wells_ecl.size();
         const Opm::BlackoilModelParameters<double> param;
 
-        for (int w = 0; w < nw; ++w) {
+        for (long long w = 0; w < nw; ++w) {
             // For the conversion between the surface volume rate and resrevoir voidage rate
             using FluidSystem = Opm::BlackOilFluidSystem<double>;
             using RateConverterType = Opm::RateConverter::
-                SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
+                SurfaceToReservoirVoidage<FluidSystem, std::vector<long long> >;
             // Compute reservoir volumes for RESV controls.
             // TODO: not sure why for this class the initlizer list does not work
             // otherwise we should make a meaningful const PhaseUsage here.
@@ -170,7 +170,7 @@ BOOST_AUTO_TEST_CASE(TestBehavoir) {
             std::unique_ptr<RateConverterType> rateConverter;
             // Compute reservoir volumes for RESV controls.
             rateConverter.reset(new RateConverterType (phaseUsage,
-                                             std::vector<int>(10, 0)));
+                                             std::vector<long long>(10, 0)));
             Opm::PerforationData<double> dummy;
             std::vector<Opm::PerforationData<double>> pdata(wells_ecl[w].getConnections().size(), dummy);
             for (auto c = 0*pdata.size(); c < pdata.size(); ++c) {

@@ -94,7 +94,7 @@ prepareStep(const SimulatorTimerInterface& timer)
     Dune::Timer perfTimer;
     perfTimer.start();
     // update the solution variables in the model
-    int lastStepFailed = timer.lastStepFailed();
+    long long lastStepFailed = timer.lastStepFailed();
     if (grid_.comm().size() > 1 && lastStepFailed != grid_.comm().min(lastStepFailed)) {
         OPM_THROW(std::runtime_error,
                   fmt::format("Misalignment of the parallel simulation run in prepareStep "
@@ -133,7 +133,7 @@ prepareStep(const SimulatorTimerInterface& timer)
 
     report.pre_post_time += perfTimer.stop();
 
-    auto getIdx = [](unsigned phaseIdx) -> int
+    auto getIdx = [](unsigned phaseIdx) -> long long
     {
         if (FluidSystem::phaseIsActive(phaseIdx)) {
             const unsigned sIdx = FluidSystem::solventComponentIndex(phaseIdx);
@@ -159,9 +159,9 @@ template <class TypeTag>
 void
 BlackoilModel<TypeTag>::
 initialLinearization(SimulatorReportSingle& report,
-                     const int iteration,
-                     const int minIter,
-                     const int maxIter,
+                     const long long iteration,
+                     const long long minIter,
+                     const long long maxIter,
                      const SimulatorTimerInterface& timer)
 {
     // -----------   Set up reports and timer   -----------
@@ -217,7 +217,7 @@ template <class TypeTag>
 template <class NonlinearSolverType>
 SimulatorReportSingle
 BlackoilModel<TypeTag>::
-nonlinearIteration(const int iteration,
+nonlinearIteration(const long long iteration,
                    const SimulatorTimerInterface& timer,
                    NonlinearSolverType& nonlinear_solver)
 {
@@ -255,7 +255,7 @@ template <class TypeTag>
 template <class NonlinearSolverType>
 SimulatorReportSingle
 BlackoilModel<TypeTag>::
-nonlinearIterationNewton(const int iteration,
+nonlinearIterationNewton(const long long iteration,
                          const SimulatorTimerInterface& timer,
                          NonlinearSolverType& nonlinear_solver)
 {
@@ -362,7 +362,7 @@ template <class TypeTag>
 SimulatorReportSingle
 BlackoilModel<TypeTag>::
 assembleReservoir(const SimulatorTimerInterface& /* timer */,
-                  const int iterationIdx)
+                  const long long iterationIdx)
 {
     // -------- Mass balance equations --------
     simulator_.model().newtonMethod().setIterationIndex(iterationIdx);
@@ -468,7 +468,7 @@ solveJacobianSystem(BVector& x)
     auto& residual = simulator_.model().linearizer().residual();
     auto& linSolver = simulator_.model().newtonMethod().linearSolver();
 
-    const int numSolvers = linSolver.numAvailableSolvers();
+    const long long numSolvers = linSolver.numAvailableSolvers();
     if (numSolvers > 1 && (linSolver.getSolveCount() % 100 == 0)) {
         if (terminal_output_) {
             OpmLog::debug("\nRunning speed test for comparing available linear solvers.");
@@ -480,7 +480,7 @@ solveJacobianSystem(BVector& x)
 
         x = 0.0;
         std::vector<BVector> x_trial(numSolvers, x);
-        for (int solver = 0; solver < numSolvers; ++solver) {
+        for (long long solver = 0; solver < numSolvers; ++solver) {
             BVector x0(x);
             linSolver.setActiveSolver(solver);
             perfTimer.start();
@@ -497,7 +497,7 @@ solveJacobianSystem(BVector& x)
             }
         }
 
-        int fastest_solver = std::min_element(times.begin(), times.end()) - times.begin();
+        long long fastest_solver = std::min_element(times.begin(), times.end()) - times.begin();
         // Use timing on rank 0 to determine fastest, must be consistent across ranks.
         grid_.comm().broadcast(&fastest_solver, 1, 0);
         linear_solve_setup_time_ = setupTimes[fastest_solver];
@@ -564,10 +564,10 @@ convergenceReduction(Parallel::Communication comm,
         // global reduction
         std::vector< Scalar > sumBuffer;
         std::vector< Scalar > maxBuffer;
-        const int numComp = B_avg.size();
+        const long long numComp = B_avg.size();
         sumBuffer.reserve( 2*numComp + 2 ); // +2 for (numAquifer)pvSum
         maxBuffer.reserve( numComp );
-        for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
             sumBuffer.push_back(B_avg[compIdx]);
             sumBuffer.push_back(R_sum[compIdx]);
             maxBuffer.push_back(maxCoeff[ compIdx]);
@@ -584,14 +584,14 @@ convergenceReduction(Parallel::Communication comm,
         comm.max( maxBuffer.data(), maxBuffer.size() );
 
         // restore values to local variables
-        for (int compIdx = 0, buffIdx = 0; compIdx < numComp; ++compIdx, ++buffIdx) {
+        for (long long compIdx = 0, buffIdx = 0; compIdx < numComp; ++compIdx, ++buffIdx) {
             B_avg[compIdx] = sumBuffer[buffIdx];
             ++buffIdx;
 
             R_sum[compIdx] = sumBuffer[buffIdx];
         }
 
-        for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
             maxCoeff[compIdx] = maxBuffer[compIdx];
         }
 
@@ -611,7 +611,7 @@ BlackoilModel<TypeTag>::
 localConvergenceData(std::vector<Scalar>& R_sum,
                      std::vector<Scalar>& maxCoeff,
                      std::vector<Scalar>& B_avg,
-                     std::vector<int>& maxCoeffCell)
+                     std::vector<long long>& maxCoeffCell)
 {
     OPM_TIMEBLOCK(localConvergenceData);
     Scalar pvSumLocal = 0.0;
@@ -648,8 +648,8 @@ localConvergenceData(std::vector<Scalar>& R_sum,
     OPM_END_PARALLEL_TRY_CATCH("BlackoilModel::localConvergenceData() failed: ", grid_.comm());
 
     // compute local average in terms of global number of elements
-    const int bSize = B_avg.size();
-    for (int i = 0; i < bSize; ++i) {
+    const long long bSize = B_avg.size();
+    for (long long i = 0; i < bSize; ++i) {
         B_avg[i] /= Scalar(global_nc_);
     }
 
@@ -657,7 +657,7 @@ localConvergenceData(std::vector<Scalar>& R_sum,
 }
 
 template <class TypeTag>
-std::pair<std::vector<double>, std::vector<int>>
+std::pair<std::vector<double>, std::vector<long long>>
 BlackoilModel<TypeTag>::
 characteriseCnvPvSplit(const std::vector<Scalar>& B_avg, const double dt)
 {
@@ -668,7 +668,7 @@ characteriseCnvPvSplit(const std::vector<Scalar>& B_avg, const double dt)
     // 2: tolerance_cnv_relaxed < cnv
     constexpr auto numPvGroups = std::vector<double>::size_type{3};
 
-    auto cnvPvSplit = std::pair<std::vector<double>, std::vector<int>> {
+    auto cnvPvSplit = std::pair<std::vector<double>, std::vector<long long>> {
         std::piecewise_construct,
         std::forward_as_tuple(numPvGroups),
         std::forward_as_tuple(numPvGroups)
@@ -747,8 +747,8 @@ ConvergenceReport
 BlackoilModel<TypeTag>::
 getReservoirConvergence(const double reportTime,
                         const double dt,
-                        const int iteration,
-                        const int maxIter,
+                        const long long iteration,
+                        const long long maxIter,
                         std::vector<Scalar>& B_avg,
                         std::vector<Scalar>& residual_norms)
 {
@@ -757,11 +757,11 @@ getReservoirConvergence(const double reportTime,
 
     ConvergenceReport report{reportTime};
 
-    const int numComp = numEq;
+    const long long numComp = numEq;
 
     Vector R_sum(numComp, Scalar{0});
     Vector maxCoeff(numComp, std::numeric_limits<Scalar>::lowest());
-    std::vector<int> maxCoeffCell(numComp, -1);
+    std::vector<long long> maxCoeffCell(numComp, -1);
 
     const auto [pvSumLocal, numAquiferPvSumLocal] =
         this->localConvergenceData(R_sum, maxCoeff, B_avg, maxCoeffCell);
@@ -847,7 +847,7 @@ getReservoirConvergence(const double reportTime,
     // Finish computation
     std::vector<Scalar> CNV(numComp);
     std::vector<Scalar> mass_balance_residual(numComp);
-    for (int compIdx = 0; compIdx < numComp; ++compIdx)
+    for (long long compIdx = 0; compIdx < numComp; ++compIdx)
     {
         CNV[compIdx]                    = B_avg[compIdx] * dt * maxCoeff[compIdx];
         mass_balance_residual[compIdx]  = std::abs(B_avg[compIdx]*R_sum[compIdx]) * dt / pvSum;
@@ -855,7 +855,7 @@ getReservoirConvergence(const double reportTime,
     }
 
     using CR = ConvergenceReport;
-    for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+    for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
         const Scalar res[2] = {
             mass_balance_residual[compIdx], CNV[compIdx],
         };
@@ -871,7 +871,7 @@ getReservoirConvergence(const double reportTime,
             tol[1] = tol_cnv_energy;
         }
 
-        for (int ii : {0, 1}) {
+        for (long long ii : {0, 1}) {
             if (std::isnan(res[ii])) {
                 report.setReservoirFailed({types[ii], CR::Severity::NotANumber, compIdx});
                 if (this->terminal_output_) {
@@ -903,13 +903,13 @@ getReservoirConvergence(const double reportTime,
         // Only rank 0 does print to std::cout
         if (iteration == 0) {
             std::string msg = "Iter";
-            for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+            for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                 msg += "    MB(";
                 msg += this->compNames_.name(compIdx)[0];
                 msg += ")  ";
             }
 
-            for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+            for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
                 msg += "    CNV(";
                 msg += this->compNames_.name(compIdx)[0];
                 msg += ") ";
@@ -923,11 +923,11 @@ getReservoirConvergence(const double reportTime,
         const std::ios::fmtflags oflags = ss.setf(std::ios::scientific);
 
         ss << std::setw(4) << iteration;
-        for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
             ss << std::setw(11) << mass_balance_residual[compIdx];
         }
 
-        for (int compIdx = 0; compIdx < numComp; ++compIdx) {
+        for (long long compIdx = 0; compIdx < numComp; ++compIdx) {
             ss << std::setw(11) << CNV[compIdx];
         }
 
@@ -944,8 +944,8 @@ template <class TypeTag>
 ConvergenceReport
 BlackoilModel<TypeTag>::
 getConvergence(const SimulatorTimerInterface& timer,
-               const int iteration,
-               const int maxIter,
+               const long long iteration,
+               const long long maxIter,
                std::vector<Scalar>& residual_norms)
 {
     OPM_TIMEBLOCK(getConvergence);
@@ -968,7 +968,7 @@ getConvergence(const SimulatorTimerInterface& timer,
 template <class TypeTag>
 std::vector<std::vector<typename BlackoilModel<TypeTag>::Scalar> >
 BlackoilModel<TypeTag>::
-computeFluidInPlace(const std::vector<int>& /*fipnum*/) const
+computeFluidInPlace(const std::vector<long long>& /*fipnum*/) const
 {
     OPM_TIMEBLOCK(computeFluidInPlace);
     // assert(true)
@@ -1001,7 +1001,7 @@ writePartitions(const std::filesystem::path& odir) const
 
     const auto& grid = this->simulator().vanguard().grid();
     const auto& comm = grid.comm();
-    const auto nDigit = 1 + static_cast<int>(std::floor(std::log10(comm.size())));
+    const auto nDigit = 1 + static_cast<long long>(std::floor(std::log10(comm.size())));
 
     std::ofstream pfile {odir / fmt::format("{1:0>{0}}", nDigit, comm.rank())};
 
@@ -1024,7 +1024,7 @@ getMaxCoeff(const unsigned cell_idx,
             std::vector<Scalar>& B_avg,
             std::vector<Scalar>& R_sum,
             std::vector<Scalar>& maxCoeff,
-            std::vector<int>& maxCoeffCell)
+            std::vector<long long>& maxCoeffCell)
 {
     for (unsigned phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx)
     {

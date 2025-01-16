@@ -137,7 +137,7 @@ void milu0_decomposition(M& A, FieldFunct<M> absFunctor, FieldFunct<M> signFunct
             OPM_THROW(std::logic_error,
                       "Matrix is missing diagonal for row " + std::to_string(irow.index()));
 
-        int index = 0;
+        long long index = 0;
         for(const auto& entry: sum_dropped)
         {
             auto& bdiag = (*a_ik)[index][index];
@@ -154,10 +154,10 @@ void milu0_decomposition(M& A, FieldFunct<M> absFunctor, FieldFunct<M> signFunct
 }
 
 template<class M>
-void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
+void milun_decomposition(const M& A, long long n, MILU_VARIANT milu, M& ILU,
                          Reorderer& ordering, Reorderer& inverseOrdering)
 {
-    using Map = std::map<std::size_t, int>;
+    using Map = std::map<std::size_t, long long>;
 
     auto iluRow = ILU.createbegin();
 
@@ -182,7 +182,7 @@ void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
                 {
                     // Assume double and block_type FieldMatrix
                     // first element is misused to store generation number
-                    int generation = (*kj)[0][0];
+                    long long generation = (*kj)[0][0];
                     if(generation < n)
                     {
                         auto ij = rowPattern.find(kj.index());
@@ -257,7 +257,7 @@ void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
     std::vector<typename __VA_ARGS__::block_type>*);
 
 #define INSTANTIATE_ILUN(...)                                                \
-    template void milun_decomposition(const __VA_ARGS__&, int, MILU_VARIANT, \
+    template void milun_decomposition(const __VA_ARGS__&, long long, MILU_VARIANT, \
                                       __VA_ARGS__&,Reorderer&,Reorderer&);
 
 #define INSTANTIATE_FULL(T,...)   \

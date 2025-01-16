@@ -77,7 +77,7 @@ public:
         return this->fluidPressure_.data();
     }
 
-    int getPRESSURE_size()
+    long long getPRESSURE_size()
     {
         return this->fluidPressure_.size();
     }
@@ -89,7 +89,7 @@ public:
 
     void outputTimeStamp(const std::string& lbl,
                          double elapsed,
-                         int rstep,
+                         long long rstep,
                          boost::posix_time::ptime currentDate);
 
     /// Clear internal arrays for parallel accumulation of per-region phase
@@ -286,7 +286,7 @@ public:
         return this->interRegionFlows_.wantInterRegflowSummary();
     }
 
-    const std::map<std::pair<std::string, int>, double>& getBlockData()
+    const std::map<std::pair<std::string, long long>, double>& getBlockData()
     {
         return blockData_;
     }
@@ -308,7 +308,7 @@ public:
         local_data_valid_ = true;
     }
 
-    void setCnvData(const std::vector<std::vector<int>>& data)
+    void setCnvData(const std::vector<std::vector<long long>>& data)
     {
         cnvData_ = data;
     }
@@ -382,11 +382,11 @@ protected:
 
     // Sum Fip values over regions.
     static ScalarBuffer regionSum(const ScalarBuffer& property,
-                                  const std::vector<int>& regionId,
+                                  const std::vector<long long>& regionId,
                                   const std::size_t maxNumberOfRegions,
                                   const Parallel::Communication& comm);
 
-    static int regionMax(const std::vector<int>& region,
+    static long long regionMax(const std::vector<long long>& region,
                          const Parallel::Communication& comm);
 
     static void update(Inplace& inplace,
@@ -397,7 +397,7 @@ protected:
 
     static Scalar sum(const ScalarBuffer& v);
 
-    void setupBlockData(std::function<bool(int)> isCartIdxOnThisRank);
+    void setupBlockData(std::function<bool(long long)> isCartIdxOnThisRank);
 
     virtual bool isDefunctParallelWell(std::string wname) const = 0;
 
@@ -462,14 +462,14 @@ protected:
     bool enableFloresn_{false};
 
     std::unordered_map<Inplace::Phase, ScalarBuffer> fip_;
-    std::unordered_map<std::string, std::vector<int>> regions_;
+    std::unordered_map<std::string, std::vector<long long>> regions_;
     std::unordered_map<Inplace::Phase, std::vector<SummaryConfigNode>> regionNodes_;
 
     std::vector<SummaryConfigNode> RPRNodes_;
     std::vector<SummaryConfigNode> RPRPNodes_;
 
-    std::vector<int> failedCellsPb_;
-    std::vector<int> failedCellsPd_;
+    std::vector<long long> failedCellsPb_;
+    std::vector<long long> failedCellsPd_;
 
     ScalarBuffer gasFormationVolumeFactor_;
     ScalarBuffer hydrocarbonPoreVolume_;
@@ -576,9 +576,9 @@ protected:
     std::map<std::size_t, Scalar> oilConnectionPressures_;
     std::map<std::size_t, Scalar> waterConnectionSaturations_;
     std::map<std::size_t, Scalar> gasConnectionSaturations_;
-    std::map<std::pair<std::string, int>, double> blockData_;
+    std::map<std::pair<std::string, long long>, double> blockData_;
 
-    std::vector<std::vector<int>> cnvData_; //!< Data for CNV_xxx arrays
+    std::vector<std::vector<long long>> cnvData_; //!< Data for CNV_xxx arrays
 
     std::optional<Inplace> initialInplace_;
     bool local_data_valid_{false};

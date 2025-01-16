@@ -45,7 +45,7 @@ SimulatorSerializer::SimulatorSerializer(SerializableSim& simulator,
                                          Parallel::Communication& comm,
                                          const IOConfig& ioconfig,
                                          const std::string& saveSpec,
-                                         int loadStep,
+                                         long long loadStep,
                                          const std::string& saveFile,
                                          const std::string& loadFile)
     : simulator_(simulator)
@@ -97,7 +97,7 @@ void SimulatorSerializer::save(SimulatorTimer& timer)
 
     OPM_BEGIN_PARALLEL_TRY_CATCH();
 
-    int nextStep = timer.currentStepNum();
+    long long nextStep = timer.currentStepNum();
     if ((saveStep_ != -1 && nextStep == saveStep_)  ||
         (saveStride_ != 0 && (nextStep % saveStride_) == 0)) {
 #if HAVE_HDF5
@@ -142,7 +142,7 @@ void SimulatorSerializer::loadTimerInfo([[maybe_unused]] SimulatorTimer& timer)
     const std::string groupName = "/report_step/" + std::to_string(loadStep_);
     reader.read(timer, groupName, "simulator_timer", HDF5File::DataSetMode::ROOT_ONLY);
 
-    std::tuple<std::array<std::string,5>,int> header;
+    std::tuple<std::array<std::string,5>,long long> header;
     reader.read(header, "/", "simulator_info", HDF5File::DataSetMode::ROOT_ONLY);
     const auto& [strings, procs] = header;
 

@@ -63,16 +63,16 @@ namespace {
 #if HAVE_MPI
     struct MPIError
     {
-        MPIError(std::string_view errstr, const int ec)
+        MPIError(std::string_view errstr, const long long ec)
             : errorstring { errstr }
             , errorcode   { ec }
         {}
 
         std::string errorstring;
-        int errorcode;
+        long long errorcode;
     };
 
-    void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+    void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
     {
         std::array<char, MPI_MAX_ERROR_STRING> err_string_vec{'\0'};
         auto err_length = 0;
@@ -95,16 +95,16 @@ namespace {
         return Opm::unit::gravity;
     }
 
-    std::size_t globIndex(const std::array<int,3>& ijk,
-                          const std::array<int,3>& dims)
+    std::size_t globIndex(const std::array<long long,3>& ijk,
+                          const std::array<long long,3>& dims)
     {
         return ijk[0] + dims[0]*(ijk[1] + static_cast<std::size_t>(dims[1])*ijk[2]);
     }
 
-    std::array<int,3> cellIJK(int                      cell,
-                              const std::array<int,3>& dims)
+    std::array<long long,3> cellIJK(long long                      cell,
+                              const std::array<long long,3>& dims)
     {
-        auto ijk = std::array<int,3>{};
+        auto ijk = std::array<long long,3>{};
 
         ijk[0] = cell % dims[0];  cell /= dims[0];
         ijk[1] = cell % dims[1];
@@ -115,14 +115,14 @@ namespace {
 
     namespace Rank {
         namespace Top {
-            int globalToLocal(const std::size_t global)
+            long long globalToLocal(const std::size_t global)
             {
                 return (global >= 5 * 5 * 5)
                     ? -1
-                    : static_cast<int>(global);
+                    : static_cast<long long>(global);
             }
 
-            bool isInRange(const std::array<int,3>& ijk)
+            bool isInRange(const std::array<long long,3>& ijk)
             {
                 // Well block column in top half covers zero-based index
                 // range
@@ -138,12 +138,12 @@ namespace {
                     && (ijk[2] >= 2) && (ijk[2] <= 4);
             }
 
-            std::size_t fieldIx(const std::array<int,3>& ijk)
+            std::size_t fieldIx(const std::array<long long,3>& ijk)
             {
                 return globIndex({ ijk[0] - 1, ijk[1] - 1, ijk[2] - 2 }, {3, 3, 3});
             }
 
-            double fieldValue(const int cell, std::initializer_list<double> field)
+            double fieldValue(const long long cell, std::initializer_list<double> field)
             {
                 const auto ijk = cellIJK(cell, { 5, 5, 5 });
 
@@ -151,7 +151,7 @@ namespace {
             }
 
             // Octave: 1234 + fix(100 * rand([3, 3, 6])) -- top half
-            double pressure(const int cell)
+            double pressure(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=2
@@ -172,7 +172,7 @@ namespace {
             }
 
             // Octave: fix(1e6 * (123.4 + 56.7*rand([3, 3, 6]))) / 1e6 -- top half
-            double porevol(const int cell)
+            double porevol(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=2
@@ -193,7 +193,7 @@ namespace {
             }
 
             // Octave: 0.1 + round(0.1 * rand([3, 3, 6]), 2) -- top half
-            double density(const int cell)
+            double density(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=2
@@ -213,7 +213,7 @@ namespace {
                     });
             }
 
-            double depth(const int cell)
+            double depth(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=2
@@ -233,7 +233,7 @@ namespace {
                     });
             }
 
-            void cellSource(const int                                                  cell,
+            void cellSource(const long long                                                  cell,
                             Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double> src)
             {
                 using Item = Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double>::Item;
@@ -245,9 +245,9 @@ namespace {
                     ;
             }
 
-            std::vector<int> localConnIdx()
+            std::vector<long long> localConnIdx()
             {
-                auto localIdx = std::vector<int>(6, -1);
+                auto localIdx = std::vector<long long>(6, -1);
                 for (auto perf = 0; perf < 3; ++perf) {
                     localIdx[perf] = perf;
                 }
@@ -261,7 +261,7 @@ namespace {
                     auto rho = std::vector { 0.1, 0.12, 0.14, };
 
                     return [rho = std::move(rho)]
-                        (const int                                                  connIx,
+                        (const long long                                                  connIx,
                          Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double> src)
                     {
                         using Item = Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double>::Item;
@@ -277,16 +277,16 @@ namespace {
         } // namespace Top
 
         namespace Bottom {
-            int globalToLocal(const std::size_t global)
+            long long globalToLocal(const std::size_t global)
             {
                 constexpr auto middle = 5 * 5 * 5;
 
                 return (global < middle)
                     ? -1
-                    : static_cast<int>(global - middle);
+                    : static_cast<long long>(global - middle);
             }
 
-            bool isInRange(const std::array<int,3>& ijk)
+            bool isInRange(const std::array<long long,3>& ijk)
             {
                 // Well block column in bottom half covers zero-based index
                 // range
@@ -302,12 +302,12 @@ namespace {
                     && (ijk[2] >= 0) && (ijk[2] <= 2);
             }
 
-            std::size_t fieldIx(const std::array<int,3>& ijk)
+            std::size_t fieldIx(const std::array<long long,3>& ijk)
             {
                 return globIndex({ ijk[0] - 1, ijk[1] - 1, ijk[2] }, {3, 3, 3});
             }
 
-            double fieldValue(const int cell, std::initializer_list<double> field)
+            double fieldValue(const long long cell, std::initializer_list<double> field)
             {
                 const auto ijk = cellIJK(cell, { 5, 5, 5 });
 
@@ -315,7 +315,7 @@ namespace {
             }
 
             // Octave: 1234 + fix(100 * rand([3, 3, 6])) -- bottom half
-            double pressure(const int cell)
+            double pressure(const long long cell)
             {
                 return fieldValue(cell, {
                     // K=5
@@ -336,7 +336,7 @@ namespace {
             }
 
             // Octave: fix(1e6 * (123.4 + 56.7*rand([3, 3, 6]))) / 1e6 -- bottom half
-            double porevol(const int cell)
+            double porevol(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=5
@@ -357,7 +357,7 @@ namespace {
             }
 
             // Octave: 0.1 + round(0.1 * rand([3, 3, 6]), 2) -- bottom half
-            double density(const int cell)
+            double density(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=5
@@ -378,7 +378,7 @@ namespace {
             }
 
             // Octave: 0.1 + round(0.1 * rand([3, 3, 6]), 2) -- bottom half
-            double depth(const int cell)
+            double depth(const long long cell)
             {
                 return fieldValue(cell, {
                         // K=5
@@ -398,7 +398,7 @@ namespace {
                     });
             }
 
-            void cellSource(const int                                                  cell,
+            void cellSource(const long long                                                  cell,
                             Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double> src)
             {
                 using Item = Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double>::Item;
@@ -410,9 +410,9 @@ namespace {
                     ;
             }
 
-            std::vector<int> localConnIdx()
+            std::vector<long long> localConnIdx()
             {
-                auto localIdx = std::vector<int>(6, -1);
+                auto localIdx = std::vector<long long>(6, -1);
                 for (auto perf = 0; perf < 3; ++perf) {
                     localIdx[3 + perf] = perf;
                 }
@@ -426,7 +426,7 @@ namespace {
                     auto rho = std::vector { 0.16, 0.18, 0.2, };
 
                     return [rho = std::move(rho)]
-                        (const int                                                  connIx,
+                        (const long long                                                  connIx,
                          Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double> src)
                     {
                         using Item = Opm::PAvgDynamicSourceData<double>::SourceDataSpan<double>::Item;
@@ -443,7 +443,7 @@ namespace {
     } // namespace Rank
 
     std::shared_ptr<Opm::WellConnections>
-    centreConnections(const int topConn, const int numConns)
+    centreConnections(const long long topConn, const long long numConns)
     {
         auto conns = std::vector<Opm::Connection>{};
 
@@ -546,7 +546,7 @@ namespace {
             .evalCellSource(&Rank::Bottom::cellSource);
     }
 
-    void setCallbacks(const int                            rank,
+    void setCallbacks(const long long                            rank,
                       Opm::ParallelWBPCalculation<double>& wbpCalcService)
     {
         if (rank == 0) {
@@ -557,7 +557,7 @@ namespace {
         }
     }
 
-    Opm::ParallelWBPCalculation<double>::EvaluatorFactory connSource(const int rank)
+    Opm::ParallelWBPCalculation<double>::EvaluatorFactory connSource(const long long rank)
     {
         if (rank == 0) {
             return Rank::Top::connSource();
@@ -567,7 +567,7 @@ namespace {
         }
     }
 
-    std::vector<int> localConnIdx(const int rank)
+    std::vector<long long> localConnIdx(const long long rank)
     {
         if (rank == 0) {
             return Rank::Top::localConnIdx();
@@ -656,7 +656,7 @@ BOOST_AUTO_TEST_CASE(TopOfFormation_Well_OpenConns)
     BOOST_CHECK_CLOSE(avgPress.value(WBPMode::WBP9), 1269.379542333333, 1.0e-8);
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

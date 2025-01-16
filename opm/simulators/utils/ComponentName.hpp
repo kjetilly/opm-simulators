@@ -35,7 +35,7 @@ class ComponentName
 public:
     ComponentName();
 
-    const std::string& name(const int compIdx) const
+    const std::string& name(const long long compIdx) const
     {
         return this->names_[compIdx];
     }

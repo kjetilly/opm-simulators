@@ -35,15 +35,15 @@ template<class Scalar> using FS = BlackOilFluidSystem<Scalar>;
     template struct PcEq<FS<T>,MatLaw<T>>; \
     template class EquilReg<T>; \
     template T satFromPc<FS<T>,MatLaw<T>>(const MatLaw<T>&, \
-                                          const int,const int, \
+                                          const long long,const long long, \
                                           const T,const bool); \
     template T satFromSumOfPcs<FS<T>,MatLaw<T>>(const MatLaw<T>&,    \
-                                                const int,const int, \
-                                                const int,const T); \
+                                                const long long,const long long, \
+                                                const long long,const T); \
     template T satFromDepth<FS<T>,MatLaw<T>>(const MatLaw<T>&, \
                                              const T,const T, \
-                                             const int,const int,const bool); \
-    template bool isConstPc<FS<T>,MatLaw<T>>(const MatLaw<T>&,const int,const int); \
+                                             const long long,const long long,const bool); \
+    template bool isConstPc<FS<T>,MatLaw<T>>(const MatLaw<T>&,const long long,const long long); \
     template class Miscibility::PBVD<FS<T>>; \
     template class Miscibility::PDVD<FS<T>>; \
     template class Miscibility::RsVD<FS<T>>; \

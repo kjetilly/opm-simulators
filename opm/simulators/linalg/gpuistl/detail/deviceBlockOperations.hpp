@@ -32,7 +32,7 @@ namespace
 {
 // TODO: figure out if this can be generalized effectively, this seems excessively verbose
 // explicit formulas based on Dune cpu code
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 invBlockOutOfPlace(const T* __restrict__ srcBlock, T* __restrict__ dstBlock)
 {
@@ -70,7 +70,7 @@ invBlockOutOfPlace(const T* __restrict__ srcBlock, T* __restrict__ dstBlock)
 }
 
 // explicit formulas based on Dune cpu code
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 invBlockInPlace(T* __restrict__ block)
 {
@@ -116,16 +116,16 @@ enum class MVType { SET, PLUS, MINUS };
 // SET:   c  = A*b
 // PLS:   c += A*b
 // MINUS: c -= A*b
-template <class T, int blocksize, MVType OP>
+template <class T, long long blocksize, MVType OP>
 __device__ __forceinline__ void
 matrixVectorProductWithAction(const T* A, const T* b, T* c)
 {
-    for (int i = 0; i < blocksize; ++i) {
+    for (long long i = 0; i < blocksize; ++i) {
         if (OP == MVType::SET) {
             c[i] = 0;
         }
 
-        for (int j = 0; j < blocksize; ++j) {
+        for (long long j = 0; j < blocksize; ++j) {
             if (OP == MVType::SET || OP == MVType::PLUS) {
                 c[i] += A[i * blocksize + j] * b[j];
             } else if (OP == MVType::MINUS) {
@@ -135,21 +135,21 @@ matrixVectorProductWithAction(const T* A, const T* b, T* c)
     }
 }
 
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 mv(const T* a, const T* b, T* c)
 {
     matrixVectorProductWithAction<T, blocksize, MVType::SET>(a, b, c);
 }
 
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 umv(const T* a, const T* b, T* c)
 {
     matrixVectorProductWithAction<T, blocksize, MVType::PLUS>(a, b, c);
 }
 
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 mmv(const T* a, const T* b, T* c)
 {
@@ -157,25 +157,25 @@ mmv(const T* a, const T* b, T* c)
 }
 
 // dst -= A*B*C
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 mmx2Subtraction(const T* A, const T* B, const T* C, T* dst)
 {
 
     T tmp[blocksize * blocksize] = {0};
     // tmp = A*B
-    for (int i = 0; i < blocksize; ++i) {
-        for (int k = 0; k < blocksize; ++k) {
-            for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long k = 0; k < blocksize; ++k) {
+            for (long long j = 0; j < blocksize; ++j) {
                 tmp[i * blocksize + j] += A[i * blocksize + k] * B[k * blocksize + j];
             }
         }
     }
 
     // dst = tmp*C
-    for (int i = 0; i < blocksize; ++i) {
-        for (int k = 0; k < blocksize; ++k) {
-            for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long k = 0; k < blocksize; ++k) {
+            for (long long j = 0; j < blocksize; ++j) {
                 dst[i * blocksize + j] -= tmp[i * blocksize + k] * C[k * blocksize + j];
             }
         }
@@ -183,13 +183,13 @@ mmx2Subtraction(const T* A, const T* B, const T* C, T* dst)
 }
 
 // C = A*B, assumes the three buffers do not overlap
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 mmNoOverlap(T* A, T* B, T* C)
 {
-    for (int i = 0; i < blocksize; ++i) {
-        for (int k = 0; k < blocksize; ++k) {
-            for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long k = 0; k < blocksize; ++k) {
+            for (long long j = 0; j < blocksize; ++j) {
                 C[i * blocksize + j] += A[i * blocksize + k] * B[k * blocksize + j];
             }
         }
@@ -197,45 +197,45 @@ mmNoOverlap(T* A, T* B, T* C)
 }
 
 // C = A*B, buffers may overlap
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 mmOverlap(T* A, T* B, T* C)
 {
     T tmp[blocksize * blocksize] = {0};
-    for (int i = 0; i < blocksize; ++i) {
-        for (int k = 0; k < blocksize; ++k) {
-            for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long k = 0; k < blocksize; ++k) {
+            for (long long j = 0; j < blocksize; ++j) {
                 tmp[i * blocksize + j] += A[i * blocksize + k] * B[k * blocksize + j];
             }
         }
     }
 
-    for (int i = 0; i < blocksize; ++i) {
-        for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long j = 0; j < blocksize; ++j) {
             C[i * blocksize + j] = tmp[i * blocksize + j];
         }
     }
 }
 
 // A -= B
-template <class T, int blocksize>
+template <class T, long long blocksize>
 __device__ __forceinline__ void
 matrixSubtraction(T* A, T* B)
 {
 
-    for (int i = 0; i < blocksize; ++i) {
-        for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long j = 0; j < blocksize; ++j) {
             A[i * blocksize + j] -= B[i * blocksize + j];
         }
     }
 }
 
 // B = A
-template<int blocksize, class ScalarInputType, class ScalarOutputType>
+template<long long blocksize, class ScalarInputType, class ScalarOutputType>
 __device__ __forceinline__ void
 moveBlock(const ScalarInputType* __restrict__ A, ScalarOutputType* __restrict__ B){
-    for (int i = 0; i < blocksize; ++i){
-        for (int j = 0; j < blocksize; ++j){
+    for (long long i = 0; i < blocksize; ++i){
+        for (long long j = 0; j < blocksize; ++j){
             B[i * blocksize + j] = ScalarOutputType(A[i * blocksize + j]);
         }
     }
@@ -243,14 +243,14 @@ moveBlock(const ScalarInputType* __restrict__ A, ScalarOutputType* __restrict__ 
 
 // TODO: consider merging with existing block operations
 // mixed precision general version of c = Ab
-template <int blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
+template <long long blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
 __device__ __forceinline__ void
 mvMixedGeneral(const MatrixScalar* A, const VectorScalar* b, ResultScalar* c)
 {
-    for (int i = 0; i < blocksize; ++i) {
+    for (long long i = 0; i < blocksize; ++i) {
         c[i] = 0;
 
-        for (int j = 0; j < blocksize; ++j) {
+        for (long long j = 0; j < blocksize; ++j) {
             c[i] += ResultScalar(ComputeScalar(A[i * blocksize + j]) * ComputeScalar(b[j]));
         }
     }
@@ -258,12 +258,12 @@ mvMixedGeneral(const MatrixScalar* A, const VectorScalar* b, ResultScalar* c)
 
 // TODO: consider merging with existing block operations
 // mixed precision general version of c += Ab
-template <int blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
+template <long long blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
 __device__ __forceinline__ void
 umvMixedGeneral(const MatrixScalar* A, const VectorScalar* b, ResultScalar* c)
 {
-    for (int i = 0; i < blocksize; ++i) {
-        for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long j = 0; j < blocksize; ++j) {
             c[i] += ResultScalar(ComputeScalar(A[i * blocksize + j]) * ComputeScalar(b[j]));
         }
     }
@@ -271,12 +271,12 @@ umvMixedGeneral(const MatrixScalar* A, const VectorScalar* b, ResultScalar* c)
 
 // TODO: consider merging with existing block operations
 // Mixed precision general version of c -= Ab
-template <int blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
+template <long long blocksize, class MatrixScalar, class VectorScalar, class ResultScalar, class ComputeScalar>
 __device__ __forceinline__ void
 mmvMixedGeneral(const MatrixScalar* A, const VectorScalar* b, ResultScalar* c)
 {
-    for (int i = 0; i < blocksize; ++i) {
-        for (int j = 0; j < blocksize; ++j) {
+    for (long long i = 0; i < blocksize; ++i) {
+        for (long long j = 0; j < blocksize; ++j) {
             c[i] -= ResultScalar(ComputeScalar(A[i * blocksize + j]) * ComputeScalar(b[j]));
         }
     }

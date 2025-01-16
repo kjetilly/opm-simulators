@@ -42,15 +42,15 @@ namespace Opm::Accelerator {
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-openclCPR<Scalar,block_size>::openclCPR(bool opencl_ilu_parallel_, int verbosity_)
+template<class Scalar, size_t block_size>
+openclCPR<Scalar,block_size>::openclCPR(bool opencl_ilu_parallel_, long long verbosity_)
     : Base(verbosity_)
     , opencl_ilu_parallel(opencl_ilu_parallel_)
 {
     bilu0 = std::make_unique<openclBILU0<Scalar,block_size> >(opencl_ilu_parallel, verbosity_);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclCPR<Scalar,block_size>::
 setOpencl(std::shared_ptr<cl::Context>& context_, std::shared_ptr<cl::CommandQueue>& queue_) {
     context = context_;
@@ -59,7 +59,7 @@ setOpencl(std::shared_ptr<cl::Context>& context_, std::shared_ptr<cl::CommandQue
     bilu0->setOpencl(context, queue);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclCPR<Scalar,block_size>::
 analyze_matrix(BlockedMatrix<Scalar>* mat_) {
     this->Nb = mat_->Nb;
@@ -72,7 +72,7 @@ analyze_matrix(BlockedMatrix<Scalar>* mat_) {
     return success;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclCPR<Scalar,block_size>::
 analyze_matrix(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
     this->Nb = mat_->Nb;
@@ -86,7 +86,7 @@ analyze_matrix(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
     return success;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclCPR<Scalar,block_size>::
 create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
     Dune::Timer t_bilu0;
@@ -116,7 +116,7 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat
     return result;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool openclCPR<Scalar,block_size>::
 create_preconditioner(BlockedMatrix<Scalar>* mat_) {
     Dune::Timer t_bilu0;
@@ -145,7 +145,7 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_) {
     return result;
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclCPR<Scalar, block_size>::
 init_opencl_buffers() {
     d_Amatrices.reserve(this->num_levels);
@@ -159,7 +159,7 @@ init_opencl_buffers() {
         d_f.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * m.N);
         d_u.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * m.N);
 
-        d_PcolIndices.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(int) * m.M);
+        d_PcolIndices.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(long long) * m.M);
         d_invDiags.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * m.M); // create a cl::Buffer
         d_t.emplace_back(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * m.M);
     }
@@ -170,7 +170,7 @@ init_opencl_buffers() {
     d_coarse_x = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * this->Nb);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclCPR<Scalar,block_size>::opencl_upload()
 {
     d_mat->upload(queue.get(), this->mat);
@@ -179,14 +179,14 @@ void openclCPR<Scalar,block_size>::opencl_upload()
     events.resize(2 * this->Rmatrices.size() + 1);
     err |= queue->enqueueWriteBuffer(*d_weights, CL_FALSE, 0,
                                      sizeof(Scalar) * this->N, this->weights.data(), nullptr, &events[0]);
-    for (unsigned int i = 0; i < this->Rmatrices.size(); ++i) {
+    for (size_t i = 0; i < this->Rmatrices.size(); ++i) {
         d_Amatrices[i].upload(queue.get(), &this->Amatrices[i]);
 
         err |= queue->enqueueWriteBuffer(d_invDiags[i], CL_FALSE, 0,
                                          sizeof(Scalar) * this->Amatrices[i].N, this->invDiags[i].data(),
                                          nullptr, &events[2*i+1]);
         err |= queue->enqueueWriteBuffer(d_PcolIndices[i], CL_FALSE, 0,
-                                         sizeof(int) * this->Amatrices[i].N, this->PcolIndices[i].data(),
+                                         sizeof(long long) * this->Amatrices[i].N, this->PcolIndices[i].data(),
                                          nullptr, &events[2*i+2]);
     }
     cl::WaitForEvents(events);
@@ -195,17 +195,17 @@ void openclCPR<Scalar,block_size>::opencl_upload()
         // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
         OPM_THROW(std::logic_error, "openclCPR OpenCL enqueueWriteBuffer error");
     }
-    for (unsigned int i = 0; i < this->Rmatrices.size(); ++i) {
+    for (size_t i = 0; i < this->Rmatrices.size(); ++i) {
         d_Rmatrices[i].upload(queue.get(), &this->Rmatrices[i]);
     }
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y, cl::Buffer& x)
+template<class Scalar, size_t block_size>
+void openclCPR<Scalar,block_size>::amg_cycle_gpu(const long long level, cl::Buffer& y, cl::Buffer& x)
 {
     OpenclMatrix<Scalar>* A = &d_Amatrices[level];
     OpenclMatrix<Scalar>* R = &d_Rmatrices[level];
-    int Ncur = A->Nb;
+    long long Ncur = A->Nb;
 
     if (level == this->num_levels - 1) {
         // solve coarsest level
@@ -239,7 +239,7 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
         }
         return;
     }
-    int Nnext = d_Amatrices[level+1].Nb;
+    long long Nnext = d_Amatrices[level+1].Nb;
 
     cl::Buffer& t = d_t[level];
     cl::Buffer& f = d_f[level];
@@ -267,14 +267,14 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
 }
 
 // x = prec(y)
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclCPR<Scalar,block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
 {
     // 0-initialize u and x vectors
     events.resize(d_u.size() + 1);
     err = queue->enqueueFillBuffer(*d_coarse_x, 0, 0,
                                    sizeof(Scalar) * this->Nb, nullptr, &events[0]);
-    for (unsigned int i = 0; i < d_u.size(); ++i) {
+    for (size_t i = 0; i < d_u.size(); ++i) {
         err |= queue->enqueueFillBuffer(d_u[i], 0, 0,
                                         sizeof(Scalar) * this->Rmatrices[i].N, nullptr, &events[i + 1]);
     }
@@ -294,7 +294,7 @@ void openclCPR<Scalar,block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
     OpenclKernels<Scalar>::add_coarse_pressure_correction(*d_coarse_x, x, this->pressure_idx, this->Nb);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void openclCPR<Scalar,block_size>::apply(const cl::Buffer& y, cl::Buffer& x)
 {
     Dune::Timer t_bilu0;

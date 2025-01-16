@@ -38,7 +38,7 @@ namespace Opm {
  * \brief Data handle for parallel communication which sums up all
  *        values are attached to DOFs
  */
-template <class FieldType, class Container, class EntityMapper, int commCodim>
+template <class FieldType, class Container, class EntityMapper, long long commCodim>
 class GridCommHandleSum
     : public Dune::CommDataHandleIF<GridCommHandleSum<FieldType, Container,
                                                       EntityMapper, commCodim>,
@@ -49,7 +49,7 @@ public:
         : mapper_(mapper), container_(container)
     {}
 
-    bool contains(int, int codim) const
+    bool contains(long long, long long codim) const
     {
         // return true if the codim is the same as the codim which we
         // are asked to communicate with.
@@ -57,9 +57,9 @@ public:
     }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-    bool fixedsize(int, int) const
+    bool fixedsize(long long, long long) const
 #else
-    bool fixedSize(int, int) const
+    bool fixedSize(long long, long long) const
 #endif
     {
         // for each DOF we communicate a single value which has a
@@ -113,7 +113,7 @@ public:
     {
     }
 
-    bool contains(int, int codim) const
+    bool contains(long long, long long codim) const
     {
         // return true if the codim is the same as the codim which we
         // are asked to communicate with.
@@ -121,9 +121,9 @@ public:
     }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-    bool fixedsize(int, int) const
+    bool fixedsize(long long, long long) const
 #else
-    bool fixedSize(int, int) const
+    bool fixedSize(long long, long long) const
 #endif
     {
         // for each DOF we communicate a single value which has a
@@ -172,7 +172,7 @@ public:
         : mapper_(mapper), container_(container)
     {}
 
-    bool contains(int, int codim) const
+    bool contains(long long, long long codim) const
     {
         // return true if the codim is the same as the codim which we
         // are asked to communicate with.
@@ -180,9 +180,9 @@ public:
     }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-    bool fixedsize(int, int) const
+    bool fixedsize(long long, long long) const
 #else
-    bool fixedSize(int, int) const
+    bool fixedSize(long long, long long) const
 #endif
     {
         // for each DOF we communicate a single value which has a
@@ -233,7 +233,7 @@ public:
         : mapper_(mapper), container_(container)
     {}
 
-    bool contains(int, int codim) const
+    bool contains(long long, long long codim) const
     {
         // return true if the codim is the same as the codim which we
         // are asked to communicate with.
@@ -241,9 +241,9 @@ public:
     }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-    bool fixedsize(int, int) const
+    bool fixedsize(long long, long long) const
 #else
-    bool fixedSize(int, int) const
+    bool fixedSize(long long, long long) const
 #endif
     {
         // for each DOF we communicate a single value which has a

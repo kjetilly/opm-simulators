@@ -58,7 +58,7 @@ struct LocalLinearizerSplice<TypeTag, TTag::ReservoirBlackOilEcfvProblem>
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::ReservoirBlackOilEcfvProblem;
     return Opm::start<ProblemTypeTag>(argc, argv);

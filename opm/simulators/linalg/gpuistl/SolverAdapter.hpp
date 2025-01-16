@@ -75,8 +75,8 @@ public:
                   Dune::ScalarProduct<X>& sp,
                   std::shared_ptr<Dune::Preconditioner<X, X>> prec,
                   scalar_real_type reduction,
-                  int maxit,
-                  int verbose,
+                  long long maxit,
+                  long long verbose,
                   const Comm& comm)
         : Dune::IterativeSolver<X, X>(op, sp, *prec, reduction, maxit, verbose)
         , m_opOnCPUWithMatrix(op)
@@ -144,8 +144,8 @@ private:
     template <class Comm>
     UnderlyingSolver<XGPU> constructSolver(std::shared_ptr<Dune::Preconditioner<X, X>> prec,
                                            scalar_real_type reduction,
-                                           int maxit,
-                                           int verbose,
+                                           long long maxit,
+                                           long long verbose,
                                            const Comm& communication)
     {
         // TODO: See the below TODO over the definition of precHolder in the other overload of constructSolver
@@ -227,8 +227,8 @@ private:
     // This is the serial case (specific overload for Dune::Amg::SequentialInformation)
     UnderlyingSolver<XGPU> constructSolver(std::shared_ptr<Dune::Preconditioner<X, X>> prec,
                                            scalar_real_type reduction,
-                                           int maxit,
-                                           int verbose,
+                                           long long maxit,
+                                           long long verbose,
                                            [[maybe_unused]] const Dune::Amg::SequentialInformation& communication)
     {
         // Dune::Amg::SequentialInformation is the serial case
@@ -238,8 +238,8 @@ private:
     // TODO: Use a std::forward
     UnderlyingSolver<XGPU> constructSolver(std::shared_ptr<Dune::Preconditioner<X, X>> prec,
                                            scalar_real_type reduction,
-                                           int maxit,
-                                           int verbose)
+                                           long long maxit,
+                                           long long verbose)
     {
         // TODO: Fix the reliance on casting here. This is a code smell to a certain degree, and assumes
         //       a certain setup beforehand. The only reason we do it this way is to minimize edits to the

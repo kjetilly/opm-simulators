@@ -108,7 +108,7 @@ private:
     //! \param dxpl Dataset transfer property list
     //! \param size Size of dataset
     //! \param data Data to write
-    void writeDset(int rank, hid_t dataset_id,
+    void writeDset(long long rank, hid_t dataset_id,
                    hid_t dxpl, hsize_t size, const void* data) const;
     hid_t m_file = H5I_INVALID_HID; //!< File handle
     Parallel::Communication comm_;

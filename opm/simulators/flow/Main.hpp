@@ -113,7 +113,7 @@ class WellTestState;
 
 // ----------------- Main program -----------------
 template <class TypeTag>
-int flowMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -133,7 +133,7 @@ int flowMain(int argc, char** argv, bool outputCout, bool outputFiles)
 class Main
 {
 public:
-    Main(int argc, char** argv, bool ownMPI = true);
+    Main(long long argc, char** argv, bool ownMPI = true);
 
     // This constructor can be called from Python
     Main(const std::string& filename, bool mpi_init = true, bool mpi_finalize = true);
@@ -153,9 +153,9 @@ public:
 
     void initMPI();
 
-    int runDynamic()
+    long long runDynamic()
     {
-        int exitCode = EXIT_SUCCESS;
+        long long exitCode = EXIT_SUCCESS;
         if (initialize_<Properties::TTag::FlowEarlyBird>(exitCode)) {
             Parameters::reset();
             if (isSimulationRank_) {
@@ -167,9 +167,9 @@ public:
     }
 
     template <class TypeTag>
-    int runStatic()
+    long long runStatic()
     {
-        int exitCode = EXIT_SUCCESS;
+        long long exitCode = EXIT_SUCCESS;
         if (initialize_<TypeTag>(exitCode)) {
             if (isSimulationRank_) {
                 return this->dispatchStatic_<TypeTag>();
@@ -180,15 +180,15 @@ public:
     }
 
     //! \brief Used for test_outputdir.
-    int justInitialize()
+    long long justInitialize()
     {
-        int exitCode = EXIT_SUCCESS;
+        long long exitCode = EXIT_SUCCESS;
         initialize_<Properties::TTag::FlowEarlyBird>(exitCode);
         return exitCode;
     }
 
 private:
-    int dispatchDynamic_()
+    long long dispatchDynamic_()
     {
         const auto& rspec = this->eclipseState_->runspec();
         const auto& phases = rspec.phases();
@@ -268,7 +268,7 @@ private:
     }
 
     template <class TypeTag>
-    int dispatchStatic_()
+    long long dispatchStatic_()
     {
         this->setupVanguard();
         return flowMain<TypeTag>(argc_, argv_, outputCout_, outputFiles_);
@@ -283,7 +283,7 @@ protected:
     /// parsing of command line was successful and no --help,
     /// --print-properties, or --print-parameters have been found.
     template <class TypeTagEarlyBird>
-    bool initialize_(int& exitCode, bool keepKeywords = false)
+    bool initialize_(long long& exitCode, bool keepKeywords = false)
     {
         Dune::Timer externalSetupTimer;
         externalSetupTimer.start();
@@ -304,7 +304,7 @@ protected:
         using PreProblem = GetPropType<PreTypeTag, Properties::Problem>;
 
         PreProblem::setBriefDescription("Flow, an advanced reservoir simulator for ECL-decks provided by the Open Porous Media project.");
-        int status = FlowMain<PreTypeTag>::setupParameters_(argc_, argv_, FlowGenericVanguard::comm());
+        long long status = FlowMain<PreTypeTag>::setupParameters_(argc_, argv_, FlowGenericVanguard::comm());
         if (status != 0) {
             // if setupParameters_ returns a value smaller than 0, there was no error, but
             // the program should abort. This is the case e.g. for the --help and the
@@ -362,7 +362,7 @@ protected:
             return true;
         }
         
-        int mpiRank = FlowGenericVanguard::comm().rank();
+        long long mpiRank = FlowGenericVanguard::comm().rank();
         outputCout_ = false;
         if (mpiRank == 0)
             outputCout_ = Parameters::Get<Parameters::EnableTerminalOutput>();
@@ -449,7 +449,7 @@ private:
     //
     // the call is intercepted by this function which will print "flow $version"
     // on stdout and exit(0).
-    void handleVersionCmdLine_(int argc, char** argv,
+    void handleVersionCmdLine_(long long argc, char** argv,
                                std::string_view moduleVersionName);
 
     // This function is a special case, if the program has been invoked
@@ -460,7 +460,7 @@ private:
     // use the parameter system instead.
     void handleTestSplitCommunicatorCmdLine_();
 
-    int runMICP(const Phases& phases)
+    long long runMICP(const Phases& phases)
     {
         if (!phases.active(Phase::WATER) || (phases.size() > 2)) {
             if (outputCout_) {
@@ -477,7 +477,7 @@ private:
                             this->outputFiles_);
     }
 
-    int runTwoPhase(const Phases& phases)
+    long long runTwoPhase(const Phases& phases)
     {
         const bool diffusive = eclipseState_->getSimulationConfig().isDiffusive();
         const bool disgasw = eclipseState_->getSimulationConfig().hasDISGASW();
@@ -529,7 +529,7 @@ private:
         }
     }
 
-    int runPolymer(const Phases& phases)
+    long long runPolymer(const Phases& phases)
     {
         if (! phases.active(Phase::WATER)) {
             if (outputCout_)
@@ -555,12 +555,12 @@ private:
         }
     }
 
-    int runFoam()
+    long long runFoam()
     {
         return flowFoamMain(argc_, argv_, outputCout_, outputFiles_);
     }
 
-    int runWaterOnly(const Phases& phases)
+    long long runWaterOnly(const Phases& phases)
     {
         if (!phases.active(Phase::WATER) || phases.size() != 1) {
             if (outputCout_)
@@ -573,7 +573,7 @@ private:
         return flowWaterOnlyMain(argc_, argv_, outputCout_, outputFiles_);
     }
 
-    int runWaterOnlyEnergy(const Phases& phases)
+    long long runWaterOnlyEnergy(const Phases& phases)
     {
         if (!phases.active(Phase::WATER) || phases.size() != 2) {
             if (outputCout_)
@@ -586,7 +586,7 @@ private:
         return flowWaterOnlyEnergyMain(argc_, argv_, outputCout_, outputFiles_);
     }
 
-    int runBrine(const Phases& phases)
+    long long runBrine(const Phases& phases)
     {
         if (! phases.active(Phase::WATER) || phases.size() == 2) {
             if (outputCout_)
@@ -628,7 +628,7 @@ private:
         return EXIT_FAILURE;
     }
 
-    int runSolvent(const Phases& phases)
+    long long runSolvent(const Phases& phases)
     {
         if (phases.active(Phase::FOAM)) {
             return flowSolventFoamMain(argc_, argv_, outputCout_, outputFiles_);
@@ -650,12 +650,12 @@ private:
         return EXIT_FAILURE;
     }
 
-    int runExtendedBlackOil()
+    long long runExtendedBlackOil()
     {
         return flowExtboMain(argc_, argv_, outputCout_, outputFiles_);
     }
 
-    int runThermal(const Phases& phases)
+    long long runThermal(const Phases& phases)
     {
         // oil-gas-thermal
         if (!phases.active( Phase::WATER ) && phases.active( Phase::OIL ) && phases.active( Phase::GAS )) {
@@ -674,7 +674,7 @@ private:
         return flowEnergyMain(argc_, argv_, outputCout_, outputFiles_);
     }
 
-    int runBlackOil()
+    long long runBlackOil()
     {
         const bool diffusive = eclipseState_->getSimulationConfig().isDiffusive();
         if (diffusive) {
@@ -696,28 +696,28 @@ private:
                   const std::string& inputSkipMode,
                   const bool keepKeywords,
                   const std::size_t numThreads,
-                  const int output_param,
+                  const long long output_param,
                   const std::string& parameters,
                   std::string_view moduleVersion,
                   std::string_view compileTimestamp);
 
-    static int getNumThreads()
+    static long long getNumThreads()
     {
 
-        int threads;
+        long long threads;
 
 #ifdef _OPENMP
         // This function is called before the parallel OpenMP stuff gets initialized.
         // That initialization happens after the deck is read and we want this message.
         // Hence we duplicate the code of setupParallelism to get the number of threads.
         static bool first_time = true;
-        constexpr int default_threads = 2;
-        const int requested_threads = Parameters::Get<Parameters::ThreadsPerProcess>();
+        constexpr long long default_threads = 2;
+        const long long requested_threads = Parameters::Get<Parameters::ThreadsPerProcess>();
         threads = requested_threads > 0 ? requested_threads : default_threads;
 
         const char* env_var = getenv("OMP_NUM_THREADS");
         if (env_var) {
-            int omp_num_threads = -1;
+            long long omp_num_threads = -1;
             auto result = std::from_chars(env_var, env_var + std::strlen(env_var), omp_num_threads);
             const bool can_output = first_time && FlowGenericVanguard::comm().rank() == 0;
             if (result.ec == std::errc() && omp_num_threads > 0) {
@@ -746,7 +746,7 @@ private:
 #endif
 
 protected:
-    int argc_{0};
+    long long argc_{0};
     char** argv_{nullptr};
     bool outputCout_{false};
     bool outputFiles_{false};

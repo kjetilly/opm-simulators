@@ -71,8 +71,8 @@ namespace Opm::Satfunc::PhaseChecks {
         /// \param[in] unscaledEndPoints Saturation function end-points for
         /// all tabulated saturation functions.  Lifetime of members must
         /// exceed the \c UnscaledSatfuncCheckPoint object.
-        explicit UnscaledSatfuncCheckPoint(const std::vector<int>*  region,
-                                           const int                regIdxOffset,
+        explicit UnscaledSatfuncCheckPoint(const std::vector<long long>*  region,
+                                           const long long                regIdxOffset,
                                            const UnscaledEndPoints& unscaledEndPoints)
             : unscaledEndPoints_ { unscaledEndPoints }
             , regIdxOffset_      { regIdxOffset }
@@ -90,14 +90,14 @@ namespace Opm::Satfunc::PhaseChecks {
         /// \return Locally unique point ID for \p cellIdx.  Nullopt if this
         /// check point does not apply to \p cellIdx.  Typically because the
         /// underlying region of \p cellIdx has already been visited.
-        std::optional<std::size_t> pointID(const int cellIdx) const override;
+        std::optional<std::size_t> pointID(const long long cellIdx) const override;
 
         /// Populate check point values for a particular cell.
         ///
         /// \param[in] cellIdx Active cell index on current rank.
         ///
         /// \param[out] endPoints Set of saturation function end-points.
-        void populateCheckPoint(const int                        cellIdx,
+        void populateCheckPoint(const long long                        cellIdx,
                                 EclEpsScalingPointsInfo<Scalar>& endPoints) const override;
 
     private:
@@ -108,13 +108,13 @@ namespace Opm::Satfunc::PhaseChecks {
 
         /// Region index offset.  Should be one (1) if region_ contains
         /// one-based region indices.
-        int regIdxOffset_{};
+        long long regIdxOffset_{};
 
         /// Region index for each active cell on rank.
-        const std::vector<int>* region_{nullptr};
+        const std::vector<long long>* region_{nullptr};
 
         /// Cache for visited ("seen") saturation regions.
-        mutable std::unordered_set<int> seen_{};
+        mutable std::unordered_set<long long> seen_{};
     };
 
 } // namespace Opm::Satfunc::PhaseChecks

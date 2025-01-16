@@ -32,10 +32,10 @@ public:
     /// \param[in] Nb               number of blockrows
     /// \param[in] nnzbs            number of nonzero blocks
     /// \param[in] block_size       the number of rows and columns for each block
-    BlockedMatrix(int Nb_, int nnzbs_, unsigned int block_size_)
+    BlockedMatrix(long long Nb_, long long nnzbs_, size_t block_size_)
         : nnzValues(new Scalar[nnzbs_*block_size_*block_size_])
-        , colIndices(new int[nnzbs_*block_size_*block_size_])
-        , rowPointers(new int[Nb_+1])
+        , colIndices(new long long[nnzbs_*block_size_*block_size_])
+        , rowPointers(new long long[Nb_+1])
         , Nb(Nb_)
         , nnzbs(nnzbs_)
         , block_size(block_size_)
@@ -63,8 +63,8 @@ public:
     /// \param[in] nnzValues      array of nonzero values, contains nnzb*block_size*block_size scalars
     /// \param[in] colIndices     array of column indices, contains nnzb entries
     /// \param[in] rowPointers    array of row pointers, contains Nb+1 entries
-    BlockedMatrix(int Nb_, int nnzbs_, unsigned int block_size_,
-                  Scalar* nnzValues_, int *colIndices_, int *rowPointers_)
+    BlockedMatrix(long long Nb_, long long nnzbs_, size_t block_size_,
+                  Scalar* nnzValues_, long long *colIndices_, long long *rowPointers_)
         : nnzValues(nnzValues_)
         , colIndices(colIndices_)
         , rowPointers(rowPointers_)
@@ -87,11 +87,11 @@ public:
     }
 
     Scalar* nnzValues;
-    int *colIndices;
-    int *rowPointers;
-    int Nb;
-    int nnzbs;
-    unsigned int block_size;
+    long long *colIndices;
+    long long *rowPointers;
+    long long Nb;
+    long long nnzbs;
+    size_t block_size;
     bool deleteNnzs;
     bool deleteSparsity;
 };
@@ -102,7 +102,7 @@ public:
 /// \param[inout] data           sorted according to the colIndices
 /// \param[in] left              lower index of data of row
 /// \param[in] right             upper index of data of row
-void sortRow(int* colIndices, int* data, int left, int right);
+void sortRow(long long* colIndices, long long* data, long long left, long long right);
 
 /// Multiply and subtract blocks
 /// a = a - (b * c)
@@ -111,7 +111,7 @@ void sortRow(int* colIndices, int* data, int left, int right);
 /// \param[in] c                 input block
 /// \param[in] block_size        size of block
 template<class Scalar>
-void blockMultSub(Scalar* a, Scalar* b, Scalar* c, unsigned int block_size);
+void blockMultSub(Scalar* a, Scalar* b, Scalar* c, size_t block_size);
 
 /// Perform a matrix-matrix multiplication on two blocks
 /// resMat = mat1 * mat2
@@ -120,7 +120,7 @@ void blockMultSub(Scalar* a, Scalar* b, Scalar* c, unsigned int block_size);
 /// \param[out] resMat           output block
 /// \param[in] block_size        size of block
 template<class Scalar>
-void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, unsigned int block_size);
+void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, size_t block_size);
 
 } // namespace Opm::Accelerator
 

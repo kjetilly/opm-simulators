@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowGasWaterBrineMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowGasWaterBrineMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_gaswater_brine binary.
-int flowGasWaterBrineMainStandalone(int argc, char** argv);
+long long flowGasWaterBrineMainStandalone(long long argc, char** argv);
 
 }
 

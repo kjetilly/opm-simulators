@@ -49,10 +49,10 @@ namespace Opm {
         /// Minimal characteristics of a cell from a simulation grid.
         struct Cell {
             /// Cell's active index on local rank.
-            int activeIndex{-1};
+            long long activeIndex{-1};
 
             /// Cell's global cell ID.
-            int cartesianIndex{-1};
+            long long cartesianIndex{-1};
 
             /// Whether or not cell is interior to local rank.
             bool isInterior{true};
@@ -63,7 +63,7 @@ namespace Opm {
         /// Constructor
         ///
         /// \param[in] region Local rank's FIP region definition array.
-        explicit InterRegFlowMapSingleFIP(const std::vector<int>& region);
+        explicit InterRegFlowMapSingleFIP(const std::vector<long long>& region);
 
         /// Add flow rate connection between regions.
         ///
@@ -154,7 +154,7 @@ namespace Opm {
 
     private:
         /// Zero-based FIP region IDs on local MPI rank.
-        std::vector<int> region_{};
+        std::vector<long long> region_{};
 
         /// Maximum one-based FIP region ID on local MPI rank.
         std::size_t maxLocalRegionID_{0};
@@ -186,7 +186,7 @@ namespace Opm {
             std::string name;
 
             /// Region definition array.
-            std::reference_wrapper<const std::vector<int>> definition;
+            std::reference_wrapper<const std::vector<long long>> definition;
         };
 
         /// Characteristics of a cell from a simulation grid.
@@ -337,7 +337,7 @@ namespace Opm {
                 // from the input stream, but do not merge with internal
                 // values.
                 auto map = InterRegFlowMapSingleFIP {
-                    std::vector<int>(this->numCells_, 1)
+                    std::vector<long long>(this->numCells_, 1)
                 };
 
                 const auto numMaps = names.size();

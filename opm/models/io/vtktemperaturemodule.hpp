@@ -59,7 +59,7 @@ class VtkTemperatureModule : public BaseOutputModule<TypeTag>
 
     using ScalarBuffer = typename ParentType::ScalarBuffer;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
 
 public:

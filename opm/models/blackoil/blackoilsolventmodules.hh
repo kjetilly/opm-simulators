@@ -83,7 +83,7 @@ class BlackOilSolventModule
     static constexpr unsigned numEq = getPropValue<TypeTag, Properties::NumEq>();
     static constexpr unsigned numPhases = FluidSystem::numPhases;
     static constexpr bool blackoilConserveSurfaceVolume = getPropValue<TypeTag, Properties::BlackoilConserveSurfaceVolume>();
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
 
 public:
     //! \brief Set parameters.
@@ -531,10 +531,10 @@ class BlackOilSolventIntensiveQuantities
     using SolventModule = BlackOilSolventModule<TypeTag>;
 
     enum { numPhases = getPropValue<TypeTag, Properties::NumPhases>() };
-    static constexpr int solventSaturationIdx = Indices::solventSaturationIdx;
-    static constexpr int oilPhaseIdx = FluidSystem::oilPhaseIdx;
-    static constexpr int gasPhaseIdx = FluidSystem::gasPhaseIdx;
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long solventSaturationIdx = Indices::solventSaturationIdx;
+    static constexpr long long oilPhaseIdx = FluidSystem::oilPhaseIdx;
+    static constexpr long long gasPhaseIdx = FluidSystem::gasPhaseIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
     static constexpr double cutOff = 1e-12;
 
 
@@ -1074,7 +1074,7 @@ class BlackOilSolventExtensiveQuantities
     using Toolbox = MathToolbox<Evaluation>;
 
     static constexpr unsigned gasPhaseIdx = FluidSystem::gasPhaseIdx;
-    static constexpr int dimWorld = GridView::dimensionworld;
+    static constexpr long long dimWorld = GridView::dimensionworld;
 
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimEvalVector = Dune::FieldVector<Evaluation, dimWorld>;

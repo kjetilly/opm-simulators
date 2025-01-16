@@ -50,7 +50,7 @@ struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionNcpEcfvProblem>
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionNcpEcfvProblem;
     return Opm::start<EcfvProblemTypeTag>(argc, argv);

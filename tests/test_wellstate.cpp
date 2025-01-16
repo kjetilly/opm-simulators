@@ -95,23 +95,23 @@ struct Setup
     {
         const auto& wells = sched.getWells(0);
         const auto& cartDims = Opm::UgGridHelpers::cartDims(*grid.c_grid());
-        const int* compressed_to_cartesian = Opm::UgGridHelpers::globalCell(*grid.c_grid());
-        std::vector<int> cartesian_to_compressed(cartDims[0] * cartDims[1] * cartDims[2], -1);
-        for (int ii = 0; ii < Opm::UgGridHelpers::numCells(*grid.c_grid()); ++ii) {
+        const long long* compressed_to_cartesian = Opm::UgGridHelpers::globalCell(*grid.c_grid());
+        std::vector<long long> cartesian_to_compressed(cartDims[0] * cartDims[1] * cartDims[2], -1);
+        for (long long ii = 0; ii < Opm::UgGridHelpers::numCells(*grid.c_grid()); ++ii) {
             cartesian_to_compressed[compressed_to_cartesian[ii]] = ii;
         }
         well_perf_data.resize(wells.size());
-        int well_index = 0;
+        long long well_index = 0;
         for (const auto& well : wells) {
             well_perf_data[well_index].clear();
             well_perf_data[well_index].reserve(well.getConnections().size());
             for (const auto& completion : well.getConnections()) {
                 if (completion.state() == Opm::Connection::State::OPEN) {
-                    const int i = completion.getI();
-                    const int j = completion.getJ();
-                    const int k = completion.getK();
-                    const int cart_grid_indx = i + cartDims[0] * (j + cartDims[1] * k);
-                    const int active_index = cartesian_to_compressed[cart_grid_indx];
+                    const long long i = completion.getI();
+                    const long long j = completion.getJ();
+                    const long long k = completion.getK();
+                    const long long cart_grid_indx = i + cartDims[0] * (j + cartDims[1] * k);
+                    const long long active_index = cartesian_to_compressed[cart_grid_indx];
                     if (active_index < 0) {
                         const std::string msg
                             = ("Cell with i,j,k indices " + std::to_string(i) + " " + std::to_string(j) + " "
@@ -302,7 +302,7 @@ BOOST_AUTO_TEST_CASE(Pressure)
 
     setSegPress(wells, wstate);
 
-    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int){return false;});
+    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const long long){return false;});
 
     {
         const auto expect_nSeg = 6;
@@ -343,7 +343,7 @@ BOOST_AUTO_TEST_CASE(Rates)
 
     setSegRates(wells, pu,  wstate);
 
-    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int){return false;});
+    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const long long){return false;});
 
     const auto wat = pu.phase_used[Opm::BlackoilPhases::Aqua];
     const auto oil = pu.phase_used[Opm::BlackoilPhases::Liquid];
@@ -447,7 +447,7 @@ BOOST_AUTO_TEST_CASE(STOP_well)
 //}
 
 BOOST_AUTO_TEST_CASE(TESTWellContainer) {
-    Opm::WellContainer<int> wc;
+    Opm::WellContainer<long long> wc;
     BOOST_CHECK_EQUAL(wc.size(), 0);
 
     wc.add("W1", 1);
@@ -472,7 +472,7 @@ BOOST_AUTO_TEST_CASE(TESTWellContainer) {
     std::vector<std::string> expected = {"W1", "W2"};
     BOOST_CHECK( std::is_permutation( wells.begin(), wells.end(), expected.begin(), expected.end()) );
 
-    Opm::WellContainer<int> wc2;
+    Opm::WellContainer<long long> wc2;
     wc2.copy_welldata(wc);
     BOOST_CHECK_EQUAL(wc2.size() , 0);
 
@@ -481,7 +481,7 @@ BOOST_AUTO_TEST_CASE(TESTWellContainer) {
     wc2.copy_welldata(wc);
     BOOST_CHECK_EQUAL(wc2["W1"], 1);
 
-    Opm::WellContainer<int> wc3;
+    Opm::WellContainer<long long> wc3;
     wc3.add("W2", 100);
     wc3.copy_welldata(wc);
     BOOST_CHECK_EQUAL(wc3["W2"], 2);
@@ -506,13 +506,13 @@ BOOST_AUTO_TEST_CASE(TESTWellContainer) {
     BOOST_CHECK(!wc3.has("NO_SUCH_WELL"));
 
 
-    std::vector<int> vec_copy(wc3.begin(), wc3.end());
+    std::vector<long long> vec_copy(wc3.begin(), wc3.end());
     BOOST_CHECK_EQUAL(vec_copy.size(), wc3.size());
     for (std::size_t i = 0; i < wc3.size(); i++)
         BOOST_CHECK_EQUAL(vec_copy[i], wc3[i]);
 
 
-    Opm::WellContainer<int> wci({{"W1", 1}, {"W2", 2}, {"W3", 3}});
+    Opm::WellContainer<long long> wci({{"W1", 1}, {"W2", 2}, {"W3", 3}});
     BOOST_CHECK_EQUAL(wci.size(), 3);
     BOOST_CHECK(wci.has("W1"));
     BOOST_CHECK_EQUAL(wci[1], 2);

@@ -27,8 +27,8 @@
 void checkIdentity(Dune::FieldMatrix<double, 4, 4> M) {
     double diag = 0.0;
     double offDiag = 0.0;
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
+    for (long long i = 0; i < 4; ++i) {
+        for (long long j = 0; j < 4; ++j) {
             if (i == j)
                 diag += M[i][j];
             else
@@ -45,8 +45,8 @@ BOOST_AUTO_TEST_CASE(Invert4x4)
     BaseType matrix;
     BaseType inverse;
 
-    for (int i = 0; i < 4; ++i) {
-        for (int j = 0; j < 4; ++j) {
+    for (long long i = 0; i < 4; ++i) {
+        for (long long j = 0; j < 4; ++j) {
                 matrix[i][j] = i + 4*j + 1;
         }
     }

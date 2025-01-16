@@ -109,45 +109,45 @@ struct AutomaticTransmission<TypeTag, TTag::Vehicle> { static constexpr bool val
 ///////////////////
 
 template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::CompactCar> { static constexpr int value = getPropValue<TypeTag, GasUsage>() * 30; };
+struct TopSpeed<TypeTag, TTag::CompactCar> { static constexpr long long value = getPropValue<TypeTag, GasUsage>() * 30; };
 template<class TypeTag>
-struct NumSeats<TypeTag, TTag::CompactCar> { static constexpr int value = 5; };
+struct NumSeats<TypeTag, TTag::CompactCar> { static constexpr long long value = 5; };
 template<class TypeTag>
-struct GasUsage<TypeTag, TTag::CompactCar> { static constexpr int value = 4; };
+struct GasUsage<TypeTag, TTag::CompactCar> { static constexpr long long value = 4; };
 
 template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Truck> { static constexpr int value = 100; };
+struct TopSpeed<TypeTag, TTag::Truck> { static constexpr long long value = 100; };
 template<class TypeTag>
-struct NumSeats<TypeTag, TTag::Truck> { static constexpr int value = 2; };
+struct NumSeats<TypeTag, TTag::Truck> { static constexpr long long value = 2; };
 template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Truck> { static constexpr int value = 12; };
+struct GasUsage<TypeTag, TTag::Truck> { static constexpr long long value = 12; };
 template<class TypeTag>
-struct Payload<TypeTag, TTag::Truck> { static constexpr int value = 35; };
+struct Payload<TypeTag, TTag::Truck> { static constexpr long long value = 35; };
 
 template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Tank> { static constexpr int value = 60; };
+struct TopSpeed<TypeTag, TTag::Tank> { static constexpr long long value = 60; };
 template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Tank> { static constexpr int value = 65; };
+struct GasUsage<TypeTag, TTag::Tank> { static constexpr long long value = 65; };
 template<class TypeTag>
-struct CanonCaliber<TypeTag, TTag::Tank> { static constexpr int value = 120; };
+struct CanonCaliber<TypeTag, TTag::Tank> { static constexpr long long value = 120; };
 
 template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Sedan> { static constexpr int value = 7; };
+struct GasUsage<TypeTag, TTag::Sedan> { static constexpr long long value = 7; };
 template<class TypeTag>
 struct AutomaticTransmission<TypeTag, TTag::Sedan> { static constexpr bool value = true; };
 
 template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Pickup> { static constexpr int value = 120; };
+struct TopSpeed<TypeTag, TTag::Pickup> { static constexpr long long value = 120; };
 template<class TypeTag>
-struct Payload<TypeTag, TTag::Pickup> { static constexpr int value = 5; };
+struct Payload<TypeTag, TTag::Pickup> { static constexpr long long value = 5; };
 
 template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::HummerH1> { static constexpr int value = getPropValue<TTag::Pickup, TopSpeed>(); };
+struct TopSpeed<TypeTag, TTag::HummerH1> { static constexpr long long value = getPropValue<TTag::Pickup, TopSpeed>(); };
 
 } // namespace Opm::Properties
 
 
-int main()
+long long main()
 {
     using namespace Opm;
     using namespace Opm::Properties;

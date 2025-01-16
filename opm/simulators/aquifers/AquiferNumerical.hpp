@@ -56,7 +56,7 @@ public:
 
     enum { dimWorld = GridView::dimensionworld };
     enum { numPhases = FluidSystem::numPhases };
-    static constexpr int numEq = BlackoilIndices::numEq;
+    static constexpr long long numEq = BlackoilIndices::numEq;
 
     using Eval =  DenseAd::Evaluation<Scalar, numEq>;
     using Toolbox = MathToolbox<Eval>;
@@ -78,7 +78,7 @@ public:
             const auto* cell = aquifer.getCellPrt(idx);
 
             // Due to parallelisation, the cell might not exist in the current process
-            const int compressed_idx = simulator.vanguard().compressedIndexForInterior(cell->global_index);
+            const long long compressed_idx = simulator.vanguard().compressedIndexForInterior(cell->global_index);
             if (compressed_idx >= 0) {
                 this->cell_to_aquifer_cell_idx_[compressed_idx] = idx;
                 aquifer_on_process = true;
@@ -233,7 +233,7 @@ private:
             elem_ctx.updatePrimaryStencil(elem);
 
             const std::size_t cell_index = elem_ctx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
-            const int idx = this->cell_to_aquifer_cell_idx_[cell_index];
+            const long long idx = this->cell_to_aquifer_cell_idx_[cell_index];
             if (idx < 0) {
                 continue;
             }
@@ -289,7 +289,7 @@ private:
         for (const auto& elem : elements(gridView, Dune::Partitions::interior)) {
             elem_ctx.updatePrimaryStencil(elem);
             const std::size_t cell_index = elem_ctx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
-            const int idx = this->cell_to_aquifer_cell_idx_[cell_index];
+            const long long idx = this->cell_to_aquifer_cell_idx_[cell_index];
             // we only need the first aquifer cell
             if (idx != 0) {
                 continue;
@@ -341,7 +341,7 @@ private:
     bool connects_to_reservoir_ {false};
 
     // TODO: maybe unordered_map can also do the work to save memory?
-    std::vector<int> cell_to_aquifer_cell_idx_;
+    std::vector<long long> cell_to_aquifer_cell_idx_;
 };
 
 } // namespace Opm

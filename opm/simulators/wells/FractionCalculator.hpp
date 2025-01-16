@@ -42,7 +42,7 @@ public:
                        const WellState<Scalar>& well_state,
                        const GroupState<Scalar>& group_state,
                        const SummaryState& summary_state,
-                       const int report_step,
+                       const long long report_step,
                        const GuideRate* guide_rate,
                        const GuideRateModel::Target target,
                        const PhaseUsage& pu,
@@ -59,20 +59,20 @@ private:
 
     // returns the sum of the guiderates of the given group
     // and the number of sub-groups/wells that contributed to the sum
-    std::pair<Scalar,int> guideRateSum(const Group& group,
+    std::pair<Scalar,long long> guideRateSum(const Group& group,
                         const std::string& always_included_child,
                         const bool always_use_potentials);
     Scalar guideRate(const std::string& name,
                      const std::string& always_included_child,
                      const bool always_use_potentials);
-    int groupControlledWells(const std::string& group_name,
+    long long groupControlledWells(const std::string& group_name,
                              const std::string& always_included_child);
     GuideRate::RateVector getGroupRateVector(const std::string& group_name);
     const Schedule& schedule_;
     const WellState<Scalar>& well_state_;
     const GroupState<Scalar>& group_state_;
     const SummaryState& summary_state_;
-    int report_step_;
+    long long report_step_;
     const GuideRate* guide_rate_;
     GuideRateModel::Target target_;
     const PhaseUsage& pu_;

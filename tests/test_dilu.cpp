@@ -40,9 +40,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect2x2NoZeros, T, NumericTypes)
         | | 0  2| | 0 -1| |
     */
 
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 4;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 4;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect2x2NoZeros, T, NumericTypes)
     D_11_dilu.invert();
 
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(D_00_dilu[i][j], D_00[i][j], 1e-7);
             BOOST_CHECK_CLOSE(D_11_dilu[i][j], D_11[i][j], 1e-7);
         }
@@ -108,9 +108,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect2x2, T, NumericTypes)
         | | 0  0| | 0 -1| |
     */
 
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 3;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 3;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -151,8 +151,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect2x2, T, NumericTypes)
     auto D_11_dilu = Dinv[1];
     D_11_dilu.invert();
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(D_00_dilu[i][j], D_00[i][j], 1e-7);
             BOOST_CHECK_CLOSE(D_11_dilu[i][j], D_11[i][j], 1e-7);
         }
@@ -176,9 +176,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrectNoZeros, T, NumericTypes)
         | | 0  2| | 0 -1| |   | |1| |     | |4| |
     */
 
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 4;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 4;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -261,8 +261,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrectNoZeros, T, NumericTypes)
     Dune::MultithreadDILU<Matrix, Vector, Vector> seqdilu(A);
     seqdilu.apply(x, b);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(x[i][j], new_x[i][j], 1e-7);
         }
     }
@@ -285,9 +285,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect1, T, NumericTypes)
     */
 
 
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 3;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 3;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -366,8 +366,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect1, T, NumericTypes)
     Dune::MultithreadDILU<Matrix, Vector, Vector> seqdilu(A);
     seqdilu.apply(x, b);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(x[i][j], new_x[i][j], 1e-7);
         }
     }
@@ -388,9 +388,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect2, T, NumericTypes)
         | | 2  0| |-1  0| |   | |1| |     | |3| |
         | | 0  2| | 0 -1| |   | |1| |     | |4| |
     */
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 3;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 3;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -465,8 +465,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect2, T, NumericTypes)
     Dune::MultithreadDILU<Matrix, Vector, Vector> seqdilu(A);
     seqdilu.apply(x, b);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(x[i][j], new_x[i][j], 1e-7);
         }
     }
@@ -494,9 +494,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect3x3, T, NumericTypes)
     */
 
 
-    const int N = 3;
-    constexpr int bz = 3;
-    const int nonZeroes = 5;
+    const long long N = 3;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 5;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -585,8 +585,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUDiagIsCorrect3x3, T, NumericTypes)
     D_22_dilu.invert();
 
 
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
+    for (long long i = 0; i < 3; ++i) {
+        for (long long j = 0; j < 3; ++j) {
             BOOST_CHECK_CLOSE(D_00_dilu[i][j], D_00[i][j], 1e-7);
             BOOST_CHECK_CLOSE(D_11_dilu[i][j], D_11[i][j], 1e-7);
             BOOST_CHECK_CLOSE(D_22_dilu[i][j], D_22[i][j], 1e-7);
@@ -617,9 +617,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect3, T, NumericTypes)
 
     */
 
-    const int N = 3;
-    constexpr int bz = 3;
-    const int nonZeroes = 5;
+    const long long N = 3;
+    constexpr long long bz = 3;
+    const long long nonZeroes = 5;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -769,8 +769,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsCorrect3, T, NumericTypes)
     Dune::MultithreadDILU<Matrix, Vector, Vector> seqdilu(A);
     seqdilu.apply(x, b);
 
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j) {
+    for (long long i = 0; i < 3; ++i) {
+        for (long long j = 0; j < 3; ++j) {
             BOOST_CHECK_CLOSE(x[i][j], new_x[i][j], 1e-7);
         }
     }
@@ -792,9 +792,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsEqualToDuneSeqILUApply, T, NumericTy
         | | 0  0| | 0 -1| |   | |1| |     | |4| |
     */
 
-    const int N = 2;
-    constexpr int bz = 2;
-    const int nonZeroes = 2;
+    const long long N = 2;
+    constexpr long long bz = 2;
+    const long long nonZeroes = 2;
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, bz, bz>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
@@ -842,8 +842,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(SeqDILUApplyIsEqualToDuneSeqILUApply, T, NumericTy
     seqdilu.apply(dilu_x, dilu_b);
     seqilu.apply(ilu_x, ilu_b);
 
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < 2; ++j) {
+    for (long long i = 0; i < 2; ++i) {
+        for (long long j = 0; j < 2; ++j) {
             BOOST_CHECK_CLOSE(dilu_x[i][j], ilu_x[i][j], 1e-7);
         }
     }

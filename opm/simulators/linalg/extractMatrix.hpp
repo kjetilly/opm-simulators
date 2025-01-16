@@ -32,7 +32,7 @@ namespace Details
 {
 
     template <class Matrix>
-    void copySubMatrix(const Matrix& A, const std::vector<int>& indices, Matrix& B)
+    void copySubMatrix(const Matrix& A, const std::vector<long long>& indices, Matrix& B)
     {
         // Copy elements so that B_{i, j} = A_{indices[i], indices[j]}.
         for (auto row = B.begin(); row != B.end(); ++row) {
@@ -44,7 +44,7 @@ namespace Details
 
 
     template <class Matrix>
-    Matrix extractMatrix(const Matrix& m, const std::vector<int>& indices)
+    Matrix extractMatrix(const Matrix& m, const std::vector<long long>& indices)
     {
         assert(std::is_sorted(indices.begin(), indices.end()));
 
@@ -52,9 +52,9 @@ namespace Details
         const std::size_t n = indices.size();
         std::size_t newrow = 0;
         enum { NotIncluded = -1 };
-        std::vector<int> index_map(m.N(), NotIncluded);
+        std::vector<long long> index_map(m.N(), NotIncluded);
         for (auto row = m.begin(); row != m.end(); ++row) {
-            const int row_index = row.index();
+            const long long row_index = row.index();
             if (row_index == indices[newrow]) {
                 index_map[row_index] = newrow;
                 ++newrow;
@@ -82,13 +82,13 @@ namespace Details
         auto from_row = m.begin();
         for (auto row = res.createbegin(); row != res.createend(); ++row) {
             // Move from_row to point to the row to be extracted.
-            while (static_cast<int>(from_row.index()) < indices[row.index()]) {
+            while (static_cast<long long>(from_row.index()) < indices[row.index()]) {
                 ++from_row;
             }
-            assert(static_cast<int>(from_row.index()) == indices[row.index()]);
+            assert(static_cast<long long>(from_row.index()) == indices[row.index()]);
             // Insert nonzeros for row.
             for (auto from_col = from_row->begin(); from_col != from_row->end(); ++from_col) {
-                const int new_col = index_map[from_col.index()];
+                const long long new_col = index_map[from_col.index()];
                 if (new_col != NotIncluded) {
                     row.insert(new_col);
                 }
@@ -101,7 +101,7 @@ namespace Details
 
 
     template <class Vector>
-    Vector extractVector(const Vector& x, const std::vector<int>& indices)
+    Vector extractVector(const Vector& x, const std::vector<long long>& indices)
     {
         Vector res(indices.size());
         for (std::size_t ii = 0; ii < indices.size(); ++ii) {
@@ -112,7 +112,7 @@ namespace Details
 
 
     template <class Vector>
-    void setGlobal(const Vector& x, const std::vector<int>& indices, Vector& global_x)
+    void setGlobal(const Vector& x, const std::vector<long long>& indices, Vector& global_x)
     {
         for (std::size_t ii = 0; ii < indices.size(); ++ii) {
             global_x[indices[ii]] = x[ii];

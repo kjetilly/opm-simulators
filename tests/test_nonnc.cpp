@@ -37,21 +37,21 @@
 
 using namespace Opm;
 
-const int dimWorld = 3;
-const int cartDims[3] = {8,15,3};
+const long long dimWorld = 3;
+const long long cartDims[3] = {8,15,3};
 
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -75,7 +75,7 @@ class TestTransmissibility : public Transmissibility<Grid,GridView,ElementMapper
                              const GridView& gridView,
                              const CartesianIndexMapper& cartMapper,
                              const Grid& grid,
-                             std::function<std::array<double,dimWorld>(int)> centroids,
+                             std::function<std::array<double,dimWorld>(long long)> centroids,
                              bool enableEnergy,
                              bool enableDiffusivity,
                              bool enableDispersivity)
@@ -135,7 +135,7 @@ BOOST_AUTO_TEST_CASE(NoNNC)
 
     CartesianIndexMapper cartMapper =  Dune::CartesianIndexMapper<Grid>(grid);
 
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
+    auto centroids = [](long long) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
     Transmissibility eclTransmissibility(eclState,
                                          gridView,
                                          cartMapper,
@@ -159,8 +159,8 @@ BOOST_AUTO_TEST_CASE(NoNNC)
         if (trans.second != 0.0) {
             const auto& id = trans.first;
             const auto& elements = details::isIdReverse(id);
-            int gc1 = std::min(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
-            int gc2 = std::max(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
+            long long gc1 = std::min(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
+            long long gc2 = std::max(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
             BOOST_CHECK(gc2 - gc1 == 1 ||
                         gc2 - gc1 == cartDims[0] ||
                         gc2 - gc1 == cartDims[0]*cartDims[1] ||
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(NoNNC)
     }
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

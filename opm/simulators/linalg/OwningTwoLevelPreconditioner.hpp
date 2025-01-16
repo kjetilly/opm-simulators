@@ -51,7 +51,7 @@ namespace Dune
 template <class Operator>
 class FlexibleSolver;
 
-template <typename T, typename A, int i>
+template <typename T, typename A, long long i>
 std::ostream& operator<<(std::ostream& out,
                          const BlockVector< FieldVector< T, i >, A >&  vector)
 {
@@ -59,7 +59,7 @@ std::ostream& operator<<(std::ostream& out,
    return out;
 }
 
-    template <typename T, typename A, int i>
+    template <typename T, typename A, long long i>
     std::istream& operator>>(std::istream& input,
                              BlockVector< FieldVector< T, i >, A >&  vector)
 {
@@ -99,11 +99,11 @@ public:
                            finesmoother_,
                            levelTransferPolicy_,
                            coarseSolverPolicy_,
-                           prm.get<int>("pre_smooth", 0),
-                           prm.get<int>("post_smooth", 1))
+                           prm.get<long long>("pre_smooth", 0),
+                           prm.get<long long>("post_smooth", 1))
         , prm_(prm)
     {
-        if (prm.get<int>("verbosity", 0) > 10) {
+        if (prm.get<long long>("verbosity", 0) > 10) {
             std::string filename = prm.get<std::string>("weights_filename", "impes_weights.txt");
             std::ofstream outfile(filename);
             if (!outfile) {
@@ -132,11 +132,11 @@ public:
                            finesmoother_,
                            levelTransferPolicy_,
                            coarseSolverPolicy_,
-                           prm.get<int>("pre_smooth", 0),
-                           prm.get<int>("post_smooth", 1))
+                           prm.get<long long>("pre_smooth", 0),
+                           prm.get<long long>("post_smooth", 1))
         , prm_(prm)
     {
-        if (prm.get<int>("verbosity", 0) > 10 && comm.communicator().rank() == 0) {
+        if (prm.get<long long>("verbosity", 0) > 10 && comm.communicator().rank() == 0) {
             auto filename = prm.get<std::string>("weights_filename", "impes_weights.txt");
             std::ofstream outfile(filename);
             if (!outfile) {

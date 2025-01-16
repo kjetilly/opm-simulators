@@ -106,7 +106,7 @@ struct GliftFixture
 {
     GliftFixture()
     {
-        int argc = boost::unit_test::framework::master_test_suite().argc;
+        long long argc = boost::unit_test::framework::master_test_suite().argc;
         char** argv = boost::unit_test::framework::master_test_suite().argv;
     #if HAVE_DUNE_FEM
         Dune::Fem::MPIManager::initialize(argc, argv);
@@ -146,7 +146,7 @@ BOOST_AUTO_TEST_CASE(G1)
     simulator->setTimeStepSize(43200);  // 12 hours
     simulator->model().newtonMethod().setIterationIndex(0);
     WellModel& well_model = simulator->problem().wellModel();
-    int report_step_idx = 0;
+    long long report_step_idx = 0;
     well_model.beginReportStep(report_step_idx);
     well_model.beginTimeStep();
     Opm::DeferredLogger deferred_logger;
@@ -160,7 +160,7 @@ BOOST_AUTO_TEST_CASE(G1)
     const auto& schedule = simulator->vanguard().schedule();
     auto wells_ecl = schedule.getWells(report_step_idx);
     std::optional<std::size_t> idx;
-    int num_producers = 0;
+    long long num_producers = 0;
     for(std::size_t i = 0; i < wells_ecl.size(); ++i) {
         const auto &well =  wells_ecl[i];
         if (well.isProducer()) {
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(G1)
     GLiftEclWells ecl_well_map;
     Opm::BlackoilWellModelGasLift<TypeTag>::
         initGliftEclWellMap(well_model.localNonshutWells(), ecl_well_map);
-    const int iteration_idx = simulator->model().newtonMethod().numIterations();
+    const long long iteration_idx = simulator->model().newtonMethod().numIterations();
     const auto& comm = simulator->vanguard().grid().comm();
     GasLiftGroupInfo group_info {
         ecl_well_map,

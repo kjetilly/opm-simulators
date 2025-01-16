@@ -92,7 +92,7 @@ static inline void registerAllParameters_(bool finalizeRegistration = true)
  *         a positive value for errors or 0 for success.
  */
 template <class TypeTag>
-static inline int setupParameters_(int argc,
+static inline long long setupParameters_(long long argc,
                                    const char **argv,
                                    bool registerParams=true,
                                    bool allowUnused=false,
@@ -101,7 +101,7 @@ static inline int setupParameters_(int argc,
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
     // first, get the MPI rank of the current process
-    int myRank = 0;
+    long long myRank = 0;
 
     ////////////////////////////////////////////////////////////
     // Register all parameters
@@ -125,12 +125,12 @@ static inline int setupParameters_(int argc,
                                             helpPreamble);
     if (!s.empty())
     {
-        int status = 1;
+        long long status = 1;
         if (s == "Help called") // only on master process
             status = -1; // Use negative values to indicate --help argument
 #if HAVE_MPI
         // Force -1 if the master process has that.
-        int globalStatus;
+        long long globalStatus;
         MPI_Allreduce(&status, &globalStatus, 1, MPI_INT, MPI_MIN, MPI_COMM_WORLD);
         return globalStatus;
 #endif
@@ -199,7 +199,7 @@ static inline int setupParameters_(int argc,
  * \param argv The array of the command line arguments
  */
 template <class TypeTag>
-static inline int start(int argc, char **argv,  bool registerParams=true)
+static inline long long start(long long argc, char **argv,  bool registerParams=true)
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
@@ -210,10 +210,10 @@ static inline int start(int argc, char **argv,  bool registerParams=true)
 
     resetLocale();
 
-    int myRank = 0;
+    long long myRank = 0;
     try
     {
-        int paramStatus = setupParameters_<TypeTag>(argc, const_cast<const char**>(argv), registerParams);
+        long long paramStatus = setupParameters_<TypeTag>(argc, const_cast<const char**>(argv), registerParams);
         if (paramStatus == 1)
             return 1;
         if (paramStatus == 2)
@@ -272,7 +272,7 @@ static inline int start(int argc, char **argv,  bool registerParams=true)
         }
 
         // print the parameters if requested
-        int printParams = Parameters::Get<Parameters::PrintParameters>();
+        long long printParams = Parameters::Get<Parameters::PrintParameters>();
         if (myRank == 0) {
             std::string endParametersSeparator("# [end of parameters]\n");
             if (printParams) {

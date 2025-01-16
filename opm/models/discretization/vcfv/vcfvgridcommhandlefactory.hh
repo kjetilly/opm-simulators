@@ -47,7 +47,7 @@ class VcfvGridCommHandleFactory
     using DofMapper = GetPropType<TypeTag, Properties::DofMapper>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    static const int dim = GridView::dimension;
+    static const long long dim = GridView::dimension;
 
 public:
     /*!

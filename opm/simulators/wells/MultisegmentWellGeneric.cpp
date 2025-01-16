@@ -50,8 +50,8 @@ MultisegmentWellGeneric(WellInterfaceGeneric<Scalar>& baseif)
 template<typename Scalar>
 void
 MultisegmentWellGeneric<Scalar>::
-scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inlets,
-                               const std::vector<std::vector<int>>& segment_perforations,
+scaleSegmentRatesWithWellRates(const std::vector<std::vector<long long>>& segment_inlets,
+                               const std::vector<std::vector<long long>>& segment_perforations,
                                WellState<Scalar>& well_state) const
 {
     auto& ws = well_state.well(baseif_.indexOfWell());
@@ -64,17 +64,17 @@ scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inle
     if (calculateSumTw) {
         // Due to various reasons, the well/top segment rate can be zero for this phase.
         // We can not scale this rate directly. The following approach is used to initialize the segment rates.
-        for (int perf = 0; perf < baseif_.numPerfs(); ++perf) {
+        for (long long perf = 0; perf < baseif_.numPerfs(); ++perf) {
             sumTw += baseif_.wellIndex()[perf];
         }
         // We need to communicate here to scale the perf_phaserate_scaled with the contribution of all segments
         sumTw = ws.parallel_info.get().communication().sum(sumTw);
     }
-    for (int phase = 0; phase < baseif_.numPhases(); ++phase) {
+    for (long long phase = 0; phase < baseif_.numPhases(); ++phase) {
         const Scalar unscaled_top_seg_rate = segment_rates[phase];
         const Scalar well_phase_rate = ws.surface_rates[phase];
         if (std::abs(unscaled_top_seg_rate) > 1e-12) {
-            for (int seg = 0; seg < numberOfSegments(); ++seg) {
+            for (long long seg = 0; seg < numberOfSegments(); ++seg) {
                 segment_rates[baseif_.numPhases() * seg + phase] *= well_phase_rate / unscaled_top_seg_rate;
             }
         } else { // In this case, we calculated sumTw
@@ -82,7 +82,7 @@ scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inle
             constexpr Scalar num_single_phase = 1;
             std::vector<Scalar> perforation_rates(num_single_phase * baseif_.numPerfs(), 0.0);
             const Scalar perf_phaserate_scaled = ws.surface_rates[phase] / sumTw;
-            for (int perf = 0; perf < baseif_.numPerfs(); ++perf) {
+            for (long long perf = 0; perf < baseif_.numPerfs(); ++perf) {
                 perforation_rates[perf] = baseif_.wellIndex()[perf] * perf_phaserate_scaled;
             }
 
@@ -92,7 +92,7 @@ scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inle
                                                      segment_perforations,
                                                      perforation_rates,
                                                      num_single_phase, 0, rates);
-            for (int seg = 0; seg < numberOfSegments(); ++seg) {
+            for (long long seg = 0; seg < numberOfSegments(); ++seg) {
                 segment_rates[baseif_.numPhases() * seg + phase] = rates[seg];
             }
         }
@@ -118,7 +118,7 @@ segmentSet() const
 }
 
 template <typename Scalar>
-int
+long long
 MultisegmentWellGeneric<Scalar>::
 numberOfSegments() const
 {
@@ -134,9 +134,9 @@ compPressureDrop() const
 }
 
 template<typename Scalar>
-int
+long long
 MultisegmentWellGeneric<Scalar>::
-segmentNumberToIndex(const int segment_number) const
+segmentNumberToIndex(const long long segment_number) const
 {
     return segmentSet().segmentNumberToIndex(segment_number);
 }
@@ -187,12 +187,12 @@ accelerationalPressureLossConsidered() const
 
 template<class Scalar>
 Scalar
-MultisegmentWellGeneric<Scalar>::getSegmentDp(const int seg,
+MultisegmentWellGeneric<Scalar>::getSegmentDp(const long long seg,
                                               const Scalar density,
                                               const std::vector<Scalar>& seg_dp) const
 {
     const Scalar segment_depth = this->segmentSet()[seg].depth();
-    const int outlet_segment_index = this->segmentNumberToIndex(this->segmentSet()[seg].outletSegment());
+    const long long outlet_segment_index = this->segmentNumberToIndex(this->segmentSet()[seg].outletSegment());
     const Scalar segment_depth_outlet = seg == 0 ? baseif_.refDepth() : this->segmentSet()[outlet_segment_index].depth();
     Scalar dp = wellhelpers::computeHydrostaticCorrection(segment_depth_outlet, segment_depth,
                                                           density, baseif_.gravity());

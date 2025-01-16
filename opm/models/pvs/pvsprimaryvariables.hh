@@ -367,7 +367,7 @@ public:
                << (*this)[switch0Idx + compIdx];
         }
         os << ")";
-        os << ", phase presence: " << static_cast<int>(phasePresence_) << std::flush;
+        os << ", phase presence: " << static_cast<long long>(phasePresence_) << std::flush;
     }
 
 private:

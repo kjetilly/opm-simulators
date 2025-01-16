@@ -56,7 +56,7 @@ struct FlowProblemAlugrid {
 
 template<class TypeTag>
 struct Grid<TypeTag, TTag::FlowProblemAlugrid> {
-    static const int dim = 3;
+    static const long long dim = 3;
 #if HAVE_MPI
      using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming,Dune::ALUGridMPIComm>;
 #else
@@ -82,7 +82,7 @@ class SupportsFaceTag<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>>
 
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowProblemAlugrid;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

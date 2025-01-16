@@ -96,8 +96,8 @@ public:
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
     using LevelCartesianIndexMapper = Opm::LevelCartesianIndexMapper<Grid>;
     using EquilCartesianIndexMapper = Dune::CartesianIndexMapper<EquilGrid>;
-    static constexpr int dimension = Grid::dimension;
-    static constexpr int dimensionworld = Grid::dimensionworld;
+    static constexpr long long dimension = Grid::dimension;
+    static constexpr long long dimensionworld = Grid::dimensionworld;
 
 private:
     using GridPointer = Grid*;
@@ -113,10 +113,10 @@ public:
     {
         this->callImplementationInit();
         // add a copy in standard vector format to fullfill new interface
-        const int* globalcellorg = this->grid().globalCell();
-        int num_cells = this->gridView().size(0);
+        const long long* globalcellorg = this->grid().globalCell();
+        long long num_cells = this->gridView().size(0);
         globalcell_.resize(num_cells);
-        for(int i=0; i < num_cells; ++i){
+        for(long long i=0; i < num_cells; ++i){
             globalcell_[i] = globalcellorg[i];
         }
     }
@@ -188,16 +188,16 @@ public:
     const CartesianIndexMapper& equilCartesianIndexMapper() const
     { return *cartesianIndexMapper_; }
 
-    const std::vector<int>& globalCell()
+    const std::vector<long long>& globalCell()
     {
         return globalcell_;
     }
 
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
+    size_t gridEquilIdxToGridIdx(size_t elemIndex) const {
          return elemIndex;
     }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    size_t gridIdxToEquilGridIdx(size_t elemIndex) const {
         return elemIndex;
     }
 
@@ -225,13 +225,13 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,FlowBaseVanguard<TypeTag>::dimensionworld>(int)>
+    std::function<std::array<double,FlowBaseVanguard<TypeTag>::dimensionworld>(long long)>
     cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), false);
     }
 
-    std::vector<int> cellPartition() const
+    std::vector<long long> cellPartition() const
     {
         // not required for this type of grid yet (only from bdaBridge??)
         return {};
@@ -258,7 +258,7 @@ protected:
     //CartesianIndexMapperPointer cartesianIndexMapper_;
 
     std::unordered_set<std::string> defunctWellNames_;
-    std::vector<int> globalcell_;
+    std::vector<long long> globalcell_;
 };
 
 } // namespace Opm

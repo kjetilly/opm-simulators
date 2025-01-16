@@ -33,8 +33,8 @@ namespace {
 
 template <typename Scalar, typename Rates>
 std::pair<Scalar, Scalar>
-dissolvedVaporisedRatio(const int    io,
-                        const int    ig,
+dissolvedVaporisedRatio(const long long    io,
+                        const long long    ig,
                         const Scalar rs,
                         const Scalar rv,
                         const Rates& surface_rates)
@@ -90,7 +90,7 @@ sumRates(std::unordered_map<RegionId,Attributes>& attributes_hpv,
 template <class FluidSystem, class Region>
 template <class Coeff>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
-calcInjCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const
+calcInjCoeff(const RegionId r, const long long pvtRegionIdx, Coeff& coeff) const
 {
     const auto& pu = phaseUsage_;
     const auto& ra = attr_.attributes(r);
@@ -98,9 +98,9 @@ calcInjCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const
     const Scalar T = ra.temperature;
     const Scalar saltConcentration = ra.saltConcentration;
 
-    const int   iw = RegionAttributeHelpers::PhasePos::water(pu);
-    const int   io = RegionAttributeHelpers::PhasePos::oil  (pu);
-    const int   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
+    const long long   iw = RegionAttributeHelpers::PhasePos::water(pu);
+    const long long   io = RegionAttributeHelpers::PhasePos::oil  (pu);
+    const long long   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
 
     std::fill(& coeff[0], & coeff[0] + phaseUsage_.num_phases, 0.0);
 
@@ -137,7 +137,7 @@ calcInjCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const
 template <class FluidSystem, class Region>
 template <class Coeff>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
-calcCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const
+calcCoeff(const RegionId r, const long long pvtRegionIdx, Coeff& coeff) const
 {
     const auto& ra = attr_.attributes(r);
     calcCoeff(pvtRegionIdx, ra.pressure, ra.rs, ra.rv, ra.rsw, ra.rvw, ra.temperature, ra.saltConcentration, coeff);
@@ -146,13 +146,13 @@ calcCoeff(const RegionId r, const int pvtRegionIdx, Coeff& coeff) const
 template <class FluidSystem, class Region>
 template <class Coeff, class Rates>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
-calcCoeff(const RegionId r, const int pvtRegionIdx, const Rates& surface_rates, Coeff& coeff) const
+calcCoeff(const RegionId r, const long long pvtRegionIdx, const Rates& surface_rates, Coeff& coeff) const
 {
     const auto& ra = attr_.attributes(r);
     const auto& pu = phaseUsage_;
-    const int   iw = RegionAttributeHelpers::PhasePos::water(pu);
-    const int   io = RegionAttributeHelpers::PhasePos::oil  (pu);
-    const int   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
+    const long long   iw = RegionAttributeHelpers::PhasePos::water(pu);
+    const long long   io = RegionAttributeHelpers::PhasePos::oil  (pu);
+    const long long   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
     const auto [Rs, Rv] =
         dissolvedVaporisedRatio(io, ig, ra.rs, ra.rv, surface_rates);
 
@@ -165,7 +165,7 @@ calcCoeff(const RegionId r, const int pvtRegionIdx, const Rates& surface_rates, 
 template <class FluidSystem, class Region>
 template <class Coeff>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
-calcCoeff(const int pvtRegionIdx,
+calcCoeff(const long long pvtRegionIdx,
           const Scalar p,
           const Scalar Rs,
           const Scalar Rv,
@@ -177,9 +177,9 @@ calcCoeff(const int pvtRegionIdx,
 {
     const auto& pu = phaseUsage_;
 
-    const int   iw = RegionAttributeHelpers::PhasePos::water(pu);
-    const int   io = RegionAttributeHelpers::PhasePos::oil  (pu);
-    const int   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
+    const long long   iw = RegionAttributeHelpers::PhasePos::water(pu);
+    const long long   io = RegionAttributeHelpers::PhasePos::oil  (pu);
+    const long long   ig = RegionAttributeHelpers::PhasePos::gas  (pu);
 
     std::fill(& coeff[0], & coeff[0] + phaseUsage_.num_phases, 0.0);
 
@@ -248,7 +248,7 @@ calcCoeff(const int pvtRegionIdx,
 template <class FluidSystem, class Region>
 template <typename SurfaceRates, typename VoidageRates>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
-calcReservoirVoidageRates(const int           pvtRegionIdx,
+calcReservoirVoidageRates(const long long           pvtRegionIdx,
                           const Scalar        p,
                           const Scalar        rs,
                           const Scalar        rv,
@@ -341,7 +341,7 @@ template <class FluidSystem, class Region>
 template <class Rates>
 void SurfaceToReservoirVoidage<FluidSystem,Region>::
 calcReservoirVoidageRates(const RegionId r,
-                          const int      pvtRegionIdx,
+                          const long long      pvtRegionIdx,
                           const Rates&   surface_rates,
                           Rates&         voidage_rates) const
 {
@@ -373,22 +373,22 @@ template<class Scalar>
 using FS = BlackOilFluidSystem<Scalar,BlackOilDefaultIndexTraits>;
 
 #define INSTANTIATE_TYPE(T)                                              \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        sumRates(std::unordered_map<int,Attributes>&,                    \
-                 std::unordered_map<int,Attributes>&,                    \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        sumRates(std::unordered_map<long long,Attributes>&,                    \
+                 std::unordered_map<long long,Attributes>&,                    \
                  Parallel::Communication);                               \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcInjCoeff(const int, const int,                               \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcInjCoeff(const long long, const long long,                               \
                      std::vector<T>&) const;                             \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcCoeff(const int, const int, std::vector<T>&) const;          \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcCoeff(const int,                                             \
-                  const int,                                             \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcCoeff(const long long, const long long, std::vector<T>&) const;          \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcCoeff(const long long,                                             \
+                  const long long,                                             \
                   const std::vector<T>&,                                 \
                   std::vector<T>&) const;                                \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcReservoirVoidageRates(const int,                             \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcReservoirVoidageRates(const long long,                             \
                                   const T,                               \
                                   const T,                               \
                                   const T,                               \
@@ -398,8 +398,8 @@ using FS = BlackOilFluidSystem<Scalar,BlackOilDefaultIndexTraits>;
                                   const T,                               \
                                   const std::vector<T>&,                 \
                                   std::vector<T>&) const;                \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcReservoirVoidageRates(const int,                             \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcReservoirVoidageRates(const long long,                             \
                                   const T,                               \
                                   const T,                               \
                                   const T,                               \
@@ -409,13 +409,13 @@ using FS = BlackOilFluidSystem<Scalar,BlackOilDefaultIndexTraits>;
                                   const T,                               \
                                   T const* const&,                       \
                                   T*&) const;                            \
-    template void SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::    \
-        calcReservoirVoidageRates(const int,                             \
-                                  const int,                             \
+    template void SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::    \
+        calcReservoirVoidageRates(const long long,                             \
+                                  const long long,                             \
                                   const std::vector<T>&,                 \
                                   std::vector<T>&) const;                \
     template std::pair<T,T>                                              \
-    SurfaceToReservoirVoidage<FS<T>,std::vector<int>>::                  \
+    SurfaceToReservoirVoidage<FS<T>,std::vector<long long>>::                  \
         inferDissolvedVaporisedRatio(const T,                            \
                                      const T,                            \
                                      const std::vector<T>::iterator&) const;

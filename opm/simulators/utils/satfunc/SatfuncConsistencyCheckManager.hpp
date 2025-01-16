@@ -59,7 +59,7 @@ namespace Opm::Satfunc::PhaseChecks {
     public:
         /// Callback for translating active cell index to globally unique
         /// point ID.
-        using LocalToGlobal = std::function<std::size_t(int)>;
+        using LocalToGlobal = std::function<std::size_t(long long)>;
 
         /// Call-back function type for outputting a single record of a
         /// consistency condition violation report.
@@ -96,7 +96,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// normally be the run's I/O rank.
         ///
         /// \return \code *this \endcode
-        SatfuncConsistencyCheckManager& collectFailuresTo(const int root)
+        SatfuncConsistencyCheckManager& collectFailuresTo(const long long root)
         {
             this->root_ = root;
             return *this;
@@ -111,7 +111,7 @@ namespace Opm::Satfunc::PhaseChecks {
         /// active cell object into a numeric index.  Assumed to support a
         /// function call operator of the form
         /// \code
-        ///    int operator()(const Element& e)
+        ///    long long operator()(const Element& e)
         /// \endcode
         /// in which \c Element is the type representing a co-dimension zero
         /// entity in the grid view.
@@ -246,7 +246,7 @@ namespace Opm::Satfunc::PhaseChecks {
         std::vector<CurveCollection> curves_{};
 
         /// Rank to which failure reports should be collected.
-        int root_{0};
+        long long root_{0};
 
         /// Whether or not the current rank coincides with \c root_ in the
         /// grid view's communicator.
@@ -264,7 +264,7 @@ namespace Opm::Satfunc::PhaseChecks {
         ///
         /// \param[in] cellIdx Numeric lookup index associated to an
         /// interior element/cell of a grid view.
-        void runCellChecks(const int cellIdx);
+        void runCellChecks(const long long cellIdx);
 
         /// Configure all pertinent saturation function consistency checks.
         ///

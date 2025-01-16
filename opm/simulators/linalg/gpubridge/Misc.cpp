@@ -7,9 +7,9 @@
 
 namespace Opm::Accelerator {
 
-// divide A by B, and round up: return (int)ceil(A/B)
-unsigned int ceilDivision(const unsigned int A,
-                          const unsigned int B)
+// divide A by B, and round up: return (long long)ceil(A/B)
+size_t ceilDivision(const size_t A,
+                          const size_t B)
 {
     return A / B + (A % B > 0);
 }
@@ -17,7 +17,7 @@ unsigned int ceilDivision(const unsigned int A,
 // return the absolute value of the N elements for which the absolute value is highest
 template<class Scalar>
 Scalar get_absmax(const Scalar* data,
-                  const int N)
+                  const long long N)
 {
     return std::abs(*std::max_element(data, data + N,
                                       [](Scalar a, Scalar b)
@@ -30,7 +30,7 @@ void solve_transposed_3x3(const Scalar* A,
                           const Scalar* b,
                           Scalar* x)
 {
-    const int B = 3;
+    const long long B = 3;
     // from dune-common/densematrix.hh, but transposed, so replace [r*B+c] with [r+c*B]
     Scalar t4  = A[0+0*B] * A[1+1*B];
     Scalar t6  = A[0+0*B] * A[1+2*B];
@@ -57,7 +57,7 @@ void solve_transposed_3x3(const Scalar* A,
 
 #define INSTANTIATE_TYPE(T) \
     template void solve_transposed_3x3<T>(const T* A, const T* b, T* x); \
-    template T get_absmax<T>(const T* data, const int N);
+    template T get_absmax<T>(const T* data, const long long N);
 
 INSTANTIATE_TYPE(double)
 

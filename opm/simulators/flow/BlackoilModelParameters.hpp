@@ -79,13 +79,13 @@ struct ToleranceWells { static constexpr Scalar value = 1e-4; };
 template<class Scalar>
 struct ToleranceWellControl { static constexpr Scalar value = 1e-7; };
 
-struct MaxWelleqIter { static constexpr int value = 30; };
+struct MaxWelleqIter { static constexpr long long value = 30; };
 
 template<class Scalar>
 struct MaxSinglePrecisionDays { static constexpr Scalar value = 20.0; };
 
-struct MinStrictCnvIter { static constexpr int value = -1; };
-struct MinStrictMbIter { static constexpr int value = -1; };
+struct MinStrictCnvIter { static constexpr long long value = -1; };
+struct MinStrictMbIter { static constexpr long long value = -1; };
 struct SolveWelleqInitially { static constexpr bool value = true; };
 struct UpdateEquationsScaling { static constexpr bool value = false; };
 struct UseUpdateStabilization { static constexpr bool value = true; };
@@ -99,13 +99,13 @@ struct TolerancePressureMsWells { static constexpr Scalar value = 0.01*1e5; };
 template<class Scalar>
 struct MaxPressureChangeMsWells { static constexpr Scalar value = 10*1e5; };
 
-struct MaxNewtonIterationsWithInnerWellIterations { static constexpr int value = 8; };
-struct MaxInnerIterMsWells { static constexpr int value = 100; };
-struct MaxInnerIterWells { static constexpr int value = 50; };
+struct MaxNewtonIterationsWithInnerWellIterations { static constexpr long long value = 8; };
+struct MaxInnerIterMsWells { static constexpr long long value = 100; };
+struct MaxInnerIterWells { static constexpr long long value = 50; };
 struct ShutUnsolvableWells { static constexpr bool value = true; };
 struct AlternativeWellRateInit { static constexpr bool value = true; };
-struct StrictOuterIterWells { static constexpr int value = 6; };
-struct StrictInnerIterWells { static constexpr int value = 40; };
+struct StrictOuterIterWells { static constexpr long long value = 6; };
+struct StrictInnerIterWells { static constexpr long long value = 40; };
 
 template<class Scalar>
 struct RegularizationFactorWells { static constexpr Scalar value = 100.0; };
@@ -120,27 +120,27 @@ struct RelaxedWellFlowTol { static constexpr Scalar value = 1e-3; };
 template<class Scalar>
 struct RelaxedPressureTolMsw { static constexpr Scalar value = 1e4; };
 
-struct MaximumNumberOfWellSwitches { static constexpr int value = 3; };
-struct MaximumNumberOfGroupSwitches { static constexpr int value = 3; };
+struct MaximumNumberOfWellSwitches { static constexpr long long value = 3; };
+struct MaximumNumberOfGroupSwitches { static constexpr long long value = 3; };
 struct UseAverageDensityMsWells { static constexpr bool value = false; };
 struct LocalWellSolveControlSwitching { static constexpr bool value = true; };
 struct UseImplicitIpr { static constexpr bool value = true; };
 struct CheckGroupConstraintsInnerWellIterations { static constexpr bool value = true; };
 
 // Network solver parameters
-struct NetworkMaxStrictIterations { static constexpr int value = 10; };
-struct NetworkMaxIterations { static constexpr int value = 20; };
+struct NetworkMaxStrictIterations { static constexpr long long value = 10; };
+struct NetworkMaxIterations { static constexpr long long value = 20; };
 struct NonlinearSolver { static constexpr auto value = "newton"; };
 struct LocalSolveApproach { static constexpr auto value = "gauss-seidel"; };
-struct MaxLocalSolveIterations { static constexpr int value = 20; };
+struct MaxLocalSolveIterations { static constexpr long long value = 20; };
 
 template<class Scalar>
 struct LocalToleranceScalingMb { static constexpr Scalar value = 1.0; };
 
 template<class Scalar>
 struct LocalToleranceScalingCnv { static constexpr Scalar value = 0.1; };
-struct NlddNumInitialNewtonIter { static constexpr int value = 1; };
-struct NumLocalDomains { static constexpr int value = 0; };
+struct NlddNumInitialNewtonIter { static constexpr long long value = 1; };
+struct NumLocalDomains { static constexpr long long value = 0; };
 
 template<class Scalar>
 struct LocalDomainsPartitioningImbalance { static constexpr Scalar value = 1.03; };
@@ -149,7 +149,7 @@ struct LocalDomainsPartitioningMethod { static constexpr auto value = "zoltan"; 
 struct LocalDomainsOrderingMeasure { static constexpr auto value = "maxpressure"; };
 
 struct ConvergenceMonitoring { static constexpr bool value = false; };
-struct ConvergenceMonitoringCutOff { static constexpr int value = 6; };
+struct ConvergenceMonitoringCutOff { static constexpr long long value = 6; };
 template<class Scalar>
 struct ConvergenceMonitoringDecayFactor { static constexpr Scalar value = 0.75; };
 
@@ -213,38 +213,38 @@ public:
     Scalar max_pressure_change_ms_wells_;
 
     /// Maximum inner iteration number for ms wells
-    int max_inner_iter_ms_wells_;
+    long long max_inner_iter_ms_wells_;
 
     /// Strict inner iteration number for wells
-    int strict_inner_iter_wells_;
+    long long strict_inner_iter_wells_;
 
     /// Newton iteration where wells are stricly convergent
-    int strict_outer_iter_wells_;
+    long long strict_outer_iter_wells_;
 
     /// Regularization factor for wells
     Scalar regularization_factor_wells_;
 
     /// Maximum newton iterations with inner well iterations
-    int max_niter_inner_well_iter_;
+    long long max_niter_inner_well_iter_;
 
     /// Whether to shut unsolvable well
     bool shut_unsolvable_wells_;
 
     /// Maximum inner iteration number for standard wells
-    int max_inner_iter_wells_;
+    long long max_inner_iter_wells_;
 
     /// Maximum iteration number of the well equation solution
-    int max_welleq_iter_;
+    long long max_welleq_iter_;
 
     /// Tolerance for time step in seconds where single precision can be used
     /// for solving for the Jacobian
     Scalar maxSinglePrecisionTimeStep_;
 
     /// Minimum number of Newton iterations before we can use relaxed CNV convergence criterion
-    int min_strict_cnv_iter_;
+    long long min_strict_cnv_iter_;
 
     /// Minimum number of Newton iterations before we can use relaxed MB convergence criterion
-    int min_strict_mb_iter_;
+    long long min_strict_mb_iter_;
 
     /// Solve well equation initially
     bool solve_welleq_initially_;
@@ -274,10 +274,10 @@ public:
     bool check_well_operability_iter_;
 
     /// Maximum number of times a well can switch to the same control
-    int max_number_of_well_switches_;
+    long long max_number_of_well_switches_;
 
     /// Maximum number of times group can switch to the same control
-    int max_number_of_group_switches_;
+    long long max_number_of_group_switches_;
 
     /// Whether to approximate segment densities by averaging over segment and its outlet
     bool use_average_density_ms_wells_;
@@ -292,23 +292,23 @@ public:
     bool check_group_constraints_inner_well_iterations_; 
 
     /// Maximum number of iterations in the network solver before relaxing tolerance
-    int network_max_strict_iterations_;
+    long long network_max_strict_iterations_;
 
     /// Maximum number of iterations in the network solver before giving up
-    int network_max_iterations_;
+    long long network_max_iterations_;
 
     /// Nonlinear solver type: newton or nldd.
     std::string nonlinear_solver_;
     /// 'jacobi' and 'gauss-seidel' supported.
     DomainSolveApproach local_solve_approach_{DomainSolveApproach::Jacobi};
 
-    int max_local_solve_iterations_;
+    long long max_local_solve_iterations_;
 
     Scalar local_tolerance_scaling_mb_;
     Scalar local_tolerance_scaling_cnv_;
 
-    int nldd_num_initial_newton_iter_{1};
-    int num_local_domains_{0};
+    long long nldd_num_initial_newton_iter_{1};
+    long long num_local_domains_{0};
     Scalar local_domain_partition_imbalance_{1.03};
     std::string local_domain_partition_method_;
     DomainOrderingMeasure local_domain_ordering_{DomainOrderingMeasure::MaxPressure};
@@ -321,7 +321,7 @@ public:
         /// Whether to enable convergence monitoring
         bool enabled_;
         /// Cut-off limit for convergence monitoring
-        int cutoff_;
+        long long cutoff_;
         /// Decay factor used in convergence monitoring
         Scalar decay_factor_;
     };

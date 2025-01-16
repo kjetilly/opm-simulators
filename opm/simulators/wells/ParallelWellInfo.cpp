@@ -37,11 +37,11 @@ struct CommPolicy<double*>
     using Type = double*;
     using IndexedType = double;
     using IndexedTypeFlag = Dune::SizeOne;
-    static const void* getAddress(const double*& v, int index)
+    static const void* getAddress(const double*& v, long long index)
     {
         return v + index;
     }
-    static int getSize(const double*&, int)
+    static long long getSize(const double*&, long long)
     {
         return 1;
     }
@@ -53,11 +53,11 @@ struct CommPolicy<float*>
     using Type = float*;
     using IndexedType = float;
     using IndexedTypeFlag = Dune::SizeOne;
-    static const void* getAddress(const float*& v, int index)
+    static const void* getAddress(const float*& v, long long index)
     {
         return v + index;
     }
-    static int getSize(const float*&, int)
+    static long long getSize(const float*&, long long)
     {
         return 1;
     }
@@ -72,7 +72,7 @@ template<class Scalar>
 GlobalPerfContainerFactory<Scalar>::
 GlobalPerfContainerFactory(const IndexSet& local_indices,
                            const Parallel::Communication comm,
-                           const int num_local_perfs)
+                           const long long num_local_perfs)
     : local_indices_(local_indices), comm_(comm)
 {
     if ( comm_.size() > 1 )
@@ -83,9 +83,9 @@ GlobalPerfContainerFactory(const IndexSet& local_indices,
         // allgather the index of the perforation in ECL schedule and the value.
         sizes_.resize(comm_.size());
         displ_.resize(comm_.size() + 1, 0);
-        // Send the int for convenience. It will be used to get the place where the
+        // Send the long long for convenience. It will be used to get the place where the
         // data comes from
-        using Pair = std::pair<GlobalIndex,int>;
+        using Pair = std::pair<GlobalIndex,long long>;
         std::vector<Pair> my_pairs;
         my_pairs.reserve(local_indices_.size());
         for (const auto& pair: local_indices_)
@@ -95,13 +95,13 @@ GlobalPerfContainerFactory(const IndexSet& local_indices,
                 my_pairs.emplace_back(pair.global(), -1);
             }
         }
-        int mySize = my_pairs.size();
+        long long mySize = my_pairs.size();
         comm_.allgather(&mySize, 1, sizes_.data());
         std::partial_sum(sizes_.begin(), sizes_.end(), displ_.begin()+1);
         std::vector<Pair> global_pairs(displ_.back());
         comm_.allgatherv(my_pairs.data(), my_pairs.size(), global_pairs.data(), sizes_.data(), displ_.data());
         // Set the the index where we receive
-        int count = 0;
+        long long count = 0;
         std::for_each(global_pairs.begin(), global_pairs.end(), [&count](Pair& pair){ pair.second = count++;});
         // sort the complete range to get the correct ordering
         std::sort(global_pairs.begin(), global_pairs.end(),
@@ -131,7 +131,7 @@ void GlobalPerfContainerFactory<Scalar>::buildLocalToGlobalMap() const {
 
 
 template<class Scalar>
-int GlobalPerfContainerFactory<Scalar>::localToGlobal(std::size_t localIndex) const {
+long long GlobalPerfContainerFactory<Scalar>::localToGlobal(std::size_t localIndex) const {
     if (local_indices_.size() == 0)
         return localIndex;
     if (!l2g_map_built_)
@@ -152,7 +152,7 @@ void GlobalPerfContainerFactory<Scalar>::buildGlobalToLocalMap() const {
 }
 
 template<class Scalar>
-int GlobalPerfContainerFactory<Scalar>::globalToLocal(const int globalIndex) const {
+long long GlobalPerfContainerFactory<Scalar>::globalToLocal(const long long globalIndex) const {
     if (local_indices_.size() == 0)
         return globalIndex;
     if (!g2l_map_built_) {
@@ -178,8 +178,8 @@ createGlobal(const std::vector<Scalar>& local_perf_container,
         if (num_components == 1)
         {
             comm_.allgatherv(local_perf_container.data(), local_perf_container.size(),
-                             global_recv.data(), const_cast<int*>(sizes_.data()),
-                             const_cast<int*>(displ_.data()));
+                             global_recv.data(), const_cast<long long*>(sizes_.data()),
+                             const_cast<long long*>(displ_.data()));
         }
         else
         {
@@ -249,7 +249,7 @@ copyGlobalToLocal(const std::vector<Scalar>& global,
 }
 
 template<class Scalar>
-int GlobalPerfContainerFactory<Scalar>::numGlobalPerfs() const
+long long GlobalPerfContainerFactory<Scalar>::numGlobalPerfs() const
 {
     return num_global_perfs_;
 }
@@ -288,7 +288,7 @@ void CommunicateAboveBelow<Scalar>::beginReset()
 }
 
 template<class Scalar>
-int CommunicateAboveBelow<Scalar>::endReset()
+long long CommunicateAboveBelow<Scalar>::endReset()
 {
 #if HAVE_MPI
     if (comm_.size() > 1)
@@ -324,8 +324,8 @@ void CommunicateAboveBelow<Scalar>::partialSumPerfValues(RAIterator begin, RAIte
         // when doing the partial sum.
         // allgather the index of the perforation in ECL schedule and the value.
         using Value = typename std::iterator_traits<RAIterator>::value_type;
-        std::vector<int> sizes(comm_.size());
-        std::vector<int> displ(comm_.size() + 1, 0);
+        std::vector<long long> sizes(comm_.size());
+        std::vector<long long> displ(comm_.size() + 1, 0);
         using GlobalIndex = typename IndexSet::IndexPair::GlobalIndex;
         using Pair = std::pair<GlobalIndex,Value>;
         std::vector<Pair> my_pairs;
@@ -337,7 +337,7 @@ void CommunicateAboveBelow<Scalar>::partialSumPerfValues(RAIterator begin, RAIte
                 my_pairs.emplace_back(pair.global(), begin[pair.local()]);
             }
         }
-        int mySize = my_pairs.size();
+        long long mySize = my_pairs.size();
         comm_.allgather(&mySize, 1, sizes.data());
         std::partial_sum(sizes.begin(), sizes.end(), displ.begin()+1);
         std::vector<Pair> global_pairs(displ.back());
@@ -443,8 +443,8 @@ communicateBelow(Scalar last_below,
 
 template<class Scalar>
 void CommunicateAboveBelow<Scalar>::
-pushBackEclIndex([[maybe_unused]] int above,
-                 [[maybe_unused]] int current,
+pushBackEclIndex([[maybe_unused]] long long above,
+                 [[maybe_unused]] long long current,
                  [[maybe_unused]] bool isOwner)
 {
 #if HAVE_MPI
@@ -490,7 +490,7 @@ CommunicateAboveBelow<Scalar>::getIndexSet() const
 }
 
 template<class Scalar>
-int CommunicateAboveBelow<Scalar>::numLocalPerfs() const
+long long CommunicateAboveBelow<Scalar>::numLocalPerfs() const
 {
     return num_local_perfs_;
 }
@@ -512,7 +512,7 @@ ParallelWellInfo<Scalar>::ParallelWellInfo(const std::pair<std::string, bool>& w
 {
 #if HAVE_MPI
     MPI_Comm newComm;
-    int color = hasLocalCells_ ? 1 : MPI_UNDEFINED;
+    long long color = hasLocalCells_ ? 1 : MPI_UNDEFINED;
     MPI_Comm_split(allComm, color, allComm.rank(), &newComm);
     comm_.reset(new Parallel::Communication(newComm));
 #else
@@ -523,7 +523,7 @@ ParallelWellInfo<Scalar>::ParallelWellInfo(const std::pair<std::string, bool>& w
 }
 
 template<class Scalar>
-int ParallelWellInfo<Scalar>::localToGlobal(std::size_t localIndex) const {
+long long ParallelWellInfo<Scalar>::localToGlobal(std::size_t localIndex) const {
     if(globalPerfCont_)
         return globalPerfCont_->localToGlobal(localIndex);
     else // If globalPerfCont_ is not set up, then this is a sequential run and local and global indices are the same.
@@ -531,7 +531,7 @@ int ParallelWellInfo<Scalar>::localToGlobal(std::size_t localIndex) const {
 }
 
 template<class Scalar>
-int ParallelWellInfo<Scalar>::globalToLocal(const int globalIndex) const {
+long long ParallelWellInfo<Scalar>::globalToLocal(const long long globalIndex) const {
     if(globalPerfCont_)
         return globalPerfCont_->globalToLocal(globalIndex);
     else // If globalPerfCont_ is not set up, then this is a sequential run and local and global indices are the same.
@@ -541,17 +541,17 @@ int ParallelWellInfo<Scalar>::globalToLocal(const int globalIndex) const {
 template<class Scalar>
 void ParallelWellInfo<Scalar>::communicateFirstPerforation(bool hasFirst)
 {
-    int first = hasFirst;
-    std::vector<int> firstVec(comm_->size());
+    long long first = hasFirst;
+    std::vector<long long> firstVec(comm_->size());
     comm_->allgather(&first, 1, firstVec.data());
     auto found = std::find_if(firstVec.begin(), firstVec.end(),
-                              [](int i) -> bool{ return i;});
+                              [](long long i) -> bool{ return i;});
     if (found != firstVec.end())
         rankWithFirstPerf_ = found - firstVec.begin();
 }
 
 template<class Scalar>
-void ParallelWellInfo<Scalar>::pushBackEclIndex(int above, int current)
+void ParallelWellInfo<Scalar>::pushBackEclIndex(long long above, long long current)
 {
     commAboveBelow_->pushBackEclIndex(above, current);
 }
@@ -565,7 +565,7 @@ void ParallelWellInfo<Scalar>::beginReset()
 template<class Scalar>
 void ParallelWellInfo<Scalar>::endReset()
 {
-    int local_num_perfs = commAboveBelow_->endReset();
+    long long local_num_perfs = commAboveBelow_->endReset();
     globalPerfCont_
         .reset(new GlobalPerfContainerFactory<Scalar>(commAboveBelow_->getIndexSet(),
                                                       *comm_,
@@ -780,8 +780,8 @@ template<class Scalar> using cdIter = typename std::vector<Scalar>::const_iterat
         ParallelWellInfo<T>::sumPerfValues<cdIter<T>>(cdIter<T>,cdIter<T>) const;   \
     template typename dIter<T>::value_type                                          \
         ParallelWellInfo<T>::sumPerfValues<dIter<T>>(dIter<T>,dIter<T>) const;      \
-     template int ParallelWellInfo<T>::                                             \
-        broadcastFirstPerforationValue<int>(const int&) const;                      \
+     template long long ParallelWellInfo<T>::                                             \
+        broadcastFirstPerforationValue<long long>(const long long&) const;                      \
      template T ParallelWellInfo<T>::                                               \
         broadcastFirstPerforationValue<T>(const T&) const;                          \
     template void CommunicateAboveBelow<T>::                                        \

@@ -394,10 +394,10 @@ public:
         const unsigned pvtRegionIdx = fluidState_.pvtRegionIndex();
 
         // compute the phase densities and transform the phase permeabilities into mobilities
-        int nmobilities = 1;
+        long long nmobilities = 1;
         std::vector<std::array<Evaluation,numPhases>*> mobilities = {&mobility_};
         if (dirMob_) {
-            for (int i=0; i<3; i++) {
+            for (long long i=0; i<3; i++) {
                 nmobilities += 1;
                 mobilities.push_back(&(dirMob_->getArray(i)));
             }
@@ -408,7 +408,7 @@ public:
             const auto& b = FluidSystem::inverseFormationVolumeFactor(fluidState_, phaseIdx, pvtRegionIdx);
             fluidState_.setInvB(phaseIdx, b);
             const auto& mu = FluidSystem::viscosity(fluidState_, phaseIdx, pvtRegionIdx);
-            for (int i = 0; i<nmobilities; i++) {
+            for (long long i = 0; i<nmobilities; i++) {
                 if (enableExtbo && phaseIdx == oilPhaseIdx) {
                     (*mobilities[i])[phaseIdx] /= asImp_().oilViscosity();
                 }

@@ -32,10 +32,10 @@
  * compile units. This file calls contains main() and just calls the main entry point
  * defined by the first compile unit.
  */
-int mainCU1(int argc, char **argv);
-int mainCU2(int argc, char **argv);
+long long mainCU1(long long argc, char **argv);
+long long mainCU2(long long argc, char **argv);
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     return mainCU1(argc, argv);
 }

@@ -13,7 +13,7 @@
 
 namespace Opm
 {
-template<typename T, int i, int j>
+template<typename T, long long i, long long j>
 class MatrixBlock;
 }
 
@@ -23,7 +23,7 @@ namespace Dune
 namespace MatrixMarketImpl
 {
 
-    template <typename T, int i, int j, typename A>
+    template <typename T, long long i, long long j, typename A>
     struct mm_header_printer<BCRSMatrix<Opm::MatrixBlock<T,i,j>, A>>
     {
         static void print(std::ostream& os)
@@ -33,7 +33,7 @@ namespace MatrixMarketImpl
         }
     };
 
-    template <typename T, int i, int j, typename A>
+    template <typename T, long long i, long long j, typename A>
     struct mm_block_structure_header<BCRSMatrix<Opm::MatrixBlock<T,i,j>, A>>
     {
         using M = BCRSMatrix<Opm::MatrixBlock<T,i,j>, A>;
@@ -47,7 +47,7 @@ namespace MatrixMarketImpl
 
 namespace MatrixMarketImpl
 {
-    template <typename T, int i, int j, typename A>
+    template <typename T, long long i, long long j, typename A>
     struct mm_multipliers<BCRSMatrix<Opm::MatrixBlock<T,i,j>, A>>
     {
         enum {

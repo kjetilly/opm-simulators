@@ -50,8 +50,8 @@ std::string humanReadableTime(double timeInSeconds, bool isAmendment)
         oss << " (";
     }
     if (timeInSeconds >= 365.25 * 24 * 60 * 60) {
-        int years = static_cast<int>(timeInSeconds / (365.25 * 24 * 60 * 60));
-        int days = static_cast<int>((timeInSeconds - years*(365.25 * 24 * 60 * 60)) / (24 * 60 * 60));
+        long long years = static_cast<long long>(timeInSeconds / (365.25 * 24 * 60 * 60));
+        long long days = static_cast<long long>((timeInSeconds - years*(365.25 * 24 * 60 * 60)) / (24 * 60 * 60));
 
         constexpr double accuracy = 1e-2;
         double hours =
@@ -64,8 +64,8 @@ std::string humanReadableTime(double timeInSeconds, bool isAmendment)
         oss << years << " years, " << days << " days, "  << hours << " hours";
     }
     else if (timeInSeconds >= 24.0 * 60 * 60) {
-        int days = static_cast<int>(timeInSeconds / (24 * 60 * 60));
-        int hours = static_cast<int>((timeInSeconds - days * (24 * 60 * 60)) / (60 * 60));
+        long long days = static_cast<long long>(timeInSeconds / (24 * 60 * 60));
+        long long hours = static_cast<long long>((timeInSeconds - days * (24 * 60 * 60)) / (60 * 60));
 
         constexpr double accuracy = 1e-2;
         double minutes =
@@ -78,8 +78,8 @@ std::string humanReadableTime(double timeInSeconds, bool isAmendment)
         oss << days << " days, " << hours << " hours, " << minutes << " minutes";
     }
     else if (timeInSeconds >= 60.0 * 60) {
-        int hours = static_cast<int>(timeInSeconds / (60 * 60));
-        int minutes = static_cast<int>((timeInSeconds - hours * (60 * 60)) / 60);
+        long long hours = static_cast<long long>(timeInSeconds / (60 * 60));
+        long long minutes = static_cast<long long>((timeInSeconds - hours * (60 * 60)) / 60);
 
         constexpr double accuracy = 1e-2;
         double seconds =
@@ -92,7 +92,7 @@ std::string humanReadableTime(double timeInSeconds, bool isAmendment)
         oss << hours << " hours, " << minutes << " minutes, "  << seconds << " seconds";
     }
     else if (timeInSeconds >= 60.0) {
-        int minutes = static_cast<int>(timeInSeconds / 60);
+        long long minutes = static_cast<long long>(timeInSeconds / 60);
 
         constexpr double accuracy = 1e-3;
         double seconds =

@@ -46,16 +46,16 @@ namespace {
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string_view errstr, const int ec)
+    MPIError(std::string_view errstr, const long long ec)
         : errorstring { errstr }
         , errorcode   { ec }
     {}
 
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string_vec(MPI_MAX_ERROR_STRING);
     auto err_length = 0;
@@ -93,10 +93,10 @@ public:
         , size_ { size }
     {}
 
-    int operator()(const std::size_t i) const
+    long long operator()(const std::size_t i) const
     {
         return ((i % this->size_) == this->rank_)
-            ? static_cast<int>(i / this->size_)
+            ? static_cast<long long>(i / this->size_)
             : -1;
     }
 
@@ -114,7 +114,7 @@ public:
         : rank_ { rank }
     {}
 
-    void operator()(const int i, SrcTerm source_term) const
+    void operator()(const long long i, SrcTerm source_term) const
     {
         using Item = typename SrcTerm::Item;
 
@@ -182,7 +182,7 @@ BOOST_AUTO_TEST_CASE(Eval_and_collect)
     }
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

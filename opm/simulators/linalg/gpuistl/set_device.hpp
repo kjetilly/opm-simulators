@@ -31,8 +31,8 @@ namespace Opm::gpuistl
 //! )
 //!
 //! @note If no CUDA device is present, this does nothing.
-void setDevice(int mpiRank, int numberOfMpiRanks);
+void setDevice(long long mpiRank, long long numberOfMpiRanks);
 
-void printDevice(int mpiRank, int numberOfMpiRanks);
+void printDevice(long long mpiRank, long long numberOfMpiRanks);
 } // namespace Opm::gpuistl
 #endif

@@ -150,7 +150,7 @@ public:
         return this->m_data;
     }
 
-    std::optional<int> well_index(const std::string& wname) const {
+    std::optional<long long> well_index(const std::string& wname) const {
         auto index_iter = this->index_map.find(wname);
         if (index_iter != this->index_map.end())
             return index_iter->second;

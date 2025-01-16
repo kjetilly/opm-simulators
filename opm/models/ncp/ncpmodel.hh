@@ -232,13 +232,13 @@ class NcpModel
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Indices = GetPropType<TypeTag, Properties::Indices>;
 
-    static constexpr int numPhases = FluidSystem::numPhases;
-    static constexpr int numComponents = FluidSystem::numComponents;
-    static constexpr int fugacity0Idx = Indices::fugacity0Idx;
+    static constexpr long long numPhases = FluidSystem::numPhases;
+    static constexpr long long numComponents = FluidSystem::numComponents;
+    static constexpr long long fugacity0Idx = Indices::fugacity0Idx;
     enum { pressure0Idx = Indices::pressure0Idx };
     enum { saturation0Idx = Indices::saturation0Idx };
-    static constexpr int conti0EqIdx = Indices::conti0EqIdx;
-    static constexpr int ncp0EqIdx = Indices::ncp0EqIdx;
+    static constexpr long long conti0EqIdx = Indices::conti0EqIdx;
+    static constexpr long long ncp0EqIdx = Indices::ncp0EqIdx;
     enum { enableDiffusion = getPropValue<TypeTag, Properties::EnableDiffusion>() };
     enum { enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>() };
 

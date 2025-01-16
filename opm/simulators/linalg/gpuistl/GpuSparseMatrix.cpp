@@ -62,8 +62,8 @@ namespace
 
 template <class T>
 GpuSparseMatrix<T>::GpuSparseMatrix(const T* nonZeroElements,
-                                  const int* rowIndices,
-                                  const int* columnIndices,
+                                  const long long* rowIndices,
+                                  const long long* columnIndices,
                                   size_t numberOfNonzeroBlocks,
                                   size_t blockSize,
                                   size_t numberOfRows)
@@ -82,8 +82,8 @@ GpuSparseMatrix<T>::GpuSparseMatrix(const T* nonZeroElements,
 }
 
 template <class T>
-GpuSparseMatrix<T>::GpuSparseMatrix(const GpuVector<int>& rowIndices,
-                                  const GpuVector<int>& columnIndices,
+GpuSparseMatrix<T>::GpuSparseMatrix(const GpuVector<long long>& rowIndices,
+                                  const GpuVector<long long>& columnIndices,
                                   size_t blockSize)
     : m_nonZeroElements(columnIndices.dim() * blockSize * blockSize)
     , m_columnIndices(columnIndices)
@@ -108,8 +108,8 @@ GpuSparseMatrix<T>
 GpuSparseMatrix<T>::fromMatrix(const MatrixType& matrix, bool copyNonZeroElementsDirectly)
 {
     // TODO: Do we need this intermediate storage? Or this shuffling of data?
-    std::vector<int> columnIndices;
-    std::vector<int> rowIndices;
+    std::vector<long long> columnIndices;
+    std::vector<long long> rowIndices;
 
     rowIndices.push_back(0);
 
@@ -142,7 +142,7 @@ GpuSparseMatrix<T>::fromMatrix(const MatrixType& matrix, bool copyNonZeroElement
     }
 
     // Sanity check
-    // h_rows and h_cols could be changed to 'unsigned int', but cusparse expects 'int'
+    // h_rows and h_cols could be changed to 'size_t', but cusparse expects 'long long'
     OPM_ERROR_IF(rowIndices[matrix.N()] != detail::to_int(matrix.nonzeroes()),
                  "Error size of rows do not sum to number of nonzeroes in GpuSparseMatrix.");
     OPM_ERROR_IF(rowIndices.size() != numberOfRows + 1, "Row indices do not match for GpuSparseMatrix.");

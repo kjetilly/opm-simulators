@@ -120,7 +120,7 @@ public:
         // the energy module
         EnergyModule::setPriVarTemperatures(*this, fluidState);
 
-        for (int i = 0; i < numComponents - 1; ++i)
+        for (long long i = 0; i < numComponents - 1; ++i)
             (*this)[z0Idx + i] = getValue(fluidState.moleFraction(i));
 
         (*this)[pressure0Idx] = getValue(fluidState.pressure(0));

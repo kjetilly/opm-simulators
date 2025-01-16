@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowMICPMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowMICPMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_micp binary.
-int flowMICPMainStandalone(int argc, char** argv);
+long long flowMICPMainStandalone(long long argc, char** argv);
 
 }
 

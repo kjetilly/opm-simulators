@@ -69,7 +69,7 @@ public:
 } // namespace Opm::Properties
 
 // ----------------- Main program -----------------
-int flowWaterOnlyMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowWaterOnlyMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -80,7 +80,7 @@ int flowWaterOnlyMain(int argc, char** argv, bool outputCout, bool outputFiles)
     return mainfunc.execute();
 }
 
-int flowWaterOnlyMainStandalone(int argc, char** argv)
+long long flowWaterOnlyMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowWaterOnlyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

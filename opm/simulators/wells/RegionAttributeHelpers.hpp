@@ -78,7 +78,7 @@ namespace Opm {
                  *                    by this process (value 1), or not (value 0).
                  * \param cell        The cell index.
                  */
-                std::tuple<Scalar, Scalar, Scalar, Scalar, int>
+                std::tuple<Scalar, Scalar, Scalar, Scalar, long long>
                 operator()(const std::vector<Scalar>& pressure,
                            const std::vector<Scalar>& temperature,
                            const std::vector<Scalar>& rs,
@@ -102,7 +102,7 @@ namespace Opm {
             template<class Scalar>
             struct AverageIncrementCalculator<Scalar, false>
             {
-                std::tuple<Scalar, Scalar, Scalar, Scalar, int>
+                std::tuple<Scalar, Scalar, Scalar, Scalar, long long>
                 operator()(const std::vector<Scalar>& pressure,
                            const std::vector<Scalar>& temperature,
                            const std::vector<Scalar>& rs,
@@ -122,7 +122,7 @@ namespace Opm {
              *
              * \tparam RegionId Region identifier type.  Must be hashable by
              * \code std::hash<> \endcode.  Typically a built-in integer
-             * type--e.g., \c int.
+             * type--e.g., \c long long.
              *
              * \tparam Attributes User-defined type that represents
              * collection of attributes that have meaning in a per-region
@@ -154,7 +154,7 @@ namespace Opm {
                     {}
 
                     Attributes attr_;
-                    int        cell_;
+                    long long        cell_;
                 };
 
                 using AttributeMap =
@@ -204,7 +204,7 @@ namespace Opm {
                  *
                  * \return Representative cell in region \p reg.
                  */
-                int cell(const RegionID reg) const
+                long long cell(const RegionID reg) const
                 {
                     return this->find(reg).cell_;
                 }
@@ -218,7 +218,7 @@ namespace Opm {
                 {
                     auto [pos, inserted] = this->attr_.try_emplace(r, std::make_unique<Value>(attr));
                     if (inserted) {
-                        pos->second->cell_ = -1; // NOT -1.0 -- "cell_" is 'int'
+                        pos->second->cell_ = -1; // NOT -1.0 -- "cell_" is 'long long'
                     }
                 }
 
@@ -351,10 +351,10 @@ namespace Opm {
                  * \return Non-negative index/position of water if
                  * active, -1 if not.
                  */
-                inline int
+                inline long long
                 water(const PhaseUsage& pu)
                 {
-                    int p = -1;
+                    long long p = -1;
 
                     if (PhaseUsed::water(pu)) {
                         p = pu.phase_pos[ BlackoilPhases::Aqua ];
@@ -371,10 +371,10 @@ namespace Opm {
                  * \return Non-negative index/position of oil if
                  * active, -1 if not.
                  */
-                inline int
+                inline long long
                 oil(const PhaseUsage& pu)
                 {
-                    int p = -1;
+                    long long p = -1;
 
                     if (PhaseUsed::oil(pu)) {
                         p = pu.phase_pos[ BlackoilPhases::Liquid ];
@@ -391,10 +391,10 @@ namespace Opm {
                  * \return Non-negative index/position of gas if
                  * active, -1 if not.
                  */
-                inline int
+                inline long long
                 gas(const PhaseUsage& pu)
                 {
-                    int p = -1;
+                    long long p = -1;
 
                     if (PhaseUsed::gas(pu)) {
                         p = pu.phase_pos[ BlackoilPhases::Vapour ];

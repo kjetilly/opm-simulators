@@ -37,7 +37,7 @@ namespace Opm {
  * https://stackoverflow.com/questions/1903954/is-there-a-standard-sign-function-signum-sgn-in-c-c
  */
 template <class Scalar>
-int signum(Scalar val)
+long long signum(Scalar val)
 { return (0 < val) - (val < 0); }
 
 } // namespace Opm

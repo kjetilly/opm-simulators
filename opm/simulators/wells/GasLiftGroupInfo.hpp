@@ -55,24 +55,24 @@ protected:
         std::map<std::string, std::vector<std::pair<std::string,Scalar>>>;
     using GroupRateMap =
         std::map<std::string, GroupRates>;
-    using GroupIdxMap = std::map<std::string, int>;
+    using GroupIdxMap = std::map<std::string, long long>;
     using Communication = Dune::Communication<Dune::MPIHelper::MPICommunicator>;
 
     // TODO: same definition with WellInterface, and
     //   WellState eventually they should go to a common header file.
-    static const int Water = BlackoilPhases::Aqua;
-    static const int Oil = BlackoilPhases::Liquid;
-    static const int Gas = BlackoilPhases::Vapour;
+    static const long long Water = BlackoilPhases::Aqua;
+    static const long long Oil = BlackoilPhases::Liquid;
+    static const long long Gas = BlackoilPhases::Vapour;
 
 public:
     enum class Rate {oil, gas, water, liquid};
 
-    using GLiftEclWells = std::map<std::string,std::pair<const Well *,int>>;
+    using GLiftEclWells = std::map<std::string,std::pair<const Well *,long long>>;
     GasLiftGroupInfo(GLiftEclWells& ecl_wells,
                      const Schedule& schedule,
                      const SummaryState& summary_state,
-                     const int report_step_idx,
-                     const int iteration_idx,
+                     const long long report_step_idx,
+                     const long long iteration_idx,
                      const PhaseUsage& phase_usage,
                      DeferredLogger& deferred_logger,
                      WellState<Scalar>& well_state,
@@ -88,13 +88,13 @@ public:
     Scalar gasPotential(const std::string& group_name) const;
     Scalar waterPotential(const std::string& group_name) const;
     Scalar oilPotential(const std::string& group_name) const;
-    int getGroupIdx(const std::string& group_name);
+    long long getGroupIdx(const std::string& group_name);
     Scalar getRate(Rate rate_type, const std::string& group_name) const;
     Scalar getPotential(Rate rate_type, const std::string& group_name) const;
-    std::tuple<Scalar,Scalar,Scalar,Scalar> getRates(const int group_idx) const;
+    std::tuple<Scalar,Scalar,Scalar,Scalar> getRates(const long long group_idx) const;
     std::optional<Scalar> gasTarget(const std::string& group_name) const;
     std::optional<Scalar> getTarget(Rate rate_type, const std::string& group_name) const;
-    const std::string& groupIdxToName(int group_idx) const;
+    const std::string& groupIdxToName(long long group_idx) const;
     bool hasAnyTarget(const std::string& group_name) const;
     bool hasWell(const std::string& well_name);
     void initialize();
@@ -111,7 +111,7 @@ public:
                 Scalar delta_gas,
                 Scalar delta_water,
                 Scalar delta_alq);
-    void updateRate(int idx,
+    void updateRate(long long idx,
                     Scalar oil_rate,
                     Scalar gas_rate,
                     Scalar water_rate,
@@ -143,7 +143,7 @@ protected:
     void displayDebugMessage_(const std::string& msg, const std::string& well_name);
 
     std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar>
-    getProducerWellRates_(const Well* well, const int index);
+    getProducerWellRates_(const Well* well, const long long index);
 
     std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, Scalar>
     initializeGroupRatesRecursive_(const Group &group);
@@ -240,14 +240,14 @@ protected:
     GLiftEclWells& ecl_wells_;
     const Schedule& schedule_;
     const SummaryState& summary_state_;
-    const int report_step_idx_;
-    const int iteration_idx_;
+    const long long report_step_idx_;
+    const long long iteration_idx_;
     const PhaseUsage& phase_usage_;
     const GasLiftOpt& glo_;
     GroupRateMap group_rate_map_;
     Well2GroupMap well_group_map_;
     GroupIdxMap group_idx_;
-    int next_group_idx_ = 0;
+    long long next_group_idx_ = 0;
     // Optimize only wells under THP control
     bool optimize_only_thp_wells_ = false;
 };

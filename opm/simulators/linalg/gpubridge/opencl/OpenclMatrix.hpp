@@ -38,7 +38,7 @@ template<class Scalar>
 class OpenclMatrix
 {
 public:
-    OpenclMatrix(cl::Context *context, int Nb_, int Mb_, int nnzbs_, unsigned int block_size_)
+    OpenclMatrix(cl::Context *context, long long Nb_, long long Mb_, long long nnzbs_, size_t block_size_)
     : Nb(Nb_),
       Mb(Mb_),
       nnzbs(nnzbs_),
@@ -46,20 +46,20 @@ public:
     {
         nnzValues = cl::Buffer(*context, CL_MEM_READ_WRITE,
                                sizeof(Scalar) * block_size * block_size * nnzbs);
-        colIndices = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * nnzbs);
-        rowPointers = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb + 1));
+        colIndices = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * nnzbs);
+        rowPointers = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(long long) * (Nb + 1));
     }
 
-    void upload(cl::CommandQueue* queue, Scalar* vals, int* cols, int* rows);
+    void upload(cl::CommandQueue* queue, Scalar* vals, long long* cols, long long* rows);
     void upload(cl::CommandQueue* queue, Matrix<Scalar>* matrix);
     void upload(cl::CommandQueue* queue, BlockedMatrix<Scalar>* matrix);
 
     cl::Buffer nnzValues;
     cl::Buffer colIndices;
     cl::Buffer rowPointers;
-    int Nb, Mb;
-    int nnzbs;
-    unsigned int block_size;
+    long long Nb, Mb;
+    long long nnzbs;
+    size_t block_size;
 };
 
 } // namespace Accelerator

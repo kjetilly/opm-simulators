@@ -214,7 +214,7 @@ namespace Opm {
         ///    the index of the IO rank.
         ///
         /// \param[in] comm MPI communication object.
-        void collectFailures(int root, const Parallel::Communication& comm);
+        void collectFailures(long long root, const Parallel::Communication& comm);
 
         /// Whether or not any checks failed at the \c Standard level.
         bool anyFailedStandardChecks() const;
@@ -337,7 +337,7 @@ namespace Opm {
         /// \param[in, out] violation Current rank's violation structure for
         ///    a single severity level.  Holds aggregate values across all
         ///    ranks, including updated sample points, on return.
-        void collectFailures(int                            root,
+        void collectFailures(long long                            root,
                              const Parallel::Communication& comm,
                              ViolationSample&               violation);
 

@@ -50,8 +50,8 @@ namespace Opm::Parameters {
 struct AllowDistributedWells { static constexpr bool value = false; };
 struct AllowSplittingInactiveWells { static constexpr bool value = true; };
 
-struct EclOutputInterval { static constexpr int value = -1; };
-struct EdgeWeightsMethod  { static constexpr int value = 1; };
+struct EclOutputInterval { static constexpr long long value = -1; };
+struct EdgeWeightsMethod  { static constexpr long long value = 1; };
 struct EnableDryRun { static constexpr auto value = "auto"; };
 struct EnableOpmRstFile { static constexpr bool value = false; };
 struct ExternalPartition { static constexpr auto* value = ""; };
@@ -64,7 +64,7 @@ struct InputSkipMode { static constexpr auto value = "100"; };
 struct MetisParams { static constexpr auto value = "default"; };
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
-struct NumJacobiBlocks { static constexpr int value = 0; };
+struct NumJacobiBlocks { static constexpr long long value = 0; };
 #endif
 
 struct OwnerCellsFirst { static constexpr bool value = true; };
@@ -73,7 +73,7 @@ struct ActionParsingStrictness { static constexpr auto value = "normal"; };
 
 /// 0: simple, 1: Zoltan, 2: METIS, 3: Zoltan with a all cells of a well
 /// represented by one vertex in the graph, see GridEnums.hpp
-struct PartitionMethod { static constexpr int value = 3; };
+struct PartitionMethod { static constexpr long long value = 3; };
 
 struct SchedRestart{ static constexpr bool value = false; };
 struct SerialPartitioning{ static constexpr bool value = false; };
@@ -239,7 +239,7 @@ public:
     /*!
      * \brief Number of blocks in the Block-Jacobi preconditioner.
      */
-    int numJacobiBlocks() const
+    long long numJacobiBlocks() const
     {
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
         return numJacobiBlocks_;
@@ -345,7 +345,7 @@ protected:
     Dune::EdgeWeightMethod edgeWeightsMethod_;
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
-    int numJacobiBlocks_{0};
+    long long numJacobiBlocks_{0};
 #endif
 
     bool ownersFirst_;
@@ -366,7 +366,7 @@ protected:
     bool allow_splitting_inactive_wells_;
 
     std::string ignoredKeywords_;
-    std::optional<int> outputInterval_;
+    std::optional<long long> outputInterval_;
     bool useMultisegmentWell_;
     bool enableExperiments_;
 

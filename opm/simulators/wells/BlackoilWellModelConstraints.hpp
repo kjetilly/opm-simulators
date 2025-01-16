@@ -50,7 +50,7 @@ public:
 
     //! \brief Check the constraints of a well group.
     bool checkGroupConstraints(const Group& group,
-                               const int reportStepIdx,
+                               const long long reportStepIdx,
                                DeferredLogger& deferred_logger) const;
 
     //! \brief Execute action for broken constraint for an injection well group.
@@ -62,7 +62,7 @@ public:
 
     //! \brief Execute action on broken constraint for a production well group. Return true if a group control is changed
     bool actionOnBrokenConstraints(const Group& group,
-                                   const int reportStepIdx,
+                                   const long long reportStepIdx,
                                    const Group::GroupLimitAction group_limit_action,
                                    const Group::ProductionCMode& newControl,
                                    const WellState<Scalar>& well_state,
@@ -72,8 +72,8 @@ public:
 
     //! \brief Update the individual controls for wells in a group. Return true if a group control is changed
     bool updateGroupIndividualControl(const Group& group,
-                                      const int reportStepIdx,
-                                      const int max_number_of_group_switch,
+                                      const long long reportStepIdx,
+                                      const long long max_number_of_group_switch,
                                       std::map<std::string, std::array<std::vector<Group::InjectionCMode>, 3>>& switched_inj,
                                       std::map<std::string, std::vector<Group::ProductionCMode>>& switched_prod,
                                       std::map<std::string, std::pair<std::string, std::string>>& closed_offending_wells,
@@ -85,13 +85,13 @@ private:
     //! \brief Check and return value and type of constraints for an injection well group.
     std::pair<Group::InjectionCMode, Scalar>
     checkGroupInjectionConstraints(const Group& group,
-                                   const int reportStepIdx,
+                                   const long long reportStepIdx,
                                    const Phase& phase) const;
 
     //! \brief Check and return value and type of constraints for a production well group.
     std::pair<Group::ProductionCMode, Scalar>
     checkGroupProductionConstraints(const Group& group,
-                                    const int reportStepIdx,
+                                    const long long reportStepIdx,
                                     DeferredLogger& deferred_logger) const;
 
     const BlackoilWellModelGeneric<Scalar>& wellModel_; //!< Reference to well model

@@ -135,11 +135,11 @@ struct TrivialFixture {
      * Fills our interpolation data with zeros
      */
     inline void fillData(double value) {
-        for (int i=0; i<nx; ++i) {
-            for (int j=0; j<ny; ++j) {
-                for (int k=0; k<nz; ++k) {
-                    for (int l=0; l<nu; ++l) {
-                        for (int m=0; m<nv; ++m) {
+        for (long long i=0; i<nx; ++i) {
+            for (long long j=0; j<ny; ++j) {
+                for (long long k=0; k<nz; ++k) {
+                    for (long long l=0; l<nu; ++l) {
+                        for (long long m=0; m<nv; ++m) {
                             (*this)(i,j,k,l,m) = value;
                         }
                     }
@@ -152,15 +152,15 @@ struct TrivialFixture {
      * Fills our interpolation data with an ND plane
      */
     inline void fillDataPlane() {
-        for (int i=0; i<nx; ++i) {
+        for (long long i=0; i<nx; ++i) {
             double x = i / static_cast<double>(nx-1);
-            for (int j=0; j<ny; ++j) {
+            for (long long j=0; j<ny; ++j) {
                 double y = j / static_cast<double>(ny-1);
-                for (int k=0; k<nz; ++k) {
+                for (long long k=0; k<nz; ++k) {
                     double z = k / static_cast<double>(nz-1);
-                    for (int l=0; l<nu; ++l) {
+                    for (long long l=0; l<nu; ++l) {
                         double u = l / static_cast<double>(nu-1);
-                        for (int m=0; m<nv; ++m) {
+                        for (long long m=0; m<nv; ++m) {
                             double v = m / static_cast<double>(nv-1);
                             // table[thp_idx][wfr_idx][gfr_idx][alq_idx][flo_idx];
                             (*this)(i,j,k,l,m) = x + 2*y + 3*z + 4*u + 5*v;
@@ -179,11 +179,11 @@ struct TrivialFixture {
     inline void fillDataRandom() {
         unsigned long randx = 42;
         static double max_val = static_cast<double>(std::numeric_limits<unsigned long>::max());
-        for (int i=0; i<nx; ++i) {
-            for (int j=0; j<ny; ++j) {
-                for (int k=0; k<nz; ++k) {
-                    for (int l=0; l<nu; ++l) {
-                        for (int m=0; m<nv; ++m) {
+        for (long long i=0; i<nx; ++i) {
+            for (long long j=0; j<ny; ++j) {
+                for (long long k=0; k<nz; ++k) {
+                    for (long long l=0; l<nu; ++l) {
+                        for (long long m=0; m<nv; ++m) {
                             (*this)(i,j,k,l,m) = randx / max_val;
                             randx = (randx*1103515245 + 12345);
                         }
@@ -221,7 +221,7 @@ struct TrivialFixture {
 
     std::shared_ptr<Opm::VFPProdProperties<double>> properties;
     std::shared_ptr<Opm::VFPProdTable> table;
-    std::vector<int> table_ids;
+    std::vector<long long> table_ids;
 
 private:
     const std::vector<double> thp_axis;
@@ -229,11 +229,11 @@ private:
     const std::vector<double> gfr_axis;
     const std::vector<double> alq_axis;
     const std::vector<double> flo_axis;
-    int nx;
-    int ny;
-    int nz;
-    int nu;
-    int nv;
+    long long nx;
+    long long ny;
+    long long nz;
+    long long nu;
+    long long nv;
     std::vector<double> data;
 };
 
@@ -257,16 +257,16 @@ BOOST_AUTO_TEST_CASE(InterpolateZero)
 
     //Check interpolation
     double sum = 0.0;
-    int n=5;
-    for (int i=1; i<n; ++i) {
+    long long n=5;
+    for (long long i=1; i<n; ++i) {
         const double x = i / static_cast<double>(n-1);
-        for (int j=1; j<n; ++j) {
+        for (long long j=1; j<n; ++j) {
             const double y = j / static_cast<double>(n-1);
-            for (int k=1; k<n; ++k) {
+            for (long long k=1; k<n; ++k) {
                 const double z = k / static_cast<double>(n-1);
-                for (int l=0; l<n; ++l) {
+                for (long long l=0; l<n; ++l) {
                     const double u = l / static_cast<double>(n-1);
-                    for (int m=0; m<n; ++m) {
+                    for (long long m=0; m<n; ++m) {
                         const double v = m / static_cast<double>(n-1);
 
                         //Note order of arguments!
@@ -292,16 +292,16 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 
     //Check interpolation
     double sum = 0.0;
-    int n=5;
-    for (int i=1; i<n; ++i) {
+    long long n=5;
+    for (long long i=1; i<n; ++i) {
         const double x = i / static_cast<double>(n-1);
-        for (int j=1; j<n; ++j) {
+        for (long long j=1; j<n; ++j) {
             const double y = j / static_cast<double>(n-1);
-            for (int k=1; k<n; ++k) {
+            for (long long k=1; k<n; ++k) {
                 const double z = k / static_cast<double>(n-1);
-                for (int l=0; l<n; ++l) {
+                for (long long l=0; l<n; ++l) {
                     const double u = l / static_cast<double>(n-1);
-                    for (int m=0; m<n; ++m) {
+                    for (long long m=0; m<n; ++m) {
                         const double v = m / static_cast<double>(n-1);
 
                         //Note order of arguments!
@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 // */
 //BOOST_AUTO_TEST_CASE(InterpolatePlane)
 //{
-//    const int n=5;
+//    const long long n=5;
 
 //    fillDataPlane();
 //    initProperties();
@@ -335,15 +335,15 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 //    double max_d = 0.0;
 
 //    //Check interpolation
-//    for (int i=0; i<=n; ++i) {
+//    for (long long i=0; i<=n; ++i) {
 //        const double thp = i / static_cast<double>(n);
-//        for (int j=1; j<=n; ++j) {
+//        for (long long j=1; j<=n; ++j) {
 //            const double aqua = -j / static_cast<double>(n);
-//            for (int k=1; k<=n; ++k) {
+//            for (long long k=1; k<=n; ++k) {
 //                const double vapour = -k / static_cast<double>(n);
-//                for (int l=0; l<=n; ++l) {
+//                for (long long l=0; l<=n; ++l) {
 //                    const double alq = l / static_cast<double>(n);
-//                    for (int m=1; m<=n; ++m) {
+//                    for (long long m=1; m<=n; ++m) {
 //                        const double liquid = -m / static_cast<double>(n);
 
 //                        //Find values that should be in table
@@ -388,17 +388,17 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 //    double reference_sum = 0.0;
 //    double sad = 0.0; // Sum absolute difference
 //    double max_d = 0.0; // Maximum difference
-//    int n=1;
-//    int o=5;
-//    for (int i=0; i<=n+o; ++i) {
+//    long long n=1;
+//    long long o=5;
+//    for (long long i=0; i<=n+o; ++i) {
 //        const double x = i / static_cast<double>(n);
-//        for (int j=1; j<=n+o; ++j) {
+//        for (long long j=1; j<=n+o; ++j) {
 //            const double aqua = -j / static_cast<double>(n);
-//            for (int k=1; k<=n+o; ++k) {
+//            for (long long k=1; k<=n+o; ++k) {
 //                const double vapour = -k / static_cast<double>(n);
-//                for (int l=0; l<=n+o; ++l) {
+//                for (long long l=0; l<=n+o; ++l) {
 //                    const double u = l / static_cast<double>(n);
-//                    for (int m=1; m<=n+o; ++m) {
+//                    for (long long m=1; m<=n+o; ++m) {
 //                        const double liquid = -m / static_cast<double>(n);
 
 //                        //Find values that should be in table
@@ -437,7 +437,7 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 // */
 //BOOST_AUTO_TEST_CASE(PartialDerivatives)
 //{
-//    const int n=5;
+//    const long long n=5;
 
 //    fillDataPlane();
 //    initProperties();
@@ -447,15 +447,15 @@ BOOST_AUTO_TEST_CASE(InterpolateOne)
 //    VFPEvaluation max_d;
 
 //    //Check interpolation
-//    for (int i=0; i<=n; ++i) {
+//    for (long long i=0; i<=n; ++i) {
 //        const double thp = i / static_cast<double>(n);
-//        for (int j=1; j<=n; ++j) {
+//        for (long long j=1; j<=n; ++j) {
 //            const double aqua = -j / static_cast<double>(n);
-//            for (int k=1; k<=n; ++k) {
+//            for (long long k=1; k<=n; ++k) {
 //                const double vapour = -k / static_cast<double>(n);
-//                for (int l=0; l<=n; ++l) {
+//                for (long long l=0; l<=n; ++l) {
 //                    const double alq = l / static_cast<double>(n);
-//                    for (int m=1; m<=n; ++m) {
+//                    for (long long m=1; m<=n; ++m) {
 //                        const double liquid = -m / static_cast<double>(n);
 
 //                        //Find values that should be in table
@@ -615,16 +615,16 @@ VFPPROD \n\
     Opm::VFPProdProperties<double> properties;
     properties.addTable( table );
 
-    const int n = 5; //Number of points to check per axis
+    const long long n = 5; //Number of points to check per axis
     double bhp_sad = 0.0; //Sum of absolute difference
     double bhp_max_d = 0.0; //Maximum difference
     double thp_sad = 0.0;
     double thp_max_d = 0.0;
-    for (int w=0; w<n; ++w) { //water
-        for (int o=0; o<n; ++o) { //oil
-            for (int g=0; g<n; ++g) { //gas
-                for (int t=0; t<n; ++t) { //thp
-                    for (int a=0; a<n; ++a) { //alq
+    for (long long w=0; w<n; ++w) { //water
+        for (long long o=0; o<n; ++o) { //oil
+            for (long long g=0; g<n; ++g) { //gas
+                for (long long t=0; t<n; ++t) { //thp
+                    for (long long a=0; a<n; ++a) { //alq
                         double aqua = w * 52.3;
                         double liquid = o * 9.9;
                         double vapour = g * 0.1;
@@ -682,16 +682,16 @@ BOOST_AUTO_TEST_CASE(ParseInterpolateRealisticVFPPROD)
     double gor[] = {90, 1505.7142857142858, 2921.4285714285716, 4337.1428571428569, 5752.8571428571431, 7168.5714285714284, 8584.2857142857138, 10000};
     double wct[] = {0, 0.14285714285714285, 0.2857142857142857, 0.42857142857142855, 0.5714285714285714, 0.7142857142857143, 0.8571428571428571, 1};
     double thp[] = {16.010000000000002, 22.438571428571429, 28.867142857142859, 35.295714285714283, 41.724285714285713, 48.152857142857144, 54.581428571428575, 61.009999999999998};
-    int n = sizeof(liq) / sizeof(liq[0]);
+    long long n = sizeof(liq) / sizeof(liq[0]);
 
-    int i = 0;
+    long long i = 0;
     double sad = 0.0; //Sum of absolute difference
     double max_d = 0.0; //Maximum difference
-    for (int t=0; t<n; ++t) {
-        for (int w=0; w<n; ++w) {
-            for (int g=0; g<n; ++g) {
-                //for (unsigned int a=0; a<n; ++a) { //n==1, skip this loop
-                    for (int f=0; f<n; ++f) {
+    for (long long t=0; t<n; ++t) {
+        for (long long w=0; w<n; ++w) {
+            for (long long g=0; g<n; ++g) {
+                //for (size_t a=0; a<n; ++a) { //n==1, skip this loop
+                    for (long long f=0; f<n; ++f) {
                         //Liq given as SM3/day => convert to SM3/second
                         double f_i = -liq[f]*1.1574074074074073e-05;
 

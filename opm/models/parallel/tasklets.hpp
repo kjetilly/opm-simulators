@@ -43,7 +43,7 @@ namespace Opm {
 class TaskletInterface
 {
 public:
-    TaskletInterface(int refCount = 1)
+    TaskletInterface(long long refCount = 1)
         : referenceCount_(refCount)
     {}
     virtual ~TaskletInterface() {}
@@ -53,11 +53,11 @@ public:
     void dereference()
     { -- referenceCount_; }
 
-    int referenceCount() const
+    long long referenceCount() const
     { return referenceCount_; }
 
 private:
-    int referenceCount_;
+    long long referenceCount_;
 };
 
 /*!
@@ -69,7 +69,7 @@ class FunctionRunnerTasklet : public TaskletInterface
 {
 public:
     FunctionRunnerTasklet(const FunctionRunnerTasklet&) = default;
-    FunctionRunnerTasklet(int numInvocations, const Fn& fn)
+    FunctionRunnerTasklet(long long numInvocations, const Fn& fn)
         : TaskletInterface(numInvocations)
         , fn_(fn)
     {}
@@ -146,12 +146,12 @@ public:
      *
      * If the current thread is not a worker thread, -1 is returned.
      */
-    int workerThreadIndex() const;
+    long long workerThreadIndex() const;
 
     /*!
      * \brief Returns the number of worker threads for the tasklet runner.
      */
-    int numWorkerThreads() const
+    long long numWorkerThreads() const
     { return threads_.size(); }
 
     /*!
@@ -165,7 +165,7 @@ public:
      * \brief Convenience method to construct a new function runner tasklet and dispatch it immediately.
      */
     template <class Fn>
-    std::shared_ptr<FunctionRunnerTasklet<Fn> > dispatchFunction(Fn &fn, int numInvocations=1)
+    std::shared_ptr<FunctionRunnerTasklet<Fn> > dispatchFunction(Fn &fn, long long numInvocations=1)
     {
         using Tasklet = FunctionRunnerTasklet<Fn>;
         auto tasklet = std::make_shared<Tasklet>(numInvocations, fn);
@@ -191,7 +191,7 @@ private:
 
 protected:
     // main function of the worker thread
-    static void startWorkerThread_(TaskletRunner* taskletRunner, int workerThreadIndex);
+    static void startWorkerThread_(TaskletRunner* taskletRunner, long long workerThreadIndex);
 
     //! do the work until the queue received an end tasklet
     void run_();
@@ -202,7 +202,7 @@ protected:
     std::condition_variable workAvailableCondition_;
 
     static thread_local TaskletRunner* taskletRunner_;
-    static thread_local int workerThreadIndex_;
+    static thread_local long long workerThreadIndex_;
 };
 
 } // end namespace Opm

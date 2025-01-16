@@ -33,7 +33,7 @@ template<class Scalar>
 class HipKernels
 {
 private:
-    static int  verbosity;
+    static long long  verbosity;
     static bool initialized;
     
     HipKernels();
@@ -41,7 +41,7 @@ private:
 public:
     /// Initialize verbosity level for the HIP kernels
     /// \param[in] verbosity   verbosity level
-    static void init(int verbosity);
+    static void init(long long verbosity);
     
     /// Transform blocked vector to scalar vector using pressure-weights, where every workitem handles one blockrow
     /// \param[in]  fine_y     Input y vector
@@ -52,7 +52,7 @@ public:
     static void full_to_pressure_restriction(const Scalar* fine_y,
                                              Scalar* weights,
                                              Scalar* coarse_y,
-                                             int Nb,
+                                             long long Nb,
                                              hipStream_t stream);
 
     /// Add the coarse pressure solution back to the finer, complete solution; every workitem handles one blockrow
@@ -63,8 +63,8 @@ public:
     /// \param[in]  stream       Hip stream to use for the computations
     static void add_coarse_pressure_correction(Scalar* coarse_x,
                                                Scalar* fine_x,
-                                               int pressure_idx,
-                                               int Nb,
+                                               long long pressure_idx,
+                                               long long Nb,
                                                hipStream_t stream);
 
 
@@ -79,7 +79,7 @@ public:
                      Scalar* in1,
                      Scalar* in2,
                      Scalar* out,
-                     int N,
+                     long long N,
                      hipStream_t stream);
     
     /// Function to prolongate vector during amg cycle, every workitem handles one row
@@ -90,8 +90,8 @@ public:
     /// \param[in]  stream  Hip stream to use for the computations
     static void prolongate_vector(const Scalar* in,
                                   Scalar* out,
-                                  const int* cols,
-                                  int N,
+                                  const long long* cols,
+                                  long long N,
                                   hipStream_t stream);
 
     /// Function to perform res = rhs - mat * x
@@ -105,13 +105,13 @@ public:
     /// \param[in]  block_size Block size
     /// \param[in]  stream     Hip stream to use for the computations
     static void residual(Scalar* vals,
-                         int* cols,
-                         int* rows,
+                         long long* cols,
+                         long long* rows,
                          Scalar* x,
                          const Scalar* rhs,
                          Scalar* out,
-                         int Nb,
-                         unsigned int block_size,
+                         long long Nb,
+                         size_t block_size,
                          hipStream_t stream);
 
     /// Function to perform sparse matrix vector multipliation
@@ -124,12 +124,12 @@ public:
     /// \param[in]  block_size Block size
     /// \param[in]  stream     Hip stream to use for the computations
     static void spmv(Scalar* vals,
-                     int* cols,
-                     int* rows,
+                     long long* cols,
+                     long long* rows,
                      Scalar* x,
                      Scalar* y,
-                     int Nb,
-                     unsigned int block_size,
+                     long long Nb,
+                     size_t block_size,
                      hipStream_t stream);
 };
 

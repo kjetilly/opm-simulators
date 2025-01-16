@@ -75,7 +75,7 @@ public:
         worldSize_ = 1;
 
 #if HAVE_MPI
-        int tmp;
+        long long tmp;
         MPI_Comm_rank(MPI_COMM_WORLD, &tmp);
         myRank_ = static_cast<ProcessRank>(tmp);
         MPI_Comm_size(MPI_COMM_WORLD, &tmp);
@@ -100,7 +100,7 @@ public:
 
         // send the foreign overlap for which we are master to the
         // peers
-        std::map<int, MpiBuffer<unsigned> *> sizeBufferMap;
+        std::map<long long, MpiBuffer<unsigned> *> sizeBufferMap;
 
         auto peerIt = peerSet_.begin();
         const auto& peerEndIt = peerSet_.end();
@@ -330,7 +330,7 @@ public:
     /*!
      * \brief Returns true iff a domestic index is seen by a peer rank.
      */
-    bool peerHasIndex(int peerRank, Index domesticIdx) const
+    bool peerHasIndex(long long peerRank, Index domesticIdx) const
     {
         return foreignOverlap_.peerHasIndex(peerRank,
                                             mapExternalToInternal_(domesticIdx));
@@ -493,10 +493,10 @@ protected:
     {
 #if HAVE_MPI
         // receive the number of additional indices
-        int numIndices = -1;
+        long long numIndices = -1;
         MpiBuffer<size_t> numIndicesRecvBuff(1);
         numIndicesRecvBuff.receive(peerRank);
-        numIndices = static_cast<int>(numIndicesRecvBuff[0]);
+        numIndices = static_cast<long long>(numIndicesRecvBuff[0]);
 
         // receive the additional indices themselfs
         MpiBuffer<IndexDistanceNpeers> recvBuff(static_cast<size_t>(numIndices));
@@ -512,7 +512,7 @@ protected:
                 globalIndices_.addIndex(newDomesticIdx, globalIdx);
 
                 size_t newSize = globalIndices_.numDomestic();
-                borderDistance_.resize(newSize, std::numeric_limits<int>::max());
+                borderDistance_.resize(newSize, std::numeric_limits<long long>::max());
                 domesticOverlapByIndex_.resize(newSize);
             }
 

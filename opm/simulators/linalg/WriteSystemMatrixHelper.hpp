@@ -53,7 +53,7 @@ namespace Helper
         std::ostringstream oss;
         oss << "prob_" << simulator.episodeIndex() << "_time_";
         oss << std::setprecision(15) << std::setw(12) << std::setfill('0') << simulator.time() << "_";
-        int nit = simulator.model().newtonMethod().numIterations();
+        long long nit = simulator.model().newtonMethod().numIterations();
         oss << "_nit_" << nit << "_";
         std::string output_file(oss.str());
         fs::path full_path = output_dir / output_file;

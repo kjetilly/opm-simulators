@@ -45,7 +45,7 @@ public:
     using BlackoilIndices = GetPropType<TypeTag, Properties::Indices>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
-    static constexpr int numEq = BlackoilIndices::numEq;
+    static constexpr long long numEq = BlackoilIndices::numEq;
     using Eval = DenseAd::Evaluation<Scalar, /*size=*/numEq>;
 
     AquiferConstantFlux(const std::vector<Aquancon::AquancCell>& connections,
@@ -132,7 +132,7 @@ public:
                      const unsigned cellIdx,
                      [[maybe_unused]] const unsigned timeIdx) override
     {
-        const int idx = this->cellToConnectionIdx_[cellIdx];
+        const long long idx = this->cellToConnectionIdx_[cellIdx];
         if (idx < 0) {
             return;
         }
@@ -163,7 +163,7 @@ private:
 
     SingleAquiferFlux aquifer_data_;
     std::vector<Eval> connection_flux_{};
-    std::vector<int> cellToConnectionIdx_{};
+    std::vector<long long> cellToConnectionIdx_{};
     Scalar flux_rate_{};
     Scalar cumulative_flux_{};
     Scalar total_face_area_{0.0};
@@ -178,7 +178,7 @@ private:
 
         for (std::size_t idx = 0; idx < this->connections_.size(); ++idx) {
             const auto global_index = this->connections_[idx].global_index;
-            const int cell_index = this->simulator_.vanguard()
+            const long long cell_index = this->simulator_.vanguard()
                 .compressedIndexForInterior(global_index);
 
             if (cell_index < 0) {
@@ -208,7 +208,7 @@ private:
     }
 
     // TODO: this is a function from AquiferAnalytical
-    int compIdx_() const
+    long long compIdx_() const
     {
         if (this->co2store_or_h2store_())
             return FluidSystem::oilCompIdx;

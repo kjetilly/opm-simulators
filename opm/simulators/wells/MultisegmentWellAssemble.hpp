@@ -31,7 +31,7 @@ namespace Opm
 
 class DeferredLogger;
 template<class Scalar> class GroupState;
-template<class Scalar, int numWellEq, int numEq> class MultisegmentWellEquations;
+template<class Scalar, long long numWellEq, long long numEq> class MultisegmentWellEquations;
 template<class FluidSystem, class Indices> class MultisegmentWellPrimaryVariables;
 class Schedule;
 class SummaryState;
@@ -42,15 +42,15 @@ template<class Scalar> class WellState;
 template<class FluidSystem, class Indices>
 class MultisegmentWellAssemble
 {
-    static constexpr int WQTotal = 0;
+    static constexpr long long WQTotal = 0;
     static constexpr bool has_wfrac_variable = Indices::waterEnabled && Indices::oilEnabled;
     static constexpr bool has_gfrac_variable = Indices::gasEnabled && Indices::numPhases > 1;
-    static constexpr int WFrac = has_wfrac_variable ? 1 : -1000;
-    static constexpr int GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
-    static constexpr int SPres = has_wfrac_variable + has_gfrac_variable + 1;
+    static constexpr long long WFrac = has_wfrac_variable ? 1 : -1000;
+    static constexpr long long GFrac = has_gfrac_variable ? has_wfrac_variable + 1 : -1000;
+    static constexpr long long SPres = has_wfrac_variable + has_gfrac_variable + 1;
 
 public:
-    static constexpr int numWellEq = Indices::numPhases+1;
+    static constexpr long long numWellEq = Indices::numPhases+1;
     using Scalar = typename FluidSystem::Scalar;
     using Equations = MultisegmentWellEquations<Scalar,numWellEq,Indices::numEq>;
     using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem,Indices>;
@@ -75,62 +75,62 @@ public:
                            DeferredLogger& deferred_logger) const;
 
     //! \brief Assemble piece of the acceleration term
-    void assembleAccelerationTerm(const int seg_target,
-                                  const int seg,
-                                  const int seg_upwing,
+    void assembleAccelerationTerm(const long long seg_target,
+                                  const long long seg,
+                                  const long long seg_upwing,
                                   const EvalWell& accelerationTerm,
                                   Equations& eqns1) const;
 
     //! \brief Assemble hydraulic pressure term
-    void assembleHydroPressureLoss(const int seg,
-                                   const int seg_density,
+    void assembleHydroPressureLoss(const long long seg,
+                                   const long long seg_density,
                                    const EvalWell& hydro_pressure_drop_seg,
                                    Equations& eqns1) const;
 
     //! \brief Assemble additional derivatives due to reverse flow
-    void assemblePressureEqExtraDerivatives(const int seg,
-                                            const int seg_upwind,
+    void assemblePressureEqExtraDerivatives(const long long seg,
+                                            const long long seg_upwind,
                                             const EvalWell& extra_derivatives,
                                             Equations& eqns1) const;
 
     //! \brief Assemble pressure terms.
-    void assemblePressureEq(const int seg,
-                            const int seg_upwind,
-                            const int outlet_segment_index,
+    void assemblePressureEq(const long long seg,
+                            const long long seg_upwind,
+                            const long long outlet_segment_index,
                             const EvalWell& pressure_equation,
                             const EvalWell& outlet_pressure,
                             Equations& eqns) const;
 
     //! \brief Assembles a trivial equation.
-    void assembleTrivialEq(const int seg,
+    void assembleTrivialEq(const long long seg,
                            const Scalar value,
                            Equations& eqns) const;
 
     //! \brief Assemble accumulation term.
-    void assembleAccumulationTerm(const int seg,
-                                  const int comp_idx,
+    void assembleAccumulationTerm(const long long seg,
+                                  const long long comp_idx,
                                   const EvalWell& accumulation_term,
                                   Equations& eqns1) const;
 
     //! \brief Assemble outflow term.
-    void assembleOutflowTerm(const int seg,
-                        const int seg_upwind,
-                        const int comp_idx,
+    void assembleOutflowTerm(const long long seg,
+                        const long long seg_upwind,
+                        const long long comp_idx,
                         const EvalWell& segment_rate,
                         Equations& eqns1) const;
 
     //! \brief Assemble inflow term.
-    void assembleInflowTerm(const int seg,
-                            const int inlet,
-                            const int inlet_upwind,
-                            const int comp_idx,
+    void assembleInflowTerm(const long long seg,
+                            const long long inlet,
+                            const long long inlet_upwind,
+                            const long long comp_idx,
                             const EvalWell& inlet_rate,
                             Equations& eqns) const;
 
     //! \brief Assemble equation for a perforation.
-    void assemblePerforationEq(const int seg,
-                               const int local_perf_index,
-                               const int comp_idx,
+    void assemblePerforationEq(const long long seg,
+                               const long long local_perf_index,
+                               const long long comp_idx,
                                const EvalWell& cq_s_effective,
                                Equations& eqns) const;
 

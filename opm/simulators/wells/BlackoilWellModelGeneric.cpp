@@ -132,14 +132,14 @@ BlackoilWellModelGeneric(Schedule& schedule,
 }
 
 template<class Scalar>
-int BlackoilWellModelGeneric<Scalar>::
+long long BlackoilWellModelGeneric<Scalar>::
 numLocalWells() const
 {
     return wells_ecl_.size();
 }
 
 template<class Scalar>
-int BlackoilWellModelGeneric<Scalar>::
+long long BlackoilWellModelGeneric<Scalar>::
 numPhases() const
 {
     return phase_usage_.num_phases;
@@ -223,7 +223,7 @@ initFromRestartFile(const RestartValue& restartValues,
     // time step. Wells that are added at the same time step as RESTART is initiated
     // will not be present in a restart file. Use the previous time step to retrieve
     // wells that have information written to the restart file.
-    const int report_step = std::max(eclState_.getInitConfig().getRestartStep() - 1, 0);
+    const long long report_step = std::max(eclState_.getInitConfig().getRestartStep() - 1, 0);
 
     const auto& config = this->schedule()[report_step].guide_rate();
 
@@ -272,7 +272,7 @@ initFromRestartFile(const RestartValue& restartValues,
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-prepareDeserialize(int report_step, const std::size_t numCells, bool handle_ms_well)
+prepareDeserialize(long long report_step, const std::size_t numCells, bool handle_ms_well)
 {
     // wells_ecl_ should only contain wells on this processor.
     wells_ecl_ = getLocalWells(report_step);
@@ -295,7 +295,7 @@ prepareDeserialize(int report_step, const std::size_t numCells, bool handle_ms_w
 
 template<class Scalar>
 std::vector<Well> BlackoilWellModelGeneric<Scalar>::
-getLocalWells(const int timeStepIdx) const
+getLocalWells(const long long timeStepIdx) const
 {
     auto w = schedule().getWells(timeStepIdx);
     w.erase(std::remove_if(w.begin(), w.end(), not_on_process_), w.end());
@@ -342,12 +342,12 @@ initializeWellPerfData()
     this->conn_idx_map_.clear();
     this->conn_idx_map_.reserve(wells_ecl_.size());
 
-    int well_index = 0;
+    long long well_index = 0;
     for (const auto& well : wells_ecl_) {
-        int connection_index = 0;
+        long long connection_index = 0;
 
         // INVALID_ECL_INDEX marks no above perf available
-        int connection_index_above = ParallelWellInfo<Scalar>::INVALID_ECL_INDEX;
+        long long connection_index_above = ParallelWellInfo<Scalar>::INVALID_ECL_INDEX;
 
         well_perf_data_[well_index].clear();
         well_perf_data_[well_index].reserve(well.getConnections().size());
@@ -429,7 +429,7 @@ void BlackoilWellModelGeneric<Scalar>::
 checkGEconLimits(
         const Group& group,
         const double simulation_time,
-        const int report_step_idx,
+        const long long report_step_idx,
         DeferredLogger& deferred_logger)
 {
      // call recursively down the group hiearchy
@@ -463,7 +463,7 @@ template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
 checkGconsaleLimits(const Group& group,
                     WellState<Scalar>& well_state,
-                    const int reportStepIdx,
+                    const long long reportStepIdx,
                     DeferredLogger& deferred_logger)
 {
      // call recursively down the group hiearchy
@@ -485,7 +485,7 @@ checkGconsaleLimits(const Group& group,
     const auto& gconsale = schedule()[reportStepIdx].gconsale().get(group.name(), summaryState_);
     const Group::ProductionCMode& oldProductionControl = this->groupState().production_control(group.name());
 
-    int gasPos = phase_usage_.phase_pos[BlackoilPhases::Vapour];
+    long long gasPos = phase_usage_.phase_pos[BlackoilPhases::Vapour];
     Scalar production_rate = WellGroupHelpers<Scalar>::sumWellSurfaceRates(group,
                                                                            schedule(),
                                                                            well_state,
@@ -591,16 +591,16 @@ template<class Scalar>
 bool BlackoilWellModelGeneric<Scalar>::
 checkGroupHigherConstraints(const Group& group,
                             DeferredLogger& deferred_logger,
-                            const int reportStepIdx,
-                            const int max_number_of_group_switch)
+                            const long long reportStepIdx,
+                            const long long max_number_of_group_switch)
 {
     // Set up coefficients for RESV <-> surface rate conversion.
     // Use the pvtRegionIdx from the top cell of the first well.
     // TODO fix this!
     // This is only used for converting RESV rates.
     // What is the proper approach?
-    const int fipnum = 0;
-    int pvtreg = well_perf_data_.empty() || well_perf_data_[0].empty()
+    const long long fipnum = 0;
+    long long pvtreg = well_perf_data_.empty() || well_perf_data_[0].empty()
         ? pvt_region_idx_[0]
         : pvt_region_idx_[well_perf_data_[0][0].cell_index];
 
@@ -610,8 +610,8 @@ checkGroupHigherConstraints(const Group& group,
         // Just like in the sequential case the pvtregion is determined
         // by the first cell of the first well. What is the first well
         // is decided by the order in the Schedule using Well::seqIndex()
-        int firstWellIndex = well_perf_data_.empty() ?
-            std::numeric_limits<int>::max() : wells_ecl_[0].seqIndex();
+        long long firstWellIndex = well_perf_data_.empty() ?
+            std::numeric_limits<long long>::max() : wells_ecl_[0].seqIndex();
         auto regIndexPair = std::make_pair(pvtreg, firstWellIndex);
         std::vector<decltype(regIndexPair)> pairs(comm_.size());
         comm_.allgather(&regIndexPair, 1, pairs.data());
@@ -632,7 +632,7 @@ checkGroupHigherConstraints(const Group& group,
         // So when checking constraints, current groups rate must also be subtracted it's reduction rate
         const std::vector<Scalar> reduction_rates = this->groupState().injection_reduction_rates(group.name());
 
-        for (int phasePos = 0; phasePos < phase_usage_.num_phases; ++phasePos) {
+        for (long long phasePos = 0; phasePos < phase_usage_.num_phases; ++phasePos) {
             const Scalar local_current_rate = WellGroupHelpers<Scalar>::sumWellSurfaceRates(group,
                                                                                             schedule(),
                                                                                             this->wellState(),
@@ -739,7 +739,7 @@ checkGroupHigherConstraints(const Group& group,
                 return false;
             }
         }
-        for (int phasePos = 0; phasePos < phase_usage_.num_phases; ++phasePos) {
+        for (long long phasePos = 0; phasePos < phase_usage_.num_phases; ++phasePos) {
             const Scalar local_current_rate = WellGroupHelpers<Scalar>::sumWellSurfaceRates(group,
                                                                                             schedule(),
                                                                                             this->wellState(),
@@ -800,7 +800,7 @@ checkGroupHigherConstraints(const Group& group,
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateEclWells(const int timeStepIdx,
+updateEclWells(const long long timeStepIdx,
                const SimulatorUpdate& sim_update,
                const SummaryState& st)
 {
@@ -824,7 +824,7 @@ updateEclWells(const int timeStepIdx,
 template<class Scalar>
 template<typename Iter, typename Body>
 void BlackoilWellModelGeneric<Scalar>::
-wellUpdateLoop(Iter first, Iter last, const int timeStepIdx, Body&& body)
+wellUpdateLoop(Iter first, Iter last, const long long timeStepIdx, Body&& body)
 {
     std::for_each(first, last,
                   [this, timeStepIdx,
@@ -852,7 +852,7 @@ wellUpdateLoop(Iter first, Iter last, const int timeStepIdx, Body&& body)
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateEclWellsConstraints(const int              timeStepIdx,
+updateEclWellsConstraints(const long long              timeStepIdx,
                           const SimulatorUpdate& sim_update,
                           const SummaryState&    st)
 {
@@ -871,7 +871,7 @@ updateEclWellsConstraints(const int              timeStepIdx,
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateEclWellsCTFFromAction(const int              timeStepIdx,
+updateEclWellsCTFFromAction(const long long              timeStepIdx,
                             const SimulatorUpdate& sim_update)
 {
     this->wellUpdateLoop(sim_update.welpi_wells.begin(),
@@ -899,7 +899,7 @@ updateEclWellsCTFFromAction(const int              timeStepIdx,
 
 template<class Scalar>
 Scalar BlackoilWellModelGeneric<Scalar>::
-wellPI(const int well_index) const
+wellPI(const long long well_index) const
 {
     const auto& pu = this->phase_usage_;
     const auto& pi = this->wellState().well(well_index).productivity_index;
@@ -924,7 +924,7 @@ wellPI(const int well_index) const
     default:
         throw std::invalid_argument {
             "Unsupported preferred phase " +
-            std::to_string(static_cast<int>(preferred))
+            std::to_string(static_cast<long long>(preferred))
         };
     }
 }
@@ -949,7 +949,7 @@ wellPI(const std::string& well_name) const
 
 template<class Scalar>
 bool BlackoilWellModelGeneric<Scalar>::
-wasDynamicallyShutThisTimeStep(const int well_index) const
+wasDynamicallyShutThisTimeStep(const long long well_index) const
 {
     return wasDynamicallyShutThisTimeStep(this->wells_ecl_[well_index].name());
 }
@@ -966,7 +966,7 @@ wasDynamicallyShutThisTimeStep(const std::string& well_name) const
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
 updateWsolvent(const Group& group,
-               const int reportStepIdx,
+               const long long reportStepIdx,
                const WellState<Scalar>& wellState)
 {
     for (const std::string& groupName : group.groups()) {
@@ -979,7 +979,7 @@ updateWsolvent(const Group& group,
 
     auto currentGroupControl = this->groupState().injection_control(group.name(), Phase::GAS);
     if( currentGroupControl == Group::InjectionCMode::REIN ) {
-        int gasPos = phase_usage_.phase_pos[BlackoilPhases::Vapour];
+        long long gasPos = phase_usage_.phase_pos[BlackoilPhases::Vapour];
         const auto& controls = group.injectionControls(Phase::GAS, summaryState_);
         const Group& groupRein = schedule_.getGroup(controls.reinj_group, reportStepIdx);
         Scalar gasProductionRate = WellGroupHelpers<Scalar>::sumWellSurfaceRates(groupRein,
@@ -1008,7 +1008,7 @@ updateWsolvent(const Group& group,
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
 setWsolvent(const Group& group,
-            const int reportStepIdx,
+            const long long reportStepIdx,
             Scalar wsolvent)
 {
     for (const std::string& groupName : group.groups()) {
@@ -1095,7 +1095,7 @@ assignInjectionWellTargets(const Well& well, data::WellControlLimits& limits) co
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
 assignShutConnections(data::Wells& wsrpt,
-                      const int reportStepIndex) const
+                      const long long reportStepIndex) const
 {
     auto wellID = 0;
 
@@ -1170,7 +1170,7 @@ assignGroupControl(const Group& group,
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-assignGroupValues(const int                               reportStepIdx,
+assignGroupValues(const long long                               reportStepIdx,
                   std::map<std::string, data::GroupData>& gvalues) const
 {
     const auto groupGuideRates =
@@ -1188,7 +1188,7 @@ assignGroupValues(const int                               reportStepIdx,
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
 assignNodeValues(std::map<std::string, data::NodeData>& nodevalues,
-                 const int reportStepIdx) const
+                 const long long reportStepIdx) const
 {
     nodevalues.clear();
     if (reportStepIdx < 0) return;
@@ -1238,7 +1238,7 @@ assignNodeValues(std::map<std::string, data::NodeData>& nodevalues,
 template<class Scalar>
 data::GroupAndNetworkValues
 BlackoilWellModelGeneric<Scalar>::
-groupAndNetworkData(const int reportStepIdx) const
+groupAndNetworkData(const long long reportStepIdx) const
 {
     auto grp_nwrk_values = data::GroupAndNetworkValues{};
 
@@ -1250,13 +1250,13 @@ groupAndNetworkData(const int reportStepIdx) const
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateAndCommunicateGroupData(const int reportStepIdx,
-                              const int iterationIdx,
+updateAndCommunicateGroupData(const long long reportStepIdx,
+                              const long long iterationIdx,
                               const Scalar tol_nupcol,
                               DeferredLogger& deferred_logger)
 {
     const Group& fieldGroup = schedule().getGroup("FIELD", reportStepIdx);
-    const int nupcol = schedule()[reportStepIdx].nupcol();
+    const long long nupcol = schedule()[reportStepIdx].nupcol();
 
     // Update accumulated group consumption/import rates for current report step
     if(iterationIdx == 0) {
@@ -1278,9 +1278,9 @@ updateAndCommunicateGroupData(const int reportStepIdx,
                         this->groupState().injection_control(gr_name, phase) == Group::InjectionCMode::REIN) {
                         const bool is_vrep = this->groupState().injection_control(gr_name, phase) == Group::InjectionCMode::VREP;
                         const Group& group = schedule().getGroup(gr_name, reportStepIdx);
-                        const int np = this->wellState().numPhases();
+                        const long long np = this->wellState().numPhases();
                         Scalar gr_rate_nupcol = 0.0;
-                        for (int phaseIdx = 0; phaseIdx < np; ++phaseIdx) {
+                        for (long long phaseIdx = 0; phaseIdx < np; ++phaseIdx) {
                             gr_rate_nupcol += WellGroupHelpers<Scalar>::sumWellPhaseRates(is_vrep,
                                                     group,
                                                     schedule(),
@@ -1290,7 +1290,7 @@ updateAndCommunicateGroupData(const int reportStepIdx,
                                                     /*isInjector*/ false);
                         }
                         Scalar gr_rate = 0.0;
-                        for (int phaseIdx = 0; phaseIdx < np; ++phaseIdx) {
+                        for (long long phaseIdx = 0; phaseIdx < np; ++phaseIdx) {
                             gr_rate += WellGroupHelpers<Scalar>::sumWellPhaseRates(is_vrep,
                                                     group,
                                                     schedule(),
@@ -1404,7 +1404,7 @@ hasTHPConstraints() const
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateNetworkActiveState(const int report_step) {
+updateNetworkActiveState(const long long report_step) {
     const auto& network = schedule()[report_step].network();
     if (!network.active()) {
         this->network_active_ = false;
@@ -1425,7 +1425,7 @@ updateNetworkActiveState(const int report_step) {
 
 template<class Scalar>
 bool BlackoilWellModelGeneric<Scalar>::
-needPreStepNetworkRebalance(const int report_step) const
+needPreStepNetworkRebalance(const long long report_step) const
 {
     const auto& network = schedule()[report_step].network();
     bool network_rebalance_necessary = false;
@@ -1450,7 +1450,7 @@ forceShutWellByName(const std::string& wellname,
 {
     // Only add the well to the closed list on the
     // process that owns it.
-    int well_was_shut = 0;
+    long long well_was_shut = 0;
     for (const auto& well : well_container_generic_) {
         if (well->name() == wellname) {
             // if one well on individuel control (typical thp/bhp) in a group strugles to converge
@@ -1511,7 +1511,7 @@ inferLocalShutWells()
 
 template<class Scalar>
 Scalar BlackoilWellModelGeneric<Scalar>::
-updateNetworkPressures(const int reportStepIdx, const Scalar damping_factor)
+updateNetworkPressures(const long long reportStepIdx, const Scalar damping_factor)
 {
     // Get the network and return if inactive (no wells in network at this time)
     const auto& network = schedule()[reportStepIdx].network();
@@ -1589,7 +1589,7 @@ updateNetworkPressures(const int reportStepIdx, const Scalar damping_factor)
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-calculateEfficiencyFactors(const int reportStepIdx)
+calculateEfficiencyFactors(const long long reportStepIdx)
 {
     for (auto& well : well_container_generic_) {
         const Well& wellEcl = well->wellEcl();
@@ -1632,7 +1632,7 @@ setRepRadiusPerfLength()
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-updateWellPotentials(const int reportStepIdx,
+updateWellPotentials(const long long reportStepIdx,
                      const bool onlyAfterEvent,
                      const SummaryConfig& summaryConfig,
                      DeferredLogger& deferred_logger)
@@ -1693,7 +1693,7 @@ updateWellPotentials(const int reportStepIdx,
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-runWellPIScaling(const int reportStepIdx,
+runWellPIScaling(const long long reportStepIdx,
                  DeferredLogger& local_deferredLogger)
 {
     if (this->last_run_wellpi_.has_value() && (*this->last_run_wellpi_ == reportStepIdx)) {
@@ -1702,14 +1702,14 @@ runWellPIScaling(const int reportStepIdx,
         return;
     }
 
-    auto hasWellPIEvent = [this, reportStepIdx](const int well_index) -> bool
+    auto hasWellPIEvent = [this, reportStepIdx](const long long well_index) -> bool
     {
         return this->schedule()[reportStepIdx].wellgroup_events()
             .hasEvent(this->wells_ecl_[well_index].name(),
                       ScheduleEvents::Events::WELL_PRODUCTIVITY_INDEX);
     };
 
-    auto updateEclWell = [this, reportStepIdx](const int well_index) -> void
+    auto updateEclWell = [this, reportStepIdx](const long long well_index) -> void
     {
         const auto& schedule = this->schedule();
         const auto& wname = this->wells_ecl_[well_index].name();
@@ -1730,7 +1730,7 @@ runWellPIScaling(const int reportStepIdx,
     };
 
     auto rescaleWellPI =
-        [this, reportStepIdx](const int    well_index,
+        [this, reportStepIdx](const long long    well_index,
                               const Scalar newWellPI) -> void
     {
         const auto& wname = this->wells_ecl_[well_index].name();
@@ -1767,7 +1767,7 @@ runWellPIScaling(const int reportStepIdx,
 
 template<class Scalar>
 bool BlackoilWellModelGeneric<Scalar>::
-shouldBalanceNetwork(const int reportStepIdx, const int iterationIdx) const
+shouldBalanceNetwork(const long long reportStepIdx, const long long iterationIdx) const
 {
     // if network is not active, we do not need to balance the network
     const auto& network = schedule()[reportStepIdx].network();
@@ -1779,7 +1779,7 @@ shouldBalanceNetwork(const int reportStepIdx, const int iterationIdx) const
     if (balance.mode() == Network::Balance::CalcMode::TimeStepStart) {
         return iterationIdx == 0;
     } else if (balance.mode() == Network::Balance::CalcMode::NUPCOL) {
-        const int nupcol = schedule()[reportStepIdx].nupcol();
+        const long long nupcol = schedule()[reportStepIdx].nupcol();
         return iterationIdx < nupcol;
     } else {
         // We do not support any other rebalancing modes,
@@ -1791,17 +1791,17 @@ shouldBalanceNetwork(const int reportStepIdx, const int iterationIdx) const
 }
 
 template<class Scalar>
-std::vector<int> BlackoilWellModelGeneric<Scalar>::
+std::vector<long long> BlackoilWellModelGeneric<Scalar>::
 getCellsForConnections(const Well& well) const
 {
-    std::vector<int> wellCells;
+    std::vector<long long> wellCells;
     // All possible connections of the well
     const auto& connectionSet = well.getConnections();
     wellCells.reserve(connectionSet.size());
 
     for (const auto& connection : connectionSet)
     {
-        int compressed_idx = compressedIndexForInterior(connection.global_index());
+        long long compressed_idx = compressedIndexForInterior(connection.global_index());
         if (compressed_idx >= 0) { // Ignore connections in inactive/remote cells.
             wellCells.push_back(compressed_idx);
         }
@@ -1812,7 +1812,7 @@ getCellsForConnections(const Well& well) const
 
 template<class Scalar>
 std::vector<std::string> BlackoilWellModelGeneric<Scalar>::
-getWellsForTesting(const int timeStepIdx,
+getWellsForTesting(const long long timeStepIdx,
                    const double simulationTime)
 {
   const auto& wtest_config = schedule()[timeStepIdx].wtest_config();
@@ -1884,10 +1884,10 @@ assignMswTracerRates(data::Wells& wsrpt,
 }
 
 template<class Scalar>
-std::vector<std::vector<int>> BlackoilWellModelGeneric<Scalar>::
+std::vector<std::vector<long long>> BlackoilWellModelGeneric<Scalar>::
 getMaxWellConnections() const
 {
-    std::vector<std::vector<int>> wells;
+    std::vector<std::vector<long long>> wells;
 
     auto schedule_wells = schedule().getWellsatEnd();
     schedule_wells.erase(std::remove_if(schedule_wells.begin(), schedule_wells.end(), not_on_process_), schedule_wells.end());
@@ -1902,12 +1902,12 @@ getMaxWellConnections() const
     // initialize the additional cell connections introduced by wells.
     for (const auto& well : schedule_wells)
     {
-        std::vector<int> compressed_well_perforations = this->getCellsForConnections(well);
+        std::vector<long long> compressed_well_perforations = this->getCellsForConnections(well);
 
         const auto possibleFutureConnectionSetIt = possibleFutureConnections.find(well.name());
         if (possibleFutureConnectionSetIt != possibleFutureConnections.end()) {
             for (auto& global_index : possibleFutureConnectionSetIt->second) {
-                int compressed_idx = compressedIndexForInterior(global_index);
+                long long compressed_idx = compressedIndexForInterior(global_index);
                 if (compressed_idx >= 0) { // Ignore connections in inactive/remote cells.
                     compressed_well_perforations.push_back(compressed_idx);
                 }
@@ -1923,7 +1923,7 @@ getMaxWellConnections() const
 }
 
 template<class Scalar>
-int BlackoilWellModelGeneric<Scalar>::numLocalWellsEnd() const
+long long BlackoilWellModelGeneric<Scalar>::numLocalWellsEnd() const
 {
     auto w = schedule().getWellsatEnd();
     w.erase(std::remove_if(w.begin(), w.end(), not_on_process_), w.end());
@@ -1931,7 +1931,7 @@ int BlackoilWellModelGeneric<Scalar>::numLocalWellsEnd() const
 }
 
 template<class Scalar>
-int BlackoilWellModelGeneric<Scalar>::numLocalNonshutWells() const
+long long BlackoilWellModelGeneric<Scalar>::numLocalNonshutWells() const
 {
     return well_container_generic_.size();
 }
@@ -2020,7 +2020,7 @@ logPrimaryVars() const
 template<class Scalar>
 std::vector<Scalar>
 BlackoilWellModelGeneric<Scalar>::
-getPrimaryVarsDomain(const int domainIdx) const
+getPrimaryVarsDomain(const long long domainIdx) const
 {
     std::vector<Scalar> ret;
     for (const auto& well : this->well_container_generic_) {
@@ -2034,12 +2034,12 @@ getPrimaryVarsDomain(const int domainIdx) const
 
 template<class Scalar>
 void BlackoilWellModelGeneric<Scalar>::
-setPrimaryVarsDomain(const int domainIdx, const std::vector<Scalar>& vars)
+setPrimaryVarsDomain(const long long domainIdx, const std::vector<Scalar>& vars)
 {
     std::size_t offset = 0;
     for (auto& well : this->well_container_generic_) {
         if (this->well_domain_.at(well->name()) == domainIdx) {
-            int num_pri_vars = well->setPrimaryVars(vars.begin() + offset);
+            long long num_pri_vars = well->setPrimaryVars(vars.begin() + offset);
             offset += num_pri_vars;
         }
     }

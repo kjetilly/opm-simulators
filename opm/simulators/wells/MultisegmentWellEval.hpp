@@ -48,9 +48,9 @@ class MultisegmentWellEval : public MultisegmentWellGeneric<typename FluidSystem
 protected:
     using Scalar = typename FluidSystem::Scalar;
     using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem,Indices>;
-    static constexpr int numWellEq = PrimaryVariables::numWellEq;
-    static constexpr int SPres = PrimaryVariables::SPres;
-    static constexpr int WQTotal = PrimaryVariables::WQTotal;
+    static constexpr long long numWellEq = PrimaryVariables::numWellEq;
+    static constexpr long long SPres = PrimaryVariables::SPres;
+    static constexpr long long WQTotal = PrimaryVariables::WQTotal;
 
     using Equations = MultisegmentWellEquations<Scalar,numWellEq,Indices::numEq>;
     using MSWSegments = MultisegmentWellSegments<FluidSystem,Indices>;
@@ -75,24 +75,24 @@ protected:
 
     void initMatrixAndVectors();
 
-    void assembleDefaultPressureEq(const int seg,
+    void assembleDefaultPressureEq(const long long seg,
                                    WellState<Scalar>& well_state,
                                    const bool use_average_density);
 
     // assemble pressure equation for ICD segments
-    void assembleICDPressureEq(const int seg,
+    void assembleICDPressureEq(const long long seg,
                                const UnitSystem& unit_system,
                                WellState<Scalar>& well_state,
                                const SummaryState& summary_state,
                                const bool use_average_density,
                                DeferredLogger& deferred_logger);
 
-    void assembleAccelerationAndHydroPressureLosses(const int seg,
+    void assembleAccelerationAndHydroPressureLosses(const long long seg,
                                                     WellState<Scalar>& well_state,
                                                     const bool use_average_density);
 
 
-    void assemblePressureEq(const int seg,
+    void assemblePressureEq(const long long seg,
                             const UnitSystem& unit_system,
                             WellState<Scalar>& well_state,
                             const SummaryState& summary_state,
@@ -126,10 +126,10 @@ protected:
                                    const Scalar tolerance_pressure_ms_wells,
                                    DeferredLogger& deferred_logger) const;
 
-    void assembleAccelerationPressureLoss(const int seg,
+    void assembleAccelerationPressureLoss(const long long seg,
                                           WellState<Scalar>& well_state);
 
-    EvalWell pressureDropAutoICD(const int seg,
+    EvalWell pressureDropAutoICD(const long long seg,
                                  const UnitSystem& unit_system) const;
 
     // convert a Eval from reservoir to contain the derivative related to wells

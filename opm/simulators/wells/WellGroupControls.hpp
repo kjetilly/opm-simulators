@@ -37,7 +37,7 @@ class DeferredLogger;
 class Group;
 template<class Scalar> class GroupState;
 enum class InjectorType;
-using RegionId = int;
+using RegionId = long long;
 struct PhaseUsage;
 class Schedule;
 class SummaryState;
@@ -51,7 +51,7 @@ public:
     //! \brief Constructor sets reference to well.
     WellGroupControls(const WellInterfaceGeneric<Scalar>& well) : well_(well) {}
 
-    using RateConvFunc = std::function<void(const RegionId, const int,
+    using RateConvFunc = std::function<void(const RegionId, const long long,
                                             const std::optional<std::string>&, std::vector<Scalar>&)>;
 
     template<class EvalWell>
@@ -109,7 +109,7 @@ public:
                                                         const SummaryState& summaryState,
                                                         const std::vector<Scalar>& resv_coeff,
                                                         Scalar efficiencyFactor,
-                                                        const int reportStepIdx,
+                                                        const long long reportStepIdx,
                                                         const PhaseUsage& pu,
                                                         const GuideRate* guideRate,
                                                         DeferredLogger& deferred_logger);

@@ -32,7 +32,7 @@ namespace Opm::gpuistl::detail
  * #include <opm/simulators/linalg/gpuistl/detail/CuBlasHandle.hpp>
  * void someFunction() {
  *     auto& cublasHandle = ::Opm::gpuistl::detail::CuBlasHandle::getInstance();
- *     int cuBlasVersion = -1;
+ *     long long cuBlasVersion = -1;
  *     OPM_CUBLAS_SAFE_CALL(cublasGetVersion(cublasHandle.get(), &cuBlasVersion));
  * }
  * @endcode

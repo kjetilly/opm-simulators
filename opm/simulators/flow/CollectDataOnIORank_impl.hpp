@@ -51,8 +51,8 @@ namespace Opm {
 // global id
 class GlobalCellIndex
 {
-    int globalId_;
-    int localIndex_;
+    long long globalId_;
+    long long localIndex_;
     bool isInterior_;
 
 public:
@@ -64,40 +64,40 @@ public:
     void setGhost()
     { isInterior_ = false; }
 
-    void setId(int globalId)
+    void setId(long long globalId)
     { globalId_ = globalId; }
-    void setIndex(int localIndex)
+    void setIndex(long long localIndex)
     { localIndex_ = localIndex; }
 
-    int localIndex () const
+    long long localIndex () const
     { return localIndex_; }
-    int id () const
+    long long id () const
     { return globalId_; }
     bool isInterior() const
     { return isInterior_; }
 };
 
-using IndexMapType = std::vector<int>;
+using IndexMapType = std::vector<long long>;
 using IndexMapStorageType = std::vector<IndexMapType>;
 using P2PCommunicatorType = Dune::Point2PointCommunicator<Dune::SimpleMessageBuffer>;
 using MessageBufferType = typename P2PCommunicatorType::MessageBufferType;
 class DistributeIndexMapping : public P2PCommunicatorType::DataHandleInterface
 {
 protected:
-    const std::vector<int>& distributedGlobalIndex_;
+    const std::vector<long long>& distributedGlobalIndex_;
     IndexMapType& localIndexMap_;
     IndexMapStorageType& indexMaps_;
-    std::map<int, int> globalPosition_;
-    std::set<int>& recv_;
-    std::vector<int>& ranks_;
+    std::map<long long, long long> globalPosition_;
+    std::set<long long>& recv_;
+    std::vector<long long>& ranks_;
 
 public:
-    DistributeIndexMapping(const std::vector<int>& globalIndex,
-                           const std::vector<int>& distributedGlobalIndex,
+    DistributeIndexMapping(const std::vector<long long>& globalIndex,
+                           const std::vector<long long>& distributedGlobalIndex,
                            IndexMapType& localIndexMap,
                            IndexMapStorageType& indexMaps,
-                           std::vector<int>& ranks,
-                           std::set<int>& recv,
+                           std::vector<long long>& ranks,
+                           std::set<long long>& recv,
                            bool isIORank)
     : distributedGlobalIndex_(distributedGlobalIndex)
     , localIndexMap_(localIndexMap)
@@ -122,7 +122,7 @@ public:
             indexMap.resize(localSize);
             for (std::size_t i = 0; i < localSize; ++i)
             {
-                int id = distributedGlobalIndex_[localIndexMap_[i]];
+                long long id = distributedGlobalIndex_[localIndexMap_[i]];
                 indexMap[i] = id;
             }
         }
@@ -139,7 +139,7 @@ public:
             // translate index maps from global cartesian to index
             for (auto& indexMap: indexMaps_)
             {
-                int rank = 0;
+                long long rank = 0;
                 if (rankIt != recv_.end())
                     rank = *rankIt;
 
@@ -161,33 +161,33 @@ public:
         }
     }
 
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as execpted");
 
         // pack all interior global cell id's
-        int size = localIndexMap_.size();
+        long long size = localIndexMap_.size();
         buffer.write(size);
 
-        for (int index = 0; index < size; ++index) {
-            int globalIdx = distributedGlobalIndex_[localIndexMap_[index]];
+        for (long long index = 0; index < size; ++index) {
+            long long globalIdx = distributedGlobalIndex_[localIndexMap_[index]];
             buffer.write(globalIdx);
         }
     }
 
-    void unpack(int link, MessageBufferType& buffer)
+    void unpack(long long link, MessageBufferType& buffer)
     {
         // get index map for current link
         IndexMapType& indexMap = indexMaps_[link];
         assert(!globalPosition_.empty());
 
         // unpack all interior global cell id's
-        int numCells = 0;
+        long long numCells = 0;
         buffer.read(numCells);
         indexMap.resize(numCells);
-        for (int index = 0; index < numCells; ++index) {
+        for (long long index = 0; index < numCells; ++index) {
             buffer.read(indexMap[index]);
         }
     }
@@ -199,11 +199,11 @@ template<class EquilMapper, class Mapper>
 class ElementIndexScatterHandle
 {
 public:
-    ElementIndexScatterHandle(const EquilMapper& sendMapper, const Mapper& recvMapper, std::vector<int>& elementIndices)
+    ElementIndexScatterHandle(const EquilMapper& sendMapper, const Mapper& recvMapper, std::vector<long long>& elementIndices)
         : sendMapper_(sendMapper), recvMapper_(recvMapper), elementIndices_(elementIndices)
     {}
-    using DataType = int;
-    bool fixedSize(int /*dim*/, int /*codim*/)
+    using DataType = long long;
+    bool fixedSize(long long /*dim*/, long long /*codim*/)
     {
         return true;
     }
@@ -224,14 +224,14 @@ public:
         buffer.read(elementIndices_[recvMapper_.index(t)]);
     }
 
-    bool contains(int dim, int codim)
+    bool contains(long long dim, long long codim)
     {
         return dim==3 && codim==0;
     }
 private:
     const EquilMapper& sendMapper_;
     const Mapper& recvMapper_;
-    std::vector<int>& elementIndices_;
+    std::vector<long long>& elementIndices_;
 };
 
 /// \brief Communication handle to scatter the global index
@@ -239,11 +239,11 @@ template<class Mapper>
 class ElementIndexHandle
 {
 public:
-    ElementIndexHandle(const Mapper& mapper, std::vector<int>& elementIndices)
+    ElementIndexHandle(const Mapper& mapper, std::vector<long long>& elementIndices)
         : mapper_(mapper), elementIndices_(elementIndices)
     {}
-    using DataType = int;
-    bool fixedSize(int /*dim*/, int /*codim*/)
+    using DataType = long long;
+    bool fixedSize(long long /*dim*/, long long /*codim*/)
     {
         return true;
     }
@@ -264,13 +264,13 @@ public:
         buffer.read(elementIndices_[mapper_.index(t)]);
     }
 
-    bool contains(int dim, int codim)
+    bool contains(long long dim, long long codim)
     {
         return dim==3 && codim==0;
     }
 private:
     const Mapper& mapper_;
-    std::vector<int>& elementIndices_;
+    std::vector<long long>& elementIndices_;
 };
 
 class PackUnPackCellData : public P2PCommunicatorType::DataHandleInterface
@@ -313,7 +313,7 @@ public:
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0)
@@ -342,7 +342,7 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int link, MessageBufferType& buffer)
+    void unpack(long long link, MessageBufferType& buffer)
     { doUnpack(indexMaps_[link], buffer); }
 
 protected:
@@ -350,15 +350,15 @@ protected:
     void write(MessageBufferType& buffer,
                const IndexMapType& localIndexMap,
                const Vector& vector,
-               unsigned int offset = 0,
-               unsigned int stride = 1) const
+               size_t offset = 0,
+               size_t stride = 1) const
     {
-        unsigned int size = localIndexMap.size();
+        size_t size = localIndexMap.size();
         buffer.write(size);
         assert(vector.size() >= stride * size);
-        for (unsigned int i=0; i<size; ++i)
+        for (size_t i=0; i<size; ++i)
         {
-            unsigned int index = localIndexMap[i] * stride + offset;
+            size_t index = localIndexMap[i] * stride + offset;
             assert(index < vector.size());
             buffer.write(vector[index]);
         }
@@ -368,14 +368,14 @@ protected:
     void read(MessageBufferType& buffer,
               const IndexMapType& indexMap,
               Vector& vector,
-              unsigned int offset = 0,
-              unsigned int stride = 1) const
+              size_t offset = 0,
+              size_t stride = 1) const
     {
-        unsigned int size = 0;
+        size_t size = 0;
         buffer.read(size);
         assert(size == indexMap.size());
-        for (unsigned int i=0; i<size; ++i) {
-            unsigned int index = indexMap[i] * stride + offset;
+        for (size_t i=0; i<size; ++i) {
+            size_t index = indexMap[i] * stride + offset;
             assert(index < vector.size());
             buffer.read(vector[index]);
         }
@@ -399,13 +399,13 @@ public:
             pack(0, buffer);
 
             // pass a dummy_link to satisfy virtual class
-            int dummyLink = -1;
+            long long dummyLink = -1;
             unpack(dummyLink, buffer);
         }
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0)
@@ -415,7 +415,7 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     { globalWellData_.read(buffer); }
 
 };
@@ -438,12 +438,12 @@ public:
         this->pack(0, buffer);
 
         // pass a dummy_link to satisfy virtual class
-        const int dummyLink = -1;
+        const long long dummyLink = -1;
         this->unpack(dummyLink, buffer);
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0) {
@@ -457,18 +457,18 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     { this->globalGroupAndNetworkData_.read(buffer); }
 };
 
 class PackUnPackBlockData : public P2PCommunicatorType::DataHandleInterface
 {
-    const std::map<std::pair<std::string, int>, double>& localBlockData_;
-    std::map<std::pair<std::string, int>, double>& globalBlockValues_;
+    const std::map<std::pair<std::string, long long>, double>& localBlockData_;
+    std::map<std::pair<std::string, long long>, double>& globalBlockValues_;
 
 public:
-    PackUnPackBlockData(const std::map<std::pair<std::string, int>, double>& localBlockData,
-                        std::map<std::pair<std::string, int>, double>& globalBlockValues,
+    PackUnPackBlockData(const std::map<std::pair<std::string, long long>, double>& localBlockData,
+                        std::map<std::pair<std::string, long long>, double>& globalBlockValues,
                         bool isIORank)
         : localBlockData_(localBlockData)
         , globalBlockValues_(globalBlockValues)
@@ -478,20 +478,20 @@ public:
             pack(0, buffer);
 
             // pass a dummyLink to satisfy virtual class
-            int dummyLink = -1;
+            long long dummyLink = -1;
             unpack(dummyLink, buffer);
         }
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as expected");
 
         // write all block data
-        unsigned int size = localBlockData_.size();
+        size_t size = localBlockData_.size();
         buffer.write(size);
         for (const auto& map : localBlockData_) {
             buffer.write(map.first.first);
@@ -501,14 +501,14 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     {
         // read all block data
-        unsigned int size = 0;
+        size_t size = 0;
         buffer.read(size);
         for (std::size_t i = 0; i < size; ++i) {
             std::string name;
-            int idx;
+            long long idx;
             double data;
             buffer.read(name);
             buffer.read(idx);
@@ -538,12 +538,12 @@ public:
         pack(0, buffer);
 
         // Pass a dummy link to satisfy base class API requirement
-        const int dummyLink = -1;
+        const long long dummyLink = -1;
         unpack(dummyLink, buffer);
     }
 
     // Pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // We should only get one link
         if (link != 0) {
@@ -558,7 +558,7 @@ public:
     }
 
     // Unpack all data associated with link
-    void unpack([[maybe_unused]] const int link,
+    void unpack([[maybe_unused]] const long long link,
                 MessageBufferType&         buffer)
     {
         this->globalWBPValues_.read(buffer);
@@ -579,18 +579,18 @@ public:
             pack(0, buffer);
 
             // pass a dummyLink to satisfy virtual class
-            int dummyLink = -1;
+            long long dummyLink = -1;
             unpack(dummyLink, buffer);
         }
     }
 
-    void pack(int link, MessageBufferType& buffer) {
+    void pack(long long link, MessageBufferType& buffer) {
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as expected");
         this->local_.pack(buffer);
     }
 
-    void unpack(int, MessageBufferType& buffer) {
+    void unpack(long long, MessageBufferType& buffer) {
         this->global_.unpack(buffer);
     }
 
@@ -616,19 +616,19 @@ public:
             pack(0, buffer);
 
             // pass a dummyLink to satisfy virtual class
-            int dummyLink = -1;
+            long long dummyLink = -1;
             unpack(dummyLink, buffer);
         }
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as expected");
 
-        int size = localAquiferData_.size();
+        long long size = localAquiferData_.size();
         buffer.write(size);
         for (const auto& [key, data] : localAquiferData_) {
             buffer.write(key);
@@ -637,12 +637,12 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     {
-        int size;
+        long long size;
         buffer.read(size);
-        for (int i = 0; i < size; ++i) {
-            int key;
+        for (long long i = 0; i < size; ++i) {
+            long long key;
             buffer.read(key);
             data::AquiferData data;
             data.read(buffer);
@@ -756,12 +756,12 @@ public:
         this->pack(0, buffer);
 
         // pass a dummy_link to satisfy virtual class
-        const int dummyLink = -1;
+        const long long dummyLink = -1;
         this->unpack(dummyLink, buffer);
     }
 
     // pack all data associated with link
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         // we should only get one link
         if (link != 0) {
@@ -775,7 +775,7 @@ public:
     }
 
     // unpack all data associated with link
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     { this->globalInterRegFlows_.read(buffer); }
 };
 
@@ -797,15 +797,15 @@ public:
         this->pack(0, buffer);
 
         // pass a dummy_link to satisfy virtual class
-        const int dummyLink = -1;
+        const long long dummyLink = -1;
         this->unpack(dummyLink, buffer);
     }
 
-    void pack(int link, MessageBufferType& buffer)
+    void pack(long long link, MessageBufferType& buffer)
     {
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as expected");
-        for (int i = 0; i < 3; ++i) {
+        for (long long i = 0; i < 3; ++i) {
             const auto& name = localFlows_[i].name;
             buffer.write(name);
             const std::size_t size = localFlows_[i].indices.size();
@@ -819,16 +819,16 @@ public:
         }
     }
 
-    void unpack(int /*link*/, MessageBufferType& buffer)
+    void unpack(long long /*link*/, MessageBufferType& buffer)
     {
-        for (int i = 0; i < 3; ++i) {
+        for (long long i = 0; i < 3; ++i) {
             std::string name;
             buffer.read(name);
             globalFlows_[i].name = name;
             std::size_t size = 0;
             buffer.read(size);
-            for (unsigned int j = 0; j < size; ++j) {
-                int nncIdx;
+            for (size_t j = 0; j < size; ++j) {
+                long long nncIdx;
                 double data;
                 buffer.read(nncIdx);
                 buffer.read(data);
@@ -858,7 +858,7 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
     const CollectiveCommunication& comm = grid.comm();
 
     {
-        std::set<int> send, recv;
+        std::set<long long> send, recv;
         using EquilGridView = typename EquilGrid::LeafGridView;
         typename std::is_same<Grid, EquilGrid>::type isSameGrid;
 
@@ -895,12 +895,12 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
 
             // loop over all elements (global grid) and store Cartesian index
             for (const auto& elem : elements(equilGrid->leafGridView())) {
-                int elemIdx = equilElemMapper.index(elem);
-                int cartElemIdx = equilCartMapper->cartesianIndex(elemIdx);
+                long long elemIdx = equilElemMapper.index(elem);
+                long long cartElemIdx = equilCartMapper->cartesianIndex(elemIdx);
                 globalCartesianIndex_[elemIdx] = cartElemIdx;
             }
 
-            for (int i = 0; i < comm.size(); ++i) {
+            for (long long i = 0; i < comm.size(); ++i) {
                 if (i != ioRank)
                     recv.insert(i);
             }
@@ -936,7 +936,7 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
 
         // A mapping for the whole grid (including the ghosts) is needed for restarts
         for (const auto& elem : elements(localGridView, Dune::Partitions::interior)) {
-            int elemIdx = elemMapper.index(elem);
+            long long elemIdx = elemMapper.index(elem);
             distributedCartesianIndex[elemIdx] = cartMapper.cartesianIndex(elemIdx);
 
             // only store interior element for collection
@@ -967,7 +967,7 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
 template <class Grid, class EquilGrid, class GridView>
 void CollectDataOnIORank<Grid,EquilGrid,GridView>::
 collect(const data::Solution&                                localCellData,
-        const std::map<std::pair<std::string, int>, double>& localBlockData,
+        const std::map<std::pair<std::string, long long>, double>& localBlockData,
         const data::Wells&                                   localWellData,
         const data::WellBlockAveragePressures&               localWBPData,
         const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
@@ -1008,7 +1008,7 @@ collect(const data::Solution&                                localCellData,
     }
 
     // Set the right sizes for Flowsn and Floresn
-    for (int i = 0; i < 3; ++i) {
+    for (long long i = 0; i < 3; ++i) {
         const std::size_t sizeFlr = localFloresn[i].indices.size();
         globalFloresn_[i].resize(sizeFlr);
         const std::size_t sizeFlo = localFlowsn[i].indices.size();
@@ -1087,7 +1087,7 @@ collect(const data::Solution&                                localCellData,
 }
 
 template <class Grid, class EquilGrid, class GridView>
-int CollectDataOnIORank<Grid,EquilGrid,GridView>::
+long long CollectDataOnIORank<Grid,EquilGrid,GridView>::
 localIdxToGlobalIdx(unsigned localIdx) const
 {
     if (!isParallel()) {
@@ -1107,7 +1107,7 @@ localIdxToGlobalIdx(unsigned localIdx) const
 
 template <class Grid, class EquilGrid, class GridView>
 bool CollectDataOnIORank<Grid,EquilGrid,GridView>::
-isCartIdxOnThisRank(int cartIdx) const
+isCartIdxOnThisRank(long long cartIdx) const
 {
     if (! this->isParallel()) {
         return true;

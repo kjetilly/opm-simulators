@@ -38,7 +38,7 @@ FractionCalculator(const Schedule& schedule,
                    const WellState<Scalar>& well_state,
                    const GroupState<Scalar>& group_state,
                    const SummaryState& summary_state,
-                   const int report_step,
+                   const long long report_step,
                    const GuideRate* guide_rate,
                    const GuideRateModel::Target target,
                    const PhaseUsage& pu,
@@ -111,13 +111,13 @@ parent(const std::string& name)
 }
 
 template<class Scalar>
-std::pair<Scalar, int> FractionCalculator<Scalar>::
+std::pair<Scalar, long long> FractionCalculator<Scalar>::
 guideRateSum(const Group& group,
              const std::string& always_included_child,
              const bool always_use_potentials)
 {
     Scalar total_guide_rate = 0.0;
-    int number_of_included_well_or_groups = 0;
+    long long number_of_included_well_or_groups = 0;
     for (const std::string& child_group : group.groups()) {
         bool included = (child_group == always_included_child);
         if (is_producer_) {
@@ -183,7 +183,7 @@ guideRate(const std::string& name,
 }
 
 template<class Scalar>
-int FractionCalculator<Scalar>::
+long long FractionCalculator<Scalar>::
 groupControlledWells(const std::string& group_name,
                      const std::string& always_included_child)
 {

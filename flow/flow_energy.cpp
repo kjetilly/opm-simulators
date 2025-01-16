@@ -48,7 +48,7 @@ struct LocalResidual<TypeTag, TTag::FlowEnergyProblem> { using type = BlackOilLo
 namespace Opm {
 
 // ----------------- Main program -----------------
-int flowEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowEnergyMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -59,7 +59,7 @@ int flowEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
     return mainfunc.execute();
 }
 
-int flowEnergyMainStandalone(int argc, char** argv)
+long long flowEnergyMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowEnergyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

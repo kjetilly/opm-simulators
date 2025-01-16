@@ -56,15 +56,15 @@ consistentlyFailingWells(const std::vector<StepReport>& sr)
     OpmLog::debug(msg.str());
 
     // Check the last few step reports.
-    const int num_steps = 3;
-    const int rep_step = sr.back().report_step;
-    const int sub_step = sr.back().current_step;
-    const int sr_size = sr.size();
+    const long long num_steps = 3;
+    const long long rep_step = sr.back().report_step;
+    const long long sub_step = sr.back().current_step;
+    const long long sr_size = sr.size();
     if (sr_size >= num_steps) {
         for (const auto& wf : wfs) {
             failing_wells.insert(wf.wellName());
         }
-        for (int s = 1; s < num_steps; ++s) {
+        for (long long s = 1; s < num_steps; ++s) {
             const auto& srep = sr[sr_size - 1 - s];
             // Report must be from same report step and substep, otherwise we have
             // not chopped/retried enough times on this step.
@@ -155,7 +155,7 @@ createController(const UnitSystem& unitSystem)
         }},
         {"pid+iteration",
          [tol]() {
-             const int iterations =  Parameters::Get<Parameters::TimeStepControlTargetIterations>(); // 30
+             const long long iterations =  Parameters::Get<Parameters::TimeStepControlTargetIterations>(); // 30
              const double decayDampingFactor = Parameters::Get<Parameters::TimeStepControlDecayDampingFactor>(); // 1.0
              const double growthDampingFactor = Parameters::Get<Parameters::TimeStepControlGrowthDampingFactor>(); // 3.2
              return RetVal{
@@ -169,7 +169,7 @@ createController(const UnitSystem& unitSystem)
          }},
         {"pid+newtoniteration",
          [tol, &unitSystem]() {
-             const int iterations =  Parameters::Get<Parameters::TimeStepControlTargetNewtonIterations>(); // 8
+             const long long iterations =  Parameters::Get<Parameters::TimeStepControlTargetNewtonIterations>(); // 8
              const double decayDampingFactor = Parameters::Get<Parameters::TimeStepControlDecayDampingFactor>(); // 1.0
              const double growthDampingFactor = Parameters::Get<Parameters::TimeStepControlGrowthDampingFactor>(); // 3.2
              const double nonDimensionalMinTimeStepIterations = Parameters::Get<Parameters::MinTimeStepBasedOnNewtonIterations>(); // 0.0 by default
@@ -188,7 +188,7 @@ createController(const UnitSystem& unitSystem)
          }},
         {"iterationcount",
          []() {
-              const int iterations =  Parameters::Get<Parameters::TimeStepControlTargetIterations>(); // 30
+              const long long iterations =  Parameters::Get<Parameters::TimeStepControlTargetIterations>(); // 30
               const double decayrate = Parameters::Get<Parameters::TimeStepControlDecayRate>(); // 0.75
               const double growthrate = Parameters::Get<Parameters::TimeStepControlGrowthRate>(); // 1.25
               return RetVal{
@@ -201,7 +201,7 @@ createController(const UnitSystem& unitSystem)
          }},
         {"newtoniterationcount",
          []() {
-             const int iterations =  Parameters::Get<Parameters::TimeStepControlTargetNewtonIterations>(); // 8
+             const long long iterations =  Parameters::Get<Parameters::TimeStepControlTargetNewtonIterations>(); // 8
              const double decayrate = Parameters::Get<Parameters::TimeStepControlDecayRate>(); // 0.75
              const double growthrate = Parameters::Get<Parameters::TimeStepControlGrowthRate>(); // 1.25
              return RetVal{

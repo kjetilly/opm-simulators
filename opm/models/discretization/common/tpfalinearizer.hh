@@ -188,7 +188,7 @@ public:
      */
     void linearizeDomain()
     {
-        int succeeded;
+        long long succeeded;
         try {
             linearizeDomain(fullDomain_);
             succeeded = 1;
@@ -372,7 +372,7 @@ public:
         if (!jacobian_) {
             initFirstIteration_();
         }
-        for (int globI : domain.cells) {
+        for (long long globI : domain.cells) {
             residual_[globI] = 0.0;
             jacobian_->clearRow(globI, 0.0);
         }
@@ -476,7 +476,7 @@ private:
                 if (problem_().nonTrivialBoundaryConditions()) {
                     for (unsigned bfIndex = 0; bfIndex < stencil.numBoundaryFaces(); ++bfIndex) {
                         const auto& bf = stencil.boundaryFace(bfIndex);
-                        const int dir_id = bf.dirId();
+                        const long long dir_id = bf.dirId();
                         // not for NNCs
                         if (dir_id < 0)
                             continue;
@@ -549,16 +549,16 @@ private:
         const auto& nncOutput = simulator_().problem().eclWriter()->getOutputNnc();
         Stencil stencil(gridView_(), model_().dofMapper());
         unsigned numCells = model.numTotalDof();
-        std::unordered_multimap<int, std::pair<int, int>> nncIndices;
+        std::unordered_multimap<long long, std::pair<long long, long long>> nncIndices;
         std::vector<FlowInfo> loc_flinfo;
         std::vector<VelocityInfo> loc_vlinfo;
-        unsigned int nncId = 0;
+        size_t nncId = 0;
         VectorBlock flow(0.0);
 
         // Create a nnc structure to use fast lookup
-        for (unsigned int nncIdx = 0; nncIdx < nncOutput.size(); ++nncIdx) {
-            const int ci1 = nncOutput[nncIdx].cell1;
-            const int ci2 = nncOutput[nncIdx].cell2;
+        for (size_t nncIdx = 0; nncIdx < nncOutput.size(); ++nncIdx) {
+            const long long ci1 = nncOutput[nncIdx].cell1;
+            const long long ci2 = nncOutput[nncIdx].cell2;
             nncIndices.emplace(ci1, std::make_pair(ci2, nncIdx));
         }
 
@@ -576,7 +576,7 @@ private:
             stencil.update(elem);
             for (unsigned primaryDofIdx = 0; primaryDofIdx < stencil.numPrimaryDof(); ++primaryDofIdx) {
                 unsigned myIdx = stencil.globalSpaceIndex(primaryDofIdx);
-                int numFaces = stencil.numBoundaryFaces() + stencil.numInteriorFaces();
+                long long numFaces = stencil.numBoundaryFaces() + stencil.numInteriorFaces();
                 loc_flinfo.resize(numFaces);
                 loc_vlinfo.resize(stencil.numDof() - 1);
 
@@ -585,9 +585,9 @@ private:
                     if (dofIdx > 0) {
                         const auto scvfIdx = dofIdx - 1;
                         const auto& scvf = stencil.interiorFace(scvfIdx);
-                        int faceId = scvf.dirId();
-                        const int cartMyIdx = simulator_().vanguard().cartesianIndex(myIdx);
-                        const int cartNeighborIdx = simulator_().vanguard().cartesianIndex(neighborIdx);
+                        long long faceId = scvf.dirId();
+                        const long long cartMyIdx = simulator_().vanguard().cartesianIndex(myIdx);
+                        const long long cartNeighborIdx = simulator_().vanguard().cartesianIndex(neighborIdx);
                         const auto& range = nncIndices.equal_range(cartMyIdx);
                         for (auto it = range.first; it != range.second; ++it) {
                             if (it->second.first == cartNeighborIdx){
@@ -604,7 +604,7 @@ private:
 
                 for (unsigned bdfIdx = 0; bdfIdx < stencil.numBoundaryFaces(); ++bdfIdx) {
                     const auto& scvf = stencil.boundaryFace(bdfIdx);
-                    int faceId = scvf.dirId();
+                    long long faceId = scvf.dirId();
                     loc_flinfo[stencil.numInteriorFaces() + bdfIdx] = FlowInfo{faceId, flow, nncId};
                 }
 
@@ -647,7 +647,7 @@ public:
         if (!enableFlows && !enableFlores) {
             return;
         }
-        const unsigned int numCells = model_().numTotalDof();
+        const size_t numCells = model_().numTotalDof();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -725,7 +725,7 @@ private:
         // the full system to zero, not just our part.
         // Instead, that must be called before starting the linearization.
         const bool& enableDispersion = simulator_().vanguard().eclState().getSimulationConfig().rock_config().dispersion();
-        const unsigned int numCells = domain.cells.size();
+        const size_t numCells = domain.cells.size();
         const bool on_full_domain = (numCells == model_().numTotalDof());
 
 #ifdef _OPENMP
@@ -900,7 +900,7 @@ private:
     using ResidualNBInfo = typename LocalResidual::ResidualNBInfo;
     struct NeighborInfo
     {
-        unsigned int neighbor;
+        size_t neighbor;
         ResidualNBInfo res_nbinfo;
         MatrixBlock* matBlockAddress;
     };
@@ -909,9 +909,9 @@ private:
 
     struct FlowInfo
     {
-        int faceId;
+        long long faceId;
         VectorBlock flow;
-        unsigned int nncId;
+        size_t nncId;
     };
     SparseTable<FlowInfo> flowsInfo_;
     SparseTable<FlowInfo> floresInfo_;
@@ -935,16 +935,16 @@ private:
     };
     struct BoundaryInfo
     {
-        unsigned int cell;
-        int dir;
-        unsigned int bfIndex;
+        size_t cell;
+        long long dir;
+        size_t bfIndex;
         BoundaryConditionData bcdata;
     };
     std::vector<BoundaryInfo> boundaryInfo_;
     bool separateSparseSourceTerms_ = false;
     struct FullDomain
     {
-        std::vector<int> cells;
+        std::vector<long long> cells;
         std::vector<bool> interior;
     };
     FullDomain fullDomain_;

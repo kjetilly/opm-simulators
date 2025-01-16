@@ -41,7 +41,7 @@ template<class Scalar>
 bool BlackoilWellModelConstraints<Scalar>::
 hasTHPConstraints() const
 {
-    int local_result = false;
+    long long local_result = false;
     for (const auto& well : wellModel_.genericWells()) {
         if (well->wellHasTHPConstraints(wellModel_.summaryState())) {
             local_result = true;
@@ -54,13 +54,13 @@ template<class Scalar>
 std::pair<Group::InjectionCMode, Scalar>
 BlackoilWellModelConstraints<Scalar>::
 checkGroupInjectionConstraints(const Group& group,
-                               const int reportStepIdx,
+                               const long long reportStepIdx,
                                const Phase& phase) const
 {
     const auto& well_state = wellModel_.wellState();
     const auto& pu = wellModel_.phaseUsage();
 
-    int phasePos;
+    long long phasePos;
     if (phase == Phase::GAS && pu.phase_used[BlackoilPhases::Vapour] )
         phasePos = pu.phase_pos[BlackoilPhases::Vapour];
     else if (phase == Phase::OIL && pu.phase_used[BlackoilPhases::Liquid])
@@ -230,7 +230,7 @@ template<class Scalar>
 std::pair<Group::ProductionCMode, Scalar>
 BlackoilWellModelConstraints<Scalar>::
 checkGroupProductionConstraints(const Group& group,
-                                const int reportStepIdx,
+                                const long long reportStepIdx,
                                 DeferredLogger& deferred_logger) const
 {
     const auto& well_state = wellModel_.wellState();
@@ -406,7 +406,7 @@ checkGroupProductionConstraints(const Group& group,
 template<class Scalar>
 bool BlackoilWellModelConstraints<Scalar>::
 checkGroupConstraints(const Group& group,
-                      const int reportStepIdx,
+                      const long long reportStepIdx,
                       DeferredLogger& deferred_logger) const
 {
     if (group.isInjectionGroup()) {
@@ -467,7 +467,7 @@ actionOnBrokenConstraints(const Group& group,
 template<class Scalar>
 bool BlackoilWellModelConstraints<Scalar>::
 actionOnBrokenConstraints(const Group& group,
-                          const int reportStepIdx,
+                          const long long reportStepIdx,
                           const Group::GroupLimitAction group_limit_action,
                           const Group::ProductionCMode& newControl,
                           const WellState<Scalar>& well_state,
@@ -560,8 +560,8 @@ actionOnBrokenConstraints(const Group& group,
 template<class Scalar>
 bool BlackoilWellModelConstraints<Scalar>::
 updateGroupIndividualControl(const Group& group,
-                             const int reportStepIdx,
-                             const int max_number_of_group_switch,
+                             const long long reportStepIdx,
+                             const long long max_number_of_group_switch,
                              std::map<std::string, std::array<std::vector<Group::InjectionCMode>, 3>>& switched_inj,
                              std::map<std::string, std::vector<Group::ProductionCMode>>& switched_prod,
                              std::map<std::string, std::pair<std::string, std::string>>& closed_offending_wells,

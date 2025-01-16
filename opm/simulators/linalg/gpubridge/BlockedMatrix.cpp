@@ -28,21 +28,21 @@
 
 namespace Opm::Accelerator {
 
-void sortRow(int *colIndices, int *data, int left, int right)
+void sortRow(long long *colIndices, long long *data, long long left, long long right)
 {
-    int l = left;
-    int r = right;
-    int middle = colIndices[(l + r) >> 1];
+    long long l = left;
+    long long r = right;
+    long long middle = colIndices[(l + r) >> 1];
     do {
         while (colIndices[l] < middle)
             l++;
         while (colIndices[r] > middle)
             r--;
         if (l <= r) {
-            int lColIndex = colIndices[l];
+            long long lColIndex = colIndices[l];
             colIndices[l] = colIndices[r];
             colIndices[r] = lColIndex;
-            int tmp = data[l];
+            long long tmp = data[l];
             data[l] = data[r];
             data[r] = tmp;
 
@@ -61,12 +61,12 @@ void sortRow(int *colIndices, int *data, int left, int right)
 // LUMat->nnzValues[ik] = LUMat->nnzValues[ik] - (pivot * LUMat->nnzValues[jk]) in ilu decomposition
 // a = a - (b * c)
 template<class Scalar>
-void blockMultSub(Scalar* a, Scalar* b, Scalar* c, unsigned int block_size)
+void blockMultSub(Scalar* a, Scalar* b, Scalar* c, size_t block_size)
 {
-    for (unsigned int row = 0; row < block_size; row++) {
-        for (unsigned int col = 0; col < block_size; col++) {
+    for (size_t row = 0; row < block_size; row++) {
+        for (size_t col = 0; col < block_size; col++) {
             Scalar temp = 0.0;
-            for (unsigned int k = 0; k < block_size; k++) {
+            for (size_t k = 0; k < block_size; k++) {
                 temp += b[block_size * row + k] * c[block_size * k + col];
             }
             a[block_size * row + col] -= temp;
@@ -76,12 +76,12 @@ void blockMultSub(Scalar* a, Scalar* b, Scalar* c, unsigned int block_size)
 
 /*Perform a 3x3 matrix-matrix multiplicationj on two blocks*/
 template<class Scalar>
-void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, unsigned int block_size)
+void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, size_t block_size)
 {
-    for (unsigned int row = 0; row < block_size; row++) {
-        for (unsigned int col = 0; col < block_size; col++) {
+    for (size_t row = 0; row < block_size; row++) {
+        for (size_t col = 0; col < block_size; col++) {
             Scalar temp = 0;
-            for (unsigned int k = 0; k < block_size; k++) {
+            for (size_t k = 0; k < block_size; k++) {
                 temp += mat1[block_size * row + k] * mat2[block_size * k + col];
             }
             resMat[block_size * row + col] = temp;
@@ -90,8 +90,8 @@ void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, unsigned int block_si
 }
 
 #define INSTANTIATE_TYPE(T)                               \
-    template void blockMultSub(T*, T*, T*, unsigned int); \
-    template void blockMult(T*, T*, T*, unsigned int);
+    template void blockMultSub(T*, T*, T*, size_t); \
+    template void blockMult(T*, T*, T*, size_t);
 
 INSTANTIATE_TYPE(double)
 

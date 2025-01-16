@@ -422,7 +422,7 @@ public:
     /*!
      * \brief Return the thermodynamic hint for a given local index.
      *
-     * \sa Discretization::thermodynamicHint(int, int)
+     * \sa Discretization::thermodynamicHint(long long, long long)
      *
      * \param dofIdx The local index of the degree of freedom in the current element.
      * \param timeIdx The index of the solution vector used by the time discretization.
@@ -470,7 +470,7 @@ public:
      *
      * If none, then this returns -1.
      */
-    int stashedDofIdx() const
+    long long stashedDofIdx() const
     { return stashedDofIdx_; }
 
     /*!
@@ -484,7 +484,7 @@ public:
 
         intensiveQuantitiesStashed_ = dofVars_[dofIdx].intensiveQuantities[/*timeIdx=*/0];
         priVarsStashed_ = *dofVars_[dofIdx].priVars[/*timeIdx=*/0];
-        stashedDofIdx_ = static_cast<int>(dofIdx);
+        stashedDofIdx_ = static_cast<long long>(dofIdx);
     }
 
     /*!
@@ -597,8 +597,8 @@ protected:
     const GridView gridView_;
     Stencil stencil_;
 
-    int stashedDofIdx_;
-    int focusDofIdx_;
+    long long stashedDofIdx_;
+    long long focusDofIdx_;
     bool enableStorageCache_;
 };
 

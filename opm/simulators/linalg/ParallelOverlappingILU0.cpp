@@ -40,7 +40,7 @@ namespace Opm
 #if HAVE_MPI
 #define INSTANTIATE(T,Dim)                                                \
     INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)             \
-    INSTANTIATE_PAR(T, Dim, Dune::OwnerOverlapCopyCommunication<int,int>)
+    INSTANTIATE_PAR(T, Dim, Dune::OwnerOverlapCopyCommunication<long long,long long>)
 #else
 #define INSTANTIATE(T,Dim) \
     INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)

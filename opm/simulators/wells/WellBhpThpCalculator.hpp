@@ -76,7 +76,7 @@ public:
                             const SummaryState& summary_state,
                             const Scalar rho,
                             const Scalar flo_rel_tol,
-                            const int max_iteration,
+                            const long long max_iteration,
                             const bool throwOnError,
                             DeferredLogger& deferred_logger) const;
 
@@ -138,7 +138,7 @@ private:
                                 const SummaryState& summary_state,
                                 const Scalar rho,
                                 const Scalar flo_rel_tol,
-                                const int max_iteration,
+                                const long long max_iteration,
                                 DeferredLogger& deferred_logger) const;
 
     //! \brief Calculate max BHP.

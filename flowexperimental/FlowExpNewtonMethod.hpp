@@ -45,7 +45,7 @@ struct EclNewtonSumTolerance { static constexpr Scalar value = 1e-5; };
 // make all Newton iterations strict, i.e., the volumetric Newton tolerance must be
 // always be upheld in the majority of the spatial domain. In this context, "majority"
 // means 1 - EclNewtonRelaxedVolumeFraction.
-struct EclNewtonStrictIterations { static constexpr int value = 100; };
+struct EclNewtonStrictIterations { static constexpr long long value = 100; };
 
 // set fraction of the pore volume where the volumetric residual may be violated during
 // strict Newton iterations
@@ -85,9 +85,9 @@ class FlowExpNewtonMethod : public BlackOilNewtonMethod<TypeTag>
 
     static constexpr unsigned numEq = getPropValue<TypeTag, Properties::NumEq>();
 
-    static constexpr int contiSolventEqIdx = Indices::contiSolventEqIdx;
-    static constexpr int contiPolymerEqIdx = Indices::contiPolymerEqIdx;
-    static constexpr int contiEnergyEqIdx = Indices::contiEnergyEqIdx;
+    static constexpr long long contiSolventEqIdx = Indices::contiSolventEqIdx;
+    static constexpr long long contiPolymerEqIdx = Indices::contiPolymerEqIdx;
+    static constexpr long long contiEnergyEqIdx = Indices::contiEnergyEqIdx;
 
     friend NewtonMethod<TypeTag>;
     friend DiscNewtonMethod;
@@ -272,7 +272,7 @@ private:
 
     Scalar sumTolerance_;
 
-    int numStrictIterations_;
+    long long numStrictIterations_;
 };
 
 } // namespace Opm

@@ -58,18 +58,18 @@ namespace Opm {
         struct Phase
         {
             /// Phase index
-            unsigned int ix;
+            size_t ix;
         };
 
         /// Compile-time disambiguation type for regions.
         struct Region
         {
             /// Region index
-            unsigned int ix;
+            size_t ix;
         };
 
         /// Call-back function type for accessing region arrays--typically the FIP* arrays.
-        using RegionArrayAccessor = std::function<const std::vector<int>&(const std::string&)>;
+        using RegionArrayAccessor = std::function<const std::vector<long long>&(const std::string&)>;
 
         /// Constructor.
         ///
@@ -221,7 +221,7 @@ namespace Opm {
         /// \param[in] phase Phase index for which to compute array offset.
         ///
         /// \return Value array offset for field-level averages of \p phase.
-        Ix fieldStartIx(unsigned int phase) const;
+        Ix fieldStartIx(size_t phase) const;
 
         /// Compute linearised value array offset for region-level average
         /// function values of a single phase.
@@ -233,7 +233,7 @@ namespace Opm {
         /// \param[in] phase Phase index for which to compute array offset.
         ///
         /// \return Value array offset for region-level averages of \p phase.
-        Ix rsetStartIx(std::size_t rset, int region, unsigned int phase) const;
+        Ix rsetStartIx(std::size_t rset, long long region, size_t phase) const;
 
         /// Compute linearised value array offset for average function
         /// values of a single phase.
@@ -243,7 +243,7 @@ namespace Opm {
         /// \param[in] phase Phase index for which to compute array offset.
         ///
         /// \return Value array offset for weighted averages of \p phase.
-        Ix startIx(std::size_t offset, unsigned int phase) const;
+        Ix startIx(std::size_t offset, size_t phase) const;
 
         /// Compute region ID of single active cell within particular region
         /// set.
@@ -254,7 +254,7 @@ namespace Opm {
         ///   the rank's interior cells.
         ///
         /// \return Region ID of \p activeCell within \p rset.
-        int regionIndex(std::size_t rset, std::size_t activeCell) const;
+        long long regionIndex(std::size_t rset, std::size_t activeCell) const;
 
         /// Incorporate per-cell contribution into all average function types.
         ///

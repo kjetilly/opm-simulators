@@ -205,7 +205,7 @@ public:
     void evalSummaryState(bool isSubStep)
     {
         OPM_TIMEBLOCK(evalSummaryState);
-        const int reportStepNum = simulator_.episodeIndex() + 1;
+        const long long reportStepNum = simulator_.episodeIndex() + 1;
         
         /*
           The summary data is not evaluated for timestep 0, that is
@@ -306,7 +306,7 @@ public:
         if (this->sub_step_report_.total_newton_iterations != 0) {
             miscSummaryData["NLINEARS"] =  static_cast<float>(this->sub_step_report_.total_linear_iterations) / this->sub_step_report_.total_newton_iterations;
         }
-        if (this->sub_step_report_.min_linear_iterations != std::numeric_limits<unsigned int>::max()) {
+        if (this->sub_step_report_.min_linear_iterations != std::numeric_limits<size_t>::max()) {
             miscSummaryData["NLINSMIN"] = this->sub_step_report_.min_linear_iterations;
         }
         if (this->sub_step_report_.max_linear_iterations != 0) {
@@ -351,7 +351,7 @@ public:
     void writeInitialFIPReport()
     {
         const auto& gridView = simulator_.vanguard().gridView();
-        const int num_interior = detail::
+        const long long num_interior = detail::
             countLocalInteriorCellsGridView(gridView);
 
         this->outputModule_->
@@ -360,7 +360,7 @@ public:
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-        for (int dofIdx = 0; dofIdx < num_interior; ++dofIdx) {
+        for (long long dofIdx = 0; dofIdx < num_interior; ++dofIdx) {
             const auto& intQuants = *simulator_.model().cachedIntensiveQuantities(dofIdx, /*timeIdx=*/0);
             const auto totVolume = simulator_.model().dofTotalVolume(dofIdx);
 
@@ -414,7 +414,7 @@ public:
     {
         OPM_TIMEBLOCK(writeOutput);
 
-        const int reportStepNum = simulator_.episodeIndex() + 1;
+        const long long reportStepNum = simulator_.episodeIndex() + 1;
         this->prepareLocalCellData(isSubStep, reportStepNum);
         this->outputModule_->outputErrorLog(simulator_.gridView().comm());
 
@@ -472,7 +472,7 @@ public:
         if (this->collectOnIORank_.isIORank()) {
             const Scalar curTime = simulator_.time() + simulator_.timeStepSize();
             const Scalar nextStepSize = simulator_.problem().nextTimeStepSize();
-            std::optional<int> timeStepIdx; 
+            std::optional<long long> timeStepIdx; 
             if (Parameters::Get<Parameters::EnableWriteAllSolutions>()) {
                 timeStepIdx = simulator_.timeStepIndex();
             }
@@ -578,7 +578,7 @@ public:
             }
 
             auto& tracer_model = simulator_.problem().tracerModel();
-            for (int tracer_index = 0; tracer_index < tracer_model.numTracers(); ++tracer_index) {
+            for (long long tracer_index = 0; tracer_index < tracer_model.numTracers(); ++tracer_index) {
                 // Free tracers
                 {
                     const auto& free_tracer_name = tracer_model.fname(tracer_index);
@@ -702,7 +702,7 @@ private:
     { return simulator_.vanguard().schedule(); }
 
     void prepareLocalCellData(const bool isSubStep,
-                              const int  reportStepNum)
+                              const long long  reportStepNum)
     {
         OPM_TIMEBLOCK(prepareLocalCellData);
 
@@ -713,7 +713,7 @@ private:
         const auto& gridView = simulator_.vanguard().gridView();
         const bool log = this->collectOnIORank_.isIORank();
 
-        const int num_interior = detail::
+        const long long num_interior = detail::
             countLocalInteriorCellsGridView(gridView);
         this->outputModule_->
             allocBuffers(num_interior, reportStepNum,
@@ -776,7 +776,7 @@ private:
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-            for (int dofIdx = 0; dofIdx < num_interior; ++dofIdx) {
+            for (long long dofIdx = 0; dofIdx < num_interior; ++dofIdx) {
                 const auto& intQuants = *simulator_.model().cachedIntensiveQuantities(dofIdx, /*timeIdx=*/0);
                 const auto totVolume = simulator_.model().dofTotalVolume(dofIdx);
 
@@ -805,7 +805,7 @@ private:
             return elemMapper.index(e);
         };
 
-        const auto cartesianIndex = [this](const int elemIndex)
+        const auto cartesianIndex = [this](const long long elemIndex)
         {
             return this->cartMapper_.cartesianIndex(elemIndex);
         };
@@ -831,7 +831,7 @@ private:
     Simulator& simulator_;
     std::unique_ptr<OutputModule> outputModule_;
     Scalar restartTimeStepSize_;
-    int rank_ ;
+    long long rank_ ;
     Inplace inplace_;
 };
 

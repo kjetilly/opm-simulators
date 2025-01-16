@@ -44,15 +44,15 @@
 #if HAVE_MPI
 struct MPIError
 {
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+    MPIError(std::string s, long long e) : errorstring(std::move(s)), errorcode(e){}
     std::string errorstring;
-    int errorcode;
+    long long errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
-    int err_length;
+    long long err_length;
     MPI_Error_string(*err_code, err_string.data(), &err_length);
     std::string s(err_string.data(), err_length);
     std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
@@ -68,13 +68,13 @@ init_unit_test_func()
 
 struct TestCase {
     std::size_t N;
-    std::array<int,6> phase;
+    std::array<long long,6> phase;
 };
 
 std::ostream& operator<<(std::ostream& os, const TestCase& t)
 {
     os << t.N;
-    for (int i : t.phase)
+    for (long long i : t.phase)
         os << " " << i;
     os << std::endl;
 
@@ -107,25 +107,25 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
     Opm::RSTConfig rst;
     rst.keywords["CONV"] = sample.N;
 
-    std::vector<int> cellMapping(10);
+    std::vector<long long> cellMapping(10);
     std::iota(cellMapping.begin(), cellMapping.end(), cc.rank()*10);
 
     Dune::BlockVector<Dune::FieldVector<double,6>> residual(10);
 
     // generate data
-    std::vector<std::vector<int>> max(6);
+    std::vector<std::vector<long long>> max(6);
     if (cc.rank() == 0) {
         std::random_device rng_device;
         std::mt19937 mersenne_engine{rng_device()};
-        std::uniform_int_distribution<int> dist{0, 10*cc.size()-1};
+        std::uniform_int_distribution<long long> dist{0, 10*cc.size()-1};
 
-        for (int c = 0; c < 6; ++c) {
+        for (long long c = 0; c < 6; ++c) {
             if (sample.phase[c] == -1) {
                 continue;
             }
-            std::vector<int>& v = max[c];
+            std::vector<long long>& v = max[c];
             while (v.size() < sample.N) {
-                int m = dist(mersenne_engine);
+                long long m = dist(mersenne_engine);
                 if (std::find(v.begin(), v.end(), m) == v.end()) {
                     v.push_back(m);
                 }
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
         }
     }
 
-    for (int c = 0; c < 6; ++c) {
+    for (long long c = 0; c < 6; ++c) {
         std::size_t size = max[c].size();
         cc.broadcast(&size, 1, 0);
         if (cc.rank() != 0) {
@@ -142,8 +142,8 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
         cc.broadcast(max[c].data(), max[c].size(), 0);
     }
 
-    for (int i = 0; i < 10; ++i) {
-        for (int c = 0; c < 6; ++c) {
+    for (long long i = 0; i < 10; ++i) {
+        for (long long c = 0; c < 6; ++c) {
             if (sample.phase[c] != -1) {
                 bool inMax = std::find(max[c].begin(),
                                        max[c].end(),
@@ -166,8 +166,8 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
                               sample.phase[i] == -1 ? 0 : cc.size() * 10);
         }
 
-        for (int i = 0; i < cc.size() * 10; ++i) {
-            for (int c = 0; c < 6; ++c) {
+        for (long long i = 0; i < cc.size() * 10; ++i) {
+            for (long long c = 0; c < 6; ++c) {
                 if (sample.phase[c] != -1) {
                     bool inMax = std::find(max[c].begin(),
                                            max[c].end(), i) != max[c].end();
@@ -181,7 +181,7 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
 #endif
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

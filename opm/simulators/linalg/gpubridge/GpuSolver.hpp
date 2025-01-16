@@ -41,7 +41,7 @@ enum class SolverStatus {
 
 /// This class serves to simplify choosing between different backend solvers, such as cusparseSolver and openclSolver
 /// This class is abstract, no instantiations can of it can be made, only of its children
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class GpuSolver
 {
 protected:
@@ -50,18 +50,18 @@ protected:
     // 1: print number of iterations and final norm
     // 2: also print norm each iteration
     // 3: also print timings of different backend functions
-    int verbosity = 0;
+    long long verbosity = 0;
 
-    int maxit = 200;
+    long long maxit = 200;
     Scalar tolerance = 1e-2;
 
-    int N;           // number of rows
-    int Nb;          // number of blocked rows (Nb*block_size == N)
-    int nnz;         // number of nonzeroes (scalars)
-    int nnzb;        // number of nonzero blocks (nnzb*block_size*block_size == nnz)
+    long long N;           // number of rows
+    long long Nb;          // number of blocked rows (Nb*block_size == N)
+    long long nnz;         // number of nonzeroes (scalars)
+    long long nnzb;        // number of nonzero blocks (nnzb*block_size*block_size == nnz)
 
-    unsigned int platformID = 0; // ID of OpenCL platform to be used, only used by openclSolver now
-    unsigned int deviceID = 0;   // ID of the device to be used
+    size_t platformID = 0; // ID of OpenCL platform to be used, only used by openclSolver now
+    size_t deviceID = 0;   // ID of the device to be used
 
     bool initialized = false;
 
@@ -72,20 +72,20 @@ public:
     /// \param[in] tolerance                  required relative tolerance for solver
     /// \param[in] platformID                 the OpenCL platform to be used, only used in openclSolver
     /// \param[in] deviceID                   the device to be used
-    GpuSolver(int linear_solver_verbosity, int max_it, Scalar tolerance_)
+    GpuSolver(long long linear_solver_verbosity, long long max_it, Scalar tolerance_)
         : verbosity(linear_solver_verbosity)
         , maxit(max_it)
         , tolerance(tolerance_)
     {}
-    GpuSolver(int linear_solver_verbosity, int max_it,
-              Scalar tolerance_, unsigned int deviceID_)
+    GpuSolver(long long linear_solver_verbosity, long long max_it,
+              Scalar tolerance_, size_t deviceID_)
         : verbosity(linear_solver_verbosity)
         , maxit(max_it)
         , tolerance(tolerance_)
         , deviceID(deviceID_) {};
-    GpuSolver(int linear_solver_verbosity, int max_it,
-              double tolerance_, unsigned int platformID_,
-              unsigned int deviceID_)
+    GpuSolver(long long linear_solver_verbosity, long long max_it,
+              double tolerance_, size_t platformID_,
+              size_t deviceID_)
         : verbosity(linear_solver_verbosity)
         , maxit(max_it)
         , tolerance(tolerance_)

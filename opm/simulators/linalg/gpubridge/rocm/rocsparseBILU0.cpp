@@ -43,14 +43,14 @@ namespace Opm::Accelerator {
 using Opm::OpmLog;
 using Dune::Timer;
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 rocsparseBILU0<Scalar, block_size>::
-rocsparseBILU0(int verbosity_) : 
+rocsparseBILU0(long long verbosity_) : 
     Base(verbosity_)
 {
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseBILU0<Scalar, block_size>::
 initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
            std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
@@ -84,14 +84,14 @@ initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     return true;
 } // end initialize()
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseBILU0<Scalar, block_size>::
 analyze_matrix(BlockedMatrix<Scalar> *mat) {
     return analyze_matrix(mat, &(*this->jacMat));
 }
 
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseBILU0<Scalar, block_size>::
 analyze_matrix(BlockedMatrix<Scalar>*,
                BlockedMatrix<Scalar>*)
@@ -171,7 +171,7 @@ analyze_matrix(BlockedMatrix<Scalar>*,
                                                     rocsparse_solve_policy_auto, d_buffer));
     }
 
-    int zero_position = 0;
+    long long zero_position = 0;
     rocsparse_status status = rocsparse_bsrilu0_zero_pivot(this->handle, ilu_info, &zero_position);
     if (rocsparse_status_success != status) {
         printf("L has structural and/or numerical zero at L(%d,%d)\n", zero_position, zero_position);
@@ -217,13 +217,13 @@ analyze_matrix(BlockedMatrix<Scalar>*,
     return true;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseBILU0<Scalar, block_size>::
 create_preconditioner(BlockedMatrix<Scalar> *mat) {
     return create_preconditioner(mat, &*this->jacMat);
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 bool rocsparseBILU0<Scalar, block_size>::
 create_preconditioner(BlockedMatrix<Scalar>*,
                       BlockedMatrix<Scalar>*)
@@ -246,7 +246,7 @@ create_preconditioner(BlockedMatrix<Scalar>*,
     }
 
     // Check for zero pivot
-    int zero_position = 0;
+    long long zero_position = 0;
     rocsparse_status status = rocsparse_bsrilu0_zero_pivot(this->handle, ilu_info, &zero_position);
     if (rocsparse_status_success != status)
     {
@@ -263,7 +263,7 @@ create_preconditioner(BlockedMatrix<Scalar>*,
     return result;
 } // end create_preconditioner()
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseBILU0<Scalar, block_size>::
 copy_system_to_gpu(Scalar *d_Avals) {
     Timer t;
@@ -295,7 +295,7 @@ copy_system_to_gpu(Scalar *d_Avals) {
 } // end copy_system_to_gpu()
 
 // don't copy rowpointers and colindices, they stay the same
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseBILU0<Scalar, block_size>::
 update_system_on_gpu(Scalar *d_Avals) {
     Timer t;
@@ -324,7 +324,7 @@ update_system_on_gpu(Scalar *d_Avals) {
     }
 } // end update_system_on_gpu()
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparseBILU0<Scalar, block_size>::
 apply(Scalar& y, Scalar& x) {
     Scalar one  = 1.0;

@@ -32,14 +32,14 @@ namespace Opm::gpuistl::detail
  * @param naturalToReordered Permuation list that converts indices in the src matrix to the indices in the dst matrix
  * @param numberOfRows The number of rows in the matrices
  */
-template <class T, int blocksize>
+template <class T, long long blocksize>
 void copyMatDataToReordered(T* srcMatrix,
-                            int* srcRowIndices,
+                            long long* srcRowIndices,
                             T* dstMatrix,
-                            int* dstRowIndices,
-                            int* naturalToReordered,
+                            long long* dstRowIndices,
+                            long long* naturalToReordered,
                             size_t numberOfRows,
-                            int threadBlockSize);
+                            long long threadBlockSize);
 
 /**
  * @brief Reorders the elements of a matrix by copying them from one matrix to a split matrix using a permutation list
@@ -55,18 +55,18 @@ void copyMatDataToReordered(T* srcMatrix,
  * @param naturalToReordered Permuation list that converts indices in the src matrix to the indices in the dst matrix
  * @param numberOfRows The number of rows in the matrices
  */
-template <class T, int blocksize>
+template <class T, long long blocksize>
 void copyMatDataToReorderedSplit(T* srcMatrix,
-                                 int* srcRowIndices,
-                                 int* srcColumnIndices,
+                                 long long* srcRowIndices,
+                                 long long* srcColumnIndices,
                                  T* dstLowerMatrix,
-                                 int* dstLowerRowIndices,
+                                 long long* dstLowerRowIndices,
                                  T* dstUpperMatrix,
-                                 int* dstUpperRowIndices,
+                                 long long* dstUpperRowIndices,
                                  T* dstDiag,
-                                 int* naturalToReordered,
+                                 long long* naturalToReordered,
                                  size_t numberOfRows,
-                                 int threadBlockSize);
+                                 long long threadBlockSize);
 
 } // namespace Opm::gpuistl::detail
 #endif

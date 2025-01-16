@@ -62,11 +62,11 @@ public:
     struct OutputRequest
     {
         /// Current report step
-        int reportStep{-1};
+        long long reportStep{-1};
 
         /// Current timestep within \c reportStep.  Expected to be a small
         /// integer.
-        int currentStep{-1};
+        long long currentStep{-1};
 
         /// Convergence metrics for each non-linear ieration in the \c
         /// currentStep.
@@ -106,7 +106,7 @@ class ConvergenceOutputThread
 public:
     /// Protocol for converting a phase/component ID into a human readable
     /// phase/component name.
-    using ComponentToPhaseName = std::function<std::string_view(int)>;
+    using ComponentToPhaseName = std::function<std::string_view(long long)>;
 
     /// Protocol for converting an SI elapsed time value into an equivalent
     /// time value in the run's output conventions.

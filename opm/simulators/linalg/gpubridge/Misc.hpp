@@ -45,12 +45,12 @@
 
 namespace Opm::Accelerator {
 
-unsigned int ceilDivision(const unsigned int A,
-                          const unsigned int B);
+size_t ceilDivision(const size_t A,
+                          const size_t B);
 
 template<class Scalar>
 Scalar get_absmax(const Scalar *data,
-                  const int N);
+                  const long long N);
 
 template<class Scalar>
 void solve_transposed_3x3(const Scalar *A,

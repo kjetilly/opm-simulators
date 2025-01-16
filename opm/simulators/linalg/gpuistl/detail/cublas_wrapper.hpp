@@ -34,10 +34,10 @@ namespace Opm::gpuistl::detail
 
 inline cublasStatus_t
 cublasScal(cublasHandle_t handle,
-           int n,
+           long long n,
            const double* alpha, /* host or device pointer */
            double* x,
-           int incx)
+           long long incx)
 {
     return cublasDscal(handle,
                        n,
@@ -48,10 +48,10 @@ cublasScal(cublasHandle_t handle,
 
 inline cublasStatus_t
 cublasScal(cublasHandle_t handle,
-           int n,
+           long long n,
            const float* alpha, /* host or device pointer */
            float* x,
-           int incx)
+           long long incx)
 {
     return cublasSscal(handle,
                        n,
@@ -62,21 +62,21 @@ cublasScal(cublasHandle_t handle,
 
 inline cublasStatus_t
 cublasScal([[maybe_unused]] cublasHandle_t handle,
-           [[maybe_unused]] int n,
-           [[maybe_unused]] const int* alpha, /* host or device pointer */
-           [[maybe_unused]] int* x,
-           [[maybe_unused]] int incx)
+           [[maybe_unused]] long long n,
+           [[maybe_unused]] const long long* alpha, /* host or device pointer */
+           [[maybe_unused]] long long* x,
+           [[maybe_unused]] long long incx)
 {
     OPM_THROW(std::runtime_error, "cublasScal multiplication for integer vectors is not implemented yet.");
 }
 inline cublasStatus_t
 cublasAxpy(cublasHandle_t handle,
-           int n,
+           long long n,
            const double* alpha, /* host or device pointer */
            const double* x,
-           int incx,
+           long long incx,
            double* y,
-           int incy)
+           long long incy)
 {
     return cublasDaxpy(handle,
                        n,
@@ -89,12 +89,12 @@ cublasAxpy(cublasHandle_t handle,
 
 inline cublasStatus_t
 cublasAxpy(cublasHandle_t handle,
-           int n,
+           long long n,
            const float* alpha, /* host or device pointer */
            const float* x,
-           int incx,
+           long long incx,
            float* y,
-           int incy)
+           long long incy)
 {
     return cublasSaxpy(handle,
                        n,
@@ -107,59 +107,59 @@ cublasAxpy(cublasHandle_t handle,
 
 inline cublasStatus_t
 cublasAxpy([[maybe_unused]] cublasHandle_t handle,
-           [[maybe_unused]] int n,
-           [[maybe_unused]] const int* alpha, /* host or device pointer */
-           [[maybe_unused]] const int* x,
-           [[maybe_unused]] int incx,
-           [[maybe_unused]] int* y,
-           [[maybe_unused]] int incy)
+           [[maybe_unused]] long long n,
+           [[maybe_unused]] const long long* alpha, /* host or device pointer */
+           [[maybe_unused]] const long long* x,
+           [[maybe_unused]] long long incx,
+           [[maybe_unused]] long long* y,
+           [[maybe_unused]] long long incy)
 {
     OPM_THROW(std::runtime_error, "axpy multiplication for integer vectors is not implemented yet.");
 }
 
 inline cublasStatus_t
-cublasDot(cublasHandle_t handle, int n, const double* x, int incx, const double* y, int incy, double* result)
+cublasDot(cublasHandle_t handle, long long n, const double* x, long long incx, const double* y, long long incy, double* result)
 {
     return cublasDdot(handle, n, x, incx, y, incy, result);
 }
 
 inline cublasStatus_t
-cublasDot(cublasHandle_t handle, int n, const float* x, int incx, const float* y, int incy, float* result)
+cublasDot(cublasHandle_t handle, long long n, const float* x, long long incx, const float* y, long long incy, float* result)
 {
     return cublasSdot(handle, n, x, incx, y, incy, result);
 }
 
 inline cublasStatus_t
 cublasDot([[maybe_unused]] cublasHandle_t handle,
-          [[maybe_unused]] int n,
-          [[maybe_unused]] const int* x,
-          [[maybe_unused]] int incx,
-          [[maybe_unused]] const int* y,
-          [[maybe_unused]] int incy,
-          [[maybe_unused]] int* result)
+          [[maybe_unused]] long long n,
+          [[maybe_unused]] const long long* x,
+          [[maybe_unused]] long long incx,
+          [[maybe_unused]] const long long* y,
+          [[maybe_unused]] long long incy,
+          [[maybe_unused]] long long* result)
 {
     OPM_THROW(std::runtime_error, "inner product for integer vectors is not implemented yet.");
 }
 
 inline cublasStatus_t
-cublasNrm2(cublasHandle_t handle, int n, const double* x, int incx, double* result)
+cublasNrm2(cublasHandle_t handle, long long n, const double* x, long long incx, double* result)
 {
     return cublasDnrm2(handle, n, x, incx, result);
 }
 
 
 inline cublasStatus_t
-cublasNrm2(cublasHandle_t handle, int n, const float* x, int incx, float* result)
+cublasNrm2(cublasHandle_t handle, long long n, const float* x, long long incx, float* result)
 {
     return cublasSnrm2(handle, n, x, incx, result);
 }
 
 inline cublasStatus_t
 cublasNrm2([[maybe_unused]] cublasHandle_t handle,
-           [[maybe_unused]] int n,
-           [[maybe_unused]] const int* x,
-           [[maybe_unused]] int incx,
-           [[maybe_unused]] int* result)
+           [[maybe_unused]] long long n,
+           [[maybe_unused]] const long long* x,
+           [[maybe_unused]] long long incx,
+           [[maybe_unused]] long long* result)
 {
     OPM_THROW(std::runtime_error, "norm2 for integer vectors is not implemented yet.");
 }

@@ -37,15 +37,15 @@
 namespace Opm {
 
 std::string breakLines(const std::string& msg,
-                       int indentWidth,
-                       int maxWidth)
+                       long long indentWidth,
+                       long long maxWidth)
 {
     std::string result;
-    int startInPos = 0;
-    int inPos = 0;
-    int lastBreakPos = 0;
-    int ttyPos = 0;
-    for (; inPos < int(msg.size()); ++ inPos, ++ ttyPos) {
+    long long startInPos = 0;
+    long long inPos = 0;
+    long long lastBreakPos = 0;
+    long long ttyPos = 0;
+    for (; inPos < (long long)(msg.size()); ++ inPos, ++ ttyPos) {
         if (msg[inPos] == '\n') {
             result += msg.substr(startInPos, inPos - startInPos + 1);
             startInPos = inPos + 1;
@@ -75,7 +75,7 @@ std::string breakLines(const std::string& msg,
             }
 
             result += "\n";
-            for (int i = 0; i < indentWidth; ++i) {
+            for (long long i = 0; i < indentWidth; ++i) {
                 result += " ";
             }
             ttyPos = indentWidth;
@@ -87,15 +87,15 @@ std::string breakLines(const std::string& msg,
     return result;
 }
 
-int getTtyWidth()
+long long getTtyWidth()
 {
-    int ttyWidth = 10*1000; // effectively do not break lines at all.
+    long long ttyWidth = 10*1000; // effectively do not break lines at all.
     if (isatty(STDOUT_FILENO)) {
 #if defined TIOCGWINSZ
         // This is a bit too linux specific, IMO. let's do it anyway
         struct winsize ttySize;
         ioctl(STDOUT_FILENO, TIOCGWINSZ, &ttySize);
-        ttyWidth = std::max<int>(80, ttySize.ws_col);
+        ttyWidth = std::max<long long>(80, ttySize.ws_col);
 #else
         // default for systems that do not implement the TIOCGWINSZ ioctl
         ttyWidth = 100;
@@ -142,13 +142,13 @@ void resetTerminal()
     }
 }
 
-void resetTerminal(int signum)
+void resetTerminal(long long signum)
 {
     // first thing to do when a nuke hits: restore the default signal handler
     signal(signum, SIG_DFL);
 
 #if HAVE_MPI
-    int rank = 0;
+    long long rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     if (rank != 0) {
         // re-raise the signal

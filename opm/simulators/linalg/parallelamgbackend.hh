@@ -69,7 +69,7 @@ namespace Opm::Parameters {
 
 //! The target number of DOFs per processor for the parallel algebraic
 //! multi-grid solver
-struct AmgCoarsenTarget { static constexpr int value = 5000; };
+struct AmgCoarsenTarget { static constexpr long long value = 5000; };
 
 }
 
@@ -98,7 +98,7 @@ class ParallelAmgBackend : public ParallelBaseBackend<TypeTag>
     using ParallelPreconditioner = typename ParentType::ParallelPreconditioner;
     using ParallelScalarProduct = typename ParentType::ParallelScalarProduct;
 
-    static constexpr int numEq = getPropValue<TypeTag, Properties::NumEq>();
+    static constexpr long long numEq = getPropValue<TypeTag, Properties::NumEq>();
     using VectorBlock = Dune::FieldVector<LinearSolverScalar, numEq>;
     using MatrixBlock = typename SparseMatrixAdapter::MatrixBlock;
     using IstlMatrix = typename SparseMatrixAdapter::IstlMatrix;
@@ -208,7 +208,7 @@ protected:
         auto bicgstabSolver =
             std::make_shared<RawLinearSolver>(parPreCond, *convCrit_, parScalarProduct);
 
-        int verbosity = 0;
+        long long verbosity = 0;
         if (parOperator.overlap().myRank() == 0)
             verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
         bicgstabSolver->setVerbosity(verbosity);
@@ -219,10 +219,10 @@ protected:
         return bicgstabSolver;
     }
 
-    std::pair<bool,int> runSolver_(std::shared_ptr<RawLinearSolver> solver)
+    std::pair<bool,long long> runSolver_(std::shared_ptr<RawLinearSolver> solver)
     {
         bool converged = solver->apply(*this->overlappingx_);
-        return std::make_pair(converged, int(solver->report().iterations()));
+        return std::make_pair(converged, (long long)(solver->report().iterations()));
     }
 
     void cleanupSolver_()
@@ -274,7 +274,7 @@ protected:
         if (amg_)
             amg_.reset();
 
-        int verbosity = 0;
+        long long verbosity = 0;
         if (this->simulator_.vanguard().gridView().comm().rank() == 0)
             verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
 
@@ -291,7 +291,7 @@ protected:
         //                             Dune::Amg::FirstDiagonal>>
         using CoarsenCriterion = Dune::Amg::
             CoarsenCriterion<Dune::Amg::SymmetricCriterion<IstlMatrix, Dune::Amg::FrobeniusNorm> >;
-        int coarsenTarget = Parameters::Get<Parameters::AmgCoarsenTarget>();
+        long long coarsenTarget = Parameters::Get<Parameters::AmgCoarsenTarget>();
         CoarsenCriterion coarsenCriterion(/*maxLevel=*/15, coarsenTarget);
         coarsenCriterion.setDefaultValuesAnisotropic(GridView::dimension,
                                                      /*aggregateSizePerDim=*/3);

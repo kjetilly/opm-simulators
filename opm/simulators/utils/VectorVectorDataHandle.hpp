@@ -59,12 +59,12 @@ public:
     : data_(data), gridView_(gridView)
   {}
 
-  bool contains(int /* dim */, int codim) const
+  bool contains(long long /* dim */, long long codim) const
   {
     return codim == 0;
   }
 
-  bool fixedSize(int /* dim */, int /* codim */) const
+  bool fixedSize(long long /* dim */, long long /* codim */) const
   {
     return true;
   }

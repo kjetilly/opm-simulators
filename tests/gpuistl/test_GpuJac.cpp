@@ -43,9 +43,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPUJACApplyBlocksize2, T, NumericTypes)
            | |0 0|  |-1  0| |     | |3| |       | |-1.5| |
            | |0 0|  | 0 -1| |     | |4| |       | |-2.0| |
    */
-    const int N = 2;
-    constexpr int blocksize = 2;
-    const int nonZeroes = 3;
+    const long long N = 2;
+    constexpr long long blocksize = 2;
+    const long long nonZeroes = 3;
     using M = Dune::FieldMatrix<T, blocksize, blocksize>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, blocksize>>;
@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(GPUJACApplyBlocksize1, T, NumericTypes)
        A = | 0  0 -1  0|   d = |1|   v = |-3/2|
            | 0  0  0 -1|       |1|       |  -2|
    */
-    const int N = 4;
-    constexpr int blocksize = 1;
-    const int nonZeroes = 8;
+    const long long N = 4;
+    constexpr long long blocksize = 1;
+    const long long nonZeroes = 8;
     using M = Dune::FieldMatrix<T, blocksize, blocksize>;
     using SpMatrix = Dune::BCRSMatrix<M>;
     using Vector = Dune::BlockVector<Dune::FieldVector<T, blocksize>>;

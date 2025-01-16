@@ -32,7 +32,7 @@
 
 #include "tutorial1problem.hh" /*@\label{tutorial1:include-problem-header}@*/
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using TypeTag = Opm::Properties::TTag::Tutorial1Problem; /*@\label{tutorial1:set-type-tag}@*/
     return Opm::start<TypeTag>(argc, argv); /*@\label{tutorial1:call-start}@*/

@@ -48,70 +48,70 @@ class MultisegmentWellSegments
     using EvalWell = typename PrimaryVariables::EvalWell;
 
 public:
-    MultisegmentWellSegments(const int numSegments,
-                             const int num_perfs_whole_mswell,
+    MultisegmentWellSegments(const long long numSegments,
+                             const long long num_perfs_whole_mswell,
                              WellInterfaceGeneric<Scalar>& well);
 
     void computeFluidProperties(const EvalWell& temperature,
                                 const EvalWell& saltConcentration,
                                 const PrimaryVariables& primary_variables,
-                                int pvt_region_index,
+                                long long pvt_region_index,
                                 DeferredLogger& deferred_logger);
 
     //! \brief Update upwinding segments.
     void updateUpwindingSegments(const PrimaryVariables& primary_variables);
 
-    EvalWell getHydroPressureLoss(const int seg,
-                                  const int seg_side) const;
+    EvalWell getHydroPressureLoss(const long long seg,
+                                  const long long seg_side) const;
 
     //! Pressure difference between segment and perforation.
-    Scalar getPressureDiffSegPerf(const int seg,
-                                  const int perf) const;
+    Scalar getPressureDiffSegPerf(const long long seg,
+                                  const long long perf) const;
 
     EvalWell getSurfaceVolume(const EvalWell& temperature,
                               const EvalWell& saltConcentration,
                               const PrimaryVariables& primary_variables,
-                              const int pvt_region_index,
-                              const int seg_idx) const;
+                              const long long pvt_region_index,
+                              const long long seg_idx) const;
 
-    EvalWell getFrictionPressureLoss(const int seg, 
+    EvalWell getFrictionPressureLoss(const long long seg, 
                                      const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for Spiral ICD segment (WSEGSICD)
-    EvalWell pressureDropSpiralICD(const int seg,
+    EvalWell pressureDropSpiralICD(const long long seg,
                                    const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for Autonomous ICD segment (WSEGAICD)
-    EvalWell pressureDropAutoICD(const int seg,
+    EvalWell pressureDropAutoICD(const long long seg,
                                  const UnitSystem& unit_system,
                                  const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for sub-critical valve (WSEGVALV)
-    EvalWell pressureDropValve(const int seg, 
+    EvalWell pressureDropValve(const long long seg, 
                                const SummaryState& st,
                                const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure loss contribution due to acceleration
-    EvalWell accelerationPressureLossContribution(const int seg,
+    EvalWell accelerationPressureLossContribution(const long long seg,
                                                   const Scalar area,
                                                   const bool extra_reverse_flow_derivatives = false) const;
 
-    const std::vector<std::vector<int>>& inlets() const
+    const std::vector<std::vector<long long>>& inlets() const
     {
         return inlets_;
     }
 
-    const std::vector<int>& inlets(const int seg) const
+    const std::vector<long long>& inlets(const long long seg) const
     {
         return inlets_[seg];
     }
 
-    const std::vector<std::vector<int>>& perforations() const
+    const std::vector<std::vector<long long>>& perforations() const
     {
         return perforations_;
     }
 
-    int upwinding_segment(const int seg) const
+    long long upwinding_segment(const long long seg) const
     {
         return upwinding_segments_[seg];
     }
@@ -121,12 +121,12 @@ public:
         return densities_[0].value();
     }
 
-    const EvalWell& density(const int seg) const
+    const EvalWell& density(const long long seg) const
     {
         return densities_[seg];
     }
 
-    Scalar perforation_depth_diff(const int perf) const
+    Scalar perforation_depth_diff(const long long perf) const
     {
         return perforation_depth_diffs_[perf];
     }
@@ -144,7 +144,7 @@ private:
     // the order of the completions in wells.
     // it is for convenience reason. we can just calculate the information for segment once
     // then using it for all the perforations belonging to this segment
-    std::vector<std::vector<int>> perforations_;
+    std::vector<std::vector<long long>> perforations_;
 
     // depth difference between the segment and the perforation
     // or in another way, the depth difference between the perforation and
@@ -155,7 +155,7 @@ private:
     std::vector<Scalar> perforation_depth_diffs_;
 
     // the inlet segments for each segment. It is for convenience and efficiency reason
-    std::vector<std::vector<int>> inlets_;
+    std::vector<std::vector<long long>> inlets_;
 
     std::vector<Scalar> depth_diffs_;
 
@@ -170,7 +170,7 @@ private:
     std::vector<EvalWell> viscosities_;
 
     // the upwinding segment for each segment based on the flow direction
-    std::vector<int> upwinding_segments_;
+    std::vector<long long> upwinding_segments_;
 
     std::vector<std::vector<EvalWell>> phase_densities_;
     std::vector<std::vector<EvalWell>> phase_fractions_;
@@ -182,9 +182,9 @@ private:
                             const std::size_t stride,
                             Scalar*           dens) const;
 
-    Scalar mixtureDensity(const int seg) const;
-    Scalar mixtureDensityWithExponents(const int seg) const;
-    Scalar mixtureDensityWithExponents(const AutoICD& aicd, const int seg) const;
+    Scalar mixtureDensity(const long long seg) const;
+    Scalar mixtureDensityWithExponents(const long long seg) const;
+    Scalar mixtureDensityWithExponents(const AutoICD& aicd, const long long seg) const;
 };
 
 } // namespace Opm

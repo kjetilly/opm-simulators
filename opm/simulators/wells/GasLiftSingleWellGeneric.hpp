@@ -49,14 +49,14 @@ template<class Scalar>
 class GasLiftSingleWellGeneric : public GasLiftCommon<Scalar>
 {
 protected:
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int NUM_PHASES = 3;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long NUM_PHASES = 3;
     static constexpr Scalar ALQ_EPSILON = 1e-8;
 
 public:
-    using GLiftSyncGroups = std::set<int>;
+    using GLiftSyncGroups = std::set<long long>;
     using Rate = typename GasLiftGroupInfo<Scalar>::Rate;
     using MessageType = typename GasLiftCommon<Scalar>::MessageType;
 
@@ -106,7 +106,7 @@ public:
                                                  bool increase,
                                                  bool debug_output = true) const;
 
-    std::unique_ptr<GasLiftWellState<Scalar>> runOptimize(const int iteration_idx);
+    std::unique_ptr<GasLiftWellState<Scalar>> runOptimize(const long long iteration_idx);
 
     std::pair<Scalar, bool> wellTestALQ();
 
@@ -121,7 +121,7 @@ protected:
                              GasLiftGroupInfo<Scalar>& group_info,
                              const PhaseUsage& phase_usage,
                              const Schedule& schedule,
-                             const int report_step_idx,
+                             const long long report_step_idx,
                              GLiftSyncGroups& sync_groups,
                              const Parallel::Communication& comm,
                              bool glift_debug);
@@ -247,7 +247,7 @@ protected:
 
         GasLiftSingleWellGeneric& parent;
         bool increase;
-        int it;
+        long long it;
         bool stop_iteration;
         Scalar bhp;
 
@@ -382,7 +382,7 @@ protected:
                          const LimitedRates& orig_rates) const;
 
     void logSuccess_(Scalar alq,
-                     const int iteration_idx);
+                     const long long iteration_idx);
 
     std::pair<LimitedRates, Scalar>
     maybeAdjustALQbeforeOptimizeLoop_(const LimitedRates& rates,
@@ -443,11 +443,11 @@ protected:
     Scalar alpha_g_;
     Scalar eco_grad_;
 
-    int gas_pos_;
-    int oil_pos_;
-    int water_pos_;
+    long long gas_pos_;
+    long long oil_pos_;
+    long long water_pos_;
 
-    int max_iterations_;
+    long long max_iterations_;
 
     std::string well_name_;
 

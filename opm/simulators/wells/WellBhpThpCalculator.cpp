@@ -115,11 +115,11 @@ calculateThpFromBhp(const std::vector<Scalar>& rates,
                     const Scalar thp_limit,
                     DeferredLogger& deferred_logger) const
 {
-    assert(int(rates.size()) == 3); // the vfp related only supports three phases now.
+    assert((long long)(rates.size()) == 3); // the vfp related only supports three phases now.
 
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     const Scalar aqua = rates[Water];
     const Scalar liquid = rates[Oil];
@@ -127,7 +127,7 @@ calculateThpFromBhp(const std::vector<Scalar>& rates,
 
     // pick the density in the top layer
     Scalar thp = 0.0;
-    const int table_id = well_.wellEcl().vfp_table_number();
+    const long long table_id = well_.wellEcl().vfp_table_number();
     if (well_.isInjector()) {
         assert(!alq.has_value());
         const Scalar vfp_ref_depth = well_.vfpProperties()->getInj()->getTable(table_id).getDatumDepth();
@@ -172,8 +172,8 @@ findThpFromBhpIteratively(const std::function<Scalar(const Scalar, const Scalar)
     auto thp = thp_func(bhp, pressure_loss);
     const Scalar tolerance = 1e-5 * unit::barsa;
     bool do_iterate = true;
-    int it = 1;
-    int max_iterations = 50;
+    long long it = 1;
+    long long max_iterations = 50;
     while (do_iterate) {
         if (it > max_iterations) {
             break;
@@ -223,9 +223,9 @@ computeBhpAtThpLimitProd(const std::function<std::vector<Scalar>(const Scalar)>&
     // the one corresponding to the lowest bhp (and therefore
     // highest rate) should be returned.
 
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     // Make the fbhp() function.
     const auto& controls = well_.wellEcl().productionControls(summary_state);
@@ -286,7 +286,7 @@ computeBhpAtThpLimitInj(const std::function<std::vector<Scalar>(const Scalar)>& 
                         const SummaryState& summary_state,
                         const Scalar rho,
                         const Scalar flo_rel_tol,
-                        const int max_iteration,
+                        const long long max_iteration,
                         const bool throwOnError,
                         DeferredLogger& deferred_logger) const
 {
@@ -310,9 +310,9 @@ updateThp(const Scalar rho,
           const SummaryState& summary_state,
           DeferredLogger& deferred_logger) const
 {
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
     auto& ws = well_state.well(well_.indexOfWell());
 
     // When there is no vaild VFP table provided, we set the thp to be zero.
@@ -361,11 +361,11 @@ calculateBhpFromThp(const WellState<Scalar>& well_state,
     // so iterations on a higher level will be required. Some investigation might be needed when
     // we face problems under THP control.
 
-    assert(int(rates.size()) == 3); // the vfp related only supports three phases now.
+    assert((long long)(rates.size()) == 3); // the vfp related only supports three phases now.
 
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     const EvalWell aqua = rates[Water];
     const EvalWell liquid = rates[Oil];
@@ -452,7 +452,7 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
                             const SummaryState& summary_state,
                             const Scalar rho,
                             const Scalar flo_rel_tol,
-                            const int max_iteration,
+                            const long long max_iteration,
                             DeferredLogger& deferred_logger) const
 {
     // Given a VFP function returning bhp as a function of phase
@@ -494,9 +494,9 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
     // in which to solve for the solution we want (with highest
     // flow in case of 2 solutions).
 
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     // Make the fbhp() function.
     const auto& controls = well_.wellEcl().injectionControls(summary_state);
@@ -549,7 +549,7 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
         const Scalar low = 10.0 * unit::barsa;
         const Scalar high = 800.0 * unit::barsa;
         const Scalar flo_tolerance = flo_rel_tol * std::fabs(flo_samples.back());
-        int iteration = 0;
+        long long iteration = 0;
         try {
             const Scalar solved_bhp = RegulaFalsiBisection<ErrorPolicy>::
                     solve(eq, low, high, max_iteration, flo_tolerance, iteration);
@@ -564,23 +564,23 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
     }
 
     // Find bhp values for VFP relation corresponding to flo samples.
-    const int num_samples = bhp_samples.size(); // Note that this can be smaller than flo_samples.size()
+    const long long num_samples = bhp_samples.size(); // Note that this can be smaller than flo_samples.size()
     std::vector<Scalar> fbhp_samples(num_samples);
-    for (int ii = 0; ii < num_samples; ++ii) {
+    for (long long ii = 0; ii < num_samples; ++ii) {
         fbhp_samples[ii] = fbhp(frates(bhp_samples[ii]));
     }
     if constexpr (extraBhpAtThpLimitOutput) {
         std::string dbgmsg;
         dbgmsg += "flo: ";
-        for (int ii = 0; ii < num_samples; ++ii) {
+        for (long long ii = 0; ii < num_samples; ++ii) {
             dbgmsg += "  " + std::to_string(flo_samples[ii]);
         }
         dbgmsg += "\nbhp: ";
-        for (int ii = 0; ii < num_samples; ++ii) {
+        for (long long ii = 0; ii < num_samples; ++ii) {
             dbgmsg += "  " + std::to_string(bhp_samples[ii]);
         }
         dbgmsg += "\nfbhp: ";
-        for (int ii = 0; ii < num_samples; ++ii) {
+        for (long long ii = 0; ii < num_samples; ++ii) {
             dbgmsg += "  " + std::to_string(fbhp_samples[ii]);
         }
         OpmLog::debug(dbgmsg);
@@ -588,8 +588,8 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
 
     // Look for sign changes for the (fbhp_samples - bhp_samples) piecewise linear curve.
     // We only look at the valid
-    int sign_change_index = -1;
-    for (int ii = 0; ii < num_samples - 1; ++ii) {
+    long long sign_change_index = -1;
+    for (long long ii = 0; ii < num_samples - 1; ++ii) {
         const Scalar curr = fbhp_samples[ii] - bhp_samples[ii];
         const Scalar next = fbhp_samples[ii + 1] - bhp_samples[ii + 1];
         if (curr * next < 0.0) {
@@ -611,7 +611,7 @@ computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar
     const Scalar low = bhp_samples[sign_change_index + 1];
     const Scalar high = bhp_samples[sign_change_index];
     const Scalar bhp_tolerance = 0.01 * unit::barsa;
-    int iteration = 0;
+    long long iteration = 0;
     if (low == high) {
         // We are in the high flow regime where the bhp_samples
         // are all equal to the bhp_limit.
@@ -658,8 +658,8 @@ bhpMax(const std::function<Scalar(const Scalar)>& fflo,
                               "  f(low) = " + std::to_string(f_low) +
                               "  f(high) = " + std::to_string(f_high));
     }
-    int adjustments = 0;
-    const int max_adjustments = 10;
+    long long adjustments = 0;
+    const long long max_adjustments = 10;
     const Scalar adjust_amount = 5.0 * unit::barsa;
     while (f_low * f_high > 0.0 && adjustments < max_adjustments) {
         // Same sign, adjust high to see if we can flip it.
@@ -684,8 +684,8 @@ bhpMax(const std::function<Scalar(const Scalar)>& fflo,
         // Bisect to find a bhp point where we produce, but
         // not a large amount ('eps' below).
         const Scalar eps = 0.1 * std::fabs(vfp_flo_front);
-        const int maxit = 50;
-        int it = 0;
+        const long long maxit = 50;
+        long long it = 0;
         while (std::fabs(f_low) > eps && it < maxit) {
             const Scalar curr = 0.5*(low + high);
             const Scalar f_curr = fflo(curr);
@@ -772,9 +772,9 @@ computeBhpAtThpLimit(const std::function<std::vector<Scalar>(const Scalar)>& fra
     }
 
     // Solve for the proper solution in the given interval.
-    const int max_iteration = 100;
+    const long long max_iteration = 100;
     const Scalar bhp_tolerance = 0.01 * unit::barsa;
-    int iteration = 0;
+    long long iteration = 0;
     try {
         const Scalar solved_bhp = RegulaFalsiBisection<ThrowOnError>::
             solve(eq, low, high, max_iteration, bhp_tolerance, iteration);
@@ -814,8 +814,8 @@ bisectBracket(const std::function<Scalar(const Scalar)>& eq,
         // If this is due to having two solutions, bisect until bracketed.
         Scalar abs_low = std::fabs(eq_low);
         Scalar abs_high = std::fabs(eq_high);
-        int bracket_attempts = 0;
-        const int max_bracket_attempts = 20;
+        long long bracket_attempts = 0;
+        const long long max_bracket_attempts = 20;
         Scalar interval = high - low;
         const Scalar min_interval = 1.0 * unit::barsa;
         while (eq_low * eq_high > 0.0 && bracket_attempts < max_bracket_attempts && interval > min_interval) {
@@ -873,11 +873,11 @@ bruteForceBracket(const std::function<Scalar(const Scalar)>& eq,
     bool bracket_found = false;
     low = range[0];
     high = range[1];
-    const int sample_number = 200;
+    const long long sample_number = 200;
     const Scalar interval = (high - low) / sample_number;
     Scalar eq_low = eq(low);
     Scalar eq_high = 0.0;
-    for (int i = 0; i < sample_number + 1; ++i) {
+    for (long long i = 0; i < sample_number + 1; ++i) {
         high = range[0] + interval * i;
         eq_high = eq(high);
         if (eq_high * eq_low <= 0.) {
@@ -902,12 +902,12 @@ isStableSolution(const WellState<Scalar>& well_state,
                  const std::vector<Scalar>& rates,
                  const SummaryState& summaryState) const
 {
-    assert(int(rates.size()) == 3); // the vfp related only supports three phases now.
+    assert((long long)(rates.size()) == 3); // the vfp related only supports three phases now.
     assert(well_.isProducer()); // only valid for producers 
 
-    static constexpr int Gas = BlackoilPhases::Vapour;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Water = BlackoilPhases::Aqua;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Water = BlackoilPhases::Aqua;
 
     const Scalar aqua = rates[Water];
     const Scalar liquid = rates[Oil];
@@ -1017,11 +1017,11 @@ bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq,
     bool bracket_found = false;
     low = range[0];
     high = range[1];
-    const int sample_number = 300;
+    const long long sample_number = 300;
     const Scalar interval = (high - low) / sample_number;
     Scalar eq_low = eq(low);
     Scalar eq_high = 0.0;
-    for (int i = 0; i < sample_number + 1; ++i) {
+    for (long long i = 0; i < sample_number + 1; ++i) {
         high = range[0] + interval * i;
         eq_high = eq(high);
         if ((std::fabs(eq_high) < limit)) {
@@ -1051,11 +1051,11 @@ bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq,
                            Scalar& min_thp, Scalar& max_thp)
 {
     bool bracket_found = false;
-    constexpr int sample_number = 1000;
+    constexpr long long sample_number = 1000;
     constexpr Scalar interval = 1E5; 
     Scalar eq_low = eq(min_thp);
     Scalar eq_high = 0.0;
-    for (int i = 0; i < sample_number + 1; ++i) {
+    for (long long i = 0; i < sample_number + 1; ++i) {
         max_thp = min_thp + interval * i;
         eq_high = eq(max_thp);
         if (eq_high * eq_low <= 0.) {

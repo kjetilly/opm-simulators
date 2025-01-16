@@ -48,9 +48,9 @@ namespace Linear {
 template <class GridView, class VertexMapper>
 class VertexBorderListFromGrid
     : public Dune::CommDataHandleIF<VertexBorderListFromGrid<GridView, VertexMapper>,
-                                    int>
+                                    long long>
 {
-    static const int dimWorld = GridView::dimensionworld;
+    static const long long dimWorld = GridView::dimensionworld;
 
 public:
     VertexBorderListFromGrid(const GridView& gridView, const VertexMapper& map)
@@ -73,13 +73,13 @@ public:
     }
 
     // data handle methods
-    bool contains(int dim, int codim) const
+    bool contains(long long dim, long long codim) const
     { return dim == codim; }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-    bool fixedsize(int, int) const
+    bool fixedsize(long long, long long) const
 #else
-    bool fixedSize(int, int) const
+    bool fixedSize(long long, long long) const
 #endif
     { return true; }
 
@@ -90,8 +90,8 @@ public:
     template <class MessageBufferImp, class EntityType>
     void gather(MessageBufferImp& buff, const EntityType& e) const
     {
-        buff.write(static_cast<int>(gridView_.comm().rank()));
-        buff.write(static_cast<int>(map_.index(e)));
+        buff.write(static_cast<long long>(gridView_.comm().rank()));
+        buff.write(static_cast<long long>(map_.index(e)));
     }
 
     template <class MessageBufferImp, class EntityType>
@@ -101,12 +101,12 @@ public:
 
         bIdx.localIdx = static_cast<Index>(map_.index(e));
         {
-            int tmp;
+            long long tmp;
             buff.read(tmp);
             bIdx.peerRank = static_cast<ProcessRank>(tmp);
         }
         {
-            int tmp;
+            long long tmp;
             buff.read(tmp);
             bIdx.peerIdx = static_cast<Index>(tmp);
         }

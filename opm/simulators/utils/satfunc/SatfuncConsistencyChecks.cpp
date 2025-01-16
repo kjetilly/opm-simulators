@@ -147,7 +147,7 @@ checkEndpoints(const std::size_t                      pointID,
 
 template <typename Scalar>
 void Opm::SatfuncConsistencyChecks<Scalar>::
-collectFailures(const int                      root,
+collectFailures(const long long                      root,
                 const Parallel::Communication& comm)
 {
     if (comm.size() == 1) {
@@ -224,7 +224,7 @@ namespace {
 
 template <typename Scalar>
 void Opm::SatfuncConsistencyChecks<Scalar>::
-collectFailures(const int                      root,
+collectFailures(const long long                      root,
                 const Parallel::Communication& comm,
                 ViolationSample&               violation)
 {

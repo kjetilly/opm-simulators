@@ -62,7 +62,7 @@ struct OutputExtraConvergenceInfo { static constexpr auto* value = "none"; };
 struct SaveStep { static constexpr auto* value = ""; };
 struct SaveFile { static constexpr auto* value = ""; };
 struct LoadFile { static constexpr auto* value = ""; };
-struct LoadStep { static constexpr int value = -1; };
+struct LoadStep { static constexpr long long value = -1; };
 
 } // namespace Opm::Parameters
 
@@ -140,7 +140,7 @@ public:
             this->terminalOutput_ = Parameters::Get<Parameters::EnableTerminalOutput>();
 
             auto getPhaseName = ConvergenceOutputThread::ComponentToPhaseName {
-                [compNames = typename Model::ComponentName{}](const int compIdx)
+                [compNames = typename Model::ComponentName{}](const long long compIdx)
                 { return std::string_view { compNames.name(compIdx) }; }
             };
 
@@ -299,7 +299,7 @@ public:
         if (adaptiveTimeStepping_) {
             auto tuningUpdater = [enableTUNING, this,
                                   reportStep = timer.currentStepNum()](const double curr_time,
-                                                                       double dt, const int timeStep)
+                                                                       double dt, const long long timeStep)
             {
                 auto& schedule = this->simulator_.vanguard().schedule();
                 auto& events = this->schedule()[reportStep].events();
@@ -483,7 +483,7 @@ protected:
     }
 
     //! \brief Returns local-to-global cell mapping.
-    const std::vector<int>& getCellMapping() const override
+    const std::vector<long long>& getCellMapping() const override
     {
         return simulator_.vanguard().globalCell();
     }

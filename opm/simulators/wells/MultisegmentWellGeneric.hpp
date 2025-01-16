@@ -46,17 +46,17 @@ public:
 
     // segment number is an ID of the segment, it is specified in the deck
     // get the loation of the segment with a segment number in the segmentSet
-    int segmentNumberToIndex(const int segment_number) const;
+    long long segmentNumberToIndex(const long long segment_number) const;
 
     /// number of segments for this well
-    int numberOfSegments() const;
+    long long numberOfSegments() const;
 
 protected:
     MultisegmentWellGeneric(WellInterfaceGeneric<Scalar>& baseif);
 
     // scale the segment rates and pressure based on well rates and bhp
-    void scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inlets,
-                                        const std::vector<std::vector<int>>& segment_perforations,
+    void scaleSegmentRatesWithWellRates(const std::vector<std::vector<long long>>& segment_inlets,
+                                        const std::vector<std::vector<long long>>& segment_perforations,
                                         WellState<Scalar>& well_state) const;
     void scaleSegmentPressuresWithBhp(WellState<Scalar>& well_state) const;
 
@@ -71,7 +71,7 @@ protected:
     bool accelerationalPressureLossConsidered() const;
     bool frictionalPressureLossConsidered() const;
 
-    Scalar getSegmentDp(const int seg,
+    Scalar getSegmentDp(const long long seg,
                         const Scalar density,
                         const std::vector<Scalar>& seg_dp) const;
 

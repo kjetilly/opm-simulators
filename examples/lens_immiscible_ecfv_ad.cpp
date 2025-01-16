@@ -33,7 +33,7 @@
 #include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemEcfvAd;
     return Opm::start<ProblemTypeTag>(argc, argv);

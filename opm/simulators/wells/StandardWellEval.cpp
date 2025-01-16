@@ -61,7 +61,7 @@ StandardWellEval<FluidSystem,Indices>::
 extendEval(const Eval& in) const
 {
     EvalWell out(primary_variables_.numWellEq() + Indices::numEq, in.value());
-    for(int eqIdx = 0; eqIdx < Indices::numEq;++eqIdx) {
+    for(long long eqIdx = 0; eqIdx < Indices::numEq;++eqIdx) {
         out.setDerivative(eqIdx, in.derivative(eqIdx));
     }
     return out;
@@ -109,7 +109,7 @@ getWellConvergence(const WellState<Scalar>& well_state,
                    DeferredLogger& deferred_logger) const
 {
     res.resize(this->primary_variables_.numWellEq());
-    for (int eq_idx = 0; eq_idx < this->primary_variables_.numWellEq(); ++eq_idx) {
+    for (long long eq_idx = 0; eq_idx < this->primary_variables_.numWellEq(); ++eq_idx) {
         // magnitude of the residual matters
         res[eq_idx] = std::abs(this->linSys_.residual()[0][eq_idx]);
     }
@@ -117,7 +117,7 @@ getWellConvergence(const WellState<Scalar>& well_state,
     std::vector<Scalar> well_flux_residual(baseif_.numComponents());
 
     // Finish computation
-    for (int compIdx = 0; compIdx < baseif_.numComponents(); ++compIdx )
+    for (long long compIdx = 0; compIdx < baseif_.numComponents(); ++compIdx )
     {
         well_flux_residual[compIdx] = B_avg[compIdx] * res[compIdx];
     }
@@ -132,7 +132,7 @@ getWellConvergence(const WellState<Scalar>& well_state,
         }
 
         const unsigned canonicalCompIdx = FluidSystem::solventComponentIndex(phaseIdx);
-        const int compIdx = Indices::canonicalToActiveComponentIndex(canonicalCompIdx);
+        const long long compIdx = Indices::canonicalToActiveComponentIndex(canonicalCompIdx);
 
         if (std::isnan(well_flux_residual[compIdx])) {
             report.setWellFailed({type, CR::Severity::NotANumber, compIdx, baseif_.name()});
@@ -166,7 +166,7 @@ getWellConvergence(const WellState<Scalar>& well_state,
         // checking the flow direction
         const Scalar sign = baseif_.isProducer() ? -1. : 1.;
         const auto weight_total_flux = this->primary_variables_.value(PrimaryVariables::WQTotal) * sign;
-        constexpr int dummy_phase = -1;
+        constexpr long long dummy_phase = -1;
         if (weight_total_flux < 0.) {
             report.setWellFailed(
                     {CR::WellFailure::Type::WrongFlowDirection, CR::Severity::Normal, dummy_phase, baseif_.name()});
@@ -184,13 +184,13 @@ init(std::vector<Scalar>& perf_depth,
      const bool has_polymermw)
 {
     perf_depth.resize(baseif_.numPerfs(), 0.);
-    for (int perf = 0; perf < baseif_.numPerfs(); ++perf) {
-        const int cell_idx = baseif_.cells()[perf];
+    for (long long perf = 0; perf < baseif_.numPerfs(); ++perf) {
+        const long long cell_idx = baseif_.cells()[perf];
         perf_depth[perf] = depth_arg[cell_idx];
     }
 
     // counting/updating primary variable numbers
-    int numWellEq = primary_variables_.numWellEq();
+    long long numWellEq = primary_variables_.numWellEq();
     if (has_polymermw) {
         if (baseif_.isInjector()) {
             // adding a primary variable for water perforation rate per connection

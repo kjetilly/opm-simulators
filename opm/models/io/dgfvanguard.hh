@@ -90,7 +90,7 @@ public:
         }
 
         if (numRefinments > 0)
-            gridPtr_->globalRefine(static_cast<int>(numRefinments));
+            gridPtr_->globalRefine(static_cast<long long>(numRefinments));
 
         this->finalizeInit_();
     }
@@ -139,7 +139,7 @@ protected:
         using LevelGridView = typename Grid::LevelGridView;
 
         // check if fractures are available (only 2d currently)
-        if (dgfPointer.nofParameters(static_cast<int>(Grid::dimension)) == 0)
+        if (dgfPointer.nofParameters(static_cast<long long>(Grid::dimension)) == 0)
             return;
 
         LevelGridView gridView = dgfPointer->levelGridView(/*level=*/0);
@@ -156,14 +156,14 @@ protected:
             const auto& refElem =
                 Dune::ReferenceElements<Scalar, Grid::dimension>::general(element.type());
 
-            const int edges = refElem.size( edgeCodim );
-            for (int edge = 0; edge < edges; ++edge) {
-                const int vertices = refElem.size(edge, edgeCodim, Grid::dimension);
+            const long long edges = refElem.size( edgeCodim );
+            for (long long edge = 0; edge < edges; ++edge) {
+                const long long vertices = refElem.size(edge, edgeCodim, Grid::dimension);
                 std::vector<unsigned> vertexIndices;
                 vertexIndices.reserve(Grid::dimension);
-                for (int vx = 0; vx < vertices; ++vx) {
+                for (long long vx = 0; vx < vertices; ++vx) {
                     // get local vertex number from edge
-                    const int localVx = refElem.subEntity(edge, edgeCodim, vx, Grid::dimension);
+                    const long long localVx = refElem.subEntity(edge, edgeCodim, vx, Grid::dimension);
 
                     // get vertex
                     const auto vertex = element.template subEntity<Grid::dimension>(localVx);
@@ -172,11 +172,11 @@ protected:
                     if (dgfPointer.parameters( vertex )[ 0 ] > 0)
                         vertexIndices.push_back(
                             static_cast<unsigned>(vertexMapper.subIndex(element,
-                                                                        static_cast<int>(localVx),
+                                                                        static_cast<long long>(localVx),
                                                                         Grid::dimension)));
                 }
                 // if 2 vertices have been found with flag 1 insert a fracture edge
-                if (static_cast<int>(vertexIndices.size()) == Grid::dimension)
+                if (static_cast<long long>(vertexIndices.size()) == Grid::dimension)
                     fractureMapper_.addFractureEdge(vertexIndices[0], vertexIndices[1]);
             }
         }

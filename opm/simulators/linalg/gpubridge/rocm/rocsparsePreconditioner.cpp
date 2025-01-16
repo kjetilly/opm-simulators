@@ -28,10 +28,10 @@
 
 namespace Opm::Accelerator {
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 std::unique_ptr<rocsparsePreconditioner<Scalar,block_size> > rocsparsePreconditioner<Scalar,block_size>::
 create(PreconditionerType type,
-       int verbosity)
+       long long verbosity)
 {
     switch (type ) {
     case PreconditionerType::BILU0:
@@ -40,11 +40,11 @@ create(PreconditionerType type,
         return std::make_unique<Opm::Accelerator::rocsparseCPR<Scalar, block_size> >(verbosity);
     default:
         OPM_THROW(std::logic_error,
-                  "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
+                  "Invalid preconditioner type " + std::to_string(static_cast<long long>(type)));
     }
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparsePreconditioner<Scalar, block_size>::
 set_matrix_analysis(rocsparse_mat_descr desc_L,
                     rocsparse_mat_descr desc_U)
@@ -53,7 +53,7 @@ set_matrix_analysis(rocsparse_mat_descr desc_L,
     descr_U = desc_U;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparsePreconditioner<Scalar, block_size>::
 set_context(rocsparse_handle handle_,
             rocsparse_direction dir_,
@@ -66,7 +66,7 @@ set_context(rocsparse_handle handle_,
     this->stream = stream_;
 }
 
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 void rocsparsePreconditioner<Scalar, block_size>::
 setJacMat(const BlockedMatrix<Scalar>& jMat)
 {

@@ -82,7 +82,7 @@ public:
             level_sets_ = Opm::getMatrixRowColoring(A_, Opm::ColoringType::LOWER);
             reordered_to_natural_ = std::vector<std::size_t>(A_.N());
             natural_to_reorder_ = std::vector<std::size_t>(A_.N());
-            int globCnt = 0;
+            long long globCnt = 0;
             for (const auto& level_set : level_sets_) {
                 for (const auto j : level_set) {
                     reordered_to_natural_[globCnt] = j;
@@ -222,14 +222,14 @@ private:
             }
         }
 
-        int level_start_idx = 0;
-        for (int level = 0; level < level_sets_.size(); ++level) {
-            const int num_of_rows_in_level = level_sets_[level].size();
+        long long level_start_idx = 0;
+        for (long long level = 0; level < level_sets_.size(); ++level) {
+            const long long num_of_rows_in_level = level_sets_[level].size();
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-            for (int row_idx_in_level = 0; row_idx_in_level < num_of_rows_in_level; ++row_idx_in_level) {
+            for (long long row_idx_in_level = 0; row_idx_in_level < num_of_rows_in_level; ++row_idx_in_level) {
                 auto row = A_reordered_->begin() + level_start_idx + row_idx_in_level;
                 const auto row_i = reordered_to_natural_[row.index()];
                 // auto Dinv_temp = Dinv_[row_i];
@@ -308,14 +308,14 @@ private:
         using Yblock = typename Y::block_type;
         {
             OPM_TIMEBLOCK(lower_solve);
-            int level_start_idx = 0;
-            for (int level = 0; level < level_sets_.size(); ++level) {
-                const int num_of_rows_in_level = level_sets_[level].size();
+            long long level_start_idx = 0;
+            for (long long level = 0; level < level_sets_.size(); ++level) {
+                const long long num_of_rows_in_level = level_sets_[level].size();
 
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-                for (int row_idx_in_level = 0; row_idx_in_level < num_of_rows_in_level; ++row_idx_in_level) {
+                for (long long row_idx_in_level = 0; row_idx_in_level < num_of_rows_in_level; ++row_idx_in_level) {
                     auto row = A_reordered_->begin() + level_start_idx + row_idx_in_level;
                     const auto row_i = reordered_to_natural_[row.index()];
                     Yblock rhs = d[row_i];
@@ -334,15 +334,15 @@ private:
         }
 
         {
-            int level_start_idx = A_.N();
+            long long level_start_idx = A_.N();
             //  upper triangular solve: (D + U_A) v = Dy
-            for (int level = level_sets_.size() - 1; level >= 0; --level) {
-                const int num_of_rows_in_level = level_sets_[level].size();
+            for (long long level = level_sets_.size() - 1; level >= 0; --level) {
+                const long long num_of_rows_in_level = level_sets_[level].size();
                 level_start_idx -= num_of_rows_in_level;
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
-                for (int row_idx_in_level = num_of_rows_in_level - 1; row_idx_in_level >= 0; --row_idx_in_level) {
+                for (long long row_idx_in_level = num_of_rows_in_level - 1; row_idx_in_level >= 0; --row_idx_in_level) {
                     auto row = A_reordered_->begin() + level_start_idx + row_idx_in_level;
                     const auto row_i = reordered_to_natural_[row.index()];
                     Xblock rhs(0.0);

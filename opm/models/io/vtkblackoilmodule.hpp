@@ -61,7 +61,7 @@ class VtkBlackOilModule : public BaseOutputModule<TypeTag>
     using GridView = GetPropType<TypeTag, Properties::GridView>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     enum { oilPhaseIdx = FluidSystem::oilPhaseIdx };
@@ -231,11 +231,11 @@ public:
 
             if (params_.primaryVarsMeaningOutput_) {
                 primaryVarsMeaningWater_[globalDofIdx] =
-                    static_cast<int>(primaryVars.primaryVarsMeaningWater());
+                    static_cast<long long>(primaryVars.primaryVarsMeaningWater());
                 primaryVarsMeaningGas_[globalDofIdx] =
-                    static_cast<int>(primaryVars.primaryVarsMeaningGas());
+                    static_cast<long long>(primaryVars.primaryVarsMeaningGas());
                 primaryVarsMeaningPressure_[globalDofIdx] =
-                    static_cast<int>(primaryVars.primaryVarsMeaningPressure());
+                    static_cast<long long>(primaryVars.primaryVarsMeaningPressure());
             }
         }
     }

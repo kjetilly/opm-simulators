@@ -32,7 +32,7 @@ namespace Opm::gpuistl::detail
  * #include <opm/simulators/linalg/gpuistl/detail/CuSparseHandle.hpp>
  * void someFunction() {
  *     auto& cuSparseHandle = ::Opm::gpuistl::detail::CuSparseHandle::getInstance();
- *     int cuSparseVersion = -1;
+ *     long long cuSparseVersion = -1;
  *     OPM_CUSPARSE_SAFE_CALL(cusparseGetVersion(cuSparseHandle.get(), &cuSparseVersion));
  * }
  * @endcode

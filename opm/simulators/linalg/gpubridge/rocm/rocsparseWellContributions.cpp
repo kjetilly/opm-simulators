@@ -78,7 +78,7 @@ __global__ void stdwell_apply(const Scalar* Cnnzs,
     if (wiId < numActiveWorkItems) {
         unsigned b = wiId/valsPerBlock + val_pointers[wgId];
         while (b < valSize + val_pointers[wgId]) {
-            int colIdx = Bcols[b];
+            long long colIdx = Bcols[b];
             localSum[wiId] += Bnnzs[b*dim*dim_wells + r*dim + c]*x[colIdx*dim + c];
             b += numBlocksPerWarp;
         }
@@ -124,7 +124,7 @@ __global__ void stdwell_apply(const Scalar* Cnnzs,
             temp += Cnnzs[bb*dim*dim_wells + j*dim + c]*z2[j];
         }
 
-        int colIdx = Ccols[bb];
+        long long colIdx = Ccols[bb];
         y[colIdx*dim + c] -= temp;
     }
 }
@@ -202,9 +202,9 @@ void WellContributionsRocsparse<Scalar>::setStream(hipStream_t stream_)
 template<class Scalar>
 void WellContributionsRocsparse<Scalar>::
 APIaddMatrix(MatrixType type,
-             int* colIndices,
+             long long* colIndices,
              Scalar* values,
-             unsigned int val_size)
+             size_t val_size)
 {
     if (!this->allocated) {
         OPM_THROW(std::logic_error, "Error cannot add wellcontribution before allocating memory in WellContributions");

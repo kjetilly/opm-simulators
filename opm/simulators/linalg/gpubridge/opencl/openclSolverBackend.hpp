@@ -30,7 +30,7 @@
 namespace Opm::Accelerator {
 
 /// This class implements a opencl-based ilu0-bicgstab solver on GPU
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class openclSolverBackend : public GpuSolver<Scalar,block_size>
 {
     using Base = GpuSolver<Scalar,block_size>;
@@ -119,12 +119,12 @@ public:
     /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL with level_scheduling
     /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
     ///                                       only ilu0, cpr_quasiimpes and isai are supported
-    openclSolverBackend(int linear_solver_verbosity, int maxit, Scalar tolerance,
-                        unsigned int platformID, unsigned int deviceID,
+    openclSolverBackend(long long linear_solver_verbosity, long long maxit, Scalar tolerance,
+                        size_t platformID, size_t deviceID,
                         bool opencl_ilu_parallel, std::string linsolver);
 
     /// For the CPR coarse solver
-    openclSolverBackend(int linear_solver_verbosity, int maxit,
+    openclSolverBackend(long long linear_solver_verbosity, long long maxit,
                         Scalar tolerance, bool opencl_ilu_parallel);
 
     /// Solve linear system, A*x = b, matrix A must be in blocked-CSR format

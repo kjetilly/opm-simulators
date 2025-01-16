@@ -46,8 +46,8 @@ protected:
 
     using MatrixType = typename WellContributions<Scalar>::MatrixType;
 
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, long long* colIndices,
+                      Scalar* values, size_t val_size) override;
 
     Scalar *d_Cnnzs_hip, *d_Dnnzs_hip, *d_Bnnzs_hip;
     unsigned *d_Ccols_hip, *d_Bcols_hip;

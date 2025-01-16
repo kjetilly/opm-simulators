@@ -179,8 +179,8 @@ applyUMFPack(Dune::UMFPack<MatrixType>& linsolver,
 
 template <typename VectorType, typename MatrixType>
 Dune::Matrix<typename MatrixType::block_type>
-invertWithUMFPack(const int size,
-                  const int bsize,
+invertWithUMFPack(const long long size,
+                  const long long bsize,
                   Dune::UMFPack<MatrixType>& linsolver)
 {
 #if HAVE_UMFPACK
@@ -194,12 +194,12 @@ invertWithUMFPack(const int size,
         OPM_THROW(std::runtime_error, "Cannot use invertWithUMFPack() with floats.");
     } else {
         // Create inverse by passing basis vectors to the solver.
-        for (int ii = 0; ii < size; ++ii) {
-            for (int jj = 0; jj < bsize; ++jj) {
+        for (long long ii = 0; ii < size; ++ii) {
+            for (long long jj = 0; jj < bsize; ++jj) {
                 e[ii][jj] = 1.0;
                 auto col = applyUMFPack(linsolver, e);
-                for (int cc = 0; cc < size; ++cc) {
-                    for (int dd = 0; dd < bsize; ++dd) {
+                for (long long cc = 0; cc < size; ++cc) {
+                    for (long long dd = 0; dd < bsize; ++dd) {
                         inv[cc][ii][dd][jj] = col[cc][dd];
                     }
                 }
@@ -347,9 +347,9 @@ ValueType emulsionViscosity(const ValueType& water_fraction,
     }
 }
 
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using Vec = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
-template<class Scalar, int M, int N = M>
+template<class Scalar, long long M, long long N = M>
 using Mat = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,M,N>>;
 
 #define INSTANTIATE_PARALLELLMSWELLB(T, M, N)                                                                                                                                                                                                                                      \
@@ -372,7 +372,7 @@ using Mat = Dune::BCRSMatrix<Dune::FieldMatrix<Scalar,M,N>>;
     template Vec<T,Dim> applyUMFPack(Dune::UMFPack<Mat<T,Dim>>&,           \
                                      Vec<T,Dim>);                          \
     template Dune::Matrix<typename Mat<T,Dim>::block_type>                 \
-    invertWithUMFPack<Vec<T,Dim>,Mat<T,Dim>>(const int, const int,         \
+    invertWithUMFPack<Vec<T,Dim>,Mat<T,Dim>>(const long long, const long long,         \
                                              Dune::UMFPack<Mat<T,Dim>>&);
 
 #define INSTANTIATE_IMPL(T,...)                                    \

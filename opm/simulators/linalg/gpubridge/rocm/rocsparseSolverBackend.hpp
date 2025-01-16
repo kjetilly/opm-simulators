@@ -36,7 +36,7 @@
 namespace Opm::Accelerator {
 
 /// This class implements a rocsparse-based ilu0-bicgstab solver on GPU
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class rocsparseSolverBackend : public GpuSolver<Scalar,block_size>
 {
     using Base = GpuSolver<Scalar,block_size>;
@@ -74,7 +74,7 @@ private:
     Scalar *d_Avals;
     Scalar *d_x, *d_b, *d_r, *d_rw, *d_p; // vectors, used during linear solve
     Scalar *d_pw, *d_s, *d_t, *d_v;
-    int  ver;
+    long long  ver;
     char rev[64];
 
     std::unique_ptr<rocsparsePreconditioner<Scalar, block_size> > prec; // can perform blocked ILU0 and AMG on pressure component
@@ -119,15 +119,15 @@ public:
     /// \param[in] platformID                 the OpenCL platform to be used
     /// \param[in] deviceID                   the device to be used
     /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
-    rocsparseSolverBackend(int linear_solver_verbosity,
-                           int maxit,
+    rocsparseSolverBackend(long long linear_solver_verbosity,
+                           long long maxit,
                            Scalar tolerance,
-                           unsigned int platformID,
-                           unsigned int deviceID,
+                           size_t platformID,
+                           size_t deviceID,
                            std::string linsolver);
 
     /// For the CPR coarse solver
-    rocsparseSolverBackend(int linear_solver_verbosity, int maxit, Scalar tolerance, bool opencl_ilu_reorder);
+    rocsparseSolverBackend(long long linear_solver_verbosity, long long maxit, Scalar tolerance, bool opencl_ilu_reorder);
 
     /// Destroy a openclSolver, and free memory
     ~rocsparseSolverBackend();

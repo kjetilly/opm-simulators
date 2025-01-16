@@ -61,7 +61,7 @@ public:
         field_type sum = 0;
         size_t numLocal = overlap_.numLocal();
         for (unsigned localIdx = 0; localIdx < numLocal; ++localIdx) {
-            if (overlap_.iAmMasterOf(static_cast<int>(localIdx)))
+            if (overlap_.iAmMasterOf(static_cast<long long>(localIdx)))
                 sum += x[localIdx] * y[localIdx];
         }
 

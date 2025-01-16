@@ -117,22 +117,22 @@ struct FlexibleSolverInfo
 #ifdef HAVE_MPI
 /// Copy values in parallel.
 void copyParValues(std::any& parallelInformation, std::size_t size,
-                   Dune::OwnerOverlapCopyCommunication<int,int>& comm);
+                   Dune::OwnerOverlapCopyCommunication<long long,long long>& comm);
 #endif
 
 /// Zero out off-diagonal blocks on rows corresponding to overlap cells
 /// Diagonal blocks on ovelap rows are set to diag(1.0).
 template<class Matrix>
 void makeOverlapRowsInvalid(Matrix& matrix,
-                            const std::vector<int>& overlapRows);
+                            const std::vector<long long>& overlapRows);
 
 /// Create sparsity pattern for block-Jacobi matrix based on partitioning of grid.
 /// Do not initialize the values, that is done in copyMatToBlockJac()
 template<class Matrix, class Grid>
 std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
-                                             const std::vector<int>& cell_part,
+                                             const std::vector<long long>& cell_part,
                                              std::size_t nonzeroes,
-                                             const std::vector<std::set<int>>& wellConnectionsGraph);
+                                             const std::vector<std::set<long long>>& wellConnectionsGraph);
 }
 
     /// This class solves the fully implicit black-oil system by
@@ -165,9 +165,9 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         constexpr static bool isIncompatibleWithCprw = enableMICP || enablePolymerMolarWeight;
 
 #if HAVE_MPI
-        using CommunicationType = Dune::OwnerOverlapCopyCommunication<int,int>;
+        using CommunicationType = Dune::OwnerOverlapCopyCommunication<long long,long long>;
 #else
-        using CommunicationType = Dune::Communication<int>;
+        using CommunicationType = Dune::Communication<long long>;
 #endif
 
     public:
@@ -296,7 +296,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
                 OPM_THROW_NOLOG(std::runtime_error, msg);
             }
 
-            const int interiorCellNum_ = detail::numMatrixRowsToUseInSolver(simulator_.vanguard().grid(), true);
+            const long long interiorCellNum_ = detail::numMatrixRowsToUseInSolver(simulator_.vanguard().grid(), true);
             for (auto& f : flexibleSolver_) {
                 f.interiorCellNum_ = interiorCellNum_;
             }
@@ -324,9 +324,9 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         {
         }
 
-        void setActiveSolver(const int num)
+        void setActiveSolver(const long long num)
         {
-            if (num > static_cast<int>(prm_.size()) - 1) {
+            if (num > static_cast<long long>(prm_.size()) - 1) {
                 OPM_THROW(std::logic_error, "Solver number " + std::to_string(num) + " not available.");
             }
             activeSolverNum_ = num;
@@ -336,7 +336,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             }
         }
 
-        int numAvailableSolvers()
+        long long numAvailableSolvers()
         {
             return flexibleSolver_.size();
         }
@@ -399,7 +399,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             // matrix_ = &M.istlMatrix(); // Must be handled in prepare() instead.
         }
 
-        int getSolveCount() const {
+        long long getSolveCount() const {
             return solveCount_;
         }
 
@@ -412,7 +412,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             OPM_TIMEBLOCK(istlSolverSolve);
             ++solveCount_;
             // Write linear system if asked for.
-            const int verbosity = prm_[activeSolverNum_].get("verbosity", 0);
+            const long long verbosity = prm_[activeSolverNum_].get("verbosity", 0);
             const bool write_matrix = verbosity > 10;
             if (write_matrix) {
                 Helper::writeSystem(simulator_, //simulator is only used to get names
@@ -443,14 +443,14 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         /// \return               the solution x
 
         /// \copydoc NewtonIterationBlackoilInterface::iterations
-        int iterations () const { return iterations_; }
+        long long iterations () const { return iterations_; }
 
         /// \copydoc NewtonIterationBlackoilInterface::parallelInformation
         const std::any& parallelInformation() const { return parallelInformation_; }
 
         const CommunicationType* comm() const { return comm_.get(); }
 
-        void setDomainIndex(const int index)
+        void setDomainIndex(const long long index)
         {
             domainIndex_ = index;
         }
@@ -462,7 +462,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
 
     protected:
 #if HAVE_MPI
-        using Comm = Dune::OwnerOverlapCopyCommunication<int, int>;
+        using Comm = Dune::OwnerOverlapCopyCommunication<long long, long long>;
 #endif
 
         void checkConvergence( const Dune::InverseOperatorResult& result ) const
@@ -553,7 +553,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             }
             if (this->parameters_[activeSolverNum_].cpr_reuse_setup_ == 1) {
                 // Recreate solver on the first iteration of every timestep.
-                const int newton_iteration = this->simulator_.model().newtonMethod().numIterations();
+                const long long newton_iteration = this->simulator_.model().newtonMethod().numIterations();
                 return newton_iteration == 0;
             }
             if (this->parameters_[activeSolverNum_].cpr_reuse_setup_ == 2) {
@@ -566,7 +566,7 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             }
             if (this->parameters_[activeSolverNum_].cpr_reuse_setup_ == 4) {
                 // Recreate solver every 'step' solve calls.
-                const int step = this->parameters_[activeSolverNum_].cpr_reuse_interval_;
+                const long long step = this->parameters_[activeSolverNum_].cpr_reuse_interval_;
                 const bool create = ((solveCount_ % step) == 0);
                 return create;
             }
@@ -654,8 +654,8 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         }
 
         const Simulator& simulator_;
-        mutable int iterations_;
-        mutable int solveCount_;
+        mutable long long iterations_;
+        mutable long long solveCount_;
         mutable bool converged_;
         std::any parallelInformation_;
 
@@ -663,12 +663,12 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         Matrix* matrix_;
         Vector *rhs_;
 
-        int activeSolverNum_ = 0;
+        long long activeSolverNum_ = 0;
         std::vector<detail::FlexibleSolverInfo<Matrix,Vector,CommunicationType>> flexibleSolver_;
-        std::vector<int> overlapRows_;
-        std::vector<int> interiorRows_;
+        std::vector<long long> overlapRows_;
+        std::vector<long long> interiorRows_;
 
-        int domainIndex_ = -1;
+        long long domainIndex_ = -1;
 
         bool useWellConn_;
 

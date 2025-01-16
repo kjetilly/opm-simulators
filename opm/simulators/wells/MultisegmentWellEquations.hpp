@@ -39,7 +39,7 @@ template<class M> class UMFPack;
 namespace Opm
 {
 
-template<class Scalar, int numWellEq, int numEq> class MultisegmentWellEquationAccess;
+template<class Scalar, long long numWellEq, long long numEq> class MultisegmentWellEquationAccess;
 template<class Scalar> class MultisegmentWellGeneric;
 #if COMPILE_GPU_BRIDGE
 template<class Scalar> class WellContributions;
@@ -47,7 +47,7 @@ template<class Scalar> class WellContributions;
 template<class Scalar> class WellInterfaceGeneric;
 template<class Scalar> class WellState;
 
-template<class Scalar, int numWellEq, int numEq>
+template<class Scalar, long long numWellEq, long long numEq>
 class MultisegmentWellEquations
 {
 public:
@@ -77,10 +77,10 @@ public:
     //! \param cells Cell indices for perforations
     //! \param segment_inlets Cell indices for segment inlets
     //! \param segment_perforations Cell indices for segment perforations
-    void init(const int numPerfs,
-              const std::vector<int>& cells,
-              const std::vector<std::vector<int>>& segment_inlets,
-              const std::vector<std::vector<int>>& segment_perforations);
+    void init(const long long numPerfs,
+              const std::vector<long long>& cells,
+              const std::vector<std::vector<long long>>& segment_inlets,
+              const std::vector<std::vector<long long>>& segment_perforations);
 
     //! \brief Set all coefficients to 0.
     void clear();
@@ -117,10 +117,10 @@ public:
     template<class PressureMatrix>
     void extractCPRPressureMatrix(PressureMatrix& jacobian,
                                   const BVector& weights,
-                                  const int pressureVarIndex,
+                                  const long long pressureVarIndex,
                                   const bool /*use_well_weights*/,
                                   const WellInterfaceGeneric<Scalar>& well,
-                                  const int seg_pressure_var_ind,
+                                  const long long seg_pressure_var_ind,
                                   const WellState<Scalar>& well_state) const;
 
     //! \brief Sum with off-process contribution.
@@ -151,7 +151,7 @@ public:
     const MultisegmentWellGeneric<Scalar>& well_; //!< Reference to well
 
     // Store the global index of well perforated cells
-    std::vector<int> cells_;
+    std::vector<long long> cells_;
 
     const ParallelWellInfo<Scalar>& pw_info_;
 

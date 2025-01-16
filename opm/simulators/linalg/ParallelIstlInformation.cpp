@@ -86,14 +86,14 @@ struct CopyGatherScatter
     }
 };
 
-template<int I=0, typename... BinaryOperators, typename... ReturnValues>
+template<long long I=0, typename... BinaryOperators, typename... ReturnValues>
 typename std::enable_if<I == sizeof...(BinaryOperators), void>::type
 computeGlobalReduction(const std::tuple<ReturnValues...>&,
                        std::tuple<BinaryOperators...>&,
                        std::tuple<ReturnValues...>&)
 {}
 
-template<int I=0, typename... BinaryOperators, typename... ReturnValues>
+template<long long I=0, typename... BinaryOperators, typename... ReturnValues>
 typename std::enable_if<I !=sizeof...(BinaryOperators), void>::type
 computeGlobalReduction(const std::tuple<ReturnValues...>& receivedValues,
                        std::tuple<BinaryOperators...>& operators,
@@ -104,7 +104,7 @@ computeGlobalReduction(const std::tuple<ReturnValues...>& receivedValues,
     computeGlobalReduction<I+1>(receivedValues, operators, values);
 }
 
-template<int I=0, typename... Containers, typename... BinaryOperators, typename... ReturnValues>
+template<long long I=0, typename... Containers, typename... BinaryOperators, typename... ReturnValues>
 typename std::enable_if<I==sizeof...(Containers), void>::type
 computeLocalReduction(const std::tuple<Containers...>&,
                       std::tuple<BinaryOperators...>&,
@@ -112,7 +112,7 @@ computeLocalReduction(const std::tuple<Containers...>&,
                       const std::vector<double>&)
 {}
 
-template<int I=0, typename... Containers, typename... BinaryOperators, typename... ReturnValues>
+template<long long I=0, typename... Containers, typename... BinaryOperators, typename... ReturnValues>
 typename std::enable_if<I!=sizeof...(Containers), void>::type
 computeLocalReduction(const std::tuple<Containers...>& containers,
                       std::tuple<BinaryOperators...>& operators,
@@ -346,7 +346,7 @@ using Vals2 = std::tuple<T,T,T,T,T>;
     INSTANCE1(T) \
     INSTANCE2(T)
 
-INSTANCE(int)
+INSTANCE(long long)
 INSTANCE(float)
 INSTANCE(std::size_t)
 

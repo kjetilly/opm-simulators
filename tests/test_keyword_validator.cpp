@@ -58,19 +58,19 @@ const PartiallySupportedKeywords<std::string> test_string_items = {
 };
 
 
-const PartiallySupportedKeywords<int> test_int_items = {
+const PartiallySupportedKeywords<long long> test_int_items = {
     {
         "ENDSCALE",
         {
-            {3, {false, allow_values<int> {1}, std::nullopt}}, // NTENDP
-            {4, {true, allow_values<int> {20, 30, 40}, std::nullopt}}, // NSENDP
+            {3, {false, allow_values<long long> {1}, std::nullopt}}, // NTENDP
+            {4, {true, allow_values<long long> {20, 30, 40}, std::nullopt}}, // NSENDP
         },
     },
     {
         "COMPDAT",
         {
-            {2, {false, allow_values<int> {1}, std::nullopt}}, // I
-            {3, {false, allow_values<int> {1}, std::nullopt}}, // J
+            {2, {false, allow_values<long long> {1}, std::nullopt}}, // I
+            {3, {false, allow_values<long long> {1}, std::nullopt}}, // J
         },
     },
 };

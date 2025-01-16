@@ -33,7 +33,7 @@
 ///
 #define cudaCheckLastError(msg)    __cudaCheckError( __FILE__, __LINE__, #msg )
 
-inline void __cudaCheckError(const char *file, const int line, const char *msg){
+inline void __cudaCheckError(const char *file, const long long line, const char *msg){
     cudaError err = cudaGetLastError();
     if (cudaSuccess != err){
         std::ostringstream out;

@@ -120,7 +120,7 @@ namespace {
         return rate;
     }
 
-    std::vector<int> all_same_region()
+    std::vector<long long> all_same_region()
     {
         return {
             1, 1,
@@ -128,7 +128,7 @@ namespace {
         };
     }
 
-    std::vector<int> left_right_split_region()
+    std::vector<long long> left_right_split_region()
     {
         return {
             1, 2,
@@ -136,7 +136,7 @@ namespace {
         };
     }
 
-    std::vector<int> checker_board_region()
+    std::vector<long long> checker_board_region()
     {
         return {
             1, 2,
@@ -144,7 +144,7 @@ namespace {
         };
     }
 
-    std::vector<int> all_separate_region()
+    std::vector<long long> all_separate_region()
     {
         return {
             4, 3,
@@ -154,14 +154,14 @@ namespace {
 
     namespace TwoProc {
         namespace P1 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return (cellID % 2) == 1;
             }
         } // namespace P1
 
         namespace P2 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return (cellID % 2) == 0;
             }
@@ -170,28 +170,28 @@ namespace {
 
     namespace FourProc {
         namespace P1 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return cellID == 1;
             }
         } // namespace P1
 
         namespace P2 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return cellID == 2;
             }
         } // namespace P2
 
         namespace P3 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return cellID == 3;
             }
         } // namespace P3
 
         namespace P4 {
-            bool isInterior(const int cellID)
+            bool isInterior(const long long cellID)
             {
                 return cellID == 0;
             }

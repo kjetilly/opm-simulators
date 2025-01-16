@@ -37,7 +37,7 @@ class DeferredLogger;
 class Group;
 template<class Scalar> class GroupState;
 enum class InjectorType;
-using RegionId = int;
+using RegionId = long long;
 class Schedule;
 class SummaryState;
 template<class Scalar> class WellInterfaceGeneric;
@@ -51,7 +51,7 @@ public:
     WellGroupConstraints(const WellInterfaceGeneric<Scalar>& well) : well_(well) {}
 
     using RateConvFunc = std::function<void(const RegionId,
-                                            const int,
+                                            const long long,
                                             const std::optional<std::string>&,
                                             std::vector<Scalar>&)>;
 

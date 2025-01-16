@@ -105,9 +105,9 @@ assembleControlEqProd(const WellState<Scalar>& well_state,
         total_rate = 0.0;
         std::vector<Scalar> convert_coeff(well_.numPhases(), 1.0);
         well_.rateConverter().calcCoeff(/*fipreg*/ 0, well_.pvtRegionIdx(), well_state.well(well_.indexOfWell()).surface_rates, convert_coeff);
-        for (int phase = 0; phase < 3; ++phase) {
+        for (long long phase = 0; phase < 3; ++phase) {
             if (pu.phase_used[phase]) {
-                const int pos = pu.phase_pos[phase];
+                const long long pos = pu.phase_pos[phase];
                 total_rate -= rates[phase] * convert_coeff[pos]; // Note different indices.
             }
         }
@@ -149,12 +149,12 @@ assembleControlEqProd(const WellState<Scalar>& well_state,
         // group production control things we must pass only the
         // active phases' rates.
         std::vector<EvalWell> active_rates(pu.num_phases);
-        for (int canonical_phase = 0; canonical_phase < 3; ++canonical_phase) {
+        for (long long canonical_phase = 0; canonical_phase < 3; ++canonical_phase) {
             if (pu.phase_used[canonical_phase]) {
                 active_rates[pu.phase_pos[canonical_phase]] = rates[canonical_phase];
             }
         }
-        auto rCoeff = [this, &group_state](const RegionId id, const int region,
+        auto rCoeff = [this, &group_state](const RegionId id, const long long region,
                                            const std::optional<std::string>& prod_gname,
                                            std::vector<Scalar>& coeff)
         {
@@ -254,7 +254,7 @@ assembleControlEqInj(const WellState<Scalar>& well_state,
     case Well::InjectorCMode::GRUP: {
         assert(well_.wellEcl().isAvailableForGroupControl());
         const auto& group = schedule.getGroup(well_.wellEcl().groupName(), well_.currentStep());
-        auto rCoeff = [this, &group_state](const RegionId id, const int region,
+        auto rCoeff = [this, &group_state](const RegionId id, const long long region,
                                            const std::optional<std::string>& prod_gname,
                                            std::vector<Scalar>& coeff)
         {

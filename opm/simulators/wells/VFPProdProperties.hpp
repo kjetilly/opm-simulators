@@ -60,7 +60,7 @@ public:
      * input ADB objects.
      */
     template <class EvalWell>
-    EvalWell bhp(const int       table_id,
+    EvalWell bhp(const long long       table_id,
                  const EvalWell& aqua,
                  const EvalWell& liquid,
                  const EvalWell& vapour,
@@ -82,7 +82,7 @@ public:
      * @return The bottom hole pressure, interpolated/extrapolated linearly using
      * the above parameters from the values in the input table.
      */
-    Scalar bhp(const int    table_id,
+    Scalar bhp(const long long    table_id,
                const Scalar aqua,
                const Scalar liquid,
                const Scalar vapour,
@@ -104,7 +104,7 @@ public:
      * @return The tubing hole pressure, interpolated/extrapolated linearly using
      * the above parameters from the values in the input table.
      */
-    Scalar thp(const int table_id,
+    Scalar thp(const long long table_id,
                const Scalar aqua,
                const Scalar liquid,
                const Scalar vapour,
@@ -118,12 +118,12 @@ public:
      * Returns the table associated with the ID, or throws an exception if
      * the table does not exist
      */
-    const VFPProdTable& getTable(const int table_id) const;
+    const VFPProdTable& getTable(const long long table_id) const;
 
     /**
      * Check whether there is table associated with ID
      */
-    bool hasTable(const int table_id) const;
+    bool hasTable(const long long table_id) const;
 
     /**
      * Returns true if no vfp tables are in the current map
@@ -136,13 +136,13 @@ public:
     /**
      * Returns minimum bhp for given thp, wfr, gfr and alq 
      */
-    Scalar minimumBHP(const int table_id, const Scalar thp,
+    Scalar minimumBHP(const long long table_id, const Scalar thp,
                       const Scalar wfr, const Scalar gfr, const Scalar alq) const;
 
 protected:
     // calculate a group bhp values with a group of flo rate values
     std::vector<Scalar> bhpwithflo(const std::vector<Scalar>& flos,
-                                   const int table_id,
+                                   const long long table_id,
                                    const Scalar wfr,
                                    const Scalar gfr,
                                    const Scalar thp,
@@ -150,7 +150,7 @@ protected:
                                    const Scalar dp) const;
 
     // Map which connects the table number with the table itself
-    std::map<int, std::reference_wrapper<const VFPProdTable>> m_tables;
+    std::map<long long, std::reference_wrapper<const VFPProdTable>> m_tables;
 };
 
 } // namespace Opm

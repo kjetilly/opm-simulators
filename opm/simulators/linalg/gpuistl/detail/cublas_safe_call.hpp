@@ -43,7 +43,7 @@ namespace
      * @param code an error code from a cublas routine
      * @return a human readable string.
      */
-    inline std::string getCublasErrorCodeToString(int code)
+    inline std::string getCublasErrorCodeToString(long long code)
     {
         CHECK_CUBLAS_ERROR_TYPE(code, CUBLAS_STATUS_SUCCESS);
         CHECK_CUBLAS_ERROR_TYPE(code, CUBLAS_STATUS_NOT_INITIALIZED);

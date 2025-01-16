@@ -109,7 +109,7 @@ void  milu0_decomposition(M& A, std::vector<typename M::block_type>* diagonal)
 
 
 template<class M>
-void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
+void milun_decomposition(const M& A, long long n, MILU_VARIANT milu, M& ILU,
                          Reorderer& ordering, Reorderer& inverseOrdering);
 
 } // end namespace details

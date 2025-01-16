@@ -76,21 +76,21 @@ public:
      * \brief Set the offset in the global system of equations for the first degree of
      *        freedom of this auxiliary module.
      */
-    void setDofOffset(int value)
+    void setDofOffset(long long value)
     { dofOffset_ = value; }
 
     /*!
      * \brief Return the offset in the global system of equations for the first degree of
      *        freedom of this auxiliary module.
      */
-    int dofOffset()
+    long long dofOffset()
     { return dofOffset_; }
 
     /*!
      * \brief Given a degree of freedom relative to the current auxiliary equation,
      *        return the corresponding index in the global system of equations.
      */
-    int localToGlobalDof(unsigned localDofIdx) const
+    long long localToGlobalDof(unsigned localDofIdx) const
     {
         assert(localDofIdx < numDofs());
         return dofOffset_ + localDofIdx;
@@ -122,7 +122,7 @@ public:
     {};
 
 private:
-    int dofOffset_;
+    long long dofOffset_;
 };
 
 } // namespace Opm

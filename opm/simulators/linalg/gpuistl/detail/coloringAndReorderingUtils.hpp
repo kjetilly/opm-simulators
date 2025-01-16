@@ -33,26 +33,26 @@ extracting sparsity structures from dune matrices and creating gpusparsematrix i
 */
 namespace Opm::gpuistl::detail
 {
-inline std::vector<int>
+inline std::vector<long long>
 createReorderedToNatural(const Opm::SparseTable<size_t>& levelSets)
 {
-    auto res = std::vector<int>(Opm::gpuistl::detail::to_size_t(levelSets.dataSize()));
-    int globCnt = 0;
+    auto res = std::vector<long long>(Opm::gpuistl::detail::to_size_t(levelSets.dataSize()));
+    long long globCnt = 0;
     for (auto row : levelSets) {
         for (auto col : row) {
             OPM_ERROR_IF(Opm::gpuistl::detail::to_size_t(globCnt) >= res.size(),
                          fmt::format("Internal error. globCnt = {}, res.size() = {}", globCnt, res.size()));
-            res[globCnt++] = static_cast<int>(col);
+            res[globCnt++] = static_cast<long long>(col);
         }
     }
     return res;
 }
 
-inline std::vector<int>
+inline std::vector<long long>
 createNaturalToReordered(const Opm::SparseTable<size_t>& levelSets)
 {
-    auto res = std::vector<int>(Opm::gpuistl::detail::to_size_t(levelSets.dataSize()));
-    int globCnt = 0;
+    auto res = std::vector<long long>(Opm::gpuistl::detail::to_size_t(levelSets.dataSize()));
+    long long globCnt = 0;
     for (auto row : levelSets) {
         for (auto col : row) {
             OPM_ERROR_IF(Opm::gpuistl::detail::to_size_t(globCnt) >= res.size(),
@@ -65,7 +65,7 @@ createNaturalToReordered(const Opm::SparseTable<size_t>& levelSets)
 
 template <class M, class field_type, class GPUM>
 inline std::unique_ptr<GPUM>
-createReorderedMatrix(const M& naturalMatrix, const std::vector<int>& reorderedToNatural)
+createReorderedMatrix(const M& naturalMatrix, const std::vector<long long>& reorderedToNatural)
 {
     M reorderedMatrix(naturalMatrix.N(), naturalMatrix.N(), naturalMatrix.nonzeroes(), M::row_wise);
     for (auto dstRowIt = reorderedMatrix.createbegin(); dstRowIt != reorderedMatrix.createend(); ++dstRowIt) {
@@ -80,7 +80,7 @@ createReorderedMatrix(const M& naturalMatrix, const std::vector<int>& reorderedT
 
 template <class M, class field_type, class GPUM>
 inline std::tuple<std::unique_ptr<GPUM>, std::unique_ptr<GPUM>>
-extractLowerAndUpperMatrices(const M& naturalMatrix, const std::vector<int>& reorderedToNatural)
+extractLowerAndUpperMatrices(const M& naturalMatrix, const std::vector<long long>& reorderedToNatural)
 {
     const size_t new_nnz = (naturalMatrix.nonzeroes() - naturalMatrix.N()) / 2;
 

@@ -41,9 +41,9 @@ std::string initDamarisXmlFile(); // Defined in initDamarisXMLFile.cpp, to avoid
  * by  filling in the XML file and storing it in the chosen directory
  */
 void
-initializeDamaris(const Parallel::Communication comm, const int mpiRank, const std::map<std::string, std::string>& find_replace_map )
+initializeDamaris(const Parallel::Communication comm, const long long mpiRank, const std::map<std::string, std::string>& find_replace_map )
 {
-    int dam_err;
+    long long dam_err;
 
     /* Get the name of the Damaris input file from an environment variable if available */
     const char* cs_damaris_xml_file = getenv("FLOW_DAMARIS_XML_FILE");

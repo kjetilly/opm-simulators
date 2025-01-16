@@ -186,11 +186,11 @@ computePressureDelta()
     //    perforation for each well, for which it will be the
     //    difference to the reference (bhp) depth.
 
-    const int nperf = well_.numPerfs();
+    const long long nperf = well_.numPerfs();
     perf_pressure_diffs_.resize(nperf, 0.0);
     auto z_above = well_.parallelWellInfo().communicateAboveValues(well_.refDepth(), well_.perfDepth());
 
-    for (int perf = 0; perf < nperf; ++perf) {
+    for (long long perf = 0; perf < nperf; ++perf) {
         const Scalar dz = well_.perfDepth()[perf] - z_above[perf];
         perf_pressure_diffs_[perf] = dz * perf_densities_[perf] * well_.gravity();
     }
@@ -231,8 +231,8 @@ computeDensities(const std::vector<Scalar>& perfComponentRates,
         ? static_cast<Ix>(Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx))
         : static_cast<Ix>(-1);
 
-    const int nperf    = this->well_.numPerfs();
-    const int num_comp = this->well_.numComponents();
+    const long long nperf    = this->well_.numPerfs();
+    const long long num_comp = this->well_.numComponents();
 
     // 1. Compute the flow (in surface volume units for each component)
     //    exiting up the wellbore from each perforation, taking into account
@@ -247,7 +247,7 @@ computeDensities(const std::vector<Scalar>& perfComponentRates,
     auto componentMixture = std::vector<Scalar>(num_comp, Scalar{0});
     auto phaseMixture     = std::vector<Scalar>(num_comp, Scalar{0});
 
-    for (int perf = 0; perf < nperf; ++perf) {
+    for (long long perf = 0; perf < nperf; ++perf) {
         this->initialiseConnectionMixture(num_comp, perf,
                                           q_out_perf,
                                           phaseMixture,
@@ -294,8 +294,8 @@ std::vector<typename StandardWellConnections<FluidSystem, Indices>::Scalar>
 StandardWellConnections<FluidSystem, Indices>::
 calculatePerforationOutflow(const std::vector<Scalar>& perfComponentRates) const
 {
-    const int nperf    = this->well_.numPerfs();
-    const int num_comp = this->well_.numComponents();
+    const long long nperf    = this->well_.numPerfs();
+    const long long num_comp = this->well_.numComponents();
 
     auto q_out_perf = std::vector<Scalar>(nperf * num_comp, Scalar{0});
 
@@ -314,8 +314,8 @@ calculatePerforationOutflow(const std::vector<Scalar>& perfComponentRates) const
     // TODO: Investigate whether we should use the following techniques to
     // calcuate the composition of flows in the wellbore.  Iterate over well
     // perforations from bottom to top.
-    for (int perf = factory.numGlobalPerfs() - 1; perf >= 0; --perf) {
-        for (int component = 0; component < num_comp; ++component) {
+    for (long long perf = factory.numGlobalPerfs() - 1; perf >= 0; --perf) {
+        for (long long component = 0; component < num_comp; ++component) {
             const auto index = perf*num_comp + component;
             auto& q_out = global_q_out_perf[index];
 
@@ -339,8 +339,8 @@ calculatePerforationOutflow(const std::vector<Scalar>& perfComponentRates) const
 
 template <class FluidSystem, class Indices>
 void StandardWellConnections<FluidSystem, Indices>::
-initialiseConnectionMixture(const int                  num_comp,
-                            const int                  perf,
+initialiseConnectionMixture(const long long                  num_comp,
+                            const long long                  perf,
                             const std::vector<Scalar>& q_out_perf,
                             const std::vector<Scalar>& phaseMixture,
                             std::vector<Scalar>&       componentMixture) const
@@ -353,7 +353,7 @@ initialiseConnectionMixture(const int                  num_comp,
     if (tot_surf_rate != Scalar{0}) {
         const auto* const qo = &q_out_perf[perf*num_comp + 0];
 
-        for (int component = 0; component < num_comp; ++component) {
+        for (long long component = 0; component < num_comp; ++component) {
             componentMixture[component] = std::abs(qo[component] / tot_surf_rate);
         }
     }
@@ -426,7 +426,7 @@ computeDensitiesForStoppedProducer(const DensityPropertyFunctions& prop_func)
     const auto np = this->well_.numPhases();
 
     const auto modPhIx = [this, np]() {
-        auto phIx = std::vector<int>(np);
+        auto phIx = std::vector<long long>(np);
 
         for (auto p = 0*np; p < np; ++p) {
             phIx[p] = this->well_.flowPhaseToModelPhaseIdx(p);
@@ -465,7 +465,7 @@ computePropertiesForPressures(const WellState<Scalar>&         well_state,
 {
     auto props = Properties{};
 
-    const int nperf = well_.numPerfs();
+    const long long nperf = well_.numPerfs();
     const PhaseUsage& pu = well_.phaseUsage();
 
     props.b_perf        .resize(nperf * this->well_.numComponents());
@@ -473,9 +473,9 @@ computePropertiesForPressures(const WellState<Scalar>&         well_state,
 
     const auto& ws = well_state.well(this->well_.indexOfWell());
 
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     const bool waterPresent = FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx);
     const bool oilPresent = FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx);
@@ -498,13 +498,13 @@ computePropertiesForPressures(const WellState<Scalar>&         well_state,
     const auto  p_above    = this->well_.parallelWellInfo()
         .communicateAboveValues(ws.bhp, perf_press.data(), nperf);
 
-    for (int perf = 0; perf < nperf; ++perf) {
-        const int cell_idx = well_.cells()[perf];
+    for (long long perf = 0; perf < nperf; ++perf) {
+        const long long cell_idx = well_.cells()[perf];
 
         const Scalar p_avg = (perf_press[perf] + p_above[perf])/2;
         const Scalar temperature = prop_func.getTemperature(cell_idx, FluidSystem::oilPhaseIdx);
         const Scalar saltConcentration = prop_func.getSaltConcentration(cell_idx);
-        const int region_idx = prop_func.pvtRegionIdx(cell_idx);
+        const long long region_idx = prop_func.pvtRegionIdx(cell_idx);
 
         if (waterPresent) {
             const unsigned waterCompIdx = Indices::canonicalToActiveComponentIndex(FluidSystem::waterCompIdx);
@@ -529,7 +529,7 @@ computePropertiesForPressures(const WellState<Scalar>&         well_state,
 
         if (gasPresent) {
             const unsigned gasCompIdx = Indices::canonicalToActiveComponentIndex(FluidSystem::gasCompIdx);
-            const int gaspos = gasCompIdx + perf * well_.numComponents();
+            const long long gaspos = gasCompIdx + perf * well_.numComponents();
 
             Scalar rvw = 0.0;
             Scalar rv = 0.0;
@@ -572,7 +572,7 @@ computePropertiesForPressures(const WellState<Scalar>&         well_state,
 
         if (oilPresent) {
             const unsigned oilCompIdx = Indices::canonicalToActiveComponentIndex(FluidSystem::oilCompIdx);
-            const int oilpos = oilCompIdx + perf * well_.numComponents();
+            const long long oilpos = oilCompIdx + perf * well_.numComponents();
 
             Scalar rs = 0.0;
             if (gasPresent) {
@@ -627,12 +627,12 @@ copyInPerforationRates(const Properties&       props,
 {
     auto perfRates = std::vector<Scalar>(props.b_perf.size(), Scalar{0});
 
-    const int nperf = this->well_.numPerfs();
-    const int np    = this->well_.numPhases();
-    const int nc    = this->well_.numComponents();
+    const long long nperf = this->well_.numPerfs();
+    const long long np    = this->well_.numPhases();
+    const long long nc    = this->well_.numComponents();
 
     const auto srcIx = [this, np]() {
-        auto ix = std::vector<int>(np);
+        auto ix = std::vector<long long>(np);
 
         for (auto comp = 0; comp < np; ++comp) {
             ix[comp] = this->well_.modelCompIdxToFlowCompIdx(comp);
@@ -641,17 +641,17 @@ copyInPerforationRates(const Properties&       props,
         return ix;
     }();
 
-    for (int perf = 0; perf < nperf; ++perf) {
+    for (long long perf = 0; perf < nperf; ++perf) {
         const auto* const src = &perf_data.phase_rates[perf*np + 0];
         auto* const       dst = &perfRates            [perf*nc + 0];
 
-        for (int comp = 0; comp < np; ++comp) {
+        for (long long comp = 0; comp < np; ++comp) {
             dst[comp] = src[srcIx[comp]];
         }
     }
 
     if constexpr (Indices::enableSolvent) {
-        for (int perf = 0, ix_s = 0*nc + Indices::contiSolventEqIdx;
+        for (long long perf = 0, ix_s = 0*nc + Indices::contiSolventEqIdx;
              perf < nperf; ++perf, ix_s += nc)
         {
             perfRates[ix_s] = perf_data.solvent_rates[perf];

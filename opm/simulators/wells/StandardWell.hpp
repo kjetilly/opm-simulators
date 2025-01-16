@@ -93,17 +93,17 @@ namespace Opm
         using typename Base::PressureMatrix;
 
         // number of the conservation equations
-        static constexpr int numWellConservationEq = Indices::numPhases + Indices::numSolvents;
+        static constexpr long long numWellConservationEq = Indices::numPhases + Indices::numSolvents;
         // number of the well control equations
-        static constexpr int numWellControlEq = 1;
+        static constexpr long long numWellControlEq = 1;
         // number of the well equations that will always be used
         // based on the solution strategy, there might be other well equations be introduced
-        static constexpr int numStaticWellEq = numWellConservationEq + numWellControlEq;
+        static constexpr long long numStaticWellEq = numWellConservationEq + numWellControlEq;
 
         // the index for Bhp in primary variables and also the index of well control equation
         // they both will be the last one in their respective system.
         // TODO: we should have indices for the well equations and well primary variables separately
-        static constexpr int Bhp = numStaticWellEq - numWellControlEq;
+        static constexpr long long Bhp = numStaticWellEq - numWellControlEq;
 
         using StdWellEval::WQTotal;
 
@@ -122,13 +122,13 @@ namespace Opm
 
         StandardWell(const Well& well,
                      const ParallelWellInfo<Scalar>& pw_info,
-                     const int time_step,
+                     const long long time_step,
                      const ModelParameters& param,
                      const RateConverterType& rate_converter,
-                     const int pvtRegionIdx,
-                     const int num_components,
-                     const int num_phases,
-                     const int index_of_well,
+                     const long long pvtRegionIdx,
+                     const long long num_components,
+                     const long long num_phases,
+                     const long long index_of_well,
                      const std::vector<PerforationData<Scalar>>& perf_data);
 
         virtual void init(const PhaseUsage* phase_usage_arg,
@@ -181,14 +181,14 @@ namespace Opm
                                      WellState<Scalar>& well_state,
                                      DeferredLogger& deferred_logger) const override;
 
-        Scalar connectionDensity(const int globalConnIdx,
-                                 const int openConnIdx) const override;
+        Scalar connectionDensity(const long long globalConnIdx,
+                                 const long long openConnIdx) const override;
 
         void addWellContributions(SparseMatrixAdapter& mat) const override;
 
         void addWellPressureEquations(PressureMatrix& mat,
                                       const BVector& x,
-                                      const int pressureVarIndex,
+                                      const long long pressureVarIndex,
                                       const bool use_well_weights,
                                       const WellState<Scalar>& well_state) const override;
 
@@ -257,7 +257,7 @@ namespace Opm
 
         std::vector<Scalar> getPrimaryVars() const override;
 
-        int setPrimaryVars(typename std::vector<Scalar>::const_iterator it) override;
+        long long setPrimaryVars(typename std::vector<Scalar>::const_iterator it) override;
 
     protected:
         bool regularize_;
@@ -290,7 +290,7 @@ namespace Opm
                              const std::vector<Value>& mob,
                              const Value& bhp,
                              const std::vector<Scalar>& Tw,
-                             const int perf,
+                             const long long perf,
                              const bool allow_cf,
                              std::vector<Value>& cq_s,
                              PerforationRates<Scalar>& perf_rates,
@@ -306,7 +306,7 @@ namespace Opm
                              const Value& rsw,
                              std::vector<Value>& b_perfcells_dense,
                              const std::vector<Scalar>& Tw,
-                             const int perf,
+                             const long long perf,
                              const bool allow_cf,
                              const Value& skin_pressure,
                              const std::vector<Value>& cmix_s,
@@ -333,12 +333,12 @@ namespace Opm
         // get the mobility for specific perforation
         template<class Value>
         void getMobility(const Simulator& simulator,
-                         const int perf,
+                         const long long perf,
                          std::vector<Value>& mob,
                          DeferredLogger& deferred_logger) const;
 
         void updateWaterMobilityWithPolymer(const Simulator& simulator,
-                                            const int perf,
+                                            const long long perf,
                                             std::vector<EvalWell>& mob_water,
                                             DeferredLogger& deferred_logger) const;
 
@@ -367,7 +367,7 @@ namespace Opm
                                                 DeferredLogger& deferred_logger);
 
         void calculateSinglePerf(const Simulator& simulator,
-                                 const int perf,
+                                 const long long perf,
                                  WellState<Scalar>& well_state,
                                  std::vector<RateVector>& connectionRates,
                                  std::vector<EvalWell>& cq_s,
@@ -426,13 +426,13 @@ namespace Opm
 
         // modify the water rate for polymer injectivity study
         void handleInjectivityRate(const Simulator& simulator,
-                                   const int perf,
+                                   const long long perf,
                                    std::vector<EvalWell>& cq_s) const;
 
         // handle the extra equations for polymer injectivity study
         void handleInjectivityEquations(const Simulator& simulator,
                                         const WellState<Scalar>& well_state,
-                                        const int perf,
+                                        const long long perf,
                                         const EvalWell& water_flux_s,
                                         DeferredLogger& deferred_logger);
 
@@ -447,7 +447,7 @@ namespace Opm
         void updateConnectionRatePolyMW(const EvalWell& cq_s_poly,
                                         const IntensiveQuantities& int_quants,
                                         const WellState<Scalar>& well_state,
-                                        const int perf,
+                                        const long long perf,
                                         std::vector<RateVector>& connectionRates,
                                         DeferredLogger& deferred_logger) const;
 

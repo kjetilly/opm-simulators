@@ -45,7 +45,7 @@ namespace Opm::gpuistl
 //!
 //! \note We assume X and Y are both GpuVector<real_type>, but we leave them as template
 //! arguments in case of future additions.
-template <class M, class X, class Y, int l = 1>
+template <class M, class X, class Y, long long l = 1>
 class GpuSeqILU0 : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:

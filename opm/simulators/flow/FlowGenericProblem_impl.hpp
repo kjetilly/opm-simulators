@@ -108,7 +108,7 @@ serializationTestObject(const EclipseState& eclState,
 template<class GridView, class FluidSystem>
 std::string
 FlowGenericProblem<GridView,FluidSystem>::
-helpPreamble(int,
+helpPreamble(long long,
              const char **argv)
 {
     std::string desc = FlowGenericProblem::briefDescription();
@@ -131,7 +131,7 @@ briefDescription()
 template<class GridView, class FluidSystem>
 void FlowGenericProblem<GridView,FluidSystem>::
 readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
-                    std::function<std::array<int,3>(const unsigned)> ijkIndex)
+                    std::function<std::array<long long,3>(const unsigned)> ijkIndex)
 {
     const auto& rock_config = eclState_.getSimulationConfig().rock_config();
 
@@ -156,7 +156,7 @@ readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
     unsigned numElem = gridView_.size(0);
     if (eclState_.fieldProps().has_int(rock_config.rocknum_property())) {
         // Auxiliary function to check rockTableIdx_ values belong to the right range. Otherwise, throws.
-        std::function<void(int, int)> valueCheck = [&ijkIndex,&rock_config,this](int fieldPropValue, int coarseElemIdx)
+        std::function<void(long long, long long)> valueCheck = [&ijkIndex,&rock_config,this](long long fieldPropValue, long long coarseElemIdx)
         {
             auto fmtError = [fieldPropValue, coarseElemIdx,&ijkIndex,&rock_config](const char* type, std::size_t size)
             {
@@ -167,18 +167,18 @@ readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
                                    rock_config.rocknum_property(), size);
             };
             if (!rockCompPoroMult_.empty() &&
-                fieldPropValue > static_cast<int>(rockCompPoroMult_.size())) {
+                fieldPropValue > static_cast<long long>(rockCompPoroMult_.size())) {
                 throw std::runtime_error(fmtError("Rock compaction",
                                                   rockCompPoroMult_.size()));
             }
             if (!rockCompPoroMultWc_.empty() &&
-                fieldPropValue > static_cast<int>(rockCompPoroMultWc_.size())) {
+                fieldPropValue > static_cast<long long>(rockCompPoroMultWc_.size())) {
                 throw std::runtime_error(fmtError("Rock water compaction",
                                                   rockCompPoroMultWc_.size()));
             }
         };
 
-        rockTableIdx_ = this->lookUpData_.template assignFieldPropsIntOnLeaf<short unsigned int>(eclState_.fieldProps(),
+        rockTableIdx_ = this->lookUpData_.template assignFieldPropsIntOnLeaf<short size_t>(eclState_.fieldProps(),
                                                                                                  rock_config.rocknum_property(),
                                                                                                  true /*needsTranslation*/,
                                                                                                  valueCheck);
@@ -350,8 +350,8 @@ updateNum(const std::string& name, std::vector<T>& numbers, std::size_t num_regi
     if (!eclState_.fieldProps().has_int(name))
         return;
 
-    std::function<void(T, int)> valueCheck = [num_regions,name](T fieldPropValue, [[maybe_unused]] int fieldPropIdx) {
-        if ( fieldPropValue > (int)num_regions) {
+    std::function<void(T, long long)> valueCheck = [num_regions,name](T fieldPropValue, [[maybe_unused]] long long fieldPropIdx) {
+        if ( fieldPropValue > (long long)num_regions) {
             throw std::runtime_error("Values larger than maximum number of regions "
                                      + std::to_string(num_regions) + " provided in " + name);
         }
@@ -398,7 +398,7 @@ updatePlmixnum_()
 
 template<class GridView, class FluidSystem>
 bool FlowGenericProblem<GridView,FluidSystem>::
-vapparsActive(int episodeIdx) const
+vapparsActive(long long episodeIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.getType() == OilVaporizationProperties::OilVaporization::VAPPARS);
@@ -407,7 +407,7 @@ vapparsActive(int episodeIdx) const
 template<class GridView, class FluidSystem>
 bool FlowGenericProblem<GridView,FluidSystem>::
 beginEpisode_(bool enableExperiments,
-              int episodeIdx)
+              long long episodeIdx)
 {
     if (enableExperiments && gridView_.comm().rank() == 0 && episodeIdx >= 0) {
         // print some useful information in experimental mode. (the production
@@ -444,8 +444,8 @@ beginEpisode_(bool enableExperiments,
 template<class GridView, class FluidSystem>
 void FlowGenericProblem<GridView,FluidSystem>::
 beginTimeStep_(bool enableExperiments,
-               int episodeIdx,
-               int timeStepIndex,
+               long long episodeIdx,
+               long long timeStepIndex,
                Scalar startTime,
                Scalar time,
                Scalar timeStepSize,

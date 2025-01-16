@@ -72,27 +72,27 @@ void ALQState<Scalar>::set(const std::string& wname, Scalar value)
 }
 
 template<class Scalar>
-int ALQState<Scalar>::get_debug_counter()
+long long ALQState<Scalar>::get_debug_counter()
 {
     return this->debug_counter_;
 }
 
 template<class Scalar>
-int ALQState<Scalar>::update_debug_counter()
+long long ALQState<Scalar>::update_debug_counter()
 {
     this->debug_counter_++;
     return this->debug_counter_;
 }
 
 template<class Scalar>
-void ALQState<Scalar>::set_debug_counter(int value)
+void ALQState<Scalar>::set_debug_counter(long long value)
 {
     this->debug_counter_ = value;
 }
 
 namespace {
 
-int get_counter(const std::map<std::string, int>& count_map, const std::string& wname) {
+long long get_counter(const std::map<std::string, long long>& count_map, const std::string& wname) {
     auto count_iter = count_map.find(wname);
     if (count_iter == count_map.end())
         return 0;
@@ -129,13 +129,13 @@ void ALQState<Scalar>::reset_count()
 }
 
 template<class Scalar>
-int ALQState<Scalar>::get_increment_count(const std::string& wname) const
+long long ALQState<Scalar>::get_increment_count(const std::string& wname) const
 {
     return get_counter(this->alq_increase_count_, wname);
 }
 
 template<class Scalar>
-int ALQState<Scalar>::get_decrement_count(const std::string& wname) const
+long long ALQState<Scalar>::get_decrement_count(const std::string& wname) const
 {
     return get_counter(this->alq_decrease_count_, wname);
 }

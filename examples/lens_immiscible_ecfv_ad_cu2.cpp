@@ -40,9 +40,9 @@
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 // fake forward declaration to prevent esoteric compiler warning
-int mainCU2(int argc, char **argv);
+long long mainCU2(long long argc, char **argv);
 
-int mainCU2(int argc, char **argv)
+long long mainCU2(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemEcfvAd;
     return Opm::start<ProblemTypeTag>(argc, argv);

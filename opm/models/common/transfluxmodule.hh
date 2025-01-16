@@ -440,7 +440,7 @@ private:
         // the permeability per definition aligns with the grid
         // we only support diagonal permeability tensor
         // and can therefore neglect off-diagonal values
-        int idx = 0;
+        long long idx = 0;
         Scalar val = 0.0;
         for (unsigned i = 0; i < dimWorld; ++ i){
             if (std::abs(face.normal()[i]) > val) {
@@ -466,7 +466,7 @@ private:
         // the permeability per definition aligns with the grid
         // we only support diagonal permeability tensor
         // and can therefore neglect off-diagonal values
-        int idx = 0;
+        long long idx = 0;
         Scalar val = 0.0;
         for (unsigned i = 0; i < dimWorld; ++ i){
             if (std::abs(face.normal()[i]) > val) {

@@ -65,8 +65,8 @@ struct DamarisSettings
     std::string damarisLogLevel_ = "info";
     std::string damarisDaskFile_ = "";
     // std::string damarisLimitVars_ = "";
-    int nDamarisCores_ = 1;  // this is the number of (Damaris server) cores per node
-    int nDamarisNodes_ = 0;
+    long long nDamarisCores_ = 1;  // this is the number of (Damaris server) cores per node
+    long long nDamarisNodes_ = 0;
     long shmemSizeBytes_ = 536870912;  // 512 MB
     
     std::string rand_value_str_ ;  // to be added to sheared memory name to make unique 

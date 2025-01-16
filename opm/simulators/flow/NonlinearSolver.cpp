@@ -32,8 +32,8 @@ namespace Opm::detail {
 
 template<class Scalar>
 void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
-                        const int it, const int numPhases, const Scalar relaxRelTol,
-                        const int minimumOscillatingPhases,
+                        const long long it, const long long numPhases, const Scalar relaxRelTol,
+                        const long long minimumOscillatingPhases,
                         bool& oscillate, bool& stagnate)
 {
     // The detection of oscillation in two primary variable results in the report of the detection
@@ -48,11 +48,11 @@ void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
     }
 
     stagnate = true;
-    int oscillatePhase = 0;
+    long long oscillatePhase = 0;
     const auto& F0 = residualHistory[it];
     const auto& F1 = residualHistory[it - 1];
     const auto& F2 = residualHistory[it - 2];
-    for (int p = 0; p < numPhases; ++p) {
+    for (long long p = 0; p < numPhases; ++p) {
         const Scalar d1 = std::abs((F0[p] - F2[p]) / F0[p]);
         const Scalar d2 = std::abs((F0[p] - F1[p]) / F0[p]);
 
@@ -105,7 +105,7 @@ void stabilizeNonlinearUpdate(BVector& dx, BVector& dxOld,
     return;
 }
 
-template<class Scalar, int Size>
+template<class Scalar, long long Size>
 using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Size>>;
 
 #define INSTANTIATE(T,Size)                                                 \
@@ -114,8 +114,8 @@ using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Size>>;
 
 #define INSTANTIATE_TYPE(T)                                                 \
     template void detectOscillations(const std::vector<std::vector<T>>&,    \
-                                     const int, const int, const T,         \
-                                     const int, bool&, bool&);              \
+                                     const long long, const long long, const T,         \
+                                     const long long, bool&, bool&);              \
     INSTANTIATE(T,1)                                                        \
     INSTANTIATE(T,2)                                                        \
     INSTANTIATE(T,3)                                                        \

@@ -52,7 +52,7 @@ class BlockedMatrix;
 //     FINE-GRAINED PARALLEL INCOMPLETE LU FACTORIZATION, E. Chow and A. Patel, SIAM 2015, https://doi.org/10.1137/140968896
 // only blocksize == 3 is supported
 // decomposition() allocates the cl::Buffers on the first call, these are C++ objects that deallocate automatically
-template <unsigned int block_size>
+template <size_t block_size>
 class ChowPatelIlu
 {
 private:
@@ -67,13 +67,13 @@ private:
     cl_int err;
     std::once_flag initialize_flag;
     std::once_flag pattern_uploaded;
-    int verbosity = 0;
+    long long verbosity = 0;
 
     std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&,
                                     cl::Buffer&, cl::Buffer&, cl::Buffer&,
                                     cl::Buffer&, cl::Buffer&, cl::Buffer&,
                                     cl::Buffer&, cl::Buffer&,
-                                    const int, cl::LocalSpaceArg, cl::LocalSpaceArg> > chow_patel_ilu_sweep_k;
+                                    const long long, cl::LocalSpaceArg, cl::LocalSpaceArg> > chow_patel_ilu_sweep_k;
 
 public:
     /// Transposes the U matrix
@@ -83,7 +83,7 @@ public:
     void decomposition(
         cl::CommandQueue *queue, cl::Context *context,
         BlockedMatrix *LUmat, BlockedMatrix *Lmat, BlockedMatrix *Umat,
-        double *invDiagVals, std::vector<int>& diagIndex,
+        double *invDiagVals, std::vector<long long>& diagIndex,
         cl::Buffer& d_diagIndex, cl::Buffer& d_invDiagVals,
         cl::Buffer& d_Lvals, cl::Buffer& d_Lcols, cl::Buffer& d_Lrows,
         cl::Buffer& d_Uvals, cl::Buffer& d_Ucols, cl::Buffer& d_Urows);
@@ -109,13 +109,13 @@ public:
     /// \param[in] num_sweeps    number of sweeps to be done
     void gpu_decomposition(
         cl::CommandQueue *queue, cl::Context *context,
-        int *Ut_ptrs, int *Ut_idxs, double *Ut_vals, int Ut_nnzbs,
-        int *L_rows, int *L_cols, double *L_vals, int L_nnzbs,
-        int *LU_rows, int *LU_cols, double *LU_vals, int LU_nnzbs,
-        int Nb, int num_sweeps);
+        long long *Ut_ptrs, long long *Ut_idxs, double *Ut_vals, long long Ut_nnzbs,
+        long long *L_rows, long long *L_cols, double *L_vals, long long L_nnzbs,
+        long long *LU_rows, long long *LU_cols, double *LU_vals, long long LU_nnzbs,
+        long long Nb, long long num_sweeps);
 
     /// Set the verbosity
-    void setVerbosity(int verbosity_) {
+    void setVerbosity(long long verbosity_) {
         this->verbosity = verbosity_;
     }
 

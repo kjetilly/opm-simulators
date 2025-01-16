@@ -31,7 +31,7 @@ void HDF5Serializer::writeHeader(const std::string& simulator_name,
                                  const std::string& time_stamp,
                                  const std::string& case_name,
                                  const std::string& params,
-                                 int num_procs)
+                                 long long num_procs)
 {
     try {
         this->pack(simulator_name, module_version, time_stamp,
@@ -43,22 +43,22 @@ void HDF5Serializer::writeHeader(const std::string& simulator_name,
     m_h5file.write("/", "simulator_info", m_buffer, HDF5File::DataSetMode::ROOT_ONLY);
 }
 
-int HDF5Serializer::lastReportStep() const
+long long HDF5Serializer::lastReportStep() const
 {
     const auto entries = m_h5file.list("/report_step");
-    int last = -1;
+    long long last = -1;
     for (const auto& entry : entries) {
-        int num = std::atoi(entry.c_str());
+        long long num = std::atoi(entry.c_str());
         last = std::max(last, num);
     }
 
     return last;
 }
 
-std::vector<int> HDF5Serializer::reportSteps() const
+std::vector<long long> HDF5Serializer::reportSteps() const
 {
     const auto entries = m_h5file.list("/report_step");
-    std::vector<int> result(entries.size());
+    std::vector<long long> result(entries.size());
     std::transform(entries.begin(), entries.end(), result.begin(),
                    [](const std::string& input)
                    {

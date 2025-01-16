@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(Header)
     }
     {
         HDF5Serializer ser(rwpath, HDF5File::OpenMode::READ, comm);
-        std::tuple<std::array<std::string,5>,int> input;
+        std::tuple<std::array<std::string,5>,long long> input;
         ser.read(input, "/", "simulator_info",
                  Opm::HDF5File::DataSetMode::ROOT_ONLY);
         const auto& [strings, num_procs] = input;
@@ -112,7 +112,7 @@ bool init_unit_test_func()
     return true;
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

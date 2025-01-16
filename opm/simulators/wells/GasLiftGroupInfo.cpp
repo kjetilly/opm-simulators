@@ -37,8 +37,8 @@ GasLiftGroupInfo<Scalar>::
 GasLiftGroupInfo(GLiftEclWells& ecl_wells,
                  const Schedule& schedule,
                  const SummaryState& summary_state,
-                 const int report_step_idx,
-                 const int iteration_idx,
+                 const long long report_step_idx,
+                 const long long iteration_idx,
                  const PhaseUsage& phase_usage,
                  DeferredLogger& deferred_logger,
                  WellState<Scalar>& well_state,
@@ -68,7 +68,7 @@ alqRate(const std::string& group_name)
 }
 
 template<class Scalar>
-int GasLiftGroupInfo<Scalar>::
+long long GasLiftGroupInfo<Scalar>::
 getGroupIdx(const std::string& group_name)
 {
     return this->group_idx_.at(group_name);
@@ -156,7 +156,7 @@ getPotential(Rate rate_type, const std::string& group_name) const
 template<class Scalar>
 std::tuple<Scalar, Scalar, Scalar, Scalar>
 GasLiftGroupInfo<Scalar>::
-getRates(const int group_idx) const
+getRates(const long long group_idx) const
 {
     const auto& group_name = groupIdxToName(group_idx);
     auto& rates = this->group_rate_map_.at(group_name);
@@ -195,7 +195,7 @@ getWellGroups(const std::string& well_name)
 template<class Scalar>
 const std::string&
 GasLiftGroupInfo<Scalar>::
-groupIdxToName(int group_idx) const
+groupIdxToName(long long group_idx) const
 {
     const std::string* group_name = nullptr;
     // TODO:  An alternative to the below loop is to set up a reverse map from idx ->
@@ -334,7 +334,7 @@ update(const std::string& group_name,
 
 template<class Scalar>
 void GasLiftGroupInfo<Scalar>::
-updateRate(int idx,
+updateRate(long long idx,
            Scalar oil_rate,
            Scalar gas_rate,
            Scalar water_rate,
@@ -371,7 +371,7 @@ checkDoGasLiftOptimization_(const std::string& well_name)
         return false;
     }
     if (this->optimize_only_thp_wells_) {
-        const int well_index = (itr->second).second;
+        const long long well_index = (itr->second).second;
         const auto& ws = this->well_state_.well(well_index);
         const Well::ProducerCMode& control_mode = ws.production_cmode;
         if (control_mode != Well::ProducerCMode::THP ) {
@@ -412,7 +412,7 @@ bool GasLiftGroupInfo<Scalar>::
 checkNewtonIterationIdxOk_(const std::string& well_name)
 {
     if (this->glo_.all_newton()) {
-        const int nupcol = this->schedule_[this->report_step_idx_].nupcol();
+        const long long nupcol = this->schedule_[this->report_step_idx_].nupcol();
         if (this->debug) {
             const std::string msg = fmt::format(
                 "LIFTOPT item4 == YES, it = {}, nupcol = {} -->  GLIFT optimize = {}",
@@ -512,7 +512,7 @@ displayDebugMessage_(const std::string& msg, const std::string& well_name)
 template<class Scalar>
 std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar>
 GasLiftGroupInfo<Scalar>::
-getProducerWellRates_(const Well* well, int well_index)
+getProducerWellRates_(const Well* well, long long well_index)
 {
     const auto& pu = this->phase_usage_;
     const auto& ws= this->well_state_.well(well_index);
@@ -580,7 +580,7 @@ initializeGroupRatesRecursive_(const Group& group)
             if (itr != this->ecl_wells_.end()) {
                 const Well *well = (itr->second).first;
                 assert(well); // Should never be nullptr
-                const int index = (itr->second).second;
+                const long long index = (itr->second).second;
                 if (well->isProducer()) {
                     auto [sw_oil_rate, sw_gas_rate, sw_water_rate, sw_oil_pot, sw_gas_pot, sw_water_pot] = getProducerWellRates_(well, index);
                     auto sw_alq = this->well_state_.getALQ(well_name);

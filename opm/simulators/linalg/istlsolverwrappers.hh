@@ -80,9 +80,9 @@ namespace Opm::Linear {
                                        Preconditioner& parPreCond)                 \
         {                                                                          \
             Scalar tolerance = Parameters::Get<Parameters::LinearSolverTolerance<Scalar>>(); \
-            int maxIter = Parameters::Get<Parameters::LinearSolverMaxIterations>();\
+            long long maxIter = Parameters::Get<Parameters::LinearSolverMaxIterations>();\
                                                                                    \
-            int verbosity = 0;                                                     \
+            long long verbosity = 0;                                                     \
             if (parOperator.overlap().myRank() == 0)                               \
                 verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();  \
             solver_ = std::make_shared<RawSolver>(parOperator, parScalarProduct,   \
@@ -135,12 +135,12 @@ public:
                                    Preconditioner& parPreCond)
     {
         Scalar tolerance = Parameters::Get<Parameters::LinearSolverTolerance<Scalar>>();
-        int maxIter = Parameters::Get<Parameters::LinearSolverMaxIterations>();
+        long long maxIter = Parameters::Get<Parameters::LinearSolverMaxIterations>();
 
-        int verbosity = 0;
+        long long verbosity = 0;
         if (parOperator.overlap().myRank() == 0)
             verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
-        int restartAfter = Parameters::Get<Parameters::GMResRestart>();
+        long long restartAfter = Parameters::Get<Parameters::GMResRestart>();
         solver_ = std::make_shared<RawSolver>(parOperator,
                                               parScalarProduct,
                                               parPreCond,

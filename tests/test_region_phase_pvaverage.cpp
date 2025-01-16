@@ -55,16 +55,16 @@ namespace {
 #if HAVE_MPI
     struct MPIError
     {
-        MPIError(std::string_view errstr, const int ec)
+        MPIError(std::string_view errstr, const long long ec)
             : errorstring { errstr }
             , errorcode   { ec }
         {}
 
         std::string errorstring;
-        int errorcode;
+        long long errorcode;
     };
 
-    void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+    void MPI_err_handler(MPI_Comm*, long long* err_code, ...)
     {
         std::array<char, MPI_MAX_ERROR_STRING> err_string_vec{'\0'};
         auto err_length = 0;
@@ -121,7 +121,7 @@ namespace {
         return local;
     }
 
-    std::vector<bool> cellSubset(const int rank, const std::vector<int>& p)
+    std::vector<bool> cellSubset(const long long rank, const std::vector<long long>& p)
     {
         auto keep = std::vector<bool>(p.size(), false);
 
@@ -133,7 +133,7 @@ namespace {
         return keep;
     }
 
-    std::vector<int> fipnum()
+    std::vector<long long> fipnum()
     {
         return {
             0, 0, 0,
@@ -150,7 +150,7 @@ namespace {
         };
     }
 
-    std::vector<int> fiplayer()
+    std::vector<long long> fiplayer()
     {
         return {
             0, 0, 0,
@@ -175,10 +175,10 @@ namespace {
         RegionSets& selectSubset(const std::vector<bool>& keep);
 
         std::vector<std::string> names() const;
-        const std::vector<int>& operator()(const std::string& rname) const;
+        const std::vector<long long>& operator()(const std::string& rname) const;
 
     private:
-        std::unordered_map<std::string, std::vector<int>> regions_;
+        std::unordered_map<std::string, std::vector<long long>> regions_;
     };
 
     RegionSets::RegionSets()
@@ -214,7 +214,7 @@ namespace {
         return rnames;
     }
 
-    const std::vector<int>& RegionSets::operator()(const std::string& rname) const
+    const std::vector<long long>& RegionSets::operator()(const std::string& rname) const
     {
         auto rpos = this->regions_.find(rname);
         if (rpos == this->regions_.end()) {
@@ -1058,7 +1058,7 @@ BOOST_AUTO_TEST_SUITE_END()     // Parallel
 
 // ===========================================================================
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

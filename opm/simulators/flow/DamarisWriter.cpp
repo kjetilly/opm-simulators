@@ -38,32 +38,32 @@
 
 namespace Opm::DamarisOutput {
 
-int setPosition(const char* field, int64_t pos)
+long long setPosition(const char* field, int64_t pos)
 {
-    int dam_err = damaris_set_position(field, &pos);
+    long long dam_err = damaris_set_position(field, &pos);
     return dam_err;
 }
 
-int setParameter(const char* field, int value)
+long long setParameter(const char* field, long long value)
 {
-    int dam_err = damaris_parameter_set(field, &value, sizeof(int));
+    long long dam_err = damaris_parameter_set(field, &value, sizeof(long long));
     return dam_err;
 }
 
-int write(const char* field, const void* data)
+long long write(const char* field, const void* data)
 {
-    int dam_err = damaris_write(field, data);
+    long long dam_err = damaris_write(field, data);
     return dam_err;
 }
 
-int endIteration()
+long long endIteration()
 {
-    int dam_err =  damaris_end_iteration();
+    long long dam_err =  damaris_end_iteration();
     return dam_err;
 }
 
-int setupWritingPars(Parallel::Communication comm,
-                     const int n_elements_local_grid,
+long long setupWritingPars(Parallel::Communication comm,
+                     const long long n_elements_local_grid,
                      std::vector<unsigned long long>& elements_rank_offsets)
 {
     // one for each rank -- to be gathered from each client rank
@@ -92,21 +92,21 @@ int setupWritingPars(Parallel::Communication comm,
     }
 
     // Set the paramater so that the Damaris servers can allocate the correct amount of memory for the variabe
-    // Damaris parameters only support int data types. This will limit models to be under size of 2^32-1 elements
+    // Damaris parameters only support long long data types. This will limit models to be under size of 2^32-1 elements
     // ToDo: Do we need to check that local ranks are 0 based ?
-    int dam_err = setParameter("n_elements_local", elements_rank_sizes[comm.rank()]);
-    // Damaris parameters only support int data types. This will limit models to be under size of 2^32-1 elements
-    // ToDo: Do we need to check that n_elements_global_max will fit in a C int type (INT_MAX)
-    if ( n_elements_global_max <= std::numeric_limits<int>::max() ) {
+    long long dam_err = setParameter("n_elements_local", elements_rank_sizes[comm.rank()]);
+    // Damaris parameters only support long long data types. This will limit models to be under size of 2^32-1 elements
+    // ToDo: Do we need to check that n_elements_global_max will fit in a C long long type (INT_MAX)
+    if ( n_elements_global_max <= std::numeric_limits<long long>::max() ) {
         setParameter("n_elements_total", n_elements_global_max);
     } else {
         if (comm.rank() == 0) {
             OpmLog::error(fmt::format("The size of the global array ({}) is"
                                       "greater than what a Damaris paramater type supports ({}).  ",
-                                      n_elements_global_max, std::numeric_limits<int>::max() ));
+                                      n_elements_global_max, std::numeric_limits<long long>::max() ));
         }
         OPM_THROW(std::runtime_error, "setupDamarisWritingPars() n_elements_global_max "
-                                      "> std::numeric_limits<int>::max() " + std::to_string(dam_err));
+                                      "> std::numeric_limits<long long>::max() " + std::to_string(dam_err));
     }
 
     return dam_err;
@@ -114,10 +114,10 @@ int setupWritingPars(Parallel::Communication comm,
 
 
 void
-handleError(const int dam_err, Parallel::Communication comm, const std::string& message)
+handleError(const long long dam_err, Parallel::Communication comm, const std::string& message)
 {
     // Find if some rank has encountered an error.
-    const int isOk = (dam_err == DAMARIS_OK);
+    const long long isOk = (dam_err == DAMARIS_OK);
     const bool error = (comm.sum(isOk) != comm.size());
 
     if (error) {

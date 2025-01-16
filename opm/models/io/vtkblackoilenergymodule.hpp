@@ -61,7 +61,7 @@ class VtkBlackOilEnergyModule : public BaseOutputModule<TypeTag>
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     enum { enableEnergy = getPropValue<TypeTag, Properties::EnableEnergy>() };
@@ -141,7 +141,7 @@ public:
                         scalarValue(intQuants.totalThermalConductivity());
                 }
 
-                for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+                for (long long phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
                     if (FluidSystem::phaseIsActive(phaseIdx)) {
                         if (params_.fluidInternalEnergiesOutput_) {
                             fluidInternalEnergies_[phaseIdx][globalDofIdx] =

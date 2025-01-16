@@ -54,13 +54,13 @@ public:
     {}
 
     //! \brief Loads guide rates from restart structures.
-    void loadRestartGuideRates(const int                    report_step,
+    void loadRestartGuideRates(const long long                    report_step,
                                const GuideRateModel::Target target,
                                const data::Wells&           rst_wells,
                                GuideRate&                   guide_rate) const;
 
     //! \brief Loads guide rates from restart structures.
-    void loadRestartGuideRates(const int                                     report_step,
+    void loadRestartGuideRates(const long long                                     report_step,
                                const GuideRateConfig&                        config,
                                const std::map<std::string, data::GroupData>& rst_groups,
                                GuideRate&                                    guide_rate) const;

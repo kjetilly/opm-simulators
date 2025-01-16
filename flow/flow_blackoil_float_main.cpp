@@ -31,7 +31,7 @@ struct Scalar<TypeTag, TTag::FlowProblemTPFA>
 
 }
 
-int main(int argc, char** argv)
+long long main(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowProblemTPFA;
     auto mainObject = Opm::Main(argc, argv);

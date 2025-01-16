@@ -39,7 +39,7 @@ struct EnablePolymer<TypeTag, TTag::FlowPolymerProblem> {
 namespace Opm {
 
 // ----------------- Main program -----------------
-int flowPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowPolymerMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -50,7 +50,7 @@ int flowPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles)
     return mainfunc.execute();
 }
 
-int flowPolymerMainStandalone(int argc, char** argv)
+long long flowPolymerMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowPolymerProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

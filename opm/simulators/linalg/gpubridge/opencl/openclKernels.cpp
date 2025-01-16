@@ -37,30 +37,30 @@ using Opm::OpmLog;
 using Dune::Timer;
 
 // define static variables and kernels
-template<class Scalar> int OpenclKernels<Scalar>::verbosity;
+template<class Scalar> long long OpenclKernels<Scalar>::verbosity;
 template<class Scalar> cl::CommandQueue* OpenclKernels<Scalar>::queue;
 template<class Scalar> std::vector<Scalar> OpenclKernels<Scalar>::tmp;
 template<class Scalar> bool OpenclKernels<Scalar>::initialized = false;
 template<class Scalar> std::size_t OpenclKernels<Scalar>::preferred_workgroup_size_multiple = 0;
 
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > OpenclKernels<Scalar>::dot_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg> > OpenclKernels<Scalar>::dot_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > OpenclKernels<Scalar>::norm_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg> > OpenclKernels<Scalar>::norm_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::axpy_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const size_t> > OpenclKernels<Scalar>::axpy_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int> > OpenclKernels<Scalar>::scale_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const size_t> > OpenclKernels<Scalar>::scale_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::vmul_k;
+std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t> > OpenclKernels<Scalar>::vmul_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int> > OpenclKernels<Scalar>::custom_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const size_t> > OpenclKernels<Scalar>::custom_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::full_to_pressure_restriction_k;
+std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t> > OpenclKernels<Scalar>::full_to_pressure_restriction_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int> > OpenclKernels<Scalar>::add_coarse_pressure_correction_k;
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, const size_t> > OpenclKernels<Scalar>::add_coarse_pressure_correction_k;
 template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::prolongate_vector_k;
+std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const size_t> > OpenclKernels<Scalar>::prolongate_vector_k;
 template<class Scalar>
 std::unique_ptr<spmv_blocked_kernel_type> OpenclKernels<Scalar>::spmv_blocked_k;
 template<class Scalar>
@@ -89,7 +89,7 @@ std::unique_ptr<isaiU_kernel_type> OpenclKernels<Scalar>::isaiU_k;
 template<class Scalar>
 void OpenclKernels<Scalar>::init(cl::Context *context,
                                  cl::CommandQueue *queue_,
-                                 std::vector<cl::Device>& devices, int verbosity_)
+                                 std::vector<cl::Device>& devices, long long verbosity_)
 {
     if (initialized) {
         OpmLog::debug("Warning OpenclKernels is already initialized");
@@ -134,15 +134,15 @@ void OpenclKernels<Scalar>::init(cl::Context *context,
     // cl::KernelFunctor<> myKernel(); myKernel(args, arg1, arg2); is also blocking
 
     // actually creating the kernels
-    dot_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(cl::Kernel(program, "dot_1")));
-    norm_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(cl::Kernel(program, "norm")));
-    axpy_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int>(cl::Kernel(program, "axpy")));
-    scale_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int>(cl::Kernel(program, "scale")));
-    vmul_k.reset(new cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(cl::Kernel(program, "vmul")));
-    custom_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int>(cl::Kernel(program, "custom")));
-    full_to_pressure_restriction_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(cl::Kernel(program, "full_to_pressure_restriction")));
-    add_coarse_pressure_correction_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int>(cl::Kernel(program, "add_coarse_pressure_correction")));
-    prolongate_vector_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int>(cl::Kernel(program, "prolongate_vector")));
+    dot_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg>(cl::Kernel(program, "dot_1")));
+    norm_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, cl::LocalSpaceArg>(cl::Kernel(program, "norm")));
+    axpy_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const size_t>(cl::Kernel(program, "axpy")));
+    scale_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, const size_t>(cl::Kernel(program, "scale")));
+    vmul_k.reset(new cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t>(cl::Kernel(program, "vmul")));
+    custom_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const size_t>(cl::Kernel(program, "custom")));
+    full_to_pressure_restriction_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const size_t>(cl::Kernel(program, "full_to_pressure_restriction")));
+    add_coarse_pressure_correction_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const size_t, const size_t>(cl::Kernel(program, "add_coarse_pressure_correction")));
+    prolongate_vector_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const size_t>(cl::Kernel(program, "prolongate_vector")));
     spmv_blocked_k.reset(new spmv_blocked_kernel_type(cl::Kernel(program, "spmv_blocked")));
     spmv_blocked_add_k.reset(new spmv_blocked_kernel_type(cl::Kernel(program, "spmv_blocked_add")));
     spmv_k.reset(new spmv_kernel_type(cl::Kernel(program, "spmv")));
@@ -165,12 +165,12 @@ void OpenclKernels<Scalar>::init(cl::Context *context,
 } // end get_opencl_kernels()
 
 template<class Scalar>
-Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
+Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, long long N)
 {
-    const unsigned int work_group_size = 256;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = 256;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_dot;
     tmp.resize(num_work_groups);
 
@@ -179,7 +179,7 @@ Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& 
     queue->enqueueReadBuffer(out, CL_TRUE, 0, sizeof(Scalar) * num_work_groups, tmp.data());
 
     Scalar gpu_sum = 0.0;
-    for (unsigned int i = 0; i < num_work_groups; ++i) {
+    for (size_t i = 0; i < num_work_groups; ++i) {
         gpu_sum += tmp[i];
     }
 
@@ -194,12 +194,12 @@ Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& 
 }
 
 template<class Scalar>
-Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
+Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, long long N)
 {
-    const unsigned int work_group_size = 256;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = 256;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_norm;
     tmp.resize(num_work_groups);
 
@@ -208,7 +208,7 @@ Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
     queue->enqueueReadBuffer(out, CL_TRUE, 0, sizeof(Scalar) * num_work_groups, tmp.data());
 
     Scalar gpu_norm = 0.0;
-    for (unsigned int i = 0; i < num_work_groups; ++i) {
+    for (size_t i = 0; i < num_work_groups; ++i) {
         gpu_norm += tmp[i];
     }
     gpu_norm = sqrt(gpu_norm);
@@ -224,11 +224,11 @@ Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, int N)
+void OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, long long N)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t_axpy;
 
     cl::Event event = (*axpy_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, out, N);
@@ -242,11 +242,11 @@ void OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, int N)
+void OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, long long N)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t_scale;
 
     cl::Event event = (*scale_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, N);
@@ -260,11 +260,11 @@ void OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, int N)
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
+void OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, long long N)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t_vmul;
 
     cl::Event event = (*vmul_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), alpha, in1, in2, out, N);
@@ -279,11 +279,11 @@ void OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer
 
 template<class Scalar>
 void OpenclKernels<Scalar>::custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r,
-                                   const Scalar omega, const Scalar beta, int N)
+                                   const Scalar omega, const Scalar beta, long long N)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t_custom;
 
     cl::Event event = (*custom_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), p, v, r, omega, beta, N);
@@ -297,11 +297,11 @@ void OpenclKernels<Scalar>::custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r,
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, int Nb)
+void OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, long long Nb)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t;
 
     cl::Event event = (*full_to_pressure_restriction_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), fine_y, weights, coarse_y, Nb);
@@ -315,11 +315,11 @@ void OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, int pressure_idx, int Nb)
+void OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, long long pressure_idx, long long Nb)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t;
 
     cl::Event event = (*add_coarse_pressure_correction_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), coarse_x, fine_x, pressure_idx, Nb);
@@ -333,11 +333,11 @@ void OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x,
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, int N)
+void OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, long long N)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(N, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(N, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
     Timer t;
 
     cl::Event event = (*prolongate_vector_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, out, cols, N);
@@ -352,13 +352,13 @@ void OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& 
 
 template<class Scalar>
 void OpenclKernels<Scalar>::spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-                                 const cl::Buffer& x, cl::Buffer& b, int Nb,
-                                 unsigned int block_size, bool reset, bool add)
+                                 const cl::Buffer& x, cl::Buffer& b, long long Nb,
+                                 size_t block_size, bool reset, bool add)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_spmv;
     cl::Event event;
 
@@ -391,12 +391,12 @@ void OpenclKernels<Scalar>::spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer&
 template<class Scalar>
 void OpenclKernels<Scalar>::residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
                                      cl::Buffer& x, const cl::Buffer& rhs,
-                                     cl::Buffer& out, int Nb, unsigned int block_size)
+                                     cl::Buffer& out, long long Nb, size_t block_size)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = 32;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_residual;
     cl::Event event;
 
@@ -420,13 +420,13 @@ template<class Scalar>
 void OpenclKernels<Scalar>::ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols,
                                        cl::Buffer& rows, cl::Buffer& diagIndex,
                                        const cl::Buffer& y, cl::Buffer& x,
-                                       cl::Buffer& rowsPerColor, int color,
-                                       int rowsThisColor, unsigned int block_size)
+                                       cl::Buffer& rowsPerColor, long long color,
+                                       long long rowsThisColor, size_t block_size)
 {
-    const unsigned int work_group_size = preferred_workgroup_size_multiple;
-    const unsigned int num_work_groups = rowsThisColor;
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = preferred_workgroup_size_multiple;
+    const size_t num_work_groups = rowsThisColor;
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_ilu_apply1;
 
     cl::Event event = (*ILU_apply1_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
@@ -446,13 +446,13 @@ template<class Scalar>
 void OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols,
                                        cl::Buffer& rows, cl::Buffer& diagIndex,
                                        cl::Buffer& invDiagVals, cl::Buffer& x,
-                                       cl::Buffer& rowsPerColor, int color,
-                                       int rowsThisColor, unsigned int block_size)
+                                       cl::Buffer& rowsPerColor, long long color,
+                                       long long rowsThisColor, size_t block_size)
 {
-    const unsigned int work_group_size = preferred_workgroup_size_multiple;
-    const unsigned int num_work_groups = rowsThisColor;
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
+    const size_t work_group_size = preferred_workgroup_size_multiple;
+    const size_t num_work_groups = rowsThisColor;
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_ilu_apply2;
 
     cl::Event event = (*ILU_apply2_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
@@ -469,16 +469,16 @@ void OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals,
 }
 
 template<class Scalar>
-void OpenclKernels<Scalar>::ILU_decomp(int firstRow, int lastRow, cl::Buffer& rowIndices,
+void OpenclKernels<Scalar>::ILU_decomp(long long firstRow, long long lastRow, cl::Buffer& rowIndices,
                                        cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
                                        cl::Buffer& diagIndex, cl::Buffer& invDiagVals,
-                                       int rowsThisColor, unsigned int block_size)
+                                       long long rowsThisColor, size_t block_size)
 {
-    const unsigned int work_group_size = 128;
-    const unsigned int num_work_groups = rowsThisColor;
-    const unsigned int total_work_items = num_work_groups * work_group_size;
-    const unsigned int num_hwarps_per_group = work_group_size / 16;
-    const unsigned int lmem_per_work_group = num_hwarps_per_group * block_size * block_size * sizeof(Scalar);           // each block needs a pivot
+    const size_t work_group_size = 128;
+    const size_t num_work_groups = rowsThisColor;
+    const size_t total_work_items = num_work_groups * work_group_size;
+    const size_t num_hwarps_per_group = work_group_size / 16;
+    const size_t lmem_per_work_group = num_hwarps_per_group * block_size * block_size * sizeof(Scalar);           // each block needs a pivot
     Timer t_ilu_decomp;
 
     cl::Event event = (*ilu_decomp_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
@@ -498,12 +498,12 @@ void OpenclKernels<Scalar>::ILU_decomp(int firstRow, int lastRow, cl::Buffer& ro
 template<class Scalar>
 void OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &d_Dnnzs_ocl, cl::Buffer &d_Bnnzs_ocl,
                                            cl::Buffer &d_Ccols_ocl, cl::Buffer &d_Bcols_ocl, cl::Buffer &d_x, cl::Buffer &d_y,
-                                           int dim, int dim_wells, cl::Buffer &d_val_pointers_ocl, int num_std_wells)
+                                           long long dim, long long dim_wells, cl::Buffer &d_val_pointers_ocl, long long num_std_wells)
 {
-    const unsigned int work_group_size = 32;
-    const unsigned int total_work_items = num_std_wells * work_group_size;
-    const unsigned int lmem1 = sizeof(Scalar) * work_group_size;
-    const unsigned int lmem2 = sizeof(Scalar) * dim_wells;
+    const size_t work_group_size = 32;
+    const size_t total_work_items = num_std_wells * work_group_size;
+    const size_t lmem1 = sizeof(Scalar) * work_group_size;
+    const size_t lmem2 = sizeof(Scalar) * dim_wells;
     Timer t_apply_stdwells;
 
     cl::Event event = (*stdwell_apply_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
@@ -520,11 +520,11 @@ void OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &
 
 template<class Scalar>
 void OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& mapping, cl::Buffer& nvc,
-                                  cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, unsigned int Nb)
+                                  cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, size_t Nb)
 {
-    const unsigned int work_group_size = 256;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 256;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
 
     Timer t_isaiL;
     cl::Event event = (*isaiL_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
@@ -541,11 +541,11 @@ void OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers
 template<class Scalar>
 void OpenclKernels<Scalar>::isaiU(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& rowIndices, cl::Buffer& mapping,
                                   cl::Buffer& nvc, cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals,
-                                  cl::Buffer& invDiagVals, cl::Buffer& invUvals, unsigned int Nb)
+                                  cl::Buffer& invDiagVals, cl::Buffer& invUvals, size_t Nb)
 {
-    const unsigned int work_group_size = 256;
-    const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
-    const unsigned int total_work_items = num_work_groups * work_group_size;
+    const size_t work_group_size = 256;
+    const size_t num_work_groups = ceilDivision(Nb, work_group_size);
+    const size_t total_work_items = num_work_groups * work_group_size;
 
     Timer t_isaiU;
     cl::Event event = (*isaiU_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),

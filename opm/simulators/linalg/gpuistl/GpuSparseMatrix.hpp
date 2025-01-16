@@ -37,7 +37,7 @@ namespace Opm::gpuistl
  * @note we currently only support simple raw primitives for T (double and float). Block size is handled through the
  * block size parameter
  *
- * @tparam T the type to store. Can be either float, double or int.
+ * @tparam T the type to store. Can be either float, double or long long.
  *
  * @note we only support square matrices.
  *
@@ -58,11 +58,11 @@ public:
     //! \param[in] blockSize size of each block matrix (typically 3)
     //! \param[in] numberOfRows the number of rows
     //!
-    //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as int due to
+    //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as long long due to
     //!       restrictions in the current version of cusparse. This might change in future versions.
     GpuSparseMatrix(const T* nonZeroElements,
-                   const int* rowIndices,
-                   const int* columnIndices,
+                   const long long* rowIndices,
+                   const long long* columnIndices,
                    size_t numberOfNonzeroBlocks,
                    size_t blockSize,
                    size_t numberOfRows);
@@ -75,10 +75,10 @@ public:
     //! \param[in] columnIndices   the column indices of the non-zero elements
     //! \param[in] blockSize size of each block matrix (typically 3)
     //!
-    //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as int due to
+    //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as long long due to
     //!       restrictions in the current version of cusparse. This might change in future versions.
-    GpuSparseMatrix(const GpuVector<int>& rowIndices,
-                   const GpuVector<int>& columnIndices,
+    GpuSparseMatrix(const GpuVector<long long>& rowIndices,
+                   const GpuVector<long long>& columnIndices,
                    size_t blockSize);
 
     /**
@@ -178,7 +178,7 @@ public:
      *
      * @note Read the CuSPARSE documentation on Block Compressed Sparse Row Format (BSR) for the exact ordering.
      */
-    GpuVector<int>& getRowIndices()
+    GpuVector<long long>& getRowIndices()
     {
         return m_rowIndices;
     }
@@ -188,7 +188,7 @@ public:
      *
      * @note Read the CuSPARSE documentation on Block Compressed Sparse Row Format (BSR) for the exact ordering.
      */
-    const GpuVector<int>& getRowIndices() const
+    const GpuVector<long long>& getRowIndices() const
     {
         return m_rowIndices;
     }
@@ -198,7 +198,7 @@ public:
      *
      * @return Read the CuSPARSE documentation on Block Compressed Sparse Row Format (BSR) for the exact ordering.
      */
-    GpuVector<int>& getColumnIndices()
+    GpuVector<long long>& getColumnIndices()
     {
         return m_columnIndices;
     }
@@ -208,7 +208,7 @@ public:
      *
      * @return Read the CuSPARSE documentation on Block Compressed Sparse Row Format (BSR) for the exact ordering.
      */
-    const GpuVector<int>& getColumnIndices() const
+    const GpuVector<long long>& getColumnIndices() const
     {
         return m_columnIndices;
     }
@@ -295,16 +295,16 @@ public:
 
 private:
     GpuVector<T> m_nonZeroElements;
-    GpuVector<int> m_columnIndices;
-    GpuVector<int> m_rowIndices;
+    GpuVector<long long> m_columnIndices;
+    GpuVector<long long> m_rowIndices;
 
-    // Notice that we store these three as int to make sure we are cusparse compatible.
+    // Notice that we store these three as long long to make sure we are cusparse compatible.
     //
     // This gives the added benefit of checking the size constraints at construction of the matrix
     // rather than in some call to cusparse.
-    const int m_numberOfNonzeroBlocks;
-    const int m_numberOfRows;
-    const int m_blockSize;
+    const long long m_numberOfNonzeroBlocks;
+    const long long m_numberOfRows;
+    const long long m_blockSize;
 
     detail::GpuSparseMatrixDescriptionPtr m_matrixDescription;
     detail::CuSparseHandle& m_cusparseHandle;

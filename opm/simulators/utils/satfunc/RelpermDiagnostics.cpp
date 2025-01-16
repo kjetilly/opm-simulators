@@ -200,7 +200,7 @@ namespace Opm {
 
     void RelpermDiagnostics::tableCheck_(const EclipseState& eclState)
     {
-        const int numSatRegions = eclState.runspec().tabdims().getNumSatTables();
+        const long long numSatRegions = eclState.runspec().tabdims().getNumSatTables();
         {
             const std::string msg = "Number of saturation regions: " + std::to_string(numSatRegions) + "\n";
             OpmLog::info(msg);
@@ -222,7 +222,7 @@ namespace Opm {
         const TableContainer& gsfTables     = tableManager.getGsfTables();
         const TableContainer& wsfTables     = tableManager.getWsfTables();
 
-        for (int satnumIdx = 0; satnumIdx < numSatRegions; ++satnumIdx) {
+        for (long long satnumIdx = 0; satnumIdx < numSatRegions; ++satnumIdx) {
             if (tableManager.hasTables("SWOF")) {
                 swofTableCheck_(swofTables.getTable<SwofTable>(satnumIdx), satnumIdx+1);
             }
@@ -269,10 +269,10 @@ namespace Opm {
 
 
         if (tableManager.hasTables("MISC")) {
-            const int numMiscNumIdx = miscTables.size();
+            const long long numMiscNumIdx = miscTables.size();
             const std::string msg = "Number of misc regions: " + std::to_string(numMiscNumIdx) + "\n";
             OpmLog::info(msg);
-            for (int miscNumIdx = 0; miscNumIdx < numMiscNumIdx; ++miscNumIdx) {
+            for (long long miscNumIdx = 0; miscNumIdx < numMiscNumIdx; ++miscNumIdx) {
                 miscTableCheck_(miscTables.getTable<MiscTable>(miscNumIdx), miscNumIdx+1);
             }
         }
@@ -284,7 +284,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::swofTableCheck_(const SwofTable& swofTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& sw = swofTables.getSwColumn();
         const auto& krw = swofTables.getKrwColumn();
@@ -319,7 +319,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sgofTableCheck_(const SgofTable& sgofTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& sg = sgofTables.getSgColumn();
         const auto& krg = sgofTables.getKrgColumn();
@@ -354,7 +354,7 @@ namespace Opm {
     }
 
     void RelpermDiagnostics::slgofTableCheck_(const SlgofTable& slgofTables,
-                                              const int satnumIdx)
+                                              const long long satnumIdx)
     {
         const auto& sl = slgofTables.getSlColumn();
         const auto& krg = slgofTables.getKrgColumn();
@@ -391,7 +391,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::swfnTableCheck_(const SwfnTable& swfnTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& sw = swfnTables.getSwColumn();
         const auto& krw = swfnTables.getKrwColumn();
@@ -415,7 +415,7 @@ namespace Opm {
     }
 
     void RelpermDiagnostics::wsfTableCheck_(const WsfTable& wsfTables,
-                                            const int satnumIdx)
+                                            const long long satnumIdx)
     {
         const auto& sw = wsfTables.getSwColumn();
         const auto& krw = wsfTables.getKrwColumn();
@@ -441,7 +441,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sgfnTableCheck_(const SgfnTable& sgfnTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& sg = sgfnTables.getSgColumn();
         const auto& krg = sgfnTables.getKrgColumn();
@@ -465,7 +465,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::gsfTableCheck_(const GsfTable& gsfTables,
-                                            const int satnumIdx)
+                                            const long long satnumIdx)
     {
         const auto& sg = gsfTables.getSgColumn();
         const auto& krg = gsfTables.getKrgColumn();
@@ -489,7 +489,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sof3TableCheck_(const Sof3Table& sof3Tables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& so = sof3Tables.getSoColumn();
         const auto& krow = sof3Tables.getKrowColumn();
@@ -534,7 +534,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sof2TableCheck_(const Sof2Table& sof2Tables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& so = sof2Tables.getSoColumn();
         const auto& kro = sof2Tables.getKroColumn();
@@ -562,7 +562,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sgwfnTableCheck_(const SgwfnTable& sgwfnTables,
-                                              const int satnumIdx)
+                                              const long long satnumIdx)
     {
         const auto& sg = sgwfnTables.getSgColumn();
         const auto& krg = sgwfnTables.getKrgColumn();
@@ -599,7 +599,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sgcwmisTableCheck_(const SgcwmisTable& sgcwmisTables,
-                                                const int satnumIdx)
+                                                const long long satnumIdx)
     {
         const auto& sw = sgcwmisTables.getWaterSaturationColumn();
         const auto& sgc = sgcwmisTables.getMiscibleResidualGasColumn();
@@ -622,7 +622,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::sorwmisTableCheck_(const SorwmisTable& sorwmisTables,
-                                                const int satnumIdx)
+                                                const long long satnumIdx)
     {
         const auto& sw = sorwmisTables.getWaterSaturationColumn();
         const auto& sor = sorwmisTables.getMiscibleResidualOilColumn();
@@ -644,7 +644,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::ssfnTableCheck_(const SsfnTable& ssfnTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& frac = ssfnTables.getSolventFractionColumn();
         const auto& krgm = ssfnTables.getGasRelPermMultiplierColumn();
@@ -675,7 +675,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::miscTableCheck_(const MiscTable& miscTables,
-                                             const int miscnumIdx)
+                                             const long long miscnumIdx)
     {
         const auto& frac = miscTables.getSolventFractionColumn();
         const auto& misc = miscTables.getMiscibilityColumn();
@@ -699,7 +699,7 @@ namespace Opm {
 
 
     void RelpermDiagnostics::msfnTableCheck_(const MsfnTable& msfnTables,
-                                             const int satnumIdx)
+                                             const long long satnumIdx)
     {
         const auto& frac = msfnTables.getGasPhaseFractionColumn();
         const auto& krgsm = msfnTables.getGasSolventRelpermMultiplierColumn();
@@ -733,7 +733,7 @@ namespace Opm {
     {
         // get the number of saturation regions and the number of cells in the deck
         const auto& runspec       = eclState.runspec();
-        const int   numSatRegions = runspec.tabdims().getNumSatTables();
+        const long long   numSatRegions = runspec.tabdims().getNumSatTables();
 
         if (numSatRegions < 1) {
             return;
@@ -760,7 +760,7 @@ namespace Opm {
         const TableContainer&  sof3Tables = tables.getSof3Tables();
 
         // std::cout << "***************\nEnd-Points In all the Tables\n";
-        for (int satnumIdx = 0; satnumIdx < numSatRegions; ++satnumIdx) {
+        for (long long satnumIdx = 0; satnumIdx < numSatRegions; ++satnumIdx) {
              this->unscaledEpsInfo_[satnumIdx]
                  .extractUnscaled(rtep, rfunc, satnumIdx);
 
@@ -845,16 +845,16 @@ namespace Opm {
     {
         // All end points are subject to round-off errors, checks should account for it
         const float tolerance = 1e-6;
-        const int nc = levelCartesianIndexMapper.compressedSize(0);
+        const long long nc = levelCartesianIndexMapper.compressedSize(0);
         const bool threepoint = eclState.runspec().endpointScaling().threepoint();
         scaledEpsInfo_.resize(nc);
         EclEpsGridProperties epsGridProperties(eclState, false);
         const std::string tag = "Scaled endpoints";
-        for (int c = 0; c < nc; ++c) {
+        for (long long c = 0; c < nc; ++c) {
             const std::string satnumIdx = std::to_string(epsGridProperties.satRegion(c));
             std::string cellIdx;
             {
-                std::array<int, 3> ijk;
+                std::array<long long, 3> ijk;
                 levelCartesianIndexMapper.cartesianCoordinate(c, ijk, 0);
                 cellIdx = "(" + std::to_string(ijk[0]) + ", " +
                     std::to_string(ijk[1]) + ", " +

@@ -56,12 +56,12 @@ template<class Scalar>
 WellInterfaceGeneric<Scalar>::
 WellInterfaceGeneric(const Well& well,
                      const ParallelWellInfo<Scalar>& pw_info,
-                     const int time_step,
+                     const long long time_step,
                      const ModelParameters& param,
-                     const int pvtRegionIdx,
-                     const int num_components,
-                     const int num_phases,
-                     const int index_of_well,
+                     const long long pvtRegionIdx,
+                     const long long num_components,
+                     const long long num_phases,
+                     const long long index_of_well,
                      const std::vector<PerforationData<Scalar>>& perf_data)
       : well_ecl_(well)
       , parallel_well_info_(pw_info)
@@ -96,7 +96,7 @@ WellInterfaceGeneric(const Well& well,
         well_cells_.resize(number_of_perforations_);
         well_index_.resize(number_of_perforations_);
         saturation_table_number_.resize(number_of_perforations_);
-        int perf = 0;
+        long long perf = 0;
         for (const auto& pd : perf_data) {
             well_cells_[perf] = pd.cell_index;
             well_index_[perf] = pd.connection_transmissibility_factor;
@@ -173,7 +173,7 @@ bool WellInterfaceGeneric<Scalar>::isProducer() const
 }
 
 template<class Scalar>
-int WellInterfaceGeneric<Scalar>::indexOfWell() const
+long long WellInterfaceGeneric<Scalar>::indexOfWell() const
 {
     return index_of_well_;
 }
@@ -247,7 +247,7 @@ updateInjMult(std::vector<Scalar>& inj_multipliers,
 
 template<class Scalar>
 Scalar WellInterfaceGeneric<Scalar>::
-getInjMult(const int perf,
+getInjMult(const long long perf,
            const Scalar bhp,
            const Scalar perf_pres,
            DeferredLogger& dlogger) const
@@ -370,7 +370,7 @@ void WellInterfaceGeneric<Scalar>::initCompletions()
     const WellConnections& connections = well_ecl_.getConnections();
     const std::size_t num_conns = connections.size();
 
-    int num_active_connections = 0;
+    long long num_active_connections = 0;
     auto my_next_perf = perf_data_->begin();
     for (std::size_t c = 0; c < num_conns; ++c) {
         if (my_next_perf == perf_data_->end())
@@ -395,7 +395,7 @@ void WellInterfaceGeneric<Scalar>::
 closeCompletions(const WellTestState& wellTestState)
 {
     const auto& connections = well_ecl_.getConnections();
-    int perfIdx = 0;
+    long long perfIdx = 0;
     for (const auto& connection : connections) {
         if (connection.state() == Connection::State::OPEN) {
             if (wellTestState.completion_is_closed(name(), connection.complnum())) {
@@ -456,7 +456,7 @@ setWellEfficiencyFactor(const Scalar efficiency_factor)
 template<class Scalar>
 void WellInterfaceGeneric<Scalar>::setRepRadiusPerfLength()
 {
-    const int nperf = number_of_perforations_;
+    const long long nperf = number_of_perforations_;
 
     perf_rep_radius_.clear();
     perf_length_.clear();
@@ -468,7 +468,7 @@ void WellInterfaceGeneric<Scalar>::setRepRadiusPerfLength()
 
     const WellConnections& connections = well_ecl_.getConnections();
     const std::size_t num_conns = connections.size();
-    int num_active_connections = 0;
+    long long num_active_connections = 0;
     auto my_next_perf = perf_data_->begin();
     for (std::size_t c = 0; c < num_conns; ++c) {
         if (my_next_perf == perf_data_->end())
@@ -529,7 +529,7 @@ template<class Scalar>
 void WellInterfaceGeneric<Scalar>::
 updatePerforatedCell(std::vector<bool>& is_cell_perforated)
 {
-    for (int perf_idx = 0; perf_idx < number_of_perforations_; ++perf_idx) {
+    for (long long perf_idx = 0; perf_idx < number_of_perforations_; ++perf_idx) {
         is_cell_perforated[well_cells_[perf_idx]] = true;
     }
 }
@@ -543,7 +543,7 @@ isVFPActive(DeferredLogger& deferred_logger) const
     // When THP control/limit is not active, if available VFP table is provided, we will still need to
     // update THP value. However, it will only used for output purpose.
     if (isProducer()) { // producer
-        const int table_id = well_ecl_.vfp_table_number();
+        const long long table_id = well_ecl_.vfp_table_number();
         if (table_id <= 0) {
             return false;
         } else {
@@ -559,7 +559,7 @@ isVFPActive(DeferredLogger& deferred_logger) const
         }
 
     } else { // injector
-        const int table_id = well_ecl_.vfp_table_number();
+        const long long table_id = well_ecl_.vfp_table_number();
         if (table_id <= 0) {
             return false;
         } else {
@@ -765,19 +765,19 @@ Scalar WellInterfaceGeneric<Scalar>::wurea_() const
 }
 
 template<class Scalar>
-int WellInterfaceGeneric<Scalar>::polymerTable_() const
+long long WellInterfaceGeneric<Scalar>::polymerTable_() const
 {
     return this->well_ecl_.getPolymerProperties().m_skprpolytable;
 }
 
 template<class Scalar>
-int WellInterfaceGeneric<Scalar>::polymerWaterTable_() const
+long long WellInterfaceGeneric<Scalar>::polymerWaterTable_() const
 {
     return this->well_ecl_.getPolymerProperties().m_skprwattable;
 }
 
 template<class Scalar>
-int WellInterfaceGeneric<Scalar>::polymerInjTable_() const
+long long WellInterfaceGeneric<Scalar>::polymerInjTable_() const
 {
     return this->well_ecl_.getPolymerProperties().m_plymwinjtable;
 }
@@ -787,7 +787,7 @@ std::pair<bool,bool> WellInterfaceGeneric<Scalar>::
 computeWellPotentials(std::vector<Scalar>& well_potentials,
                       const WellState<Scalar>& well_state)
 {
-    const int np = this->number_of_phases_;
+    const long long np = this->number_of_phases_;
     well_potentials.resize(np, 0.0);
 
     // Stopped wells have zero potential.
@@ -823,14 +823,14 @@ computeWellPotentials(std::vector<Scalar>& well_potentials,
         (thp_controlled_well || bhp_controlled_well)) {
         Scalar total_rate = 0.0;
         const Scalar sign = this->isInjector() ? 1.0 : -1.0;
-        for (int phase = 0; phase < np; ++phase){
+        for (long long phase = 0; phase < np; ++phase){
             total_rate += sign * ws.surface_rates[phase];
         }
         // for pressure controlled wells the well rates are the potentials
         // if the rates are trivial we are most probably looking at the newly
         // opened well, and we therefore make the effort of computing the potentials anyway.
         if (total_rate > 0) {
-            for (int phase = 0; phase < np; ++phase){
+            for (long long phase = 0; phase < np; ++phase){
                 well_potentials[phase] = sign * ws.surface_rates[phase];
             }
             compute_potential = false;
@@ -848,7 +848,7 @@ checkNegativeWellPotentials(std::vector<Scalar>& well_potentials,
 {
     const Scalar sign = this->isInjector() ? 1.0 : -1.0;
     Scalar total_potential = 0.0;
-    for (int phase = 0; phase < this->number_of_phases_; ++phase) {
+    for (long long phase = 0; phase < this->number_of_phases_; ++phase) {
         well_potentials[phase] *= sign;
         total_potential += well_potentials[phase];
     }

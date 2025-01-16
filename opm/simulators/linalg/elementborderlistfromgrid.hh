@@ -75,13 +75,13 @@ class ElementBorderListFromGrid
         }
 
         // data handle methods
-        bool contains(int, int codim) const
+        bool contains(long long, long long codim) const
         { return codim == 0; }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-        bool fixedsize(int, int) const
+        bool fixedsize(long long, long long) const
 #else
-        bool fixedSize(int, int) const
+        bool fixedSize(long long, long long) const
 #endif
         { return true; }
 
@@ -157,7 +157,7 @@ class ElementBorderListFromGrid
     };
 
     class PeerBlackListHandle_
-        : public Dune::CommDataHandleIF<PeerBlackListHandle_, int>
+        : public Dune::CommDataHandleIF<PeerBlackListHandle_, long long>
     {
     public:
         PeerBlackListHandle_(const GridView& gridView,
@@ -169,13 +169,13 @@ class ElementBorderListFromGrid
         {}
 
         // data handle methods
-        bool contains(int, int codim) const
+        bool contains(long long, long long codim) const
         { return codim == 0; }
 
 #if DUNE_VERSION_LT(DUNE_GRID, 2, 8)
-        bool fixedsize(int, int) const
+        bool fixedsize(long long, long long) const
 #else
-        bool fixedSize(int, int) const
+        bool fixedSize(long long, long long) const
 #endif
         { return true; }
 
@@ -186,15 +186,15 @@ class ElementBorderListFromGrid
         template <class MessageBufferImp, class EntityType>
         void gather(MessageBufferImp& buff, const EntityType& e) const
         {
-            buff.write(static_cast<int>(gridView_.comm().rank()));
-            buff.write(static_cast<int>(map_.index(e)));
+            buff.write(static_cast<long long>(gridView_.comm().rank()));
+            buff.write(static_cast<long long>(map_.index(e)));
         }
 
         template <class MessageBufferImp, class EntityType>
         void scatter(MessageBufferImp& buff, const EntityType& e, size_t)
         {
-            int peerRank;
-            int peerIdx;
+            long long peerRank;
+            long long peerIdx;
             Index localIdx;
 
             buff.read(peerRank);

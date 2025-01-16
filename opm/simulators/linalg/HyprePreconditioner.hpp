@@ -66,7 +66,7 @@ public:
     {
         OPM_TIMEBLOCK(prec_construct);
 
-        int size;
+        long long size;
         MPI_Comm_size(MPI_COMM_WORLD, &size);
         if (size > 1) {
             OPM_THROW(std::runtime_error, "HyprePreconditioner is currently only implemented for sequential runs");
@@ -97,12 +97,12 @@ public:
         HYPRE_BoomerAMGCreate(&solver_);
 
         // Set parameters from property tree with defaults
-        HYPRE_BoomerAMGSetPrintLevel(solver_, prm.get<int>("print_level", 0));
-        HYPRE_BoomerAMGSetMaxIter(solver_, prm.get<int>("max_iter", 1));
+        HYPRE_BoomerAMGSetPrintLevel(solver_, prm.get<long long>("print_level", 0));
+        HYPRE_BoomerAMGSetMaxIter(solver_, prm.get<long long>("max_iter", 1));
         HYPRE_BoomerAMGSetStrongThreshold(solver_, prm.get<double>("strong_threshold", 0.5));
         HYPRE_BoomerAMGSetAggTruncFactor(solver_, prm.get<double>("agg_trunc_factor", 0.3));
-        HYPRE_BoomerAMGSetInterpType(solver_, prm.get<int>("interp_type", 6));
-        HYPRE_BoomerAMGSetMaxLevels(solver_, prm.get<int>("max_levels", 15));
+        HYPRE_BoomerAMGSetInterpType(solver_, prm.get<long long>("interp_type", 6));
+        HYPRE_BoomerAMGSetMaxLevels(solver_, prm.get<long long>("max_levels", 15));
         HYPRE_BoomerAMGSetTol(solver_, prm.get<double>("tolerance", 0.0));
 
         if (use_gpu_) {
@@ -114,10 +114,10 @@ public:
             HYPRE_BoomerAMGSetKeepTranspose(solver_, true);
         }
         else {
-            HYPRE_BoomerAMGSetRelaxType(solver_, prm.get<int>("relax_type", 13));
-            HYPRE_BoomerAMGSetCoarsenType(solver_, prm.get<int>("coarsen_type", 10));
-            HYPRE_BoomerAMGSetAggNumLevels(solver_, prm.get<int>("agg_num_levels", 1));
-            HYPRE_BoomerAMGSetAggInterpType(solver_, prm.get<int>("agg_interp_type", 4));
+            HYPRE_BoomerAMGSetRelaxType(solver_, prm.get<long long>("relax_type", 13));
+            HYPRE_BoomerAMGSetCoarsenType(solver_, prm.get<long long>("coarsen_type", 10));
+            HYPRE_BoomerAMGSetAggNumLevels(solver_, prm.get<long long>("agg_num_levels", 1));
+            HYPRE_BoomerAMGSetAggInterpType(solver_, prm.get<long long>("agg_interp_type", 4));
         }
 
         // Create Hypre vectors
@@ -269,9 +269,9 @@ private:
         cols_.resize(nnz_);
 
         // Setup arrays and fill column indices
-        int pos = 0;
+        long long pos = 0;
         for (auto row = A_.begin(); row != A_.end(); ++row) {
-            const int rowIdx = row.index();
+            const long long rowIdx = row.index();
             rows_[rowIdx] = rowIdx;
             ncols_[rowIdx] = row->size();
 

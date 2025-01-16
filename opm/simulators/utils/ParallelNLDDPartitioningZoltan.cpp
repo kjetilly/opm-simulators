@@ -117,18 +117,18 @@ namespace {
         ///
         /// \return Reachable index of \p vertex.  -1 if \p vertex is not
         ///   reachable.
-        int operator[](const std::size_t vertex) const
+        long long operator[](const std::size_t vertex) const
         {
             return this->index_[vertex];
         }
 
     private:
         /// Indices of reachable vertices.
-        std::vector<int> index_{};
+        std::vector<long long> index_{};
 
         /// Number of reachable vertices.  One more than the maximum value
         /// in \c index_.
-        int numSeenVertices_{0};
+        long long numSeenVertices_{0};
     };
 
     /// Unstructured graph of reachable vertices
@@ -158,7 +158,7 @@ namespace {
         /// \param[in] globalCell Callback for mapping (local) vertex IDs to
         ///   globally unique vertex IDs.
         template <typename Edge, typename GlobalCellID>
-        explicit VertexGraph(const int                    myRank,
+        explicit VertexGraph(const long long                    myRank,
                              const std::size_t            numVertices,
                              const std::vector<Edge>&     edges,
                              const EnumerateSeenVertices& vertexId,
@@ -185,21 +185,21 @@ namespace {
         /// Retrive my rank in current MPI communicator.
         ///
         /// Needed by Zoltan.
-        int myRank() const
+        long long myRank() const
         {
             return this->myRank_;
         }
 
         /// Retrieve number of vertices in connectivity graph.
-        int numVertices() const
+        long long numVertices() const
         {
-            return static_cast<int>(this->graph_.numVertices());
+            return static_cast<long long>(this->graph_.numVertices());
         }
 
         /// Retrieve globally unique ID of reachable vertex.
         ///
         /// \param[in] localCell Index of locally reachable cell/vertex.
-        int globalId(const int localCell) const
+        long long globalId(const long long localCell) const
         {
             return this->globalCell_[localCell];
         }
@@ -221,14 +221,14 @@ namespace {
         }
 
     private:
-        // VertexID = int, TrackCompressedIdx = false
+        // VertexID = long long, TrackCompressedIdx = false
         using Backend = Opm::utility::CSRGraphFromCoordinates<>;
 
         /// My rank in current MPI communicator.
-        int myRank_{};
+        long long myRank_{};
 
         /// Globally unique vertex ID of each locally reachable vertex.
-        std::vector<int> globalCell_{};
+        std::vector<long long> globalCell_{};
 
         /// Vertex connectivity graph.
         Backend graph_{};
@@ -243,8 +243,8 @@ extern "C" {
     /// \param[in] graphPtr Opaque user data.  Assumed to point to a
     ///   \c VertexGraph instance.
     ///
-    /// \param[out] ierr Error code for Zoltan consumption.  Single \c int.
-    int numVertices(void* graphPtr, int* ierr)
+    /// \param[out] ierr Error code for Zoltan consumption.  Single \c long long.
+    long long numVertices(void* graphPtr, long long* ierr)
     {
         *ierr = ZOLTAN_OK;
         return static_cast<VertexGraph*>(graphPtr)->numVertices();
@@ -267,15 +267,15 @@ extern "C" {
     ///   cell/vertex/object.  Size equal to \code numVertices(graphPtr)
     ///   \endcode.  Populated by this function.  Allocated by Zoltan.
     ///
-    /// \param[out] ierr Error code for Zoltan consumption.  Single \c int.
+    /// \param[out] ierr Error code for Zoltan consumption.  Single \c long long.
     void numEdges(void*            graphPtr,
-                  const int     /* sizeGID */,
-                  const int     /* sizeLID */,
-                  const int        numCells,
+                  const long long     /* sizeGID */,
+                  const long long     /* sizeLID */,
+                  const long long        numCells,
                   ZOLTAN_ID_PTR /* globalID */,
                   ZOLTAN_ID_PTR    localID,
-                  int*             numEdges,
-                  int*             ierr)
+                  long long*             numEdges,
+                  long long*             ierr)
     {
         const auto& ia = static_cast<VertexGraph*>(graphPtr)->startPointers();
 
@@ -310,15 +310,15 @@ extern "C" {
     ///   \code numElmsPerLid * numVertices(graphPtr) \endcode.  Populated
     ///   by this function.  Allocated by Zoltan.
     ///
-    /// \param[out] ierr Error code for Zoltan consumption.  Single \c int.
+    /// \param[out] ierr Error code for Zoltan consumption.  Single \c long long.
     void vertexList(void*            graphPtr,
-                    const int        numElmsPerGid,
-                    const int        numElmsPerLid,
+                    const long long        numElmsPerGid,
+                    const long long        numElmsPerLid,
                     ZOLTAN_ID_PTR    globalIds,
                     ZOLTAN_ID_PTR    localIds,
-                    const int     /* wgtDim */,
+                    const long long     /* wgtDim */,
                     float*        /* objWgts */,
-                    int*             ierr)
+                    long long*             ierr)
     {
         if ((numElmsPerGid != numElmsPerLid) || (numElmsPerLid != 1)) {
             *ierr = ZOLTAN_FATAL;
@@ -335,7 +335,7 @@ extern "C" {
         std::transform(&localIds[0],
                        &localIds[0] + graph->numVertices(),
                        &globalIds[0],
-                       [graph](const int localCell) -> ZOLTAN_ID_TYPE
+                       [graph](const long long localCell) -> ZOLTAN_ID_TYPE
                        {
                            return graph->globalId(localCell);
                        });
@@ -372,19 +372,19 @@ extern "C" {
     ///   cell/vertex/object.  Populated by this function.  Allocated by
     ///   Zoltan.
     ///
-    /// \param[out] ierr Error code for Zoltan consumption.  Single \c int.
+    /// \param[out] ierr Error code for Zoltan consumption.  Single \c long long.
     void edgeList(void*            graphPtr,
-                  const int        numElmsPerGid,
-                  const int        numElmsPerLid,
-                  const int        numCells,
+                  const long long        numElmsPerGid,
+                  const long long        numElmsPerLid,
+                  const long long        numCells,
                   ZOLTAN_ID_PTR /* globalIds */,
                   ZOLTAN_ID_PTR    localIds,
-                  int*          /* numEdges */,
+                  long long*          /* numEdges */,
                   ZOLTAN_ID_PTR    neighbourGid,
-                  int*             neighbourProc,
-                  int           /* weightDim */,
+                  long long*             neighbourProc,
+                  long long           /* weightDim */,
                   float*        /* edgeWeights */,
-                  int*             ierr)
+                  long long*             ierr)
     {
         const auto* graph = static_cast<VertexGraph*>(graphPtr);
 
@@ -442,7 +442,7 @@ extern "C" {
         ///
         /// \return Partition vector.  Non-negative block IDs for each of
         ///   the \p numCells cells/vertices/objects in \p graphPtr.
-        std::vector<int> operator()(void* graphPtr, const std::size_t numCells);
+        std::vector<long long> operator()(void* graphPtr, const std::size_t numCells);
 
     private:
         /// Helper RAII type to manage partition ("part") memory allocated
@@ -456,10 +456,10 @@ extern "C" {
             ZOLTAN_ID_PTR localId{nullptr};
 
             /// Owning process for each cell/vertex/object.
-            int* process{nullptr};
+            long long* process{nullptr};
 
             /// Block/domain to which each cell/vertex/object is assigned.
-            int* block{nullptr};
+            long long* block{nullptr};
 
             /// Destructor.
             ///
@@ -500,7 +500,7 @@ extern "C" {
         Zoltan_Destroy(&this->zz_);
     }
 
-    std::vector<int>
+    std::vector<long long>
     Partitioner::operator()(void* graphPtr, const std::size_t numCells)
     {
         Zoltan_Set_Num_Obj_Fn        (this->zz_, &numVertices, graphPtr);
@@ -528,7 +528,7 @@ extern "C" {
             OPM_THROW(std::runtime_error, "Failed to Partition Domain Graph");
         }
 
-        auto blocks = std::vector<int>(numCells, 0);
+        auto blocks = std::vector<long long>(numCells, 0);
         for (auto e = 0*numSend; e < numSend; ++e) {
             blocks[send.localId[e]] = send.block[e];
         }
@@ -536,8 +536,8 @@ extern "C" {
         return blocks;
     }
 
-    void forceSameDomain(const std::vector<int>& cells,
-                         std::vector<int>&       parts)
+    void forceSameDomain(const std::vector<long long>& cells,
+                         std::vector<long long>&       parts)
     {
         if (cells.empty()) { return; }
 
@@ -549,7 +549,7 @@ extern "C" {
 
 } // Anonymous namespace
 
-std::vector<int>
+std::vector<long long>
 Opm::ParallelNLDDPartitioningZoltan::partitionElements(const ZoltanParamMap& params) const
 {
     const auto vertexId = EnumerateSeenVertices { this->numElements_, this->conns_ };
@@ -564,7 +564,7 @@ Opm::ParallelNLDDPartitioningZoltan::partitionElements(const ZoltanParamMap& par
     }(static_cast<void*>(&graph), graph.numVertices());
 
     // Map reachable cells back to full cell numbering.
-    auto parts = std::vector<int>(this->numElements_, -1);
+    auto parts = std::vector<long long>(this->numElements_, -1);
     for (auto elm = 0*this->numElements_; elm < this->numElements_; ++elm) {
         if (const auto reachableElmIx = vertexId[elm]; reachableElmIx >= 0) {
             parts[elm] = partsForReachableCells[reachableElmIx];

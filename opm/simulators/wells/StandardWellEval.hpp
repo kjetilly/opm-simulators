@@ -48,15 +48,15 @@ protected:
     using Scalar = typename FluidSystem::Scalar;
     using PrimaryVariables = StandardWellPrimaryVariables<FluidSystem,Indices>;
     using StdWellConnections = StandardWellConnections<FluidSystem,Indices>;
-    static constexpr int Bhp = PrimaryVariables::Bhp;
-    static constexpr int WQTotal= PrimaryVariables::WQTotal;
-    static constexpr int numWellConservationEq = PrimaryVariables::numWellConservationEq;
+    static constexpr long long Bhp = PrimaryVariables::Bhp;
+    static constexpr long long WQTotal= PrimaryVariables::WQTotal;
+    static constexpr long long numWellConservationEq = PrimaryVariables::numWellConservationEq;
 
     static constexpr bool has_wfrac_variable = PrimaryVariables::has_wfrac_variable;
     static constexpr bool has_gfrac_variable = PrimaryVariables::has_gfrac_variable;
-    static constexpr int WFrac = PrimaryVariables::WFrac;
-    static constexpr int GFrac = PrimaryVariables::GFrac;
-    static constexpr int SFrac = PrimaryVariables::SFrac;
+    static constexpr long long WFrac = PrimaryVariables::WFrac;
+    static constexpr long long GFrac = PrimaryVariables::GFrac;
+    static constexpr long long SFrac = PrimaryVariables::SFrac;
 
 public:
     using EvalWell = typename PrimaryVariables::EvalWell;

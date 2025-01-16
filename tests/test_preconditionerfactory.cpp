@@ -64,7 +64,7 @@ public:
 };
 
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 testPrec(const Opm::PropertyTree& prm, const std::string& matrix_filename, const std::string& rhs_filename)
 {
@@ -101,7 +101,7 @@ testPrec(const Opm::PropertyTree& prm, const std::string& matrix_filename, const
     };
 
     auto prec = PrecFactory::create(op, prm.get_child("preconditioner"), wc, 1);
-    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
+    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<long long>("maxiter"), prm.get<long long>("verbosity"));
     Vector x(rhs.size());
     Dune::InverseOperatorResult res;
     solver.apply(x, rhs, res);
@@ -110,7 +110,7 @@ testPrec(const Opm::PropertyTree& prm, const std::string& matrix_filename, const
 
 void test1(const Opm::PropertyTree& prm)
 {
-    constexpr int bz = 1;
+    constexpr long long bz = 1;
     auto sol = testPrec<bz>(prm, "matr33.txt", "rhs3.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {-1.62493,
             -1.76435e-06,
@@ -123,7 +123,7 @@ void test1(const Opm::PropertyTree& prm)
             -1.049e-05};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
         }
     }
@@ -131,14 +131,14 @@ void test1(const Opm::PropertyTree& prm)
 
 void test3(const Opm::PropertyTree& prm)
 {
-    constexpr int bz = 3;
+    constexpr long long bz = 3;
     auto sol = testPrec<bz>(prm, "matr33.txt", "rhs3.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {{-1.62493, -1.76435e-06, 1.86991e-10},
             {-458.542, 2.28308e-06, -2.45341e-07},
                 {-1.48005, -5.02264e-07, -1.049e-05}};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
         }
     }
@@ -159,13 +159,13 @@ BOOST_AUTO_TEST_CASE(TestDefaultPreconditionerFactory)
 }
 
 
-template <int bz>
+template <long long bz>
 using M = Dune::BCRSMatrix<Opm::MatrixBlock<double, bz, bz>>;
-template <int bz>
+template <long long bz>
 using V = Dune::BlockVector<Dune::FieldVector<double, bz>>;
-template <int bz>
+template <long long bz>
 using O = Dune::MatrixAdapter<M<bz>, V<bz>, V<bz>>;
-template <int bz>
+template <long long bz>
 using PF = Opm::PreconditionerFactory<O<bz>,Dune::Amg::SequentialInformation>;
 
 
@@ -176,13 +176,13 @@ BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
 
     // Test with 1x1 block solvers.
     {
-        constexpr int bz = 1;
+        constexpr long long bz = 1;
         BOOST_CHECK_THROW(testPrec<bz>(prm, "matr33.txt", "rhs3.txt"), std::invalid_argument);
     }
 
     // Test with 3x3 block solvers.
     {
-        constexpr int bz = 3;
+        constexpr long long bz = 3;
         BOOST_CHECK_THROW(testPrec<bz>(prm, "matr33.txt", "rhs3.txt"), std::invalid_argument);
     }
 
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
 
     // Test with 3x3 block solvers.
     {
-        constexpr int bz = 3;
+        constexpr long long bz = 3;
         BOOST_CHECK_THROW(testPrec<bz>(prm, "matr33.txt", "rhs3.txt"), std::invalid_argument);
     }
 
@@ -231,7 +231,7 @@ public:
         return Dune::SolverCategory::sequential;
     }
 
-    RepeatingOperator(const Mat& matrix, const int repeats)
+    RepeatingOperator(const Mat& matrix, const long long repeats)
         : matrix_(matrix)
         , repeats_(repeats)
     {
@@ -250,7 +250,7 @@ public:
         Vec temp1 = x;
         Vec temp2 = x; // For size.
         temp2 = 0.0;
-        for (int rr = 0; rr < repeats_; ++rr) {
+        for (long long rr = 0; rr < repeats_; ++rr) {
             // mv below means: temp2 = matrix_ * temp1;
             matrix_.mv(temp1, temp2);
             temp1 = temp2;
@@ -266,11 +266,11 @@ public:
 
 protected:
     const Mat& matrix_;
-    const int repeats_;
+    const long long repeats_;
 };
 
 
-template <int bz>
+template <long long bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
 testPrecRepeating(const Opm::PropertyTree& prm, const std::string& matrix_filename, const std::string& rhs_filename)
 {
@@ -307,7 +307,7 @@ testPrecRepeating(const Opm::PropertyTree& prm, const std::string& matrix_filena
     });
 
     auto prec = PrecFactory::create(op, prm.get_child("preconditioner"));
-    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
+    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<long long>("maxiter"), prm.get<long long>("verbosity"));
     Vector x(rhs.size());
     Dune::InverseOperatorResult res;
     solver.apply(x, rhs, res);
@@ -316,7 +316,7 @@ testPrecRepeating(const Opm::PropertyTree& prm, const std::string& matrix_filena
 
 void test1rep(const Opm::PropertyTree& prm)
 {
-    constexpr int bz = 1;
+    constexpr long long bz = 1;
     auto sol = testPrecRepeating<bz>(prm, "matr33rep.txt", "rhs3rep.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {0.285714285714286,
                                                                0.285714285714286,
@@ -329,7 +329,7 @@ void test1rep(const Opm::PropertyTree& prm)
                                                                -0.214285714285714};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
         }
     }
@@ -337,7 +337,7 @@ void test1rep(const Opm::PropertyTree& prm)
 
 void test3rep(const Opm::PropertyTree& prm)
 {
-    constexpr int bz = 3;
+    constexpr long long bz = 3;
     auto sol = testPrecRepeating<bz>(prm, "matr33rep.txt", "rhs3rep.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {
         {0.285714285714286, 0.285714285714286, 0.285714285714286},
@@ -346,7 +346,7 @@ void test3rep(const Opm::PropertyTree& prm)
     };
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
-        for (int row = 0; row < bz; ++row) {
+        for (long long row = 0; row < bz; ++row) {
             BOOST_CHECK_CLOSE(sol[i][row], expected[i][row], 1e-3);
         }
     }

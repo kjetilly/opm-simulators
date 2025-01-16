@@ -63,7 +63,7 @@ public:
 namespace Opm {
 
 // ----------------- Main program -----------------
-int flowMICPMain(int argc, char** argv, bool outputCout, bool outputFiles)
+long long flowMICPMain(long long argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -74,7 +74,7 @@ int flowMICPMain(int argc, char** argv, bool outputCout, bool outputFiles)
     return mainfunc.execute();
 }
 
-int flowMICPMainStandalone(int argc, char** argv)
+long long flowMICPMainStandalone(long long argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowMICPProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

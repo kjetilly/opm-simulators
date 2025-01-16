@@ -211,7 +211,7 @@ public:
          * For corner point grids, this is 0-5 for I-, I+, J-, J+, K- and K+ faces,
          * and -1 for NNC faces.
          */
-        int dirId() const
+        long long dirId() const
         {
             return dirId_;
         }
@@ -245,7 +245,7 @@ public:
         ConditionalStorage<needIntegrationPos, GlobalPosition> integrationPos_;
         ConditionalStorage<needNormal, WorldVector> normal_;
         Scalar area_;
-        int dirId_;
+        long long dirId_;
 
         unsigned short exteriorIdx_;
     };
@@ -258,7 +258,7 @@ public:
         , elementMapper_(mapper)
     {
         // try to ensure that the mapper passed indeed maps elements
-        assert(int(gridView.size(/*codim=*/0)) == int(elementMapper_.size()));
+        assert((long long)(gridView.size(/*codim=*/0)) == (long long)(elementMapper_.size()));
     }
 
     void updateTopology(const Element& element)

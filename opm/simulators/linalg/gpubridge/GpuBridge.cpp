@@ -60,14 +60,14 @@ using Accelerator::GpuResult;
 using Accelerator::GpuSolver;
 using Accelerator::SolverStatus;
 
-template<class BridgeMatrix, class BridgeVector, int block_size>
+template<class BridgeMatrix, class BridgeVector, long long block_size>
 GpuBridge<BridgeMatrix, BridgeVector, block_size>::
 GpuBridge(std::string accelerator_mode_,
-          int linear_solver_verbosity,
-          [[maybe_unused]] int maxit,
+          long long linear_solver_verbosity,
+          [[maybe_unused]] long long maxit,
           [[maybe_unused]] Scalar tolerance,
-          [[maybe_unused]] unsigned int platformID,
-          [[maybe_unused]] unsigned int deviceID,
+          [[maybe_unused]] size_t platformID,
+          [[maybe_unused]] size_t deviceID,
           [[maybe_unused]] bool opencl_ilu_parallel,
           [[maybe_unused]] std::string linsolver)
     : verbosity(linear_solver_verbosity)
@@ -133,20 +133,20 @@ GpuBridge(std::string accelerator_mode_,
 }
 
 template <class BridgeMatrix>
-int replaceZeroDiagonal(BridgeMatrix& mat,
+long long replaceZeroDiagonal(BridgeMatrix& mat,
                     std::vector<typename BridgeMatrix::size_type>& diag_indices)
 {
     using Scalar = typename BridgeMatrix::field_type;
-    int numZeros = 0;
-    const int dim = mat[0][0].N();                    // might be replaced with BridgeMatrix::block_type::size()
+    long long numZeros = 0;
+    const long long dim = mat[0][0].N();                    // might be replaced with BridgeMatrix::block_type::size()
     const Scalar zero_replace = 1e-15;
     if (diag_indices.empty()) {
-        int Nb = mat.N();
+        long long Nb = mat.N();
         diag_indices.reserve(Nb);
         for (typename BridgeMatrix::iterator r = mat.begin(); r != mat.end(); ++r) {
             auto diag = r->find(r.index());  // diag is an iterator
             assert(diag.index() == r.index()); // every row must have a diagonal block
-            for (int rr = 0; rr < dim; ++rr) {
+            for (long long rr = 0; rr < dim; ++rr) {
                 auto& val = (*diag)[rr][rr]; // reference to easily change the value
                 if (val == 0.0) {             // could be replaced by '< 1e-30' or similar
                     val = zero_replace;
@@ -159,7 +159,7 @@ int replaceZeroDiagonal(BridgeMatrix& mat,
         for (typename BridgeMatrix::iterator r = mat.begin(); r != mat.end(); ++r) {
             typename BridgeMatrix::size_type offset = diag_indices[r.index()];
             auto& diag_block = r->getptr()[offset]; // diag_block is a reference to MatrixBlock, located on column r of row r
-            for (int rr = 0; rr < dim; ++rr) {
+            for (long long rr = 0; rr < dim; ++rr) {
                 auto& val = diag_block[rr][rr];
                 if (val == 0.0) {                     // could be replaced by '< 1e-30' or similar
                     val = zero_replace;
@@ -175,11 +175,11 @@ int replaceZeroDiagonal(BridgeMatrix& mat,
 // iterate sparsity pattern from Matrix and put colIndices and rowPointers in arrays
 // sparsity pattern should stay the same
 // this could be removed if Dune::BCRSMatrix features an API call that returns colIndices and rowPointers
-template <class BridgeMatrix, class BridgeVector, int block_size>
+template <class BridgeMatrix, class BridgeVector, long long block_size>
 void GpuBridge<BridgeMatrix, BridgeVector, block_size>::
 copySparsityPatternFromISTL(const BridgeMatrix& mat,
-                            std::vector<int>& h_rows,
-                            std::vector<int>& h_cols)
+                            std::vector<long long>& h_rows,
+                            std::vector<long long>& h_cols)
 {
     h_rows.clear();
     h_cols.clear();
@@ -193,8 +193,8 @@ copySparsityPatternFromISTL(const BridgeMatrix& mat,
         h_rows.emplace_back(h_cols.size());
     }
 
-    // h_rows and h_cols could be changed to 'unsigned int', but cusparse expects 'int'
-    if (static_cast<unsigned int>(h_rows[mat.N()]) != mat.nonzeroes()) {
+    // h_rows and h_cols could be changed to 'size_t', but cusparse expects 'long long'
+    if (static_cast<size_t>(h_rows[mat.N()]) != mat.nonzeroes()) {
         OPM_THROW(std::logic_error,
                   "Error size of rows do not sum to number of nonzeroes "
                   "in GpuBridge::copySparsityPatternFromISTL()");
@@ -224,11 +224,11 @@ void checkMemoryContiguous(const BridgeMatrix& mat)
     }
 }
 
-template <class BridgeMatrix, class BridgeVector, int block_size>
+template <class BridgeMatrix, class BridgeVector, long long block_size>
 void GpuBridge<BridgeMatrix, BridgeVector, block_size>::
 solve_system(BridgeMatrix* bridgeMat,
              BridgeMatrix* jacMat,
-             int numJacobiBlocks,
+             long long numJacobiBlocks,
              BridgeVector& b,
              WellContributions<Scalar>& wellContribs,
              InverseOperatorResult& res)
@@ -236,9 +236,9 @@ solve_system(BridgeMatrix* bridgeMat,
     if (use_gpu) {
         GpuResult result;
         result.converged = false;
-        const int dim = (*bridgeMat)[0][0].N();
-        const int Nb = bridgeMat->N();
-        const int nnzb = bridgeMat->nonzeroes();
+        const long long dim = (*bridgeMat)[0][0].N();
+        const long long Nb = bridgeMat->N();
+        const long long nnzb = bridgeMat->nonzeroes();
 
         if (dim != 3) {
             OpmLog::warning("GpuSolver only accepts blocksize = 3 at this time, will use Dune for the remainder of the program");
@@ -259,7 +259,7 @@ solve_system(BridgeMatrix* bridgeMat,
         }
 
         Dune::Timer t_zeros;
-        int numZeros = replaceZeroDiagonal(*bridgeMat, diagIndices);
+        long long numZeros = replaceZeroDiagonal(*bridgeMat, diagIndices);
         if (verbosity >= 2) {
             std::ostringstream out;
             out << "Checking zeros took: " << t_zeros.stop() << " s, found "
@@ -268,7 +268,7 @@ solve_system(BridgeMatrix* bridgeMat,
         }
 
         if (numJacobiBlocks >= 2) {
-            const int jacNnzb = (h_jacRows.empty()) ? jacMat->nonzeroes()
+            const long long jacNnzb = (h_jacRows.empty()) ? jacMat->nonzeroes()
                                                     : h_jacRows.back();
 
             if (!jacMatrix) {
@@ -283,7 +283,7 @@ solve_system(BridgeMatrix* bridgeMat,
             }
 
             Dune::Timer t_zeros2;
-            int jacNumZeros = replaceZeroDiagonal(*jacMat, jacDiagIndices);
+            long long jacNumZeros = replaceZeroDiagonal(*jacMat, jacDiagIndices);
             if (verbosity >= 2) {
                 std::ostringstream out;
                 out << "Checking zeros for jacMat took: " << t_zeros2.stop()
@@ -327,7 +327,7 @@ solve_system(BridgeMatrix* bridgeMat,
     }
 }
 
-template <class BridgeMatrix, class BridgeVector, int block_size>
+template <class BridgeMatrix, class BridgeVector, long long block_size>
 void GpuBridge<BridgeMatrix, BridgeVector, block_size>::
 get_result([[maybe_unused]] BridgeVector& x)
 {
@@ -336,7 +336,7 @@ get_result([[maybe_unused]] BridgeVector& x)
     }
 }
 
-template <class BridgeMatrix, class BridgeVector, int block_size>
+template <class BridgeMatrix, class BridgeVector, long long block_size>
 void GpuBridge<BridgeMatrix, BridgeVector, block_size>::
 initWellContributions([[maybe_unused]] WellContributions<Scalar>& wellContribs,
                       [[maybe_unused]] unsigned N)

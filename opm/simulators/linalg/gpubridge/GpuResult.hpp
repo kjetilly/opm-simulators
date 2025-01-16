@@ -31,7 +31,7 @@ class GpuResult
 {
 
 public:
-    int iterations = 0;         // number of iterations
+    long long iterations = 0;         // number of iterations
     double reduction = 0.0;     // reduction of norm, norm_start / norm_final
     bool converged = false;     // true iff the linear solver reached the desired norm within maxit iterations
     double conv_rate = 0.0;     // average reduction of norm per iteration, usually calculated with 'static_cast<double>(pow(res.reduction,1.0/it));'

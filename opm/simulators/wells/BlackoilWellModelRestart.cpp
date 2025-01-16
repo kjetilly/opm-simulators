@@ -112,7 +112,7 @@ loadRestartSegmentData(const std::string&                   well_name,
     auto& segment_pressure = segments.pressure;
     auto& segment_rates = segments.rates;
     for (const auto& [segNum, rst_segment] : rst_segments) {
-        const int segment_index = segment_set.segmentNumberToIndex(segNum);
+        const long long segment_index = segment_set.segmentNumberToIndex(segNum);
 
         // Recovering segment rates and pressure from the restart values
         segment_pressure[segment_index] = rst_segment.pressures[pres_idx];
@@ -186,7 +186,7 @@ loadRestartGroupData(const std::string&     group,
 
 template<class Scalar>
 void BlackoilWellModelRestart<Scalar>::
-loadRestartGuideRates(const int                    report_step,
+loadRestartGuideRates(const long long                    report_step,
                       const GuideRateModel::Target target,
                       const data::Wells&           rst_wells,
                       GuideRate&                   guide_rate) const
@@ -205,7 +205,7 @@ loadRestartGuideRates(const int                    report_step,
 
 template<class Scalar>
 void BlackoilWellModelRestart<Scalar>::
-loadRestartGuideRates(const int                                     report_step,
+loadRestartGuideRates(const long long                                     report_step,
                       const GuideRateConfig&                        config,
                       const std::map<std::string, data::GroupData>& rst_groups,
                       GuideRate&                                    guide_rate) const

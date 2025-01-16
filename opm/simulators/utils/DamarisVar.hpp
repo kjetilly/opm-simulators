@@ -99,9 +99,9 @@ namespace DamarisOutput
     template <typename T>
     class DamarisVar
     {
-        int num_params_; //!< Each paramater name string will need a value and they
+        long long num_params_; //!< Each paramater name string will need a value and they
                          //!< are set in SetDamarisParameter()
-        std::vector<int> param_sizes_; //!< The value for any paramaters that are being used to
+        std::vector<long long> param_sizes_; //!< The value for any paramaters that are being used to
                                        //!< describe the size of the variables data array
         std::vector<int64_t> positions_; //!< The offsets into the array that the data in the Variable
                                          //!< starts from for this rank.
@@ -112,8 +112,8 @@ namespace DamarisOutput
                                                //!< variable depends on (via it's Layout)
         std::string variable_name_; //!< Reference string to the XML attribute name of
                                     //!< the variable.
-        int rank_; //!< Rank of process - used for error reporting.
-        int dam_err_; //!<  Set to != DAMARIS_OK if a Damaris error was returned by a
+        long long rank_; //!< Rank of process - used for error reporting.
+        long long dam_err_; //!<  Set to != DAMARIS_OK if a Damaris error was returned by a
                       //!<  Damaris API function call
         bool has_error_;
         std::string dam_err_str_; //!< Error string describing detected error
@@ -140,14 +140,14 @@ namespace DamarisOutput
         *
         * Two usages:
         *    Example XML definition:
-        *     <parameter name="my_param_name1"     type="int" value="1" />
-        *     <parameter name="my_param_name2"     type="int" value="1" />
-        *     <layout    name="my_layout"          type="int" dimensions="my_param_name1,my_param_name2" />
+        *     <parameter name="my_param_name1"     type="long long" value="1" />
+        *     <parameter name="my_param_name2"     type="long long" value="1" />
+        *     <layout    name="my_layout"          type="long long" dimensions="my_param_name1,my_param_name2" />
         *     <variable name="MYVARNAME"  layout="my_layout"  visualizable="true"/>
         *
         * 1/ The variable's layout needs to be initialised via parameters :
         *     // Create the DamarisVar object:
-        *     damaris::model::DamarisVar<int>  MYVARNAME_2d(2,{std::string("my_param_name1"),
+        *     damaris::model::DamarisVar<long long>  MYVARNAME_2d(2,{std::string("my_param_name1"),
         *                                                   std::string("my_param_name2")},
         *                                                   {100, 25},
         *                                                   std::string("MYVARNAME"), rank_);
@@ -161,7 +161,7 @@ namespace DamarisOutput
         *  2/ The variable's layout has been initialised via parameters in another variable
         *     (i.e. "my_param_name1" and "my_param_name2" have been previously set in the code)
         *     // Create the DamarisVar object:
-        *     damaris::model::DamarisVar<int>  MYVARNAME_2d(2, {std::string("my_param_name1"),
+        *     damaris::model::DamarisVar<long long>  MYVARNAME_2d(2, {std::string("my_param_name1"),
                                                                 std::string("my_param_name2")},
         *                                                       std::string("MYVARNAME"), rank_);
         *
@@ -184,10 +184,10 @@ namespace DamarisOutput
         *  /param [IN] variable_name  The name of the Damaris variable (defined in the Damaris XML file)
         *  /param [IN] rank           The rank of the process. Used for error output.
         */
-        DamarisVar(int dims,
+        DamarisVar(long long dims,
                    const std::vector<std::string>& param_names,
                    const std::string& variable_name,
-                   int rank);
+                   long long rank);
 
         /**
          *  Constructor - Sets private data values and also initialises the Damaris shared memory area for writing (and
@@ -198,12 +198,12 @@ namespace DamarisOutput
          *
          *  Example use:
          *         Example XML definition:
-         *          <parameter name="my_param_name1"     type="int" value="1" />
-         *          <parameter name="my_param_name2"     type="int" value="1" />
-         *          <layout    name="my_layout"    type="int" dimensions="my_param_name1,my_param_name2"   comment="This
+         *          <parameter name="my_param_name1"     type="long long" value="1" />
+         *          <parameter name="my_param_name2"     type="long long" value="1" />
+         *          <layout    name="my_layout"    type="long long" dimensions="my_param_name1,my_param_name2"   comment="This
          * is a 2D variable"  /> <variable name="MYVARNAME"  layout="my_layout"  visualizable="true"/>
          *  // The paramaters are intialized in the constructor code
-         *  damaris::model::DamarisVar<int>  MYVARNAME_2d(2,{std::string("my_param_name1"),
+         *  damaris::model::DamarisVar<long long>  MYVARNAME_2d(2,{std::string("my_param_name1"),
          * std::string("my_param_name2")}, {100, 25}, std::string("MYVARNAME"), rank_); T * mymemory =
          * MYVARNAME_2d.data();
          *  ... write data to mymemory ....
@@ -219,11 +219,11 @@ namespace DamarisOutput
          *  /param [IN] variable_name  The name of the Damaris variable (defined in the Damaris XML file)
          *  /param [IN] rank           The rank of the process. Used for error output.
          */
-        DamarisVar(int dims,
+        DamarisVar(long long dims,
                    const std::vector<std::string>& param_names,
-                   const std::vector<int>& param_values,
+                   const std::vector<long long>& param_values,
                    const std::string& variable_name,
-                   int rank);
+                   long long rank);
 
         ~DamarisVar();
 
@@ -278,7 +278,7 @@ namespace DamarisOutput
          *
          *
          */
-        void setDamarisParameterAndShmem(const std::vector<int>& paramSizeVal)
+        void setDamarisParameterAndShmem(const std::vector<long long>& paramSizeVal)
         {
             this->setDamarisParameter(paramSizeVal);
             this->setPointersToDamarisShmem();
@@ -308,7 +308,7 @@ namespace DamarisOutput
          *  /implicit                : Implicitly uses the array of paramater names:
          * \ref param_names_
          */
-        void setDamarisParameter(const std::vector<int>& paramSizeVal);
+        void setDamarisParameter(const std::vector<long long>& paramSizeVal);
 
         /**
          *  Method to set the Damaris position values.

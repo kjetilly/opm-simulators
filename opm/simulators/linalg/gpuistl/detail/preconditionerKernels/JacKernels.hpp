@@ -31,8 +31,8 @@ namespace Opm::gpuistl::detail::JAC
  * @param numberOfRows Integer describing the number of rows in the matrix
  * @param[out] vec Pointer to the vector where the inverse of the diagonal matrix should be stored
  */
-template <class T, int blocksize>
-void invertDiagonalAndFlatten(T* mat, int* rowIndices, int* colIndices, size_t numberOfRows, T* vec);
+template <class T, long long blocksize>
+void invertDiagonalAndFlatten(T* mat, long long* rowIndices, long long* colIndices, size_t numberOfRows, T* vec);
 
 } // namespace Opm::gpuistl::detail::JAC
 #endif

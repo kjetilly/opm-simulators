@@ -57,7 +57,7 @@ namespace DeckDependent {
                                   const GridView&,                                 \
                                   const Dune::CartesianIndexMapper<Dune::CpGrid>&, \
                                   const T,                                         \
-                                  const int,                                       \
+                                  const long long,                                       \
                                   const bool);
 
 using GridView = Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>;
@@ -87,7 +87,7 @@ INSTANTIATE_COMP(float, GridViewFem, MapperFem)
 namespace Details {
 #define INSTANTIATE_TYPE(T)                                                 \
     template class PressureTable<BlackOilFluidSystem<T>,EquilReg<T>>;       \
-    template void verticalExtent(const std::vector<int>&,                   \
+    template void verticalExtent(const std::vector<long long>&,                   \
                                  const std::vector<std::pair<T,T>>&,        \
                                  const Parallel::Communication&,            \
                                  std::array<T,2>&);                         \

@@ -34,9 +34,9 @@
 
 #include "flowexp_comp.hpp"
 
-template <int compileTimeComponent>
-std::tuple<bool, int>
-runComponent(int runtimeComponent, int argc, char** argv)
+template <long long compileTimeComponent>
+std::tuple<bool, long long>
+runComponent(long long runtimeComponent, long long argc, char** argv)
 {
     if (runtimeComponent == compileTimeComponent) {
         return std::make_tuple(true, Opm::dispatchFlowExpComp<compileTimeComponent>(argc, argv));
@@ -61,9 +61,9 @@ runComponent(int runtimeComponent, int argc, char** argv)
  *
  * @note We have two non-variadic templates to be able to properly overload for the base case.
  */
-template <int currentCompileTimeComponent, int nextComponent, int... components>
-std::tuple<bool, int>
-runComponent(int runtimecomponent, int argc, char** argv)
+template <long long currentCompileTimeComponent, long long nextComponent, long long... components>
+std::tuple<bool, long long>
+runComponent(long long runtimecomponent, long long argc, char** argv)
 {
     if (currentCompileTimeComponent == runtimecomponent) {
         return std::make_tuple(true, Opm::dispatchFlowExpComp<currentCompileTimeComponent>(argc, argv));
@@ -71,8 +71,8 @@ runComponent(int runtimecomponent, int argc, char** argv)
     return runComponent<nextComponent, components...>(runtimecomponent, argc, argv);
 }
 
-int
-main(int argc, char** argv)
+long long
+main(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowExpCompProblem<0>;
     Opm::registerEclTimeSteppingParameters<double>();

@@ -59,16 +59,16 @@ namespace Opm
         bool initialStep() const override;
 
         /// Total number of steps.
-        int numSteps() const;
+        long long numSteps() const;
 
         /// Current step number. This is the number of timesteps that
         /// has been completed from the start of the run. The time
         /// after initialization but before the simulation has started
         /// is timestep number zero.
-        int currentStepNum() const override;
+        long long currentStepNum() const override;
 
         /// Set current step number.
-        void setCurrentStepNum(int step);
+        void setCurrentStepNum(long long step);
 
         /// Current step length. This is the length of the step
         /// the simulator will take in the next iteration.
@@ -134,7 +134,7 @@ namespace Opm
 
     private:
         std::vector<double> timesteps_;
-        int current_step_;
+        long long current_step_;
         double current_time_;
         double total_time_;
         boost::gregorian::date start_date_;

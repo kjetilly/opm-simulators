@@ -351,182 +351,182 @@ partiallySupported()
 }
 
 template <>
-const KeywordValidation::PartiallySupportedKeywords<int>&
+const KeywordValidation::PartiallySupportedKeywords<long long>&
 partiallySupported()
 {
-   static const KeywordValidation::PartiallySupportedKeywords<int>partially_supported_keywords_int = {
+   static const KeywordValidation::PartiallySupportedKeywords<long long>partially_supported_keywords_int = {
          {
             "EDITNNC",
             {
-               {8,{true, allow_values<int> {0}, "EDITNNC(ISATNUM1): only default value of 0 supported"}}, // SAT_TABLE12
-               {9,{true, allow_values<int> {0}, "EDITNNC(ISATNUM2): only default value of 0 supported"}}, // SAT_TABLE21
-               {10,{true, allow_values<int> {0}, "EDITNNC(IPRSNUM1): only default value of 0 supported"}}, // PRESS_TABLE12
-               {11,{true, allow_values<int> {0}, "EDITNNC(IPRSNUM2): only default value of 0 supported"}}, // PRESS_TABLE21
+               {8,{true, allow_values<long long> {0}, "EDITNNC(ISATNUM1): only default value of 0 supported"}}, // SAT_TABLE12
+               {9,{true, allow_values<long long> {0}, "EDITNNC(ISATNUM2): only default value of 0 supported"}}, // SAT_TABLE21
+               {10,{true, allow_values<long long> {0}, "EDITNNC(IPRSNUM1): only default value of 0 supported"}}, // PRESS_TABLE12
+               {11,{true, allow_values<long long> {0}, "EDITNNC(IPRSNUM2): only default value of 0 supported"}}, // PRESS_TABLE21
             },
          },
          {
             "EHYSTR",
             {
-               {2,{true, allow_values<int> {0, 1, 2, 3, 4}, "EHYSTR(HYSTMOD): only Carlson or Killough Hysteresis Models supported (0,1 or 2,3,4)"}}, // relative_perm_hyst
-               {13,{true, allow_values<int> {0}, "EHYSTR(HYSWETRP): Killough’s option not supported and should be defaulted"}}, // FLAG_SOMETHING
+               {2,{true, allow_values<long long> {0, 1, 2, 3, 4}, "EHYSTR(HYSTMOD): only Carlson or Killough Hysteresis Models supported (0,1 or 2,3,4)"}}, // relative_perm_hyst
+               {13,{true, allow_values<long long> {0}, "EHYSTR(HYSWETRP): Killough’s option not supported and should be defaulted"}}, // FLAG_SOMETHING
             },
          },
          {
             "ENDSCALE",
             {
-               {3,{false, allow_values<int> {1}, "ENDSCALE(NTENDP): depth end-point scaling not supported – value ignored"}}, // NTENDP
-               {4,{false, allow_values<int> {20}, "ENDSCALE(NNODES): depth end-point scaling not supported – value ignored"}}, // NSENDP
-               {5,{true, allow_values<int> {0}, "ENDSCALE(MODE): depth temperature end-point scaling not supported"}}, // COMP_MODE
+               {3,{false, allow_values<long long> {1}, "ENDSCALE(NTENDP): depth end-point scaling not supported – value ignored"}}, // NTENDP
+               {4,{false, allow_values<long long> {20}, "ENDSCALE(NNODES): depth end-point scaling not supported – value ignored"}}, // NSENDP
+               {5,{true, allow_values<long long> {0}, "ENDSCALE(MODE): depth temperature end-point scaling not supported"}}, // COMP_MODE
             },
          },
          {
             "EQLDIMS",
             {
-               {4,{true, allow_values<int> {1}, "EQLDIMS(NTTRVD): tracer regions (TNUM) not supported. This item should be defaulted to 1."}}, // NTTRVD
+               {4,{true, allow_values<long long> {1}, "EQLDIMS(NTTRVD): tracer regions (TNUM) not supported. This item should be defaulted to 1."}}, // NTTRVD
             },
          },
          {
             "EQUIL",
             {
-               {9,{true, [](int x) { return x >= -20 && x <= 0; }, "EQUIL(EQLOPT3): only values less than or equal to zero are supported (default is -5)"}}, // OIP_INIT
-               {10,{false, allow_values<int> {}, "EQUIL(EQLOPT4): compositional option not used, should be defaulted"}}, // EQLOPT4
-               {11,{false, allow_values<int> {}, "EQUIL(EQLOPT5): compositional option not used, should be defaulted"}}, // EQLOPT5
+               {9,{true, [](long long x) { return x >= -20 && x <= 0; }, "EQUIL(EQLOPT3): only values less than or equal to zero are supported (default is -5)"}}, // OIP_INIT
+               {10,{false, allow_values<long long> {}, "EQUIL(EQLOPT4): compositional option not used, should be defaulted"}}, // EQLOPT4
+               {11,{false, allow_values<long long> {}, "EQUIL(EQLOPT5): compositional option not used, should be defaulted"}}, // EQLOPT5
             },
          },
          {
             "FOAMROCK",
             {
-               {1,{true, allow_values<int> {1}, "FOAMROCK(ADINDX): only the default(1) value is supported"}}, // ADSORPTION_INDEX
+               {1,{true, allow_values<long long> {1}, "FOAMROCK(ADINDX): only the default(1) value is supported"}}, // ADSORPTION_INDEX
             },
          },
          {
             "GRIDFILE",
             {
-               {1,{false, allow_values<int> {0}, "GRIDFILE(NGRID): output of GRID file is not supported."}}, // GRID
-               {2,{false, allow_values<int> {0,1}, "GRIDFILE(NEGRID): only generate (1) or not (0) an EGRID file is supported."}}, // EGRID
+               {1,{false, allow_values<long long> {0}, "GRIDFILE(NGRID): output of GRID file is not supported."}}, // GRID
+               {2,{false, allow_values<long long> {0,1}, "GRIDFILE(NEGRID): only generate (1) or not (0) an EGRID file is supported."}}, // EGRID
             },
          },
          {
             "MESSAGES",
             {
-               {7,{false, allow_values<int> {1000000}, "MESSAGES(STOPMESG): option is not supported"}}, // MESSAGE_STOP_LIMIT
-               {8,{false, allow_values<int> {1000000}, "MESSAGES(STOPCOMT): option is not supported"}}, // COMMENT_STOP_LIMIT
-               {9,{false, allow_values<int> {10000}, "MESSAGES(STOPWARN): option is not supported"}}, // WARNING_STOP_LIMIT
-               {10,{false, allow_values<int> {100}, "MESSAGES(STOPPROB): option is not supported"}}, // PROBLEM_STOP_LIMIT
-               {11,{false, allow_values<int> {10}, "MESSAGES(STOPERRS): option is not supported"}}, // ERROR_STOP_LIMIT
-               {12,{false, allow_values<int> {1}, "MESSAGES(STOPBUGS): option is not supported"}}, // BUG_STOP_LIMIT
-               {13,{false, allow_values<int> {10}, "MESSAGES(PRTGRPMS): option is not supported"}}, // GROUP_PRINT_LIMIT
+               {7,{false, allow_values<long long> {1000000}, "MESSAGES(STOPMESG): option is not supported"}}, // MESSAGE_STOP_LIMIT
+               {8,{false, allow_values<long long> {1000000}, "MESSAGES(STOPCOMT): option is not supported"}}, // COMMENT_STOP_LIMIT
+               {9,{false, allow_values<long long> {10000}, "MESSAGES(STOPWARN): option is not supported"}}, // WARNING_STOP_LIMIT
+               {10,{false, allow_values<long long> {100}, "MESSAGES(STOPPROB): option is not supported"}}, // PROBLEM_STOP_LIMIT
+               {11,{false, allow_values<long long> {10}, "MESSAGES(STOPERRS): option is not supported"}}, // ERROR_STOP_LIMIT
+               {12,{false, allow_values<long long> {1}, "MESSAGES(STOPBUGS): option is not supported"}}, // BUG_STOP_LIMIT
+               {13,{false, allow_values<long long> {10}, "MESSAGES(PRTGRPMS): option is not supported"}}, // GROUP_PRINT_LIMIT
             },
          },
          {
             "NETBALAN",
             {
-               {5,{false, allow_values<int> {10}, "NETBALAN(THPMXITE): option is not supported"}}, // MAX_ITER_THP
+               {5,{false, allow_values<long long> {10}, "NETBALAN(THPMXITE): option is not supported"}}, // MAX_ITER_THP
             },
          },
          {
             "NETWORK",
             {
-               {3,{false, allow_values<int> {20}, "NETWORK(NBCMAX): option is not used and should be defaulted– value ignored"}}, // NBCMAX
+               {3,{false, allow_values<long long> {20}, "NETWORK(NBCMAX): option is not used and should be defaulted– value ignored"}}, // NBCMAX
             },
          },
          {
             "NNC",
             {
-               {8,{true, allow_values<int> {0}, "NNC(ISATNUM1): only default value of 0 supported"}}, // SIM_DEPENDENT1
-               {9,{true, allow_values<int> {0}, "NNC(ISATNUM2): only default value of 0 supported"}}, // SIM_DEPENDENT2
-               {10,{true, allow_values<int> {0}, "NNC(IPRSNUM1): only default value of 0 supported"}}, // PRESSURE_TABLE1
-               {11,{true, allow_values<int> {0}, "NNC(IPRSNUM2): only default value of 0 supported"}}, // PRESSURE_TABLE2
+               {8,{true, allow_values<long long> {0}, "NNC(ISATNUM1): only default value of 0 supported"}}, // SIM_DEPENDENT1
+               {9,{true, allow_values<long long> {0}, "NNC(ISATNUM2): only default value of 0 supported"}}, // SIM_DEPENDENT2
+               {10,{true, allow_values<long long> {0}, "NNC(IPRSNUM1): only default value of 0 supported"}}, // PRESSURE_TABLE1
+               {11,{true, allow_values<long long> {0}, "NNC(IPRSNUM2): only default value of 0 supported"}}, // PRESSURE_TABLE2
             },
          },
          {
             "NUMRES",
             {
-               {1,{true, allow_values<int> {1}, "NUMRES(NUMRES): only a value of one is supported – will STOP"}}, // NUM
+               {1,{true, allow_values<long long> {1}, "NUMRES(NUMRES): only a value of one is supported – will STOP"}}, // NUM
             },
          },
          {
             "REGDIMS",
             {
-               {5,{false, allow_values<int> {0}, "REGDIMS(NUSREG): compositional TRACK regions not supported - value ignored"}}, // "MAX_ETRACK
-               {6,{false, allow_values<int> {1}, "REGDIMS(NTCREG): COAL regions not supported - value ignored"}}, // NTCREG
-               {8,{false, allow_values<int> {0}, "REGDIMS(NWKDREG): should be equal to 0 - value ignored"}}, // MAX_OPERATE_DWORK
-               {9,{false, allow_values<int> {0}, "REGDIMS(NWKIREG): should be equal to 0 - value ignored"}}, // MAX_OPERATE_IWORK
+               {5,{false, allow_values<long long> {0}, "REGDIMS(NUSREG): compositional TRACK regions not supported - value ignored"}}, // "MAX_ETRACK
+               {6,{false, allow_values<long long> {1}, "REGDIMS(NTCREG): COAL regions not supported - value ignored"}}, // NTCREG
+               {8,{false, allow_values<long long> {0}, "REGDIMS(NWKDREG): should be equal to 0 - value ignored"}}, // MAX_OPERATE_DWORK
+               {9,{false, allow_values<long long> {0}, "REGDIMS(NWKIREG): should be equal to 0 - value ignored"}}, // MAX_OPERATE_IWORK
             },
          },
          {
             "SPECGRID",
             {
-               {4,{true, allow_values<int> {1}, "SPECGRID(NUMRES): must be equal to 1"}}, // NUMRES
+               {4,{true, allow_values<long long> {1}, "SPECGRID(NUMRES): must be equal to 1"}}, // NUMRES
             },
          },
          {
             "TABDIMS",
             {
-               {7,{false, allow_values<int> {20}, "TABDIMS(NRVPVT): should be defaulted (20) – ignored as not used"}}, // MAX_RV_NODES"
-               {9,{false, allow_values<int> {1}, "TABDIMS(NMEOSR): must be greater than or equal to 1"}}, // NUM_EOS_RES
-               {10,{false, allow_values<int> {1}, "TABDIMS(NMEOSS): should be equal to 1 - ignored as not used"}}, // NUM_EOS_SURFACE
-               {12,{false, allow_values<int> {1}, "TABDIMS(MXNTHR): should be equal to 1 - ignored as not used"}}, // MAX_THERMAL_REGIONS
-               {14,{false, allow_values<int> {0}, "TABDIMS(MXNPMR): should be equal to 0 - ignored as not used"}}, // MAX_PRESSURE_MAINTAINANCE_REGIONS
-               {15,{false, allow_values<int> {0}, "TABDIMS(NTABKT): should be defaulted (0) – ignored as not used"}}, // MAX_KVALUE_TABLES
-               {16,{false, allow_values<int> {0}, "TABDIMS(NTALPHA): should be defaulted (0) - ignored as not used"}}, // NTALPHA
-               {17,{false, allow_values<int> {10}, "TABDIMS(NASPKA): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPKDAM_MAX_ROWS
-               {18,{false, allow_values<int> {10}, "TABDIMS(MXRAWG): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPREWG_MAX_ROWS
-               {19,{false, allow_values<int> {10}, "TABDIMS(MXRASO): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPVISO_MAX_ROWS
-               {21,{false, allow_values<int> {5}, "TABDIMS(MCASPP): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPPW2D_MAX_COLUMNS
-               {22,{false, allow_values<int> {5}, "TABDIMS(MRASPP): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPPW2D_MAX_ROWS
-               {23,{false, allow_values<int> {5}, "TABDIMS(MXRATF): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPWETF_MAX_ROWS
-               {24,{false, allow_values<int> {0}, "TABDIMS(MXNKVT): should be defaulted (0) - ignored as not used"}}, // NUM_KVALUE_TABLES
+               {7,{false, allow_values<long long> {20}, "TABDIMS(NRVPVT): should be defaulted (20) – ignored as not used"}}, // MAX_RV_NODES"
+               {9,{false, allow_values<long long> {1}, "TABDIMS(NMEOSR): must be greater than or equal to 1"}}, // NUM_EOS_RES
+               {10,{false, allow_values<long long> {1}, "TABDIMS(NMEOSS): should be equal to 1 - ignored as not used"}}, // NUM_EOS_SURFACE
+               {12,{false, allow_values<long long> {1}, "TABDIMS(MXNTHR): should be equal to 1 - ignored as not used"}}, // MAX_THERMAL_REGIONS
+               {14,{false, allow_values<long long> {0}, "TABDIMS(MXNPMR): should be equal to 0 - ignored as not used"}}, // MAX_PRESSURE_MAINTAINANCE_REGIONS
+               {15,{false, allow_values<long long> {0}, "TABDIMS(NTABKT): should be defaulted (0) – ignored as not used"}}, // MAX_KVALUE_TABLES
+               {16,{false, allow_values<long long> {0}, "TABDIMS(NTALPHA): should be defaulted (0) - ignored as not used"}}, // NTALPHA
+               {17,{false, allow_values<long long> {10}, "TABDIMS(NASPKA): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPKDAM_MAX_ROWS
+               {18,{false, allow_values<long long> {10}, "TABDIMS(MXRAWG): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPREWG_MAX_ROWS
+               {19,{false, allow_values<long long> {10}, "TABDIMS(MXRASO): should be defaulted (10) - ignored as not used"}}, // ASPHALTENE_ASPVISO_MAX_ROWS
+               {21,{false, allow_values<long long> {5}, "TABDIMS(MCASPP): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPPW2D_MAX_COLUMNS
+               {22,{false, allow_values<long long> {5}, "TABDIMS(MRASPP): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPPW2D_MAX_ROWS
+               {23,{false, allow_values<long long> {5}, "TABDIMS(MXRATF): should be defaulted (5) - ignored as not used"}}, // ASPHALTENE_ASPWETF_MAX_ROWS
+               {24,{false, allow_values<long long> {0}, "TABDIMS(MXNKVT): should be defaulted (0) - ignored as not used"}}, // NUM_KVALUE_TABLES
             },
          },
          {
             "TRACER",
             {
-               {5,{true, allow_values<int> {0}, "TRACER(KPNUM): partitioned tracer model not supported use default"}}, // NUM_PART_TABLE
+               {5,{true, allow_values<long long> {0}, "TRACER(KPNUM): partitioned tracer model not supported use default"}}, // NUM_PART_TABLE
             },
          },
          {
             "TRACERS",
             {
-               {4,{false, allow_values<int> {0}, "TRACERS(MXENVTR):  passive environmental tracers not supported - ignored as not used"}}, // MAX_ENV_TRACERS
-               {6,{false, allow_values<int> {12}, "TRACERS(MXITRTR): not supported - ignored as not used"}}, // MAX_ITER
-               {7,{false, allow_values<int> {1}, "TRACERS(MNITRTR): not supported - ignored as not used"}}, // MIN_ITER
-               {9,{false, allow_values<int> {}, "TRACERS(LNCONFAC): not supported - ignored as not used"}}, // ONEOFF_LIN_TIGHT
-               {10,{false, allow_values<int> {}, "TRACERS(NLCONFAC): not supported - ignored as not used"}}, // ONEOFF_NLIN_TIGHT
-               {12,{false, allow_values<int> {0}, "TRACERS(NUMCONF): not supported - ignored as not used"}}, // NTIGHTFACTORS
+               {4,{false, allow_values<long long> {0}, "TRACERS(MXENVTR):  passive environmental tracers not supported - ignored as not used"}}, // MAX_ENV_TRACERS
+               {6,{false, allow_values<long long> {12}, "TRACERS(MXITRTR): not supported - ignored as not used"}}, // MAX_ITER
+               {7,{false, allow_values<long long> {1}, "TRACERS(MNITRTR): not supported - ignored as not used"}}, // MIN_ITER
+               {9,{false, allow_values<long long> {}, "TRACERS(LNCONFAC): not supported - ignored as not used"}}, // ONEOFF_LIN_TIGHT
+               {10,{false, allow_values<long long> {}, "TRACERS(NLCONFAC): not supported - ignored as not used"}}, // ONEOFF_NLIN_TIGHT
+               {12,{false, allow_values<long long> {0}, "TRACERS(NUMCONF): not supported - ignored as not used"}}, // NTIGHTFACTORS
             },
          },
          {
             "UDADIMS",
             {
-               {2,{false, allow_values<int> {0}, "UDADIMS(IGNORED): should be defaulted (0) – ignored as not used"}}, // IGNORED
+               {2,{false, allow_values<long long> {0}, "UDADIMS(IGNORED): should be defaulted (0) – ignored as not used"}}, // IGNORED
             },
          },
          {
             "UDQPARAM",
             {
-               {1,{false, allow_values<int> {1}, "UDQPARAM(RSEED): option not supported – value ignored"}}, // RANDOM_SEED
+               {1,{false, allow_values<long long> {1}, "UDQPARAM(RSEED): option not supported – value ignored"}}, // RANDOM_SEED
             },
          },
          {
             "WELLDIMS",
             {
-               {5,{false, allow_values<int> {5}, "WELLDIMS(MXSTAGE): option not supported – value ignored"}}, // MAX_STAGES
-               {6,{false, allow_values<int> {10}, "WELLDIMS(MXSTRMS): option not supported – value ignored"}}, // MAX_STREAMS
-               {7,{false, allow_values<int> {5}, "WELLDIMS(MXMIS): option not supported – value ignored"}}, // MAX_MIXTURES
-               {8,{false, allow_values<int> {4}, "WELLDIMS(MXSEPS): option not supported – value ignored"}}, // MAX_SEPARATORS
-               {9,{false, allow_values<int> {3}, "WELLDIMS(MXCOMPS): option not supported – value ignored"}}, // MAX_MIXTURE_ITEMS
-               {10,{false, allow_values<int> {0}, "WELLDIMS(MXDOCOMP): option not supported – value ignored"}}, // MAX_COMPLETION_X
-               {11,{false, allow_values<int> {1}, "WELLDIMS(MXWSLIST): option not supported – value ignored"}}, // MAX_WELLIST_PR_WELL
-               {12,{false, allow_values<int> {1}, "WELLDIMS(MXWLISTS): option not supported – value ignored"}}, // MAX_DYNAMIC_WELLIST
-               {13,{false, allow_values<int> {10}, "WELLDIMS(MXWSECD): option not supported – value ignored"}}, // MAX_SECONDARY_WELLS
-               {14,{false, allow_values<int> {201}, "WELLDIMS(MXNGPP): option not supported – value ignored"}}, // NO_JASON_ENTRY
+               {5,{false, allow_values<long long> {5}, "WELLDIMS(MXSTAGE): option not supported – value ignored"}}, // MAX_STAGES
+               {6,{false, allow_values<long long> {10}, "WELLDIMS(MXSTRMS): option not supported – value ignored"}}, // MAX_STREAMS
+               {7,{false, allow_values<long long> {5}, "WELLDIMS(MXMIS): option not supported – value ignored"}}, // MAX_MIXTURES
+               {8,{false, allow_values<long long> {4}, "WELLDIMS(MXSEPS): option not supported – value ignored"}}, // MAX_SEPARATORS
+               {9,{false, allow_values<long long> {3}, "WELLDIMS(MXCOMPS): option not supported – value ignored"}}, // MAX_MIXTURE_ITEMS
+               {10,{false, allow_values<long long> {0}, "WELLDIMS(MXDOCOMP): option not supported – value ignored"}}, // MAX_COMPLETION_X
+               {11,{false, allow_values<long long> {1}, "WELLDIMS(MXWSLIST): option not supported – value ignored"}}, // MAX_WELLIST_PR_WELL
+               {12,{false, allow_values<long long> {1}, "WELLDIMS(MXWLISTS): option not supported – value ignored"}}, // MAX_DYNAMIC_WELLIST
+               {13,{false, allow_values<long long> {10}, "WELLDIMS(MXWSECD): option not supported – value ignored"}}, // MAX_SECONDARY_WELLS
+               {14,{false, allow_values<long long> {201}, "WELLDIMS(MXNGPP): option not supported – value ignored"}}, // NO_JASON_ENTRY
             },
          },
          {
             "WELSPECS",
             {
-               {17,{true, allow_values<int> {0}, "WELSPECS(POLYTAB): only the default value of zero is supported"}}, // POLYMER_TABLE
+               {17,{true, allow_values<long long> {0}, "WELSPECS(POLYTAB): only the default value of zero is supported"}}, // POLYMER_TABLE
             },
          },
    };

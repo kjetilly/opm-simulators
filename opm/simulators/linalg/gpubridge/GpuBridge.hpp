@@ -32,19 +32,19 @@ template<class Scalar> class WellContributions;
 typedef Dune::InverseOperatorResult InverseOperatorResult;
 
 /// GpuBridge acts as interface between opm-simulators with the GpuSolvers
-template <class BridgeMatrix, class BridgeVector, int block_size>
+template <class BridgeMatrix, class BridgeVector, long long block_size>
 class GpuBridge
 {
 private:
     using Scalar = typename BridgeVector::field_type;
-    int verbosity = 0;
+    long long verbosity = 0;
     bool use_gpu = false;
     std::string accelerator_mode;
     std::unique_ptr<Accelerator::GpuSolver<Scalar,block_size>> backend;
     std::shared_ptr<Accelerator::BlockedMatrix<Scalar>> matrix;  // 'stores' matrix, actually points to h_rows, h_cols and the received BridgeMatrix for the nonzeroes
     std::shared_ptr<Accelerator::BlockedMatrix<Scalar>> jacMatrix;  // 'stores' preconditioner matrix, actually points to h_rows, h_cols and the received BridgeMatrix for the nonzeroes
-    std::vector<int> h_rows, h_cols;  // store the sparsity pattern of the matrix
-    std::vector<int> h_jacRows, h_jacCols;  // store the sparsity pattern of the jacMatrix
+    std::vector<long long> h_rows, h_cols;  // store the sparsity pattern of the matrix
+    std::vector<long long> h_jacRows, h_jacCols;  // store the sparsity pattern of the jacMatrix
     std::vector<typename BridgeMatrix::size_type> diagIndices;   // contains offsets of the diagonal blocks wrt start of the row, used for replaceZeroDiagonal()
     std::vector<typename BridgeMatrix::size_type> jacDiagIndices;   // same but for jacMatrix
 
@@ -59,11 +59,11 @@ public:
     /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL with level_scheduling
     /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
     GpuBridge(std::string accelerator_mode,
-              int linear_solver_verbosity,
-              int maxit,
+              long long linear_solver_verbosity,
+              long long maxit,
               Scalar tolerance,
-              unsigned int platformID,
-              unsigned int deviceID,
+              size_t platformID,
+              size_t deviceID,
               bool opencl_ilu_parallel,
               std::string linsolver);
 
@@ -78,7 +78,7 @@ public:
     /// \param[inout] result       summary of solver result
     void solve_system(BridgeMatrix* bridgeMat,
                       BridgeMatrix* jacMat,
-                      int numJacobiBlocks,
+                      long long numJacobiBlocks,
                       BridgeVector& b,
                       WellContributions<Scalar>& wellContribs,
                       InverseOperatorResult &result);
@@ -99,8 +99,8 @@ public:
     /// \param[out] h_rows   rowpointers
     /// \param[out] h_cols   columnindices
     static void copySparsityPatternFromISTL(const BridgeMatrix& mat,
-                                            std::vector<int>& h_rows,
-                                            std::vector<int>& h_cols);
+                                            std::vector<long long>& h_rows,
+                                            std::vector<long long>& h_cols);
 
     /// Initialize the WellContributions object with opencl context and queue
     /// those must be set before calling BlackOilWellModel::getWellContributions() in ISTL

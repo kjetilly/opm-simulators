@@ -35,7 +35,7 @@ namespace Opm::gpuistl
 /**
  * @brief The GpuVector class is a simple (arithmetic) vector class for the GPU.
  *
- * @note we currently only support simple raw primitives for T (double, float and int)
+ * @note we currently only support simple raw primitives for T (double, float and long long)
  *
  * @note We currently only support arithmetic operations on double and float.
  *
@@ -59,7 +59,7 @@ namespace Opm::gpuistl
  *     auto stdVectorOnCPU = dataOnGPU.asStdVector();
  * }
  *
- * @tparam T the type to store. Can be either float, double or int.
+ * @tparam T the type to store. Can be either float, double or long long.
  */
 template <typename T>
 class GpuVector
@@ -86,7 +86,7 @@ public:
      * @note This does CPU to GPU transfer.
      * @note This does synchronous transfer.
      *
-     * @note For now data.size() needs to be within the limits of int due to restrctions of CuBlas.
+     * @note For now data.size() needs to be within the limits of long long due to restrctions of CuBlas.
      *
      * @param data the vector to copy from
      */
@@ -114,7 +114,7 @@ public:
     /**
      * @brief GpuVector allocates new GPU memory of size numberOfElements * sizeof(T)
      *
-     * @note For now numberOfElements needs to be within the limits of int due to restrictions in cublas
+     * @note For now numberOfElements needs to be within the limits of long long due to restrictions in cublas
      *
      * @param numberOfElements number of T elements to allocate
      */
@@ -130,7 +130,7 @@ public:
      * @param numberOfElements number of T elements to allocate
      * @param dataOnHost data on host/CPU
      *
-     * @note For now numberOfElements needs to be within the limits of int due to restrictions in cublas
+     * @note For now numberOfElements needs to be within the limits of long long due to restrictions in cublas
      */
     GpuVector(const T* dataOnHost, const size_t numberOfElements);
 
@@ -156,7 +156,7 @@ public:
      * @note This does synchronous transfer.
      * @note This assumes that the size of this vector is equal to the dim of the input vector.
      */
-    template <int BlockDimension>
+    template <long long BlockDimension>
     void copyFromHost(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector)
     {
         // TODO: [perf] vector.dim() can be replaced by bvector.N() * BlockDimension
@@ -179,7 +179,7 @@ public:
      * @note This does synchronous transfer.
      * @note This assumes that the size of this vector is equal to the dim of the input vector.
      */
-    template <int BlockDimension>
+    template <long long BlockDimension>
     void copyToHost(Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector) const
     {
         // TODO: [perf] vector.dim() can be replaced by bvector.N() * BlockDimension
@@ -231,8 +231,8 @@ public:
      */
     void copyToHost(std::vector<T>& data) const;
 
-    void prepareSendBuf(GpuVector<T>& buffer, const GpuVector<int>& indexSet) const;
-    void syncFromRecvBuf(GpuVector<T>& buffer, const GpuVector<int>& indexSet) const;
+    void prepareSendBuf(GpuVector<T>& buffer, const GpuVector<long long>& indexSet) const;
+    void syncFromRecvBuf(GpuVector<T>& buffer, const GpuVector<long long>& indexSet) const;
 
     /**
      * @brief operator *= multiplies every element by scalar
@@ -240,7 +240,7 @@ public:
      *
      * @note This operation is asynchronous.
      *
-     * @note int is not supported
+     * @note long long is not supported
      */
     GpuVector<T>& operator*=(const T& scalar);
 
@@ -250,7 +250,7 @@ public:
      * @param y input vector of same size as this
      *
      * @note this will call CuBlas in the background
-     * @note int is not supported
+     * @note long long is not supported
      */
     GpuVector<T>& axpy(T alpha, const GpuVector<T>& y);
 
@@ -258,7 +258,7 @@ public:
      * @brief operator+= adds the other vector to this vector
      *
      * @note this will call CuBlas in the background
-     * @note int is not supported
+     * @note long long is not supported
      */
     GpuVector<T>& operator+=(const GpuVector<T>& other);
 
@@ -266,7 +266,7 @@ public:
      * @brief operator-= subtracts the other vector from this vector
      *
      * @note this will call CuBlas in the background
-     * @note int is not supported
+     * @note long long is not supported
      */
     GpuVector<T>& operator-=(const GpuVector<T>& other);
 
@@ -274,7 +274,7 @@ public:
      * @brief dot computes the dot product (standard inner product) against the other vector
      * @param other vector of same size as this
      * @note this will call CuBlas in the background
-     * @note int is not supported
+     * @note long long is not supported
      *
      * @return the result on the inner product
      */
@@ -283,7 +283,7 @@ public:
     /**
      * @brief returns the l2 norm of the vector
      * @note this will call CuBlas in the background
-     * @note int is not supported
+     * @note long long is not supported
      *
      * @return the l2 norm
      */
@@ -292,31 +292,31 @@ public:
     /**
      * Computes the dot product sum_i this[indexSet[i]] * other[indexSet[i]]
      *
-     * @note int is not supported
+     * @note long long is not supported
      */
-    T dot(const GpuVector<T>& other, const GpuVector<int>& indexSet, GpuVector<T>& buffer) const;
+    T dot(const GpuVector<T>& other, const GpuVector<long long>& indexSet, GpuVector<T>& buffer) const;
 
     /**
      * Computes the norm sqrt(sum_i this[indexSet[i]] * this[indexSet[i]])
      *
-     * @note int is not supported
+     * @note long long is not supported
      */
-    T two_norm(const GpuVector<int>& indexSet, GpuVector<T>& buffer) const;
+    T two_norm(const GpuVector<long long>& indexSet, GpuVector<T>& buffer) const;
 
 
     /**
      * Computes the dot product sum_i this[indexSet[i]] * other[indexSet[i]]
      *
-     * @note int is not supported
+     * @note long long is not supported
      */
-    T dot(const GpuVector<T>& other, const GpuVector<int>& indexSet) const;
+    T dot(const GpuVector<T>& other, const GpuVector<long long>& indexSet) const;
 
     /**
      * Computes the norm sqrt(sum_i this[indexSet[i]] * this[indexSet[i]])
      *
-     * @note int is not supported
+     * @note long long is not supported
      */
-    T two_norm(const GpuVector<int>& indexSet) const;
+    T two_norm(const GpuVector<long long>& indexSet) const;
 
 
     /**
@@ -336,7 +336,7 @@ public:
      * @brief creates an std::vector of the same size and copies the GPU data to this std::vector
      * @return an std::vector containing the elements copied from the GPU.
      */
-    template <int blockSize>
+    template <long long blockSize>
     Dune::BlockVector<Dune::FieldVector<T, blockSize>> asDuneBlockVector() const
     {
         OPM_ERROR_IF(dim() % blockSize != 0,
@@ -358,12 +358,12 @@ public:
      *
      * This is supposed to do the same as the following code on the CPU:
      * @code{.cpp}
-     * for (int index : indexSet) {
+     * for (long long index : indexSet) {
      *     this->data[index] = T(0.0);
      * }
      * @endcode
      */
-    void setZeroAtIndexSet(const GpuVector<int>& indexSet);
+    void setZeroAtIndexSet(const GpuVector<long long>& indexSet);
 
     // Slow method that creates a string representation of a GpuVector for debug purposes
     std::string toDebugString()
@@ -380,13 +380,13 @@ public:
 private:
     T* m_dataOnDevice = nullptr;
 
-    // Note that we store this as int to make sure we are always cublas compatible.
-    // This gives the added benefit that a size_t to int conversion error occurs during construction.
-    const int m_numberOfElements;
+    // Note that we store this as long long to make sure we are always cublas compatible.
+    // This gives the added benefit that a size_t to long long conversion error occurs during construction.
+    const long long m_numberOfElements;
     detail::CuBlasHandle& m_cuBlasHandle;
 
     void assertSameSize(const GpuVector<T>& other) const;
-    void assertSameSize(int size) const;
+    void assertSameSize(long long size) const;
 
     void assertHasElements() const;
 };

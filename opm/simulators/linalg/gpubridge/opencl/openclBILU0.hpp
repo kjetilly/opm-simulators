@@ -34,7 +34,7 @@ namespace Opm::Accelerator {
 /// This class implements a Blocked ILU0 preconditioner
 /// The decomposition is done on GPU, using exact decomposition, or ChowPatel decomposition
 /// The preconditioner is applied via two exact triangular solves
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class openclBILU0 : public openclPreconditioner<Scalar,block_size>
 {
     using Base = openclPreconditioner<Scalar,block_size>;
@@ -55,11 +55,11 @@ private:
     std::unique_ptr<BlockedMatrix<Scalar>> Lmat{}, Umat{};
 #endif
     std::vector<Scalar> invDiagVals;
-    std::vector<int> diagIndex;
-    std::vector<int> rowsPerColor;  // color i contains rowsPerColor[i] rows, which are processed in parallel
-    std::vector<int> rowsPerColorPrefix;  // the prefix sum of rowsPerColor
-    std::vector<int> toOrder, fromOrder;
-    int numColors;
+    std::vector<long long> diagIndex;
+    std::vector<long long> rowsPerColor;  // color i contains rowsPerColor[i] rows, which are processed in parallel
+    std::vector<long long> rowsPerColorPrefix;  // the prefix sum of rowsPerColor
+    std::vector<long long> toOrder, fromOrder;
+    long long numColors;
     std::once_flag pattern_uploaded;
 
     bool opencl_ilu_parallel;
@@ -87,7 +87,7 @@ private:
 
 public:
 
-    openclBILU0(bool opencl_ilu_parallel, int verbosity);
+    openclBILU0(bool opencl_ilu_parallel, long long verbosity);
 
     // analysis, extract parallelism if specified
     bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
@@ -105,7 +105,7 @@ public:
     void apply(const cl::Buffer& y, cl::Buffer& x) override;
     void apply(Scalar&, Scalar&) override {}
 
-    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
+    std::tuple<std::vector<long long>, std::vector<long long>, std::vector<long long>>
     get_preconditioner_structure()
     {
         return {{LUmat->rowPointers, LUmat->rowPointers + (Nb + 1)},

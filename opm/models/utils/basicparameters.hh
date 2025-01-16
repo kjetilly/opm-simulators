@@ -72,7 +72,7 @@ struct PredeterminedTimeStepsFile { static constexpr auto value = ""; };
  * 0 means 'no', 1 means 'yes', 2 means 'print only to logfiles'. The
  * default is 2.
  */
-struct PrintParameters { static constexpr int value = 2; };
+struct PrintParameters { static constexpr long long value = 2; };
 
 //! The default value for the simulation's restart time
 template<class Scalar>

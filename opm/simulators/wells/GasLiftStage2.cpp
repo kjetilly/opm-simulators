@@ -40,7 +40,7 @@
 namespace Opm {
 
 template<class Scalar>
-GasLiftStage2<Scalar>::GasLiftStage2(const int report_step_idx,
+GasLiftStage2<Scalar>::GasLiftStage2(const long long report_step_idx,
                                      const Parallel::Communication& comm,
                                      const Schedule& schedule,
                                      const SummaryState& summary_state,
@@ -381,7 +381,7 @@ mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
                                 std::vector<GradPair>& grads_global) const
 {
     assert(this->comm_.size() > 1);  // The parent should check if comm. size is > 1
-    using Pair = std::pair<int, double>;
+    using Pair = std::pair<long long, double>;
     std::vector<Pair> grads_local_tmp;
     grads_local_tmp.reserve(grads_local.size());
     for (std::size_t i = 0; i < grads_local.size(); ++i) {
@@ -393,9 +393,9 @@ mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
               grads_local[i].second));
     }
 
-    std::vector<int> sizes_(this->comm_.size());
-    std::vector<int> displ_(this->comm_.size() + 1, 0);
-    int mySize = grads_local_tmp.size();
+    std::vector<long long> sizes_(this->comm_.size());
+    std::vector<long long> displ_(this->comm_.size() + 1, 0);
+    long long mySize = grads_local_tmp.size();
     this->comm_.allgather(&mySize, 1, sizes_.data());
     std::partial_sum(sizes_.begin(), sizes_.end(), displ_.begin()+1);
     std::vector<Pair> grads_global_tmp(displ_.back());
@@ -880,9 +880,9 @@ template<class Scalar>
 bool GasLiftStage2<Scalar>::OptimizeState::
 checkAtLeastTwoWells(std::vector<GasLiftSingleWell*>& wells)
 {
-    int numberOfwells = 0;
+    long long numberOfwells = 0;
     for (auto well : wells){
-        int index_of_wells = well->getWell().indexOfWell();
+        long long index_of_wells = well->getWell().indexOfWell();
         if (!this->parent.well_state_.wellIsOwned(index_of_wells, well->name()))
             continue;
         numberOfwells++;

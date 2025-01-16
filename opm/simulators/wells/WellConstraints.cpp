@@ -144,7 +144,7 @@ activeInjectionConstraint(const SingleWellState<Scalar>& ws,
         Scalar current_thp = ws.thp;
         if (thp < current_thp) {
             bool rate_less_than_potential = true;
-            for (int p = 0; p < well_.numPhases(); ++p) {
+            for (long long p = 0; p < well_.numPhases(); ++p) {
                 // Currently we use the well potentials here computed before the iterations.
                 // We may need to recompute the well potentials to get a more
                 // accurate check here.
@@ -236,8 +236,8 @@ activeProductionConstraint(const SingleWellState<Scalar>& ws,
             return Well::ProducerCMode::RESV;
 
         if (!controls.prediction_mode) {
-            const int fipreg = 0; // not considering the region for now
-            const int np = well_.numPhases();
+            const long long fipreg = 0; // not considering the region for now
+            const long long np = well_.numPhases();
 
             std::vector<Scalar> surface_rates(np, 0.0);
             if (pu.phase_used[BlackoilPhases::Aqua])
@@ -251,7 +251,7 @@ activeProductionConstraint(const SingleWellState<Scalar>& ws,
             calcReservoirVoidageRates(fipreg, well_.pvtRegionIdx(), surface_rates, voidage_rates);
 
             Scalar resv_rate = 0.0;
-            for (int p = 0; p < np; ++p)
+            for (long long p = 0; p < np; ++p)
                 resv_rate += voidage_rates[p];
 
             if (resv_rate < current_rate)
@@ -269,7 +269,7 @@ activeProductionConstraint(const SingleWellState<Scalar>& ws,
             const auto& wvfpexp = well_.wellEcl().getWVFPEXP();
             bool rate_less_than_potential = true;
             if (wvfpexp.prevent()) {
-                for (int p = 0; p < well_.numPhases(); ++p) {
+                for (long long p = 0; p < well_.numPhases(); ++p) {
                     // Currently we use the well potentials here computed before the iterations.
                     // We may need to recompute the well potentials to get a more
                     // accurate check here.

@@ -44,16 +44,16 @@ namespace Opm
         double update_time = 0.0;
         double output_write_time = 0.0;
 
-        unsigned int total_well_iterations = 0;
-        unsigned int total_linearizations = 0;
-        unsigned int total_newton_iterations = 0;
-        unsigned int total_linear_iterations = 0;
-        unsigned int min_linear_iterations = std::numeric_limits<unsigned int>::max();
-        unsigned int max_linear_iterations = 0;
+        size_t total_well_iterations = 0;
+        size_t total_linearizations = 0;
+        size_t total_newton_iterations = 0;
+        size_t total_linear_iterations = 0;
+        size_t min_linear_iterations = std::numeric_limits<size_t>::max();
+        size_t max_linear_iterations = 0;
 
         bool converged = false;
         bool well_group_control_changed = false;
-        int exit_status = EXIT_SUCCESS;
+        long long exit_status = EXIT_SUCCESS;
 
         double global_time = 0.0;
         double timestep_length = 0.0;

@@ -60,7 +60,7 @@ public:
         : partitionFile_(partitionFile)
     {}
 
-    std::vector<int> operator()(const Dune::CpGrid& grid) const;
+    std::vector<long long> operator()(const Dune::CpGrid& grid) const;
 
 private:
     std::filesystem::path partitionFile_{};
@@ -73,7 +73,7 @@ private:
 /// \brief optional functor returning external load balancing information
 ///
 /// If it is set then this will be used during loadbalance.
-extern std::optional<std::function<std::vector<int> (const Dune::CpGrid&)>> externalLoadBalancer;
+extern std::optional<std::function<std::vector<long long> (const Dune::CpGrid&)>> externalLoadBalancer;
 
 template<class ElementMapper, class GridView, class Scalar>
 class GenericCpGridVanguard {
@@ -122,7 +122,7 @@ public:
     /// \brief Sets a function that returns external load balancing information when passed the grid
     ///
     /// The information is a vector of integers indication the partition index for each cell id.
-    static void setExternalLoadBalancer(const std::function<std::vector<int> (const Dune::CpGrid&)>& loadBalancer)
+    static void setExternalLoadBalancer(const std::function<std::vector<long long> (const Dune::CpGrid&)>& loadBalancer)
     {
         externalLoadBalancer = loadBalancer;
     }
@@ -144,7 +144,7 @@ public:
      */
     const CartesianIndexMapper& equilCartesianIndexMapper() const;
 
-    const std::vector<int>& cellPartition() const
+    const std::vector<long long>& cellPartition() const
     {
         return this->cell_part_;
     }
@@ -167,7 +167,7 @@ protected:
                         const Schedule&                          schedule,
                         EclipseState&                            eclState,
                         FlowGenericVanguard::ParallelWellStruct& parallelWells,
-                        const int                                numJacobiBlocks);
+                        const long long                                numJacobiBlocks);
 
     void distributeFieldProps_(EclipseState& eclState);
 
@@ -183,7 +183,7 @@ private:
                         const bool                                            loadBalancerSet,
                         const std::vector<double>&                            faceTrans,
                         const std::vector<Well>&                              wells,
-                        const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+                        const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
                         EclipseState&                                         eclState,
                         FlowGenericVanguard::ParallelWellStruct&              parallelWells);
 
@@ -196,7 +196,7 @@ private:
                         const bool                                            loadBalancerSet,
                         const std::vector<double>&                            faceTrans,
                         const std::vector<Well>&                              wells,
-                        const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+                        const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
                         ParallelEclipseState*                                 eclState,
                         FlowGenericVanguard::ParallelWellStruct&              parallelWells);
 
@@ -210,7 +210,7 @@ protected:
 
     void doCreateGrids_(EclipseState& eclState);
     void addLgrsUpdateLeafView(const LgrCollection& lgrCollection,
-                               const int lgrsSize,
+                               const long long lgrsSize,
                                Dune::CpGrid& grid);
 
     virtual void allocTrans() = 0;
@@ -226,8 +226,8 @@ protected:
     std::unique_ptr<CartesianIndexMapper> cartesianIndexMapper_;
     std::unique_ptr<CartesianIndexMapper> equilCartesianIndexMapper_;
 
-    int mpiRank;
-    std::vector<int> cell_part_{};
+    long long mpiRank;
+    std::vector<long long> cell_part_{};
 };
 
 } // namespace Opm

@@ -68,18 +68,18 @@ namespace Opm {
 #if HAVE_MPI
 namespace details {
 
-std::vector<int>
+std::vector<long long>
 MPIPartitionFromFile::operator()(const Dune::CpGrid& grid) const
 {
     std::ifstream pfile { this->partitionFile_ };
 
-    auto partition = std::vector<int> {
-        std::istream_iterator<int> { pfile },
-        std::istream_iterator<int> {}
+    auto partition = std::vector<long long> {
+        std::istream_iterator<long long> { pfile },
+        std::istream_iterator<long long> {}
     };
 
     const auto nc =
-        static_cast<std::vector<int>::size_type>(grid.size(0));
+        static_cast<std::vector<long long>::size_type>(grid.size(0));
 
     if (partition.size() == nc) {
         // Input is one process ID for each active cell
@@ -92,13 +92,13 @@ MPIPartitionFromFile::operator()(const Dune::CpGrid& grid) const
         //   Process_ID   Cartesian_Idx   NLDD_Domain
         //
         // with one row for each active cell.  Select first column.
-        auto g2l = std::unordered_map<int, int>{};
+        auto g2l = std::unordered_map<long long, long long>{};
         auto locCell = 0;
         for (const auto& globCell : grid.globalCell()) {
             g2l.insert_or_assign(globCell, locCell++);
         }
 
-        auto filtered_partition = std::vector<int>(nc);
+        auto filtered_partition = std::vector<long long>(nc);
         for (auto c = 0*nc; c < nc; ++c) {
             auto pos = g2l.find(partition[3*c + 1]);
             if (pos != g2l.end()) {
@@ -120,7 +120,7 @@ MPIPartitionFromFile::operator()(const Dune::CpGrid& grid) const
 }
 #endif
 
-std::optional<std::function<std::vector<int> (const Dune::CpGrid&)>> externalLoadBalancer;
+std::optional<std::function<std::vector<long long> (const Dune::CpGrid&)>> externalLoadBalancer;
 
 template<class ElementMapper, class GridView, class Scalar>
 GenericCpGridVanguard<ElementMapper,GridView,Scalar>::GenericCpGridVanguard()
@@ -153,7 +153,7 @@ doLoadBalance_(const Dune::EdgeWeightMethod             edgeWeightsMethod,
                const Schedule&                          schedule,
                EclipseState&                            eclState1,
                FlowGenericVanguard::ParallelWellStruct& parallelWells,
-               const int                                numJacobiBlocks)
+               const long long                                numJacobiBlocks)
 {
     if ((partitionMethod == Dune::PartitionMethod::zoltan
          || partitionMethod == Dune::PartitionMethod::zoltanGoG) && !this->zoltanParams().empty())
@@ -182,7 +182,7 @@ doLoadBalance_(const Dune::EdgeWeightMethod             edgeWeightsMethod,
         // the per-face transmissibilities as a linear array is relatively
         // expensive.  We therefore extract transmissibility values only if
         // the values are actually needed.
-        auto loadBalancerSet = static_cast<int>(externalLoadBalancer.has_value());
+        auto loadBalancerSet = static_cast<long long>(externalLoadBalancer.has_value());
         this->grid_->comm().broadcast(&loadBalancerSet, 1, 0);
 
         std::vector<double> faceTrans;
@@ -220,7 +220,7 @@ doLoadBalance_(const Dune::EdgeWeightMethod             edgeWeightsMethod,
             for (const auto cell : global_cells) cellOnRank.insert(cell);
             const auto inactive_well_names = schedule.getInactiveWellNamesAtEnd();
             std::size_t num_wells = inactive_well_names.size();
-            std::vector<int> well_on_rank(num_wells, 0);
+            std::vector<long long> well_on_rank(num_wells, 0);
             std::size_t well_idx = 0;
             for (const auto& well_name : inactive_well_names) {
                 const auto& well = schedule.getWell(well_name, schedule.size()-1);
@@ -239,13 +239,13 @@ doLoadBalance_(const Dune::EdgeWeightMethod             edgeWeightsMethod,
             const auto& comm = this->grid_->comm();
             const auto nranks = comm.size();
             // // values from rank i will be at indices i*num_wells, i*num_wells + 1, ..., (i+1) * num_wells -1
-            std::vector<int> well_on_rank_global(num_wells * nranks, 0);
-            comm.allgather(well_on_rank.data(), static_cast<int>(num_wells), well_on_rank_global.data());
+            std::vector<long long> well_on_rank_global(num_wells * nranks, 0);
+            comm.allgather(well_on_rank.data(), static_cast<long long>(num_wells), well_on_rank_global.data());
             if (comm.rank() == 0) {
                 well_idx = 0;
                 for (const auto& well_name : inactive_well_names) {
                     std::string msg = fmt::format("Well {} is inactive, with perforations on ranks: ", well_name);
-                    for (int i=0; i<nranks; ++i) {
+                    for (long long i=0; i<nranks; ++i) {
                         if (well_on_rank_global[i*num_wells + well_idx]) msg += fmt::format("{} ", i);
                     }
                     OpmLog::info(msg);
@@ -318,8 +318,8 @@ extractFaceTrans(const GridView& gridView) const
                 continue;
             }
 
-            const auto I = static_cast<unsigned int>(elemMapper.index(is.inside()));
-            const auto J = static_cast<unsigned int>(elemMapper.index(is.outside()));
+            const auto I = static_cast<size_t>(elemMapper.index(is.inside()));
+            const auto J = static_cast<size_t>(elemMapper.index(is.outside()));
 
             faceTrans[is.id()] = this->getTransmissibility(I, J);
         }
@@ -340,7 +340,7 @@ distributeGrid(const Dune::EdgeWeightMethod                          edgeWeights
                const bool                                            loadBalancerSet,
                const std::vector<double>&                            faceTrans,
                const std::vector<Well>&                              wells,
-               const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+               const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
                EclipseState&                                         eclState1,
                FlowGenericVanguard::ParallelWellStruct&              parallelWells)
 {
@@ -378,7 +378,7 @@ distributeGrid(const Dune::EdgeWeightMethod                          edgeWeights
                const bool                                            loadBalancerSet,
                const std::vector<double>&                            faceTrans,
                const std::vector<Well>&                              wells,
-               const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+               const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
                ParallelEclipseState*                                 eclState,
                FlowGenericVanguard::ParallelWellStruct&              parallelWells)
 {
@@ -395,7 +395,7 @@ distributeGrid(const Dune::EdgeWeightMethod                          edgeWeights
     if (loadBalancerSet) {
         auto parts = isIORank
             ? (*externalLoadBalancer)(*this->grid_)
-            : std::vector<int>{};
+            : std::vector<long long>{};
         //For this case, simple partitioning is selected automatically
         parallelWells =
             std::get<1>(this->grid_->loadBalance(handle, parts, &wells, possibleFutureConnections, ownersFirst,
@@ -482,7 +482,7 @@ void GenericCpGridVanguard<ElementMapper,GridView,Scalar>::doCreateGrids_(Eclips
 #if HAVE_MPI
     {
         const bool has_numerical_aquifer = eclState.aquifer().hasNumericalAquifer();
-        int mpiSize = 1;
+        long long mpiSize = 1;
         MPI_Comm_size(grid_->comm(), &mpiSize);
 
         // when there is numerical aquifers, new NNC are generated during
@@ -551,18 +551,18 @@ void GenericCpGridVanguard<ElementMapper,GridView,Scalar>::doCreateGrids_(Eclips
 
 template<class ElementMapper, class GridView, class Scalar>
 void GenericCpGridVanguard<ElementMapper,GridView,Scalar>::addLgrsUpdateLeafView(const LgrCollection& lgrCollection,
-                                                                                 const int lgrsSize,
+                                                                                 const long long lgrsSize,
                                                                                  Dune::CpGrid& grid)
 {
-    std::vector<std::array<int,3>> cells_per_dim_vec;
-    std::vector<std::array<int,3>> startIJK_vec;
-    std::vector<std::array<int,3>> endIJK_vec;
+    std::vector<std::array<long long,3>> cells_per_dim_vec;
+    std::vector<std::array<long long,3>> startIJK_vec;
+    std::vector<std::array<long long,3>> endIJK_vec;
     std::vector<std::string> lgrName_vec;
     cells_per_dim_vec.reserve(lgrsSize);
     startIJK_vec.reserve(lgrsSize);
     endIJK_vec.reserve(lgrsSize);
     lgrName_vec.reserve(lgrsSize);
-    for (int lgr = 0; lgr < lgrsSize; ++lgr)
+    for (long long lgr = 0; lgr < lgrsSize; ++lgr)
     {
         const auto lgrCarfin = lgrCollection.getLgr(lgr);
         cells_per_dim_vec.push_back({lgrCarfin.NX()/(lgrCarfin.I2() +1 - lgrCarfin.I1()),
@@ -642,7 +642,7 @@ GenericCpGridVanguard<ElementMapper,GridView,Scalar>::
 computeCellThickness(const typename GridView::template Codim<0>::Entity& element) const
 {
     typedef typename Element::Geometry Geometry;
-    static constexpr int zCoord = Element::dimension - 1;
+    static constexpr long long zCoord = Element::dimension - 1;
     Scalar zz1 = 0.0;
     Scalar zz2 = 0.0;
 
@@ -653,7 +653,7 @@ computeCellThickness(const typename GridView::template Codim<0>::Entity& element
     // 4 corners are the top surface and
     // the 4 next are the bottomn.
     assert(geometry.corners() == 8);
-    for (int i=0; i < 4; ++i){
+    for (long long i=0; i < 4; ++i){
         zz1 += geometry.corner(i)[zCoord];
         zz2 += geometry.corner(i+4)[zCoord];
     }

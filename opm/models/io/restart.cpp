@@ -26,7 +26,7 @@
 
 namespace Opm {
 
-std::string Restart::restartFileName_(int rank,
+std::string Restart::restartFileName_(long long rank,
                                       const std::string& outputDir,
                                       const std::string& simName,
                                       double t)

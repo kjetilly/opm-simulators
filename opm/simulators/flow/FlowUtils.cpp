@@ -109,12 +109,12 @@ void checkAllMPIProcesses()
         // we try to prevent the abort here.
         // For that we need a signal that each process is here.
         // Each process sends  a message to rank 0.
-        const int tag = 357912;
+        const long long tag = 357912;
         if (comm.rank() == 0)
         {
             // wait for a message from all processes.
             std::vector<MPI_Request> requests(comm.size() - 1, MPI_REQUEST_NULL);
-            std::vector<int> data(comm.size()-1);
+            std::vector<long long> data(comm.size()-1);
 
             for(decltype(comm.size()) i = 1; i < comm.size(); ++i)
             {
@@ -128,7 +128,7 @@ void checkAllMPIProcesses()
             for(std::size_t tries = 0; msgs >0 && tries < 3; ++tries)
             {
                 sleep(3);
-                int flag, idx;
+                long long flag, idx;
                 for(auto left_msgs = msgs; left_msgs > 0; --left_msgs)
                 {
                     if( auto error = MPI_Testany(comm.size()-1, requests.data(), &idx, &flag, MPI_STATUS_IGNORE);
@@ -149,7 +149,7 @@ void checkAllMPIProcesses()
         }
         else
         {
-            int data= 3;
+            long long data= 3;
             MPI_Request request = MPI_REQUEST_NULL;
             if (auto error = MPI_Isend(&data, 1, MPI_INT, 0, tag, comm, &request);
                 error != MPI_SUCCESS) {
@@ -160,7 +160,7 @@ void checkAllMPIProcesses()
             for(std::size_t tries = 0; !completed && tries < 3; tries++)
             {
                 sleep(3);
-                int flag;
+                long long flag;
                 if( auto error = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
                     error != MPI_SUCCESS) {
                     OpmLog::error(fmt::format("Error: Could not test for MPI message (error code : {})", error));
@@ -262,11 +262,11 @@ void hideUnusedParameters()
     Parameters::Hide<Parameters::UseAverageDensityMsWells>();
 }
 
-int eclPositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
+long long eclPositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
                            std::set<std::string>& seenParams,
                            std::string& errorMsg,
                            const char** argv,
-                           int paramIdx)
+                           long long paramIdx)
 {
     std::string param  = argv[paramIdx];
     std::size_t i = param.find('=');

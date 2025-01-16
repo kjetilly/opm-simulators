@@ -85,7 +85,7 @@ detail::InterpData<Scalar> VFPHelpers<Scalar>::findInterpData(const Scalar value
 {
     detail::InterpData<Scalar> retval;
 
-    const int nvalues = values.size();
+    const long long nvalues = values.size();
 
     // chopping the value to be zero, which means we do not
     // extrapolate the table towards nagative ranges
@@ -112,7 +112,7 @@ detail::InterpData<Scalar> VFPHelpers<Scalar>::findInterpData(const Scalar value
         }
         else {
             //Search internal intervals
-            for (int i=1; i<nvalues; ++i) {
+            for (long long i=1; i<nvalues; ++i) {
                 if (values[i] >= value) {
                     retval.ind_[0] = i-1;
                     retval.ind_[1] = i;
@@ -157,17 +157,17 @@ interpolate(const VFPProdTable& table,
     //we copy to (nn) will fit better in cache than the full original table for the
     //interpolation below.
     //The following ladder of for loops will presumably be unrolled by a reasonable compiler.
-    for (int t=0; t<=1; ++t) {
-        for (int w=0; w<=1; ++w) {
-            for (int g=0; g<=1; ++g) {
-                for (int a=0; a<=1; ++a) {
-                    for (int f=0; f<=1; ++f) {
+    for (long long t=0; t<=1; ++t) {
+        for (long long w=0; w<=1; ++w) {
+            for (long long g=0; g<=1; ++g) {
+                for (long long a=0; a<=1; ++a) {
+                    for (long long f=0; f<=1; ++f) {
                         //Shorthands for indexing
-                        const int ti = thp_i.ind_[t];
-                        const int wi = wfr_i.ind_[w];
-                        const int gi = gfr_i.ind_[g];
-                        const int ai = alq_i.ind_[a];
-                        const int fi = flo_i.ind_[f];
+                        const long long ti = thp_i.ind_[t];
+                        const long long wi = wfr_i.ind_[w];
+                        const long long gi = gfr_i.ind_[g];
+                        const long long ai = alq_i.ind_[a];
+                        const long long fi = flo_i.ind_[f];
 
                         //Copy element
                         nn[t][w][g][a][f].value = table(ti,wi,gi,ai,fi);
@@ -180,10 +180,10 @@ interpolate(const VFPProdTable& table,
     //Calculate derivatives
     //Note that the derivative of the two end points of a line aligned with the
     //"axis of the derivative" are equal
-    for (int i=0; i<=1; ++i) {
-        for (int j=0; j<=1; ++j) {
-            for (int k=0; k<=1; ++k) {
-                for (int l=0; l<=1; ++l) {
+    for (long long i=0; i<=1; ++i) {
+        for (long long j=0; j<=1; ++j) {
+            for (long long k=0; k<=1; ++k) {
+                for (long long l=0; l<=1; ++l) {
                     nn[0][i][j][k][l].dthp = (nn[1][i][j][k][l].value - nn[0][i][j][k][l].value) * thp_i.inv_dist_;
                     nn[i][0][j][k][l].dwfr = (nn[i][1][j][k][l].value - nn[i][0][j][k][l].value) * wfr_i.inv_dist_;
                     nn[i][j][0][k][l].dgfr = (nn[i][j][1][k][l].value - nn[i][j][0][k][l].value) * gfr_i.inv_dist_;
@@ -208,10 +208,10 @@ interpolate(const VFPProdTable& table,
     // axis, leaving a 1D, problem, etc.
     t2 = flo_i.factor_;
     t1 = (1.0-t2);
-    for (int t=0; t<=1; ++t) {
-        for (int w=0; w<=1; ++w) {
-            for (int g=0; g<=1; ++g) {
-                for (int a=0; a<=1; ++a) {
+    for (long long t=0; t<=1; ++t) {
+        for (long long w=0; w<=1; ++w) {
+            for (long long g=0; g<=1; ++g) {
+                for (long long a=0; a<=1; ++a) {
                     nn[t][w][g][a][0] = t1*nn[t][w][g][a][0] + t2*nn[t][w][g][a][1];
                 }
             }
@@ -220,9 +220,9 @@ interpolate(const VFPProdTable& table,
 
     t2 = alq_i.factor_;
     t1 = (1.0-t2);
-    for (int t=0; t<=1; ++t) {
-        for (int w=0; w<=1; ++w) {
-            for (int g=0; g<=1; ++g) {
+    for (long long t=0; t<=1; ++t) {
+        for (long long w=0; w<=1; ++w) {
+            for (long long g=0; g<=1; ++g) {
                 nn[t][w][g][0][0] = t1*nn[t][w][g][0][0] + t2*nn[t][w][g][1][0];
             }
         }
@@ -230,15 +230,15 @@ interpolate(const VFPProdTable& table,
 
     t2 = gfr_i.factor_;
     t1 = (1.0-t2);
-    for (int t=0; t<=1; ++t) {
-        for (int w=0; w<=1; ++w) {
+    for (long long t=0; t<=1; ++t) {
+        for (long long w=0; w<=1; ++w) {
             nn[t][w][0][0][0] = t1*nn[t][w][0][0][0] + t2*nn[t][w][1][0][0];
         }
     }
 
     t2 = wfr_i.factor_;
     t1 = (1.0-t2);
-    for (int t=0; t<=1; ++t) {
+    for (long long t=0; t<=1; ++t) {
         nn[t][0][0][0][0] = t1*nn[t][0][0][0][0] + t2*nn[t][1][0][0][0];
     }
 
@@ -260,11 +260,11 @@ interpolate(const VFPInjTable& table,
 
     //Pick out nearest neighbors (nn) to our evaluation point
     //The following ladder of for loops will presumably be unrolled by a reasonable compiler.
-    for (int t=0; t<=1; ++t) {
-        for (int f=0; f<=1; ++f) {
+    for (long long t=0; t<=1; ++t) {
+        for (long long f=0; f<=1; ++f) {
             //Shorthands for indexing
-            const int ti = thp_i.ind_[t];
-            const int fi = flo_i.ind_[f];
+            const long long ti = thp_i.ind_[t];
+            const long long fi = flo_i.ind_[f];
 
             //Copy element
             nn[t][f].value = table(ti,fi);
@@ -274,7 +274,7 @@ interpolate(const VFPInjTable& table,
     //Calculate derivatives
     //Note that the derivative of the two end points of a line aligned with the
     //"axis of the derivative" are equal
-    for (int i=0; i<=1; ++i) {
+    for (long long i=0; i<=1; ++i) {
         nn[0][i].dthp = (nn[1][i].value - nn[0][i].value) * thp_i.inv_dist_;
         nn[i][0].dwfr = -1e100;
         nn[i][0].dgfr = -1e100;
@@ -366,7 +366,7 @@ findTHP(const std::vector<Scalar>& bhp_array,
         Scalar bhp, 
         const bool find_largest)
 {
-    int nthp = thp_array.size();
+    long long nthp = thp_array.size();
 
     Scalar thp = -1e100;
 
@@ -406,7 +406,7 @@ findTHP(const std::vector<Scalar>& bhp_array,
             //Find i so that bhp_array[i-1] <= bhp <= bhp_array[i];
             //Assuming a small number of values in bhp_array, this should be quite
             //efficient. Other strategies might be bisection, etc.
-            int i=0;
+            long long i=0;
             bool found = false;
             for (; i<nthp-1; ++i) {
                 const Scalar& y0 = bhp_array[i  ];
@@ -444,7 +444,7 @@ findTHP(const std::vector<Scalar>& bhp_array,
         const bool valid_high = (bhp > bhp_array[nthp-1] && last_slope_positive) || (bhp <= bhp_array[nthp-1] && !last_slope_positive);
 
         bool found = false;
-        int array_ix = 0;
+        long long array_ix = 0;
         if (find_largest){//find intersection corresponding to the largest thp
             // high extrap -> table interp -> low extrap
             if (valid_high) {
@@ -452,7 +452,7 @@ findTHP(const std::vector<Scalar>& bhp_array,
                 array_ix = nthp-2;
             } else {
                 //search backward within table
-                for (int i = nthp-2; i>=0; --i) {
+                for (long long i = nthp-2; i>=0; --i) {
                     const Scalar& y0 = bhp_array[i  ];
                     const Scalar& y1 = bhp_array[i+1];
                     if (std::min(y0, y1) < bhp && bhp <= std::max(y0, y1)) {
@@ -473,7 +473,7 @@ findTHP(const std::vector<Scalar>& bhp_array,
                 array_ix = 0;
             } else {
                 //search forward within table
-                for (int i = 0; i<nthp-1; ++i) {
+                for (long long i = 0; i<nthp-1; ++i) {
                     const Scalar& y0 = bhp_array[i  ];
                     const Scalar& y1 = bhp_array[i+1];
                     if (std::min(y0, y1) < bhp && bhp <= std::max(y0, y1)) {
@@ -733,7 +733,7 @@ T getGFR(const VFPProdTable& table,
 }
 
 template <typename T>
-const T& getTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id)
+const T& getTable(const std::map<long long, std::reference_wrapper<const T>>& tables, long long table_id)
 {
     auto entry = tables.find(table_id);
     if (entry == tables.end()) {
@@ -774,9 +774,9 @@ VFPInjTable::FLO_TYPE getType(const VFPInjTable& table)
 }
 
 template const VFPInjTable&
-getTable(const std::map<int, std::reference_wrapper<const VFPInjTable>>&, int);
+getTable(const std::map<long long, std::reference_wrapper<const VFPInjTable>>&, long long);
 template const VFPProdTable&
-getTable(const std::map<int, std::reference_wrapper<const VFPProdTable>>&, int);
+getTable(const std::map<long long, std::reference_wrapper<const VFPProdTable>>&, long long);
 
 #define INSTANTIATE(...)                            \
     template __VA_ARGS__                            \

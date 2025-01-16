@@ -76,31 +76,31 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using ModelParameters = BlackoilModelParameters<Scalar>;
 
-    static constexpr int numEq = Indices::numEq;
-    static constexpr int contiSolventEqIdx = Indices::contiSolventEqIdx;
-    static constexpr int contiZfracEqIdx = Indices::contiZfracEqIdx;
-    static constexpr int contiPolymerEqIdx = Indices::contiPolymerEqIdx;
-    static constexpr int contiEnergyEqIdx = Indices::contiEnergyEqIdx;
-    static constexpr int contiPolymerMWEqIdx = Indices::contiPolymerMWEqIdx;
-    static constexpr int contiFoamEqIdx = Indices::contiFoamEqIdx;
-    static constexpr int contiBrineEqIdx = Indices::contiBrineEqIdx;
-    static constexpr int contiMicrobialEqIdx = Indices::contiMicrobialEqIdx;
-    static constexpr int contiOxygenEqIdx = Indices::contiOxygenEqIdx;
-    static constexpr int contiUreaEqIdx = Indices::contiUreaEqIdx;
-    static constexpr int contiBiofilmEqIdx = Indices::contiBiofilmEqIdx;
-    static constexpr int contiCalciteEqIdx = Indices::contiCalciteEqIdx;
-    static constexpr int solventSaturationIdx = Indices::solventSaturationIdx;
-    static constexpr int zFractionIdx = Indices::zFractionIdx;
-    static constexpr int polymerConcentrationIdx = Indices::polymerConcentrationIdx;
-    static constexpr int polymerMoleWeightIdx = Indices::polymerMoleWeightIdx;
-    static constexpr int temperatureIdx = Indices::temperatureIdx;
-    static constexpr int foamConcentrationIdx = Indices::foamConcentrationIdx;
-    static constexpr int saltConcentrationIdx = Indices::saltConcentrationIdx;
-    static constexpr int microbialConcentrationIdx = Indices::microbialConcentrationIdx;
-    static constexpr int oxygenConcentrationIdx = Indices::oxygenConcentrationIdx;
-    static constexpr int ureaConcentrationIdx = Indices::ureaConcentrationIdx;
-    static constexpr int biofilmConcentrationIdx = Indices::biofilmConcentrationIdx;
-    static constexpr int calciteConcentrationIdx = Indices::calciteConcentrationIdx;
+    static constexpr long long numEq = Indices::numEq;
+    static constexpr long long contiSolventEqIdx = Indices::contiSolventEqIdx;
+    static constexpr long long contiZfracEqIdx = Indices::contiZfracEqIdx;
+    static constexpr long long contiPolymerEqIdx = Indices::contiPolymerEqIdx;
+    static constexpr long long contiEnergyEqIdx = Indices::contiEnergyEqIdx;
+    static constexpr long long contiPolymerMWEqIdx = Indices::contiPolymerMWEqIdx;
+    static constexpr long long contiFoamEqIdx = Indices::contiFoamEqIdx;
+    static constexpr long long contiBrineEqIdx = Indices::contiBrineEqIdx;
+    static constexpr long long contiMicrobialEqIdx = Indices::contiMicrobialEqIdx;
+    static constexpr long long contiOxygenEqIdx = Indices::contiOxygenEqIdx;
+    static constexpr long long contiUreaEqIdx = Indices::contiUreaEqIdx;
+    static constexpr long long contiBiofilmEqIdx = Indices::contiBiofilmEqIdx;
+    static constexpr long long contiCalciteEqIdx = Indices::contiCalciteEqIdx;
+    static constexpr long long solventSaturationIdx = Indices::solventSaturationIdx;
+    static constexpr long long zFractionIdx = Indices::zFractionIdx;
+    static constexpr long long polymerConcentrationIdx = Indices::polymerConcentrationIdx;
+    static constexpr long long polymerMoleWeightIdx = Indices::polymerMoleWeightIdx;
+    static constexpr long long temperatureIdx = Indices::temperatureIdx;
+    static constexpr long long foamConcentrationIdx = Indices::foamConcentrationIdx;
+    static constexpr long long saltConcentrationIdx = Indices::saltConcentrationIdx;
+    static constexpr long long microbialConcentrationIdx = Indices::microbialConcentrationIdx;
+    static constexpr long long oxygenConcentrationIdx = Indices::oxygenConcentrationIdx;
+    static constexpr long long ureaConcentrationIdx = Indices::ureaConcentrationIdx;
+    static constexpr long long biofilmConcentrationIdx = Indices::biofilmConcentrationIdx;
+    static constexpr long long calciteConcentrationIdx = Indices::calciteConcentrationIdx;
 
     using VectorBlockType = Dune::FieldVector<Scalar, numEq>;
     using MatrixBlockType = typename SparseMatrixAdapter::MatrixBlock;
@@ -137,9 +137,9 @@ public:
     SimulatorReportSingle prepareStep(const SimulatorTimerInterface& timer);
 
     void initialLinearization(SimulatorReportSingle& report,
-                              const int iteration,
-                              const int minIter,
-                              const int maxIter,
+                              const long long iteration,
+                              const long long minIter,
+                              const long long maxIter,
                               const SimulatorTimerInterface& timer);
 
     /// Called once per nonlinear iteration.
@@ -150,12 +150,12 @@ public:
     /// \param[in] timer                  simulation timer
     /// \param[in] nonlinear_solver       nonlinear solver used (for oscillation/relaxation control)
     template <class NonlinearSolverType>
-    SimulatorReportSingle nonlinearIteration(const int iteration,
+    SimulatorReportSingle nonlinearIteration(const long long iteration,
                                              const SimulatorTimerInterface& timer,
                                              NonlinearSolverType& nonlinear_solver);
 
     template <class NonlinearSolverType>
-    SimulatorReportSingle nonlinearIterationNewton(const int iteration,
+    SimulatorReportSingle nonlinearIterationNewton(const long long iteration,
                                                    const SimulatorTimerInterface& timer,
                                                    NonlinearSolverType& nonlinear_solver);
 
@@ -166,13 +166,13 @@ public:
 
     /// Assemble the residual and Jacobian of the nonlinear system.
     SimulatorReportSingle assembleReservoir(const SimulatorTimerInterface& /* timer */,
-                                            const int iterationIdx);
+                                            const long long iterationIdx);
 
     // compute the "relative" change of the solution between time steps
     Scalar relativeChange() const;
 
     /// Number of linear iterations used in last call to solveJacobianSystem().
-    int linearIterationsLastSolve() const
+    long long linearIterationsLastSolve() const
     { return simulator_.model().newtonMethod().linearSolver().iterations (); }
 
     // Obtain reference to linear solver setup time
@@ -205,12 +205,12 @@ public:
     localConvergenceData(std::vector<Scalar>& R_sum,
                          std::vector<Scalar>& maxCoeff,
                          std::vector<Scalar>& B_avg,
-                         std::vector<int>& maxCoeffCell);
+                         std::vector<long long>& maxCoeffCell);
 
     /// \brief Compute pore-volume/cell count split among "converged",
     /// "relaxed converged", "unconverged" cells based on CNV point
     /// measures.
-    std::pair<std::vector<double>, std::vector<int>>
+    std::pair<std::vector<double>, std::vector<long long>>
     characteriseCnvPvSplit(const std::vector<Scalar>& B_avg, const double dt);
 
     void updateTUNING(const Tuning& tuning);
@@ -218,8 +218,8 @@ public:
     ConvergenceReport
     getReservoirConvergence(const double reportTime,
                             const double dt,
-                            const int iteration,
-                            const int maxIter,
+                            const long long iteration,
+                            const long long maxIter,
                             std::vector<Scalar>& B_avg,
                             std::vector<Scalar>& residual_norms);
 
@@ -231,23 +231,23 @@ public:
     /// \param[out]  residual_norms   CNV residuals by phase
     ConvergenceReport
     getConvergence(const SimulatorTimerInterface& timer,
-                   const int iteration,
-                   const int maxIter,
+                   const long long iteration,
+                   const long long maxIter,
                    std::vector<Scalar>& residual_norms);
 
     /// The number of active fluid phases in the model.
-    int numPhases() const
+    long long numPhases() const
     { return phaseUsage_.num_phases; }
 
     /// Wrapper required due to not following generic API
     template<class T>
     std::vector<std::vector<Scalar> >
-    computeFluidInPlace(const T&, const std::vector<int>& fipnum) const
+    computeFluidInPlace(const T&, const std::vector<long long>& fipnum) const
     { return this->computeFluidInPlace(fipnum); }
 
     /// Should not be called
     std::vector<std::vector<Scalar> >
-    computeFluidInPlace(const std::vector<int>& /*fipnum*/) const;
+    computeFluidInPlace(const std::vector<long long>& /*fipnum*/) const;
 
     const Simulator& simulator() const
     { return simulator_; }
@@ -267,7 +267,7 @@ public:
 
     void writePartitions(const std::filesystem::path& odir) const;
 
-    const std::vector<std::vector<int>>& getConvCells() const
+    const std::vector<std::vector<long long>>& getConvCells() const
     { return rst_conv_.getData(); }
 
     /// return the StandardWells object
@@ -294,7 +294,7 @@ public:
                      std::vector<Scalar>& B_avg,
                      std::vector<Scalar>& R_sum,
                      std::vector<Scalar>& maxCoeff,
-                     std::vector<int>& maxCoeffCell);
+                     std::vector<long long>& maxCoeffCell);
 
     //! \brief Returns const reference to model parameters.
     const ModelParameters& param() const
@@ -329,7 +329,7 @@ protected:
     /// \brief Whether we print something to std::cout
     bool terminal_output_;
     /// \brief The number of cells of the global grid.
-    long int global_nc_;
+    long long global_nc_;
 
     std::vector<std::vector<Scalar>> residual_norms_history_;
     Scalar current_relaxation_;

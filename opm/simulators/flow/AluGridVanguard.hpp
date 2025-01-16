@@ -113,8 +113,8 @@ public:
     using TransmissibilityType = Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>;
     using Factory = Dune::FromToGridFactory<Grid>;
 
-    static constexpr int dimension = Grid::dimension;
-    static constexpr int dimensionworld = Grid::dimensionworld;
+    static constexpr long long dimension = Grid::dimension;
+    static constexpr long long dimensionworld = Grid::dimensionworld;
 
     AluGridVanguard(Simulator& simulator)
         : FlowBaseVanguard<TypeTag>(simulator)
@@ -194,7 +194,7 @@ public:
                                                                  Properties::EnableDispersion>());
             // Re-ordering  for ALUGrid
             globalTrans_->update(false, TransmissibilityType::TransUpdateQuantities::Trans,
-                                 [&](unsigned int i) { return gridEquilIdxToGridIdx(i);});
+                                 [&](size_t i) { return gridEquilIdxToGridIdx(i);});
         }
         
     }
@@ -256,7 +256,7 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,dimensionworld>(int)>
+    std::function<std::array<double,dimensionworld>(long long)>
     cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), false);
@@ -268,22 +268,22 @@ public:
         return *globalTrans_;
     }
 
-    const std::vector<int>& globalCell()
+    const std::vector<long long>& globalCell()
     {
         return cartesianCellId_;
     }
 
-    std::vector<int> cellPartition() const
+    std::vector<long long> cellPartition() const
     {      
         // not required for this type of grid yet
         return {};
     }
     
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
+    size_t gridEquilIdxToGridIdx(size_t elemIndex) const {
         return equilGridToGrid_[elemIndex];
     }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    size_t gridIdxToEquilGridIdx(size_t elemIndex) const {
         return ordering_[elemIndex];
     }
 
@@ -356,10 +356,10 @@ protected:
 
     std::unique_ptr<Grid> grid_;
     std::unique_ptr<EquilGrid> equilGrid_;
-    std::vector<int> cartesianCellId_;
-    std::vector<unsigned int> ordering_;
-    std::vector<unsigned int> equilGridToGrid_;
-    std::array<int,dimension> cartesianDimension_;
+    std::vector<long long> cartesianCellId_;
+    std::vector<size_t> ordering_;
+    std::vector<size_t> equilGridToGrid_;
+    std::array<long long,dimension> cartesianDimension_;
     std::unique_ptr<CartesianIndexMapper> cartesianIndexMapper_;
     std::unique_ptr<EquilCartesianIndexMapper> equilCartesianIndexMapper_;
     std::unique_ptr<Factory> factory_;
@@ -368,7 +368,7 @@ protected:
     // diffusivity_ abd dispersivity_. The main reason is to reduce the memory usage for rank 0
     // during parallel running.
     std::unique_ptr<TransmissibilityType> globalTrans_;
-    int mpiRank;
+    long long mpiRank;
 };
 
 } // namespace Opm

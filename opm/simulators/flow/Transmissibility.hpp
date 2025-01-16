@@ -63,7 +63,7 @@ public:
                      const GridView& gridView,
                      const CartesianIndexMapper& cartMapper,
                      const Grid& grid,
-                     std::function<std::array<double,dimWorld>(int)> centroids,
+                     std::function<std::array<double,dimWorld>(long long)> centroids,
                      bool enableEnergy,
                      bool enableDiffusivity,
                      bool enableDispersivity);
@@ -126,7 +126,7 @@ public:
      * permeabilities. This approach is probably not always correct
      * either but at least it seems to be much better.
      */
-    void finishInit(const std::function<unsigned int(unsigned int)>& map = {})
+    void finishInit(const std::function<size_t(size_t)>& map = {})
     {
         this->update(true, TransUpdateQuantities::All, map, /*applyNncMultRegT = */ true);
     }
@@ -156,7 +156,7 @@ public:
      */
     enum class TransUpdateQuantities { Trans, All };
     void update(bool global, TransUpdateQuantities update_quantities = TransUpdateQuantities::All,
-                const std::function<unsigned int(unsigned int)>& map = {}, bool applyNncMultRegT = false);
+                const std::function<size_t(size_t)>& map = {}, bool applyNncMultRegT = false);
 
 protected:
     void updateFromEclState_(bool global);
@@ -172,7 +172,7 @@ protected:
                                unsigned insideCartElemIdx,
                                unsigned outsideCartElemIdx,
                                const TransMult& transMult,
-                               const std::array<int, dimWorld>& cartDims);
+                               const std::array<long long, dimWorld>& cartDims);
 
     /// \brief Creates TRANS{XYZ} arrays for modification by FieldProps data
     ///
@@ -190,10 +190,10 @@ protected:
 
     template <class Intersection>
     void computeFaceProperties(const Intersection& intersection,
-                               const int,
-                               const int,
-                               const int,
-                               const int,
+                               const long long,
+                               const long long,
+                               const long long,
+                               const long long,
                                DimVector& faceCenterInside,
                                DimVector& faceCenterOutside,
                                DimVector& faceAreaNormal,
@@ -201,10 +201,10 @@ protected:
 
     template <class Intersection>
     void computeFaceProperties(const Intersection& intersection,
-                               const int insideElemIdx,
-                               const int insideFaceIdx,
-                               const int outsideElemIdx,
-                               const int outsideFaceIdx,
+                               const long long insideElemIdx,
+                               const long long insideFaceIdx,
+                               const long long outsideElemIdx,
+                               const long long outsideFaceIdx,
                                DimVector& faceCenterInside,
                                DimVector& faceCenterOutside,
                                DimVector& faceAreaNormal,
@@ -222,30 +222,30 @@ protected:
      *                              cells) as the element at the cartesian index.
      * \return Nothing.
      */
-    void applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed);
+    void applyNncToGridTrans_(const std::unordered_map<std::size_t,long long>& cartesianToCompressed);
 
     /// \brief Applies the previous calculate transmissibilities to the NNCs created via PINCH
     ///
     /// \param cartesianToCompressed Vector containing the compressed index (or -1 for inactive
     ///                              cells) as the element at the cartesian index.
-    void applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed);
+    void applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,long long>& cartesianToCompressed);
 
     /// \brief Multiplies the grid transmissibilities according to EDITNNC.
-    void applyEditNncToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyEditNncToGridTrans_(const std::unordered_map<std::size_t,long long>& globalToLocal);
 
     /// \brief Resets the grid transmissibilities according to EDITNNCR.
-    void applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,long long>& globalToLocal);
 
-    void applyNncMultreg_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyNncMultreg_(const std::unordered_map<std::size_t,long long>& globalToLocal);
 
-    void applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& globalToLocal,
+    void applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,long long>& globalToLocal,
                                         const std::string& keyword, const std::vector<NNCdata>& nncs,
                                         const std::function<KeywordLocation(const NNCdata&)>& getLocation,
                                         const std::function<void(Scalar&, const Scalar&)>& apply);
 
     void extractPermeability_();
 
-    void extractPermeability_(const std::function<unsigned int(unsigned int)>& map);
+    void extractPermeability_(const std::function<size_t(size_t)>& map);
 
     void extractPorosity_();
 
@@ -253,7 +253,7 @@ protected:
 
     void computeHalfTrans_(Scalar& halfTrans,
                            const DimVector& areaNormal,
-                           int faceIdx, // in the reference element that contains the intersection
+                           long long faceIdx, // in the reference element that contains the intersection
                            const DimVector& distance,
                            const DimMatrix& perm) const;
 
@@ -283,7 +283,7 @@ protected:
     const GridView& gridView_;
     const CartesianIndexMapper& cartMapper_;
     const Grid& grid_;
-    std::function<std::array<double,dimWorld>(int)> centroids_;
+    std::function<std::array<double,dimWorld>(long long)> centroids_;
     Scalar transmissibilityThreshold_;
     std::map<std::pair<unsigned, unsigned>, Scalar> transBoundary_;
     std::map<std::pair<unsigned, unsigned>, Scalar> thermalHalfTransBoundary_;

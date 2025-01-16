@@ -36,7 +36,7 @@ namespace Opm
     template <class Communication>
     void extendCommunicatorWithWells(const Communication& comm,
                                      std::shared_ptr<Communication>& commRW,
-                                     const int nw)
+                                     const long long nw)
     {
         OPM_TIMEBLOCK(extendCommunicatorWithWells);
         // used for extending the coarse communicator pattern
@@ -44,23 +44,23 @@ namespace Opm
         using LocalIndex = typename IndexSet::LocalIndex;
         const IndexSet& indset = comm.indexSet();
         IndexSet& indset_rw = commRW->indexSet();
-        const int max_nw = comm.communicator().max(nw);
-        const int rank = comm.communicator().rank();
-        int glo_max = 0;
+        const long long max_nw = comm.communicator().max(nw);
+        const long long rank = comm.communicator().rank();
+        long long glo_max = 0;
         std::size_t loc_max = 0;
         indset_rw.beginResize();
         for (auto ind = indset.begin(), indend = indset.end(); ind != indend; ++ind) {
             indset_rw.add(ind->global(), LocalIndex(ind->local(), ind->local().attribute(), true));
-            const int glo = ind->global();
+            const long long glo = ind->global();
             const std::size_t loc = ind->local().local();
             glo_max = std::max(glo_max, glo);
             loc_max = std::max(loc_max, loc);
         }
-        const int global_max = comm.communicator().max(glo_max);
+        const long long global_max = comm.communicator().max(glo_max);
         // used append the welldofs at the end
         assert(loc_max + 1 == indset.size());
         std::size_t local_ind = loc_max + 1;
-        for (int i = 0; i < nw; ++i) {
+        for (long long i = 0; i < nw; ++i) {
             // need to set unique global number
             const std::size_t v = global_max + max_nw * rank + i + 1;
             // set to true to not have problems with higher levels if growing of domains is used
@@ -130,7 +130,7 @@ namespace Opm
                                                           average_elements_per_row,
                                                           overflow_fraction,
                                                           CoarseMatrix::implicit));
-                int rownum = 0;
+                long long rownum = 0;
                 for (const auto& row : fineLevelMatrix) {
                     for (auto col = row.begin(), cend = row.end(); col != cend; ++col) {
                         coarseLevelMatrix_->entry(rownum, col.index()) = 0.0;
@@ -266,7 +266,7 @@ private:
     Communication* communication_;
     const FineVectorType& weights_;
     PropertyTree prm_;
-    const int pressure_var_index_;
+    const long long pressure_var_index_;
     std::shared_ptr<Communication> coarseLevelCommunication_;
     std::shared_ptr<typename CoarseOperator::matrix_type> coarseLevelMatrix_;
 };

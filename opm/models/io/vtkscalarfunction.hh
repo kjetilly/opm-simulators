@@ -65,15 +65,15 @@ public:
         , mapper_(mapper)
         , buf_(buf)
         , codim_(codim)
-    { assert(int(buf_.size()) == int(mapper_.size())); }
+    { assert((long long)(buf_.size()) == (long long)(mapper_.size())); }
 
     virtual std::string name() const
     { return name_; }
 
-    virtual int ncomps() const
+    virtual long long ncomps() const
     { return 1; }
 
-    virtual double evaluate(int,
+    virtual double evaluate(long long,
                             const Element& e,
                             const Dune::FieldVector<ctype, dim>& xi) const
     {
@@ -86,17 +86,17 @@ public:
             // find vertex which is closest to xi in local
             // coordinates. This code is based on Dune::P1VTKFunction
             double min = 1e100;
-            int imin = -1;
+            long long imin = -1;
             Dune::GeometryType gt = e.type();
-            int n = static_cast<int>(e.subEntities(dim));
-            for (int i = 0; i < n; ++i) {
+            long long n = static_cast<long long>(e.subEntities(dim));
+            for (long long i = 0; i < n; ++i) {
                 Dune::FieldVector<ctype, dim> local =
                     Dune::ReferenceElements<ctype, dim>::general(gt).position(i, dim);
 
                 local -= xi;
                 if (local.infinity_norm() < min) {
                     min = local.infinity_norm();
-                    imin = static_cast<int>(i);
+                    imin = static_cast<long long>(i);
                 }
             }
 

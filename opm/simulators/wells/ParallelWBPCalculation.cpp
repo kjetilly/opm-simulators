@@ -49,12 +49,12 @@
 
 template<class Scalar>
 Opm::ParallelWBPCalculation<Scalar>::
-LocalConnSet::LocalConnSet(const std::vector<int>& localConnIdx)
+LocalConnSet::LocalConnSet(const std::vector<long long>& localConnIdx)
     : localConnIdx_ { localConnIdx }
 {}
 
 template<class Scalar>
-int Opm::ParallelWBPCalculation<Scalar>::
+long long Opm::ParallelWBPCalculation<Scalar>::
 LocalConnSet::localIndex(const std::size_t connIdx) const
 {
     return (connIdx >= this->localConnIdx_.size())
@@ -141,11 +141,11 @@ collectDynamicValues()
 }
 
 template<class Scalar>
-std::vector<int>
+std::vector<long long>
 Opm::ParallelWBPCalculation<Scalar>::SourceData::
 getLocalIndex(const std::vector<std::size_t>& globalIndex) const
 {
-    auto localIdx = std::vector<int>(globalIndex.size());
+    auto localIdx = std::vector<long long>(globalIndex.size());
 
     std::transform(globalIndex.begin(), globalIndex.end(), localIdx.begin(),
                    [this](const std::size_t globIx)
@@ -188,7 +188,7 @@ template<class Scalar>
 std::size_t Opm::ParallelWBPCalculation<Scalar>::
 createCalculator(const Well&                     well,
                  const ParallelWellInfo<Scalar>& parallelWellInfo,
-                 const std::vector<int>&         localConnIdx,
+                 const std::vector<long long>&         localConnIdx,
                  EvaluatorFactory                makeWellSourceEvaluator)
 {
     assert (this->wellConnSrc_.size() == this->localConnSet_.size());

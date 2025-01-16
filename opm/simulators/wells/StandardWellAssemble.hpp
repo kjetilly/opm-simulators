@@ -31,7 +31,7 @@ namespace Opm
 class DeferredLogger;
 template<class Scalar> class GroupState;
 class Schedule;
-template<class Scalar, int numEq> class StandardWellEquations;
+template<class Scalar, long long numEq> class StandardWellEquations;
 template<class FluidSystem, class Indices> class StandardWellPrimaryVariables;
 class SummaryState;
 template<class FluidSystem> class WellInterfaceFluidSystem;
@@ -67,29 +67,29 @@ public:
     //! \brief Assemble injectivity equation.
     void assembleInjectivityEq(const EvalWell& eq_pskin,
                                const EvalWell& eq_wat_vel,
-                               const int pskin_index,
-                               const int wat_vel_index,
-                               const int cell_idx,
-                               const int numWellEq,
+                               const long long pskin_index,
+                               const long long wat_vel_index,
+                               const long long cell_idx,
+                               const long long numWellEq,
                                StandardWellEquations<Scalar,Indices::numEq>& eqns) const;
 
     //! \brief Assemble equation for a perforation.
     void assemblePerforationEq(const EvalWell& cq_s_effective,
-                               const int componentIdx,
-                               const int cell_idx,
-                               const int numWellEq,
+                               const long long componentIdx,
+                               const long long cell_idx,
+                               const long long numWellEq,
                                StandardWellEquations<Scalar,Indices::numEq>& eqns) const;
 
     //! \brief Assemble equation for Z fraction.
     void assembleZFracEq(const EvalWell& cq_s_zfrac_effective,
-                         const int cell_idx,
-                         const int numWellEq,
+                         const long long cell_idx,
+                         const long long numWellEq,
                          StandardWellEquations<Scalar,Indices::numEq>& eqns) const;
 
     //! \brief Assemble a source term.
     void assembleSourceEq(const EvalWell& resWell_loc,
-                          const int componentIdx,
-                          const int numWellEq,
+                          const long long componentIdx,
+                          const long long numWellEq,
                           StandardWellEquations<Scalar,Indices::numEq>& eqns) const;
 
 private:

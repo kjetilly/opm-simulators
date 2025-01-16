@@ -80,7 +80,7 @@ class UnstructuredGridVanguard : public BaseVanguard<TypeTag> {
         //GridPointer polygrid( new Grid(*ugPtr) );
         gridPtr_ = new Grid(*ugPtr_);//std::move(polygrid);
         if (numRefinments > 0) {
-            gridPtr_->globalRefine(static_cast<int>(numRefinments));
+            gridPtr_->globalRefine(static_cast<long long>(numRefinments));
         }
         this->finalizeInit_();
 #endif

@@ -30,15 +30,15 @@
 namespace Opm::Parameters {
 
 struct SolverContinueOnConvergenceFailure { static constexpr bool value = false; };
-struct SolverMaxRestarts { static constexpr int value = 10; };
-struct SolverVerbosity { static constexpr int value = 1; };
-struct TimeStepVerbosity { static constexpr int value = 1; };
+struct SolverMaxRestarts { static constexpr long long value = 10; };
+struct SolverVerbosity { static constexpr long long value = 1; };
+struct TimeStepVerbosity { static constexpr long long value = 1; };
 struct InitialTimeStepInDays { static constexpr double value = 1.0;  };
 struct FullTimeStepInitially { static constexpr bool value = false; };
 struct TimeStepControl { static constexpr auto value = "pid+newtoniteration"; };
 struct TimeStepControlTolerance { static constexpr double value = 1e-1; };
-struct TimeStepControlTargetIterations { static constexpr int value = 30; };
-struct TimeStepControlTargetNewtonIterations { static constexpr int value = 8; };
+struct TimeStepControlTargetIterations { static constexpr long long value = 30; };
+struct TimeStepControlTargetNewtonIterations { static constexpr long long value = 8; };
 struct TimeStepControlDecayRate { static constexpr double value = 0.75; };
 struct TimeStepControlGrowthRate { static constexpr double  value = 1.25; };
 struct TimeStepControlDecayDampingFactor { static constexpr double value = 1.0;  };
@@ -127,7 +127,7 @@ createController(const UnitSystem& unitSystem);
         SimulatorReport step(const SimulatorTimer& simulatorTimer,
                              Solver& solver,
                              const bool isEvent,
-                             const std::function<bool(const double, const double, const int)> tuningUpdater);
+                             const std::function<bool(const double, const double, const long long)> tuningUpdater);
 
         /** \brief Returns the simulator report for the failed substeps of the last
          *         report step.
@@ -186,7 +186,7 @@ createController(const UnitSystem& unitSystem);
         double maxTimeStep_{};                 //!< maximal allowed time step size in days
         double minTimeStep_{};                 //!< minimal allowed time step size before throwing
         bool ignoreConvergenceFailure_{false}; //!< continue instead of stop when minimum time step is reached
-        int solverRestartMax_{};               //!< how many restart of solver are allowed
+        long long solverRestartMax_{};               //!< how many restart of solver are allowed
         bool solverVerbose_{false};            //!< solver verbosity
         bool timestepVerbose_{false};          //!< timestep verbosity
         double suggestedNextTimestep_{};       //!< suggested size of next timestep

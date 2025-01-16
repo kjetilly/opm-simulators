@@ -78,7 +78,7 @@ public:
         myRank_ = 0;
 #if HAVE_MPI
         {
-            int tmp;
+            long long tmp;
             MPI_Comm_rank(MPI_COMM_WORLD, &tmp);
             myRank_ = static_cast<ProcessRank>(tmp);
         }

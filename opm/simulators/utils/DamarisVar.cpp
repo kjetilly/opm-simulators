@@ -74,9 +74,9 @@ std::string DamarisVarXMLAttributes::ReturnXMLForVariable()
 }
 
 template<class T>
-DamarisVar<T>::DamarisVar(int dims,
+DamarisVar<T>::DamarisVar(long long dims,
                           const std::vector<std::string>& param_names,
-                          const std::string& variable_name, int rank)
+                          const std::string& variable_name, long long rank)
     : param_names_(param_names)
     , variable_name_(variable_name)
     , rank_(rank)
@@ -106,11 +106,11 @@ DamarisVar<T>::DamarisVar(int dims,
 }
 
 template<class T>
-DamarisVar<T>::DamarisVar(int dims,
+DamarisVar<T>::DamarisVar(long long dims,
                           const std::vector<std::string>& param_names,
-                          const std::vector<int>& param_values,
+                          const std::vector<long long>& param_values,
                           const std::string& variable_name,
-                          int rank)
+                          long long rank)
     : param_names_(param_names)
     , variable_name_(variable_name)
     , rank_(rank)
@@ -145,20 +145,20 @@ std::string DamarisVar<T>::returnXMLForVariable()
 }
 
 template<class T>
-void DamarisVar<T>::setDamarisParameter(const std::vector<int>& paramSizeVal)
+void DamarisVar<T>::setDamarisParameter(const std::vector<long long>& paramSizeVal)
 {
     assert(paramSizeVal.size() == static_cast<std::size_t>(num_params_));
 
     bool resbool = true;
     std::size_t total_size = 1;
-    for (int varnum = 0; varnum < num_params_; varnum++) {
+    for (long long varnum = 0; varnum < num_params_; varnum++) {
         param_sizes_[varnum] = paramSizeVal[varnum];
         total_size *= param_sizes_[varnum];
 
-        dam_err_ = damaris_parameter_set(param_names_[varnum].c_str(), &paramSizeVal[varnum], sizeof(int));
+        dam_err_ = damaris_parameter_set(param_names_[varnum].c_str(), &paramSizeVal[varnum], sizeof(long long));
         if (dam_err_ != DAMARIS_OK) {
             dam_err_str_ += fmt::format("  ERROR rank = {}: class DamarisVar : damaris_parameter_set(\"{}\""
-                                        ", paramSizeVal, sizeof(int));  Damaris error = {}\n",
+                                        ", paramSizeVal, sizeof(long long));  Damaris error = {}\n",
                                         rank_, param_names_[varnum], damaris_error_string(dam_err_));
             resbool = false;
             has_error_ = true;
@@ -189,7 +189,7 @@ void DamarisVar<T>::setDamarisPosition(const std::vector<int64_t>& positionsVals
 {
     assert(positionsVals.size() == static_cast<std::size_t>(num_params_));
 
-    for (int pos_dim = 0; pos_dim < num_params_; pos_dim++) {
+    for (long long pos_dim = 0; pos_dim < num_params_; pos_dim++) {
         positions_[pos_dim] = positionsVals[pos_dim];
     }
     dam_err_ = damaris_set_position(variable_name_.c_str(), positionsVals.data());
@@ -299,9 +299,9 @@ bool DamarisVar<T>::TestType(const std::string& variable_name)
         using ushort = unsigned short;
         resbool = check(ushort{});
     } else if (vartype == DAMARIS_TYPE_INT) {
-        resbool = check(int{});
+        resbool = check(long long{});
     } else if (vartype == DAMARIS_TYPE_UINT) {
-        using uint = unsigned int;
+        using uint = size_t;
         resbool = check(uint{});
     } else if (vartype == DAMARIS_TYPE_LONG) {
         resbool = check(long{});
@@ -337,6 +337,6 @@ void DamarisVar<T>::formatTypeError(const std::string& var_name,
 
 template class DamarisVar<char>;
 template class DamarisVar<double>;
-template class DamarisVar<int>;
+template class DamarisVar<long long>;
 
 } // namespace Opm::DamarisOutput

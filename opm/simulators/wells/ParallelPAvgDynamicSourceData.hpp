@@ -39,7 +39,7 @@ public:
     /// Translate globally unique, linearised Cartesian cell indices to
     /// local, on-rank, cell indices.  Assumed to return a negative value
     /// result if the input cell index is not owned by the current rank.
-    using GlobalToLocal = std::function<int(const std::size_t)>;
+    using GlobalToLocal = std::function<(long long)(const std::size_t)>;
 
     /// Fixed-width span/view of a underlying range of contiguous elements.
     ///
@@ -61,7 +61,7 @@ public:
     /// in which \c cellIndex is the local, on-rank, cell index in the range
     /// 0 to #active cells on rank - 1.  Function \c eval is expected to
     /// fill in/assign all \c sourceTerm items for this cell.
-    using Evaluator = std::function<void(int, SourceDataSpan<Scalar>)>;
+    using Evaluator = std::function<void(long long, SourceDataSpan<Scalar>)>;
 
     /// Constructor
     ///
@@ -119,7 +119,7 @@ private:
         std::size_t ix{};
 
         /// Local cell index for this source term (0..#active on rank - 1).
-        int cell{};
+        long long cell{};
     };
 
     /// MPI communication object.
@@ -136,10 +136,10 @@ private:
     std::vector<typename std::vector<Scalar>::size_type> storageIndex_{};
 
     /// Receive size from all ranks (allgatherv()).
-    std::vector<int> allSizes_{}; // Type int to meet API requirements.
+    std::vector<long long> allSizes_{}; // Type long long to meet API requirements.
 
     /// Receive displacements for all ranks (allgatherv()).
-    std::vector<int> startPointers_{}; // Type int to meet API requirements.
+    std::vector<long long> startPointers_{}; // Type long long to meet API requirements.
 
     /// Translate element index into storage index.
     ///

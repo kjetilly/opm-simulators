@@ -95,7 +95,7 @@ operator=(const MixingRateControls& rhs)
 
 template<class FluidSystem>
 void MixingRateControls<FluidSystem>::
-init(std::size_t numDof, int episodeIdx, const unsigned ntpvt)
+init(std::size_t numDof, long long episodeIdx, const unsigned ntpvt)
 {
     // allocate DRSDT related vectors
     if (this->drsdtActive(episodeIdx) && maxDRs_.empty()) {
@@ -114,7 +114,7 @@ init(std::size_t numDof, int episodeIdx, const unsigned ntpvt)
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drsdtActive(int episodeIdx) const
+drsdtActive(long long episodeIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drsdtActive());
@@ -122,7 +122,7 @@ drsdtActive(int episodeIdx) const
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drvdtActive(int episodeIdx) const
+drvdtActive(long long episodeIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drvdtActive());
@@ -130,7 +130,7 @@ drvdtActive(int episodeIdx) const
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drsdtConvective(int episodeIdx) const
+drsdtConvective(long long episodeIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drsdtConvective());
@@ -138,7 +138,7 @@ drsdtConvective(int episodeIdx) const
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drsdtActive(int episodeIdx, std::size_t pvtRegionIdx) const
+drsdtActive(long long episodeIdx, std::size_t pvtRegionIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drsdtActive(pvtRegionIdx));
@@ -146,7 +146,7 @@ drsdtActive(int episodeIdx, std::size_t pvtRegionIdx) const
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drvdtActive(int episodeIdx, std::size_t pvtRegionIdx) const
+drvdtActive(long long episodeIdx, std::size_t pvtRegionIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drvdtActive(pvtRegionIdx));
@@ -154,7 +154,7 @@ drvdtActive(int episodeIdx, std::size_t pvtRegionIdx) const
 
 template<class FluidSystem>
 bool MixingRateControls<FluidSystem>::
-drsdtConvective(int episodeIdx, std::size_t pvtRegionIdx) const
+drsdtConvective(long long episodeIdx, std::size_t pvtRegionIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.drsdtConvective(pvtRegionIdx));
@@ -163,7 +163,7 @@ drsdtConvective(int episodeIdx, std::size_t pvtRegionIdx) const
 
 template<class FluidSystem>
 void MixingRateControls<FluidSystem>::
-updateExplicitQuantities(const int episodeIdx,
+updateExplicitQuantities(const long long episodeIdx,
                          const Scalar timeStepSize)
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
@@ -199,7 +199,7 @@ updateLastValues(const unsigned elemIdx,
 
 template<class FluidSystem>
 void MixingRateControls<FluidSystem>::
-updateMaxValues(const int episodeIdx,
+updateMaxValues(const long long episodeIdx,
                 const Scalar timeStepSize)
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
@@ -222,8 +222,8 @@ template<class FluidSystem>
 typename MixingRateControls<FluidSystem>::Scalar
 MixingRateControls<FluidSystem>::
 drsdtcon(const unsigned elemIdx,
-         int episodeIdx,
-         const int pvtRegionIdx) const
+         long long episodeIdx,
+         const long long pvtRegionIdx) const
 {
     if (convectiveDrs_.empty()) {
         return 0;
@@ -245,8 +245,8 @@ typename MixingRateControls<FluidSystem>::Scalar
 MixingRateControls<FluidSystem>::
 maxGasDissolutionFactor(const unsigned timeIdx,
                         const unsigned globalDofIdx,
-                        const int episodeIdx,
-                        const int pvtRegionIdx) const
+                        const long long episodeIdx,
+                        const long long pvtRegionIdx) const
 {
     if (!this->drsdtActive(episodeIdx, pvtRegionIdx)) {
         return std::numeric_limits<Scalar>::max() / 2.0;
@@ -271,8 +271,8 @@ typename MixingRateControls<FluidSystem>::Scalar
 MixingRateControls<FluidSystem>::
 maxOilVaporizationFactor(const unsigned timeIdx,
                          const unsigned globalDofIdx,
-                         const int episodeIdx,
-                         const int pvtRegionIdx) const
+                         const long long episodeIdx,
+                         const long long pvtRegionIdx) const
 {
     if (!this->drvdtActive(episodeIdx, pvtRegionIdx)) {
         return std::numeric_limits<Scalar>::max() / 2.0;
@@ -303,7 +303,7 @@ updateConvectiveDRsDt_(const unsigned compressedDofIdx,
                        const Scalar Xhi,
                        const Scalar Psi,
                        const Scalar omegainn,
-                       const int pvtRegionIndex)
+                       const long long pvtRegionIndex)
 {
     const Scalar rssat = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) ?
         FluidSystem::waterPvt().saturatedGasDissolutionFactor(pvtRegionIndex, t, p, salt) :

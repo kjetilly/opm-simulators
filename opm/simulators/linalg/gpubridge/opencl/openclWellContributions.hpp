@@ -47,8 +47,8 @@ protected:
 
     using MatrixType = typename WellContributions<Scalar>::MatrixType;
 
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, long long* colIndices,
+                      Scalar* values, size_t val_size) override;
 
     cl::Context* context;
     cl::CommandQueue* queue;

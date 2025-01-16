@@ -52,33 +52,33 @@ public:
                                     const Opm::Group& group,
                                     const Opm::Schedule& schedule,
                                     const Opm::WellState<Scalar>& wellState,
-                                    const int reportStepIdx,
-                                    const int phasePos,
+                                    const long long reportStepIdx,
+                                    const long long phasePos,
                                     const bool injector);
 
     static void setCmodeGroup(const Group& group,
                               const Schedule& schedule,
                               const SummaryState& summaryState,
-                              const int reportStepIdx,
+                              const long long reportStepIdx,
                               GroupState<Scalar>& group_state);
 
     static void accumulateGroupEfficiencyFactor(const Group& group,
                                                 const Schedule& schedule,
-                                                const int reportStepIdx,
+                                                const long long reportStepIdx,
                                                 Scalar& factor);
 
     static Scalar sumWellSurfaceRates(const Group& group,
                                       const Schedule& schedule,
                                       const WellState<Scalar>& wellState,
-                                      const int reportStepIdx,
-                                      const int phasePos,
+                                      const long long reportStepIdx,
+                                      const long long phasePos,
                                       const bool injector);
 
     /// Returns the name of the worst offending well and its fraction (i.e. violated_phase / preferred_phase)
     static std::pair<std::optional<std::string>, Scalar>
     worstOffendingWell(const Group& group,
                        const Schedule& schedule,
-                       const int reportStepIdx,
+                       const long long reportStepIdx,
                        const Group::ProductionCMode& offendedControl,
                        const PhaseUsage& pu,
                        const Parallel::Communication& comm,
@@ -88,19 +88,19 @@ public:
     static Scalar sumWellResRates(const Group& group,
                                   const Schedule& schedule,
                                   const WellState<Scalar>& wellState,
-                                  const int reportStepIdx,
-                                  const int phasePos,
+                                  const long long reportStepIdx,
+                                  const long long phasePos,
                                   const bool injector);
 
     static Scalar sumSolventRates(const Group& group,
                                   const Schedule& schedule,
                                   const WellState<Scalar>& wellState,
-                                  const int reportStepIdx,
+                                  const long long reportStepIdx,
                                   const bool injector);
 
     static void updateGroupTargetReduction(const Group& group,
                                            const Schedule& schedule,
-                                           const int reportStepIdx,
+                                           const long long reportStepIdx,
                                            const bool isInjector,
                                            const PhaseUsage& pu,
                                            const GuideRate& guide_rate,
@@ -113,7 +113,7 @@ public:
                                  const Schedule& schedule,
                                  const SummaryState& summary_state,
                                  const PhaseUsage& pu,
-                                 int report_step,
+                                 long long report_step,
                                  double sim_time,
                                  WellState<Scalar>& well_state,
                                  const GroupState<Scalar>& group_state,
@@ -125,7 +125,7 @@ public:
     static void updateGuideRateForProductionGroups(const Group& group,
                                                    const Schedule& schedule,
                                                    const PhaseUsage& pu,
-                                                   const int reportStepIdx,
+                                                   const long long reportStepIdx,
                                                    const double& simTime,
                                                    WellState<Scalar>& wellState,
                                                    const GroupState<Scalar>& group_state,
@@ -135,7 +135,7 @@ public:
 
     static void updateGuideRatesForWells(const Schedule& schedule,
                                          const PhaseUsage& pu,
-                                         const int reportStepIdx,
+                                         const long long reportStepIdx,
                                          const double& simTime,
                                          const WellState<Scalar>& wellState,
                                          const Parallel::Communication& comm,
@@ -145,7 +145,7 @@ public:
                                                    const Schedule& schedule,
                                                    const SummaryState& summaryState,
                                                    const PhaseUsage& pu,
-                                                   const int reportStepIdx,
+                                                   const long long reportStepIdx,
                                                    const WellState<Scalar>& wellState,
                                                    const GroupState<Scalar>& group_state,
                                                    GuideRate* guideRate,
@@ -153,7 +153,7 @@ public:
 
     static void updateVREPForGroups(const Group& group,
                                     const Schedule& schedule,
-                                    const int reportStepIdx,
+                                    const long long reportStepIdx,
                                     const WellState<Scalar>& wellState,
                                     GroupState<Scalar>& group_state);
 
@@ -161,46 +161,46 @@ public:
     static void updateGpMaintTargetForGroups(const Group& group,
                                              const Schedule& schedule,
                                              const RegionalValues& regional_values,
-                                             const int reportStepIdx,
+                                             const long long reportStepIdx,
                                              const double dt,
                                              const WellState<Scalar>& well_state,
                                              GroupState<Scalar>& group_state);
 
     static void updateReservoirRatesInjectionGroups(const Group& group,
                                                     const Schedule& schedule,
-                                                    const int reportStepIdx,
+                                                    const long long reportStepIdx,
                                                     const WellState<Scalar>& wellState,
                                                     GroupState<Scalar>& group_state);
 
     static void updateSurfaceRatesInjectionGroups(const Group& group,
                                                   const Schedule& schedule,
-                                                  const int reportStepIdx,
+                                                  const long long reportStepIdx,
                                                   const WellState<Scalar>& wellState,
                                                   GroupState<Scalar>& group_state);
 
     static void updateWellRates(const Group& group,
                                 const Schedule& schedule,
-                                const int reportStepIdx,
+                                const long long reportStepIdx,
                                 const WellState<Scalar>& wellStateNupcol,
                                 WellState<Scalar>& wellState);
 
     static void updateGroupProductionRates(const Group& group,
                                            const Schedule& schedule,
-                                           const int reportStepIdx,
+                                           const long long reportStepIdx,
                                            const WellState<Scalar>& wellState,
                                            GroupState<Scalar>& group_state);
 
     static void updateWellRatesFromGroupTargetScale(const Scalar scale,
                                                     const Group& group,
                                                     const Schedule& schedule,
-                                                    const int reportStepIdx,
+                                                    const long long reportStepIdx,
                                                     bool isInjector,
                                                     const GroupState<Scalar>& group_state,
                                                     WellState<Scalar>& wellState);
 
     static void updateREINForGroups(const Group& group,
                                     const Schedule& schedule,
-                                    const int reportStepIdx,
+                                    const long long reportStepIdx,
                                     const PhaseUsage& pu,
                                     const SummaryState& st,
                                     const WellState<Scalar>& wellState,
@@ -214,7 +214,7 @@ public:
                             const GroupState<Scalar>& group_state,
                             const VFPProdProperties<Scalar>& vfp_prod_props,
                             const Schedule& schedule,
-                            const int report_time_step);
+                            const long long report_time_step);
 
     static GuideRate::RateVector
     getWellRateVector(const WellState<Scalar>& well_state,
@@ -230,7 +230,7 @@ public:
                                const Schedule& schedule,
                                const WellState<Scalar>& wellState,
                                const GroupState<Scalar>& group_state,
-                               const int reportStepIdx,
+                               const long long reportStepIdx,
                                const GuideRate* guideRate,
                                const GuideRateModel::Target target,
                                const PhaseUsage& pu);
@@ -239,18 +239,18 @@ public:
                                   const Schedule& schedule,
                                   const WellState<Scalar>& wellState,
                                   const GroupState<Scalar>& group_state,
-                                  const int reportStepIdx,
+                                  const long long reportStepIdx,
                                   const GuideRate* guideRate,
                                   const GuideRateModel::Target target,
                                   const Phase& injectionPhase,
                                   const PhaseUsage& pu);
 
-    static int groupControlledWells(const Schedule& schedule,
+    static long long groupControlledWells(const Schedule& schedule,
                                     const WellState<Scalar>& well_state,
                                     const GroupState<Scalar>& group_state,
                                     const SummaryState& summary_state,
                                     const GuideRate* guideRate,
-                                    const int report_step,
+                                    const long long report_step,
                                     const std::string& group_name,
                                     const std::string& always_included_child,
                                     const bool is_production_group,
@@ -262,7 +262,7 @@ public:
                              const Group& group,
                              const WellState<Scalar>& wellState,
                              const GroupState<Scalar>& group_state,
-                             const int reportStepIdx,
+                             const long long reportStepIdx,
                              const GuideRate* guideRate,
                              const Scalar* rates,
                              Phase injectionPhase,
@@ -277,12 +277,12 @@ public:
     groupChainTopBot(const std::string& bottom,
                      const std::string& top,
                      const Schedule& schedule,
-                     const int report_step);
+                     const long long report_step);
 
     static std::string
     control_group(const Group& group,
                   const GroupState<Scalar>& group_state,
-                  const int reportStepIdx,
+                  const long long reportStepIdx,
                   const Schedule& schedule);
 
     static std::pair<bool, Scalar>
@@ -291,7 +291,7 @@ public:
                               const Group& group,
                               const WellState<Scalar>& wellState,
                               const GroupState<Scalar>& group_state,
-                              const int reportStepIdx,
+                              const long long reportStepIdx,
                               const GuideRate* guideRate,
                               const Scalar* rates,
                               const PhaseUsage& pu,
@@ -304,7 +304,7 @@ public:
     template <class AverageRegionalPressureType>
     static void setRegionAveragePressureCalculator(const Group& group,
                                                    const Schedule& schedule,
-                                                   const int reportStepIdx,
+                                                   const long long reportStepIdx,
                                                    const FieldPropsManager& fp,
                                                    const PhaseUsage& pu,
                                                    std::map<std::string, std::unique_ptr<AverageRegionalPressureType>>& regionalAveragePressureCalculator);

@@ -34,17 +34,17 @@
 
 
 template<class Matrix>
-void setupLaplace2d(int N, Matrix& mat)
+void setupLaplace2d(long long N, Matrix& mat)
 {
-    const int nonZeroes = N*N * 5; // max 5 entries per row (diagonal + 4 neighbors)
+    const long long nonZeroes = N*N * 5; // max 5 entries per row (diagonal + 4 neighbors)
     mat.setBuildMode(Matrix::row_wise);
     mat.setSize(N*N, N*N, nonZeroes);
 
     // Set up sparsity pattern
     for (auto row = mat.createbegin(); row != mat.createend(); ++row) {
-        const int i = row.index();
-        int x = i % N;
-        int y = i / N;
+        const long long i = row.index();
+        long long x = i % N;
+        long long y = i / N;
 
         row.insert(i);  // diagonal
         if (x > 0)      // left neighbor
@@ -59,9 +59,9 @@ void setupLaplace2d(int N, Matrix& mat)
 
     // Fill the matrix with values
     for (auto row = mat.begin(); row != mat.end(); ++row) {
-        const int i = row.index();
-        int x = i % N;
-        int y = i / N;
+        const long long i = row.index();
+        long long x = i % N;
+        long long y = i / N;
 
         // Set diagonal
         (*row)[i] = 4.0;
@@ -80,7 +80,7 @@ void setupLaplace2d(int N, Matrix& mat)
 
 inline void testHyprePreconditioner(bool use_gpu)
 {
-    constexpr int N = 100; // 100x100 grid
+    constexpr long long N = 100; // 100x100 grid
     using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, 1, 1>>;
     using Vector = Dune::BlockVector<Dune::FieldVector<double, 1>>;
 
@@ -106,8 +106,8 @@ inline void testHyprePreconditioner(bool use_gpu)
 
     // Create solver
     double reduction = 1e-8;
-    int maxit = 300;
-    int verbosity = 0;
+    long long maxit = 300;
+    long long verbosity = 0;
     Dune::LoopSolver<Vector> solver(op, *prec, reduction, maxit, verbosity);
 
     // Solve

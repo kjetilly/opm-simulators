@@ -43,7 +43,7 @@ namespace detail {
 
 #ifdef HAVE_MPI
 void copyParValues(std::any& parallelInformation, std::size_t size,
-                   Dune::OwnerOverlapCopyCommunication<int,int>& comm)
+                   Dune::OwnerOverlapCopyCommunication<long long,long long>& comm)
 {
   if (parallelInformation.type() == typeid(ParallelISTLInformation)) {
       const ParallelISTLInformation* parinfo = std::any_cast<ParallelISTLInformation>(&parallelInformation);
@@ -55,12 +55,12 @@ void copyParValues(std::any& parallelInformation, std::size_t size,
 
 template<class Matrix>
 void makeOverlapRowsInvalid(Matrix& matrix,
-                            const std::vector<int>& overlapRows)
+                            const std::vector<long long>& overlapRows)
 {
     //value to set on diagonal
-    const int numEq = Matrix::block_type::rows;
+    const long long numEq = Matrix::block_type::rows;
     typename Matrix::block_type diag_block(0.0);
-    for (int eq = 0; eq < numEq; ++eq)
+    for (long long eq = 0; eq < numEq; ++eq)
         diag_block[eq][eq] = 1.0;
 
     //loop over precalculated overlap rows and columns
@@ -99,7 +99,7 @@ void FlexibleSolverInfo<Matrix,Vector,Comm>::create(const Matrix& matrix,
         // The static_cast of Matrix::block_type::rows is needed for fmt version 10.
         // TODO: Check if the cast is still needed in future versions.
         os << fmt::format("blocksize: {} size: {:7d} block nonzeroes: {:9d}",
-                          static_cast<int>(Matrix::block_type::rows), matrix.N(), matrix.nonzeroes());
+                          static_cast<long long>(Matrix::block_type::rows), matrix.N(), matrix.nonzeroes());
         DeferredLogger local_logger;
         local_logger.debug(os.str());
         auto global_logger = gatherDeferredLogger(local_logger, basic_comm);
@@ -158,19 +158,19 @@ void FlexibleSolverInfo<Matrix,Vector,Comm>::create(const Matrix& matrix,
     }
 }
 
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using BM = Dune::BCRSMatrix<MatrixBlock<Scalar,Dim,Dim>>;
-template<class Scalar, int Dim>
+template<class Scalar, long long Dim>
 using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
 
 #if HAVE_MPI
-using CommunicationType = Dune::OwnerOverlapCopyCommunication<int,int>;
+using CommunicationType = Dune::OwnerOverlapCopyCommunication<long long,long long>;
 #else
-using CommunicationType = Dune::Communication<int>;
+using CommunicationType = Dune::Communication<long long>;
 #endif
 
 #define INSTANTIATE_FLEX(T,Dim)                                                           \
-    template void makeOverlapRowsInvalid<BM<T,Dim>>(BM<T,Dim>&, const std::vector<int>&); \
+    template void makeOverlapRowsInvalid<BM<T,Dim>>(BM<T,Dim>&, const std::vector<long long>&); \
     template struct FlexibleSolverInfo<BM<T,Dim>,BV<T,Dim>,CommunicationType>;
 
 #define INSTANTIATE_TYPE(T) \

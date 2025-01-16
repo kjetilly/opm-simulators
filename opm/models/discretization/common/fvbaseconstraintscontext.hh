@@ -88,25 +88,25 @@ public:
     /*!
      * \copydoc Opm::ElementContext::numDof()
      */
-    int numDof(int timeIdx) const
+    long long numDof(long long timeIdx) const
     { return elemCtx_.numDof(timeIdx); }
 
     /*!
      * \copydoc Opm::ElementContext::numInteriorFaces()
      */
-    int numInteriorFaces(int timeIdx) const
+    long long numInteriorFaces(long long timeIdx) const
     { return elemCtx_.numInteriorFaces(timeIdx); }
 
     /*!
      * \copydoc Opm::ElementContext::globalSpaceIndex
      */
-    int globalSpaceIndex(int dofIdx, int timeIdx) const
+    long long globalSpaceIndex(long long dofIdx, long long timeIdx) const
     { return elemCtx_.globalSpaceIndex(dofIdx, timeIdx); }
 
     /*!
      * \copydoc Opm::ElementContext::pos
      */
-    GlobalPosition pos(int dofIdx, int timeIdx) const
+    GlobalPosition pos(long long dofIdx, long long timeIdx) const
     { return elemCtx_.pos(dofIdx, timeIdx); }
 
 protected:

@@ -34,7 +34,7 @@ namespace Opm::Accelerator {
 /// This class implements a Blocked ILU0 preconditioner
 /// The decomposition is done on GPU, using exact decomposition, or ChowPatel decomposition
 /// The preconditioner is applied via two exact triangular solves
-template <class Scalar, unsigned int block_size>
+template <class Scalar, size_t block_size>
 class rocsparseBILU0 : public rocsparsePreconditioner<Scalar, block_size>
 {
     typedef rocsparsePreconditioner<Scalar, block_size> Base;
@@ -59,7 +59,7 @@ private:
     
 public:
 
-    rocsparseBILU0(int verbosity_);
+    rocsparseBILU0(long long verbosity_);
     
     /// Initialize GPU and allocate memory
     /// \param[in] matrix     matrix A

@@ -182,7 +182,7 @@ public:
     void prepare(const SparseMatrixAdapter& M, const Vector& )
     {
         // if grid has changed the sequence number has changed too
-        int curSeqNum = simulator_.vanguard().gridSequenceNumber();
+        long long curSeqNum = simulator_.vanguard().gridSequenceNumber();
         if (gridSequenceNumber_ == curSeqNum && overlappingMatrix_)
             // the grid has not changed since the overlappingMatrix_has been created, so
             // there's noting to do
@@ -310,7 +310,7 @@ protected:
 
     std::shared_ptr<ParallelPreconditioner> preparePreconditioner_()
     {
-        int preconditionerIsReady = 1;
+        long long preconditionerIsReady = 1;
         try {
             // update sequential preconditioner
             precWrapper_.prepare(*overlappingMatrix_);
@@ -339,11 +339,11 @@ protected:
 
     void writeOverlapToVTK_()
     {
-        for (int lookedAtRank = 0;
+        for (long long lookedAtRank = 0;
              lookedAtRank < simulator_.gridView().comm().size(); ++lookedAtRank) {
             std::cout << "writing overlap for rank " << lookedAtRank << "\n"  << std::flush;
             using VtkField = Dune::BlockVector<Dune::FieldVector<Scalar, 1> >;
-            int n = simulator_.gridView().size(/*codim=*/dimWorld);
+            long long n = simulator_.gridView().size(/*codim=*/dimWorld);
             VtkField isInOverlap(n);
             VtkField rankField(n);
             isInOverlap = 0.0;
@@ -354,8 +354,8 @@ protected:
             const auto& vEndIt = simulator_.gridView().template end</*codim=*/dimWorld>();
             const auto& overlap = overlappingMatrix_->overlap();
             for (; vIt != vEndIt; ++vIt) {
-                int nativeIdx = simulator_.model().vertexMapper().map(*vIt);
-                int localIdx = overlap.foreignOverlap().nativeToLocal(nativeIdx);
+                long long nativeIdx = simulator_.model().vertexMapper().map(*vIt);
+                long long localIdx = overlap.foreignOverlap().nativeToLocal(nativeIdx);
                 if (localIdx < 0)
                     continue;
                 rankField[nativeIdx] = simulator_.gridView().comm().rank();
@@ -375,7 +375,7 @@ protected:
     }
 
     const Simulator& simulator_;
-    int gridSequenceNumber_;
+    long long gridSequenceNumber_;
     size_t lastIterations_;
 
     OverlappingMatrix *overlappingMatrix_;
@@ -398,7 +398,7 @@ template<class TypeTag>
 struct OverlappingMatrix<TypeTag, TTag::ParallelBaseLinearSolver>
 {
 private:
-    static constexpr int numEq = getPropValue<TypeTag, Properties::NumEq>();
+    static constexpr long long numEq = getPropValue<TypeTag, Properties::NumEq>();
     using LinearSolverScalar = GetPropType<TypeTag, Properties::LinearSolverScalar>;
     using MatrixBlock = Opm::MatrixBlock<LinearSolverScalar, numEq, numEq>;
     using NonOverlappingMatrix = Dune::BCRSMatrix<MatrixBlock>;
@@ -414,7 +414,7 @@ struct Overlap<TypeTag, TTag::ParallelBaseLinearSolver>
 template<class TypeTag>
 struct OverlappingVector<TypeTag, TTag::ParallelBaseLinearSolver>
 {
-    static constexpr int numEq = getPropValue<TypeTag, Properties::NumEq>();
+    static constexpr long long numEq = getPropValue<TypeTag, Properties::NumEq>();
     using LinearSolverScalar = GetPropType<TypeTag, Properties::LinearSolverScalar>;
     using VectorBlock = Dune::FieldVector<LinearSolverScalar, numEq>;
     using Overlap = GetPropType<TypeTag, Properties::Overlap>;

@@ -64,9 +64,9 @@ struct StructuredGridVanguard {};
 
 // GRIDDIM is only set by the finger problem
 #ifndef GRIDDIM
-static const int dim = 2;
+static const long long dim = 2;
 #else
-static const int dim = GRIDDIM;
+static const long long dim = GRIDDIM;
 #endif
 
 // set the Grid and Vanguard properties
@@ -100,7 +100,7 @@ class StructuredGridVanguard : public BaseVanguard<TypeTag>
 
     using GridPointer = std::unique_ptr<Grid>;
 
-    static constexpr int dim = Grid::dimension;
+    static constexpr long long dim = Grid::dimension;
 
 public:
     /*!
@@ -135,7 +135,7 @@ public:
     StructuredGridVanguard(Simulator& simulator)
         : ParentType(simulator)
     {
-        Dune::FieldVector<int, dim> cellRes;
+        Dune::FieldVector<long long, dim> cellRes;
 
         using GridScalar = double;
         Dune::FieldVector<GridScalar, dim> upperRight;
@@ -168,7 +168,7 @@ public:
         gridPtr_.reset( Dune::GridPtr< Grid >( dgffile ).release() );
 
         unsigned numRefinements = Parameters::Get<Parameters::GridGlobalRefinements>();
-        gridPtr_->globalRefine(static_cast<int>(numRefinements));
+        gridPtr_->globalRefine(static_cast<long long>(numRefinements));
 
         this->finalizeInit_();
     }

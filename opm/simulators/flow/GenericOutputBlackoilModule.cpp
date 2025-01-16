@@ -162,7 +162,7 @@ std::string EclString(const Opm::Inplace::Phase phase)
     default:
         throw std::logic_error {
             fmt::format("Phase enum with integer value: "
-                        "{} not recognized", static_cast<int>(phase))
+                        "{} not recognized", static_cast<long long>(phase))
         };
     }
 }
@@ -299,7 +299,7 @@ template<class FluidSystem>
 void GenericOutputBlackoilModule<FluidSystem>::
 outputTimeStamp(const std::string& lbl,
                 const double elapsed,
-                const int rstep,
+                const long long rstep,
                 const boost::posix_time::ptime currentDate)
 {
     logOutput_.timeStamp(lbl, elapsed, rstep, currentDate);
@@ -436,9 +436,9 @@ template<class FluidSystem>
 void GenericOutputBlackoilModule<FluidSystem>::
 gatherAndUpdateRftMap(std::map<std::size_t, Scalar>& local_map, const Parallel::Communication& comm) {
 
-    std::vector<std::pair<int, Scalar>> pairs(local_map.begin(), local_map.end());
-    std::vector<std::pair<int, Scalar>> all_pairs;
-    std::vector<int> offsets;
+    std::vector<std::pair<long long, Scalar>> pairs(local_map.begin(), local_map.end());
+    std::vector<std::pair<long long, Scalar>> all_pairs;
+    std::vector<long long> offsets;
 
     std::tie(all_pairs, offsets) = Opm::allGatherv(pairs, comm);
 
@@ -527,7 +527,7 @@ assignToSolution(data::Solution& sol)
     };
 
     // if index not specified, we treat it as valid (>= 0)
-    auto addEntry = [](std::vector<DataEntry>& container, const std::string& name, UnitSystem::measure measure, const auto& flowArray, int index = 1) {
+    auto addEntry = [](std::vector<DataEntry>& container, const std::string& name, UnitSystem::measure measure, const auto& flowArray, long long index = 1) {
         if (index >= 0) {  // Only add if index is valid
             container.emplace_back(name, measure, flowArray);
         }
@@ -667,20 +667,20 @@ assignToSolution(data::Solution& sol)
         auto compositionalEntries = std::vector<DataEntry>{};
         {
             // ZMF
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 const auto name = fmt::format("ZMF{}", i + 1);  // Generate ZMF1, ZMF2, ...
                 compositionalEntries.emplace_back(name, UnitSystem::measure::identity, moleFractions_[i]);
             }
 
             // XMF
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 const auto name = fmt::format("XMF{}", i + 1);  // Generate XMF1, XMF2, ...
                 compositionalEntries.emplace_back(name, UnitSystem::measure::identity,
                                                   phaseMoleFractions_[oilPhaseIdx][i]);
             }
 
             // YMF
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 const auto name = fmt::format("YMF{}", i + 1);  // Generate YMF1, YMF2, ...
                 compositionalEntries.emplace_back(name, UnitSystem::measure::identity,
                                                   phaseMoleFractions_[gasPhaseIdx][i]);
@@ -743,7 +743,7 @@ assignToSolution(data::Solution& sol)
         std::transform(this->rsw_.begin(), this->rsw_.end(),
                        this->eclState_.fieldProps().get_int("PVTNUM").begin(),
                        mfrac.begin(),
-            [](const auto& rsw, const int pvtReg)
+            [](const auto& rsw, const long long pvtReg)
         {
             const auto xwg = FluidSystem::convertRswToXwG(rsw, pvtReg - 1);
             return FluidSystem::convertXwGToxwG(xwg, pvtReg - 1);
@@ -762,7 +762,7 @@ assignToSolution(data::Solution& sol)
         std::transform(this->rvw_.begin(), this->rvw_.end(),
                        this->eclState_.fieldProps().get_int("PVTNUM").begin(),
                        mfrac.begin(),
-            [](const auto& rvw, const int pvtReg)
+            [](const auto& rvw, const long long pvtReg)
         {
             const auto xgw = FluidSystem::convertRvwToXgW(rvw, pvtReg - 1);
             return FluidSystem::convertXgWToxgW(xgw, pvtReg - 1);
@@ -963,7 +963,7 @@ template<class FluidSystem>
 typename GenericOutputBlackoilModule<FluidSystem>::ScalarBuffer
 GenericOutputBlackoilModule<FluidSystem>::
 regionSum(const ScalarBuffer& property,
-          const std::vector<int>& regionId,
+          const std::vector<long long>& regionId,
           std::size_t maxNumberOfRegions,
           const Parallel::Communication& comm)
 {
@@ -979,12 +979,12 @@ regionSum(const ScalarBuffer& property,
         // OwnerCellsFirst = True
         assert(regionId.size() >= property.size());
         for (std::size_t j = 0; j < property.size(); ++j) {
-            const int regionIdx = regionId[j] - 1;
+            const long long regionIdx = regionId[j] - 1;
             // the cell is not attributed to any region. ignore it!
             if (regionIdx < 0)
                 continue;
 
-            assert(regionIdx < static_cast<int>(maxNumberOfRegions));
+            assert(regionIdx < static_cast<long long>(maxNumberOfRegions));
             totals[regionIdx] += property[j];
         }
 
@@ -1010,7 +1010,7 @@ doAllocBuffers(const unsigned bufferSize,
                const unsigned numOutputNnc)
 {
     // Output RESTART_OPM_EXTENDED only when explicitly requested by user.
-    std::map<std::string, int> rstKeywords = schedule_.rst_keywords(reportStepNum);
+    std::map<std::string, long long> rstKeywords = schedule_.rst_keywords(reportStepNum);
     for (auto& [keyword, should_write] : rstKeywords) {
         if (this->isOutputCreationDirective_(keyword)) {
             // 'BASIC', 'FREQ' and similar.  Don't attempt to create
@@ -1119,8 +1119,8 @@ doAllocBuffers(const unsigned bufferSize,
 
     // Flows may need to be allocated even when there is no restart due to BFLOW* summary keywords
     if (blockFlows_ ) {
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
+        const std::array<long long, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
+        const std::array<long long, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
             if (FluidSystem::phaseIsActive(phaseIdxs[ii])) {
@@ -1379,8 +1379,8 @@ doAllocBuffers(const unsigned bufferSize,
         rstKeywords["FLOWS"] = 0;
         enableFlows_ = true;
 
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
+        const std::array<long long, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
+        const std::array<long long, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
         const auto rstName = std::array { "FLOGASN+", "FLOOILN+", "FLOWATN+" };
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
@@ -1417,8 +1417,8 @@ doAllocBuffers(const unsigned bufferSize,
         rstKeywords["FLORES"] = 0;
         enableFlores_ = true;
 
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
+        const std::array<long long, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
+        const std::array<long long, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
         const auto rstName = std::array{ "FLRGASN+", "FLROILN+", "FLRWATN+" };
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
@@ -1540,7 +1540,7 @@ doAllocBuffers(const unsigned bufferSize,
 
     if (rstKeywords["RESIDUAL"] > 0) {
         rstKeywords["RESIDUAL"] = 0;
-        for (int phaseIdx = 0; phaseIdx <  numPhases; ++phaseIdx)
+        for (long long phaseIdx = 0; phaseIdx <  numPhases; ++phaseIdx)
         {
             if (FluidSystem::phaseIsActive(phaseIdx)) {
                 this->residual_[phaseIdx].resize(bufferSize, 0.0);
@@ -1561,21 +1561,21 @@ doAllocBuffers(const unsigned bufferSize,
     if (this->isCompositional_) {
         if (rstKeywords["ZMF"] > 0) {
             rstKeywords["ZMF"] = 0;
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 moleFractions_[i].resize(bufferSize, 0.0);
             }
         }
 
         if (rstKeywords["XMF"] > 0 && FluidSystem::phaseIsActive(oilPhaseIdx)) {
             rstKeywords["XMF"] = 0;
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 phaseMoleFractions_[oilPhaseIdx][i].resize(bufferSize, 0.0);
             }
         }
 
         if (rstKeywords["YMF"] > 0 && FluidSystem::phaseIsActive(gasPhaseIdx)) {
             rstKeywords["YMF"] = 0;
-            for (int i = 0; i < numComponents; ++i) {
+            for (long long i = 0; i < numComponents; ++i) {
                 phaseMoleFractions_[gasPhaseIdx][i].resize(bufferSize, 0.0);
             }
         }
@@ -1635,8 +1635,8 @@ outputErrorLog(const Parallel::Communication& comm) const
 }
 
 template<class FluidSystem>
-int GenericOutputBlackoilModule<FluidSystem>::
-regionMax(const std::vector<int>& region,
+long long GenericOutputBlackoilModule<FluidSystem>::
+regionMax(const std::vector<long long>& region,
           const Parallel::Communication& comm)
 {
     const auto max_value = region.empty() ? 0 : *std::max_element(region.begin(), region.end());
@@ -1813,7 +1813,7 @@ updateSummaryRegionValues(const Inplace& inplace,
 
 template<class FluidSystem>
 void GenericOutputBlackoilModule<FluidSystem>::
-setupBlockData(std::function<bool(int)> isCartIdxOnThisRank)
+setupBlockData(std::function<bool(long long)> isCartIdxOnThisRank)
 {
     for (const auto& node : summaryConfig_) {
         if ((node.category() == SummaryConfigNode::Category::Block) &&

@@ -432,7 +432,7 @@ has_gpmaint_target(const std::string& gname) const
 
 template<class Scalar>
 void GroupState<Scalar>::
-update_gconsump(const Schedule& schedule, const int report_step, const SummaryState& summary_state) {
+update_gconsump(const Schedule& schedule, const long long report_step, const SummaryState& summary_state) {
     this->m_gconsump_rates.clear();
     const auto& sched_state = schedule[report_step];
     const auto& gconsump = sched_state.gconsump();

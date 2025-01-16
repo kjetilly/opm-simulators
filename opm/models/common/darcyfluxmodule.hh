@@ -242,7 +242,7 @@ protected:
                 Evaluation pStatIn;
 
                 if (std::is_same<Scalar, Evaluation>::value ||
-                    interiorDofIdx_ == static_cast<int>(focusDofIdx))
+                    interiorDofIdx_ == static_cast<long long>(focusDofIdx))
                 {
                     const Evaluation& rhoIn = intQuantsIn.fluidState().density(phaseIdx);
                     pStatIn = - rhoIn*(gIn*distVecIn);
@@ -257,7 +257,7 @@ protected:
                 Evaluation pStatEx;
 
                 if (std::is_same<Scalar, Evaluation>::value ||
-                    exteriorDofIdx_ == static_cast<int>(focusDofIdx))
+                    exteriorDofIdx_ == static_cast<long long>(focusDofIdx))
                 {
                     const Evaluation& rhoEx = intQuantsEx.fluidState().density(phaseIdx);
                     pStatEx = - rhoEx*(gEx*distVecEx);
@@ -314,7 +314,7 @@ protected:
             // we only carry the derivatives along if the upstream DOF is the one which
             // we currently focus on
             const auto& up = elemCtx.intensiveQuantities(upstreamDofIdx_[phaseIdx], timeIdx);
-            if (upstreamDofIdx_[phaseIdx] == static_cast<int>(focusDofIdx))
+            if (upstreamDofIdx_[phaseIdx] == static_cast<long long>(focusDofIdx))
                 mobility_[phaseIdx] = up.mobility(phaseIdx);
             else
                 mobility_[phaseIdx] = Toolbox::value(up.mobility(phaseIdx));
@@ -355,7 +355,7 @@ protected:
         auto i = scvf.interiorIndex();
         interiorDofIdx_ = static_cast<short>(i);
         exteriorDofIdx_ = -1;
-        int focusDofIdx = elemCtx.focusDofIndex();
+        long long focusDofIdx = elemCtx.focusDofIndex();
 
         // calculate the intrinsic permeability
         const auto& intQuantsIn = elemCtx.intensiveQuantities(i, timeIdx);

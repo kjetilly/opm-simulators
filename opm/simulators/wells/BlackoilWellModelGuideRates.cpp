@@ -100,7 +100,7 @@ public:
     using WellOp = std::function<void(const Opm::Well&)>;
 
     explicit GroupTreeWalker(const Opm::Schedule& sched,
-                             const int            reportStepIdx)
+                             const long long            reportStepIdx)
         : sched_        (sched)
         , reportStepIdx_(reportStepIdx)
     {}
@@ -130,7 +130,7 @@ private:
     using NodeOp = void (GroupTreeWalker::*)(std::string_view) const;
 
     std::reference_wrapper<const Opm::Schedule> sched_;
-    int reportStepIdx_;
+    long long reportStepIdx_;
 
     GroupOp visitGroup_{};
     WellOp visitWell_{};
@@ -390,7 +390,7 @@ getGuideRateInjectionGroupValues(const Group& group) const
 template<class Scalar>
 void BlackoilWellModelGuideRates<Scalar>::
 assignWellGuideRates(data::Wells& wsrpt,
-                     const int    reportStepIdx) const
+                     const long long    reportStepIdx) const
 {
     auto all = std::unordered_map<std::string, data::GuideRateValue>{};
     auto retrieve = std::unordered_map<std::string, RetrieveWellGuideRate>{};
@@ -489,7 +489,7 @@ assignWellGuideRates(data::Wells& wsrpt,
 template<class Scalar>
 std::unordered_map<std::string, data::GroupGuideRates>
 BlackoilWellModelGuideRates<Scalar>::
-calculateAllGroupGuideRates(const int reportStepIdx) const
+calculateAllGroupGuideRates(const long long reportStepIdx) const
 {
     auto gr = std::unordered_map<std::string, data::GroupGuideRates>{};
 
@@ -577,7 +577,7 @@ assignGroupGuideRates(const Group& group,
 
 template<class Scalar>
 bool BlackoilWellModelGuideRates<Scalar>::
-guideRateUpdateIsNeeded(const int reportStepIdx) const
+guideRateUpdateIsNeeded(const long long reportStepIdx) const
 {
     const auto& genWells = wellModel_.genericWells();
     auto need_update =
@@ -599,7 +599,7 @@ guideRateUpdateIsNeeded(const int reportStepIdx) const
             return events.hasEvent(well->name(), effective_events_mask);
         });
     }
-    return wellModel_.comm().max(static_cast<int>(need_update));
+    return wellModel_.comm().max(static_cast<long long>(need_update));
 }
 
 template class BlackoilWellModelGuideRates<double>;

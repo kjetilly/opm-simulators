@@ -76,7 +76,7 @@ public:
         
         // compute the specific enthalpy of the fluids, the specific enthalpy of the rock
         // and the thermal conductivity coefficients
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+        for (long long phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             if (!FluidSystem::phaseIsActive(phaseIdx)) {
                 continue;
             }

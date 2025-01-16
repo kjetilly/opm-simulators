@@ -57,13 +57,13 @@ namespace Opm::Accelerator {
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 rocsparseSolverBackend<Scalar,block_size>::
-rocsparseSolverBackend(int verbosity_, int maxit_, Scalar tolerance_,
-                       unsigned int platformID_, unsigned int deviceID_, std::string linsolver)
+rocsparseSolverBackend(long long verbosity_, long long maxit_, Scalar tolerance_,
+                       size_t platformID_, size_t deviceID_, std::string linsolver)
     : Base(verbosity_, maxit_, tolerance_, platformID_, deviceID_)
 {
-    int numDevices = 0;
+    long long numDevices = 0;
     bool use_cpr;
     
     if (linsolver.compare("ilu0") == 0) {
@@ -79,7 +79,7 @@ rocsparseSolverBackend(int verbosity_, int maxit_, Scalar tolerance_,
     }
     
     HIP_CHECK(hipGetDeviceCount(&numDevices));
-    if (static_cast<int>(deviceID) >= numDevices) {
+    if (static_cast<long long>(deviceID) >= numDevices) {
         OPM_THROW(std::runtime_error, "Invalid HIP device ID");
     }
     HIP_CHECK(hipSetDevice(deviceID));
@@ -109,7 +109,7 @@ rocsparseSolverBackend(int verbosity_, int maxit_, Scalar tolerance_,
     prec->set_context(handle, dir, operation, stream);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 rocsparseSolverBackend<Scalar,block_size>::~rocsparseSolverBackend()
 {
     hipError_t hipstatus = hipStreamSynchronize(stream);
@@ -130,7 +130,7 @@ rocsparseSolverBackend<Scalar,block_size>::~rocsparseSolverBackend()
     }
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 gpu_pbicgstab([[maybe_unused]] WellContributions<Scalar>& wellContribs,
               GpuResult& res)
@@ -456,7 +456,7 @@ gpu_pbicgstab([[maybe_unused]] WellContributions<Scalar>& wellContribs,
     }
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
            std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix)
@@ -510,7 +510,7 @@ initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     initialized = true;
 } // end initialize()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 copy_system_to_gpu(Scalar *b)
 {
@@ -543,7 +543,7 @@ copy_system_to_gpu(Scalar *b)
 } // end copy_system_to_gpu()
 
 // don't copy rowpointers and colindices, they stay the same
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 update_system_on_gpu(Scalar* b)
 {
@@ -568,7 +568,7 @@ update_system_on_gpu(Scalar* b)
     }
 } // end update_system_on_gpu()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool rocsparseSolverBackend<Scalar,block_size>::
 analyze_matrix()
 {
@@ -629,14 +629,14 @@ analyze_matrix()
     return true;
 } // end analyze_matrix()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 bool rocsparseSolverBackend<Scalar,block_size>::
 create_preconditioner()
 {
     return prec->create_preconditioner(&*mat);
 } // end create_preconditioner()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
 {
@@ -655,7 +655,7 @@ solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
 
 // copy result to host memory
 // caller must be sure that x is a valid array
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocsparseSolverBackend<Scalar,block_size>::
 get_result(Scalar* x)
 {
@@ -672,7 +672,7 @@ get_result(Scalar* x)
     }
 } // end get_result()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 SolverStatus rocsparseSolverBackend<Scalar,block_size>::
 solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
              Scalar* b,

@@ -38,9 +38,9 @@ template<class T> using DV = DamarisOutput::DamarisVar<T>;
     template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
         writeGridPoints<DV<double>>(DV<double>&, DV<double>&, DV<double>&) const; \
     template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeConnectivity<DV<int>>(DV<int>&, ConnectivityVertexOrder) const; \
+        writeConnectivity<DV<long long>>(DV<long long>&, ConnectivityVertexOrder) const; \
     template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeOffsetsCells<DV<int>>(DV<int>&) const; \
+        writeOffsetsCells<DV<long long>>(DV<long long>&) const; \
     template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
         writeCellTypes<DV<char>>(DV<char>&) const;
 

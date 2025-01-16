@@ -81,7 +81,7 @@ gasLiftOptimizationStage2(const Parallel::Communication& comm,
                           GLiftOptWells& glift_wells,
                           GasLiftGroupInfo<Scalar>& group_info,
                           GLiftWellStateMap& glift_well_state_map,
-                          const int episodeIndex,
+                          const long long episodeIndex,
                           DeferredLogger& deferred_logger)
 
 {

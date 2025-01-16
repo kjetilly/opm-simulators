@@ -95,7 +95,7 @@ protected:
     void init();
 
 private:
-    void createDynamicAquifers(const int episode_index);
+    void createDynamicAquifers(const long long episode_index);
 
     void initializeStaticAquifers();
     void initializeRestartDynamicAquifers();
@@ -105,7 +105,7 @@ private:
     template <typename AquiferType, typename AquiferData>
     std::unique_ptr<AquiferType>
     createAnalyticAquiferPointer(const AquiferData& aqData,
-                                 const int          aquiferID,
+                                 const long long          aquiferID,
                                  std::string_view   aqType) const;
 
     void computeConnectionAreaFraction() const;

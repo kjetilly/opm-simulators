@@ -45,7 +45,7 @@ namespace Opm::Accelerator {
 
 /// This class does not implement a solver, but converts the BCSR format to normal CSR and uses amgcl for solving
 /// Note amgcl also implements blocked solvers, but looks like it needs unblocked input data
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 class amgclSolverBackend : public GpuSolver<Scalar,block_size>
 {
     using Base = GpuSolver<Scalar,block_size>;
@@ -86,7 +86,7 @@ private:
     Amgcl_backend_type backend_type = cpu;
 
     boost::property_tree::ptree prm;         // amgcl parameters
-    int iters = 0;
+    long long iters = 0;
     Scalar error = 0.0;
 
 #if HAVE_CUDA
@@ -100,17 +100,17 @@ private:
     /// Initialize host memory and determine amgcl parameters
     /// \param[in] Nb               number of blockrows
     /// \param[in] nnzbs            number of blocks
-    void initialize(int Nb, int nnzbs);
+    void initialize(long long Nb, long long nnzbs);
 
     /// Convert the BCSR sparsity pattern to a CSR one
     /// \param[in] rows           array of rowPointers, contains N/dim+1 values
     /// \param[in] cols           array of columnIndices, contains nnz values
-    void convert_sparsity_pattern(int *rows, int *cols);
+    void convert_sparsity_pattern(long long *rows, long long *cols);
 
     /// Convert the BCSR nonzero data to a CSR format
     /// \param[in] vals           array of nonzeroes, each block is stored row-wise and contiguous, contains nnz values
     /// \param[in] rows           array of rowPointers, contains N/dim+1 values
-    void convert_data(Scalar* vals, int* rows);
+    void convert_data(Scalar* vals, long long* rows);
 
     /// Solve linear system
     /// \param[in] b              pointer to b vector
@@ -124,9 +124,9 @@ public:
     /// \param[in] tolerance                  required relative tolerance for amgclSolver
     /// \param[in] platformID                 the OpenCL platform to be used
     /// \param[in] deviceID                   the device to be used
-    amgclSolverBackend(int linear_solver_verbosity, int maxit,
-                       Scalar tolerance, unsigned int platformID,
-                       unsigned int deviceID);
+    amgclSolverBackend(long long linear_solver_verbosity, long long maxit,
+                       Scalar tolerance, size_t platformID,
+                       size_t deviceID);
 
     /// Destroy a openclSolver, and free memory
     ~amgclSolverBackend();

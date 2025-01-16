@@ -93,7 +93,7 @@ namespace KeywordValidation
     public:
         KeywordValidator(const UnsupportedKeywords& keywords,
                          const PartiallySupportedKeywords<std::string>& string_items,
-                         const PartiallySupportedKeywords<int>& int_items,
+                         const PartiallySupportedKeywords<long long>& int_items,
                          const PartiallySupportedKeywords<double>& double_items,
                          const std::unordered_map<std::string, ValidationFunction>& special_validation)
             : m_keywords(keywords)
@@ -136,7 +136,7 @@ namespace KeywordValidation
 
         const UnsupportedKeywords m_keywords;
         const PartiallySupportedKeywords<std::string> m_string_items;
-        const PartiallySupportedKeywords<int> m_int_items;
+        const PartiallySupportedKeywords<long long> m_int_items;
         const PartiallySupportedKeywords<double> m_double_items;
         const std::unordered_map<std::string, ValidationFunction> m_special_validation;
     };

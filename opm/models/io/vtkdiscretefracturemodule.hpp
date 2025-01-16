@@ -72,7 +72,7 @@ class VtkDiscreteFractureModule : public BaseOutputModule<TypeTag>
 
     using DiscBaseOutputModule = GetPropType<TypeTag, Properties::DiscBaseOutputModule>;
 
-    static const int vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = Opm::VtkMultiWriter<GridView, vtkFormat>;
 
     enum { dim = GridView::dimension };

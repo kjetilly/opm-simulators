@@ -89,7 +89,7 @@ namespace Opm::Parameters {
  * -1 means backward differences, 0 means central differences, 1 means
  * forward differences. By default we use forward differences.
  */
-struct NumericDifferenceMethod { static constexpr int value = +1; };
+struct NumericDifferenceMethod { static constexpr long long value = +1; };
 
 } // namespace Opm::Parameters
 
@@ -335,9 +335,9 @@ protected:
     /*!
      * \brief Returns the numeric difference method which is applied.
      */
-    static int numericDifferenceMethod_()
+    static long long numericDifferenceMethod_()
     {
-        static int diff = Parameters::Get<Parameters::NumericDifferenceMethod>();
+        static long long diff = Parameters::Get<Parameters::NumericDifferenceMethod>();
         return diff;
     }
 

@@ -110,14 +110,14 @@ void printUsage(const std::string& helpPreamble,
                 const bool showAll = false);
 
 //! \brief Callback function for command line parsing.
-using PositionalArgumentCallback = std::function<int(std::function<void(const std::string&,
+using PositionalArgumentCallback = std::function<(long long)(std::function<void(const std::string&,
                                                                         const std::string&)>,
                                                      std::set<std::string>&,
                                                      std::string&,
-                                                     int,
+                                                     long long,
                                                      const char**,
-                                                     int,
-                                                     int)>;
+                                                     long long,
+                                                     long long)>;
 /*!
  * \ingroup Parameter
  * \brief Parse the parameters provided on the command line.
@@ -135,7 +135,7 @@ using PositionalArgumentCallback = std::function<int(std::function<void(const st
  *         not be read.
  */
 std::string
-parseCommandLineOptions(int argc,
+parseCommandLineOptions(long long argc,
                         const char **argv,
                         const PositionalArgumentCallback& posArgCallback,
                         const std::string& helpPreamble = "");

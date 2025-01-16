@@ -33,9 +33,9 @@
 
 namespace {
 
-std::vector<int> make_segment_number(const Opm::WellSegments& segments)
+std::vector<long long> make_segment_number(const Opm::WellSegments& segments)
 {
-    std::vector<int> segment_number;
+    std::vector<long long> segment_number;
     segment_number.reserve(segments.size());
 
     std::transform(segments.begin(), segments.end(),
@@ -53,7 +53,7 @@ std::vector<int> make_segment_number(const Opm::WellSegments& segments)
 namespace Opm {
 
 template<class Scalar>
-SegmentState<Scalar>::SegmentState(int num_phases, const WellSegments& segments)
+SegmentState<Scalar>::SegmentState(long long num_phases, const WellSegments& segments)
     : rates                    (segments.size() * num_phases)
     , dissolved_gas_rate       (segments.size())
     , vaporized_oil_rate       (segments.size())
@@ -123,7 +123,7 @@ void SegmentState<Scalar>::scale_pressure(const Scalar bhp)
 }
 
 template<class Scalar>
-const std::vector<int>&
+const std::vector<long long>&
 SegmentState<Scalar>::segment_number() const
 {
     return this->m_segment_number;

@@ -32,7 +32,7 @@
 
 #include "problems/fractureproblem.hh"
 
-int main(int argc, char **argv)
+long long main(long long argc, char **argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::FractureProblem;
     return Opm::start<ProblemTypeTag>(argc, argv);

@@ -58,7 +58,7 @@ GroupEconomicLimitsChecker(const BlackoilWellModelGeneric<Scalar>& well_model,
                            WellTestState& well_test_state,
                            const Group& group,
                            const double simulation_time,
-                           const int report_step_idx,
+                           const long long report_step_idx,
                            DeferredLogger& deferred_logger)
     : well_model_{well_model}
     , group_{group}
@@ -75,7 +75,7 @@ GroupEconomicLimitsChecker(const BlackoilWellModelGeneric<Scalar>& well_model,
 {
     for (std::size_t i = 0; i < this->phase_idx_map_.size(); i++) {
         auto phase_idx = this->phase_idx_map_[i];
-        this->phase_idx_reverse_map_[phase_idx] = static_cast<int>(i);
+        this->phase_idx_reverse_map_[phase_idx] = static_cast<long long>(i);
         auto phase_pos = this->well_model_.phaseUsage().phase_pos[phase_idx];
         Scalar production_rate = WellGroupHelpers<Scalar>::sumWellSurfaceRates(this->group_,
                                                                                this->schedule_,
@@ -213,14 +213,14 @@ minOilRate()
 }
 
 template<class Scalar>
-int GroupEconomicLimitsChecker<Scalar>::
+long long GroupEconomicLimitsChecker<Scalar>::
 numProducersOpen()
 {
     return 1;
 }
 
 template<class Scalar>
-int GroupEconomicLimitsChecker<Scalar>::
+long long GroupEconomicLimitsChecker<Scalar>::
 numProducersOpenInitially()
 {
     return 1;
@@ -340,7 +340,7 @@ addPrintMessage(const std::string& msg,
 
 template<class Scalar>
 bool GroupEconomicLimitsChecker<Scalar>::
-closeWellsRecursive(const Group& group, int level)
+closeWellsRecursive(const Group& group, long long level)
 {
     bool wells_closed = false;
 

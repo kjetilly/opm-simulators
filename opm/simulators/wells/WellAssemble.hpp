@@ -46,9 +46,9 @@ struct WellProductionControls;
 
 template<class FluidSystem>
 class WellAssemble {
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
     using Scalar = typename FluidSystem::Scalar;
 
 public:

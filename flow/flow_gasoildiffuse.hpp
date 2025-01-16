@@ -20,10 +20,10 @@
 namespace Opm {
 
 //! \brief Main function used in flow binary.
-int flowGasOilDiffuseMain(int argc, char** argv, bool outputCout, bool outputFiles);
+long long flowGasOilDiffuseMain(long long argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_gasoil binary.
-int flowGasOilDiffuseMainStandalone(int argc, char** argv);
+long long flowGasOilDiffuseMainStandalone(long long argc, char** argv);
 
 }
 

@@ -34,7 +34,7 @@ struct EnableEnergy<TypeTag, TTag::FlowBrineEnergyProblem> {
 };
 }
 
-int flowBrineEnergyMain(int argc, char** argv)
+long long flowBrineEnergyMain(long long argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowBrineEnergyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

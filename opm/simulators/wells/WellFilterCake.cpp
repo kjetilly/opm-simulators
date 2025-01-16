@@ -75,7 +75,7 @@ applyCleaning(const WellInterfaceGeneric<Scalar>& well,
 {
     const auto& connections = well.wellEcl().getConnections();
     const auto nperf = well.numPerfs();
-    for (int perf = 0; perf < nperf; ++perf) {
+    for (long long perf = 0; perf < nperf; ++perf) {
         const auto perf_ecl_index = well.perforationData()[perf].ecl_index;
         const auto& connection = connections[perf_ecl_index];
         if (!connection.filterCakeActive())
@@ -132,13 +132,13 @@ updateSkinFactorsAndMultipliers(const WellInterfaceGeneric<Scalar>& well,
     const auto& connections = well.wellEcl().getConnections();
     auto& ws = well_state.well(well.indexOfWell());
     auto& perf_data = ws.perf_data;
-    assert (nperf == static_cast<int>(perf_data.size()));
+    assert (nperf == static_cast<long long>(perf_data.size()));
 
     const auto& connection_rates = perf_data.phase_rates;
     const auto conc = ws.filtrate_conc;
     const std::size_t np = well_state.numPhases();
 
-    for (int perf = 0; perf < nperf; ++perf) {
+    for (long long perf = 0; perf < nperf; ++perf) {
         const auto perf_ecl_index = well.perforationData()[perf].ecl_index;
         const auto& connection = connections[perf_ecl_index];
         if (!connection.filterCakeActive())
@@ -212,7 +212,7 @@ updateSkinFactorsAndMultipliers(const WellInterfaceGeneric<Scalar>& well,
 
 template<class Scalar> template <class Conn>
 void WellFilterCake<Scalar>::
-updateMultiplier(const Conn& connection, const int perf)
+updateMultiplier(const Conn& connection, const long long perf)
 {
     const auto denom = connection.ctfProperties().peaceman_denom;
     const auto denom2 = denom + skin_factor_[perf];

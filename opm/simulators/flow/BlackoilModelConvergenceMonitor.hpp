@@ -37,7 +37,7 @@ public:
     using MonitorParams = typename BlackoilModelParameters<Scalar>::ConvergenceMonitorParams;
     explicit BlackoilModelConvergenceMonitor(const MonitorParams& param);
 
-    void checkPenaltyCard(ConvergenceReport& report, int iteration);
+    void checkPenaltyCard(ConvergenceReport& report, long long iteration);
 
     void reset();
 
@@ -45,7 +45,7 @@ private:
     const MonitorParams& param_;
     ConvergenceReport::PenaltyCard total_penaltyCard_;
     double prev_distance_;
-    int prev_above_tolerance_;
+    long long prev_above_tolerance_;
 };
 
 } // namespace Opm

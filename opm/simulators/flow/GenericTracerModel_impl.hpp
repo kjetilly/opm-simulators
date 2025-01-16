@@ -65,14 +65,14 @@ namespace Opm {
 template<class M, class V>
 struct TracerSolverSelector
 {
-    using Comm = Dune::OwnerOverlapCopyCommunication<int, int>;
+    using Comm = Dune::OwnerOverlapCopyCommunication<long long, long long>;
     using TracerOperator = Dune::OverlappingSchwarzOperator<M, V, V, Comm>;
     using type = Dune::FlexibleSolver<TracerOperator>;
 };
 
 template<class Vector, class Grid, class Matrix>
 std::tuple<std::unique_ptr<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                            Dune::OwnerOverlapCopyCommunication<int,int>>>,
+                                                            Dune::OwnerOverlapCopyCommunication<long long,long long>>>,
            std::unique_ptr<typename TracerSolverSelector<Matrix,Vector>::type>>
 createParallelFlexibleSolver(const Grid&, const Matrix&, const PropertyTree&)
 {
@@ -82,12 +82,12 @@ createParallelFlexibleSolver(const Grid&, const Matrix&, const PropertyTree&)
 
 template<class Vector, class Matrix>
 std::tuple<std::unique_ptr<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                            Dune::OwnerOverlapCopyCommunication<int,int>>>,
+                                                            Dune::OwnerOverlapCopyCommunication<long long,long long>>>,
            std::unique_ptr<typename TracerSolverSelector<Matrix,Vector>::type>>
 createParallelFlexibleSolver(const Dune::CpGrid& grid, const Matrix& M, const PropertyTree& prm)
 {
         using TracerOperator = Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                                Dune::OwnerOverlapCopyCommunication<int,int>>;
+                                                                Dune::OwnerOverlapCopyCommunication<long long,long long>>;
         using TracerSolver = Dune::FlexibleSolver<TracerOperator>;
         const auto& cellComm = grid.cellCommunication();
         auto op = std::make_unique<TracerOperator>(M, cellComm);
@@ -102,7 +102,7 @@ GenericTracerModel(const GridView& gridView,
                    const EclipseState& eclState,
                    const CartesianIndexMapper& cartMapper,
                    const DofMapper& dofMapper,
-                   const std::function<std::array<double,dimWorld>(int)> centroids)
+                   const std::function<std::array<double,dimWorld>(long long)> centroids)
     : gridView_(gridView)
     , eclState_(eclState)
     , cartMapper_(cartMapper)
@@ -113,7 +113,7 @@ GenericTracerModel(const GridView& gridView,
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 Scalar GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-freeTracerConcentration(int tracerIdx, int globalDofIdx) const
+freeTracerConcentration(long long tracerIdx, long long globalDofIdx) const
 {
     if (freeTracerConcentration_.empty())
         return 0.0;
@@ -123,7 +123,7 @@ freeTracerConcentration(int tracerIdx, int globalDofIdx) const
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 Scalar GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-solTracerConcentration(int tracerIdx, int globalDofIdx) const
+solTracerConcentration(long long tracerIdx, long long globalDofIdx) const
 {
     if (solTracerConcentration_.empty())
         return 0.0;
@@ -133,7 +133,7 @@ solTracerConcentration(int tracerIdx, int globalDofIdx) const
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setFreeTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
+setFreeTracerConcentration(long long tracerIdx, long long globalDofIdx, Scalar value)
 {
     this->freeTracerConcentration_[tracerIdx][globalDofIdx] = value;
     this->tracerConcentration_[tracerIdx][globalDofIdx][0] = value;
@@ -141,7 +141,7 @@ setFreeTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setSolTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
+setSolTracerConcentration(long long tracerIdx, long long globalDofIdx, Scalar value)
 {
     this->solTracerConcentration_[tracerIdx][globalDofIdx] = value;
     this->tracerConcentration_[tracerIdx][globalDofIdx][1] = value;
@@ -149,13 +149,13 @@ setSolTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setEnableSolTracers(int tracerIdx, bool enableSolTracer)
+setEnableSolTracers(long long tracerIdx, bool enableSolTracer)
 {
     this->enableSolTracers_[tracerIdx] = enableSolTracer;
 }
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-int GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
+long long GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
 numTracers() const
 {
     return this->eclState_.tracer().size();
@@ -163,35 +163,35 @@ numTracers() const
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-fname(int tracerIdx) const
+fname(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].fname();
 }
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-sname(int tracerIdx) const
+sname(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].sname();
 }
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-wellfname(int tracerIdx) const
+wellfname(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].wellfname();
 }
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-wellsname(int tracerIdx) const
+wellsname(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].wellsname();
 }
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 Phase GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-phase(int tracerIdx) const
+phase(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].phase;
 }
@@ -212,7 +212,7 @@ currentConcentration_(const Well& eclWell, const std::string& name) const
 
 template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
 const std::string& GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-name(int tracerIdx) const
+name(long long tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].name;
 }
@@ -257,12 +257,12 @@ doInit(bool rst, std::size_t numGridDof,
         // TBLKF keyword
         if (tracer.free_concentration.has_value()){
             const auto& free_concentration = tracer.free_concentration.value();
-            int tblkDatasize = free_concentration.size();
+            long long tblkDatasize = free_concentration.size();
             if (tblkDatasize < cartMapper_.cartesianSize()){
                 throw std::runtime_error("Wrong size of TBLKF for" + tracer.name);
             }
             for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
-                int cartDofIdx = cartMapper_.cartesianIndex(globalDofIdx);
+                long long cartDofIdx = cartMapper_.cartesianIndex(globalDofIdx);
                 tracerConcentration_[tracerIdx][globalDofIdx][0] = free_concentration[cartDofIdx];
                 freeTracerConcentration_[tracerIdx][globalDofIdx] = free_concentration[cartDofIdx];
             }
@@ -296,12 +296,12 @@ doInit(bool rst, std::size_t numGridDof,
             if (tracer.solution_concentration.has_value()){
                 enableSolTracers_[tracerIdx] = true;
                 const auto& solution_concentration = tracer.solution_concentration.value();
-                int tblkDatasize = solution_concentration.size();
+                long long tblkDatasize = solution_concentration.size();
                 if (tblkDatasize < cartMapper_.cartesianSize()){
                     throw std::runtime_error("Wrong size of TBLKS for" + tracer.name);
                 }
                 for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
-                    int cartDofIdx = cartMapper_.cartesianIndex(globalDofIdx);
+                    long long cartDofIdx = cartMapper_.cartesianIndex(globalDofIdx);
                     tracerConcentration_[tracerIdx][globalDofIdx][1] = solution_concentration[cartDofIdx];
                     solTracerConcentration_[tracerIdx][globalDofIdx] = solution_concentration[cartDofIdx];
                 }
@@ -386,9 +386,9 @@ linearSolve_(const TracerMatrix& M, TracerVector& x, TracerVector& b)
 {
     x = 0.0;
     Scalar tolerance = 1e-2;
-    int maxIter = 100;
+    long long maxIter = 100;
 
-    int verbosity = 0;
+    long long verbosity = 0;
     PropertyTree prm;
     prm.put("maxiter", maxIter);
     prm.put("tol", tolerance);
@@ -440,9 +440,9 @@ bool GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
 linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::vector<TracerVector>& b)
 {
     Scalar tolerance = 1e-2;
-    int maxIter = 100;
+    long long maxIter = 100;
 
-    int verbosity = 0;
+    long long verbosity = 0;
     PropertyTree prm;
     prm.put("maxiter", maxIter);
     prm.put("tol", tolerance);

@@ -38,7 +38,7 @@ struct FlowsData
     }
 
     std::string name; //!< Associated name
-    std::vector<int> indices; //!< Cell indices for values
+    std::vector<long long> indices; //!< Cell indices for values
     std::vector<Scalar> values; //!< Values
 };
 

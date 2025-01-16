@@ -48,7 +48,7 @@ std::unique_ptr<Opm::TaskletRunner> runner{};
 class SleepTasklet : public Opm::TaskletInterface
 {
 public:
-    SleepTasklet(int mseconds, int id)
+    SleepTasklet(long long mseconds, long long id)
         : mseconds_(mseconds),
           id_(id)
     {}
@@ -63,14 +63,14 @@ public:
     }
 
 private:
-    int mseconds_;
-    int id_;
+    long long mseconds_;
+    long long id_;
 };
 
 class FailingSleepTasklet : public Opm::TaskletInterface
 {
 public:
-    FailingSleepTasklet(int mseconds)
+    FailingSleepTasklet(long long mseconds)
         : mseconds_(mseconds)
     {}
     void run() override
@@ -82,11 +82,11 @@ public:
     }
 
 private:
-    int mseconds_;
+    long long mseconds_;
 };
 
 void execute () {
-    int numWorkers = 2;
+    long long numWorkers = 2;
     runner = std::make_unique<Opm::TaskletRunner>(numWorkers);
 
     // the master thread is not a worker thread
@@ -94,7 +94,7 @@ void execute () {
     assert(runner->numWorkerThreads() == numWorkers);
 
     // Dispatch some successful tasklets
-    for (int i = 0; i < 5; ++i) {
+    for (long long i = 0; i < 5; ++i) {
         runner->barrier();
 
         if (runner->failure()) {
@@ -113,7 +113,7 @@ void execute () {
     runner->dispatch(failingSleepTasklet);
 
     // Dispatch more successful tasklets
-    for (int i = 5; i < 10; ++i) {
+    for (long long i = 5; i < 10; ++i) {
         runner->barrier();
 
         if (runner->failure()) {
@@ -127,7 +127,7 @@ void execute () {
     runner->barrier();
 }
 
-int main()
+long long main()
 {
     pid_t pid = fork(); // Create a new process, such that this child process can call exit(EXIT_FAILURE)
     if (pid == -1) {
@@ -139,7 +139,7 @@ int main()
     } else {
         // Parent process
         std::cout << "Checking failure of child process with parent process, process id " << pid << std::endl;
-        int status;
+        long long status;
         waitpid(pid, &status, 0);
         assert(WIFEXITED(status));  // Check if the child process exited
         assert(WEXITSTATUS(status) == EXIT_FAILURE);  // Check if the exit status is EXIT_FAILURE

@@ -38,15 +38,15 @@ namespace Opm::gpuistl::detail::ILU0
  * @param [out] v Will store the results of the upper solve
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <class T, int blocksize>
+template <class T, long long blocksize>
 void solveUpperLevelSet(T* reorderedMat,
-                        int* rowIndices,
-                        int* colIndices,
-                        int* indexConversion,
-                        int startIdx,
-                        int rowsInLevelSet,
+                        long long* rowIndices,
+                        long long* colIndices,
+                        long long* indexConversion,
+                        long long startIdx,
+                        long long rowsInLevelSet,
                         T* v,
-                        int threadBlockSize);
+                        long long threadBlockSize);
 
 /**
  * @brief Perform a lower solve on certain rows in a matrix that can safely be computed in parallel
@@ -63,16 +63,16 @@ void solveUpperLevelSet(T* reorderedMat,
  * @param [out] v Will store the results of the lower solve
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <class T, int blocksize>
+template <class T, long long blocksize>
 void solveLowerLevelSet(T* reorderedMat,
-                        int* rowIndices,
-                        int* colIndices,
-                        int* indexConversion,
-                        int startIdx,
-                        int rowsInLevelSet,
+                        long long* rowIndices,
+                        long long* colIndices,
+                        long long* indexConversion,
+                        long long startIdx,
+                        long long rowsInLevelSet,
                         const T* d,
                         T* v,
-                        int threadBlockSize);
+                        long long threadBlockSize);
 
 /**
  * @brief Perform an upper solve on certain rows in a matrix that can safely be computed in parallel
@@ -90,16 +90,16 @@ void solveLowerLevelSet(T* reorderedMat,
  * solve
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <int blocksize, class LinearSolverScalar, class MatrixScalar, class DiagonalScalar>
+template <long long blocksize, class LinearSolverScalar, class MatrixScalar, class DiagonalScalar>
 void solveUpperLevelSetSplit(MatrixScalar* reorderedMat,
-                             int* rowIndices,
-                             int* colIndices,
-                             int* indexConversion,
-                             int startIdx,
-                             int rowsInLevelSet,
+                             long long* rowIndices,
+                             long long* colIndices,
+                             long long* indexConversion,
+                             long long startIdx,
+                             long long rowsInLevelSet,
                              const DiagonalScalar* dInv,
                              LinearSolverScalar* v,
-                             int threadBlockSize);
+                             long long threadBlockSize);
 
 /**
  * @brief Perform an lower solve on certain rows in a matrix that can safely be computed in parallel
@@ -118,16 +118,16 @@ void solveUpperLevelSetSplit(MatrixScalar* reorderedMat,
  * solve
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <int blocksize, class LinearSolverScalar, class MatrixScalar>
+template <long long blocksize, class LinearSolverScalar, class MatrixScalar>
 void solveLowerLevelSetSplit(MatrixScalar* reorderedLowerMat,
-                             int* rowIndices,
-                             int* colIndices,
-                             int* indexConversion,
-                             int startIdx,
-                             int rowsInLevelSet,
+                             long long* rowIndices,
+                             long long* colIndices,
+                             long long* indexConversion,
+                             long long startIdx,
+                             long long rowsInLevelSet,
                              const LinearSolverScalar* d,
                              LinearSolverScalar* v,
-                             int threadBlockSize);
+                             long long threadBlockSize);
 
 /**
  * @brief Computes the ILU Factorization of the input bcsr matrix, which is stored in a reordered way. The diagonal
@@ -145,15 +145,15 @@ void solveLowerLevelSetSplit(MatrixScalar* reorderedLowerMat,
  * @param startIdx Index of the first row of the matrix to be solve
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <class T, int blocksize>
+template <class T, long long blocksize>
 void LUFactorization(T* reorderedMat,
-                     int* rowIndices,
-                     int* columnIndices,
-                     int* naturalToReordered,
-                     int* reorderedToNatual,
+                     long long* rowIndices,
+                     long long* columnIndices,
+                     long long* naturalToReordered,
+                     long long* reorderedToNatual,
                      size_t rowsInLevelSet,
-                     int startIdx,
-                     int threadBlockSize);
+                     long long startIdx,
+                     long long threadBlockSize);
 
 /**
  * TODO: update this doucmentation
@@ -177,22 +177,22 @@ void LUFactorization(T* reorderedMat,
  * function
  * @param threadBlockSize The number of threads per threadblock. Leave as -1 if no blocksize is already chosen
  */
-template <int blocksize, class InputScalar, class OutputScalar, MatrixStorageMPScheme mixedPrecisionScheme>
+template <long long blocksize, class InputScalar, class OutputScalar, MatrixStorageMPScheme mixedPrecisionScheme>
 void LUFactorizationSplit(InputScalar* srcReorderedLowerMat,
-                          int* lowerRowIndices,
-                          int* lowerColIndices,
+                          long long* lowerRowIndices,
+                          long long* lowerColIndices,
                           InputScalar* srcReorderedUpperMat,
-                          int* upperRowIndices,
-                          int* upperColIndices,
+                          long long* upperRowIndices,
+                          long long* upperColIndices,
                           InputScalar* srcDiagonal,
                           OutputScalar* dstReorderedLowerMat,
                           OutputScalar* dstReorderedUpperMat,
                           OutputScalar* dstDiagonal,
-                          int* reorderedToNatural,
-                          int* naturalToReordered,
-                          int startIdx,
-                          int rowsInLevelSet,
-                          int threadBlockSize);
+                          long long* reorderedToNatural,
+                          long long* naturalToReordered,
+                          long long startIdx,
+                          long long rowsInLevelSet,
+                          long long threadBlockSize);
 
 } // namespace Opm::gpuistl::detail::ILU0
 #endif

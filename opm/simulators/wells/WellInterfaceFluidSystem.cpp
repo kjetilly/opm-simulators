@@ -47,13 +47,13 @@ template<class FluidSystem>
 WellInterfaceFluidSystem<FluidSystem>::
 WellInterfaceFluidSystem(const Well& well,
                          const ParallelWellInfo<Scalar>& parallel_well_info,
-                         const int time_step,
+                         const long long time_step,
                          const ModelParameters& param,
                          const RateConverterType& rate_converter,
-                         const int pvtRegionIdx,
-                         const int num_components,
-                         const int num_phases,
-                         const int index_of_well,
+                         const long long pvtRegionIdx,
+                         const long long num_components,
+                         const long long num_phases,
+                         const long long index_of_well,
                          const std::vector<PerforationData<Scalar>>& perf_data)
     : WellInterfaceGeneric<Scalar>(well, parallel_well_info, time_step, param,
                                    pvtRegionIdx, num_components, num_phases,
@@ -67,11 +67,11 @@ void
 WellInterfaceFluidSystem<FluidSystem>::
 calculateReservoirRates(const bool co2store, SingleWellState<Scalar>& ws) const
 {
-    const int np = this->number_of_phases_;
+    const long long np = this->number_of_phases_;
     const auto& pu = this->phaseUsage();
     // Calculate reservoir rates from average pressure and temperature
     if ( !(co2store || pu.has_energy) || this->wellEcl().isProducer()) {
-        const int fipreg = 0; // not considering the region for now
+        const long long fipreg = 0; // not considering the region for now
         this->rateConverter_
             .calcReservoirVoidageRates(fipreg,
                                     this->pvtRegionIdx_,
@@ -161,8 +161,8 @@ checkIndividualConstraints(SingleWellState<Scalar>& ws,
                            const std::optional<Well::InjectionControls>& inj_controls,
                            const std::optional<Well::ProductionControls>& prod_controls) const
 {
-    auto rRates = [this](const int fipreg,
-                         const int pvtRegion,
+    auto rRates = [this](const long long fipreg,
+                         const long long pvtRegion,
                          const std::vector<Scalar>& surface_rates,
                          std::vector<Scalar>& voidage_rates)
     {
@@ -189,7 +189,7 @@ checkGroupConstraints(WellState<Scalar>& well_state,
         return false;
 
     auto rCoeff = [this, &group_state](const RegionId id,
-                                       const int region,
+                                       const long long region,
                                        const std::optional<std::string>& prod_gname,
                                        std::vector<Scalar>& coeff)
     {
@@ -225,9 +225,9 @@ checkConstraints(WellState<Scalar>& well_state,
 }
 
 template<typename FluidSystem>
-int
+long long
 WellInterfaceFluidSystem<FluidSystem>::
-flowPhaseToModelPhaseIdx(const int phaseIdx) const
+flowPhaseToModelPhaseIdx(const long long phaseIdx) const
 {
     const auto& pu = this->phaseUsage();
     if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx) && pu.phase_pos[Water] == phaseIdx)
@@ -253,7 +253,7 @@ getGroupInjectionTargetRate(const Group& group,
                             Scalar efficiencyFactor,
                             DeferredLogger& deferred_logger) const
 {
-    auto rCoeff = [this, &group_state](const RegionId id, const int region,
+    auto rCoeff = [this, &group_state](const RegionId id, const long long region,
                                        const std::optional<std::string>& prod_gname,
                                        std::vector<Scalar>& coeff)
     {
@@ -286,7 +286,7 @@ getGroupProductionTargetRate(const Group& group,
                              Scalar efficiencyFactor,
                              DeferredLogger& deferred_logger) const
 {
-    auto rCoeff = [this, &group_state](const RegionId id, const int region,
+    auto rCoeff = [this, &group_state](const RegionId id, const long long region,
                                        const std::optional<std::string>& prod_gname,
                                        std::vector<Scalar>& coeff)
     {

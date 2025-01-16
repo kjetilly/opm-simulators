@@ -51,19 +51,19 @@ class WellInterfaceFluidSystem : public WellInterfaceGeneric<typename FluidSyste
 {
 protected:
     using RateConverterType = RateConverter::
-    SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
+    SurfaceToReservoirVoidage<FluidSystem, std::vector<long long>>;
     // to indicate a invalid completion
-    static constexpr int INVALIDCOMPLETION = std::numeric_limits<int>::max();
+    static constexpr long long INVALIDCOMPLETION = std::numeric_limits<long long>::max();
 
 public:
     using Scalar = typename FluidSystem::Scalar;
     using ModelParameters = typename WellInterfaceGeneric<Scalar>::ModelParameters;
 
-    int flowPhaseToModelPhaseIdx(const int phaseIdx) const;
+    long long flowPhaseToModelPhaseIdx(const long long phaseIdx) const;
 
-    static constexpr int Water = BlackoilPhases::Aqua;
-    static constexpr int Oil = BlackoilPhases::Liquid;
-    static constexpr int Gas = BlackoilPhases::Vapour;
+    static constexpr long long Water = BlackoilPhases::Aqua;
+    static constexpr long long Oil = BlackoilPhases::Liquid;
+    static constexpr long long Gas = BlackoilPhases::Vapour;
 
     const RateConverterType& rateConverter() const
     {
@@ -73,13 +73,13 @@ public:
 protected:
     WellInterfaceFluidSystem(const Well& well,
                              const ParallelWellInfo<Scalar>& parallel_well_info,
-                             const int time_step,
+                             const long long time_step,
                              const ModelParameters& param,
                              const RateConverterType& rate_converter,
-                             const int pvtRegionIdx,
-                             const int num_components,
-                             const int num_phases,
-                             const int index_of_well,
+                             const long long pvtRegionIdx,
+                             const long long num_components,
+                             const long long num_phases,
+                             const long long index_of_well,
                              const std::vector<PerforationData<Scalar>>& perf_data);
 
     // updating the voidage rates in well_state when requested

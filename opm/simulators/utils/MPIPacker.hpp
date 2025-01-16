@@ -68,9 +68,9 @@ struct Packing<true,T>
     {
         // For now we do not handle the situation where a a single call to packSize/pack/unpack
         // is likely to require an MPI_Pack_size value larger than intmax
-        if (n*sizeof(T) > std::numeric_limits<int>::max())
+        if (n*sizeof(T) > std::numeric_limits<long long>::max())
             throw std::invalid_argument("packSize will be larger than max integer - this is not supported.");
-        int size = 0;
+        long long size = 0;
         MPI_Pack_size(n, Dune::MPITraits<T>::getType(), comm, &size);
         return static_cast<std::size_t>(size);
     }
@@ -100,7 +100,7 @@ struct Packing<true,T>
                      std::size_t& position,
                      Parallel::MPIComm comm)
     {
-        int int_position = 0;
+        long long int_position = 0;
         MPI_Pack(data, n, Dune::MPITraits<T>::getType(), buffer.data()+position,
                  mpi_buffer_size(buffer.size(), position), &int_position, comm);
         position += int_position;
@@ -131,7 +131,7 @@ struct Packing<true,T>
                        std::size_t& position,
                        Parallel::MPIComm comm)
     {
-        int int_position = 0;
+        long long int_position = 0;
         MPI_Unpack(buffer.data()+position, mpi_buffer_size(buffer.size(), position), &int_position, data, n,
                    Dune::MPITraits<T>::getType(), comm);
         position += int_position;

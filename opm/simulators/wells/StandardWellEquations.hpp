@@ -35,14 +35,14 @@ namespace Opm
 {
 
 template<class Scalar> class ParallelWellInfo;
-template<class Scalar, int numEq> class StandardWellEquationAccess;
+template<class Scalar, long long numEq> class StandardWellEquationAccess;
 #if COMPILE_GPU_BRIDGE
 template<class Scalar> class WellContributions;
 #endif
 template<class Scalar> class WellInterfaceGeneric;
 template<class Scalar> class WellState;
 
-template<class Scalar, int numEq>
+template<class Scalar, long long numEq>
 class StandardWellEquations
 {
 public:
@@ -71,9 +71,9 @@ public:
     //! \param numWellEq Number of well equations
     //! \param numPerfs Number of perforations
     //! \param cells Cell indices for perforations
-    void init(const int numWellEq,
-              const int numPerfs,
-              const std::vector<int>& cells);
+    void init(const long long numWellEq,
+              const long long numPerfs,
+              const std::vector<long long>& cells);
 
     //! \brief Set all coefficients to 0.
     void clear();
@@ -99,7 +99,7 @@ public:
 
 #if COMPILE_GPU_BRIDGE
     //! \brief Add the matrices of this well to the WellContributions object.
-    void extract(const int numStaticWellEq,
+    void extract(const long long numStaticWellEq,
                  WellContributions<Scalar>& wellContribs) const;
 #endif
 
@@ -111,14 +111,14 @@ public:
     template<class PressureMatrix>
     void extractCPRPressureMatrix(PressureMatrix& jacobian,
                                   const BVector& weights,
-                                  const int pressureVarIndex,
+                                  const long long pressureVarIndex,
                                   const bool use_well_weights,
                                   const WellInterfaceGeneric<Scalar>& well,
-                                  const int bhp_var_index,
+                                  const long long bhp_var_index,
                                   const WellState<Scalar>& well_state) const;
 
     //! \brief Get the number of blocks of the C and B matrices.
-    unsigned int getNumBlocks() const;
+    size_t getNumBlocks() const;
 
     //! \brief Sum with off-process contribution.
     void sumDistributed(Parallel::Communication comm);
@@ -150,7 +150,7 @@ private:
     mutable BVectorWell invDrw_;
 
     // Store the global index of well perforated cells
-    std::vector<int> cells_;
+    std::vector<long long> cells_;
 };
 
 }

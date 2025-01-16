@@ -101,7 +101,7 @@ END
         return data;
     }
 
-    template <int type>
+    template <long long type>
     struct LogFixture
     {
         LogFixture() : LogFixture { deck() } {}

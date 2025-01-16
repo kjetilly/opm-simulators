@@ -50,8 +50,8 @@ public:
     void cumulative(const std::size_t reportStepNum) const;
 
     //! \brief Write error report to output.
-    void error(const std::vector<int>& failedCellsPbub,
-               const std::vector<int>& failedCellsPdew) const;
+    void error(const std::vector<long long>& failedCellsPbub,
+               const std::vector<long long>& failedCellsPdew) const;
 
     //! \brief Write fluid-in-place reports to output.
     void fip(const Inplace& inplace,
@@ -67,7 +67,7 @@ public:
     //! \brief Write production report to output.
     void production(const std::size_t reportStepNum) const;
 
-    void timeStamp(const std::string& lbl, double elapsed, int rstep, boost::posix_time::ptime currentDate) const;
+    void timeStamp(const std::string& lbl, double elapsed, long long rstep, boost::posix_time::ptime currentDate) const;
 
 private:
     void beginCumulativeReport_() const;
@@ -79,10 +79,10 @@ private:
                                    std::unordered_map<Inplace::Phase, Scalar> cip,
                                    const Scalar pav,
                                    const std::string& name,
-                                   const int reg) const;
+                                   const long long reg) const;
 
     void outputResvFluidInPlace_(std::unordered_map<Inplace::Phase, Scalar> cipr,
-                                 const int reg) const;
+                                 const long long reg) const;
 
     void beginInjectionReport_() const;
     void endInjectionReport_() const;
@@ -115,8 +115,8 @@ private:
             WellType = 1, // WType
             WellCTRL = 2, // WCTRL
         };
-        static constexpr int numWCValues = 10;
-        static constexpr int numWCNames = 3;
+        static constexpr long long numWCValues = 10;
+        static constexpr long long numWCNames = 3;
     };
 
     struct WellInjDataType
@@ -137,8 +137,8 @@ private:
             CTRLModeWat = 2, // CTRLw
             CTRLModeGas = 3, // CTRLg
         };
-        static constexpr int numWIValues = 9;
-        static constexpr int numWINames = 4;
+        static constexpr long long numWIValues = 9;
+        static constexpr long long numWINames = 4;
     };
 
     struct WellProdDataType
@@ -161,8 +161,8 @@ private:
             CTRLMode = 1, // CTRL
         };
 
-        static constexpr int numWPValues = 12;
-        static constexpr int numWPNames = 2;
+        static constexpr long long numWPValues = 12;
+        static constexpr long long numWPNames = 2;
     };
 
     const EclipseState& eclState_;

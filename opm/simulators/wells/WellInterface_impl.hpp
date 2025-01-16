@@ -57,13 +57,13 @@ namespace Opm
     WellInterface<TypeTag>::
     WellInterface(const Well& well,
                   const ParallelWellInfo<Scalar>& pw_info,
-                  const int time_step,
+                  const long long time_step,
                   const ModelParameters& param,
                   const RateConverterType& rate_converter,
-                  const int pvtRegionIdx,
-                  const int num_components,
-                  const int num_phases,
-                  const int index_of_well,
+                  const long long pvtRegionIdx,
+                  const long long num_components,
+                  const long long num_phases,
+                  const long long index_of_well,
                   const std::vector<PerforationData<Scalar>>& perf_data)
       : WellInterfaceIndices<FluidSystem,Indices>(well,
                                                   pw_info,
@@ -215,9 +215,9 @@ namespace Opm
             from = WellProducerCMode2String(ws.production_cmode);
         }
         bool oscillating = std::count(this->well_control_log_.begin(), this->well_control_log_.end(), from) >= this->param_.max_number_of_well_switches_;
-        const int episodeIdx = simulator.episodeIndex();
-        const int iterationIdx = simulator.model().newtonMethod().numIterations();
-        const int nupcol = schedule[episodeIdx].nupcol();
+        const long long episodeIdx = simulator.episodeIndex();
+        const long long iterationIdx = simulator.model().newtonMethod().numIterations();
+        const long long nupcol = schedule[episodeIdx].nupcol();
         if (oscillating && iterationIdx > nupcol) {
             // only output frist time
             bool output = std::count(this->well_control_log_.begin(), this->well_control_log_.end(), from) == this->param_.max_number_of_well_switches_;
@@ -445,8 +445,8 @@ namespace Opm
                 deferred_logger.info(msg);
                 return;
             }
-            const int np = well_state_copy.numPhases();
-            for (int p = 0; p < np; ++p) {
+            const long long np = well_state_copy.numPhases();
+            for (long long p = 0; p < np; ++p) {
                 ws.well_potentials[p] = std::max(Scalar{0.0}, potentials[p]);
             }
             const bool under_zero_target = this->wellUnderZeroGroupRateTarget(simulator, well_state_copy, deferred_logger);
@@ -724,7 +724,7 @@ namespace Opm
             deferred_logger.debug("WellTest: Well equation for well " + this->name() +  " converged");
             return true;
         }
-        const int max_iter = this->param_.max_welleq_iter_;
+        const long long max_iter = this->param_.max_welleq_iter_;
         deferred_logger.debug("WellTest: Well equation for well " + this->name() + " failed converging in "
                               + std::to_string(max_iter) + " iterations");
         well_state = well_state0;
@@ -780,7 +780,7 @@ namespace Opm
         }
 
         if (!converged) {
-            const int max_iter = this->param_.max_welleq_iter_;
+            const long long max_iter = this->param_.max_welleq_iter_;
             deferred_logger.debug("Compute initial well solution for well " + this->name() + ". Failed to converge in "
                                   + std::to_string(max_iter) + " iterations");
             well_state = well_state0;
@@ -838,7 +838,7 @@ namespace Opm
             checkWellOperability(simulator, well_state, deferred_logger);
 
         // only use inner well iterations for the first newton iterations.
-        const int iteration_idx = simulator.model().newtonMethod().numIterations();
+        const long long iteration_idx = simulator.model().newtonMethod().numIterations();
         if (iteration_idx < this->param_.max_niter_inner_well_iter_ || this->well_ecl_.isMultiSegment()) {
             const auto& ws = well_state.well(this->indexOfWell());
             const auto pmode_orig = ws.production_cmode;
@@ -894,8 +894,8 @@ namespace Opm
                 this->operability_status_.has_negative_potentials = true;
             }
             auto& ws = well_state.well(this->indexOfWell());
-            const int np = well_state.numPhases();
-            for (int p = 0; p < np; ++p) {
+            const long long np = well_state.numPhases();
+            for (long long p = 0; p < np; ++p) {
                 ws.well_potentials[p] = std::max(Scalar{0.0}, potentials[p]);
             }
         }
@@ -916,14 +916,14 @@ namespace Opm
 
     template<typename TypeTag>
     void
-    WellInterface<TypeTag>::addCellRates(RateVector& rates, int cellIdx) const
+    WellInterface<TypeTag>::addCellRates(RateVector& rates, long long cellIdx) const
     {
         if(!this->isOperableAndSolvable() && !this->wellIsStopped())
             return;
 
-        for (int perfIdx = 0; perfIdx < this->number_of_perforations_; ++perfIdx) {
+        for (long long perfIdx = 0; perfIdx < this->number_of_perforations_; ++perfIdx) {
             if (this->cells()[perfIdx] == cellIdx) {
-                for (int i = 0; i < RateVector::dimension; ++i) {
+                for (long long i = 0; i < RateVector::dimension; ++i) {
                     rates[i] += connectionRates_[perfIdx][i];
                 }
             }
@@ -932,9 +932,9 @@ namespace Opm
 
     template<typename TypeTag>
     typename WellInterface<TypeTag>::Scalar
-    WellInterface<TypeTag>::volumetricSurfaceRateForConnection(int cellIdx, int phaseIdx) const
+    WellInterface<TypeTag>::volumetricSurfaceRateForConnection(long long cellIdx, long long phaseIdx) const
     {
-        for (int perfIdx = 0; perfIdx < this->number_of_perforations_; ++perfIdx) {
+        for (long long perfIdx = 0; perfIdx < this->number_of_perforations_; ++perfIdx) {
             if (this->cells()[perfIdx] == cellIdx) {
                 const unsigned activeCompIdx = Indices::canonicalToActiveComponentIndex(FluidSystem::solventComponentIndex(phaseIdx));
                 return connectionRates_[perfIdx][activeCompIdx].value();
@@ -1136,15 +1136,15 @@ namespace Opm
 
         // only bhp and wellRates are used to initilize the primaryvariables for standard wells
         const auto& well = this->well_ecl_;
-        const int well_index = this->index_of_well_;
+        const long long well_index = this->index_of_well_;
         auto& ws = well_state.well(well_index);
         const auto& pu = this->phaseUsage();
-        const int np = well_state.numPhases();
+        const long long np = well_state.numPhases();
         const auto& summaryState = simulator.vanguard().summaryState();
         const auto& schedule = simulator.vanguard().schedule();
 
         if (this->wellIsStopped()) {
-            for (int p = 0; p<np; ++p) {
+            for (long long p = 0; p<np; ++p) {
                 ws.surface_rates[p] = 0;
             }
             ws.thp = 0;
@@ -1156,7 +1156,7 @@ namespace Opm
             const auto& controls = well.injectionControls(summaryState);
 
             InjectorType injectorType = controls.injector_type;
-            int phasePos;
+            long long phasePos;
             switch (injectorType) {
             case InjectorType::WATER:
             {
@@ -1229,7 +1229,7 @@ namespace Opm
             {
                 ws.bhp = controls.bhp_limit;
                 Scalar total_rate = 0.0;
-                for (int p = 0; p<np; ++p) {
+                for (long long p = 0; p<np; ++p) {
                     total_rate += ws.surface_rates[p];
                 }
                 // if the total rates are negative or zero
@@ -1289,14 +1289,14 @@ namespace Opm
                 // for trivial rates or opposite direction we don't just scale the rates
                 // but use either the potentials or the mobility ratio to initial the well rates
                 if (current_rate > 0.0) {
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] *= controls.oil_rate/current_rate;
                     }
                 } else {
                     const std::vector<Scalar> fractions = initialWellRateFractions(simulator, well_state);
                     double control_fraction = fractions[pu.phase_pos[Oil]];
                     if (control_fraction != 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * controls.oil_rate/control_fraction;
                         }
                     }
@@ -1309,14 +1309,14 @@ namespace Opm
                 // for trivial rates or opposite direction we don't just scale the rates
                 // but use either the potentials or the mobility ratio to initial the well rates
                 if (current_rate > 0.0) {
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] *= controls.water_rate/current_rate;
                     }
                 } else {
                     const std::vector<Scalar> fractions = initialWellRateFractions(simulator, well_state);
                     const Scalar control_fraction = fractions[pu.phase_pos[Water]];
                     if (control_fraction != 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * controls.water_rate / control_fraction;
                         }
                     }
@@ -1329,14 +1329,14 @@ namespace Opm
                 // or trivial rates or opposite direction we don't just scale the rates
                 // but use either the potentials or the mobility ratio to initial the well rates
                 if (current_rate > 0.0) {
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] *= controls.gas_rate/current_rate;
                     }
                 } else {
                     const std::vector<Scalar > fractions = initialWellRateFractions(simulator, well_state);
                     const Scalar control_fraction = fractions[pu.phase_pos[Gas]];
                     if (control_fraction != 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * controls.gas_rate / control_fraction;
                         }
                     }
@@ -1352,14 +1352,14 @@ namespace Opm
                 // or trivial rates or opposite direction we don't just scale the rates
                 // but use either the potentials or the mobility ratio to initial the well rates
                 if (current_rate > 0.0) {
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] *= controls.liquid_rate/current_rate;
                     }
                 } else {
                     const std::vector<Scalar> fractions = initialWellRateFractions(simulator, well_state);
                     const Scalar control_fraction = fractions[pu.phase_pos[Water]] + fractions[pu.phase_pos[Oil]];
                     if (control_fraction != 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * controls.liquid_rate / control_fraction;
                         }
                     }
@@ -1377,19 +1377,19 @@ namespace Opm
                 std::vector<Scalar> convert_coeff(this->number_of_phases_, 1.0);
                 this->rateConverter_.calcCoeff(/*fipreg*/ 0, this->pvtRegionIdx_, ws.surface_rates, convert_coeff);
                 Scalar total_res_rate = 0.0;
-                for (int p = 0; p<np; ++p) {
+                for (long long p = 0; p<np; ++p) {
                     total_res_rate -= ws.surface_rates[p] * convert_coeff[p];
                 }
                 if (controls.prediction_mode) {
                     // or trivial rates or opposite direction we don't just scale the rates
                     // but use either the potentials or the mobility ratio to initial the well rates
                     if (total_res_rate > 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] *= controls.resv_rate/total_res_rate;
                         }
                     } else {
                         const std::vector<Scalar> fractions = initialWellRateFractions(simulator, well_state);
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * controls.resv_rate / convert_coeff[p];
                         }
                     }
@@ -1410,12 +1410,12 @@ namespace Opm
                     // or trivial rates or opposite direction we don't just scale the rates
                     // but use either the potentials or the mobility ratio to initial the well rates
                     if (total_res_rate > 0.0) {
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] *= target/total_res_rate;
                         }
                     } else {
                         const std::vector<Scalar> fractions = initialWellRateFractions(simulator, well_state);
-                        for (int p = 0; p<np; ++p) {
+                        for (long long p = 0; p<np; ++p) {
                             ws.surface_rates[p] = - fractions[p] * target / convert_coeff[p];
                         }
                     }
@@ -1426,14 +1426,14 @@ namespace Opm
             {
                 ws.bhp = controls.bhp_limit;
                 Scalar total_rate = 0.0;
-                for (int p = 0; p<np; ++p) {
+                for (long long p = 0; p<np; ++p) {
                     total_rate -= ws.surface_rates[p];
                 }
                 // if the total rates are negative or zero
                 // we try to provide a better intial well rate
                 // using the well potentials
                 if (total_rate <= 0.0){
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] = -ws.well_potentials[p];
                     }
                 }
@@ -1458,7 +1458,7 @@ namespace Opm
                     // using the well potentials
                     const Scalar total_rate = -std::accumulate(rates.begin(), rates.end(), 0.0);
                     if (total_rate <= 0.0) {
-                        for (int p = 0; p < this->number_of_phases_; ++p) {
+                        for (long long p = 0; p < this->number_of_phases_; ++p) {
                             ws.surface_rates[p] = -ws.well_potentials[p];
                         }
                     }
@@ -1481,7 +1481,7 @@ namespace Opm
 
                 // we don't want to scale with zero and get zero rates.
                 if (scale > 0) {
-                    for (int p = 0; p<np; ++p) {
+                    for (long long p = 0; p<np; ++p) {
                         ws.surface_rates[p] *= scale;
                     }
                     ws.trivial_target = false;
@@ -1559,16 +1559,16 @@ namespace Opm
     initialWellRateFractions(const Simulator& simulator,
                              const WellState<Scalar>& well_state) const
     {
-        const int np = this->number_of_phases_;
+        const long long np = this->number_of_phases_;
         std::vector<Scalar> scaling_factor(np);
         const auto& ws = well_state.well(this->index_of_well_);
 
         Scalar total_potentials = 0.0;
-        for (int p = 0; p<np; ++p) {
+        for (long long p = 0; p<np; ++p) {
             total_potentials += ws.well_potentials[p];
         }
         if (total_potentials > 0) {
-            for (int p = 0; p<np; ++p) {
+            for (long long p = 0; p<np; ++p) {
                 scaling_factor[p] = ws.well_potentials[p] / total_potentials;
             }
             return scaling_factor;
@@ -1576,22 +1576,22 @@ namespace Opm
         // if we don't have any potentials we weight it using the mobilites
         // We only need approximation so we don't bother with the vapporized oil and dissolved gas
         Scalar total_tw = 0;
-        const int nperf = this->number_of_perforations_;
-        for (int perf = 0; perf < nperf; ++perf) {
+        const long long nperf = this->number_of_perforations_;
+        for (long long perf = 0; perf < nperf; ++perf) {
             total_tw += this->well_index_[perf];
         }
-        for (int perf = 0; perf < nperf; ++perf) {
-            const int cell_idx = this->well_cells_[perf];
+        for (long long perf = 0; perf < nperf; ++perf) {
+            const long long cell_idx = this->well_cells_[perf];
             const auto& intQuants = simulator.model().intensiveQuantities(cell_idx, /*timeIdx=*/0);
             const auto& fs = intQuants.fluidState();
             const Scalar well_tw_fraction = this->well_index_[perf] / total_tw;
             Scalar total_mobility = 0.0;
-            for (int p = 0; p < np; ++p) {
-                int modelPhaseIdx = this->flowPhaseToModelPhaseIdx(p);
+            for (long long p = 0; p < np; ++p) {
+                long long modelPhaseIdx = this->flowPhaseToModelPhaseIdx(p);
                 total_mobility += fs.invB(modelPhaseIdx).value() * intQuants.mobility(modelPhaseIdx).value();
             }
-            for (int p = 0; p < np; ++p) {
-                int modelPhaseIdx = this->flowPhaseToModelPhaseIdx(p);
+            for (long long p = 0; p < np; ++p) {
+                long long modelPhaseIdx = this->flowPhaseToModelPhaseIdx(p);
                 scaling_factor[p] += well_tw_fraction * fs.invB(modelPhaseIdx).value() * intQuants.mobility(modelPhaseIdx).value() / total_mobility;
             }
         }
@@ -1610,9 +1610,9 @@ namespace Opm
         // Check if the rates of this well only are single-phase, do nothing
         // if more than one nonzero rate.
         auto& ws = well_state.well(this->index_of_well_);
-        int nonzero_rate_index = -1;
+        long long nonzero_rate_index = -1;
         const Scalar floating_point_error_epsilon = 1e-14;
-        for (int p = 0; p < this->number_of_phases_; ++p) {
+        for (long long p = 0; p < this->number_of_phases_; ++p) {
             if (std::abs(ws.surface_rates[p]) > floating_point_error_epsilon) {
                 if (nonzero_rate_index == -1) {
                     nonzero_rate_index = p;
@@ -1629,7 +1629,7 @@ namespace Opm
         if (nonzero_rate_index == -1) {
             // No nonzero rates.
             // Use the computed rate directly
-            for (int p = 0; p < this->number_of_phases_; ++p) {
+            for (long long p = 0; p < this->number_of_phases_; ++p) {
                ws.surface_rates[p] = well_q_s[this->flowPhaseToModelCompIdx(p)];
             }
             return;
@@ -1637,11 +1637,11 @@ namespace Opm
 
         // Set the currently-zero phase flows to be nonzero in proportion to well_q_s.
         const Scalar initial_nonzero_rate = ws.surface_rates[nonzero_rate_index];
-        const int comp_idx_nz = this->flowPhaseToModelCompIdx(nonzero_rate_index);
+        const long long comp_idx_nz = this->flowPhaseToModelCompIdx(nonzero_rate_index);
         if (std::abs(well_q_s[comp_idx_nz]) > floating_point_error_epsilon) {
-            for (int p = 0; p < this->number_of_phases_; ++p) {
+            for (long long p = 0; p < this->number_of_phases_; ++p) {
                 if (p != nonzero_rate_index) {
-                    const int comp_idx = this->flowPhaseToModelCompIdx(p);
+                    const long long comp_idx = this->flowPhaseToModelCompIdx(p);
                     Scalar& rate = ws.surface_rates[p];
                     rate = (initial_nonzero_rate / well_q_s[comp_idx_nz]) * (well_q_s[comp_idx]);
                 }
@@ -1652,7 +1652,7 @@ namespace Opm
     template <typename TypeTag>
     std::vector<typename WellInterface<TypeTag>::Scalar>
     WellInterface<TypeTag>::
-    wellIndex(const int                      perf,
+    wellIndex(const long long                      perf,
               const IntensiveQuantities&     intQuants,
               const Scalar                   trans_mult,
               const SingleWellState<Scalar>& ws) const
@@ -1741,8 +1741,8 @@ namespace Opm
 
         auto& d_factor = ws.perf_data.connection_d_factor;
 
-        for (int perf = 0; perf < this->number_of_perforations_; ++perf) {
-            const int cell_idx = this->well_cells_[perf];
+        for (long long perf = 0; perf < this->number_of_perforations_; ++perf) {
+            const long long cell_idx = this->well_cells_[perf];
             const auto& intQuants = simulator.model().intensiveQuantities(cell_idx, /*timeIdx=*/ 0);
 
             d_factor[perf] = this->computeConnectionDFactor(perf, intQuants, ws);
@@ -1752,7 +1752,7 @@ namespace Opm
     template <typename TypeTag>
     typename WellInterface<TypeTag>::Scalar
     WellInterface<TypeTag>::
-    computeConnectionDFactor(const int                      perf,
+    computeConnectionDFactor(const long long                      perf,
                              const IntensiveQuantities&     intQuants,
                              const SingleWellState<Scalar>& ws) const
     {
@@ -1799,7 +1799,7 @@ namespace Opm
     {
         auto connCF = [&connIx = std::as_const(ws.perf_data.ecl_index),
                        &conns = this->well_ecl_.getConnections()]
-            (const int perf)
+            (const long long perf)
         {
             return conns[connIx[perf]].CF();
         };
@@ -1807,8 +1807,8 @@ namespace Opm
         auto& tmult = ws.perf_data.connection_compaction_tmult;
         auto& ctf   = ws.perf_data.connection_transmissibility_factor;
 
-        for (int perf = 0; perf < this->number_of_perforations_; ++perf) {
-            const int cell_idx = this->well_cells_[perf];
+        for (long long perf = 0; perf < this->number_of_perforations_; ++perf) {
+            const long long cell_idx = this->well_cells_[perf];
 
             const auto& intQuants = simulator.model()
                 .intensiveQuantities(cell_idx, /*timeIdx=*/ 0);
@@ -1839,7 +1839,7 @@ namespace Opm
     void
     WellInterface<TypeTag>::
     getMobility(const Simulator& simulator,
-                const int perf,
+                const long long perf,
                 std::vector<Value>& mob,
                 Callback& extendEval,
                 [[maybe_unused]] DeferredLogger& deferred_logger) const
@@ -1855,15 +1855,15 @@ namespace Opm
         if (static_cast<std::size_t>(perf) >= this->well_cells_.size()) {
             OPM_THROW(std::invalid_argument,"The perforation index exceeds the size of the local containers - possibly getMobility was called with a global instead of a local perforation index!");
         }
-        const int cell_idx = this->well_cells_[perf];
-        assert (int(mob.size()) == this->num_components_);
+        const long long cell_idx = this->well_cells_[perf];
+        assert ((long long)(mob.size()) == this->num_components_);
         const auto& intQuants = simulator.model().intensiveQuantities(cell_idx, /*timeIdx=*/0);
         const auto& materialLawManager = simulator.problem().materialLawManager();
 
         // either use mobility of the perforation cell or calculate its own
         // based on passing the saturation table index
-        const int satid = this->saturation_table_number_[perf] - 1;
-        const int satid_elem = materialLawManager->satnumRegionIdx(cell_idx);
+        const long long satid = this->saturation_table_number_[perf] - 1;
+        const long long satid_elem = materialLawManager->satnumRegionIdx(cell_idx);
         if (satid == satid_elem) { // the same saturation number is used. i.e. just use the mobilty from the cell
             for (unsigned phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx) {
                 if (!FluidSystem::phaseIsActive(phaseIdx)) {
@@ -1952,8 +1952,8 @@ namespace Opm
                             Scalar* connPI) const
     {
         const auto& pu = this->phaseUsage();
-        const int   np = this->number_of_phases_;
-        for (int p = 0; p < np; ++p) {
+        const long long   np = this->number_of_phases_;
+        for (long long p = 0; p < np; ++p) {
             // Note: E100's notion of PI value phase mobility includes
             // the reciprocal FVF.
             const auto connMob =
@@ -2005,7 +2005,7 @@ namespace Opm
             OPM_DEFLOG_THROW(NotImplemented,
                              fmt::format("Unsupported Injector Type ({}) "
                                          "for well {} during connection I.I. calculation",
-                                         static_cast<int>(preferred_phase), this->name()),
+                                         static_cast<long long>(preferred_phase), this->name()),
                              deferred_logger);
         }
 
@@ -2042,7 +2042,7 @@ namespace Opm
         };
 
         // Return GasLiftSingleWell object to use the wellTestALQ() function
-        std::set<int> sync_groups;
+        std::set<long long> sync_groups;
         const auto& summary_state = simulator.vanguard().summaryState();
         return std::make_unique<GasLiftSingleWell>(*this, 
                                                     simulator, 

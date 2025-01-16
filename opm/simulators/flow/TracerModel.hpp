@@ -223,7 +223,7 @@ public:
 protected:
 
     // compute volume associated with free concentration
-    Scalar computeFreeVolume_(const int tracerPhaseIdx,
+    Scalar computeFreeVolume_(const long long tracerPhaseIdx,
                               unsigned globalDofIdx,
                               unsigned timeIdx)
     {
@@ -239,7 +239,7 @@ protected:
     }
 
     // compute volume associated with solution concentration
-    Scalar computeSolutionVolume_(const int tracerPhaseIdx,
+    Scalar computeSolutionVolume_(const long long tracerPhaseIdx,
                                   unsigned globalDofIdx,
                                   unsigned timeIdx)
     {
@@ -275,7 +275,7 @@ protected:
 
     void computeFreeFlux_(TracerEvaluation & freeFlux,
                           bool & isUp,
-                          const int tracerPhaseIdx,
+                          const long long tracerPhaseIdx,
                           const ElementContext& elemCtx,
                           unsigned scvfIdx,
                           unsigned timeIdx)
@@ -308,7 +308,7 @@ protected:
 
     void computeSolFlux_(TracerEvaluation & solFlux,
                          bool & isUp,
-                         const int tracerPhaseIdx,
+                         const long long tracerPhaseIdx,
                          const ElementContext& elemCtx,
                          unsigned scvfIdx,
                          unsigned timeIdx)
@@ -377,7 +377,7 @@ protected:
         std::vector<Scalar> fStorageOfTimeIndex1(tr.numTracer());
         std::vector<Scalar> sStorageOfTimeIndex1(tr.numTracer());
         if (elemCtx.enableStorageCache()) {
-            for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+            for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                 fStorageOfTimeIndex1[tIdx] = tr.storageOfTimeIndex1_[tIdx][I][0];
                 sStorageOfTimeIndex1[tIdx] = tr.storageOfTimeIndex1_[tIdx][I][1];
             }
@@ -385,7 +385,7 @@ protected:
         else {
             Scalar fVolume1 = computeFreeVolume_(tr.phaseIdx_, I1, 1);
             Scalar sVolume1 = computeSolutionVolume_(tr.phaseIdx_, I1, 1);
-            for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+            for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                 fStorageOfTimeIndex1[tIdx] = fVolume1 * tr.concentration_[tIdx][I1][0];
                 sStorageOfTimeIndex1[tIdx] = sVolume1 * tr.concentration_[tIdx][I1][1];
             }
@@ -395,7 +395,7 @@ protected:
         TracerEvaluation sVol = computeSolutionVolume_(tr.phaseIdx_, I, 0) * variable<TracerEvaluation>(1.0, 0);
         dsVol_[tr.phaseIdx_][I] += sVol.value() * scvVolume - sVol1_[tr.phaseIdx_][I];
         dfVol_[tr.phaseIdx_][I] += fVol.value() * scvVolume - fVol1_[tr.phaseIdx_][I];
-        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
             // Free part
             Scalar fStorageOfTimeIndex0 = fVol.value() * tr.concentration_[tIdx][I][0];
             Scalar fLocalStorage = (fStorageOfTimeIndex0 - fStorageOfTimeIndex1[tIdx]) * scvVolume/dt;
@@ -432,9 +432,9 @@ protected:
         computeSolFlux_(sFlux, isUpS, tr.phaseIdx_, elemCtx, scvfIdx, 0);
         dsVol_[tr.phaseIdx_][I] += sFlux.value() * dt;
         dfVol_[tr.phaseIdx_][I] += fFlux.value() * dt;
-        int fGlobalUpIdx = isUpF ? I : J;
-        int sGlobalUpIdx = isUpS ? I : J;
-        for (int tIdx =0; tIdx < tr.numTracer(); ++tIdx) {
+        long long fGlobalUpIdx = isUpF ? I : J;
+        long long sGlobalUpIdx = isUpS ? I : J;
+        for (long long tIdx =0; tIdx < tr.numTracer(); ++tIdx) {
             // Free and solution fluxes
             tr.residual_[tIdx][I][0] += fFlux.value()*tr.concentration_[tIdx][fGlobalUpIdx][0]; //residual + flux
             tr.residual_[tIdx][I][1] += sFlux.value()*tr.concentration_[tIdx][sGlobalUpIdx][1]; //residual + flux
@@ -461,7 +461,7 @@ protected:
         const auto& eclWell = well.wellEcl();
 
         // Init. well output to zero
-        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
             this->wellTracerRate_[std::make_pair(eclWell.name(), this->name(tr.idx_[tIdx]))] = 0.0;
             this->wellFreeTracerRate_[std::make_pair(eclWell.name(), this->wellfname(tr.idx_[tIdx]))] = 0.0;
             this->wellSolTracerRate_[std::make_pair(eclWell.name(), this->wellsname(tr.idx_[tIdx]))] = 0.0;
@@ -475,7 +475,7 @@ protected:
         }
 
         std::vector<Scalar> wtracer(tr.numTracer());
-        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
             wtracer[tIdx] = this->currentConcentration_(eclWell, this->name(tr.idx_[tIdx]));
         }
 
@@ -498,7 +498,7 @@ protected:
 
             Scalar rate_f = rate - rate_s;
             if (rate_f > 0) {
-                for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                     // Injection of free tracer only
                     tr.residual_[tIdx][I][0] -= rate_f*wtracer[tIdx];
 
@@ -514,7 +514,7 @@ protected:
                 dfVol_[tr.phaseIdx_][I] -= rate_f * dt;
             }
             else if (rate_f < 0) {
-                for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                     // Store _injector_ tracer rate for cross-flowing well connections (can be done here since WTRACER is constant)
                     this->wellTracerRate_.at(std::make_pair(eclWell.name(),this->name(tr.idx_[tIdx]))) += rate_f*wtracer[tIdx];
                     this->wellFreeTracerRate_.at(std::make_pair(eclWell.name(),this->wellfname(tr.idx_[tIdx]))) += rate_f*wtracer[tIdx];
@@ -529,7 +529,7 @@ protected:
                 (*tr.mat)[I][I][0][0] -= rate_f * variable<TracerEvaluation>(1.0, 0).derivative(0);
             }
             if (rate_s < 0) {
-                for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                     // Production of solution tracer
                     tr.residual_[tIdx][I][1] -= rate_s * tr.concentration_[tIdx][I][1];
                 }
@@ -560,7 +560,7 @@ protected:
         const Scalar& dfVol = dfVol_[tr.phaseIdx_][I];
 
         // Source term determined by sign of dsVol: if dsVol > 0 then ms -> mf, else mf -> ms
-        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
             if (dsVol >= 0) {
                 tr.residual_[tIdx][I][0] -= (dfVol / dt) * tr.concentration_[tIdx][I][0];
                 tr.residual_[tIdx][I][1] += (dfVol / dt) * tr.concentration_[tIdx][I][0];
@@ -593,7 +593,7 @@ protected:
         for (auto& tr : tbatch) {
             if (tr.numTracer() != 0) {
                 (*tr.mat) = 0.0;
-                for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                     tr.residual_[tIdx] = 0.0;
                 }
             }
@@ -685,7 +685,7 @@ protected:
             elemCtx.updatePrimaryIntensiveQuantities(/*timeIdx=*/0);
             Scalar extrusionFactor = elemCtx.intensiveQuantities(/*dofIdx=*/ 0, /*timeIdx=*/0).extrusionFactor();
             Scalar scvVolume = elemCtx.stencil(/*timeIdx=*/0).subControlVolume(/*dofIdx=*/ 0).volume() * extrusionFactor;
-            int globalDofIdx = elemCtx.globalSpaceIndex(0, /*timeIdx=*/0);
+            long long globalDofIdx = elemCtx.globalSpaceIndex(0, /*timeIdx=*/0);
             for (auto& tr : tbatch) {
                 if (tr.numTracer() == 0)
                     continue;
@@ -696,7 +696,7 @@ protected:
                 sVol1_[tr.phaseIdx_][globalDofIdx] = sVol1 * scvVolume;
                 dsVol_[tr.phaseIdx_][globalDofIdx] = 0.0;
                 dfVol_[tr.phaseIdx_][globalDofIdx] = 0.0;
-                for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                     tr.storageOfTimeIndex1_[tIdx][globalDofIdx][0] = fVol1 * tr.concentrationInitial_[tIdx][globalDofIdx][0];
                     tr.storageOfTimeIndex1_[tIdx][globalDofIdx][1] = sVol1 * tr.concentrationInitial_[tIdx][globalDofIdx][1];
                 }
@@ -715,7 +715,7 @@ protected:
             // Note that we solve for a concentration update (compared to previous time step)
             // Confer also assembleTracerEquations_(...) above.
             std::vector<TracerVector> dx(tr.concentration_);
-            for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+            for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                 dx[tIdx] = 0.0;
             }
 
@@ -724,7 +724,7 @@ protected:
                 OpmLog::warning("### Tracer model: Linear solver did not converge. ###");
             }
 
-            for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+            for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                 for (std::size_t globalDofIdx = 0; globalDofIdx < tr.concentration_[tIdx].size(); ++globalDofIdx) {
                     // New concetration. Concentrations that are negative or where free/solution phase is not
                     // present are set to zero
@@ -785,7 +785,7 @@ protected:
 
                     Scalar rate_f = rate - rate_s;
                     if (rate_f < 0) {
-                        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                             // Store _producer_ free tracer rate for reporting
                             this->wellTracerRate_.at(std::make_pair(eclWell.name(),this->name(tr.idx_[tIdx]))) += 
                                 rate_f * tr.concentration_[tIdx][I][0];
@@ -800,7 +800,7 @@ protected:
                         }
                     }
                     if (rate_s < 0) {
-                        for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                        for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                             // Store _producer_ solution tracer rate for reporting
                             this->wellTracerRate_.at(std::make_pair(eclWell.name(),this->name(tr.idx_[tIdx]))) += 
                                 rate_s * tr.concentration_[tIdx][I][1];
@@ -835,7 +835,7 @@ protected:
                 if (rateWellTotal > rateWellNeg) { // Cross flow
                     const Scalar bucketPrDay = 10.0/(1000.*3600.*24.); // ... keeps (some) trouble away
                     const Scalar factor = (rateWellTotal < -bucketPrDay) ? rateWellTotal/rateWellNeg : 0.0;
-                    for (int tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
+                    for (long long tIdx = 0; tIdx < tr.numTracer(); ++tIdx) {
                         this->wellTracerRate_.at(std::make_pair(eclWell.name(),this->name(tr.idx_[tIdx]))) *= factor;
                     }
                 }
@@ -857,8 +857,8 @@ protected:
 
     template <typename TV>
     struct TracerBatch {
-        std::vector<int> idx_;
-        const int phaseIdx_;
+        std::vector<long long> idx_;
+        const long long phaseIdx_;
         std::vector<TV> concentrationInitial_;
         std::vector<TV> concentration_;
         std::vector<TV> storageOfTimeIndex1_;
@@ -890,13 +890,13 @@ protected:
           serializer(concentration_);
       }
 
-      TracerBatch(int phaseIdx = 0) : phaseIdx_(phaseIdx) {}
+      TracerBatch(long long phaseIdx = 0) : phaseIdx_(phaseIdx) {}
 
-      int numTracer() const {return idx_.size(); }
+      long long numTracer() const {return idx_.size(); }
 
-      void addTracer(const int idx, const TV & concentration)
+      void addTracer(const long long idx, const TV & concentration)
       {
-            int numGridDof = concentration.size();
+            long long numGridDof = concentration.size();
             idx_.emplace_back(idx);
             concentrationInitial_.emplace_back(concentration);
             concentration_.emplace_back(concentration);

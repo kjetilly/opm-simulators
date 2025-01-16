@@ -26,7 +26,7 @@
 #include <opm/simulators/linalg/PropertyTree.hpp>
 #include <opm/simulators/linalg/gpuistl/SolverAdapter.hpp>
 
-static const constexpr int dim = 3;
+static const constexpr long long dim = 3;
 using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, dim, dim>>;
 using Vector = Dune::BlockVector<Dune::FieldVector<double, dim>>;
 using Moperator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
@@ -40,7 +40,7 @@ createSolverAdapterWithMatrix(const size_t N = 10)
 {
 
 
-    const int nonZeroes = N * 3 - 2;
+    const long long nonZeroes = N * 3 - 2;
 
     // We need to hold the matrix in memory somehow, but we don't want to deference
     // a pointer all the time (quality of life...):
@@ -58,17 +58,17 @@ createSolverAdapterWithMatrix(const size_t N = 10)
     }
     // This might not be the most elegant way of filling in a Dune sparse matrix, but it works.
     for (size_t i = 0; i < N; ++i) {
-        for (int k = 0; k < dim; ++k) {
+        for (long long k = 0; k < dim; ++k) {
             matrix[i][i][k][k] = -2;
         }
         if (i < N - 1) {
-            for (int k = 0; k < dim; ++k) {
+            for (long long k = 0; k < dim; ++k) {
                 matrix[i][i + 1][k][k] = 1;
             }
         }
 
         if (i > 0) {
-            for (int k = 0; k < dim; ++k) {
+            for (long long k = 0; k < dim; ++k) {
                 matrix[i][i - 1][k][k] = 1;
             }
         }

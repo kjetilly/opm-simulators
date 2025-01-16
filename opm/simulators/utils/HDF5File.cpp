@@ -212,7 +212,7 @@ void HDF5File::writeSplit(hid_t grp,
         proc_sizes[0] = buffer.size();
     }
 
-    for (int i = 0; i < comm_.size(); ++i) {
+    for (long long i = 0; i < comm_.size(); ++i) {
         hid_t space = H5Screate_simple(1, &proc_sizes[i], nullptr);
         hid_t dcpl = this->getCompression(proc_sizes[i]);
         hid_t dataset_id = H5Dcreate2(grp,
@@ -290,7 +290,7 @@ hid_t HDF5File::getCompression([[maybe_unused]] hsize_t size) const
     return dcpl;
 }
 
-void HDF5File::writeDset(int rank, hid_t dataset_id,
+void HDF5File::writeDset(long long rank, hid_t dataset_id,
                          hid_t dxpl, hsize_t size, const void* data) const
 {
     hid_t filespace = H5Dget_space(dataset_id);

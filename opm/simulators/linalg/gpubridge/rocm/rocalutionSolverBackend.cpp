@@ -51,9 +51,9 @@ namespace Opm::Accelerator {
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 rocalutionSolverBackend<Scalar,block_size>::
-rocalutionSolverBackend(int verbosity_, int maxit_, Scalar tolerance_)
+rocalutionSolverBackend(long long verbosity_, long long maxit_, Scalar tolerance_)
     : Base(verbosity_, maxit_, tolerance_)
 {
     rocalution::init_rocalution();
@@ -66,7 +66,7 @@ rocalutionSolverBackend(int verbosity_, int maxit_, Scalar tolerance_)
     roc_solver->Init(/*abs_tol=*/1e-15, tolerance, /*divergence_tol=*/1e3, maxit);
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 rocalutionSolverBackend<Scalar,block_size>::~rocalutionSolverBackend()
 {
     // normally, these rocalution variables are destroyed after the destructor automatically,
@@ -77,7 +77,7 @@ rocalutionSolverBackend<Scalar,block_size>::~rocalutionSolverBackend()
     rocalution::stop_rocalution();
 }
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocalutionSolverBackend<Scalar,block_size>::
 initialize(BlockedMatrix<Scalar>* matrix)
 {
@@ -96,16 +96,16 @@ initialize(BlockedMatrix<Scalar>* matrix)
     initialized = true;
 } // end initialize()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocalutionSolverBackend<Scalar,block_size>::
 convert_matrix(BlockedMatrix<Scalar>* matrix)
 {
     Timer t;
 
-    for (int i = 0; i < Nb+1; ++i) {
+    for (long long i = 0; i < Nb+1; ++i) {
         tmp_rowpointers[i] = matrix->rowPointers[i];
     }
-    for (int i = 0; i < nnzb; ++i) {
+    for (long long i = 0; i < nnzb; ++i) {
         tmp_colindices[i] = matrix->colIndices[i];
     }
 
@@ -115,7 +115,7 @@ convert_matrix(BlockedMatrix<Scalar>* matrix)
     // BCSR_IND_BASE == 0: rocalution expects column-major
     // BCSR_IND_BASE == 1: rocalution expects row-major
     if (BCSR_IND_BASE == 0) {
-        for (int i = 0; i < nnzb; ++i) {
+        for (long long i = 0; i < nnzb; ++i) {
             tmp_nnzvalues[i * block_size * block_size + 0] = matrix->nnzValues[i * block_size * block_size + 0];
             tmp_nnzvalues[i * block_size * block_size + 1] = matrix->nnzValues[i * block_size * block_size + 3];
             tmp_nnzvalues[i * block_size * block_size + 2] = matrix->nnzValues[i * block_size * block_size + 6];
@@ -136,7 +136,7 @@ convert_matrix(BlockedMatrix<Scalar>* matrix)
 
 // copy result to host memory
 // caller must be sure that x is a valid array
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 void rocalutionSolverBackend<Scalar,block_size>::
 get_result(Scalar* x)
 {
@@ -151,7 +151,7 @@ get_result(Scalar* x)
     }
 } // end get_result()
 
-template<class Scalar, unsigned int block_size>
+template<class Scalar, size_t block_size>
 SolverStatus rocalutionSolverBackend<Scalar,block_size>::
 solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
              Scalar* b,
@@ -163,8 +163,8 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
         initialize(matrix.get());
     }
 
-    tmp_rowpointers = new int[Nb+1];
-    tmp_colindices = new int[nnzb];
+    tmp_rowpointers = new long long[Nb+1];
+    tmp_colindices = new long long[nnzb];
     tmp_nnzvalues = new Scalar[nnzb*block_size*block_size];
 
     convert_matrix(matrix.get());

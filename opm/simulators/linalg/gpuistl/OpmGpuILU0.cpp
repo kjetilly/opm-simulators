@@ -40,8 +40,8 @@
 namespace Opm::gpuistl
 {
 
-template <class M, class X, class Y, int l>
-OpmGpuILU0<M, X, Y, l>::OpmGpuILU0(const M& A, bool splitMatrix, bool tuneKernels, int mixedPrecisionScheme)
+template <class M, class X, class Y, long long l>
+OpmGpuILU0<M, X, Y, l>::OpmGpuILU0(const M& A, bool splitMatrix, bool tuneKernels, long long mixedPrecisionScheme)
     : m_cpuMatrix(A)
     , m_levelSets(Opm::getMatrixRowColoring(m_cpuMatrix, Opm::ColoringType::LOWER))
     , m_reorderedToNatural(detail::createReorderedToNatural(m_levelSets))
@@ -105,13 +105,13 @@ OpmGpuILU0<M, X, Y, l>::OpmGpuILU0(const M& A, bool splitMatrix, bool tuneKernel
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 OpmGpuILU0<M, X, Y, l>::pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d)
 {
@@ -121,16 +121,16 @@ OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d)
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, int upperSolveThreadBlockSize)
+OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d, long long lowerSolveThreadBlockSize, long long upperSolveThreadBlockSize)
 {
     // perform a lower solve and then an upper solve to apply the approximate inverse using ILU factorization
     // for the lower and upper solve we have some if's that determine which underlying implementation to use
 
-    int levelStartIdx = 0;
-    for (int level = 0; level < m_levelSets.size(); ++level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    long long levelStartIdx = 0;
+    for (long long level = 0; level < m_levelSets.size(); ++level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme != MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG) {
                 detail::ILU0::solveLowerLevelSetSplit<blocksize_, field_type, float>(
@@ -171,8 +171,8 @@ OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, i
     }
 
     levelStartIdx = m_cpuMatrix.N();
-    for (int level = m_levelSets.size() - 1; level >= 0; --level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    for (long long level = m_levelSets.size() - 1; level >= 0; --level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
         levelStartIdx -= numOfRowsInLevel;
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme == MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG) {
@@ -224,20 +224,20 @@ OpmGpuILU0<M, X, Y, l>::apply(X& v, const Y& d, int lowerSolveThreadBlockSize, i
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 OpmGpuILU0<M, X, Y, l>::post([[maybe_unused]] X& x)
 {
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 Dune::SolverCategory::Category
 OpmGpuILU0<M, X, Y, l>::category() const
 {
     return Dune::SolverCategory::sequential;
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 OpmGpuILU0<M, X, Y, l>::update()
 {
@@ -247,9 +247,9 @@ OpmGpuILU0<M, X, Y, l>::update()
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-OpmGpuILU0<M, X, Y, l>::update(int moveThreadBlockSize, int factorizationThreadBlockSize)
+OpmGpuILU0<M, X, Y, l>::update(long long moveThreadBlockSize, long long factorizationThreadBlockSize)
 {
     OPM_TIMEBLOCK(prec_update);
     {
@@ -257,9 +257,9 @@ OpmGpuILU0<M, X, Y, l>::update(int moveThreadBlockSize, int factorizationThreadB
         LUFactorizeAndMoveData(moveThreadBlockSize, factorizationThreadBlockSize);
     }
 }
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
-OpmGpuILU0<M, X, Y, l>::LUFactorizeAndMoveData(int moveThreadBlockSize, int factorizationThreadBlockSize)
+OpmGpuILU0<M, X, Y, l>::LUFactorizeAndMoveData(long long moveThreadBlockSize, long long factorizationThreadBlockSize)
 {
     if (m_splitMatrix) {
         detail::copyMatDataToReorderedSplit<field_type, blocksize_>(
@@ -283,9 +283,9 @@ OpmGpuILU0<M, X, Y, l>::LUFactorizeAndMoveData(int moveThreadBlockSize, int fact
                                                                m_gpuReorderedLU->N(),
                                                                moveThreadBlockSize);
     }
-    int levelStartIdx = 0;
-    for (int level = 0; level < m_levelSets.size(); ++level) {
-        const int numOfRowsInLevel = m_levelSets[level].size();
+    long long levelStartIdx = 0;
+    for (long long level = 0; level < m_levelSets.size(); ++level) {
+        const long long numOfRowsInLevel = m_levelSets[level].size();
 
         if (m_splitMatrix) {
             if (m_mixedPrecisionScheme == MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG){
@@ -357,17 +357,17 @@ OpmGpuILU0<M, X, Y, l>::LUFactorizeAndMoveData(int moveThreadBlockSize, int fact
     }
 }
 
-template <class M, class X, class Y, int l>
+template <class M, class X, class Y, long long l>
 void
 OpmGpuILU0<M, X, Y, l>::tuneThreadBlockSizes()
 {
     // tune the thread-block size of the update function
     auto tuneMoveThreadBlockSizeInUpdate
-        = [this](int moveThreadBlockSize) { this->update(moveThreadBlockSize, m_ILU0FactorizationThreadBlockSize); };
+        = [this](long long moveThreadBlockSize) { this->update(moveThreadBlockSize, m_ILU0FactorizationThreadBlockSize); };
     m_moveThreadBlockSize
         = detail::tuneThreadBlockSize(tuneMoveThreadBlockSizeInUpdate, "(in ILU update) Move data to reordered matrix");
 
-    auto tuneFactorizationThreadBlockSizeInUpdate = [this](int factorizationThreadBlockSize) {
+    auto tuneFactorizationThreadBlockSizeInUpdate = [this](long long factorizationThreadBlockSize) {
         this->update(m_moveThreadBlockSize, factorizationThreadBlockSize);
     };
     m_ILU0FactorizationThreadBlockSize
@@ -378,13 +378,13 @@ OpmGpuILU0<M, X, Y, l>::tuneThreadBlockSizes()
     GpuVector<field_type> tmpD(m_gpuMatrix.N() * m_gpuMatrix.blockSize());
     tmpD = 1;
 
-    auto tuneLowerSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](int lowerSolveThreadBlockSize) {
+    auto tuneLowerSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](long long lowerSolveThreadBlockSize) {
         this->apply(tmpV, tmpD, lowerSolveThreadBlockSize, m_ILU0FactorizationThreadBlockSize);
     };
     m_lowerSolveThreadBlockSize = detail::tuneThreadBlockSize(
         tuneLowerSolveThreadBlockSizeInApply, "(in ILU apply) Triangular lower solve");
 
-    auto tuneUpperSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](int upperSolveThreadBlockSize) {
+    auto tuneUpperSolveThreadBlockSizeInApply = [this, &tmpV, &tmpD](long long upperSolveThreadBlockSize) {
         this->apply(tmpV, tmpD, m_lowerSolveThreadBlockSize, upperSolveThreadBlockSize);
     };
     m_upperSolveThreadBlockSize = detail::tuneThreadBlockSize(

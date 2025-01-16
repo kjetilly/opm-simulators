@@ -33,16 +33,16 @@ namespace Accelerator
 
 template<class Scalar>
 void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue,
-                                  Scalar* vals, int* cols, int* rows)
+                                  Scalar* vals, long long* cols, long long* rows)
 {
     std::vector<cl::Event> events(3);
 
     cl_int err = queue->enqueueWriteBuffer(nnzValues, CL_FALSE, 0,
                                            sizeof(Scalar) * block_size * block_size * nnzbs,
                                            vals, nullptr, &events[0]);
-    err |= queue->enqueueWriteBuffer(colIndices, CL_FALSE, 0, sizeof(int) * nnzbs,
+    err |= queue->enqueueWriteBuffer(colIndices, CL_FALSE, 0, sizeof(long long) * nnzbs,
                                      cols, nullptr, &events[1]);
-    err |= queue->enqueueWriteBuffer(rowPointers, CL_FALSE, 0, sizeof(int) * (Nb + 1),
+    err |= queue->enqueueWriteBuffer(rowPointers, CL_FALSE, 0, sizeof(long long) * (Nb + 1),
                                      rows, nullptr, &events[2]);
 
     cl::WaitForEvents(events);

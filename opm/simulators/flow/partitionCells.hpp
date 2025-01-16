@@ -46,7 +46,7 @@ struct ZoltanPartitioningControl
 
     /// Compute a locally unique, for this MPI process, ID of a local
     /// cell/element/entity.
-    std::function<int(const Element&)> index;
+    std::function<(long long)(const Element&)> index;
 
     /// Compute a globally unique, across all MPI processes, ID for a local
     /// cell/element/entity.  Might for instance return the cell's
@@ -55,7 +55,7 @@ struct ZoltanPartitioningControl
     ///    i + nx*(j + ny*k)
     ///
     /// of the Cartesian cell (i,j,k).
-    std::function<int(int)> local_to_global;
+    std::function<(long long)(long long)> local_to_global;
 };
 
 /// Partition rank's interior cells.
@@ -88,21 +88,21 @@ struct ZoltanPartitioningControl
 ///    traversal order for its interior cells--and the number of subdomains
 ///    on current rank.
 template <class GridView, class Element>
-std::pair<std::vector<int>, int>
+std::pair<std::vector<long long>, long long>
 partitionCells(const std::string&                                    method,
-               const int                                             num_local_domains,
+               const long long                                             num_local_domains,
                const GridView&                                       grid_view,
                const std::vector<Well>&                              wells,
-               const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+               const std::unordered_map<std::string, std::set<long long>>& possibleFutureConnections,
                const ZoltanPartitioningControl<Element>&             zoltan_ctrl);
 
 /// Read a partitioning from file, assumed to contain one number per cell, its partition number.
 /// \return pair containing a partition vector (partition number for each cell), and the number of partitions.
-std::pair<std::vector<int>, int> partitionCellsFromFile(const std::string& filename, const int num_cells);
+std::pair<std::vector<long long>, long long> partitionCellsFromFile(const std::string& filename, const long long num_cells);
 
 /// Trivially simple partitioner assigning partitions en bloc, consecutively by cell index.
 /// \return pair containing a partition vector (partition number for each cell), and the number of partitions.
-std::pair<std::vector<int>, int> partitionCellsSimple(const int num_cells, const int num_domains);
+std::pair<std::vector<long long>, long long> partitionCellsSimple(const long long num_cells, const long long num_domains);
 
 } // namespace Opm
 

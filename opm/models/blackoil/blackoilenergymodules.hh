@@ -346,8 +346,8 @@ class BlackOilEnergyIntensiveQuantities
     using EnergyModule = BlackOilEnergyModule<TypeTag>;
 
     enum { numPhases = getPropValue<TypeTag, Properties::NumPhases>() };
-    static constexpr int temperatureIdx = Indices::temperatureIdx;
-    static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
+    static constexpr long long temperatureIdx = Indices::temperatureIdx;
+    static constexpr long long waterPhaseIdx = FluidSystem::waterPhaseIdx;
 
 
 public:
@@ -393,7 +393,7 @@ public:
 
         // compute the specific enthalpy of the fluids, the specific enthalpy of the rock
         // and the thermal condictivity coefficients
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+        for (long long phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
             if (!FluidSystem::phaseIsActive(phaseIdx)) {
                 continue;
             }
@@ -523,7 +523,7 @@ class BlackOilEnergyExtensiveQuantities
 
     using EnergyModule = BlackOilEnergyModule<TypeTag>;
 
-    static const int dimWorld = GridView::dimensionworld;
+    static const long long dimWorld = GridView::dimensionworld;
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimEvalVector = Dune::FieldVector<Evaluation, dimWorld>;
 public:

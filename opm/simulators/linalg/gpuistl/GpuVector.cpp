@@ -123,7 +123,7 @@ GpuVector<T>::asStdVector() const
 
 template <typename T>
 void
-GpuVector<T>::setZeroAtIndexSet(const GpuVector<int>& indexSet)
+GpuVector<T>::setZeroAtIndexSet(const GpuVector<long long>& indexSet)
 {
     detail::setZeroAtIndexSet(m_dataOnDevice, indexSet.dim(), indexSet.data());
 }
@@ -137,7 +137,7 @@ GpuVector<T>::assertSameSize(const GpuVector<T>& x) const
 
 template <typename T>
 void
-GpuVector<T>::assertSameSize(int size) const
+GpuVector<T>::assertSameSize(long long size) const
 {
     if (size != m_numberOfElements) {
         OPM_THROW(std::invalid_argument,
@@ -203,14 +203,14 @@ GpuVector<T>::two_norm() const
 
 template <typename T>
 T
-GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<int>& indexSet, GpuVector<T>& buffer) const
+GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<long long>& indexSet, GpuVector<T>& buffer) const
 {
     return detail::innerProductAtIndices(m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template <typename T>
 T
-GpuVector<T>::two_norm(const GpuVector<int>& indexSet, GpuVector<T>& buffer) const
+GpuVector<T>::two_norm(const GpuVector<long long>& indexSet, GpuVector<T>& buffer) const
 {
     // TODO: [perf] Optimize this to a single call
     return std::sqrt(this->dot(*this, indexSet, buffer));
@@ -218,7 +218,7 @@ GpuVector<T>::two_norm(const GpuVector<int>& indexSet, GpuVector<T>& buffer) con
 
 template <typename T>
 T
-GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<int>& indexSet) const
+GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<long long>& indexSet) const
 {
     GpuVector<T> buffer(indexSet.dim());
     return detail::innerProductAtIndices(m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
@@ -226,7 +226,7 @@ GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<int>& indexSet) con
 
 template <typename T>
 T
-GpuVector<T>::two_norm(const GpuVector<int>& indexSet) const
+GpuVector<T>::two_norm(const GpuVector<long long>& indexSet) const
 {
     GpuVector<T> buffer(indexSet.dim());
     // TODO: [perf] Optimize this to a single call
@@ -289,19 +289,19 @@ GpuVector<T>::copyToHost(std::vector<T>& data) const
 
 template <typename T>
 void
-GpuVector<T>::prepareSendBuf(GpuVector<T>& buffer, const GpuVector<int>& indexSet) const
+GpuVector<T>::prepareSendBuf(GpuVector<T>& buffer, const GpuVector<long long>& indexSet) const
 {
     return detail::prepareSendBuf(m_dataOnDevice, buffer.data(), indexSet.dim(), indexSet.data());
 }
 template <typename T>
 void
-GpuVector<T>::syncFromRecvBuf(GpuVector<T>& buffer, const GpuVector<int>& indexSet) const
+GpuVector<T>::syncFromRecvBuf(GpuVector<T>& buffer, const GpuVector<long long>& indexSet) const
 {
     return detail::syncFromRecvBuf(m_dataOnDevice, buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template class GpuVector<double>;
 template class GpuVector<float>;
-template class GpuVector<int>;
+template class GpuVector<long long>;
 
 } // namespace Opm::gpuistl

@@ -71,13 +71,13 @@ namespace Opm {
 
         MultisegmentWell(const Well& well,
                          const ParallelWellInfo<Scalar>& pw_info,
-                         const int time_step,
+                         const long long time_step,
                          const ModelParameters& param,
                          const RateConverterType& rate_converter,
-                         const int pvtRegionIdx,
-                         const int num_components,
-                         const int num_phases,
-                         const int index_of_well,
+                         const long long pvtRegionIdx,
+                         const long long num_components,
+                         const long long num_phases,
+                         const long long index_of_well,
                          const std::vector<PerforationData<Scalar>>& perf_data);
 
         void init(const PhaseUsage* phase_usage_arg,
@@ -140,14 +140,14 @@ namespace Opm {
                                      WellState<Scalar>& well_state,
                                      DeferredLogger& deferred_logger) const override;
 
-        Scalar connectionDensity(const int globalConnIdx,
-                                 const int openConnIdx) const override;
+        Scalar connectionDensity(const long long globalConnIdx,
+                                 const long long openConnIdx) const override;
 
         void addWellContributions(SparseMatrixAdapter& jacobian) const override;
 
         void addWellPressureEquations(PressureMatrix& mat,
                                       const BVector& x,
-                                      const int pressureVarIndex,
+                                      const long long pressureVarIndex,
                                       const bool use_well_weights,
                                       const WellState<Scalar>& well_state) const override;
 
@@ -164,7 +164,7 @@ namespace Opm {
 
         std::vector<Scalar> getPrimaryVars() const override;
 
-        int setPrimaryVars(typename std::vector<Scalar>::const_iterator it) override;
+        long long setPrimaryVars(typename std::vector<Scalar>::const_iterator it) override;
 
     protected:
         // regularize msw equation
@@ -173,7 +173,7 @@ namespace Opm {
         // the intial amount of fluids in each segment under surface condition
         std::vector<std::vector<Scalar> > segment_fluid_initial_;
 
-        mutable int debug_cost_counter_ = 0;
+        mutable long long debug_cost_counter_ = 0;
 
         // updating the well_state based on well solution dwells
         void updateWellState(const Simulator& simulator,
@@ -192,8 +192,8 @@ namespace Opm {
         void computePerfRate(const IntensiveQuantities& int_quants,
                              const std::vector<Value>& mob_perfcells,
                              const std::vector<Scalar>& Tw,
-                             const int seg,
-                             const int perf,
+                             const long long seg,
+                             const long long perf,
                              const Value& segment_pressure,
                              const bool& allow_cf,
                              std::vector<Value>& cq_s,
@@ -208,7 +208,7 @@ namespace Opm {
                         const std::vector<Value>& b_perfcells,
                         const std::vector<Value>& mob_perfcells,
                         const std::vector<Scalar>& Tw,
-                        const int perf,
+                        const long long perf,
                         const Value& segment_pressure,
                         const Value& segment_density,
                         const bool& allow_cf,
@@ -226,7 +226,7 @@ namespace Opm {
         // get the mobility for specific perforation
         template<class Value>
         void getMobility(const Simulator& simulator,
-                         const int perf,
+                         const long long perf,
                          std::vector<Value>& mob,
                          DeferredLogger& deferred_logger) const;
 
@@ -283,7 +283,7 @@ namespace Opm {
 
         void updateWaterThroughput(const double dt, WellState<Scalar>& well_state) const override;
 
-        EvalWell getSegmentSurfaceVolume(const Simulator& simulator, const int seg_idx) const;
+        EvalWell getSegmentSurfaceVolume(const Simulator& simulator, const long long seg_idx) const;
 
         // turn on crossflow to avoid singular well equations
         // when the well is banned from cross-flow and the BHP is not properly initialized,

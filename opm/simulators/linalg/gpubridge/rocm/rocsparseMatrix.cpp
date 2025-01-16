@@ -34,10 +34,10 @@ namespace Opm::Accelerator {
 
 template<class Scalar>
 RocmMatrix<Scalar>::
-RocmMatrix(int Nb_, 
-           int Mb_,
-           int nnzbs_,
-           unsigned int block_size_)
+RocmMatrix(long long Nb_, 
+           long long Mb_,
+           long long nnzbs_,
+           size_t block_size_)
     : Nb(Nb_),
       Mb(Mb_),
       nnzbs(nnzbs_),
@@ -45,23 +45,23 @@ RocmMatrix(int Nb_,
 {
     HIP_CHECK(hipMalloc((void**)&nnzValues, sizeof(Scalar) * block_size * block_size * nnzbs));
         
-    HIP_CHECK(hipMalloc((void**)&colIndices, sizeof(int) * nnzbs));
+    HIP_CHECK(hipMalloc((void**)&colIndices, sizeof(long long) * nnzbs));
 
-    HIP_CHECK(hipMalloc((void**)&rowPointers, sizeof(int) * (Nb + 1)));
+    HIP_CHECK(hipMalloc((void**)&rowPointers, sizeof(long long) * (Nb + 1)));
 }
 
 template <class Scalar>
 void RocmMatrix<Scalar>::
 upload(Scalar *vals,
-       int *cols,
-       int *rows,
+       long long *cols,
+       long long *rows,
        hipStream_t stream)
 {
     HIP_CHECK(hipMemcpyAsync(nnzValues, vals, sizeof(Scalar) * block_size * block_size * nnzbs, hipMemcpyHostToDevice, stream));
     
-    HIP_CHECK(hipMemcpyAsync(colIndices, cols, sizeof(int) * nnzbs, hipMemcpyHostToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(colIndices, cols, sizeof(long long) * nnzbs, hipMemcpyHostToDevice, stream));
     
-    HIP_CHECK(hipMemcpyAsync(rowPointers, rows, sizeof(int) * (Nb + 1), hipMemcpyHostToDevice, stream));
+    HIP_CHECK(hipMemcpyAsync(rowPointers, rows, sizeof(long long) * (Nb + 1), hipMemcpyHostToDevice, stream));
 }
 
 template <class Scalar>
@@ -89,7 +89,7 @@ upload(BlockedMatrix<Scalar> *matrix,
 }
 
 template <class Scalar>
-RocmVector<Scalar>::RocmVector(int N)
+RocmVector<Scalar>::RocmVector(long long N)
     : size(N)
 {
     HIP_CHECK(hipMalloc((void**)&nnzValues, sizeof(Scalar) * N));
@@ -107,7 +107,7 @@ upload(Scalar *vals,
     template class RocmVector<T>; \
     template class RocmMatrix<T>;
 
-INSTANTIATE_TYPE(int)
+INSTANTIATE_TYPE(long long)
 INSTANTIATE_TYPE(double)
 
 #if FLOW_INSTANTIATE_FLOAT

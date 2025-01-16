@@ -159,28 +159,28 @@ public:
         ReturnType value;
         if (i == focusDofIdx) {
             value = quantityCallback(i);
-            for (int k = 0; k < value.size(); ++k)
+            for (long long k = 0; k < value.size(); ++k)
                 value[k] *= interiorDistance;
         }
         else {
             const auto& dofVal = getValue(quantityCallback(i));
-            for (int k = 0; k < dofVal.size(); ++k)
+            for (long long k = 0; k < dofVal.size(); ++k)
                 value[k] = getValue(dofVal[k])*interiorDistance;
         }
 
         if (j == focusDofIdx) {
             const auto& dofVal = quantityCallback(j);
-            for (int k = 0; k < dofVal.size(); ++k)
+            for (long long k = 0; k < dofVal.size(); ++k)
                 value[k] += dofVal[k]*exteriorDistance;
         }
         else {
             const auto& dofVal = quantityCallback(j);
-            for (int k = 0; k < dofVal.size(); ++k)
+            for (long long k = 0; k < dofVal.size(); ++k)
                 value[k] += getValue(dofVal[k])*exteriorDistance;
         }
 
         Scalar totDistance = interiorDistance + exteriorDistance;
-        for (int k = 0; k < value.size(); ++k)
+        for (long long k = 0; k < value.size(); ++k)
             value[k] /= totDistance;
 
         return value;

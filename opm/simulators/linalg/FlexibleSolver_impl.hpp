@@ -160,8 +160,8 @@ namespace Dune
     {
         const bool is_iorank = comm.communicator().rank() == 0;
         const double tol = prm.get<double>("tol", 1e-2);
-        const int maxiter = prm.get<int>("maxiter", 200);
-        const int verbosity = is_iorank ? prm.get<int>("verbosity", 0) : 0;
+        const long long maxiter = prm.get<long long>("maxiter", 200);
+        const long long verbosity = is_iorank ? prm.get<long long>("verbosity", 0) : 0;
         const std::string solver_type = prm.get<std::string>("solver", "bicgstab");
         if (solver_type == "bicgstab") {
             linsolver_ = std::make_shared<Dune::BiCGSTABSolver<VectorType>>(*linearoperator_for_solver_,
@@ -178,7 +178,7 @@ namespace Dune
                                                                         maxiter, // maximum number of iterations
                                                                         verbosity);
         } else if (solver_type == "gmres") {
-            int restart = prm.get<int>("restart", 15);
+            long long restart = prm.get<long long>("restart", 15);
             linsolver_ = std::make_shared<Dune::RestartedGMResSolver<VectorType>>(*linearoperator_for_solver_,
                                                                                   *scalarproduct_,
                                                                                   *preconditioner_,
@@ -187,7 +187,7 @@ namespace Dune
                                                                                   maxiter, // maximum number of iterations
                                                                                   verbosity);
         } else if (solver_type == "flexgmres") {
-            int restart = prm.get<int>("restart", 15);
+            long long restart = prm.get<long long>("restart", 15);
             linsolver_ = std::make_shared<Dune::RestartedFlexibleGMResSolver<VectorType>>(*linearoperator_for_solver_,
                                                                                           *scalarproduct_,
                                                                                           *preconditioner_,
@@ -268,26 +268,26 @@ namespace Dune
 // Macros to simplify explicit instantiation of FlexibleSolver for various block sizes.
 
 // Vectors and matrices.
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using BV = Dune::BlockVector<Dune::FieldVector<Scalar, N>>;
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using OBM = Dune::BCRSMatrix<Opm::MatrixBlock<Scalar, N, N>>;
 
 // Sequential operators.
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using SeqOpM = Dune::MatrixAdapter<OBM<Scalar,N>, BV<Scalar,N>, BV<Scalar,N>>;
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using SeqOpW = Opm::WellModelMatrixAdapter<OBM<Scalar,N>, BV<Scalar,N>, BV<Scalar,N>, false>;
 
 #if HAVE_MPI
 
 // Parallel communicator and operators.
-using Comm = Dune::OwnerOverlapCopyCommunication<int, int>;
-template<class Scalar, int N>
+using Comm = Dune::OwnerOverlapCopyCommunication<long long, long long>;
+template<class Scalar, long long N>
 using ParOpM = Opm::GhostLastMatrixAdapter<OBM<Scalar,N>, BV<Scalar,N>, BV<Scalar,N>, Comm>;
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using ParOpW = Opm::WellModelGhostLastMatrixAdapter<OBM<Scalar,N>, BV<Scalar,N>, BV<Scalar,N>, true>;
-template<class Scalar, int N>
+template<class Scalar, long long N>
 using ParOpD = Dune::OverlappingSchwarzOperator<OBM<Scalar,N>, BV<Scalar,N>, BV<Scalar,N>, Comm>;
 
 // Note: we must instantiate the constructor that is a template.

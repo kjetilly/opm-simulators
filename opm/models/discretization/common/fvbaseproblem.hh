@@ -69,7 +69,7 @@ private:
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    static const int vtkOutputFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    static const long long vtkOutputFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
     using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkOutputFormat>;
 
     using Model = GetPropType<TypeTag, Properties::Model>;
@@ -214,7 +214,7 @@ public:
      *
      * If the returned string is empty, no help message will be generated.
      */
-    static std::string helpPreamble(int,
+    static std::string helpPreamble(long long,
                                     const char **argv)
     {
         std::string desc = Implementation::briefDescription();
@@ -253,14 +253,14 @@ public:
      *         the next regular parameter. If this is less than 1, it indicated that the
      *         positional parameter was invalid.
      */
-    static int handlePositionalParameter(std::function<void(const std::string&,
+    static long long handlePositionalParameter(std::function<void(const std::string&,
                                                             const std::string&)>,
                                          std::set<std::string>&,
                                          std::string& errorMsg,
-                                         int,
+                                         long long,
                                          const char** argv,
-                                         int paramIdx,
-                                         int)
+                                         long long paramIdx,
+                                         long long)
     {
         errorMsg = std::string("Illegal parameter \"")+argv[paramIdx]+"\".";
         return 0;

@@ -126,7 +126,7 @@ public:
 
         // copy the result into the array of initial fluid states
         initialFluidStates_.resize(numElems);
-        for (unsigned int elemIdx = 0; elemIdx < numElems; ++elemIdx) {
+        for (size_t elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             auto& fluidState = initialFluidStates_[elemIdx];
 
             // get the PVT region index of the current element

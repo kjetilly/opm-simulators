@@ -110,10 +110,10 @@ struct BlackOilPolymerParams {
     bool hasPlyshlog_ = false;
 
     std::vector<PlyvmhCoefficients> plyvmhCoefficients_{};
-    std::map<int, TabulatedTwoDFunction> plymwinjTables_{};
-    std::map<int, TabulatedTwoDFunction> skprwatTables_{};
+    std::map<long long, TabulatedTwoDFunction> plymwinjTables_{};
+    std::map<long long, TabulatedTwoDFunction> skprwatTables_{};
 
-    std::map<int, SkprpolyTable> skprpolyTables_{};
+    std::map<long long, SkprpolyTable> skprpolyTables_{};
 };
 
 } // namespace Opm

@@ -148,7 +148,7 @@ protected:
         auto bicgstabSolver =
             std::make_shared<RawLinearSolver>(parPreCond, *convCrit_, parScalarProduct);
 
-        int verbosity = 0;
+        long long verbosity = 0;
         if (parOperator.overlap().myRank() == 0)
             verbosity = Parameters::Get<Parameters::LinearSolverVerbosity>();
         bicgstabSolver->setVerbosity(verbosity);
@@ -159,10 +159,10 @@ protected:
         return bicgstabSolver;
     }
 
-    std::pair<bool,int> runSolver_(std::shared_ptr<RawLinearSolver> solver)
+    std::pair<bool,long long> runSolver_(std::shared_ptr<RawLinearSolver> solver)
     {
         bool converged = solver->apply(*this->overlappingx_);
-        return std::make_pair(converged, int(solver->report().iterations()));
+        return std::make_pair(converged, (long long)(solver->report().iterations()));
     }
 
     void cleanupSolver_()
