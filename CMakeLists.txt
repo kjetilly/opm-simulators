@@ -740,6 +740,9 @@ if(CUDA_FOUND)
                        gpu_resources
                        gpu_smart_pointers
                        is_gpu_pointer
+                       throw_macros_on_gpu
+                       conditional_storage
+                       blackoilfluidstategpu
                        PROPERTIES LABELS ${gpu_label})
 endif()
 
