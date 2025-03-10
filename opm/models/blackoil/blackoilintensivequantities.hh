@@ -41,6 +41,7 @@
 
 #include <opm/common/TimingMacros.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/utility/gpuDecorators.hpp>
 
 #include <opm/input/eclipse/EclipseState/Grid/FaceDir.hpp>
 
@@ -154,7 +155,7 @@ public:
                                                 Indices::numPhases>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
 
-    BlackOilIntensiveQuantities()
+    OPM_HOST_DEVICE BlackOilIntensiveQuantities()
     {
         if (compositionSwitchEnabled) {
             fluidState_.setRs(0.0);
@@ -551,6 +552,8 @@ public:
         const unsigned globalSpaceIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
         const unsigned pvtRegionIdx = priVars.pvtRegionIndex();
 
+
+        
         fluidState_.setPvtRegionIndex(pvtRegionIdx);
 
         updateTempSalt(elemCtx, dofIdx, timeIdx);
