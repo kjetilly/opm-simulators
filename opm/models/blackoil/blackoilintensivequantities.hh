@@ -165,15 +165,32 @@ public:
                                                 has_disgas_in_water,
                                                 Indices::numPhases>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
-
-    OPM_HOST_DEVICE BlackOilIntensiveQuantities(FluidSystem* fluidSystem = nullptr)
-        : fluidSystem_(fluidSystem)
+    OPM_HOST_DEVICE BlackOilIntensiveQuantities()
     {
+        printf("BlackOilIntensiveQuantities2: fluidSystem_ = %p\n", fluidSystem_);
         if (compositionSwitchEnabled) {
             fluidState_.setRs(0.0);
             fluidState_.setRv(0.0);
         }        
         if (enableVapwat) { 
+            fluidState_.setRvw(0.0);
+        }
+        if (has_disgas_in_water) {
+            fluidState_.setRsw(0.0);
+        }
+    }
+
+
+    template <class T = FluidSystem_,
+              class = std::enable_if_t<!std::is_same_v<T, nullptr_t>>>
+    OPM_HOST_DEVICE BlackOilIntensiveQuantities(T* fluidSystem)
+        : fluidState_(*fluidSystem), fluidSystem_(fluidSystem)
+    {
+        if (compositionSwitchEnabled) {
+            fluidState_.setRs(0.0);
+            fluidState_.setRv(0.0);
+        }
+        if (enableVapwat) {
             fluidState_.setRvw(0.0);
         }
         if (has_disgas_in_water) {
@@ -406,7 +423,7 @@ public:
         return SoMax;
     }
 
-    void updateMobilityAndInvB()
+    OPM_HOST_DEVICE void updateMobilityAndInvB()
     {
         const unsigned pvtRegionIdx = fluidState_.pvtRegionIndex();
 
@@ -440,7 +457,7 @@ public:
         Valgrind::CheckDefined(mobility_);
     }
 
-    void updatePhaseDensities()
+    OPM_HOST_DEVICE void updatePhaseDensities()
     {
         const unsigned pvtRegionIdx = fluidState_.pvtRegionIndex();
 
@@ -633,11 +650,11 @@ public:
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::fluidState
      */
-    const FluidState& fluidState() const
+    OPM_HOST_DEVICE const FluidState& fluidState() const
     { return fluidState_; }
 
     /*!
-     * \copydoc ImmiscibleIntensiveQuantities::mobility
+    * \copydoc ImmiscibleIntensiveQuantities::mobility
      */
     const Evaluation& mobility(unsigned phaseIdx) const
     { return mobility_[phaseIdx]; }

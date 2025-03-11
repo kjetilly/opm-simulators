@@ -199,7 +199,13 @@ using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
 
 namespace {
   __global__ void testCreationGPU(BlackOilFluidSystemView fs) {
-    Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
+
+    Opm::BlackOilIntensiveQuantities<TypeTag, BlackOilFluidSystemView> intensiveQuantities (&fs);
+    // Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
+    auto& state = intensiveQuantities.fluidState();
+    printf("BlackOilState density before update: %f\n", state.density(0));
+    intensiveQuantities.updatePhaseDensities();
+    printf("BlackOilState density after update: %f\n", state.density(0));
     //Opm::BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::dense::FieldVector> primaryVariablesFieldVector;
   }
 }
