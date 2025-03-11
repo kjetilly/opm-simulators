@@ -41,7 +41,77 @@
 #include <opm/simulators/flow/equil/InitStateEquil.hpp>
 #include <opm/models/blackoil/blackoilintensivequantities.hh>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManagerSimple.hpp>
+#include <opm/input/eclipse/Parser/Parser.hpp>
+#include <opm/input/eclipse/Deck/Deck.hpp>
+#include <opm/input/eclipse/EclipseState/EclipseState.hpp>
+#include <opm/input/eclipse/Python/Python.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
+#include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
+#include <opm/material/fluidsystems/BlackOilFluidSystemNonStatic.hpp>
 
+#include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuView.hpp>
+#include <opm/simulators/linalg/gpuistl/gpu_smart_pointer.hpp>
+
+static constexpr const char* deckString1 =
+"-- =============== RUNSPEC\n"
+"RUNSPEC\n"
+"DIMENS\n"
+"3 3 3 /\n"
+"EQLDIMS\n"
+"/\n"
+"TABDIMS\n"
+"/\n"
+"WATER\n"
+"GAS\n"
+"CO2STORE\n"
+"METRIC\n"
+"-- =============== GRID\n"
+"GRID\n"
+"GRIDFILE\n"
+"0 0 /\n"
+"DX\n"
+"27*1 /\n"
+"DY\n"
+"27*1 /\n"
+"DZ\n"
+"27*1 /\n"
+"TOPS\n"
+"9*0 /\n"
+"PERMX\n"
+"27*1013.25 /\n"
+"PORO\n"
+"27*0.25 /\n"
+"COPY\n"
+"PERMX PERMY /\n"
+"PERMX PERMZ /\n"
+"/\n"
+"-- =============== PROPS\n"
+"PROPS\n"
+"SGWFN\n"
+"0.000000E+00 0.000000E+00 1.000000E+00 3.060000E-02\n"
+"1.000000E+00 1.000000E+00 0.000000E+00 3.060000E-01 /\n"
+"-- =============== SOLUTION\n"
+"SOLUTION\n"
+"RPTRST\n"
+"'BASIC=0' /\n"
+"EQUIL\n"
+"0 300 100 0 0 0 1 1 0 /\n"
+"-- =============== SCHEDULE\n"
+"SCHEDULE\n"
+"RPTRST\n"
+"'BASIC=0' /\n"
+"TSTEP\n"
+"1 /";
+
+using GpuB = Opm::gpuistl::GpuBuffer<double>;
+using GpuV = Opm::gpuistl::GpuView<double>;
+using GpuBufCo2Tables = Opm::CO2Tables<double, GpuB>;
+using GpuBufBrineCo2Pvt = Opm::BrineCo2Pvt<double, GpuBufCo2Tables, GpuB>;
+using FluidSystem = Opm::BlackOilFluidSystem<double>;
+using Evaluation = Opm::DenseAd::Evaluation<double,2>;
+using Scalar = typename Opm::MathToolbox<Evaluation>::Scalar;
+using BlackOilFluidSystemView = Opm::BlackOilFluidSystemNonStatic<double, Opm::BlackOilDefaultIndexTraits, Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>;
 namespace Opm {
   namespace Properties {
       namespace TTag {
@@ -121,7 +191,6 @@ namespace Opm {
 
       template<class TypeTag>
       struct PrimaryVariables<TypeTag, TTag::FlowSimpleProblem> { using type = BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::dense::FieldVector>; };
-
   };
 
 }
@@ -129,7 +198,7 @@ namespace Opm {
 using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
 
 namespace {
-  __global__ void testCreationGPU() {
+  __global__ void testCreationGPU(BlackOilFluidSystemView fs) {
     Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
     //Opm::BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::dense::FieldVector> primaryVariablesFieldVector;
   }
@@ -137,11 +206,25 @@ namespace {
 
 BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCrationGPU) 
 {
+  Opm::Parser parser;
+
+    auto deck = parser.parseString(deckString1);
+    auto python = std::make_shared<Opm::Python>();
+    Opm::EclipseState eclState(deck);
+    Opm::Schedule schedule(deck, eclState, python);
+
+    FluidSystem::initFromState(eclState, schedule);
+
+    auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
+
+    auto dynamicGpuFluidSystemBuffer = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, double>(dynamicFluidSystem);
+    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(dynamicGpuFluidSystemBuffer);
+
   Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
 
   using PrimaryVariables = Opm::GetPropType<TypeTag, Opm::Properties::PrimaryVariables>;
   std::cout << typeid(PrimaryVariables).name() << std::endl;
-  testCreationGPU<<<1, 1>>>();
+  testCreationGPU<<<1, 1>>>(dynamicGpuFluidSystemView);
   OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
   OPM_GPU_SAFE_CALL(cudaGetLastError());
 }

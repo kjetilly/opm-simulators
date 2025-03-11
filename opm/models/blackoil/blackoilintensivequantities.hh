@@ -58,6 +58,17 @@
 #include <utility>
 
 namespace Opm {
+
+// template<class T>
+// class GetFluidSystem {
+//     using FluidSystem = T;
+// };
+
+// template<>
+// class GetFluidSystem<BlackOilFluidSystem<double, BlackOilDefaultIndexTraits, VectorWithDefaultAllocator, std::shared_ptr>> {
+//     using FluidSystem = ;
+// };
+
 /*!
  * \ingroup BlackOilModel
  * \ingroup IntensiveQuantities
@@ -65,7 +76,7 @@ namespace Opm {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the black-oil model.
  */
-template <class TypeTag>
+template <class TypeTag, class FluidSystem_ = nullptr_t>
 class BlackOilIntensiveQuantities
     : public GetPropType<TypeTag, Properties::DiscIntensiveQuantities>
     , public GetPropType<TypeTag, Properties::FluxModule>::FluxIntensiveQuantities
@@ -84,7 +95,7 @@ class BlackOilIntensiveQuantities
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Evaluation = GetPropType<TypeTag, Properties::Evaluation>;
-    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using FluidSystem = std::conditional_t<std::is_same_v<FluidSystem_, nullptr_t>, GetPropType<TypeTag, Properties::FluidSystem>, FluidSystem_>;
     using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
