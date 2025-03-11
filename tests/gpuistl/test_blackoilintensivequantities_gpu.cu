@@ -201,12 +201,10 @@ namespace {
   __global__ void testCreationGPU(BlackOilFluidSystemView fs) {
 
     Opm::BlackOilIntensiveQuantities<TypeTag, BlackOilFluidSystemView> intensiveQuantities (&fs);
-    // Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
     auto& state = intensiveQuantities.fluidState();
     printf("BlackOilState density before update: %f\n", state.density(0));
     intensiveQuantities.updatePhaseDensities();
     printf("BlackOilState density after update: %f\n", state.density(0));
-    //Opm::BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::dense::FieldVector> primaryVariablesFieldVector;
   }
 }
 
@@ -227,6 +225,10 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCrationGPU)
     auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(dynamicGpuFluidSystemBuffer);
 
   Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
+  auto& state = intensiveQuantities.fluidState();
+  printf("(CPU) BlackOilState density before update: %f\n", state.density(0));
+  intensiveQuantities.updatePhaseDensities();
+  printf("(CPU) BlackOilState density after update: %f\n", state.density(0));
 
   using PrimaryVariables = Opm::GetPropType<TypeTag, Opm::Properties::PrimaryVariables>;
   std::cout << typeid(PrimaryVariables).name() << std::endl;
