@@ -144,6 +144,45 @@ class BlackOilIntensiveQuantities
 
 
 public:
+    void printme() {
+        std::cout << "numEq: " << Opm::BlackOilIntensiveQuantities<TypeTag>::numEq << "\n";
+        std::cout << "enableSolvent: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableSolvent << "\n";
+        std::cout << "enableExtbo: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableExtbo << "\n";
+        std::cout << "enablePolymer: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enablePolymer << "\n";
+        std::cout << "enableFoam: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableFoam << "\n";
+        std::cout << "enableBrine: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableBrine << "\n";
+        std::cout << "enableVapwat: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableVapwat << "\n";
+        std::cout << "has_disgas_in_water: " << Opm::BlackOilIntensiveQuantities<TypeTag>::has_disgas_in_water << "\n";
+        std::cout << "enableSaltPrecipitation: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableSaltPrecipitation << "\n";
+        std::cout << "enableTemperature: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableTemperature << "\n";
+        std::cout << "enableEnergy: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableEnergy << "\n";
+        std::cout << "enableDiffusion: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableDiffusion << "\n";
+        std::cout << "enableDispersion: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableDispersion << "\n";
+        std::cout << "enableMICP: " << Opm::BlackOilIntensiveQuantities<TypeTag>::enableMICP << "\n";
+        std::cout << "numPhases: " << Opm::BlackOilIntensiveQuantities<TypeTag>::numPhases << "\n";
+        std::cout << "numComponents: " << Opm::BlackOilIntensiveQuantities<TypeTag>::numComponents << "\n";
+        std::cout << "waterCompIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::waterCompIdx << "\n";
+        std::cout << "oilCompIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::oilCompIdx << "\n";
+        std::cout << "gasCompIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::gasCompIdx << "\n";
+        std::cout << "waterPhaseIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::waterPhaseIdx << "\n";
+        std::cout << "oilPhaseIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::oilPhaseIdx << "\n";
+        std::cout << "gasPhaseIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::gasPhaseIdx << "\n";
+        std::cout << "dimWorld: " << Opm::BlackOilIntensiveQuantities<TypeTag>::dimWorld << "\n";
+        std::cout << "compositionSwitchIdx: " << Opm::BlackOilIntensiveQuantities<TypeTag>::compositionSwitchIdx << "\n";
+
+        std::cout << "Scalar = " << typeid(Scalar).name() << "\n";
+        std::cout << "Evaluation = " << typeid(Evaluation).name() << "\n";
+        std::cout << "FluidSystem = " << typeid(FluidSystem).name() << "\n";
+        std::cout << "MaterialLaw = " << typeid(MaterialLaw).name() << "\n";
+        std::cout << "ElementContext = " << typeid(ElementContext).name() << "\n";
+        std::cout << "PrimaryVariables = " << typeid(PrimaryVariables).name() << "\n";
+        std::cout << "Indices = " << typeid(Indices).name() << "\n";
+        std::cout << "GridView = " << typeid(GridView).name() << "\n";
+        std::cout << "FluxModule = " << typeid(FluxModule).name() << "\n";
+        std::cout << "ParentType = " << typeid(ParentType).name() << "\n";
+        std::cout << "Implementation = " << typeid(Implementation).name() << "\n";
+        
+    }
     using FluidState = BlackOilFluidState<Evaluation,
                                           FluidSystem,
                                           enableTemperature,

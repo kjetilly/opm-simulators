@@ -225,6 +225,8 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCrationGPU)
     auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(dynamicGpuFluidSystemBuffer);
 
   Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
+
+  intensiveQuantities.printme();
   auto& state = intensiveQuantities.fluidState();
   printf("(CPU) BlackOilState density before update: %f\n", state.density(0));
   intensiveQuantities.updatePhaseDensities();
