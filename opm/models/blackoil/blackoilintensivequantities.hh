@@ -76,7 +76,7 @@ namespace Opm {
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the black-oil model.
  */
-template <class TypeTag, class FluidSystem_ = nullptr_t>
+template <class TypeTag>
 class BlackOilIntensiveQuantities
     : public GetPropType<TypeTag, Properties::DiscIntensiveQuantities>
     , public GetPropType<TypeTag, Properties::FluxModule>::FluxIntensiveQuantities
@@ -95,7 +95,7 @@ class BlackOilIntensiveQuantities
 
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Evaluation = GetPropType<TypeTag, Properties::Evaluation>;
-    using FluidSystem = std::conditional_t<std::is_same_v<FluidSystem_, nullptr_t>, GetPropType<TypeTag, Properties::FluidSystem>, FluidSystem_>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using MaterialLaw = GetPropType<TypeTag, Properties::MaterialLaw>;
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
@@ -174,6 +174,7 @@ public:
         std::cout << "Evaluation = " << typeid(Evaluation).name() << "\n";
         std::cout << "FluidSystem = " << typeid(FluidSystem).name() << "\n";
         std::cout << "MaterialLaw = " << typeid(MaterialLaw).name() << "\n";
+        std::cout << "MaterialLawParams = " << typeid(typename MaterialLaw::Params).name() << "\n";
         std::cout << "ElementContext = " << typeid(ElementContext).name() << "\n";
         std::cout << "PrimaryVariables = " << typeid(PrimaryVariables).name() << "\n";
         std::cout << "Indices = " << typeid(Indices).name() << "\n";
@@ -181,6 +182,7 @@ public:
         std::cout << "FluxModule = " << typeid(FluxModule).name() << "\n";
         std::cout << "ParentType = " << typeid(ParentType).name() << "\n";
         std::cout << "Implementation = " << typeid(Implementation).name() << "\n";
+        std::cout << "Problem = " << typeid(Problem).name() << "\n";
         
     }
     using FluidState = BlackOilFluidState<Evaluation,
@@ -220,9 +222,9 @@ public:
     }
 
 
-    template <class T = FluidSystem_,
-              class = std::enable_if_t<!std::is_same_v<T, nullptr_t>>>
-    OPM_HOST_DEVICE BlackOilIntensiveQuantities(T* fluidSystem)
+    //template <class T = FluidSystem_,
+    //          class = std::enable_if_t<!std::is_same_v<T, nullptr_t>>>
+    OPM_HOST_DEVICE BlackOilIntensiveQuantities(FluidSystem* fluidSystem)
         : fluidState_(*fluidSystem), fluidSystem_(fluidSystem)
     {
         if (compositionSwitchEnabled) {
@@ -251,7 +253,7 @@ public:
         }
     }
 
-    void updateTempSalt(const Problem& problem,
+    OPM_HOST_DEVICE void updateTempSalt(const Problem& problem,
                         const PrimaryVariables& priVars,
                         const unsigned globalSpaceIdx,
                         const unsigned timeIdx,
@@ -273,7 +275,7 @@ public:
         this->updateSaturations(priVars, timeIdx, lintype);
     }
 
-    void updateSaturations(const PrimaryVariables& priVars, const unsigned timeIdx, const LinearizationType lintype)
+    OPM_HOST_DEVICE void updateSaturations(const PrimaryVariables& priVars, const unsigned timeIdx, const LinearizationType lintype)
     {
         // extract the water and the gas saturations for convenience
         Evaluation Sw = 0.0;
@@ -342,7 +344,7 @@ public:
         this->updateRelpermAndPressures(problem, priVars, globalSpaceIdx, timeIdx, elemCtx.linearizationType());
     }
 
-    void updateRelpermAndPressures(const Problem& problem,
+    OPM_HOST_DEVICE void updateRelpermAndPressures(const Problem& problem,
                                    const PrimaryVariables& priVars,
                                    const unsigned globalSpaceIdx,
                                    const unsigned timeIdx,
@@ -417,7 +419,7 @@ public:
         this->updateRsRvRsw(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void updateRsRvRsw(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updateRsRvRsw(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         const unsigned pvtRegionIdx = priVars.pvtRegionIndex();
 
@@ -588,7 +590,7 @@ public:
         this->updatePorosityImpl(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void updatePorosity(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updatePorosity(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         // Retrieve the reference porosity from the problem.
         referencePorosity_ = problem.porosity(globalSpaceIdx, timeIdx);
@@ -596,7 +598,7 @@ public:
         this->updatePorosityImpl(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void updatePorosityImpl(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updatePorosityImpl(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         const auto& linearizationType = problem.model().linearizer().getLinearizationType();
 
@@ -636,7 +638,7 @@ public:
         }
     }
 
-    void assertFiniteMembers()
+    OPM_HOST_DEVICE void assertFiniteMembers()
     {
         // some safety checks in debug mode
         for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
@@ -709,36 +711,41 @@ public:
         }
     }
 
-    void update(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void  update(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
-        static_assert(!enableSolvent);
-        static_assert(!enableExtbo);
-        static_assert(!enablePolymer);
-        static_assert(!enableEnergy);
-        static_assert(!enableFoam);
-        static_assert(!enableMICP);
-        static_assert(!enableBrine);
-        static_assert(!enableDiffusion);
-        static_assert(!enableDispersion);
+        #if !OPM_IS_COMPILING_WITH_GPU_COMPILER
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableSolvent);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableExtbo);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enablePolymer);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableEnergy);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableFoam);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableMICP);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableBrine);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableDiffusion);
+        static_assert(!OPM_IS_COMPILING_WITH_GPU_COMPILER || !enableDispersion);
+        #endif
 
         this->extrusionFactor_ = 1.0;// to avoid fixing parent update
         updatePart1(problem, priVars, globalSpaceIdx, timeIdx);
         // Porosity requires separate calls so this can be instantiated with ReservoirProblem from the examples/ directory.
-        updatePorosity(problem, priVars, globalSpaceIdx, timeIdx);
+        //updatePorosity(problem, priVars, globalSpaceIdx, timeIdx);
 
         // TODO: Here we should do the parts for solvent etc. at the bottom of the other update() function.
     }
 
-    void updatePart1(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updatePart1(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         OPM_TIMEBLOCK_LOCAL(blackoilIntensiveQuanititiesUpdate);
+        
 
         const auto& linearizationType = problem.model().linearizer().getLinearizationType();
+        
         const unsigned pvtRegionIdx = priVars.pvtRegionIndex();
-
+        
         fluidState_.setPvtRegionIndex(pvtRegionIdx);
-
+        
         updateTempSalt(problem, priVars, globalSpaceIdx, timeIdx, linearizationType);
+        #if 0
         updateSaturations(priVars, timeIdx, linearizationType);
         updateRelpermAndPressures(problem, priVars, globalSpaceIdx, timeIdx, linearizationType);
 
@@ -756,6 +763,7 @@ public:
 #ifndef NDEBUG
         assertFiniteMembers();
 #endif
+#endif
     }
 
     /*!
@@ -767,10 +775,10 @@ public:
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::mobility
      */
-    const Evaluation& mobility(unsigned phaseIdx) const
+    OPM_HOST_DEVICE  const Evaluation& mobility(unsigned phaseIdx) const
     { return mobility_[phaseIdx]; }
 
-    const Evaluation& mobility(unsigned phaseIdx, FaceDir::DirEnum facedir) const
+    OPM_HOST_DEVICE  const Evaluation& mobility(unsigned phaseIdx, FaceDir::DirEnum facedir) const
     {
         using Dir = FaceDir::DirEnum;
         if (dirMob_) {
@@ -797,13 +805,13 @@ public:
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::porosity
      */
-    const Evaluation& porosity() const
+    OPM_HOST_DEVICE const Evaluation& porosity() const
     { return porosity_; }
 
     /*!
      * The pressure-dependent transmissibility multiplier due to rock compressibility.
      */
-    const Evaluation& rockCompTransMultiplier() const
+    OPM_HOST_DEVICE const Evaluation& rockCompTransMultiplier() const
     { return rockCompTransMultiplier_; }
 
     /*!
@@ -813,14 +821,14 @@ public:
      * This allows to specify different Pressure-Volume-Temperature (PVT) relations in
      * different parts of the spatial domain.
      */
-    auto pvtRegionIndex() const
+    OPM_HOST_DEVICE auto pvtRegionIndex() const
         -> decltype(std::declval<FluidState>().pvtRegionIndex())
     { return fluidState_.pvtRegionIndex(); }
 
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::relativePermeability
      */
-    Evaluation relativePermeability(unsigned phaseIdx) const
+    OPM_HOST_DEVICE Evaluation relativePermeability(unsigned phaseIdx) const
     {
         // warning: slow
         return fluidState_.viscosity(phaseIdx)*mobility(phaseIdx);
@@ -832,7 +840,7 @@ public:
      * I.e., the porosity of rock which is not perturbed by pressure and temperature
      * changes.
      */
-    Scalar referencePorosity() const
+    OPM_HOST_DEVICE Scalar referencePorosity() const
     { return referencePorosity_; }
 
 private:
@@ -844,7 +852,7 @@ private:
     friend BlackOilBrineIntensiveQuantities<TypeTag>;
     friend BlackOilMICPIntensiveQuantities<TypeTag>;
 
-    Implementation& asImp_()
+    OPM_HOST_DEVICE  Implementation& asImp_()
     { return *static_cast<Implementation*>(this); }
 
     FluidState fluidState_;

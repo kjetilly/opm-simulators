@@ -112,12 +112,55 @@ using FluidSystem = Opm::BlackOilFluidSystem<double>;
 using Evaluation = Opm::DenseAd::Evaluation<double,2>;
 using Scalar = typename Opm::MathToolbox<Evaluation>::Scalar;
 using BlackOilFluidSystemView = Opm::BlackOilFluidSystemNonStatic<double, Opm::BlackOilDefaultIndexTraits, Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>;
+
+template<class TypeTag>
+struct DummyProblem {
+  using EclMaterialLawManager = typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>::EclMaterialLawManager;
+  using EclThermalLawManager = typename Opm::GetProp<TypeTag, Opm::Properties::SolidEnergyLaw>::EclThermalLawManager;
+  using MaterialLawParams = typename EclMaterialLawManager::MaterialLawParams;
+  struct {
+    struct {
+      OPM_HOST_DEVICE Opm::LinearizationType getLinearizationType() const { return Opm::LinearizationType(); }
+    } lin_;
+
+    OPM_HOST_DEVICE auto linearizer() const { return lin_; }
+  } model_;
+
+  OPM_HOST_DEVICE auto model() const { return model_; }
+
+  OPM_HOST_DEVICE int satnumRegionIndex(std::size_t) const { return 0; }
+  OPM_HOST_DEVICE MaterialLawParams materialLawParams(std::size_t) const { return MaterialLawParams(); }
+  OPM_HOST_DEVICE double rockCompressibility(std::size_t) const { return 0.0; }
+  OPM_HOST_DEVICE double rockReferencePressure(std::size_t) const { return 0.0; }
+  OPM_HOST_DEVICE double porosity(std::size_t, unsigned int) const { return 0.0; }
+  OPM_HOST_DEVICE double maxOilVaporizationFactor(unsigned int, std::size_t) const { return 0.0; }
+  OPM_HOST_DEVICE double maxGasDissolutionFactor(unsigned int, std::size_t) const { return 0.0; }
+  OPM_HOST_DEVICE double maxOilSaturation(std::size_t) const { return 0.0; }
+
+  template<class Evaluation>
+  OPM_HOST_DEVICE Evaluation rockCompPoroMultiplier(const auto&, std::size_t) const {
+    return Evaluation(0.0);
+  }
+
+  template<class A, class B, class C>
+  OPM_HOST_DEVICE void updateRelperms(A&, B&, const C&, std::size_t) const {}
+
+  template<class Evaluation>
+  OPM_HOST_DEVICE Evaluation rockCompTransMultiplier(const auto&, std::size_t) const {
+    return Evaluation(0.0);
+  }
+};
 namespace Opm {
   namespace Properties {
       namespace TTag {
           struct FlowSimpleProblem {
               using InheritsFrom = std::tuple<FlowProblem>;
           };
+
+          struct FlowSimpleProblemGPU {
+              using InheritsFrom = std::tuple<FlowSimpleProblem>;
+          };
+
       }
 
       // Indices for two-phase gas-water.
@@ -191,20 +234,37 @@ namespace Opm {
 
       template<class TypeTag>
       struct PrimaryVariables<TypeTag, TTag::FlowSimpleProblem> { using type = BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::dense::FieldVector>; };
+      template<class TypeTag>
+      struct IntensiveQuantities<TypeTag, TTag::FlowSimpleProblem> { using type = BlackOilIntensiveQuantities<TypeTag>; };
+
+      template<class TypeTag>
+      struct Problem<TypeTag, TTag::FlowSimpleProblemGPU> { using type = DummyProblem<TypeTag>; };
+
+      template<class TypeTag>
+      struct FluidSystem<TypeTag, TTag::FlowSimpleProblemGPU> { using type = BlackOilFluidSystemView; };
+
   };
 
 }
 
 using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
+using TypeNacht = Opm::Properties::TTag::FlowSimpleProblemGPU;
+#if 1
 
+#endif
 namespace {
   __global__ void testCreationGPU(BlackOilFluidSystemView fs) {
 
-    Opm::BlackOilIntensiveQuantities<TypeTag, BlackOilFluidSystemView> intensiveQuantities (&fs);
+    DummyProblem<TypeNacht> problem;
+    Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::dense::FieldVector> primaryVariables;
+    Opm::BlackOilIntensiveQuantities<TypeNacht> intensiveQuantities (&fs);
     auto& state = intensiveQuantities.fluidState();
     printf("BlackOilState density before update: %f\n", state.density(0));
     intensiveQuantities.updatePhaseDensities();
     printf("BlackOilState density after update: %f\n", state.density(0));
+
+    intensiveQuantities.update(problem, primaryVariables, 0, 0);
+    printf("Updating succeeded");
   }
 }
 

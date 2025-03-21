@@ -156,12 +156,21 @@ public:
         Disabled, // The primary variable is not used
     };
 
+    #if OPM_IS_INSIDE_DEVICE_FUNCTION
     OPM_HOST_DEVICE BlackOilPrimaryVariables()
-        : ParentType()
+        : ParentType(), pressureScale_(1.0) // TODO: Make the GPU branch fetch the pressure scale from static.
     {
         Valgrind::SetUndefined(*this);
         pvtRegionIdx_ = 0;
     }
+    #else 
+    BlackOilPrimaryVariables()
+        : ParentType(), pressureScale_(BlackOilPrimaryVariables::pressureScaleStatic_)
+    {
+        Valgrind::SetUndefined(*this);
+        pvtRegionIdx_ = 0;
+    }
+    #endif
 
     /*!
      * \copydoc ImmisciblePrimaryVariables::ImmisciblePrimaryVariables(const ImmisciblePrimaryVariables& )
@@ -187,7 +196,7 @@ public:
     OPM_HOST_DEVICE static void init()
     {
         // TODO: these parameters have undocumented non-trivial dependencies
-        pressureScale_ = Parameters::Get<Parameters::PressureScale<Scalar>>();
+        pressureScaleStatic_ = Parameters::Get<Parameters::PressureScale<Scalar>>();
     }
 
     static void registerParameters()
@@ -1127,7 +1136,8 @@ private:
     SolventMeaning primaryVarsMeaningSolvent_{SolventMeaning::Disabled};
     unsigned short pvtRegionIdx_;
     Scalar pcFactor_;
-    static inline Scalar pressureScale_ = 1.0;
+    Scalar pressureScale_ = 1.0;
+    inline static Scalar pressureScaleStatic_ = 1.0;
 
     const FluidSystem* fluidSystem_ = nullptr;
 };
