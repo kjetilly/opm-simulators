@@ -43,6 +43,7 @@
 #include <opm/common/TimingMacros.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/utility/gpuDecorators.hpp>
+#include <opm/common/utility/GpuFriendlyVector.hpp>
 
 #include <opm/input/eclipse/EclipseState/Grid/FaceDir.hpp>
 
@@ -507,7 +508,8 @@ public:
 
         // compute the phase densities and transform the phase permeabilities into mobilities
         int nmobilities = 1;
-        std::vector<std::array<Evaluation,numPhases>*> mobilities = {&mobility_};
+
+        Opm::GpuFriendlyVector<std::array<Evaluation,numPhases>*, 4> mobilities = {&mobility_};
         if (dirMob_) {
             for (int i=0; i<3; i++) {
                 nmobilities += 1;
@@ -743,7 +745,7 @@ public:
         this->extrusionFactor_ = 1.0;// to avoid fixing parent update
         updatePart1(problem, priVars, globalSpaceIdx, timeIdx);
         // Porosity requires separate calls so this can be instantiated with ReservoirProblem from the examples/ directory.
-        //updatePorosity(problem, priVars, globalSpaceIdx, timeIdx);
+        updatePorosity(problem, priVars, globalSpaceIdx, timeIdx);
 
         // TODO: Here we should do the parts for solvent etc. at the bottom of the other update() function.
     }
@@ -760,7 +762,7 @@ public:
         fluidState_.setPvtRegionIndex(pvtRegionIdx);
         
         updateTempSalt(problem, priVars, globalSpaceIdx, timeIdx, linearizationType);
-        #if 0
+    
         updateSaturations(priVars, timeIdx, linearizationType);
         updateRelpermAndPressures(problem, priVars, globalSpaceIdx, timeIdx, linearizationType);
 
@@ -778,7 +780,7 @@ public:
 #ifndef NDEBUG
         assertFiniteMembers();
 #endif
-#endif
+
     }
 
     /*!
