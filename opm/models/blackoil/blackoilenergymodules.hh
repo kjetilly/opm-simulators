@@ -255,7 +255,7 @@ public:
      * \brief Assign the energy specific primary variables to a PrimaryVariables object
      */
     template <class FluidState>
-    static void assignPrimaryVars(PrimaryVariables& priVars,
+    OPM_HOST_DEVICE static void assignPrimaryVars(PrimaryVariables& priVars,
                                   const FluidState& fluidState)
     {
         if constexpr (enableEnergy)
