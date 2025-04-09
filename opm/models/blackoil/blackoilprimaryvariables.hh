@@ -160,12 +160,28 @@ public:
     OPM_HOST_DEVICE BlackOilPrimaryVariables()
         : ParentType(), pressureScale_(1.0) // TODO: Make the GPU branch fetch the pressure scale from static.
     {
+        //static_assert(std::is_empty_v<FluidSystem>, "When using the default constructor, the FluidSystem must be empty.");
+        Valgrind::SetUndefined(*this);
+        pvtRegionIdx_ = 0;
+    }
+
+    OPM_HOST_DEVICE BlackOilPrimaryVariables(FluidSystem& fluidSystem)
+        : ParentType(), pressureScale_(1.0), fluidSystem_(&fluidSystem) // TODO: Make the GPU branch fetch the pressure scale from static.
+    {
         Valgrind::SetUndefined(*this);
         pvtRegionIdx_ = 0;
     }
     #else 
     BlackOilPrimaryVariables()
         : ParentType(), pressureScale_(BlackOilPrimaryVariables::pressureScaleStatic_)
+    {
+        //static_assert(std::is_empty_v<FluidSystem>, "When using the default constructor, the FluidSystem must be empty.");
+        Valgrind::SetUndefined(*this);
+        pvtRegionIdx_ = 0;
+    }
+
+    BlackOilPrimaryVariables(FluidSystem& fluidSystem)
+    : ParentType(), pressureScale_(BlackOilPrimaryVariables::pressureScaleStatic_), fluidSystem_(&fluidSystem)
     {
         Valgrind::SetUndefined(*this);
         pvtRegionIdx_ = 0;
