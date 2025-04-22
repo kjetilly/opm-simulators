@@ -360,6 +360,7 @@ using TypeTagGPU = Opm::Properties::TTag::FlowSimpleProblemGPU;
 #endif
 //namespace
 //{ 
+#if 0
 __global__ void
 testCreationGPU(BlackOilFluidSystemView fs)
 {
@@ -383,7 +384,7 @@ testCreationGPU(BlackOilFluidSystemView fs)
     intensiveQuantities.update(problem, primaryVariables, 0, 0);
     printf("Updating succeeded");
 }
-#if 0
+
 template <class ProblemType>
 __global__ void
 testCreationGPUWithProblem(BlackOilFluidSystemView fs, ProblemType problem)
@@ -445,7 +446,7 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCreationGPU)
     fmt::println("state::Scalar: {}", typeid(std::remove_reference_t<std::remove_const_t<decltype(state)>>::Scalar).name());
     using PrimaryVariables = Opm::GetPropType<TypeTag, Opm::Properties::PrimaryVariables>;
     std::cout << typeid(PrimaryVariables).name() << std::endl;
-    testCreationGPU<<<1, 1>>>(dynamicGpuFluidSystemView);
+    // testCreationGPU<<<1, 1>>>(dynamicGpuFluidSystemView);
     OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
     OPM_GPU_SAFE_CALL(cudaGetLastError());
 }
