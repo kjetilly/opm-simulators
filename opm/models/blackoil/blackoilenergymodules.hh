@@ -355,7 +355,7 @@ public:
      * \brief Update the temperature of the intensive quantity's fluid state
      *
      */
-    void updateTemperature_(const ElementContext& elemCtx,
+    OPM_HOST_DEVICE void updateTemperature_(const ElementContext& elemCtx,
                             unsigned dofIdx,
                             unsigned timeIdx)
     {
@@ -370,7 +370,7 @@ public:
      * \brief Update the temperature of the intensive quantity's fluid state
      *
      */
-    void updateTemperature_([[maybe_unused]] const Problem& problem,
+    OPM_HOST_DEVICE void updateTemperature_([[maybe_unused]] const Problem& problem,
                             const PrimaryVariables& priVars,
                             [[maybe_unused]] unsigned globalDofIdx,
                             const unsigned timeIdx,
@@ -384,14 +384,14 @@ public:
      * \brief Compute the intensive quantities needed to handle energy conservation
      *
      */
-    void updateEnergyQuantities_(const ElementContext& elemCtx,
+    OPM_HOST_DEVICE void updateEnergyQuantities_(const ElementContext& elemCtx,
                                  unsigned dofIdx,
                                  unsigned timeIdx)
     {
         updateEnergyQuantities_(elemCtx.problem(), elemCtx.globalSpaceIndex(dofIdx, timeIdx), timeIdx);
     }
 
-    void updateEnergyQuantities_(const Problem& problem,
+    OPM_HOST_DEVICE void updateEnergyQuantities_(const Problem& problem,
                                  const unsigned globalSpaceIdx,
                                  const unsigned timeIdx)
     {
@@ -422,17 +422,17 @@ public:
         rockFraction_ = problem.rockFraction(globalSpaceIdx, timeIdx);
     }
 
-    const Evaluation& rockInternalEnergy() const
+    OPM_HOST_DEVICE const Evaluation& rockInternalEnergy() const
     { return rockInternalEnergy_; }
 
-    const Evaluation& totalThermalConductivity() const
+    OPM_HOST_DEVICE const Evaluation& totalThermalConductivity() const
     { return totalThermalConductivity_; }
 
-    const Scalar& rockFraction() const
+    OPM_HOST_DEVICE const Scalar& rockFraction() const
     { return rockFraction_; }
 
 protected:
-    Implementation& asImp_()
+    OPM_HOST_DEVICE Implementation& asImp_()
     { return *static_cast<Implementation*>(this); }
 
     Evaluation rockInternalEnergy_;
