@@ -294,7 +294,7 @@ public:
     {
     }
 
-    PointerView(void* ptr)
+    OPM_HOST_DEVICE PointerView(void* ptr)
         : ptr_(ptr)
     {
     }
