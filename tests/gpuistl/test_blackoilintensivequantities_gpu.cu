@@ -360,7 +360,7 @@ using TypeTagGPU = Opm::Properties::TTag::FlowSimpleProblemGPU;
 #endif
 //namespace
 //{ 
-#if 0
+
 __global__ void
 testCreationGPU(BlackOilFluidSystemView fs)
 {
@@ -381,10 +381,11 @@ testCreationGPU(BlackOilFluidSystemView fs)
     //intensiveQuantities.updatePhaseDensities();
     printf("BlackOilState density after update: %f\n", state.density(0));
 
-    intensiveQuantities.update(problem, primaryVariables, 0, 0);
+    //intensiveQuantities.update(problem, primaryVariables, 0, 0);
     printf("Updating succeeded");
 }
 
+#if 0
 template <class ProblemType>
 __global__ void
 testCreationGPUWithProblem(BlackOilFluidSystemView fs, ProblemType problem)
