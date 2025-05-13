@@ -12,7 +12,32 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include "opm/common/utility/VectorWithDefaultAllocator.hpp"
 #include <config.h>
+#include <algorithm>
+#include <array>
+#include <chrono>
+#include <cmath>
+#include <cstddef>
+#include <cstring>
+#include <functional>
+#include <iostream>
+#include <iterator>
+#include <limits>
+#include <map>
+#include <memory>
+#include <numeric>
+#include <optional>
+#include <set>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <tuple>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 
 #define BOOST_TEST_MODULE TestFlowProblemGpu
 
@@ -261,6 +286,15 @@ __global__ void updateRelPermsFromFlowProblemBlackoilGpu(ProblemView prob, MobAr
   prob.updateRelperms(mob, dirPtr, fs, 0);
 }
 
+template<class T>
+struct GetTraits {
+};
+
+
+template<class Scalar, class IndexTraits, template<class> class ViewType, template<class> class PtrType>
+struct GetTraits<Opm::BlackOilFluidSystem<Scalar, IndexTraits, ViewType, PtrType>>{
+  using type = IndexTraits;
+};
 
 BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 {
@@ -328,6 +362,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   BOOST_CHECK_EQUAL(satNumOnCpu, sim->problem().satnumRegionIndex(0));
   std::ignore = cudaFree(satNumOnGpu);
 
+
   Opm::LinearizationType linTypeOnCpu;
   Opm::LinearizationType* linTypeOnGpu;
   std::ignore = cudaMalloc(&linTypeOnGpu, sizeof(Opm::LinearizationType));
@@ -362,7 +397,6 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   std::ignore = cudaFree(referencePressureOnGpu);
 
   materialLawParamsCallable<<<1, 1>>>(problemGpuView);
-
   using FluidSystem = Opm::BlackOilFluidSystem<double>;
   using Evaluation = Opm::DenseAd::Evaluation<double,2>;
   using Scalar = double;
@@ -375,10 +409,16 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   Opm::EclipseState eclState(deck);
   Opm::Schedule schedule(deck, eclState, python);
 
+
   FluidSystem::initFromState(eclState, schedule);
+
   auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
-  auto dynamicGpuFluidSystemBuffer = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, double>(dynamicFluidSystem);
+
+  using IndexTraits = typename GetTraits<FluidSystem>::type;
+  auto dynamicGpuFluidSystemBuffer = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, double, Opm::BlackOilDefaultIndexTraits, Opm::VectorWithDefaultAllocator>(dynamicFluidSystem);
+
   auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(dynamicGpuFluidSystemBuffer);
+
   auto gpufluidstate = BlackOilFluidState<double, decltype(dynamicGpuFluidSystemView)>(dynamicGpuFluidSystemView);
   // Create MobArr
   double testValue = 0.5;
@@ -387,7 +427,6 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   MobArr cpuMobArray;
   cpuMobArray[0] = Evaluation(testValue, 0);
   cpuMobArray[1] = Evaluation(testValue, 1);
-  
   // Copy to GPU
   MobArr* d_mobArray;
   OPM_GPU_SAFE_CALL(cudaMalloc(&d_mobArray, sizeof(MobArr)));

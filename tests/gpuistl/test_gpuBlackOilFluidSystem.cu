@@ -402,7 +402,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleInterpolation)
 
   std::shared_ptr<CPUParams> cpuParamsPtr = std::make_shared<CPUParams>(cpuParams);
 
-  GPUBufferParams gpuBufferParams = gpuistl::copy_to_gpu<GPUBuffer>(cpuParams);
+  GPUBufferParams gpuBufferParams = gpuistl::copy_to_gpu<GPUBuffer, TwoPhaseTraits>(cpuParams);
   GPUViewParams gpuViewParams = gpuistl::make_view<GPUView>(gpuBufferParams);
 
   EclTwoPhaseMaterialParams<ThreePhaseTraits, CPUParams, CPUParams, CPUParams> cpuTwoPhaseParams;
@@ -435,6 +435,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleInterpolation)
   auto gpufluidstate = BlackOilFluidState<double, decltype(dynamicGpuFluidSystemView)>(dynamicGpuFluidSystemView);
   auto cpuFluidstate = BlackOilFluidState<double, std::remove_reference_t<decltype(dynamicFluidSystem)>>(dynamicFluidSystem);
 
+
   std::vector<double> Pc = {0, 0, 0};
   ::Opm::EclTwoPhaseMaterial<
     ThreePhaseTraits,
@@ -451,8 +452,7 @@ BOOST_AUTO_TEST_CASE(TestSimpleInterpolation)
   std::vector<double> gpuPcOnCpu = {0, 0, 0};
   auto gpuPcBuffer = GpuB(gpuPcOnCpu);
   auto gpuPcView = gpuistl::make_view<double>(gpuPcBuffer);
-
-  using GpuEclTwoPhaseMaterialParams = EclTwoPhaseMaterialParams<ThreePhaseTraits, GPUViewParams, GPUViewParams, GPUViewParams, typename ::Opm::gpuistl::ValueAsPointer>;
+  using GpuEclTwoPhaseMaterialParams = EclTwoPhaseMaterialParams<ThreePhaseTraits, GPUViewParams, GPUViewParams, GPUViewParams, ::Opm::gpuistl::ValueAsPointer>;
   using GpuEclTwoPhaseMaterial = Opm::EclTwoPhaseMaterial<
     ThreePhaseTraits,
     GPUTwoPhaseViewMaterialLaw,
@@ -460,7 +460,9 @@ BOOST_AUTO_TEST_CASE(TestSimpleInterpolation)
     GPUTwoPhaseViewMaterialLaw,
     GpuEclTwoPhaseMaterialParams>;
 
+
   computeCapillaryPressures<GpuEclTwoPhaseMaterial><<<1, 1>>>(gpuPcView, gpuTwoPhaseParamsView, gpufluidstate);
+  #if 1
 
   auto res = gpuPcView.asStdVector();
 
@@ -468,4 +470,5 @@ BOOST_AUTO_TEST_CASE(TestSimpleInterpolation)
   BOOST_CHECK_EQUAL(res[0], Pc[0]);
   BOOST_CHECK_EQUAL(res[1], Pc[1]);
   BOOST_CHECK_EQUAL(res[2], Pc[2]);
+  #endif
 }

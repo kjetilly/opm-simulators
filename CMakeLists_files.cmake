@@ -504,6 +504,7 @@ if (HAVE_CUDA)
 
   # for loop providing the flag --expt-relaxed-constexpr to fix some cuda issues with constexpr
   if(NOT CONVERT_CUDA_TO_HIP)
+  if(NOT "${CMAKE_CUDA_COMPILER}" MATCHES ".*clang.*")
     set(CU_FILES_NEEDING_RELAXED_CONSTEXPR
       tests/gpuistl/test_gpu_ad.cu
       tests/gpuistl/test_gpu_linear_two_phase_material.cu
@@ -515,17 +516,19 @@ if (HAVE_CUDA)
     )
 
     foreach(file ${CU_FILES_NEEDING_RELAXED_CONSTEXPR})
-        set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--expt-relaxed-constexpr")
+      set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "--expt-relaxed-constexpr")
     endforeach()
 
     set(CU_FILES_NEEDING_FPERMISSIVE
       tests/gpuistl/test_primary_variables_gpu.cu
       tests/gpuistl/test_blackoilintensivequantities_gpu.cu
+      tests/gpuistl/test_gpuflowproblem.cu
     )
 
     foreach(file ${CU_FILES_NEEDING_FPERMISSIVE})
       set_source_files_properties(${file} PROPERTIES COMPILE_FLAGS "-fpermissive --expt-relaxed-constexpr -Xcompiler=-fpermissive")
     endforeach()
+  endif()
   endif()
 endif()
 
