@@ -494,6 +494,11 @@ target_sources(test_glift1 PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 target_sources(test_blackoilintensivequantities_gpu PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 target_sources(test_gpuflowproblem PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 
+#target_sources(test_flow_blackoil PRIVATE $<TARGET_OBJECTS:moduleVersion>)
+#target_sources(test_flow_blackoil_gpu PRIVATE $<TARGET_OBJECTS:moduleVersion>)
+#target_sources(test_flow PRIVATE  $<TARGET_OBJECTS:moduleVersion> $<TARGET_OBJECTS:MainDispatchDynamic>  ${FLOW_TGTS})
+#target_sources(test_flow_gpu PRIVATE  $<TARGET_OBJECTS:moduleVersion> $<TARGET_OBJECTS:MainDispatchDynamic> ${FLOW_TGTS})
+
 if(MPI_FOUND)
   target_sources(test_chopstep PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 endif()
@@ -613,6 +618,12 @@ opm_add_test(flow
   $<TARGET_OBJECTS:moduleVersion>
   $<TARGET_OBJECTS:MainDispatchDynamic>
   )
+
+  target_sources(test_flow_gpu PRIVATE   ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  target_sources(test_flow PRIVATE   ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+target_sources(test_flow_simple PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic>  $<TARGET_OBJECTS:moduleVersion>)
+target_sources(test_flow_simple_gpu PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+
 
 opm_add_test(flow_simple
   ONLY_COMPILE

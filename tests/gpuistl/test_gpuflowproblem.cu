@@ -268,12 +268,14 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   // FIXTURE FROM TEST EQUIL
   int argc1 = boost::unit_test::framework::master_test_suite().argc;
   char** argv1 = boost::unit_test::framework::master_test_suite().argv;
+  fmt::println("At line {}", __LINE__);
 
 #if HAVE_DUNE_FEM
   Dune::Fem::MPIManager::initialize(argc1, argv1);
 #else
   Dune::MPIHelper::instance(argc1, argv1);
 #endif
+fmt::println("At line {}", __LINE__);
 
   using namespace Opm;
   FlowGenericVanguard::setCommunication(std::make_unique<Opm::Parallel::Communication>());
@@ -282,25 +284,39 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   AdaptiveTimeStepping<TypeTag>::registerParameters();
   Parameters::Register<Parameters::EnableTerminalOutput>("Dummy added for the well model to compile.");
   registerAllParameters_<TypeTag>();
+  fmt::println("At line {}", __LINE__);
 
   // END OF FIXTURE FROM TEST EQUIL
 
   using Simulator = Opm::GetPropType<TypeTag, Opm::Properties::Simulator>;
+  fmt::println("At line {}", __LINE__);
 
   // TODO: will this actually refer to the very_simple_deck.DATA inside the gpuistl folder,
   // TODO: do we need to keep track of the path since it can be hipified?
   const char* filename = "very_simple_deck.DATA";
   const auto filenameArg = std::string {"--ecl-deck-file-name="} + filename;
+  fmt::println("At line {}", __LINE__);
 
   const char* argv2[] = {
       "test_gpuflowproblem",
-      filenameArg.c_str(),
-      "--check-satfunc-consistency=false",
+      filename,//filenameArg.c_str(),
+      //"--check-satfunc-consistency=false",
+      ""
   };
+  fmt::println("At line {}", __LINE__);
 
   Opm::setupParameters_<TypeTag>(/*argc=*/sizeof(argv2)/sizeof(argv2[0]), argv2, /*registerParams=*/false);
 
+  // Check if the deck file exists
+  
+  {
+    std::ifstream deckFile(filename);
+    if (!deckFile.good()) {
+      throw std::runtime_error("Deck file not found: " + std::string(filename));
+    }
+  }
   Opm::FlowGenericVanguard::readDeck(filename);
+  fmt::println("At line {}", __LINE__);
 
   auto sim = std::make_unique<Simulator>();
 
@@ -310,6 +326,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   // using ThreePhaseParams = typename GetPropType<TypeTag, Properties::MaterialLaw>::EclMaterialLawManager::MaterialLawParams;
   using ThreePhaseParams = typename ::Opm::EclMaterialLawManagerSimple<ThreePhaseTraits>::MaterialLawParams;
   using CpuGasWaterTwoPhaseLaw = ThreePhaseParams::GasWaterParams;
+  fmt::println("At line {}", __LINE__);
 
   enum { waterPhaseIdx = ThreePhaseTraits::wettingPhaseIdx };
   enum { oilPhaseIdx = ThreePhaseTraits::nonWettingPhaseIdx };
@@ -319,9 +336,21 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 
   using GPUBufferInterpolation = Opm::PiecewiseLinearTwoPhaseMaterialParams<GasWaterTraits, Opm::gpuistl::GpuBuffer<double>>;
   using GPUViewInterpolation = Opm::PiecewiseLinearTwoPhaseMaterialParams<GasWaterTraits, Opm::gpuistl::GpuView<double>>;
+  fmt::println("At line {}", __LINE__);
+
+  auto& simproblem = sim->problem();
+  fmt::println("got problem");
+  auto manager = simproblem.materialLawManager();
+  fmt::println("got manager");
+  auto& params = manager->materialLawParams(0).gasWaterParams();
+  fmt::println("got params");
+  params.printme();
+
+  fmt::println("cpu stuff done");
 
   auto problemGpuBuf = Opm::gpuistl::copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(sim->problem());
   auto problemGpuView = Opm::gpuistl::make_view<Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>(problemGpuBuf);
+  fmt::println("At line {}", __LINE__);
 
   unsigned short satNumOnCpu;
   unsigned short* satNumOnGpu;
@@ -330,6 +359,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   std::ignore = cudaMemcpy(&satNumOnCpu, satNumOnGpu, sizeof(unsigned short), cudaMemcpyDeviceToHost);
   BOOST_CHECK_EQUAL(satNumOnCpu, sim->problem().satnumRegionIndex(0));
   std::ignore = cudaFree(satNumOnGpu);
+  fmt::println("At line {}", __LINE__);
 
   Opm::LinearizationType linTypeOnCpu;
   Opm::LinearizationType* linTypeOnGpu;
@@ -339,6 +369,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   auto linTypeFromCPUSimulator = sim->problem().model().linearizer().getLinearizationType();
   BOOST_CHECK_EQUAL(linTypeOnCpu.type, linTypeFromCPUSimulator.type);
   std::ignore = cudaFree(linTypeOnGpu);
+  fmt::println("At line {}", __LINE__);
 
   double rocmCompressibilityOnCpu;
   double* rockCompressibilityOnGpu;
@@ -347,6 +378,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   std::ignore = cudaMemcpy(&rocmCompressibilityOnCpu, rockCompressibilityOnGpu, sizeof(double), cudaMemcpyDeviceToHost);
   BOOST_CHECK_EQUAL(rocmCompressibilityOnCpu, sim->problem().rockCompressibility(0));
   std::ignore = cudaFree(rockCompressibilityOnGpu);
+  fmt::println("At line {}", __LINE__);
 
   double porosityOnCpu;
   double* porosityOnGpu;
@@ -360,24 +392,30 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   double* referencePressureOnGpu;
   std::ignore = cudaMalloc(&referencePressureOnGpu, sizeof(double));
   rockReferencePressureFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, referencePressureOnGpu);
+  fmt::println("At line {}", __LINE__);
   std::ignore = cudaMemcpy(&referencePressureOnCpu, referencePressureOnGpu, sizeof(double), cudaMemcpyDeviceToHost);
+  fmt::println("At line {}", __LINE__);
   BOOST_CHECK_EQUAL(referencePressureOnCpu, sim->problem().rockReferencePressure(0));
+  fmt::println("At line {}", __LINE__);
   std::ignore = cudaFree(referencePressureOnGpu);
-
+  fmt::println("At line {}", __LINE__);
   materialLawParamsCallable<<<1, 1>>>(problemGpuView);
+  fmt::println("At line {}", __LINE__);
 
   using FluidSystem = Opm::BlackOilFluidSystem<double>;
   using Evaluation = Opm::DenseAd::Evaluation<double,2>;
   using Scalar = double;
   // using DirectionalMobilityPtr = Utility::CopyablePtr<DirectionalMobility<TypeTag, Evaluation>>;
   using DirectionalMobilityPtr = Utility::CopyablePtr<DirectionalMobility<TypeTag>>;
-  
+  fmt::println("At line {}", __LINE__);
+
   // Create the fluid system
   Opm::Parser parser;
   auto deck = parser.parseString(deckString1);
   auto python = std::make_shared<Opm::Python>();
   Opm::EclipseState eclState(deck);
   Opm::Schedule schedule(deck, eclState, python);
+  fmt::println("At line {}", __LINE__);
 
   FluidSystem::initFromState(eclState, schedule);
   auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
@@ -391,11 +429,16 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
   MobArr cpuMobArray;
   cpuMobArray[0] = Evaluation(testValue, 0);
   cpuMobArray[1] = Evaluation(testValue, 1);
-  
+  fmt::println("At line {}", __LINE__);
+
   // Copy to GPU
   MobArr* d_mobArray;
   OPM_GPU_SAFE_CALL(cudaMalloc(&d_mobArray, sizeof(MobArr)));
   OPM_GPU_SAFE_CALL(cudaMemcpy(d_mobArray, &cpuMobArray, sizeof(MobArr), cudaMemcpyHostToDevice));
-  
+  fmt::println("At line {}", __LINE__);
+
   updateRelPermsFromFlowProblemBlackoilGpu<DirectionalMobilityPtr><<<1, 1>>>(problemGpuView, *d_mobArray, gpufluidstate);
+  
+  OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
+  fmt::println("At line {}", __LINE__);
 }

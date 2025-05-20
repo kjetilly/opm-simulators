@@ -449,6 +449,8 @@ list (APPEND TEST_SOURCE_FILES
   tests/test_RestartSerialization.cpp
   tests/test_RunningStatistics.cpp
   tests/test_rstconv.cpp
+  tests/test_flow_simple.cpp
+  tests/test_flow.cpp
   tests/test_stoppedwells.cpp
   tests/test_SymmTensor.cpp
   tests/test_timer.cpp
@@ -518,6 +520,10 @@ if (HAVE_CUDA)
   ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_primary_variables_gpu.cu)
   ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_gpuflowproblem.cu)
   ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_gpumateriallaw.cu)
+  ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_simple_gpu.cu)
+  #ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_blackoil_gpu.cu)
+  ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_gpu.cu)
+
   if(MPI_FOUND)
     ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_GpuOwnerOverlapCopy.cpp)
   endif()
