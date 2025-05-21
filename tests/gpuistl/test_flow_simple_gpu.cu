@@ -81,7 +81,7 @@ namespace Opm {
                                                     /*nonWettingPhaseIdx=*/FluidSystem::oilPhaseIdx,
                                                     /*gasPhaseIdx=*/FluidSystem::gasPhaseIdx>;
         public:
-            using EclMaterialLawManager = ::Opm::EclMaterialLawManager<Traits>;
+            using EclMaterialLawManager = ::Opm::EclMaterialLawManagerSimple<Traits>;
             using type = typename EclMaterialLawManager::MaterialLaw;
         };
 

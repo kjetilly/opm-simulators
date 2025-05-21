@@ -172,6 +172,11 @@ namespace Opm {
             return execute_(&FlowMain::runSimulator, /*cleanup=*/true);
         }
 
+        auto getSimulator() const
+        {
+            return simulator_.get();
+        }
+
         int executeInitStep()
         {
             return execute_(&FlowMain::runSimulatorInit, /*cleanup=*/false);

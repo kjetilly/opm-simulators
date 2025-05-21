@@ -619,11 +619,13 @@ opm_add_test(flow
   $<TARGET_OBJECTS:MainDispatchDynamic>
   )
 
-  target_sources(test_flow_gpu PRIVATE   ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  target_sources(test_flow_simple PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic>  $<TARGET_OBJECTS:moduleVersion>)
   target_sources(test_flow PRIVATE   ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
-target_sources(test_flow_simple PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic>  $<TARGET_OBJECTS:moduleVersion>)
-target_sources(test_flow_simple_gpu PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  target_sources(test_flow_gpu PRIVATE   ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  
 
+  target_sources(test_flow_simple_gpu PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  target_sources(test_flow_simple_gpu_with_external_load PRIVATE tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
 
 opm_add_test(flow_simple
   ONLY_COMPILE
@@ -636,6 +638,9 @@ opm_add_test(flow_simple
   ${FLOW_TGTS}
   $<TARGET_OBJECTS:moduleVersion>
 )
+
+
+
 
 opm_add_test(flow_blackoil_polyhedralgrid
   ONLY_COMPILE

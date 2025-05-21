@@ -170,6 +170,18 @@ public:
         return exitCode;
     }
 
+
+    template <class TypeTag>
+    auto gimmeFlowMain()
+    {
+        this->setupVanguard();
+        // we always want to use the default locale, and thus spare us the trouble
+        // with incorrect locale settings.
+        resetLocale();
+
+        return new FlowMain<TypeTag>(argc_, argv_, false, false);
+    }
+
 protected:
     /// \brief Initialize
     /// \param exitCode The exitCode of the program.

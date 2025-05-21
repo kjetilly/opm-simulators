@@ -523,6 +523,7 @@ if (HAVE_CUDA)
   ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_simple_gpu.cu)
   #ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_blackoil_gpu.cu)
   ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_gpu.cu)
+  ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_flow_simple_gpu_with_external_load.cu)
 
   if(MPI_FOUND)
     ADD_CUDA_OR_HIP_FILE(TEST_SOURCE_FILES tests test_GpuOwnerOverlapCopy.cpp)
