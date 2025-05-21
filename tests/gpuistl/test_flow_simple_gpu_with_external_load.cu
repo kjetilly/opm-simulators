@@ -20,12 +20,28 @@
 #include "config.h"
 #include <tests/common_type_tag.hpp>
 #include <tests/load_data.hpp>
+#include <fmt/core.h>
+#if USE_HIP
+#include <opm/simulators/linalg/gpuistl_hip/GpuBuffer.hpp>
+#include <opm/simulators/linalg/gpuistl_hip/DualBuffer.hpp>
+#else
+#include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
+#include <opm/simulators/linalg/gpuistl/DualBuffer.hpp
+#endif
+
+#include <opm/simulators/flow/FlowProblemBlackoilGpu.hpp>
+
 
 int main(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
 
-    loadData<TypeTag>(argc, argv);
+    loadData<TypeTag>(argc, argv, [](Opm::GetPropType<TypeTag, Opm::Properties::Problem>& problem) {
+      fmt::println("From callback");
+      auto problemGpuBuf = Opm::gpuistl::copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
+      fmt::println("Copied to GPU");
+
+    });
     return 0;
 //    return Opm::start<TypeTag>(argc, argv);
 }
