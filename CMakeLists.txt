@@ -492,7 +492,7 @@ target_sources(test_equil PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 target_sources(test_RestartSerialization PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 target_sources(test_glift1 PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 target_sources(test_blackoilintensivequantities_gpu PRIVATE $<TARGET_OBJECTS:moduleVersion>)
-target_sources(test_gpuflowproblem PRIVATE $<TARGET_OBJECTS:moduleVersion>)
+
 
 #target_sources(test_flow_blackoil PRIVATE $<TARGET_OBJECTS:moduleVersion>)
 #target_sources(test_flow_blackoil_gpu PRIVATE $<TARGET_OBJECTS:moduleVersion>)
@@ -626,6 +626,7 @@ opm_add_test(flow
 
   target_sources(test_flow_simple_gpu PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
   target_sources(test_flow_simple_gpu_with_external_load PRIVATE tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+target_sources(test_gpuflowproblem PRIVATE tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
 
 opm_add_test(flow_simple
   ONLY_COMPILE
