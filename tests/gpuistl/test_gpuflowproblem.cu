@@ -12,13 +12,17 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
+//#undef NDEBUG
 #include <config.h>
+//#undef NDEBUG
+
 #include <string>
 
 #define BOOST_TEST_MODULE TestFlowProblemGpu
 
 #include <boost/test/unit_test.hpp>
-
+#include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
+#include <opm/simulators/linalg/gpuistl/DualBuffer.hpp>
 #include <opm/material/densead/Evaluation.hpp>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManagerSimple.hpp>
 
@@ -79,8 +83,8 @@ Functionality requested for the blackoil flow problem on gpu:
 #include <opm/input/eclipse/Python/Python.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <tests/common_type_tag.hpp>
-
-#include <tests/load_data.hpp>
+//#include <tests/load_data.hpp>
+//#include <tests/load_data.cpp>
 
 #include <iostream>
 #include <memory>
@@ -151,14 +155,23 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
     for (auto& arg : args) {
         argv2.push_back(static_cast<char*>(arg.data()));
     }
-
-    loadData<TypeTag>(
-        argv2.size(),
-        static_cast<char**>(argv2.data()),
-        [&](Opm::GetPropType<TypeTag, Opm::Properties::Problem>& problem) {
+    using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
+    auto mainObject = Opm::Main(argv2.size() - 1, argv2.data());
+    //mainObject.runStatic<TypeTag>();
+    auto mainFlow = mainObject.gimmeFlowMain<TypeTag>();
+    std::cout << "Got mainFlow" << std::endl;
+    mainFlow->execute();
+    std::cout << "Executed mainFlow" << std::endl;
+    auto simulator = mainFlow->getSimulator();
+    std::cout << "Got simulator" << std::endl;
+    auto& problem = simulator->problem();
+    std::cout << "Got problem" << std::endl;
+    auto problemGpuBuf = Opm::gpuistl::
+       copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
+    
             fmt::println("From callback");
-            auto problemGpuBuf = Opm::gpuistl::
-                copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
+            //auto problemGpuBuf = Opm::gpuistl::
+            //    copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
             fmt::println("Copied to GPU");
             auto problemGpuView
                 = Opm::gpuistl::make_view<Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>(problemGpuBuf);
@@ -170,6 +183,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
             std::ignore = cudaMalloc(&satNumOnGpu, sizeof(unsigned short));
             satnumFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, satNumOnGpu);
             std::ignore = cudaMemcpy(&satNumOnCpu, satNumOnGpu, sizeof(unsigned short), cudaMemcpyDeviceToHost);
+            
             BOOST_CHECK_EQUAL(satNumOnCpu, problem.satnumRegionIndex(0));
             std::ignore = cudaFree(satNumOnGpu);
             fmt::println("At line {}", __LINE__);
@@ -273,5 +287,5 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 
             OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
             fmt::println("At line {}", __LINE__);
-        });
+        
 }

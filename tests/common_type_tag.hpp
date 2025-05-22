@@ -1,3 +1,5 @@
+#ifndef OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED
+#define OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED
 #include <opm/simulators/flow/Main.hpp>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManagerSimple.hpp>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
@@ -61,7 +63,6 @@ namespace Opm {
                                                     /*wettingPhaseIdx=*/FluidSystem::waterPhaseIdx,
                                                     /*nonWettingPhaseIdx=*/FluidSystem::oilPhaseIdx,
                                                     /*gasPhaseIdx=*/FluidSystem::gasPhaseIdx>;
-        public:
             using EclMaterialLawManager = ::Opm::EclMaterialLawManagerSimple<Traits>;
             using type = typename EclMaterialLawManager::MaterialLaw;
         };
@@ -86,3 +87,4 @@ namespace Opm {
     };
 
 }
+#endif  // OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED

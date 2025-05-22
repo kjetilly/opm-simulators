@@ -626,7 +626,17 @@ opm_add_test(flow
 
   target_sources(test_flow_simple_gpu PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
   target_sources(test_flow_simple_gpu_with_external_load PRIVATE tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
-target_sources(test_gpuflowproblem PRIVATE tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+
+  #add_library(load_data STATIC tests/load_data.cpp ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+  #target_link_libraries(load_data PUBLIC opmsimulators)
+  # Set debug flags specifically for load_data target
+  #target_compile_options(load_data PRIVATE -O0 -g -fPIC)
+  #target_compile_definitions(load_data PRIVATE -DDEBUG)
+
+  
+
+target_sources(test_gpuflowproblem PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
+#target_link_libraries(test_gpuflowproblem load_data)
 
 opm_add_test(flow_simple
   ONLY_COMPILE

@@ -250,6 +250,43 @@ namespace gpuistl
 //     template <class Scalar, class TypeTag, class MatLawParam, template <class> class Storage = VectorWithDefaultAllocator>
 // class FlowProblemBlackoilGpu
 
+    template<class TypeTag>
+    class GpuProblem {
+        using Problem = typename Opm::GetPropType<TypeTag, Opm::Properties::Problem>;
+        using MatLaw = typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>;
+        using CpuMgr = typename MatLaw::EclMaterialLawManager;          // == EclMaterialLawManagerSimple<…>
+        using CpuParams = typename CpuMgr::MaterialLawParams;              // == EclTwoPhaseMaterialParams<…CpuGasOil, CpuOilWater, CpuGasWater>
+        using Traits = typename MatLaw::Traits;
+        
+        using Scalar = typename Opm::GetPropType<TypeTag, Opm::Properties::Scalar>;
+        
+        using GasOilTraits   = TwoPhaseMaterialTraits<Scalar,
+                                                      Traits::nonWettingPhaseIdx,
+                                                      Traits::gasPhaseIdx>;
+        using OilWaterTraits = TwoPhaseMaterialTraits<Scalar,
+                                                      Traits::wettingPhaseIdx,
+                                                      Traits::nonWettingPhaseIdx>;
+        using GasWaterTraits = TwoPhaseMaterialTraits<Scalar,
+                                                      Traits::wettingPhaseIdx,
+                                                      Traits::gasPhaseIdx>;
+
+        using GpuBuf = GpuBuffer<Scalar>;
+        // now build your new GPU param classes:
+        using GpuGasOilParams   = PiecewiseLinearTwoPhaseMaterialParams<GasOilTraits,   GpuBuf>;
+        using GpuOilWaterParams = PiecewiseLinearTwoPhaseMaterialParams<OilWaterTraits, GpuBuf>;
+        using GpuGasWaterParams = PiecewiseLinearTwoPhaseMaterialParams<GasWaterTraits, GpuBuf>;
+
+        using ThreePhaseMaterialParams = Opm::EclTwoPhaseMaterialParams<
+            Traits,
+            GpuGasOilParams,
+            GpuOilWaterParams,
+            GpuGasWaterParams
+        >;
+
+    public:
+        using type = FlowProblemBlackoilGpu<Scalar, TypeTag, ThreePhaseMaterialParams, GpuBuffer, DualBuffer>;
+    };
+
     // TODO: why are there two typetags?
     template <class Scalar, template <class> class ContainerT, template<class> class DualContainer, class TypeTagFrom, class TypeTagTo>
     auto

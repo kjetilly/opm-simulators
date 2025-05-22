@@ -175,7 +175,7 @@ namespace Opm {
         auto getSimulator() const
         {
             return simulator_.get();
-        }
+    }
 
         int executeInitStep()
         {
