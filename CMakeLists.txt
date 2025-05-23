@@ -564,6 +564,10 @@ if(USE_TRACY_PROFILER AND Tracy_FOUND)
   target_link_libraries(MainDispatchDynamic Tracy::TracyClient)
 endif()
 
+if (CONVERT_CUDA_TO_HIP)
+  add_dependencies(MainDispatchDynamic hipified_headers)
+endif()
+
 # Strictly we only depend on the update-version target,
 # but this is not exposed in a super-build.
 add_dependencies(moduleVersion opmsimulators)
@@ -589,6 +593,9 @@ foreach(OBJ ${COMMON_MODELS} ${FLOW_MODELS} ${FLOW_VARIANT_MODELS})
   endif()
   if(USE_TRACY_PROFILER AND Tracy_FOUND)
     target_link_libraries(flow_lib${OBJ} Tracy::TracyClient)
+  endif()
+  if(CONVERT_CUDA_TO_HIP)
+    add_dependencies(flow_lib${OBJ} hipified_headers)
   endif()
   opm_add_test(flow_${OBJ}
                ONLY_COMPILE
