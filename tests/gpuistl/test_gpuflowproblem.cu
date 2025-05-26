@@ -12,19 +12,19 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
-//#undef NDEBUG
+// #undef NDEBUG
 #include <config.h>
-//#undef NDEBUG
+// #undef NDEBUG
 
 #include <string>
 
 #define BOOST_TEST_MODULE TestFlowProblemGpu
 
 #include <boost/test/unit_test.hpp>
-#include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
-#include <opm/simulators/linalg/gpuistl/DualBuffer.hpp>
 #include <opm/material/densead/Evaluation.hpp>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManagerSimple.hpp>
+#include <opm/simulators/linalg/gpuistl/DualBuffer.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
 
 #include <opm/models/blackoil/blackoilmodel.hh>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
@@ -83,8 +83,8 @@ Functionality requested for the blackoil flow problem on gpu:
 #include <opm/input/eclipse/Python/Python.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <tests/common_type_tag.hpp>
-//#include <tests/load_data.hpp>
-//#include <tests/load_data.cpp>
+// #include <tests/load_data.hpp>
+// #include <tests/load_data.cpp>
 
 #include <iostream>
 #include <memory>
@@ -92,6 +92,8 @@ Functionality requested for the blackoil flow problem on gpu:
 // #include <dune/common/mpihelper.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <opm/models/utils/start.hh>
+
+#include <opm/simulators/linalg/gpuistl/gpu_smart_pointer.hpp>
 
 template <class ProblemView>
 __global__ void
@@ -157,7 +159,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
     }
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
     auto mainObject = Opm::Main(argv2.size() - 1, argv2.data());
-    //mainObject.runStatic<TypeTag>();
+    // mainObject.runStatic<TypeTag>();
     auto mainFlow = mainObject.gimmeFlowMain<TypeTag>();
     std::cout << "Got mainFlow" << std::endl;
     mainFlow->execute();
@@ -166,126 +168,100 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
     std::cout << "Got simulator" << std::endl;
     auto& problem = simulator->problem();
     std::cout << "Got problem" << std::endl;
-    auto problemGpuBuf = Opm::gpuistl::
-       copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
+    auto problemGpuBuf
+        = Opm::gpuistl::copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(
+            problem);
+
+    fmt::println("From callback");
+    // auto problemGpuBuf = Opm::gpuistl::
+    //     copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
+    fmt::println("Copied to GPU");
+    auto problemGpuView = Opm::gpuistl::make_view<Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>(problemGpuBuf);
+
+    fmt::println("At line {}", __LINE__);
+
+    auto satNumOnGpu = Opm::gpuistl::make_gpu_unique_ptr<unsigned short>(0);
+    satnumFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, satNumOnGpu.get());
+    const auto satNumOnCpu = Opm::gpuistl::copyFromGPU(satNumOnGpu);
+    BOOST_CHECK_EQUAL(satNumOnCpu, problem.satnumRegionIndex(0));
+    fmt::println("At line {}", __LINE__);
+
+    auto linTypeOnGpu = Opm::gpuistl::make_gpu_unique_ptr<Opm::LinearizationType>(Opm::LinearizationType{});
+    linTypeFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, linTypeOnGpu.get());
+    const auto linTypeOnCpu = Opm::gpuistl::copyFromGPU(linTypeOnGpu);
+    auto linTypeFromCPUSimulator = problem.model().linearizer().getLinearizationType();
+    BOOST_CHECK_EQUAL(linTypeOnCpu.type, linTypeFromCPUSimulator.type);
+    fmt::println("At line {}", __LINE__);
+
+    auto rockCompressibilityOnGpu = Opm::gpuistl::make_gpu_unique_ptr<double>(0.0);
+    rockCompressibilityFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, rockCompressibilityOnGpu.get());
+   
+    const auto rocmCompressibilityOnCpu = Opm::gpuistl::copyFromGPU(rockCompressibilityOnGpu);
+    BOOST_CHECK_EQUAL(rocmCompressibilityOnCpu, problem.rockCompressibility(0));
+    fmt::println("At line {}", __LINE__);
+
+    auto  porosityOnGpu = Opm::gpuistl::make_gpu_unique_ptr<double>(0.0);
+    porosityFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, porosityOnGpu.get());
+    const auto porosityOnCpu = Opm::gpuistl::copyFromGPU(porosityOnGpu);
+    BOOST_CHECK_EQUAL(porosityOnCpu, problem.porosity(0, 0));
+
+    auto referencePressureOnGpu = Opm::gpuistl::make_gpu_unique_ptr<double>(0.0);
+    rockReferencePressureFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, referencePressureOnGpu.get());
+    fmt::println("At line {}", __LINE__);
+    const auto referencePressureOnCpu = Opm::gpuistl::copyFromGPU(referencePressureOnGpu);
+    BOOST_CHECK_EQUAL(referencePressureOnCpu, problem.rockReferencePressure(0));
     
-            fmt::println("From callback");
-            //auto problemGpuBuf = Opm::gpuistl::
-            //    copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(problem);
-            fmt::println("Copied to GPU");
-            auto problemGpuView
-                = Opm::gpuistl::make_view<Opm::gpuistl::GpuView, Opm::gpuistl::ValueAsPointer>(problemGpuBuf);
+    materialLawParamsCallable<<<1, 1>>>(problemGpuView);
+    fmt::println("At line {}", __LINE__);
 
-            fmt::println("At line {}", __LINE__);
-
-            unsigned short satNumOnCpu;
-            unsigned short* satNumOnGpu;
-            std::ignore = cudaMalloc(&satNumOnGpu, sizeof(unsigned short));
-            satnumFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, satNumOnGpu);
-            std::ignore = cudaMemcpy(&satNumOnCpu, satNumOnGpu, sizeof(unsigned short), cudaMemcpyDeviceToHost);
-            
-            BOOST_CHECK_EQUAL(satNumOnCpu, problem.satnumRegionIndex(0));
-            std::ignore = cudaFree(satNumOnGpu);
-            fmt::println("At line {}", __LINE__);
-
-            Opm::LinearizationType linTypeOnCpu;
-            Opm::LinearizationType* linTypeOnGpu;
-            std::ignore = cudaMalloc(&linTypeOnGpu, sizeof(Opm::LinearizationType));
-            linTypeFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, linTypeOnGpu);
-            std::ignore
-                = cudaMemcpy(&linTypeOnCpu, linTypeOnGpu, sizeof(Opm::LinearizationType), cudaMemcpyDeviceToHost);
-            auto linTypeFromCPUSimulator = problem.model().linearizer().getLinearizationType();
-            BOOST_CHECK_EQUAL(linTypeOnCpu.type, linTypeFromCPUSimulator.type);
-            std::ignore = cudaFree(linTypeOnGpu);
-            fmt::println("At line {}", __LINE__);
-
-            double rocmCompressibilityOnCpu;
-            double* rockCompressibilityOnGpu;
-            std::ignore = cudaMalloc(&rockCompressibilityOnGpu, sizeof(double));
-            rockCompressibilityFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, rockCompressibilityOnGpu);
-            std::ignore = cudaMemcpy(
-                &rocmCompressibilityOnCpu, rockCompressibilityOnGpu, sizeof(double), cudaMemcpyDeviceToHost);
-            BOOST_CHECK_EQUAL(rocmCompressibilityOnCpu, problem.rockCompressibility(0));
-            std::ignore = cudaFree(rockCompressibilityOnGpu);
-            fmt::println("At line {}", __LINE__);
-
-            double porosityOnCpu;
-            double* porosityOnGpu;
-            std::ignore = cudaMalloc(&porosityOnGpu, sizeof(double));
-            porosityFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, porosityOnGpu);
-            std::ignore = cudaMemcpy(&porosityOnCpu, porosityOnGpu, sizeof(double), cudaMemcpyDeviceToHost);
-            BOOST_CHECK_EQUAL(porosityOnCpu, problem.porosity(0, 0));
-            std::ignore = cudaFree(porosityOnGpu);
-
-            double referencePressureOnCpu;
-            double* referencePressureOnGpu;
-            std::ignore = cudaMalloc(&referencePressureOnGpu, sizeof(double));
-            rockReferencePressureFromFlowProblemBlackoilGpu<<<1, 1>>>(problemGpuView, referencePressureOnGpu);
-            fmt::println("At line {}", __LINE__);
-            std::ignore
-                = cudaMemcpy(&referencePressureOnCpu, referencePressureOnGpu, sizeof(double), cudaMemcpyDeviceToHost);
-            fmt::println("At line {}", __LINE__);
-            BOOST_CHECK_EQUAL(referencePressureOnCpu, problem.rockReferencePressure(0));
-            fmt::println("At line {}", __LINE__);
-            std::ignore = cudaFree(referencePressureOnGpu);
-            fmt::println("At line {}", __LINE__);
-            materialLawParamsCallable<<<1, 1>>>(problemGpuView);
-            fmt::println("At line {}", __LINE__);
-
-            using FluidSystem = Opm::BlackOilFluidSystem<double>;
-            using Evaluation = Opm::DenseAd::Evaluation<double, 2>;
-            using Scalar = double;
-            // using DirectionalMobilityPtr = Utility::CopyablePtr<DirectionalMobility<TypeTag, Evaluation>>;
-            using DirectionalMobilityPtr = Opm::Utility::CopyablePtr<Opm::DirectionalMobility<TypeTag>>;
-            fmt::println("At line {}", __LINE__);
+    using FluidSystem = Opm::BlackOilFluidSystem<double>;
+    using Evaluation = Opm::DenseAd::Evaluation<double, 2>;
+    using Scalar = double;
+    // using DirectionalMobilityPtr = Utility::CopyablePtr<DirectionalMobility<TypeTag, Evaluation>>;
+    using DirectionalMobilityPtr = Opm::Utility::CopyablePtr<Opm::DirectionalMobility<TypeTag>>;
+    fmt::println("At line {}", __LINE__);
 
 
-            // Create the fluid system
-            std::string deckString1;
-            {
-                std::ifstream deckFile(filename);
-                if (!deckFile) {
-                    throw std::runtime_error("Failed to open deck file: " + filename);
-                }
-                std::stringstream buffer;
-                buffer << deckFile.rdbuf();
-                deckString1 = buffer.str();
-            }
-            Opm::Parser parser;
-            auto deck = parser.parseString(deckString1);
-            auto python = std::make_shared<Opm::Python>();
-            Opm::EclipseState eclState(deck);
-            Opm::Schedule schedule(deck, eclState, python);
-            fmt::println("At line {}", __LINE__);
+    // Create the fluid system
+    std::string deckString1;
+    {
+        std::ifstream deckFile(filename);
+        if (!deckFile) {
+            throw std::runtime_error("Failed to open deck file: " + filename);
+        }
+        std::stringstream buffer;
+        buffer << deckFile.rdbuf();
+        deckString1 = buffer.str();
+    }
+    Opm::Parser parser;
+    auto deck = parser.parseString(deckString1);
+    auto python = std::make_shared<Opm::Python>();
+    Opm::EclipseState eclState(deck);
+    Opm::Schedule schedule(deck, eclState, python);
+    fmt::println("At line {}", __LINE__);
 
-            FluidSystem::initFromState(eclState, schedule);
-            auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
-            auto dynamicGpuFluidSystemBuffer
-                = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, double>(dynamicFluidSystem);
-            auto dynamicGpuFluidSystemView
-                = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(
-                    dynamicGpuFluidSystemBuffer);
-            auto gpufluidstate
-                = Opm::BlackOilFluidState<double, decltype(dynamicGpuFluidSystemView)>(dynamicGpuFluidSystemView);
-            // Create MobArr
-            double testValue = 0.5;
-            // Create an array of Evaluations on CPU
-            using MobArr = std::array<Evaluation, 2>;
-            MobArr cpuMobArray;
-            cpuMobArray[0] = Evaluation(testValue, 0);
-            cpuMobArray[1] = Evaluation(testValue, 1);
-            fmt::println("At line {}", __LINE__);
-            // Copy to GPU
-            MobArr* d_mobArray;
-            OPM_GPU_SAFE_CALL(cudaMalloc(&d_mobArray, sizeof(MobArr)));
-            OPM_GPU_SAFE_CALL(cudaMemcpy(d_mobArray, &cpuMobArray, sizeof(MobArr), cudaMemcpyHostToDevice));
-            fmt::println("At line {}", __LINE__);
+    FluidSystem::initFromState(eclState, schedule);
+    auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
+    auto dynamicGpuFluidSystemBuffer
+        = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, double>(dynamicFluidSystem);
+    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(
+        dynamicGpuFluidSystemBuffer);
+    auto gpufluidstate
+        = Opm::BlackOilFluidState<double, decltype(dynamicGpuFluidSystemView)>(dynamicGpuFluidSystemView);
+    // Create MobArr
+    double testValue = 0.5;
+    // Create an array of Evaluations on CPU
+    using MobArr = std::array<Evaluation, 2>;
+    MobArr cpuMobArray;
+    cpuMobArray[0] = Evaluation(testValue, 0);
+    cpuMobArray[1] = Evaluation(testValue, 1);
+    fmt::println("At line {}", __LINE__);
+    fmt::println("At line {}", __LINE__);
 
-            updateRelPermsFromFlowProblemBlackoilGpu<DirectionalMobilityPtr>
-                <<<1, 1>>>(problemGpuView, cpuMobArray, gpufluidstate);
-            fmt::println("At line {}", __LINE__);
+    updateRelPermsFromFlowProblemBlackoilGpu<DirectionalMobilityPtr>
+         <<<1, 1>>>(problemGpuView, cpuMobArray, gpufluidstate);
+    fmt::println("At line {}", __LINE__);
 
-            OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
-            fmt::println("At line {}", __LINE__);
-        
+    OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
+    fmt::println("At line {}", __LINE__);
 }
