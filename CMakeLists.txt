@@ -644,6 +644,19 @@ opm_add_test(flow
 
 target_sources(test_gpuflowproblem PRIVATE ${FLOW_TGTS} $<TARGET_OBJECTS:MainDispatchDynamic> $<TARGET_OBJECTS:moduleVersion>)
 #target_link_libraries(test_gpuflowproblem load_data)
+ADD_CUDA_OR_HIP_FILE(TEST_GPUFLOWPROBLEMALL tests/ test_gpuflowproblemall.cu)
+opm_add_test(test_gpuflowproblemall
+  ONLY_COMPILE
+  ALWAYS_ENABLE
+  DEFAULT_ENABLE_IF ${FLOW_DEFAULT_ENABLE_IF}
+  DEPENDS opmgrid
+  LIBRARIES opmgrid
+  SOURCES
+  ${TEST_GPUFLOWPROBLEMALL}
+  #${FLOW_TGTS}
+  $<TARGET_OBJECTS:moduleVersion>
+)
+target_link_options(test_gpuflowproblemall PRIVATE LINKER:--error-limit=0)
 
 opm_add_test(flow_simple
   ONLY_COMPILE

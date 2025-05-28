@@ -308,7 +308,7 @@ namespace gpuistl
         using GasWaterTraits = TwoPhaseMaterialTraits<Scalar,
                                                       Traits::wettingPhaseIdx,
                                                       Traits::gasPhaseIdx>;
-        
+        fmt::println("ProblemGPU: {}", __LINE__);
         // now build your new GPU param classes:
         using GpuGasOilParams   = PiecewiseLinearTwoPhaseMaterialParams<GasOilTraits,   GpuBuf>;
         using GpuOilWaterParams = PiecewiseLinearTwoPhaseMaterialParams<OilWaterTraits, GpuBuf>;
@@ -318,6 +318,7 @@ namespace gpuistl
         static_assert(std::is_same_v<std::vector<unsigned short>, decltype(problem.rockTableIdx())>);
 
         auto nParams = problem.materialLawManager()->numMaterialLawParams();
+        fmt::println("ProblemGPU: {}", __LINE__);
 
         using ThreePhaseMaterialParams = Opm::EclTwoPhaseMaterialParams<
             Traits,
@@ -325,8 +326,11 @@ namespace gpuistl
             GpuOilWaterParams,
             GpuGasWaterParams
         >;
+        fmt::println("ProblemGPU: {}", __LINE__);
 
         auto materialLawParamsInVector = std::vector<ThreePhaseMaterialParams>(nParams);
+                fmt::println("ProblemGPU: {}", __LINE__);
+
         for (size_t i = 0; i < nParams; ++i) {
             materialLawParamsInVector[i] =
                 ::Opm::gpuistl::copy_to_gpu<
@@ -337,6 +341,8 @@ namespace gpuistl
                 Traits
                 >(problem.materialLawParams(i));
         }
+                fmt::println("ProblemGPU: {}", __LINE__);
+
 
         // Check that GPUType works
         static_assert(
@@ -354,6 +360,7 @@ namespace gpuistl
                 >
             >
         );
+        fmt::println("ProblemGPU: {}", __LINE__);
 
         return FlowProblemBlackoilGpu<Scalar, TypeTagTo, ThreePhaseMaterialParams, ContainerT, DualContainer>(
             ContainerT(problem.satnumRegionArray()),
