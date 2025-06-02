@@ -1,12 +1,29 @@
-#ifndef OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED
-#define OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED
+/*
+  Copyright 2024, SINTEF AS
+
+  This file is part of the Open Porous Media project (OPM).
+
+  OPM is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  OPM is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU General Public License
+  along with OPM.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+#include "config.h"
 #include <opm/simulators/flow/Main.hpp>
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawManagerSimple.hpp>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
 // do I need these?
 #include <opm/simulators/flow/equil/EquilibrationHelpers.hpp>
 #include <opm/simulators/flow/equil/InitStateEquil.hpp>
-#include <tests/load_data.hpp>
 
 namespace Opm {
     namespace Properties {
@@ -42,7 +59,7 @@ namespace Opm {
         // SPE11C requires thermal/energy
         template<class TypeTag>
         struct EnableEnergy<TypeTag, TTag::FlowSimpleProblem> {
-            static constexpr bool value = false;
+            static constexpr bool value = true;
         };
 
         // SPE11C requires dispersion
@@ -55,7 +72,7 @@ namespace Opm {
         template<class TypeTag>
         struct MaterialLaw<TypeTag, TTag::FlowSimpleProblem>
         {
-        public:
+        private:
             using Scalar = GetPropType<TypeTag, Properties::Scalar>;
             using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
 
@@ -63,7 +80,8 @@ namespace Opm {
                                                     /*wettingPhaseIdx=*/FluidSystem::waterPhaseIdx,
                                                     /*nonWettingPhaseIdx=*/FluidSystem::oilPhaseIdx,
                                                     /*gasPhaseIdx=*/FluidSystem::gasPhaseIdx>;
-            using EclMaterialLawManager = ::Opm::EclMaterialLawManager<Traits>;
+        public:
+            using EclMaterialLawManager = ::Opm::EclMaterialLawManagerSimple<Traits>;
             using type = typename EclMaterialLawManager::MaterialLaw;
         };
 
@@ -87,4 +105,11 @@ namespace Opm {
     };
 
 }
-#endif  // OPM_FLOW_SIMPLE_PROBLEM_HEADER_INCLUDED
+
+int main(int argc, char** argv)
+{
+    using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
+    auto mainObject = Opm::Main(argc, argv);
+    return mainObject.runStatic<TypeTag>();
+//    return Opm::start<TypeTag>(argc, argv);
+}

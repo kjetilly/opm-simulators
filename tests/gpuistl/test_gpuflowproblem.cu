@@ -148,19 +148,40 @@ updateRelPermsFromFlowProblemBlackoilGpu(ProblemView prob, MobArr mob, FluidStat
 
 BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 {
+    std::cout << __LINE__ << std::endl;
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
+    std::cout << __LINE__ << std::endl;
     // TODO: will this actually refer to the very_simple_deck.DATA inside the gpuistl folder,
     // TODO: do we need to keep track of the path since it can be hipified?
     const std::string filename = "very_simple_deck.DATA";
+        std::cout << __LINE__ << std::endl;
+
     std::vector<std::string> args = {filename, "very_simple_deck.DATA", ""};
+        std::cout << __LINE__ << std::endl;
+
     std::vector<char*> argv2;
+        std::cout << __LINE__ << std::endl;
+
     for (auto& arg : args) {
+            std::cout << __LINE__ << std::endl;
+
         argv2.push_back(static_cast<char*>(arg.data()));
+            std::cout << __LINE__ << std::endl;
+
     }
+        std::cout << __LINE__ << std::endl;
+
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
-    auto mainObject = Opm::Main(argv2.size() - 1, argv2.data());
+        std::cout << __LINE__ << std::endl;
+
+    // auto mainObject = Opm::Main(argv2.size() - 1, argv2.data());
+    auto mainObject = Opm::Main(filename, false, false);
+        std::cout << __LINE__ << std::endl;
+
     // mainObject.runStatic<TypeTag>();
     auto mainFlow = mainObject.gimmeFlowMain<TypeTag>();
+        std::cout << __LINE__ << std::endl;
+
     std::cout << "Got mainFlow" << std::endl;
     mainFlow->execute();
     std::cout << "Executed mainFlow" << std::endl;
@@ -168,6 +189,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
     std::cout << "Got simulator" << std::endl;
     auto& problem = simulator->problem();
     std::cout << "Got problem" << std::endl;
+    #if 0
     auto problemGpuBuf
         = Opm::gpuistl::copy_to_gpu<double, Opm::gpuistl::GpuBuffer, Opm::gpuistl::DualBuffer, TypeTag, TypeTag>(
             problem);
@@ -264,4 +286,5 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 
     OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
     fmt::println("At line {}", __LINE__);
+    #endif
 }

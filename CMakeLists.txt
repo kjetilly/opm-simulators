@@ -649,14 +649,30 @@ opm_add_test(test_gpuflowproblemall
   ONLY_COMPILE
   ALWAYS_ENABLE
   DEFAULT_ENABLE_IF ${FLOW_DEFAULT_ENABLE_IF}
-  DEPENDS opmgrid
-  LIBRARIES opmgrid
   SOURCES
   ${TEST_GPUFLOWPROBLEMALL}
   #${FLOW_TGTS}
   $<TARGET_OBJECTS:moduleVersion>
 )
+FIND_PACKAGE(HDF5 REQUIRED)
+target_link_libraries(test_gpuflowproblemall
+  hdf5::hdf5
+)
 target_link_options(test_gpuflowproblemall PRIVATE LINKER:--error-limit=0)
+
+
+ADD_CUDA_OR_HIP_FILE(RESERVOIR_BLACKOIL_ECFV_GPU tests/ reservoir_blackoil_ecfv.cu)
+opm_add_test(reservoir_blackoil_ecfv_gpu
+  ONLY_COMPILE
+  ALWAYS_ENABLE
+  DEFAULT_ENABLE_IF ${FLOW_DEFAULT_ENABLE_IF}
+  DEPENDS opmsimulators
+  LIBRARIES opmsimulators
+  SOURCES
+  ${RESERVOIR_BLACKOIL_ECFV_GPU}
+  #${FLOW_TGTS}
+  $<TARGET_OBJECTS:moduleVersion>
+)
 
 opm_add_test(flow_simple
   ONLY_COMPILE
