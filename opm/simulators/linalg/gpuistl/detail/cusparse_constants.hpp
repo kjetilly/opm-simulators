@@ -18,7 +18,7 @@
 */
 #ifndef CUSPARSE_CONSTANTS_HPP
 #define CUSPARSE_CONSTANTS_HPP
-#include <cusparse.h>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 namespace Opm::gpuistl::detail
 {
 const constexpr auto CUSPARSE_MATRIX_ORDER = CUSPARSE_DIRECTION_ROW;

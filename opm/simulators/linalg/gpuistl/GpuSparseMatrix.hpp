@@ -18,10 +18,10 @@
 */
 #ifndef OPM_GPUSPARSEMATRIX_HPP
 #define OPM_GPUSPARSEMATRIX_HPP
-#include <cusparse.h>
 #include <iostream>
 #include <memory>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuSparseHandle.hpp>

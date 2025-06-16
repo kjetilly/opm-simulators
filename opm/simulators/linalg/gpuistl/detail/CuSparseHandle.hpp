@@ -18,7 +18,7 @@
 */
 #ifndef OPM_CUSPARSEHANDLE_HPP
 #define OPM_CUSPARSEHANDLE_HPP
-#include <cusparse.h>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <memory>
 
 namespace Opm::gpuistl::detail

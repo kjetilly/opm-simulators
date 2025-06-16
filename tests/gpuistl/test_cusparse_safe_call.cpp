@@ -21,7 +21,7 @@
 #define BOOST_TEST_MODULE TestCusparseSafeCall
 
 #include <boost/test/unit_test.hpp>
-#include <cusparse.h>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/cusparse_safe_call.hpp>
 
 BOOST_AUTO_TEST_CASE(TestCreateHandle)

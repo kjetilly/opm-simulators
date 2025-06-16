@@ -18,10 +18,10 @@
 */
 #ifndef OPM_PRECONDITIONERCONVERTOFLOATADAPTER_HPP
 #define OPM_PRECONDITIONERCONVERTOFLOATADAPTER_HPP
-#include <cusparse.h>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/preconditioner.hh>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuSparseHandle.hpp>

@@ -18,7 +18,7 @@
 */
 #ifndef CUSPARSERESOURCE_HPP
 #define CUSPARSERESOURCE_HPP
-#include <cusparse.h>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <functional>
 #include <memory>
 #include <type_traits>

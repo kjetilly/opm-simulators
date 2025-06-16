@@ -23,7 +23,7 @@
  * In simple terms, this allows one to call say cusparseBsrilu02_analysis on both double and single precisision,
  * instead of calling cusparseDbsrilu02_analysis and cusparseDbsrilu02_analysis respectively.
  */
-#include <cusparse.h>
+#include <opm/simulators/linalg/gpuistl/detail/cusparse_without_warning.hpp>
 #include <type_traits>
 #ifndef OPM_CUSPARSE_WRAPPER_HPP
 #define OPM_CUSPARSE_WRAPPER_HPP
