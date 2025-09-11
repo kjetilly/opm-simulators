@@ -124,7 +124,8 @@ class BlackOilDispersionModule<TypeTag, /*enableDispersion=*/true>
     enum { numComponents = FluidSystem::numComponents };
     enum { conti0EqIdx = Indices::conti0EqIdx };
     enum { enableDispersion = getPropValue<TypeTag, Properties::EnableDispersion>() };
-    enum { enableMICP = getPropValue<TypeTag, Properties::EnableMICP>() };
+    enum { enableBioeffects = getPropValue<TypeTag, Properties::EnableBioeffects>() };
+    enum { enableMICP = Indices::enableMICP };
 
     static constexpr unsigned contiMicrobialEqIdx = Indices::contiMicrobialEqIdx;
     static constexpr unsigned contiOxygenEqIdx = Indices::contiOxygenEqIdx;
@@ -201,28 +202,30 @@ public:
         const auto& inFs = inIq.fluidState();
         const auto& exFs = exIq.fluidState();
         Evaluation diffR = 0.0;
-        if constexpr(enableMICP) {
+        if constexpr(enableBioeffects) {
             // The dispersion coefficients are given for mass concentrations
             const Evaluation bAvg = (inFs.invB(waterPhaseIdx) + Toolbox::value(exFs.invB(waterPhaseIdx))) / 2;
             diffR = inIq.microbialConcentration() - Toolbox::value(exIq.microbialConcentration());
             flux[contiMicrobialEqIdx] +=
-                 bAvg *
-                 normVelocityAvg[waterPhaseIdx] *
-                 dispersivity *
-                 diffR;
-            diffR = inIq.oxygenConcentration() - Toolbox::value(exIq.oxygenConcentration());
-            flux[contiOxygenEqIdx] +=
-                 bAvg *
-                 normVelocityAvg[waterPhaseIdx] *
-                 dispersivity *
-                 diffR;
-            diffR = inIq.ureaConcentration() - Toolbox::value(exIq.ureaConcentration());
-            flux[contiUreaEqIdx] +=
-                 bAvg *
-                 normVelocityAvg[waterPhaseIdx] *
-                 dispersivity *
-                 diffR;
-            return;
+                 bAvg
+                 * normVelocityAvg[waterPhaseIdx]
+                 * dispersivity
+                 * diffR;
+            if constexpr(enableMICP) {
+                diffR = inIq.oxygenConcentration() - Toolbox::value(exIq.oxygenConcentration());
+                flux[contiOxygenEqIdx] +=
+                    bAvg
+                    * normVelocityAvg[waterPhaseIdx]
+                    * dispersivity
+                    * diffR;
+                diffR = inIq.ureaConcentration() - Toolbox::value(exIq.ureaConcentration());
+                flux[contiUreaEqIdx] +=
+                    bAvg
+                    * normVelocityAvg[waterPhaseIdx]
+                    * dispersivity
+                    * diffR;
+                return;
+            }
         }
 
         unsigned pvtRegionIndex = inFs.pvtRegionIndex();
@@ -249,21 +252,14 @@ public:
             bAvg /= 2;
 
             Evaluation convFactor = 1.0;
-            if (FluidSystem::enableDissolvedGas() &&
-                FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx) &&
-                phaseIdx == FluidSystem::oilPhaseIdx)
-            {
+            if (FluidSystem::enableDissolvedGas() && FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx) && phaseIdx == FluidSystem::oilPhaseIdx) {
                 const Evaluation rsAvg = (inFs.Rs() + Toolbox::value(exFs.Rs())) / 2;
                 convFactor = 1.0 / (toMassFractionGasOil(pvtRegionIndex) + rsAvg);
                 diffR = inFs.Rs() - Toolbox::value(exFs.Rs());
             }
-            if (FluidSystem::enableVaporizedOil() &&
-                FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx) &&
-                phaseIdx == FluidSystem::gasPhaseIdx)
-            {
+            if (FluidSystem::enableVaporizedOil() && FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx) && phaseIdx == FluidSystem::gasPhaseIdx) {
                 const Evaluation rvAvg = (inFs.Rv() + Toolbox::value(exFs.Rv())) / 2;
-                convFactor = toMassFractionGasOil(pvtRegionIndex) /
-                             (1.0 + rvAvg * toMassFractionGasOil(pvtRegionIndex));
+                convFactor = toMassFractionGasOil(pvtRegionIndex) / (1.0 + rvAvg*toMassFractionGasOil(pvtRegionIndex));
                 diffR = inFs.Rv() - Toolbox::value(exFs.Rv());
             }
             if (FluidSystem::enableDissolvedGasInWater() && phaseIdx == FluidSystem::waterPhaseIdx) {
@@ -273,8 +269,7 @@ public:
             }
             if (FluidSystem::enableVaporizedWater() && phaseIdx == FluidSystem::gasPhaseIdx) {
                 const Evaluation rvAvg = (inFs.Rvw() + Toolbox::value(exFs.Rvw())) / 2;
-                convFactor = toMassFractionGasWater(pvtRegionIndex) /
-                             (1.0 + rvAvg * toMassFractionGasWater(pvtRegionIndex));
+                convFactor = toMassFractionGasWater(pvtRegionIndex)/ (1.0 + rvAvg*toMassFractionGasWater(pvtRegionIndex));
                 diffR = inFs.Rvw() - Toolbox::value(exFs.Rvw());
             }
 
@@ -282,34 +277,32 @@ public:
             const unsigned solventCompIdx = FluidSystem::solventComponentIndex(phaseIdx);
             const unsigned activeSolventCompIdx = FluidSystem::canonicalToActiveCompIdx(solventCompIdx);
             flux[conti0EqIdx + activeSolventCompIdx] +=
-                    -bAvg *
-                    normVelocityAvg[phaseIdx] *
-                    convFactor *
-                    dispersivity *
-                    diffR;
+                    - bAvg
+                    * normVelocityAvg[phaseIdx]
+                    * convFactor
+                    * dispersivity
+                    * diffR;
 
             // mass flux of solute component
             const unsigned soluteCompIdx = FluidSystem::soluteComponentIndex(phaseIdx);
             const unsigned activeSoluteCompIdx = FluidSystem::canonicalToActiveCompIdx(soluteCompIdx);
             flux[conti0EqIdx + activeSoluteCompIdx] +=
-                    bAvg *
-                    normVelocityAvg[phaseIdx] *
-                    convFactor *
-                    dispersivity *
-                    diffR;
+                    bAvg
+                    * normVelocityAvg[phaseIdx]
+                    * convFactor
+                    * dispersivity
+                    * diffR;
         }
     }
 
 private:
-    static Scalar toMassFractionGasOil (unsigned regionIdx)
-    {
+
+    static Scalar toMassFractionGasOil (unsigned regionIdx) {
         const Scalar rhoO = FluidSystem::referenceDensity(FluidSystem::oilPhaseIdx, regionIdx);
         const Scalar rhoG = FluidSystem::referenceDensity(FluidSystem::gasPhaseIdx, regionIdx);
         return rhoO / rhoG;
     }
-
-    static Scalar toMassFractionGasWater (unsigned regionIdx)
-    {
+    static Scalar toMassFractionGasWater (unsigned regionIdx) {
         const Scalar rhoW = FluidSystem::referenceDensity(FluidSystem::waterPhaseIdx, regionIdx);
         const Scalar rhoG = FluidSystem::referenceDensity(FluidSystem::gasPhaseIdx, regionIdx);
         return rhoW / rhoG;
@@ -386,7 +379,9 @@ public:
      * \brief Returns the max. norm of the filter velocity of the cell.
      */
     Scalar normVelocityCell(unsigned phaseIdx) const
-    { return normVelocityCell_[phaseIdx]; }
+    {
+        return normVelocityCell_[phaseIdx];
+    }
 
 protected:
     /*!
@@ -420,7 +415,7 @@ protected:
         for (const auto& velocityInfo : velocityInfos) {
             for (unsigned i = 0; i < phaseIdxs.size(); ++i) {
                 if (FluidSystem::phaseIsActive(phaseIdxs[i])) {
-                    normVelocityCell_[phaseIdxs[i]] = max( normVelocityCell_[phaseIdxs[i]], 
+                    normVelocityCell_[phaseIdxs[i]] = std::max(normVelocityCell_[phaseIdxs[i]], 
                         std::abs(velocityInfo.velocity[conti0EqIdx +
                                  FluidSystem::canonicalToActiveCompIdx(compIdxs[i])]));
                 }
@@ -429,7 +424,7 @@ protected:
     }
 
 private:
-    std::array<Scalar, numPhases> normVelocityCell_{};
+    Scalar normVelocityCell_[numPhases];
 };
 
 /*!
@@ -484,7 +479,7 @@ public:
      * \brief The dispersivity the face.
      *
      */
-    Scalar dispersivity() const
+    const Scalar& dispersivity() const
     {
         throw std::logic_error("The method dispersivity() does not "
                                "make sense if dispersion is disabled.");
@@ -497,11 +492,12 @@ public:
      * \copydoc Doxygen::phaseIdxParam
      * \copydoc Doxygen::compIdxParam
      */
-    Scalar normVelocityAvg(unsigned) const
+    const Scalar& normVelocityAvg(unsigned) const
     {
         throw std::logic_error("The method normVelocityAvg() "
                                "does not make sense if dispersion is disabled.");
     }
+
 };
 
 /*!
@@ -524,9 +520,8 @@ class BlackOilDispersionExtensiveQuantities<TypeTag, /*enableDispersion=*/true>
 
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
     using DimEvalVector = Dune::FieldVector<Evaluation, dimWorld>;
-
 public:
-    using ScalarArray = std::array<Scalar, numPhases>;
+    using ScalarArray = Scalar[numPhases];
     static void update(ScalarArray& normVelocityAvg,
                        const IntensiveQuantities& intQuantsInside,
                        const IntensiveQuantities& intQuantsOutside)
@@ -569,7 +564,7 @@ public:
      * \copydoc Doxygen::phaseIdxParam
      * \copydoc Doxygen::compIdxParam
      */
-    Scalar dispersivity() const
+    const Scalar& dispersivity() const
     { return dispersivity_; }
 
     /*!
@@ -579,7 +574,7 @@ public:
      * \copydoc Doxygen::phaseIdxParam
      * \copydoc Doxygen::compIdxParam
      */
-    Scalar normVelocityAvg(unsigned phaseIdx) const
+    const Scalar& normVelocityAvg(unsigned phaseIdx) const
     { return normVelocityAvg_[phaseIdx]; }
 
     const auto& normVelocityAvg() const
