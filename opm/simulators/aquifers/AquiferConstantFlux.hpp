@@ -32,9 +32,10 @@
 #include <numeric>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename TypeTag>
+template <typename TypeTag>
 class AquiferConstantFlux : public AquiferInterface<TypeTag>
 {
 public:
@@ -49,12 +50,12 @@ public:
     using Eval = DenseAd::Evaluation<Scalar, /*size=*/numEq>;
 
     AquiferConstantFlux(const std::vector<Aquancon::AquancCell>& connections,
-                        const Simulator&                         simulator,
-                        const SingleAquiferFlux&                 aquifer)
+                        const Simulator& simulator,
+                        const SingleAquiferFlux& aquifer)
         : AquiferInterface<TypeTag>(aquifer.id, simulator)
-        , connections_             (connections)
-        , aquifer_data_            (aquifer)
-        , connection_flux_         (connections_.size(), Eval{0})
+        , connections_(connections)
+        , aquifer_data_(aquifer)
+        , connection_flux_(connections_.size(), Eval {0})
     {
         this->total_face_area_ = this->initializeConnections();
     }
@@ -69,10 +70,9 @@ public:
 
     void computeFaceAreaFraction(const std::vector<Scalar>& total_face_area) override
     {
-        assert (total_face_area.size() >= static_cast<typename std::vector<Scalar>::size_type>(this->aquiferID()));
+        assert(total_face_area.size() >= static_cast<typename std::vector<Scalar>::size_type>(this->aquiferID()));
 
-        this->area_fraction_ = this->totalFaceArea()
-            / total_face_area[this->aquiferID() - 1];
+        this->area_fraction_ = this->totalFaceArea() / total_face_area[this->aquiferID() - 1];
     }
 
     Scalar totalFaceArea() const override
@@ -96,16 +96,17 @@ public:
     }
 
     void initialSolutionApplied() override
-    {}
+    {
+    }
 
     void beginTimeStep() override
-    {}
+    {
+    }
 
     void endTimeStep() override
     {
         this->flux_rate_ = this->totalFluxRate();
-        this->cumulative_flux_ +=
-            this->flux_rate_ * this->simulator_.timeStepSize();
+        this->cumulative_flux_ += this->flux_rate_ * this->simulator_.timeStepSize();
     }
 
     data::AquiferData aquiferData() const override
@@ -126,9 +127,7 @@ public:
         return data;
     }
 
-    void addToSource(RateVector& rates,
-                     const unsigned cellIdx,
-                     [[maybe_unused]] const unsigned timeIdx) override
+    void addToSource(RateVector& rates, const unsigned cellIdx, [[maybe_unused]] const unsigned timeIdx) override
     {
         const int idx = this->cellToConnectionIdx_[cellIdx];
         if (idx < 0) {
@@ -141,11 +140,10 @@ public:
 
         this->connection_flux_[idx] = fw * this->connections_[idx].effective_facearea;
 
-        rates[BlackoilIndices::conti0EqIdx + compIdx_()]
-                += this->connection_flux_[idx] / model.dofTotalVolume(cellIdx);
+        rates[BlackoilIndices::conti0EqIdx + compIdx_()] += this->connection_flux_[idx] / model.dofTotalVolume(cellIdx);
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(cumulative_flux_);
@@ -160,24 +158,22 @@ private:
     const std::vector<Aquancon::AquancCell>& connections_;
 
     SingleAquiferFlux aquifer_data_;
-    std::vector<Eval> connection_flux_{};
-    std::vector<int> cellToConnectionIdx_{};
-    Scalar flux_rate_{};
-    Scalar cumulative_flux_{};
-    Scalar total_face_area_{0.0};
-    Scalar area_fraction_{1.0};
+    std::vector<Eval> connection_flux_ {};
+    std::vector<int> cellToConnectionIdx_ {};
+    Scalar flux_rate_ {};
+    Scalar cumulative_flux_ {};
+    Scalar total_face_area_ {0.0};
+    Scalar area_fraction_ {1.0};
 
     Scalar initializeConnections()
     {
         auto connected_face_area = 0.0;
 
-        this->cellToConnectionIdx_
-            .resize(this->simulator_.gridView().size(/*codim=*/0), -1);
+        this->cellToConnectionIdx_.resize(this->simulator_.gridView().size(/*codim=*/0), -1);
 
         for (std::size_t idx = 0; idx < this->connections_.size(); ++idx) {
             const auto global_index = this->connections_[idx].global_index;
-            const int cell_index = this->simulator_.vanguard()
-                .compressedIndexForInterior(global_index);
+            const int cell_index = this->simulator_.vanguard().compressedIndexForInterior(global_index);
 
             if (cell_index < 0) {
                 continue;
@@ -197,12 +193,9 @@ private:
 
     Scalar computeFaceAreaFraction(const Scalar connected_face_area) const
     {
-        const auto tot_face_area = this->simulator_.vanguard()
-            .grid().comm().sum(connected_face_area);
+        const auto tot_face_area = this->simulator_.vanguard().grid().comm().sum(connected_face_area);
 
-        return (tot_face_area > 0.0)
-            ? connected_face_area / tot_face_area
-            : 0.0;
+        return (tot_face_area > 0.0) ? connected_face_area / tot_face_area : 0.0;
     }
 
     // TODO: this is a function from AquiferAnalytical
@@ -217,14 +210,12 @@ private:
     Scalar totalFluxRate() const
     {
         return std::accumulate(this->connection_flux_.begin(),
-                               this->connection_flux_.end(), 0.0,
-                               [](const Scalar rate, const auto& q)
-                               {
-                                   return rate + getValue(q);
-                               });
+                               this->connection_flux_.end(),
+                               0.0,
+                               [](const Scalar rate, const auto& q) { return rate + getValue(q); });
     }
 };
 
 } // namespace Opm
 
-#endif //OPM_AQUIFERCONSTANTFLUX_HPP
+#endif // OPM_AQUIFERCONSTANTFLUX_HPP

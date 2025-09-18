@@ -30,7 +30,8 @@
 
 #include <opm/models/blackoil/blackoilenergymodules.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 template <class TypeTag, bool enableEnergyV>
 class BlackOilEnergyIntensiveQuantitiesGlobalIndex;
@@ -42,19 +43,19 @@ class BlackOilEnergyIntensiveQuantitiesGlobalIndex;
  */
 template <class TypeTag>
 class BlackOilEnergyIntensiveQuantitiesGlobalIndex<TypeTag, true>
-    : public BlackOilEnergyIntensiveQuantities<TypeTag,true>
+    : public BlackOilEnergyIntensiveQuantities<TypeTag, true>
 {
-    using Parent =  BlackOilEnergyIntensiveQuantities<TypeTag, true>;
+    using Parent = BlackOilEnergyIntensiveQuantities<TypeTag, true>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using Evaluation = GetPropType<TypeTag, Properties::Evaluation>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using SolidEnergyLaw = GetPropType<TypeTag, Properties::SolidEnergyLaw>;
-    using ThermalConductionLaw  = GetPropType<TypeTag, Properties::ThermalConductionLaw>;
+    using ThermalConductionLaw = GetPropType<TypeTag, Properties::ThermalConductionLaw>;
     using ParamCache = typename FluidSystem::template ParameterCache<Evaluation>;
     static constexpr bool enableTemperature = getPropValue<TypeTag, Properties::EnableTemperature>();
-    
+
     using Indices = GetPropType<TypeTag, Properties::Indices>;
     static constexpr unsigned temperatureIdx = Indices::temperatureIdx;
     static constexpr unsigned numPhases = FluidSystem::numPhases;
@@ -76,10 +77,10 @@ public:
                                  const ParamCache& paramCache)
     {
         auto& fs = Parent::asImp_().fluidState_;
-        
+
         // compute the specific enthalpy of the fluids, the specific enthalpy of the rock
         // and the thermal conductivity coefficients
-        for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+        for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             if (!FluidSystem::phaseIsActive(phaseIdx)) {
                 continue;
             }
@@ -107,7 +108,7 @@ template <class TypeTag>
 class BlackOilEnergyIntensiveQuantitiesGlobalIndex<TypeTag, false>
     : public BlackOilEnergyIntensiveQuantities<TypeTag, false>
 {
-    using Parent =  BlackOilEnergyIntensiveQuantities<TypeTag, false>;
+    using Parent = BlackOilEnergyIntensiveQuantities<TypeTag, false>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using PrimaryVariables = GetPropType<TypeTag, Properties::PrimaryVariables>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -135,9 +136,10 @@ public:
                                  [[maybe_unused]] unsigned globalSpaceIdx,
                                  [[maybe_unused]] unsigned timeIdx,
                                  const typename FluidSystem::template ParameterCache<Evaluation>&)
-    { }
+    {
+    }
 };
-    
+
 } // namespace Opm
 
-#endif    
+#endif

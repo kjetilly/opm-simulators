@@ -20,23 +20,24 @@
 #ifndef OPM_WGSTATE_HEADER_INCLUDED
 #define OPM_WGSTATE_HEADER_INCLUDED
 
-#include <opm/simulators/wells/WellState.hpp>
-#include <opm/simulators/wells/GroupState.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellTestState.hpp>
+#include <opm/simulators/wells/GroupState.hpp>
+#include <opm/simulators/wells/WellState.hpp>
 
 #include <memory>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> class ParallelWellInfo;
+template <class Scalar>
+class ParallelWellInfo;
 
 /*
   Microscopic class to handle well, group and well test state.
 */
 
-template<typename Scalar, typename IndexTraits>
-struct WGState
-{
+template <typename Scalar, typename IndexTraits>
+struct WGState {
     explicit WGState(const PhaseUsageInfo<IndexTraits>& pu);
 
     static WGState serializationTestObject(const ParallelWellInfo<Scalar>& pinfo);
@@ -49,7 +50,7 @@ struct WGState
 
     bool operator==(const WGState&) const;
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(well_state);
@@ -58,6 +59,6 @@ struct WGState
     }
 };
 
-}
+} // namespace Opm
 
 #endif

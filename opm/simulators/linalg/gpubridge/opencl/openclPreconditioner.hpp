@@ -20,12 +20,14 @@
 #ifndef OPM_OPENCLPRECONDITIONER_HEADER_INCLUDED
 #define OPM_OPENCLPRECONDITIONER_HEADER_INCLUDED
 
-#include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 #include <opm/simulators/linalg/gpubridge/Preconditioner.hpp>
+#include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-template<class Scalar> class BlockedMatrix;
+template <class Scalar>
+class BlockedMatrix;
 
 template <class Scalar, unsigned int block_size>
 class openclPreconditioner : public Preconditioner<Scalar, block_size, cl::Buffer>
@@ -39,19 +41,18 @@ protected:
 
     openclPreconditioner(int verbosity_)
         : Preconditioner<Scalar, block_size, cl::Buffer>(verbosity_)
-    {}
+    {
+    }
 
 public:
     virtual ~openclPreconditioner() = default;
 
-    static std::unique_ptr<openclPreconditioner<Scalar, block_size>> create(PreconditionerType type,
-           int verbosity,
-           bool opencl_ilu_parallel);
+    static std::unique_ptr<openclPreconditioner<Scalar, block_size>>
+    create(PreconditionerType type, int verbosity, bool opencl_ilu_parallel);
 
     // nested Preconditioners might need to override this
-    virtual void setOpencl(std::shared_ptr<cl::Context>& context,
-                           std::shared_ptr<cl::CommandQueue>& queue);
+    virtual void setOpencl(std::shared_ptr<cl::Context>& context, std::shared_ptr<cl::CommandQueue>& queue);
 };
-} //namespace Opm
+} // namespace Opm::Accelerator
 
 #endif

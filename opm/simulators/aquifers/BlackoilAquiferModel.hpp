@@ -38,11 +38,12 @@
 
 #include <opm/material/densead/Math.hpp>
 
-#include <vector>
-#include <type_traits>
 #include <string_view>
+#include <type_traits>
+#include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Class for handling the blackoil aquifer model.
 template <typename TypeTag>
@@ -77,7 +78,7 @@ public:
     template <class Restarter>
     void deserialize(Restarter& res);
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer);
 
 protected:
@@ -104,9 +105,7 @@ private:
 
     template <typename AquiferType, typename AquiferData>
     std::unique_ptr<AquiferType>
-    createAnalyticAquiferPointer(const AquiferData& aqData,
-                                 const int          aquiferID,
-                                 std::string_view   aqType) const;
+    createAnalyticAquiferPointer(const AquiferData& aqData, const int aquiferID, std::string_view aqType) const;
 
     void computeConnectionAreaFraction() const;
 };

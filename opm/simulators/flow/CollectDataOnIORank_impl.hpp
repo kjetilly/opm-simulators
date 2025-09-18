@@ -39,14 +39,17 @@
 #include <string>
 #include <vector>
 
-namespace {
-    std::vector<std::string> toVector(const std::set<std::string>& string_set)
-    {
-        return { string_set.begin(), string_set.end() };
-    }
+namespace
+{
+std::vector<std::string>
+toVector(const std::set<std::string>& string_set)
+{
+    return {string_set.begin(), string_set.end()};
 }
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
 // global id
 class GlobalCellIndex
@@ -60,21 +63,34 @@ public:
         : globalId_(-1)
         , localIndex_(-1)
         , isInterior_(true)
-    {}
+    {
+    }
     void setGhost()
-    { isInterior_ = false; }
+    {
+        isInterior_ = false;
+    }
 
     void setId(int globalId)
-    { globalId_ = globalId; }
+    {
+        globalId_ = globalId;
+    }
     void setIndex(int localIndex)
-    { localIndex_ = localIndex; }
+    {
+        localIndex_ = localIndex;
+    }
 
-    int localIndex () const
-    { return localIndex_; }
-    int id () const
-    { return globalId_; }
+    int localIndex() const
+    {
+        return localIndex_;
+    }
+    int id() const
+    {
+        return globalId_;
+    }
     bool isInterior() const
-    { return isInterior_; }
+    {
+        return isInterior_;
+    }
 };
 
 using IndexMapType = std::vector<int>;
@@ -99,16 +115,16 @@ public:
                            std::vector<int>& ranks,
                            std::set<int>& recv,
                            bool isIORank)
-    : distributedGlobalIndex_(distributedGlobalIndex)
-    , localIndexMap_(localIndexMap)
-    , indexMaps_(indexMaps)
-    , globalPosition_()
-    , recv_(recv)
-    , ranks_(ranks)
+        : distributedGlobalIndex_(distributedGlobalIndex)
+        , localIndexMap_(localIndexMap)
+        , indexMaps_(indexMaps)
+        , globalPosition_()
+        , recv_(recv)
+        , ranks_(ranks)
     {
         std::size_t size = globalIndex.size();
         // create mapping globalIndex --> localIndex
-        if ( isIORank ) // ioRank
+        if (isIORank) // ioRank
             for (std::size_t index = 0; index < size; ++index)
                 globalPosition_.insert(std::make_pair(globalIndex[index], index));
 
@@ -120,8 +136,7 @@ public:
             IndexMapType& indexMap = indexMaps_.back();
             std::size_t localSize = localIndexMap_.size();
             indexMap.resize(localSize);
-            for (std::size_t i = 0; i < localSize; ++i)
-            {
+            for (std::size_t i = 0; i < localSize; ++i) {
                 int id = distributedGlobalIndex_[localIndexMap_[i]];
                 indexMap[i] = id;
             }
@@ -133,18 +148,15 @@ public:
         if (!indexMaps_.size())
             return;
 
-        if ( ranks_.size() )
-        {
+        if (ranks_.size()) {
             auto rankIt = recv_.begin();
             // translate index maps from global cartesian to index
-            for (auto& indexMap: indexMaps_)
-            {
+            for (auto& indexMap : indexMaps_) {
                 int rank = 0;
                 if (rankIt != recv_.end())
                     rank = *rankIt;
 
-                for (auto&& entry: indexMap)
-                {
+                for (auto&& entry : indexMap) {
                     auto candidate = globalPosition_.find(entry);
                     assert(candidate != globalPosition_.end());
                     entry = candidate->second;
@@ -154,10 +166,10 @@ public:
                 if (rankIt != recv_.end())
                     ++rankIt;
             }
-    #ifndef NDEBUG
-            for (const auto& rank: ranks_)
-                assert(rank>=0);
-    #endif
+#ifndef NDEBUG
+            for (const auto& rank : ranks_)
+                assert(rank >= 0);
+#endif
         }
     }
 
@@ -195,30 +207,33 @@ public:
 
 
 /// \brief Communication handle to scatter the global index
-template<class EquilMapper, class Mapper>
+template <class EquilMapper, class Mapper>
 class ElementIndexScatterHandle
 {
 public:
     ElementIndexScatterHandle(const EquilMapper& sendMapper, const Mapper& recvMapper, std::vector<int>& elementIndices)
-        : sendMapper_(sendMapper), recvMapper_(recvMapper), elementIndices_(elementIndices)
-    {}
+        : sendMapper_(sendMapper)
+        , recvMapper_(recvMapper)
+        , elementIndices_(elementIndices)
+    {
+    }
     using DataType = int;
     bool fixedSize(int /*dim*/, int /*codim*/)
     {
         return true;
     }
 
-    template<class T>
+    template <class T>
     std::size_t size(const T&)
     {
         return 1;
     }
-    template<class B, class T>
+    template <class B, class T>
     void gather(B& buffer, const T& t)
     {
         buffer.write(sendMapper_.index(t));
     }
-    template<class B, class T>
+    template <class B, class T>
     void scatter(B& buffer, const T& t, std::size_t)
     {
         buffer.read(elementIndices_[recvMapper_.index(t)]);
@@ -226,8 +241,9 @@ public:
 
     bool contains(int dim, int codim)
     {
-        return dim==3 && codim==0;
+        return dim == 3 && codim == 0;
     }
+
 private:
     const EquilMapper& sendMapper_;
     const Mapper& recvMapper_;
@@ -235,30 +251,32 @@ private:
 };
 
 /// \brief Communication handle to scatter the global index
-template<class Mapper>
+template <class Mapper>
 class ElementIndexHandle
 {
 public:
     ElementIndexHandle(const Mapper& mapper, std::vector<int>& elementIndices)
-        : mapper_(mapper), elementIndices_(elementIndices)
-    {}
+        : mapper_(mapper)
+        , elementIndices_(elementIndices)
+    {
+    }
     using DataType = int;
     bool fixedSize(int /*dim*/, int /*codim*/)
     {
         return true;
     }
 
-    template<class T>
+    template <class T>
     std::size_t size(const T&)
     {
         return 1;
     }
-    template<class B, class T>
+    template <class B, class T>
     void gather(B& buffer, const T& t)
     {
         buffer.write(elementIndices_[mapper_.index(t)]);
     }
-    template<class B, class T>
+    template <class B, class T>
     void scatter(B& buffer, const T& t, std::size_t)
     {
         buffer.read(elementIndices_[mapper_.index(t)]);
@@ -266,8 +284,9 @@ public:
 
     bool contains(int dim, int codim)
     {
-        return dim==3 && codim==0;
+        return dim == 3 && codim == 0;
     }
+
 private:
     const Mapper& mapper_;
     std::vector<int>& elementIndices_;
@@ -298,9 +317,8 @@ public:
             for (const auto& pair : localCellData_) {
                 const std::string& key = pair.first;
                 std::size_t containerSize = globalSize;
-                [[maybe_unused]] auto ret = globalCellData_.insert(key, pair.second.dim,
-                                                                   std::vector<double>(containerSize),
-                                                                   pair.second.target);
+                [[maybe_unused]] auto ret = globalCellData_.insert(
+                    key, pair.second.dim, std::vector<double>(containerSize), pair.second.target);
                 assert(ret.second);
             }
 
@@ -336,14 +354,16 @@ public:
             const std::string& key = pair.first;
             auto& data = globalCellData_.data<double>(key);
 
-            //write all data from local cell data to buffer
+            // write all data from local cell data to buffer
             read(buffer, indexMap, data);
         }
     }
 
     // unpack all data associated with link
     void unpack(int link, MessageBufferType& buffer)
-    { doUnpack(indexMaps_[link], buffer); }
+    {
+        doUnpack(indexMaps_[link], buffer);
+    }
 
 protected:
     template <class Vector>
@@ -356,8 +376,7 @@ protected:
         unsigned int size = localIndexMap.size();
         buffer.write(size);
         assert(vector.size() >= stride * size);
-        for (unsigned int i=0; i<size; ++i)
-        {
+        for (unsigned int i = 0; i < size; ++i) {
             unsigned int index = localIndexMap[i] * stride + offset;
             assert(index < vector.size());
             buffer.write(vector[index]);
@@ -374,7 +393,7 @@ protected:
         unsigned int size = 0;
         buffer.read(size);
         assert(size == indexMap.size());
-        for (unsigned int i=0; i<size; ++i) {
+        for (unsigned int i = 0; i < size; ++i) {
             unsigned int index = indexMap[i] * stride + offset;
             assert(index < vector.size());
             buffer.read(vector[index]);
@@ -388,9 +407,7 @@ class PackUnPackWellData : public P2PCommunicatorType::DataHandleInterface
     data::Wells& globalWellData_;
 
 public:
-    PackUnPackWellData(const data::Wells& localWellData,
-                       data::Wells& globalWellData,
-                       bool isIORank)
+    PackUnPackWellData(const data::Wells& localWellData, data::Wells& globalWellData, bool isIORank)
         : localWellData_(localWellData)
         , globalWellData_(globalWellData)
     {
@@ -416,23 +433,26 @@ public:
 
     // unpack all data associated with link
     void unpack(int /*link*/, MessageBufferType& buffer)
-    { globalWellData_.read(buffer); }
-
+    {
+        globalWellData_.read(buffer);
+    }
 };
 
 class PackUnPackGroupAndNetworkValues : public P2PCommunicatorType::DataHandleInterface
 {
     const data::GroupAndNetworkValues& localGroupAndNetworkData_;
-    data::GroupAndNetworkValues&       globalGroupAndNetworkData_;
+    data::GroupAndNetworkValues& globalGroupAndNetworkData_;
 
 public:
     PackUnPackGroupAndNetworkValues(const data::GroupAndNetworkValues& localGroupAndNetworkData,
-                                    data::GroupAndNetworkValues&       globalGroupAndNetworkData,
-                                    const bool                              isIORank)
-        : localGroupAndNetworkData_ (localGroupAndNetworkData)
+                                    data::GroupAndNetworkValues& globalGroupAndNetworkData,
+                                    const bool isIORank)
+        : localGroupAndNetworkData_(localGroupAndNetworkData)
         , globalGroupAndNetworkData_(globalGroupAndNetworkData)
     {
-        if (! isIORank) { return; }
+        if (!isIORank) {
+            return;
+        }
 
         MessageBufferType buffer;
         this->pack(0, buffer);
@@ -447,9 +467,7 @@ public:
     {
         // we should only get one link
         if (link != 0) {
-            throw std::logic_error {
-                "link in method pack is not 0 as expected"
-            };
+            throw std::logic_error {"link in method pack is not 0 as expected"};
         }
 
         // write all group and network (node/branch) data
@@ -458,7 +476,9 @@ public:
 
     // unpack all data associated with link
     void unpack(int /*link*/, MessageBufferType& buffer)
-    { this->globalGroupAndNetworkData_.read(buffer); }
+    {
+        this->globalGroupAndNetworkData_.read(buffer);
+    }
 };
 
 class PackUnPackBlockData : public P2PCommunicatorType::DataHandleInterface
@@ -525,12 +545,12 @@ class PackUnPackWBPData : public P2PCommunicatorType::DataHandleInterface
 
 public:
     PackUnPackWBPData(const data::WellBlockAveragePressures& localWBPData,
-                      data::WellBlockAveragePressures&       globalWBPValues,
-                      const bool                             isIORank)
-        : localWBPData_   (localWBPData)
+                      data::WellBlockAveragePressures& globalWBPValues,
+                      const bool isIORank)
+        : localWBPData_(localWBPData)
         , globalWBPValues_(globalWBPValues)
     {
-        if (! isIORank) {
+        if (!isIORank) {
             return;
         }
 
@@ -547,10 +567,7 @@ public:
     {
         // We should only get one link
         if (link != 0) {
-            throw std::logic_error {
-                "link (" + std::to_string(link) +
-                ") in method pack() is not 0 as expected"
-            };
+            throw std::logic_error {"link (" + std::to_string(link) + ") in method pack() is not 0 as expected"};
         }
 
         // Write all local, per-well, WBP data
@@ -558,8 +575,7 @@ public:
     }
 
     // Unpack all data associated with link
-    void unpack([[maybe_unused]] const int link,
-                MessageBufferType&         buffer)
+    void unpack([[maybe_unused]] const int link, MessageBufferType& buffer)
     {
         this->globalWBPValues_.read(buffer);
     }
@@ -568,9 +584,7 @@ public:
 class PackUnPackWellTestState : public P2PCommunicatorType::DataHandleInterface
 {
 public:
-    PackUnPackWellTestState(const WellTestState& localWTestState,
-                            WellTestState& globalWTestState,
-                            bool isIORank)
+    PackUnPackWellTestState(const WellTestState& localWTestState, WellTestState& globalWTestState, bool isIORank)
         : local_(localWTestState)
         , global_(globalWTestState)
     {
@@ -584,13 +598,15 @@ public:
         }
     }
 
-    void pack(int link, MessageBufferType& buffer) {
+    void pack(int link, MessageBufferType& buffer)
+    {
         if (link != 0)
             throw std::logic_error("link in method pack is not 0 as expected");
         this->local_.pack(buffer);
     }
 
-    void unpack(int, MessageBufferType& buffer) {
+    void unpack(int, MessageBufferType& buffer)
+    {
         this->global_.unpack(buffer);
     }
 
@@ -605,9 +621,7 @@ class PackUnPackAquiferData : public P2PCommunicatorType::DataHandleInterface
     data::Aquifers& globalAquiferData_;
 
 public:
-    PackUnPackAquiferData(const data::Aquifers& localAquiferData,
-                          data::Aquifers& globalAquiferData,
-                          bool isIORank)
+    PackUnPackAquiferData(const data::Aquifers& localAquiferData, data::Aquifers& globalAquiferData, bool isIORank)
         : localAquiferData_(localAquiferData)
         , globalAquiferData_(globalAquiferData)
     {
@@ -651,19 +665,11 @@ public:
 
             this->unpackCommon(data, aq);
 
-            if (auto const* aquFet = data.typeData.get<data::AquiferType::Fetkovich>();
-                aquFet != nullptr)
-            {
+            if (auto const* aquFet = data.typeData.get<data::AquiferType::Fetkovich>(); aquFet != nullptr) {
                 this->unpackAquFet(*aquFet, aq);
-            }
-            else if (auto const* aquCT = data.typeData.get<data::AquiferType::CarterTracy>();
-                     aquCT != nullptr)
-            {
+            } else if (auto const* aquCT = data.typeData.get<data::AquiferType::CarterTracy>(); aquCT != nullptr) {
                 this->unpackCarterTracy(*aquCT, aq);
-            }
-            else if (auto const* aquNum = data.typeData.get<data::AquiferType::Numerical>();
-                     aquNum != nullptr)
-            {
+            } else if (auto const* aquNum = data.typeData.get<data::AquiferType::Numerical>(); aquNum != nullptr) {
                 this->unpackNumericAquifer(*aquNum, aq);
             }
         }
@@ -682,58 +688,52 @@ private:
 
     void unpackAquFet(const data::FetkovichData& aquFet, data::AquiferData& aq)
     {
-        if (! aq.typeData.is<data::AquiferType::Fetkovich>()) {
+        if (!aq.typeData.is<data::AquiferType::Fetkovich>()) {
             auto* tData = aq.typeData.create<data::AquiferType::Fetkovich>();
             *tData = aquFet;
-        }
-        else {
+        } else {
             const auto& src = aquFet;
-            auto&       dst = *aq.typeData.getMutable<data::AquiferType::Fetkovich>();
+            auto& dst = *aq.typeData.getMutable<data::AquiferType::Fetkovich>();
 
-            dst.initVolume   = std::max(dst.initVolume  , src.initVolume);
-            dst.prodIndex    = std::max(dst.prodIndex   , src.prodIndex);
+            dst.initVolume = std::max(dst.initVolume, src.initVolume);
+            dst.prodIndex = std::max(dst.prodIndex, src.prodIndex);
             dst.timeConstant = std::max(dst.timeConstant, src.timeConstant);
         }
     }
 
     void unpackCarterTracy(const data::CarterTracyData& aquCT, data::AquiferData& aq)
     {
-        if (! aq.typeData.is<data::AquiferType::CarterTracy>()) {
+        if (!aq.typeData.is<data::AquiferType::CarterTracy>()) {
             auto* tData = aq.typeData.create<data::AquiferType::CarterTracy>();
             *tData = aquCT;
-        }
-        else {
+        } else {
             const auto& src = aquCT;
-            auto&       dst = *aq.typeData.getMutable<data::AquiferType::CarterTracy>();
+            auto& dst = *aq.typeData.getMutable<data::AquiferType::CarterTracy>();
 
-            dst.timeConstant   = std::max(dst.timeConstant  , src.timeConstant);
+            dst.timeConstant = std::max(dst.timeConstant, src.timeConstant);
             dst.influxConstant = std::max(dst.influxConstant, src.influxConstant);
-            dst.waterDensity   = std::max(dst.waterDensity  , src.waterDensity);
+            dst.waterDensity = std::max(dst.waterDensity, src.waterDensity);
             dst.waterViscosity = std::max(dst.waterViscosity, src.waterViscosity);
 
-            dst.dimensionless_time     = std::max(dst.dimensionless_time    , src.dimensionless_time);
+            dst.dimensionless_time = std::max(dst.dimensionless_time, src.dimensionless_time);
             dst.dimensionless_pressure = std::max(dst.dimensionless_pressure, src.dimensionless_pressure);
         }
     }
 
     void unpackNumericAquifer(const data::NumericAquiferData& aquNum, data::AquiferData& aq)
     {
-        if (! aq.typeData.is<data::AquiferType::Numerical>()) {
+        if (!aq.typeData.is<data::AquiferType::Numerical>()) {
             auto* tData = aq.typeData.create<data::AquiferType::Numerical>();
             *tData = aquNum;
-        }
-        else {
+        } else {
             const auto& src = aquNum;
-            auto&       dst = *aq.typeData.getMutable<data::AquiferType::Numerical>();
+            auto& dst = *aq.typeData.getMutable<data::AquiferType::Numerical>();
 
             std::transform(src.initPressure.begin(),
                            src.initPressure.end(),
                            dst.initPressure.begin(),
                            dst.initPressure.begin(),
-                           [](const double p0_1, const double p0_2)
-                           {
-                               return std::max(p0_1, p0_2);
-                           });
+                           [](const double p0_1, const double p0_2) { return std::max(p0_1, p0_2); });
         }
     }
 };
@@ -741,16 +741,18 @@ private:
 class PackUnpackInterRegFlows : public P2PCommunicatorType::DataHandleInterface
 {
     const InterRegFlowMap& localInterRegFlows_;
-    InterRegFlowMap&       globalInterRegFlows_;
+    InterRegFlowMap& globalInterRegFlows_;
 
 public:
     PackUnpackInterRegFlows(const InterRegFlowMap& localInterRegFlows,
-                            InterRegFlowMap&       globalInterRegFlows,
-                            const bool             isIORank)
+                            InterRegFlowMap& globalInterRegFlows,
+                            const bool isIORank)
         : localInterRegFlows_(localInterRegFlows)
         , globalInterRegFlows_(globalInterRegFlows)
     {
-        if (! isIORank) { return; }
+        if (!isIORank) {
+            return;
+        }
 
         MessageBufferType buffer;
         this->pack(0, buffer);
@@ -765,9 +767,7 @@ public:
     {
         // we should only get one link
         if (link != 0) {
-            throw std::logic_error {
-                "link in method pack is not 0 as expected"
-            };
+            throw std::logic_error {"link in method pack is not 0 as expected"};
         }
 
         // write all inter-region flow data
@@ -776,7 +776,9 @@ public:
 
     // unpack all data associated with link
     void unpack(int /*link*/, MessageBufferType& buffer)
-    { this->globalInterRegFlows_.read(buffer); }
+    {
+        this->globalInterRegFlows_.read(buffer);
+    }
 };
 
 class PackUnpackFlows : public P2PCommunicatorType::DataHandleInterface
@@ -785,13 +787,15 @@ class PackUnpackFlows : public P2PCommunicatorType::DataHandleInterface
     std::array<FlowsData<double>, 3>& globalFlows_;
 
 public:
-    PackUnpackFlows(const std::array<FlowsData<double>, 3> & localFlows,
+    PackUnpackFlows(const std::array<FlowsData<double>, 3>& localFlows,
                     std::array<FlowsData<double>, 3>& globalFlows,
                     const bool isIORank)
         : localFlows_(localFlows)
         , globalFlows_(globalFlows)
     {
-        if (! isIORank) { return; }
+        if (!isIORank) {
+            return;
+        }
 
         MessageBufferType buffer;
         this->pack(0, buffer);
@@ -842,17 +846,18 @@ public:
 };
 
 template <class Grid, class EquilGrid, class GridView>
-CollectDataOnIORank<Grid,EquilGrid,GridView>::
-CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
-                    const GridView& localGridView,
-                    const Dune::CartesianIndexMapper<Grid>& cartMapper,
-                    const Dune::CartesianIndexMapper<EquilGrid>* equilCartMapper,
-                    const std::set<std::string>& fipRegionsInterregFlow)
+CollectDataOnIORank<Grid, EquilGrid, GridView>::CollectDataOnIORank(
+    const Grid& grid,
+    const EquilGrid* equilGrid,
+    const GridView& localGridView,
+    const Dune::CartesianIndexMapper<Grid>& cartMapper,
+    const Dune::CartesianIndexMapper<EquilGrid>* equilCartMapper,
+    const std::set<std::string>& fipRegionsInterregFlow)
     : toIORankComm_(grid.comm())
     , globalInterRegFlows_(InterRegFlowMap::createMapFromNames(toVector(fipRegionsInterregFlow)))
 {
     // Build index maps only when reordering is needed; skip in parallel runs for CpGrid with LGRs
-    if ((!needsReordering && !isParallel()) || (isParallel() && (grid.maxLevel()>0)))
+    if ((!needsReordering && !isParallel()) || (isParallel() && (grid.maxLevel() > 0)))
         return;
 
     const CollectiveCommunication& comm = grid.comm();
@@ -866,8 +871,7 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
         ElementMapper elemMapper(localGridView, Dune::mcmgElementLayout());
         sortedCartesianIdx_.reserve(localGridView.size(0));
 
-        for (const auto& elem : elements(localGridView, Dune::Partitions::interior))
-        {
+        for (const auto& elem : elements(localGridView, Dune::Partitions::interior)) {
             auto idx = elemMapper.index(elem);
             sortedCartesianIdx_.push_back(cartMapper.cartesianIndex(idx));
         }
@@ -887,11 +891,12 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
             using EquilElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<EquilGridView>;
             EquilElementMapper equilElemMapper(equilGridView, Dune::mcmgElementLayout());
 
-           // Scatter the global index to local index for lookup during restart
-           if constexpr (isSameGrid) {
-             ElementIndexScatterHandle<EquilElementMapper,ElementMapper> handle(equilElemMapper, elemMapper, localIdxToGlobalIdx_);
-             grid.scatterData(handle);
-           }
+            // Scatter the global index to local index for lookup during restart
+            if constexpr (isSameGrid) {
+                ElementIndexScatterHandle<EquilElementMapper, ElementMapper> handle(
+                    equilElemMapper, elemMapper, localIdxToGlobalIdx_);
+                grid.scatterData(handle);
+            }
 
             // loop over all elements (global grid) and store Cartesian index
             for (const auto& elem : elements(equilGrid->leafGridView())) {
@@ -904,9 +909,7 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
                 if (i != ioRank)
                     recv.insert(i);
             }
-        }
-        else
-        {
+        } else {
             // all other simply send to the I/O rank
             send.insert(ioRank);
 
@@ -914,16 +917,16 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
             // This is a bit hacky since the type differs from the iorank.
             // But should work since we only receive, i.e. use the second parameter.
             if constexpr (isSameGrid) {
-              ElementIndexScatterHandle<ElementMapper, ElementMapper> handle(elemMapper, elemMapper, localIdxToGlobalIdx_);
-              grid.scatterData(handle);
+                ElementIndexScatterHandle<ElementMapper, ElementMapper> handle(
+                    elemMapper, elemMapper, localIdxToGlobalIdx_);
+                grid.scatterData(handle);
             }
         }
 
         // Sync the global element indices
         if constexpr (isSameGrid) {
-          ElementIndexHandle<ElementMapper> handle(elemMapper, localIdxToGlobalIdx_);
-          grid.communicate(handle, Dune::InteriorBorder_All_Interface,
-                           Dune::ForwardCommunication);
+            ElementIndexHandle<ElementMapper> handle(elemMapper, localIdxToGlobalIdx_);
+            grid.communicate(handle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
         }
 
         localIndexMap_.clear();
@@ -965,22 +968,23 @@ CollectDataOnIORank(const Grid& grid, const EquilGrid* equilGrid,
 }
 
 template <class Grid, class EquilGrid, class GridView>
-void CollectDataOnIORank<Grid,EquilGrid,GridView>::
-collect(const data::Solution&                                localCellData,
-        const std::map<std::pair<std::string, int>, double>& localBlockData,
-        std::map<std::pair<std::string, int>, double>&       extraBlockData,
-        const data::Wells&                                   localWellData,
-        const data::WellBlockAveragePressures&               localWBPData,
-        const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
-        const data::Aquifers&                                localAquiferData,
-        const WellTestState&                                 localWellTestState,
-        const InterRegFlowMap&                               localInterRegFlows,
-        const std::array<FlowsData<double>, 3>&              localFlowsn,
-        const std::array<FlowsData<double>, 3>&              localFloresn)
+void
+CollectDataOnIORank<Grid, EquilGrid, GridView>::collect(
+    const data::Solution& localCellData,
+    const std::map<std::pair<std::string, int>, double>& localBlockData,
+    std::map<std::pair<std::string, int>, double>& extraBlockData,
+    const data::Wells& localWellData,
+    const data::WellBlockAveragePressures& localWBPData,
+    const data::GroupAndNetworkValues& localGroupAndNetworkData,
+    const data::Aquifers& localAquiferData,
+    const WellTestState& localWellTestState,
+    const InterRegFlowMap& localInterRegFlows,
+    const std::array<FlowsData<double>, 3>& localFlowsn,
+    const std::array<FlowsData<double>, 3>& localFloresn)
 {
     globalCellData_ = {};
     globalBlockData_.clear();
-    std::map<std::pair<std::string,int>,double> globalExtraBlockData;
+    std::map<std::pair<std::string, int>, double> globalExtraBlockData;
     globalWellData_.clear();
     globalWBPData_.values.clear();
     globalGroupAndNetworkData_.clear();
@@ -991,20 +995,18 @@ collect(const data::Solution&                                localCellData,
     globalFloresn_ = {};
 
     // index maps only have to be build when reordering is needed
-    if(!needsReordering && !isParallel())
+    if (!needsReordering && !isParallel())
         return;
 
     // this also linearises the local buffers on ioRank
-    PackUnPackCellData packUnpackCellData {
-        localCellData,
-        this->globalCellData_,
-        this->localIndexMap_,
-        this->indexMaps_,
-        this->numCells(),
-        this->isIORank()
-    };
+    PackUnPackCellData packUnpackCellData {localCellData,
+                                           this->globalCellData_,
+                                           this->localIndexMap_,
+                                           this->indexMaps_,
+                                           this->numCells(),
+                                           this->isIORank()};
 
-    if (! isParallel()) {
+    if (!isParallel()) {
         // no need to collect anything.
         return;
     }
@@ -1017,65 +1019,26 @@ collect(const data::Solution&                                localCellData,
         globalFlowsn_[i].resize(sizeFlo);
     }
 
-    PackUnPackWellData packUnpackWellData {
-        localWellData,
-        this->globalWellData_,
-        this->isIORank()
-    };
+    PackUnPackWellData packUnpackWellData {localWellData, this->globalWellData_, this->isIORank()};
 
     PackUnPackGroupAndNetworkValues packUnpackGroupAndNetworkData {
-        localGroupAndNetworkData,
-        this->globalGroupAndNetworkData_,
-        this->isIORank()
-    };
+        localGroupAndNetworkData, this->globalGroupAndNetworkData_, this->isIORank()};
 
-    PackUnPackBlockData packUnpackBlockData {
-        localBlockData,
-                this->globalBlockData_,
-                this->isIORank()
-    };
+    PackUnPackBlockData packUnpackBlockData {localBlockData, this->globalBlockData_, this->isIORank()};
 
-    PackUnPackBlockData packUnpackExtraBlockData {
-        extraBlockData,
-        globalExtraBlockData,
-        this->isIORank()
-    };
+    PackUnPackBlockData packUnpackExtraBlockData {extraBlockData, globalExtraBlockData, this->isIORank()};
 
-    PackUnPackWBPData packUnpackWBPData {
-        localWBPData,
-        this->globalWBPData_,
-        this->isIORank()
-    };
+    PackUnPackWBPData packUnpackWBPData {localWBPData, this->globalWBPData_, this->isIORank()};
 
-    PackUnPackAquiferData packUnpackAquiferData {
-        localAquiferData,
-        this->globalAquiferData_,
-        this->isIORank()
-    };
+    PackUnPackAquiferData packUnpackAquiferData {localAquiferData, this->globalAquiferData_, this->isIORank()};
 
-    PackUnPackWellTestState packUnpackWellTestState {
-        localWellTestState,
-        this->globalWellTestState_,
-        this->isIORank()
-    };
+    PackUnPackWellTestState packUnpackWellTestState {localWellTestState, this->globalWellTestState_, this->isIORank()};
 
-    PackUnpackInterRegFlows packUnpackInterRegFlows {
-        localInterRegFlows,
-        this->globalInterRegFlows_,
-        this->isIORank()
-    };
+    PackUnpackInterRegFlows packUnpackInterRegFlows {localInterRegFlows, this->globalInterRegFlows_, this->isIORank()};
 
-    PackUnpackFlows packUnpackFlowsn {
-        localFlowsn,
-        this->globalFlowsn_,
-        this->isIORank()
-    };
+    PackUnpackFlows packUnpackFlowsn {localFlowsn, this->globalFlowsn_, this->isIORank()};
 
-    PackUnpackFlows packUnpackFloresn {
-        localFloresn,
-        this->globalFloresn_,
-        this->isIORank()
-    };
+    PackUnpackFlows packUnpackFloresn {localFloresn, this->globalFloresn_, this->isIORank()};
 
     toIORankComm_.exchange(packUnpackCellData);
     toIORankComm_.exchange(packUnpackWellData);
@@ -1098,8 +1061,8 @@ collect(const data::Solution&                                localCellData,
 }
 
 template <class Grid, class EquilGrid, class GridView>
-int CollectDataOnIORank<Grid,EquilGrid,GridView>::
-localIdxToGlobalIdx(unsigned localIdx) const
+int
+CollectDataOnIORank<Grid, EquilGrid, GridView>::localIdxToGlobalIdx(unsigned localIdx) const
 {
     if (!isParallel()) {
         return localIdx;
@@ -1117,21 +1080,18 @@ localIdxToGlobalIdx(unsigned localIdx) const
 }
 
 template <class Grid, class EquilGrid, class GridView>
-bool CollectDataOnIORank<Grid,EquilGrid,GridView>::
-isCartIdxOnThisRank(int cartIdx) const
+bool
+CollectDataOnIORank<Grid, EquilGrid, GridView>::isCartIdxOnThisRank(int cartIdx) const
 {
-    if (! this->isParallel()) {
+    if (!this->isParallel()) {
         return true;
     }
 
-    assert (! needsReordering);
+    assert(!needsReordering);
 
-    auto candidate = std::lower_bound(this->sortedCartesianIdx_.begin(),
-                                      this->sortedCartesianIdx_.end(),
-                                      cartIdx);
+    auto candidate = std::lower_bound(this->sortedCartesianIdx_.begin(), this->sortedCartesianIdx_.end(), cartIdx);
 
-    return (candidate != sortedCartesianIdx_.end())
-        && (*candidate == cartIdx);
+    return (candidate != sortedCartesianIdx_.end()) && (*candidate == cartIdx);
 }
 
 } // end namespace Opm

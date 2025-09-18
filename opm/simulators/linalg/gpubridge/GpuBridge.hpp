@@ -27,7 +27,8 @@
 namespace Opm
 {
 
-template<class Scalar> class WellContributions;
+template <class Scalar>
+class WellContributions;
 
 typedef Dune::InverseOperatorResult InverseOperatorResult;
 
@@ -40,24 +41,32 @@ private:
     int verbosity = 0;
     bool use_gpu = false;
     std::string accelerator_mode;
-    std::unique_ptr<Accelerator::GpuSolver<Scalar,block_size>> backend;
-    std::shared_ptr<Accelerator::BlockedMatrix<Scalar>> matrix;  // 'stores' matrix, actually points to h_rows, h_cols and the received BridgeMatrix for the nonzeroes
-    std::shared_ptr<Accelerator::BlockedMatrix<Scalar>> jacMatrix;  // 'stores' preconditioner matrix, actually points to h_rows, h_cols and the received BridgeMatrix for the nonzeroes
-    std::vector<int> h_rows, h_cols;  // store the sparsity pattern of the matrix
-    std::vector<int> h_jacRows, h_jacCols;  // store the sparsity pattern of the jacMatrix
-    std::vector<typename BridgeMatrix::size_type> diagIndices;   // contains offsets of the diagonal blocks wrt start of the row, used for replaceZeroDiagonal()
-    std::vector<typename BridgeMatrix::size_type> jacDiagIndices;   // same but for jacMatrix
+    std::unique_ptr<Accelerator::GpuSolver<Scalar, block_size>> backend;
+    std::shared_ptr<Accelerator::BlockedMatrix<Scalar>>
+        matrix; // 'stores' matrix, actually points to h_rows, h_cols and the received BridgeMatrix for the nonzeroes
+    std::shared_ptr<Accelerator::BlockedMatrix<Scalar>>
+        jacMatrix; // 'stores' preconditioner matrix, actually points to h_rows, h_cols and the received BridgeMatrix
+                   // for the nonzeroes
+    std::vector<int> h_rows, h_cols; // store the sparsity pattern of the matrix
+    std::vector<int> h_jacRows, h_jacCols; // store the sparsity pattern of the jacMatrix
+    std::vector<typename BridgeMatrix::size_type>
+        diagIndices; // contains offsets of the diagonal blocks wrt start of the row, used for replaceZeroDiagonal()
+    std::vector<typename BridgeMatrix::size_type> jacDiagIndices; // same but for jacMatrix
 
 public:
     /// Construct a GpuBridge
-    /// \param[in] accelerator_mode           to select if an accelerated solver is used, is passed via command-line: '--accelerator-mode=[none|cusparse|opencl|amgcl|rocalution|rocsparse]'
+    /// \param[in] accelerator_mode           to select if an accelerated solver is used, is passed via command-line:
+    /// '--accelerator-mode=[none|cusparse|opencl|amgcl|rocalution|rocsparse]'
     /// \param[in] linear_solver_verbosity    verbosity of GpuSolver
     /// \param[in] maxit                      maximum number of iterations for GpuSolver
     /// \param[in] tolerance                  required relative tolerance for GpuSolver
     /// \param[in] platformID                 the OpenCL platform ID to be used
-    /// \param[in] deviceID                   the device ID to be used by the cusparse- and openclSolvers, too high values could cause runtime errors
-    /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL with level_scheduling
-    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
+    /// \param[in] deviceID                   the device ID to be used by the cusparse- and openclSolvers, too high
+    /// values could cause runtime errors
+    /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL
+    /// with level_scheduling
+    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline
+    /// argument
     GpuBridge(std::string accelerator_mode,
               int linear_solver_verbosity,
               int maxit,
@@ -74,18 +83,19 @@ public:
     /// \param[in] jacMat          matrix A, but modified for the preconditioner, should be of type Dune::BCRSMatrix
     /// \param[in] numJacobiBlocks number of jacobi blocks in jacMat
     /// \param[in] b               vector b, should be of type Dune::BlockVector
-    /// \param[in] wellContribs    contains all WellContributions, to apply them separately, instead of adding them to matrix A
+    /// \param[in] wellContribs    contains all WellContributions, to apply them separately, instead of adding them to
+    /// matrix A
     /// \param[inout] result       summary of solver result
     void solve_system(BridgeMatrix* bridgeMat,
                       BridgeMatrix* jacMat,
                       int numJacobiBlocks,
                       BridgeVector& b,
                       WellContributions<Scalar>& wellContribs,
-                      InverseOperatorResult &result);
+                      InverseOperatorResult& result);
 
     /// Get the resulting x vector
     /// \param[inout] x    vector x, should be of type Dune::BlockVector
-    void get_result(BridgeVector &x);
+    void get_result(BridgeVector& x);
 
     /// Return whether the GpuBridge will use the GPU or not
     /// return whether the GpuBridge will use the GPU or not
@@ -98,9 +108,8 @@ public:
     /// \param[in] mat       input matrix, probably BCRSMatrix
     /// \param[out] h_rows   rowpointers
     /// \param[out] h_cols   columnindices
-    static void copySparsityPatternFromISTL(const BridgeMatrix& mat,
-                                            std::vector<int>& h_rows,
-                                            std::vector<int>& h_cols);
+    static void
+    copySparsityPatternFromISTL(const BridgeMatrix& mat, std::vector<int>& h_rows, std::vector<int>& h_cols);
 
     /// Initialize the WellContributions object with opencl context and queue
     /// those must be set before calling BlackOilWellModel::getWellContributions() in ISTL
@@ -115,6 +124,6 @@ public:
     }
 }; // end class GpuBridge
 
-}
+} // namespace Opm
 
 #endif

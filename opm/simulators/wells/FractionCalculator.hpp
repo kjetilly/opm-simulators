@@ -25,15 +25,19 @@
 
 #include <string>
 
-namespace Opm {
-template<class Scalar> class GroupState;
+namespace Opm
+{
+template <class Scalar>
+class GroupState;
 class Schedule;
-template<typename Scalar, typename IndexTraits> class WellState;
-}
+template <typename Scalar, typename IndexTraits>
+class WellState;
+} // namespace Opm
 
-namespace Opm::WGHelpers {
+namespace Opm::WGHelpers
+{
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class FractionCalculator
 {
 public:
@@ -46,25 +50,19 @@ public:
                        const GuideRateModel::Target target,
                        const bool is_producer,
                        const Phase injection_phase);
-    Scalar fraction(const std::string& name,
-                    const std::string& control_group_name,
-                    const bool always_include_this);
-    Scalar localFraction(const std::string& name,
-                         const std::string& always_included_child);
+    Scalar fraction(const std::string& name, const std::string& control_group_name, const bool always_include_this);
+    Scalar localFraction(const std::string& name, const std::string& always_included_child);
 
 private:
     std::string parent(const std::string& name);
 
     // returns the sum of the guiderates of the given group
     // and the number of sub-groups/wells that contributed to the sum
-    std::pair<Scalar,int> guideRateSum(const Group& group,
-                        const std::string& always_included_child,
-                        const bool always_use_potentials);
-    Scalar guideRate(const std::string& name,
-                     const std::string& always_included_child,
-                     const bool always_use_potentials);
-    int groupControlledWells(const std::string& group_name,
-                             const std::string& always_included_child);
+    std::pair<Scalar, int>
+    guideRateSum(const Group& group, const std::string& always_included_child, const bool always_use_potentials);
+    Scalar
+    guideRate(const std::string& name, const std::string& always_included_child, const bool always_use_potentials);
+    int groupControlledWells(const std::string& group_name, const std::string& always_included_child);
     GuideRate::RateVector getGroupRateVector(const std::string& group_name);
     const Schedule& schedule_;
     const WellState<Scalar, IndexTraits>& well_state_;

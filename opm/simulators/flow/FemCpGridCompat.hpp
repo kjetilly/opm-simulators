@@ -36,32 +36,36 @@
 #include <dune/fem/gridpart/common/gridpart.hh>
 #include <dune/fem/io/streams/streams.hh>
 
-namespace Dune {
-namespace cpgrid {
-template <int codim>
-class Entity;
+namespace Dune
+{
+namespace cpgrid
+{
+    template <int codim>
+    class Entity;
 
-template <int codim>
-class EntityPointer;
-}
+    template <int codim>
+    class EntityPointer;
+} // namespace cpgrid
 
 // specialization of dune-fem compatiblity functions for CpGrid, since CpGrid does not use the interface classes.
-namespace Fem {
-
-////////////////////////////////////////////////////////////
-//
-//  GridEntityAccess for CpGrid entities
-//
-////////////////////////////////////////////////////////////
-template<int codim>
-struct GridEntityAccess<Dune::cpgrid::Entity<codim> >
+namespace Fem
 {
-    using EntityType = Dune::cpgrid::Entity<codim>;
-    using GridEntityType = EntityType;
 
-    static const GridEntityType& gridEntity(const EntityType& entity)
-    { return entity; }
-};
+    ////////////////////////////////////////////////////////////
+    //
+    //  GridEntityAccess for CpGrid entities
+    //
+    ////////////////////////////////////////////////////////////
+    template <int codim>
+    struct GridEntityAccess<Dune::cpgrid::Entity<codim>> {
+        using EntityType = Dune::cpgrid::Entity<codim>;
+        using GridEntityType = EntityType;
+
+        static const GridEntityType& gridEntity(const EntityType& entity)
+        {
+            return entity;
+        }
+    };
 
 } // namespace Fem
 

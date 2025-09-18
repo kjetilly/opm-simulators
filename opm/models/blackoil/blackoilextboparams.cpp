@@ -26,26 +26,27 @@
 
 #if HAVE_ECL_INPUT
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/SsfnTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/Sof2Table.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/MiscTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/MsfnTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/PmiscTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/MiscTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/SorwmisTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/SgcwmisTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/Sof2Table.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/SorwmisTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/SsfnTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/TlpmixpaTable.hpp>
 #endif
 
 #include <cstddef>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableExtbo>
-void BlackOilExtboParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enableExtbo>
+void
+BlackOilExtboParams<Scalar>::initFromState(const EclipseState& eclState)
 {
     // some sanity checks: if extended BO is enabled, the PVTSOL keyword must be
     // present, if extended BO is disabled the keyword must not be present.
@@ -54,8 +55,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Extended black oil treatment requested at compile "
                                      "time, but the deck does not contain the PVTSOL keyword");
         }
-    }
-    else {
+    } else {
         if (!enableExtbo && eclState.runspec().phases().active(Phase::ZFRACTION)) {
             throw std::runtime_error("Extended black oil treatment disabled at compile time, but the deck "
                                      "contains the PVTSOL keyword");
@@ -73,17 +73,17 @@ initFromState(const EclipseState& eclState)
 
     std::size_t numPvtRegions = pvtsolTables.size();
 
-    BO_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    BG_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    RS_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    RV_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    X_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    Y_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    VISCO_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    VISCG_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    BO_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    BG_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    RS_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    RV_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    X_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    Y_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    VISCO_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    VISCG_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
 
-    PBUB_RS_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
-    PBUB_RV_.resize(numPvtRegions, Tabulated2DFunction{Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    PBUB_RS_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
+    PBUB_RV_.resize(numPvtRegions, Tabulated2DFunction {Tabulated2DFunction::InterpolationPolicy::LeftExtreme});
 
     zLim_.resize(numPvtRegions);
 
@@ -97,9 +97,9 @@ initFromState(const EclipseState& eclState)
         const auto& saturatedTable = pvtsolTable.getSaturatedTable();
         assert(saturatedTable.numRows() > 1);
 
-        std::vector<Scalar> oilCmp(saturatedTable.numRows(), -4.0e-9); //Default values used in [*]
-        std::vector<Scalar> gasCmp(saturatedTable.numRows(), -0.08);   //-------------"-------------
-        zLim_[regionIdx] = 0.7;                                //-------------"-------------
+        std::vector<Scalar> oilCmp(saturatedTable.numRows(), -4.0e-9); // Default values used in [*]
+        std::vector<Scalar> gasCmp(saturatedTable.numRows(), -0.08); //-------------"-------------
+        zLim_[regionIdx] = 0.7; //-------------"-------------
         std::vector<Scalar> zArg(saturatedTable.numRows(), 0.0);
 
         for (unsigned outerIdx = 0; outerIdx < saturatedTable.numRows(); ++outerIdx) {
@@ -144,17 +144,19 @@ initFromState(const EclipseState& eclState)
                         Scalar cmpFactor = (bo - bo0) / (po - po0);
                         oilCmp[outerIdx] = cmpFactor;
                         zLim_[regionIdx] = ZCO2;
-                        //std::cout << "### cmpFactorOil: " << cmpFactor << "  zLim: " << zLim_[regionIdx] << std::endl;
+                        // std::cout << "### cmpFactorOil: " << cmpFactor << "  zLim: " << zLim_[regionIdx] <<
+                        // std::endl;
                     }
                     break;
                 } else if (bo0 == bo) { // This is undersaturated gas-phase for ZCO2 > zLim ...
                     // Here we assume tabulated bo to be constant extrapolated beyond dew point
-                    if (innerIdx+1 < numRows && ZCO2<1.0 && extractCmpFromPvt) {
+                    if (innerIdx + 1 < numRows && ZCO2 < 1.0 && extractCmpFromPvt) {
                         Scalar rvNxt = underSaturatedTable.get("RV", innerIdx + 1) + innerIdx * 1.0e-10;
                         Scalar bgNxt = underSaturatedTable.get("B_G", innerIdx + 1);
                         Scalar cmpFactor = (bgNxt - bg) / (rvNxt - rv);
                         gasCmp[outerIdx] = cmpFactor;
-                        //std::cout << "### cmpFactorGas: " << cmpFactor << "  zLim: " << zLim_[regionIdx] << std::endl;
+                        // std::cout << "### cmpFactorGas: " << cmpFactor << "  zLim: " << zLim_[regionIdx] <<
+                        // std::endl;
                     }
 
                     BO_[regionIdx].appendSamplePoint(outerIdx, po, bo);
@@ -183,7 +185,7 @@ initFromState(const EclipseState& eclState)
                 VISCO_[regionIdx].appendSamplePoint(outerIdx, po, mo);
                 VISCG_[regionIdx].appendSamplePoint(outerIdx, po, mg);
 
-                       // rs,rv -> pressure
+                // rs,rv -> pressure
                 PBUB_RS_[regionIdx].appendSamplePoint(outerIdx, rs, po);
                 PBUB_RV_[regionIdx].appendSamplePoint(outerIdx, rv, po);
             }
@@ -192,7 +194,7 @@ initFromState(const EclipseState& eclState)
         gasCmp_[regionIdx].setXYContainers(zArg, gasCmp, /*sortInput=*/false);
     }
 
-           // Reference density for pure z-component taken from kw SDENSITY
+    // Reference density for pure z-component taken from kw SDENSITY
     const auto& sdensityTables = eclState.getTableManager().getSolventDensityTables();
     if (sdensityTables.size() == numPvtRegions) {
         zReferenceDensity_.resize(numPvtRegions);
@@ -200,15 +202,14 @@ initFromState(const EclipseState& eclState)
             Scalar rhoRefS = sdensityTables[regionIdx].getSolventDensityColumn().front();
             zReferenceDensity_[regionIdx] = rhoRefS;
         }
-    }
-    else
+    } else
         throw std::runtime_error("Extbo:  kw SDENSITY is missing or not aligned with NTPVT\n");
 }
 #endif
 
-#define INSTANTIATE_TYPE(T)                                                          \
-    template struct BlackOilExtboParams<T>;                                          \
-    template void BlackOilExtboParams<T>::initFromState<false>(const EclipseState&); \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilExtboParams<T>;                                                                            \
+    template void BlackOilExtboParams<T>::initFromState<false>(const EclipseState&);                                   \
     template void BlackOilExtboParams<T>::initFromState<true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)

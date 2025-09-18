@@ -30,21 +30,20 @@
 
 #include <functional>
 
-template<class Scalar>
-Opm::ParallelPAvgCalculator<Scalar>::
-ParallelPAvgCalculator(const Parallel::Communication& comm,
-                       const GridDims&                cellIndexMap,
-                       const WellConnections&         connections)
-    : PAvgCalculator<Scalar> { cellIndexMap, connections }
-    , comm_          { comm }
-{}
-
-template<class Scalar>
-void Opm::ParallelPAvgCalculator<Scalar>::
-collectGlobalContributions()
+template <class Scalar>
+Opm::ParallelPAvgCalculator<Scalar>::ParallelPAvgCalculator(const Parallel::Communication& comm,
+                                                            const GridDims& cellIndexMap,
+                                                            const WellConnections& connections)
+    : PAvgCalculator<Scalar> {cellIndexMap, connections}
+    , comm_ {comm}
 {
-    auto collect = [this](Accumulator& accumulator)
-    {
+}
+
+template <class Scalar>
+void
+Opm::ParallelPAvgCalculator<Scalar>::collectGlobalContributions()
+{
+    auto collect = [this](Accumulator& accumulator) {
         auto avg = accumulator.getRunningAverages();
 
         this->comm_.get().sum(avg.data(), avg.size());

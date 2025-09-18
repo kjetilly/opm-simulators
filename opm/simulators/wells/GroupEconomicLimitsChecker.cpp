@@ -35,57 +35,58 @@
 
 #include <fmt/format.h>
 
-#include <ctime>
 #include <chrono>
-#include <sstream>
+#include <ctime>
 #include <iomanip>
+#include <sstream>
 
-namespace Opm {
+namespace Opm
+{
 
-std::string simTimeToString(const std::time_t start_time, const double sim_time)
+std::string
+simTimeToString(const std::time_t start_time, const double sim_time)
 {
     const auto start_timep = std::chrono::system_clock::from_time_t(start_time);
-    const auto sim_duration = std::chrono::duration_cast<std::chrono::system_clock::duration>(
-        std::chrono::duration<double>(sim_time)
-    );
+    const auto sim_duration
+        = std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<double>(sim_time));
     const std::time_t cur_time = std::chrono::system_clock::to_time_t(start_timep + sim_duration);
     std::ostringstream ss;
     ss << std::put_time(std::localtime(&cur_time), "%d-%b-%Y");
     return ss.str();
 }
 
-template<typename Scalar, typename IndexTraits>
-GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-GroupEconomicLimitsChecker(const BlackoilWellModelGeneric<Scalar, IndexTraits>& well_model,
-                           WellTestState& well_test_state,
-                           const Group& group,
-                           const double simulation_time,
-                           const int report_step_idx,
-                           DeferredLogger& deferred_logger)
-    : well_model_{well_model}
-    , group_{group}
-    , simulation_time_{simulation_time}
-    , report_step_idx_{report_step_idx}
-    , deferred_logger_{deferred_logger}
-    , date_string_{simTimeToString(well_model.schedule().getStartTime(),simulation_time)}
-    , unit_system_{well_model.eclipseState().getUnits()}
-    , well_state_{well_model.wellState()}
-    , well_test_state_{well_test_state}
-    , schedule_{well_model.schedule()}
-    , gecon_props_{schedule_[report_step_idx_].gecon().get_group_prop(
-                   schedule_, well_model_.summaryState(), group_.name())}
+template <typename Scalar, typename IndexTraits>
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::GroupEconomicLimitsChecker(
+    const BlackoilWellModelGeneric<Scalar, IndexTraits>& well_model,
+    WellTestState& well_test_state,
+    const Group& group,
+    const double simulation_time,
+    const int report_step_idx,
+    DeferredLogger& deferred_logger)
+    : well_model_ {well_model}
+    , group_ {group}
+    , simulation_time_ {simulation_time}
+    , report_step_idx_ {report_step_idx}
+    , deferred_logger_ {deferred_logger}
+    , date_string_ {simTimeToString(well_model.schedule().getStartTime(), simulation_time)}
+    , unit_system_ {well_model.eclipseState().getUnits()}
+    , well_state_ {well_model.wellState()}
+    , well_test_state_ {well_test_state}
+    , schedule_ {well_model.schedule()}
+    , gecon_props_ {
+          schedule_[report_step_idx_].gecon().get_group_prop(schedule_, well_model_.summaryState(), group_.name())}
 {
     for (std::size_t i = 0; i < this->phase_idx_map_.size(); i++) {
         auto phase_idx = this->phase_idx_map_[i];
         this->phase_idx_reverse_map_[phase_idx] = static_cast<int>(i);
         auto phase_pos = this->well_model_.phaseUsage().canonicalToActivePhaseIdx(phase_idx);
         Scalar production_rate = WellGroupHelpers<Scalar, IndexTraits>::sumWellSurfaceRates(this->group_,
-                                                                               this->schedule_,
-                                                                               this->well_state_,
-                                                                               this->report_step_idx_,
-                                                                               phase_pos,
-                                                                               /*isInjector*/false,
-                                                                               well_model_.summaryState());
+                                                                                            this->schedule_,
+                                                                                            this->well_state_,
+                                                                                            this->report_step_idx_,
+                                                                                            phase_pos,
+                                                                                            /*isInjector*/ false,
+                                                                                            well_model_.summaryState());
         this->production_rates_[i] = this->well_model_.comm().sum(production_rate);
     }
 }
@@ -94,32 +95,32 @@ GroupEconomicLimitsChecker(const BlackoilWellModelGeneric<Scalar, IndexTraits>& 
  * Public methods in alphabetical order
  ****************************************/
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-activateEndRun()
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::activateEndRun()
 {
     displayDebugMessage("activate end run");
 }
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-closeWells()
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::closeWells()
 {
     closeWellsRecursive(this->group_);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-doWorkOver()
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::doWorkOver()
 {
     if (this->gecon_props_.workover() != GroupEconProductionLimits::EconWorkover::NONE) {
         throwNotImplementedError("workover procedure");
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-endRun()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::endRun()
 {
     if (this->gecon_props_.endRun()) {
         throwNotImplementedError("end run flag YES");
@@ -127,9 +128,9 @@ endRun()
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-GOR()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::GOR()
 {
     auto oil_phase_idx = this->phase_idx_reverse_map_[IndexTraits::oilPhaseIdx];
     auto gas_phase_idx = this->phase_idx_reverse_map_[IndexTraits::gasPhaseIdx];
@@ -138,100 +139,98 @@ GOR()
     Scalar gor;
     if (gas_rate <= 0.0) {
         gor = 0.0;
-    }
-    else if (oil_rate <= 0.0) {
+    } else if (oil_rate <= 0.0) {
         gor = 1e100;
-    }
-    else {
+    } else {
         gor = gas_rate / oil_rate;
     }
     if (auto max_gor = this->gecon_props_.maxGasOilRatio(); max_gor) {
         if (gor > *max_gor) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "GOR={} is greater than maximum: {}",
-                    gor, *max_gor);
+                const std::string msg = fmt::format("GOR={} is greater than maximum: {}", gor, *max_gor);
                 displayDebugMessage(msg);
             }
             addPrintMessage("  Gas/oil ratio = {:.2f} {} which is greater than the minimum economic value = {:.2f} {}",
-                                gor, *max_gor, UnitSystem::measure::gas_oil_ratio);
+                            gor,
+                            *max_gor,
+                            UnitSystem::measure::gas_oil_ratio);
             return true;
         }
     }
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-minGasRate()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::minGasRate()
 {
     auto phase_idx = this->phase_idx_reverse_map_[IndexTraits::gasPhaseIdx];
     auto gas_production_rate = this->production_rates_[phase_idx];
     if (this->debug_) {
-        const std::string msg = fmt::format(
-            "gecon: group: {}, gas_rate={}", this->group_.name(), gas_production_rate);
+        const std::string msg = fmt::format("gecon: group: {}, gas_rate={}", this->group_.name(), gas_production_rate);
         displayDebugMessage(msg);
     }
     if (auto min_gas_rate = this->gecon_props_.minGasRate(); min_gas_rate) {
         if (gas_production_rate < *min_gas_rate) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "gas_rate={} is less than minimum: {}",
-                    gas_production_rate, *min_gas_rate);
+                const std::string msg
+                    = fmt::format("gas_rate={} is less than minimum: {}", gas_production_rate, *min_gas_rate);
                 displayDebugMessage(msg);
             }
             addPrintMessage("  Gas rate = {:.2f} {} which is lower than the minimum economic value = {:.2f} {}",
-                                gas_production_rate, *min_gas_rate, UnitSystem::measure::gas_surface_rate);
+                            gas_production_rate,
+                            *min_gas_rate,
+                            UnitSystem::measure::gas_surface_rate);
             return true;
         }
     }
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-minOilRate()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::minOilRate()
 {
     auto phase_idx = this->phase_idx_reverse_map_[IndexTraits::oilPhaseIdx];
     auto oil_production_rate = this->production_rates_[phase_idx];
     if (this->debug_) {
-        const std::string msg = fmt::format(
-            "oil_rate={}", oil_production_rate);
+        const std::string msg = fmt::format("oil_rate={}", oil_production_rate);
         displayDebugMessage(msg);
     }
     if (auto min_oil_rate = this->gecon_props_.minOilRate(); min_oil_rate) {
         if (oil_production_rate < *min_oil_rate) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "oil_rate={} is less than minimum: {}",
-                    oil_production_rate, *min_oil_rate);
+                const std::string msg
+                    = fmt::format("oil_rate={} is less than minimum: {}", oil_production_rate, *min_oil_rate);
                 displayDebugMessage(msg);
             }
             addPrintMessage("  Oil rate = {:.2f} {} which is lower than the minimum economic value = {:.2f} {}",
-                                oil_production_rate, *min_oil_rate, UnitSystem::measure::liquid_surface_rate);
+                            oil_production_rate,
+                            *min_oil_rate,
+                            UnitSystem::measure::liquid_surface_rate);
             return true;
         }
     }
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-int GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-numProducersOpen()
+template <typename Scalar, typename IndexTraits>
+int
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::numProducersOpen()
 {
     return 1;
 }
 
-template<typename Scalar, typename IndexTraits>
-int GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-numProducersOpenInitially()
+template <typename Scalar, typename IndexTraits>
+int
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::numProducersOpenInitially()
 {
     return 1;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-waterCut()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::waterCut()
 {
     auto oil_phase_idx = this->phase_idx_reverse_map_[IndexTraits::oilPhaseIdx];
     auto water_phase_idx = this->phase_idx_reverse_map_[IndexTraits::waterPhaseIdx];
@@ -241,37 +240,35 @@ waterCut()
     Scalar water_cut;
     if (liquid_rate == 0.0) {
         water_cut = 0.0;
-    }
-    else {
+    } else {
         if (water_rate < 0.0) {
             water_cut = 0.0;
-        }
-        else if (oil_rate < 0.0) {
+        } else if (oil_rate < 0.0) {
             water_cut = 1.0;
-        }
-        else {
+        } else {
             water_cut = water_rate / liquid_rate;
         }
     }
     if (auto max_water_cut = this->gecon_props_.maxWaterCut(); max_water_cut) {
         if (water_cut > *max_water_cut) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "water_cut={} is greater than maximum: {}",
-                    water_cut, *max_water_cut);
+                const std::string msg
+                    = fmt::format("water_cut={} is greater than maximum: {}", water_cut, *max_water_cut);
                 displayDebugMessage(msg);
             }
             addPrintMessage("  Water cut = {:.2f} {} which is greater than the maximum economic value = {:.2f} {}",
-                                water_cut, *max_water_cut, UnitSystem::measure::water_cut);
+                            water_cut,
+                            *max_water_cut,
+                            UnitSystem::measure::water_cut);
             return true;
         }
     }
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-WGR()
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::WGR()
 {
     auto water_phase_idx = this->phase_idx_reverse_map_[IndexTraits::waterPhaseIdx];
     auto gas_phase_idx = this->phase_idx_reverse_map_[IndexTraits::gasPhaseIdx];
@@ -280,23 +277,22 @@ WGR()
     Scalar wgr;
     if (water_rate <= 0.0) {
         wgr = 0.0;
-    }
-    else if (gas_rate <= 0.0) {
+    } else if (gas_rate <= 0.0) {
         wgr = 1e100;
-    }
-    else {
+    } else {
         wgr = water_rate / gas_rate;
     }
     if (auto max_wgr = this->gecon_props_.maxWaterGasRatio(); max_wgr) {
         if (wgr > *max_wgr) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "WGR={} is greater than maximum: {}",
-                    wgr, *max_wgr);
+                const std::string msg = fmt::format("WGR={} is greater than maximum: {}", wgr, *max_wgr);
                 displayDebugMessage(msg);
             }
-            addPrintMessage("  Water/gas ratio = {:.2f} {} which is greater than the maximum economic value = {:.2f} {}",
-                                wgr, *max_wgr, UnitSystem::measure::gas_oil_ratio); // Same units
+            addPrintMessage(
+                "  Water/gas ratio = {:.2f} {} which is greater than the maximum economic value = {:.2f} {}",
+                wgr,
+                *max_wgr,
+                UnitSystem::measure::gas_oil_ratio); // Same units
             return true;
         }
     }
@@ -307,43 +303,44 @@ WGR()
  * Private methods in alphabetical order
  ****************************************/
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-displayDebugMessage(const std::string& msg) const
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::displayDebugMessage(const std::string& msg) const
 {
     if (this->debug_) {
-        const std::string msg2 = fmt::format(
-            "GECON: group: {} : {}", this->group_.name(), msg);
+        const std::string msg2 = fmt::format("GECON: group: {} : {}", this->group_.name(), msg);
         this->deferred_logger_.debug(msg2);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-addPrintMessage(const std::string& msg,
-                const Scalar value,
-                const Scalar limit,
-                const UnitSystem::measure measure)
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::addPrintMessage(const std::string& msg,
+                                                                 const Scalar value,
+                                                                 const Scalar limit,
+                                                                 const UnitSystem::measure measure)
 {
-    const std::string header = fmt::format(
-        "{}\nAt time = {:.2f} {} (date = {}): Group {} will close because: \n", this->message_separator(),
-        this->unit_system_.from_si(UnitSystem::measure::time, this->simulation_time_),
-        this->unit_system_.name(UnitSystem::measure::time),
-        this->date_string_,
-        this->group_.name()
-    );
+    const std::string header
+        = fmt::format("{}\nAt time = {:.2f} {} (date = {}): Group {} will close because: \n",
+                      this->message_separator(),
+                      this->unit_system_.from_si(UnitSystem::measure::time, this->simulation_time_),
+                      this->unit_system_.name(UnitSystem::measure::time),
+                      this->date_string_,
+                      this->group_.name());
     const std::string measure_name(this->unit_system_.name(measure));
     const std::string message = fmt::format(fmt::runtime(msg),
-                                         this->unit_system_.from_si(measure, value), measure_name,
-                                         this->unit_system_.from_si(measure, limit), measure_name);
+                                            this->unit_system_.from_si(measure, value),
+                                            measure_name,
+                                            this->unit_system_.from_si(measure, limit),
+                                            measure_name);
 
     this->message_ = header;
     this->message_ += message;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-closeWellsRecursive(const Group& group, int level)
+template <typename Scalar, typename IndexTraits>
+bool
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::closeWellsRecursive(const Group& group, int level)
 {
     bool wells_closed = false;
 
@@ -353,58 +350,53 @@ closeWellsRecursive(const Group& group, int level)
     }
     for (const std::string& group_name : group.groups()) {
         auto next_group = this->schedule_.getGroup(group_name, this->report_step_idx_);
-        wells_closed = wells_closed | closeWellsRecursive(next_group, level+1);
+        wells_closed = wells_closed | closeWellsRecursive(next_group, level + 1);
     }
-    const auto indent = std::string(2*(level+1), ' ');
+    const auto indent = std::string(2 * (level + 1), ' ');
     if (level > 0) {
         const std::string msg = fmt::format("\n{}Closing group {}.", indent, group.name());
         this->message_ += msg;
     }
 
     if (this->debug_) {
-        const std::string msg = fmt::format("closing wells recursive : group {} has {} wells",
-                          group.name(), group.wells().size());
+        const std::string msg
+            = fmt::format("closing wells recursive : group {} has {} wells", group.name(), group.wells().size());
         displayDebugMessage(msg);
     }
 
     for (const std::string& well_name : group.wells()) {
         if (this->well_test_state_.well_is_closed(well_name)) {
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "well {} is already closed", well_name);
+                const std::string msg = fmt::format("well {} is already closed", well_name);
                 displayDebugMessage(msg);
             }
-        }
-        else {
+        } else {
             wells_closed = true;
             if (this->debug_) {
-                const std::string msg = fmt::format(
-                    "closing well {}", well_name);
+                const std::string msg = fmt::format("closing well {}", well_name);
                 displayDebugMessage(msg);
             }
             const std::string msg = fmt::format("\n{} Closing well {}", indent, well_name);
             this->message_ += msg;
 
-            this->well_test_state_.close_well(
-                well_name, WellTestConfig::Reason::GROUP, this->simulation_time_);
+            this->well_test_state_.close_well(well_name, WellTestConfig::Reason::GROUP, this->simulation_time_);
             this->well_model_.updateClosedWellsThisStep(well_name);
         }
     }
 
     // If any wells were closed, output message at top level (group that hit constraint), on rank 0
-    if (level == 0 && wells_closed && this->well_model_.comm().rank()==0) {
+    if (level == 0 && wells_closed && this->well_model_.comm().rank() == 0) {
         this->message_ += ("\n" + this->message_separator() + "\n");
         this->deferred_logger_.info(this->message_);
     }
     return wells_closed;
 }
 
-template<typename Scalar, typename IndexTraits>
-void GroupEconomicLimitsChecker<Scalar, IndexTraits>::
-throwNotImplementedError(const std::string& error) const
+template <typename Scalar, typename IndexTraits>
+void
+GroupEconomicLimitsChecker<Scalar, IndexTraits>::throwNotImplementedError(const std::string& error) const
 {
-    const std::string msg = fmt::format("Group: {} : GECON : {} not implemented",
-                                        this->group_.name(), error);
+    const std::string msg = fmt::format("Group: {} : GECON : {} not implemented", this->group_.name(), error);
     OPM_DEFLOG_THROW(std::runtime_error, msg, this->deferred_logger_);
 }
 

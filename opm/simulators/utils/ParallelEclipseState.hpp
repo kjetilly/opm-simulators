@@ -19,16 +19,17 @@
 #ifndef PARALLEL_ECLIPSE_STATE_HPP
 #define PARALLEL_ECLIPSE_STATE_HPP
 
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/version.hh>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/TranCalculator.hpp>
-#include <dune/common/parallel/mpihelper.hh>
 
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
 #include <functional>
 
-namespace Opm {
+namespace Opm
+{
 
 
 /*! \brief Parallel frontend to the field properties.
@@ -37,13 +38,14 @@ namespace Opm {
  *          FieldPropsManager in opm-common. It contains
  *          process-local field properties on each process using
  *          compressed indexing.
-*/
+ */
 
-class ParallelFieldPropsManager : public FieldPropsManager {
+class ParallelFieldPropsManager : public FieldPropsManager
+{
 public:
     friend class ParallelEclipseState; //!< Friend so props can be setup.
     //! \brief Friend to set up props
-    template<class Grid>
+    template <class Grid>
     friend class PropsDataHandle;
 
     //! \brief Constructor.
@@ -100,7 +102,7 @@ public:
     //! It will be used to autocreate properties not explicitly stored.
     //! \tparam T The type of the cartesian mapper
     //! \param mapper The cartesian mapper of the distributed grid
-    template<class T>
+    template <class T>
     void resetCartesianMapper(const T* mapper)
     {
         // Note: mapper would usually be a CartesianIndexMapper. However, to support also
@@ -122,15 +124,17 @@ public:
         m_tran = from.getTran();
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(m_tran);
     }
 
 protected:
-    std::map<std::string, Fieldprops::FieldData<int>> m_intProps; //!< Map of integer properties in process-local compressed indices.
-    std::map<std::string, Fieldprops::FieldData<double>> m_doubleProps; //!< Map of double properties in process-local compressed indices.
+    std::map<std::string, Fieldprops::FieldData<int>>
+        m_intProps; //!< Map of integer properties in process-local compressed indices.
+    std::map<std::string, Fieldprops::FieldData<double>>
+        m_doubleProps; //!< Map of double properties in process-local compressed indices.
     FieldPropsManager& m_manager; //!< Underlying field property manager (only used on root process).
     Parallel::Communication m_comm; //!< Collective communication handler.
     std::function<int(void)> m_activeSize; //!< active size function of the grid
@@ -148,12 +152,14 @@ protected:
  *          Additionally, it has a few sanity checks to ensure that the data that
  *          is only available on the root process is not attempted to be accessed
  *          on non-root processes.
-*/
+ */
 
-class ParallelEclipseState : public EclipseState {
+class ParallelEclipseState : public EclipseState
+{
     //! \brief Friend to set up props
-    template<class Grid>
+    template <class Grid>
     friend class PropsDataHandle;
+
 public:
     //! \brief Default constructor.
     ParallelEclipseState(Parallel::Communication comm);
@@ -201,11 +207,12 @@ public:
     //! It will be used to autocreate properties not explicitly stored.
     //! \tparam T The type of the cartesian mapper
     //! \param mapper The cartesian mapper of the distributed grid
-    template<class T>
+    template <class T>
     void resetCartesianMapper(const T* mapper)
     {
         m_fieldProps.resetCartesianMapper(mapper);
     }
+
 private:
     bool m_parProps = false; //! True to use distributed properties on root process
     ParallelFieldPropsManager m_fieldProps; //!< The parallel field properties

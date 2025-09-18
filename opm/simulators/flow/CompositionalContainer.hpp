@@ -32,11 +32,15 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 
-template<class FluidSystem>
+template <class FluidSystem>
 class CompositionalContainer
 {
     using Scalar = typename FluidSystem::Scalar;
@@ -50,25 +54,22 @@ class CompositionalContainer
     static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
 
 public:
-    void allocate(const unsigned bufferSize,
-                  std::map<std::string, int>& rstKeywords);
+    void allocate(const unsigned bufferSize, std::map<std::string, int>& rstKeywords);
 
     using AssignFunction = std::function<Scalar(const unsigned)>;
 
-    void assignGasFractions(const unsigned globalDofIdx,
-                            const AssignFunction& fractions);
+    void assignGasFractions(const unsigned globalDofIdx, const AssignFunction& fractions);
 
-    void assignMoleFractions(const unsigned globalDofIdx,
-                             const AssignFunction& fractions);
+    void assignMoleFractions(const unsigned globalDofIdx, const AssignFunction& fractions);
 
-    void assignOilFractions(const unsigned globalDofIdx,
-                            const AssignFunction& fractions);
+    void assignOilFractions(const unsigned globalDofIdx, const AssignFunction& fractions);
 
-    void outputRestart(data::Solution& sol,
-                       ScalarBuffer& oil_saturation);
+    void outputRestart(data::Solution& sol, ScalarBuffer& oil_saturation);
 
     bool allocated() const
-    { return allocated_; }
+    {
+        return allocated_;
+    }
 
 private:
     bool allocated_ = false;

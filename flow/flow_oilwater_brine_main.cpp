@@ -18,7 +18,8 @@
 #include <flow/flow_oilwater_brine.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowOilWaterBrineMainStandalone(argc, argv);
 }

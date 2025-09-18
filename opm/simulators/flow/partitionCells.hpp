@@ -26,23 +26,24 @@
 #include <utility>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class Well;
 
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 /// Control parameters for on-rank subdomain partitioning using Zoltan library.
 ///
 /// \tparam Element Grid view entity type
 template <typename Element>
-struct ZoltanPartitioningControl
-{
+struct ZoltanPartitioningControl {
     /// Partition imbalance, percentage units.  Assumed to be the run's
     /// value of ZoltanImbalanceTol.
-    double domain_imbalance{1.03};
+    double domain_imbalance {1.03};
 
     /// Compute a locally unique, for this MPI process, ID of a local
     /// cell/element/entity.
@@ -94,13 +95,13 @@ struct ZoltanPartitioningControl
 ///    on current rank.
 template <class GridView, class Element>
 std::pair<std::vector<int>, int>
-partitionCells(const std::string&                                    method,
-               const int                                             num_local_domains,
-               const GridView&                                       grid_view,
-               const std::vector<Well>&                              wells,
+partitionCells(const std::string& method,
+               const int num_local_domains,
+               const GridView& grid_view,
+               const std::vector<Well>& wells,
                const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-               const ZoltanPartitioningControl<Element>&             zoltan_ctrl,
-               const int                                             num_neighbor_levels);
+               const ZoltanPartitioningControl<Element>& zoltan_ctrl,
+               const int num_neighbor_levels);
 
 /// Read a partitioning from file, assumed to contain one number per cell, its partition number.
 /// \return pair containing a partition vector (partition number for each cell), and the number of partitions.

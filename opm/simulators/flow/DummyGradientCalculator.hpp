@@ -34,7 +34,8 @@
 
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 /*!
  * \ingroup BlackOilSimulator
  *
@@ -45,7 +46,7 @@ namespace Opm {
  * instead of permeabilities), and an energy equation and molecular diffusion are not
  * supported.
  */
-template<class TypeTag>
+template <class TypeTag>
 class DummyGradientCalculator
 {
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -58,42 +59,34 @@ class DummyGradientCalculator
 
 public:
     static void registerParameters()
-    { }
+    {
+    }
 
     template <bool prepareValues = true, bool prepareGradients = true>
     void prepare(const ElementContext&, unsigned)
-    { }
+    {
+    }
 
     template <class QuantityCallback, class QuantityType = Scalar>
-    QuantityType calculateValue(const ElementContext&,
-                                unsigned,
-                                const QuantityCallback&) const
+    QuantityType calculateValue(const ElementContext&, unsigned, const QuantityCallback&) const
     {
         throw std::logic_error("Generic values are not supported by the black-oil simulator");
     }
 
     template <class QuantityCallback>
-    void calculateGradient(DimVector&,
-                           const ElementContext&,
-                           unsigned,
-                           const QuantityCallback&) const
+    void calculateGradient(DimVector&, const ElementContext&, unsigned, const QuantityCallback&) const
     {
         throw std::logic_error("Generic gradients are not supported by the black-oil simulator");
     }
 
     template <class QuantityCallback>
-    Scalar calculateBoundaryValue(const ElementContext&,
-                                  unsigned,
-                                  const QuantityCallback&)
+    Scalar calculateBoundaryValue(const ElementContext&, unsigned, const QuantityCallback&)
     {
         throw std::logic_error("Generic boundary values are not supported by the black-oil simulator");
     }
 
     template <class QuantityCallback>
-    void calculateBoundaryGradient(DimVector&,
-                                   const ElementContext&,
-                                   unsigned,
-                                   const QuantityCallback&) const
+    void calculateBoundaryGradient(DimVector&, const ElementContext&, unsigned, const QuantityCallback&) const
     {
         throw std::logic_error("Generic boundary gradients are not supported by the black-oil simulator");
     }

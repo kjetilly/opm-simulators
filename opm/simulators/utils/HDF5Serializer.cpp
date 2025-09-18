@@ -24,18 +24,19 @@
 #include <algorithm>
 #include <cstdlib>
 
-namespace Opm {
+namespace Opm
+{
 
-void HDF5Serializer::writeHeader(const std::string& simulator_name,
-                                 const std::string& module_version,
-                                 const std::string& time_stamp,
-                                 const std::string& case_name,
-                                 const std::string& params,
-                                 int num_procs)
+void
+HDF5Serializer::writeHeader(const std::string& simulator_name,
+                            const std::string& module_version,
+                            const std::string& time_stamp,
+                            const std::string& case_name,
+                            const std::string& params,
+                            int num_procs)
 {
     try {
-        this->pack(simulator_name, module_version, time_stamp,
-                   case_name, params, num_procs);
+        this->pack(simulator_name, module_version, time_stamp, case_name, params, num_procs);
     } catch (...) {
         m_packSize = std::numeric_limits<std::size_t>::max();
         throw;
@@ -43,7 +44,8 @@ void HDF5Serializer::writeHeader(const std::string& simulator_name,
     m_h5file.write("/", "simulator_info", m_buffer, HDF5File::DataSetMode::ROOT_ONLY);
 }
 
-int HDF5Serializer::lastReportStep() const
+int
+HDF5Serializer::lastReportStep() const
 {
     const auto entries = m_h5file.list("/report_step");
     int last = -1;
@@ -55,17 +57,16 @@ int HDF5Serializer::lastReportStep() const
     return last;
 }
 
-std::vector<int> HDF5Serializer::reportSteps() const
+std::vector<int>
+HDF5Serializer::reportSteps() const
 {
     const auto entries = m_h5file.list("/report_step");
     std::vector<int> result(entries.size());
-    std::transform(entries.begin(), entries.end(), result.begin(),
-                   [](const std::string& input)
-                   {
-                      return std::atoi(input.c_str());
-                   });
+    std::transform(entries.begin(), entries.end(), result.begin(), [](const std::string& input) {
+        return std::atoi(input.c_str());
+    });
     std::sort(result.begin(), result.end());
     return result;
 }
 
-}
+} // namespace Opm

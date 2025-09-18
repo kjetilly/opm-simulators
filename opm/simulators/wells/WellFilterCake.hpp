@@ -23,32 +23,38 @@
 #include <cstddef>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class for well calculations related to filter cakes.
-template<typename Scalar, typename IndexTraits>
-class WellFilterCake {
+template <typename Scalar, typename IndexTraits>
+class WellFilterCake
+{
 public:
     //! \brief Post-step filtration model updates
     //! \details Calculates the filtrate deposition volumes and associated skin factors / injectivity multipliers
     void updatePostStep(const WellInterfaceGeneric<Scalar, IndexTraits>& well,
-                WellState<Scalar, IndexTraits>& well_state,
-                const double dt,
-                const Scalar conc,
-                const std::size_t water_index,
-                DeferredLogger& deferred_logger);
+                        WellState<Scalar, IndexTraits>& well_state,
+                        const double dt,
+                        const Scalar conc,
+                        const std::size_t water_index,
+                        DeferredLogger& deferred_logger);
 
     //! \brief Pre-step filtration model updates
     //! \details Applies filter cake cleaning
-    void updatePreStep(const WellInterfaceGeneric<Scalar, IndexTraits>& well,
-                       DeferredLogger& deferred_logger);
+    void updatePreStep(const WellInterfaceGeneric<Scalar, IndexTraits>& well, DeferredLogger& deferred_logger);
 
     //! \brief Returns a const-ref to multipliers.
-    const std::vector<Scalar>& multipliers() const { return inj_fc_multiplier_; }
+    const std::vector<Scalar>& multipliers() const
+    {
+        return inj_fc_multiplier_;
+    }
 
 private:
     //! \brief Update the multiplier for well transmissbility due to cake filtration.
@@ -57,13 +63,12 @@ private:
                                          const double dt,
                                          const std::size_t water_index,
                                          DeferredLogger& deferred_logger);
-    template<class Conn>
+    template <class Conn>
     void updateMultiplier(const Conn& conn, const int perf);
 
     //! \brief Apply cleaning multipliers to skin factors and reduce cake thickness accordingly
     //! \details The cake thickness is re-computed to give the new (reduced) skin factor with current cake properties
-    void applyCleaning(const WellInterfaceGeneric<Scalar, IndexTraits>& well,
-                       DeferredLogger& deferred_logger);
+    void applyCleaning(const WellInterfaceGeneric<Scalar, IndexTraits>& well, DeferredLogger& deferred_logger);
 
 
     std::vector<Scalar> inj_fc_multiplier_; //!< Multiplier due to injection filtration cake
@@ -71,6 +76,6 @@ private:
     std::vector<Scalar> thickness_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_FILTER_CAKE_HEADER_INCLUDED

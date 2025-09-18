@@ -28,11 +28,12 @@
 #include <functional>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Dynamic source data for block-average pressure calculations.
 /// Specialisation for parallel runs.
-template<class Scalar>
+template <class Scalar>
 class ParallelPAvgDynamicSourceData : public PAvgDynamicSourceData<Scalar>
 {
 public:
@@ -49,8 +50,7 @@ public:
     /// \tparam T Element type.  Const or non-const as needed.  Typically \c
     ///   Scalar or \code const Scalar \endcode.
     template <typename T>
-    using SourceDataSpan = typename
-        PAvgDynamicSourceData<Scalar>::template SourceDataSpan<T>;
+    using SourceDataSpan = typename PAvgDynamicSourceData<Scalar>::template SourceDataSpan<T>;
 
     /// Collect source term contributions from local, on-rank, cell.
     ///
@@ -75,9 +75,9 @@ public:
     ///
     /// \param[in] localCellIdx Translation from global, Cartesian cell
     ///   indices to local, on-rank, cell indices.
-    ParallelPAvgDynamicSourceData(const Parallel::Communication&  comm,
+    ParallelPAvgDynamicSourceData(const Parallel::Communication& comm,
                                   const std::vector<std::size_t>& sourceLocations,
-                                  GlobalToLocal                   localCellIdx);
+                                  GlobalToLocal localCellIdx);
 
     /// Clear contents of local source term contributions.
     ///
@@ -98,8 +98,7 @@ public:
     ///
     /// \param[in] localCellIdx Translation from global, Cartesian cell
     ///   indices to local, on-rank, cell indices.
-    void reconstruct(const std::vector<std::size_t>& sourceLocations,
-                     GlobalToLocal                   localCellIdx);
+    void reconstruct(const std::vector<std::size_t>& sourceLocations, GlobalToLocal localCellIdx);
 
     /// Compute local, on-rank, contributions to the collection of source
     /// terms.
@@ -113,33 +112,32 @@ public:
 
 private:
     /// Identifier for local source term element.
-    struct LocalLocation
-    {
+    struct LocalLocation {
         /// Source term element index.
-        std::size_t ix{};
+        std::size_t ix {};
 
         /// Local cell index for this source term (0..#active on rank - 1).
-        int cell{};
+        int cell {};
     };
 
     /// MPI communication object.
     std::reference_wrapper<const Parallel::Communication> comm_;
 
     /// Subset of source locations owned by current rank.
-    std::vector<LocalLocation> locations_{};
+    std::vector<LocalLocation> locations_ {};
 
     /// Source data values owned by current rank.
-    std::vector<Scalar> localSrc_{};
+    std::vector<Scalar> localSrc_ {};
 
     /// Translation map from element index to storage index in
     /// PAvgDynamicSourceData::src_.
-    std::vector<typename std::vector<Scalar>::size_type> storageIndex_{};
+    std::vector<typename std::vector<Scalar>::size_type> storageIndex_ {};
 
     /// Receive size from all ranks (allgatherv()).
-    std::vector<int> allSizes_{}; // Type int to meet API requirements.
+    std::vector<int> allSizes_ {}; // Type int to meet API requirements.
 
     /// Receive displacements for all ranks (allgatherv()).
-    std::vector<int> startPointers_{}; // Type int to meet API requirements.
+    std::vector<int> startPointers_ {}; // Type int to meet API requirements.
 
     /// Translate element index into storage index.
     ///
@@ -163,16 +161,14 @@ private:
     ///
     /// \param[in] localCellIdx Translation from global, Cartesian cell
     ///   indices to local, on-rank, cell indices.
-    void finaliseConstruction(const std::vector<std::size_t>& sourceLocations,
-                              GlobalToLocal                   localCellIdx);
+    void finaliseConstruction(const std::vector<std::size_t>& sourceLocations, GlobalToLocal localCellIdx);
 
     /// Form mutable data span into non-default backing store.
     ///
     /// \param[in] localIx Logical element index into \c localSrc_.
     ///
     /// \return Mutable view into \c localSrc_.
-    [[nodiscard]] SourceDataSpan<Scalar>
-    localSourceTerm(const std::size_t localIx);
+    [[nodiscard]] SourceDataSpan<Scalar> localSourceTerm(const std::size_t localIx);
 
     /// Build communication pattern for all source terms.
     ///

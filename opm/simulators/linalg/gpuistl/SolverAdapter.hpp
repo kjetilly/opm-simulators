@@ -71,7 +71,7 @@ public:
     //! @param comm the communication object. If this is Dune::Amg::SequentialInformation, we assume a serial setup
     //!
     //! @todo Use a std::forward in this function
-    template<class Comm>
+    template <class Comm>
     SolverAdapter(Operator& op,
                   Dune::ScalarProduct<X>& sp,
                   std::shared_ptr<Dune::Preconditioner<X, X>> prec,

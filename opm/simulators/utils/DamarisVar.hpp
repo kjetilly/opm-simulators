@@ -184,10 +184,7 @@ namespace DamarisOutput
         *  /param [IN] variable_name  The name of the Damaris variable (defined in the Damaris XML file)
         *  /param [IN] rank           The rank of the process. Used for error output.
         */
-        DamarisVar(int dims,
-                   const std::vector<std::string>& param_names,
-                   const std::string& variable_name,
-                   int rank);
+        DamarisVar(int dims, const std::vector<std::string>& param_names, const std::string& variable_name, int rank);
 
         /**
          *  Constructor - Sets private data values and also initialises the Damaris shared memory area for writing (and
@@ -358,9 +355,7 @@ namespace DamarisOutput
          */
         bool TestType(const std::string& variable_name);
 
-        void formatTypeError(const std::string& var_name,
-                             const std::string& type_name1,
-                             const std::string& type_name2);
+        void formatTypeError(const std::string& var_name, const std::string& type_name1, const std::string& type_name2);
     }; // class DamarisVar
 
 } // namespace DamarisOutput

@@ -41,42 +41,47 @@
 #include <filesystem>
 #endif
 
-namespace Opm {
-    class EclipseState;
-    class Schedule;
-    class Well;
-    class ParallelEclipseState;
-    class LgrCollection;
-}
+namespace Opm
+{
+class EclipseState;
+class Schedule;
+class Well;
+class ParallelEclipseState;
+class LgrCollection;
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_MPI
-namespace details {
-class MPIPartitionFromFile
+namespace details
 {
-public:
-    explicit MPIPartitionFromFile(const std::filesystem::path& partitionFile)
-        : partitionFile_(partitionFile)
-    {}
+    class MPIPartitionFromFile
+    {
+    public:
+        explicit MPIPartitionFromFile(const std::filesystem::path& partitionFile)
+            : partitionFile_(partitionFile)
+        {
+        }
 
-    std::vector<int> operator()(const Dune::CpGrid& grid) const;
+        std::vector<int> operator()(const Dune::CpGrid& grid) const;
 
-private:
-    std::filesystem::path partitionFile_{};
-};
+    private:
+        std::filesystem::path partitionFile_ {};
+    };
 
-} // namespace Opm::details
+} // namespace details
 #endif // HAVE_MPI
 
 
 /// \brief optional functor returning external load balancing information
 ///
 /// If it is set then this will be used during loadbalance.
-extern std::optional<std::function<std::vector<int> (const Dune::CpGrid&)>> externalLoadBalancer;
+extern std::optional<std::function<std::vector<int>(const Dune::CpGrid&)>> externalLoadBalancer;
 
-template<class ElementMapper, class GridView, class Scalar>
-class GenericCpGridVanguard {
+template <class ElementMapper, class GridView, class Scalar>
+class GenericCpGridVanguard
+{
 protected:
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Dune::CpGrid>;
     using LevelCartesianIndexMapper = Opm::LevelCartesianIndexMapper<Dune::CpGrid>;
@@ -91,13 +96,17 @@ public:
      * \brief Return a reference to the simulation grid.
      */
     Dune::CpGrid& grid()
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Return a reference to the simulation grid.
      */
     const Dune::CpGrid& grid() const
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Returns a refefence to the grid which should be used by the EQUIL
@@ -122,7 +131,7 @@ public:
     /// \brief Sets a function that returns external load balancing information when passed the grid
     ///
     /// The information is a vector of integers indication the partition index for each cell id.
-    static void setExternalLoadBalancer(const std::function<std::vector<int> (const Dune::CpGrid&)>& loadBalancer)
+    static void setExternalLoadBalancer(const std::function<std::vector<int>(const Dune::CpGrid&)>& loadBalancer)
     {
         externalLoadBalancer = loadBalancer;
     }
@@ -156,70 +165,68 @@ protected:
      * (For parallel simulation runs.)
      */
 #if HAVE_MPI
-    void doLoadBalance_(const Dune::EdgeWeightMethod             edgeWeightsMethod,
-                        const bool                               ownersFirst,
-                        const bool                               addCorners,
-                        const int                                numOverlap,
-                        const Dune::PartitionMethod              partitionMethod,
-                        const bool                               serialPartitioning,
-                        const bool                               enableDistributedWells,
-                        const bool                               allowSplittingInactiveWells,
-                        const double                             imbalanceTol,
-                        const GridView&                          gridView,
-                        const Schedule&                          schedule,
-                        EclipseState&                            eclState,
+    void doLoadBalance_(const Dune::EdgeWeightMethod edgeWeightsMethod,
+                        const bool ownersFirst,
+                        const bool addCorners,
+                        const int numOverlap,
+                        const Dune::PartitionMethod partitionMethod,
+                        const bool serialPartitioning,
+                        const bool enableDistributedWells,
+                        const bool allowSplittingInactiveWells,
+                        const double imbalanceTol,
+                        const GridView& gridView,
+                        const Schedule& schedule,
+                        EclipseState& eclState,
                         FlowGenericVanguard::ParallelWellStruct& parallelWells,
-                        const int                                numJacobiBlocks,
-                        const bool                               enableEclOutput);
+                        const int numJacobiBlocks,
+                        const bool enableEclOutput);
 
     void distributeFieldProps_(EclipseState& eclState);
 
 private:
     std::vector<double> extractFaceTrans(const GridView& gridView) const;
 
-    void distributeGrid(const Dune::EdgeWeightMethod                          edgeWeightsMethod,
-                        const bool                                            ownersFirst,
-                        const bool                                            addCorners,
-                        const int                                             numOverlap,
-                        const Dune::PartitionMethod                           partitionMethod,
-                        const bool                                            serialPartitioning,
-                        const bool                                            enableDistributedWells,
-                        const double                                          imbalanceTol,
-                        const bool                                            loadBalancerSet,
-                        const std::vector<double>&                            faceTrans,
-                        const std::vector<Well>&                              wells,
+    void distributeGrid(const Dune::EdgeWeightMethod edgeWeightsMethod,
+                        const bool ownersFirst,
+                        const bool addCorners,
+                        const int numOverlap,
+                        const Dune::PartitionMethod partitionMethod,
+                        const bool serialPartitioning,
+                        const bool enableDistributedWells,
+                        const double imbalanceTol,
+                        const bool loadBalancerSet,
+                        const std::vector<double>& faceTrans,
+                        const std::vector<Well>& wells,
                         const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-                        EclipseState&                                         eclState,
-                        FlowGenericVanguard::ParallelWellStruct&              parallelWells);
+                        EclipseState& eclState,
+                        FlowGenericVanguard::ParallelWellStruct& parallelWells);
 
-    void distributeGrid(const Dune::EdgeWeightMethod                          edgeWeightsMethod,
-                        const bool                                            ownersFirst,
-                        const bool                                            addCorners,
-                        const int                                             numOverlap,
-                        const Dune::PartitionMethod                           partitionMethod,
-                        const bool                                            serialPartitioning,
-                        const bool                                            enableDistributedWells,
-                        const double                                          imbalanceTol,
-                        const bool                                            loadBalancerSet,
-                        const std::vector<double>&                            faceTrans,
-                        const std::vector<Well>&                              wells,
+    void distributeGrid(const Dune::EdgeWeightMethod edgeWeightsMethod,
+                        const bool ownersFirst,
+                        const bool addCorners,
+                        const int numOverlap,
+                        const Dune::PartitionMethod partitionMethod,
+                        const bool serialPartitioning,
+                        const bool enableDistributedWells,
+                        const double imbalanceTol,
+                        const bool loadBalancerSet,
+                        const std::vector<double>& faceTrans,
+                        const std::vector<Well>& wells,
                         const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-                        ParallelEclipseState*                                 eclState,
-                        FlowGenericVanguard::ParallelWellStruct&              parallelWells);
+                        ParallelEclipseState* eclState,
+                        FlowGenericVanguard::ParallelWellStruct& parallelWells);
 
 protected:
     virtual const std::string& zoltanParams() const = 0;
     virtual double zoltanPhgEdgeSizeThreshold() const = 0;
     virtual const std::string& metisParams() const = 0;
 
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
     void allocCartMapper();
 
     void doCreateGrids_(bool edge_conformal, EclipseState& eclState);
-    void addLgrsUpdateLeafView(const LgrCollection& lgrCollection,
-                               const int lgrsSize,
-                               Dune::CpGrid& grid);
+    void addLgrsUpdateLeafView(const LgrCollection& lgrCollection, const int lgrsSize, Dune::CpGrid& grid);
 
     virtual void allocTrans() = 0;
     virtual double getTransmissibility(unsigned I, unsigned J) const = 0;
@@ -236,7 +243,7 @@ protected:
     std::unique_ptr<LevelCartesianIndexMapper> levelCartesianIndexMapper_;
 
     int mpiRank;
-    std::vector<int> cell_part_{};
+    std::vector<int> cell_part_ {};
 };
 
 } // namespace Opm

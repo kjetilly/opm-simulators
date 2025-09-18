@@ -17,24 +17,27 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <config.h>
-#include <opm/simulators/timestepping/SimulatorTimerInterface.hpp>
-#include <opm/input/eclipse/Units/Units.hpp>
 #include <boost/date_time/posix_time/conversion.hpp>
+#include <config.h>
+#include <opm/input/eclipse/Units/Units.hpp>
+#include <opm/simulators/timestepping/SimulatorTimerInterface.hpp>
 
 namespace Opm
 {
 
-boost::posix_time::ptime SimulatorTimerInterface::currentDateTime() const
+boost::posix_time::ptime
+SimulatorTimerInterface::currentDateTime() const
 {
     // Boost uses only 32 bit long for seconds, but 64 bit for milliseconds.
     // As a workaround for very large times we just use milliseconds.
     // The cast is necessary because boost::posix_time::milliseconds requires
     // an integer argument.
-    return startDateTime() + boost::posix_time::milliseconds(static_cast<long long>(simulationTimeElapsed() / Opm::prefix::milli));
+    return startDateTime()
+        + boost::posix_time::milliseconds(static_cast<long long>(simulationTimeElapsed() / Opm::prefix::milli));
 }
 
-time_t SimulatorTimerInterface::currentPosixTime() const
+time_t
+SimulatorTimerInterface::currentPosixTime() const
 {
     tm t = boost::posix_time::to_tm(currentDateTime());
     return std::mktime(&t);

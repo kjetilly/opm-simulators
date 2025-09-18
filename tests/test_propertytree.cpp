@@ -28,7 +28,7 @@
 //
 // when compiling with "-Wundef".
 #define HAVE_MPI 0
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 #include <boost/test/unit_test.hpp>
 
@@ -50,11 +50,11 @@ BOOST_AUTO_TEST_SUITE(Put_And_Get)
 
 BOOST_AUTO_TEST_CASE(Top_Node_Only)
 {
-    auto t = Opm::PropertyTree{};
+    auto t = Opm::PropertyTree {};
 
     t.put("a", 1234);
     t.put("b", 123.4);
-    t.put("c", std::string { "hello" });
+    t.put("c", std::string {"hello"});
     t.put("d", 12.34f);
     t.put("e", true);
 
@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(Top_Node_Only)
         const auto c = t.get<std::string>("c");
         BOOST_CHECK_EQUAL(c, "hello");
 
-        const auto cc = t.get("cc", std::string { "world" });
+        const auto cc = t.get("cc", std::string {"world"});
         BOOST_CHECK_EQUAL(cc, "world");
     }
 
@@ -101,10 +101,10 @@ BOOST_AUTO_TEST_CASE(Top_Node_Only)
 
 BOOST_AUTO_TEST_CASE(Size_T)
 {
-    auto t = Opm::PropertyTree{};
+    auto t = Opm::PropertyTree {};
 
-    t.put("s.ramanujan", std::size_t{1729});
-    BOOST_CHECK_EQUAL(t.get<std::size_t>("s.ramanujan"), std::size_t{1729});
+    t.put("s.ramanujan", std::size_t {1729});
+    BOOST_CHECK_EQUAL(t.get<std::size_t>("s.ramanujan"), std::size_t {1729});
 
     t.put("m", static_cast<std::size_t>(-1));
     BOOST_CHECK_EQUAL(t.get<std::size_t>("m"), std::numeric_limits<std::size_t>::max());
@@ -116,14 +116,14 @@ BOOST_AUTO_TEST_CASE(Size_T)
 
 BOOST_AUTO_TEST_CASE(Missing_Keys)
 {
-    auto t = Opm::PropertyTree{};
+    auto t = Opm::PropertyTree {};
 
     BOOST_CHECK_THROW(t.get<int>("a"), std::exception);
 }
 
 BOOST_AUTO_TEST_CASE(Hierarchy)
 {
-    auto t = Opm::PropertyTree{};
+    auto t = Opm::PropertyTree {};
 
     t.put("a.b.c", 123);
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(Hierarchy)
 
     {
         const auto f = t.get_child_optional("d.e.f");
-        BOOST_CHECK_MESSAGE(! f.has_value(), R"(Node "f" must not exist)");
+        BOOST_CHECK_MESSAGE(!f.has_value(), R"(Node "f" must not exist)");
     }
 }
 
@@ -158,40 +158,41 @@ BOOST_AUTO_TEST_SUITE_END() // Put_And_Get
 
 BOOST_AUTO_TEST_SUITE(Load_From_File)
 
-namespace {
+namespace
+{
 
-    class TempFile
+class TempFile
+{
+public:
+    TempFile()
+        : fname_ {std::filesystem::temp_directory_path() / Opm::unique_path("wrk-%%%%")}
     {
-    public:
-        TempFile()
-            : fname_ { std::filesystem::temp_directory_path() /
-                       Opm::unique_path("wrk-%%%%") }
-        {}
+    }
 
-        ~TempFile()
-        {
-            std::filesystem::remove_all(this->fname_);
-        }
+    ~TempFile()
+    {
+        std::filesystem::remove_all(this->fname_);
+    }
 
-        void append(std::string_view s)
-        {
-            std::ofstream { this->fname_, std::ios::app } << s;
-        }
+    void append(std::string_view s)
+    {
+        std::ofstream {this->fname_, std::ios::app} << s;
+    }
 
-        std::string name() const
-        {
-            return this->fname_.generic_string();
-        }
+    std::string name() const
+    {
+        return this->fname_.generic_string();
+    }
 
-    private:
-        std::filesystem::path fname_;
-    };
+private:
+    std::filesystem::path fname_;
+};
 
 } // Anonymous namespace
 
 BOOST_AUTO_TEST_CASE(Top_Node_Only)
 {
-    auto f = TempFile{};
+    auto f = TempFile {};
     f.append(R"({
  "a" : 1234,
  "b" : 123.4,
@@ -200,7 +201,7 @@ BOOST_AUTO_TEST_CASE(Top_Node_Only)
 }
 )");
 
-    const auto t = Opm::PropertyTree { f.name() };
+    const auto t = Opm::PropertyTree {f.name()};
     {
         const auto a = t.get<int>("a");
         BOOST_CHECK_EQUAL(a, 1234);
@@ -221,7 +222,7 @@ BOOST_AUTO_TEST_CASE(Top_Node_Only)
         const auto c = t.get<std::string>("c");
         BOOST_CHECK_EQUAL(c, "hello");
 
-        const auto cc = t.get("cc", std::string { "world" });
+        const auto cc = t.get("cc", std::string {"world"});
         BOOST_CHECK_EQUAL(cc, "world");
     }
 
@@ -236,13 +237,13 @@ BOOST_AUTO_TEST_CASE(Top_Node_Only)
 
 BOOST_AUTO_TEST_CASE(Hierarchy)
 {
-    auto f = TempFile{};
+    auto f = TempFile {};
     f.append(R"({
  "a" : { "b" : { "c" : 123 } }
 }
 )");
 
-    const auto t = Opm::PropertyTree { f.name() };
+    const auto t = Opm::PropertyTree {f.name()};
     {
         const auto c = t.get<int>("a.b.c");
         BOOST_CHECK_EQUAL(c, 123);
@@ -264,27 +265,31 @@ BOOST_AUTO_TEST_CASE(Hierarchy)
 
     {
         const auto d_e_f = t.get_child_optional("d.e.f");
-        BOOST_CHECK_MESSAGE(! d_e_f.has_value(), R"(Node "f" must not exist)");
+        BOOST_CHECK_MESSAGE(!d_e_f.has_value(), R"(Node "f" must not exist)");
     }
 }
 
 BOOST_AUTO_TEST_CASE(Vector)
 {
-    auto f = TempFile{};
+    auto f = TempFile {};
     f.append(R"({
  "a" : [ 1, 2, 3, 4 ],
  "b" : [ 11.22, 33.44 ]
 })");
 
-    const auto t = Opm::PropertyTree { f.name() };
+    const auto t = Opm::PropertyTree {f.name()};
 
     {
         const auto a = t.get_child_items_as_vector<int>("a");
         BOOST_REQUIRE_MESSAGE(a.has_value(), R"(Node "a" must exist)");
 
-        const auto expect = std::vector { 1, 2, 3, 4, };
-        BOOST_CHECK_EQUAL_COLLECTIONS(a    ->begin(), a    ->end(),
-                                      expect.begin(), expect.end());
+        const auto expect = std::vector {
+            1,
+            2,
+            3,
+            4,
+        };
+        BOOST_CHECK_EQUAL_COLLECTIONS(a->begin(), a->end(), expect.begin(), expect.end());
     }
 
     {
@@ -296,10 +301,13 @@ BOOST_AUTO_TEST_CASE(Vector)
         const auto b = t.get_child_items_as_vector<double>("b");
         BOOST_REQUIRE_MESSAGE(b.has_value(), R"(Node "b" must exist)");
 
-        const auto expect = std::vector { 11.22, 33.44, };
+        const auto expect = std::vector {
+            11.22,
+            33.44,
+        };
         BOOST_REQUIRE_EQUAL(b->size(), expect.size());
 
-        for (auto i = 0*b->size(); i < b->size(); ++i) {
+        for (auto i = 0 * b->size(); i < b->size(); ++i) {
             BOOST_TEST_MESSAGE("Element " << i);
             BOOST_CHECK_CLOSE((*b)[i], expect[i], 1.0e-8);
         }

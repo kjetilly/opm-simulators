@@ -22,43 +22,41 @@
 
 #include "config.h"
 
-#include <opm/simulators/flow/Main.hpp>
 #include <opm/simulators/flow/CpGridVanguard.hpp>
+#include <opm/simulators/flow/Main.hpp>
 
-std::vector<int> loadBalanceInZOnly(const Dune::CpGrid& grid)
+std::vector<int>
+loadBalanceInZOnly(const Dune::CpGrid& grid)
 {
     auto cartMapper = Dune::CartesianIndexMapper<Dune::CpGrid>(grid);
     auto dims = cartMapper.cartesianDimensions();
     std::vector<int> parts(grid.leafGridView().size(0));
-    auto numCellsPerProc = dims[2]/grid.comm().size();
+    auto numCellsPerProc = dims[2] / grid.comm().size();
 
-    if (grid.size(0)>0 && numCellsPerProc == 0)
-    {
-        OPM_THROW(std::logic_error,
-                  "cartesian grid must have more cells in z direction than number of processes.");
+    if (grid.size(0) > 0 && numCellsPerProc == 0) {
+        OPM_THROW(std::logic_error, "cartesian grid must have more cells in z direction than number of processes.");
     }
 
-    using ElementMapper =
-        Dune::MultipleCodimMultipleGeomTypeMapper<typename Dune::CpGrid::LeafGridView>;
+    using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<typename Dune::CpGrid::LeafGridView>;
     const auto& gridView = grid.leafGridView();
     const auto& idSet = grid.localIdSet();
     ElementMapper elemMapper(gridView, Dune::mcmgElementLayout());
 
-    for( const auto &element : elements(gridView) )
-    {
+    for (const auto& element : elements(gridView)) {
         const auto& id = idSet.id(element);
         unsigned elemIdx = elemMapper.index(element);
         const auto& cartIndex = cartMapper.cartesianIndex(elemIdx);
-        std::array<int,3> cartCoord;
+        std::array<int, 3> cartCoord;
         cartMapper.cartesianCoordinate(cartIndex, cartCoord);
         using std::min;
-        auto rank = min(grid.comm().size() -1, cartCoord[2] / numCellsPerProc);
+        auto rank = min(grid.comm().size() - 1, cartCoord[2] / numCellsPerProc);
         parts[id] = rank;
     }
     return parts;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
     Opm::CpGridVanguard<Opm::Properties::TTag::FlowProblem>::setExternalLoadBalancer(loadBalanceInZOnly);
@@ -67,4 +65,3 @@ int main(int argc, char** argv)
     mainObject.reset();
     return ret;
 }
-

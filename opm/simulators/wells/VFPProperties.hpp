@@ -20,14 +20,15 @@
 #ifndef OPM_AUTODIFF_VFPPROPERTIES_HPP_
 #define OPM_AUTODIFF_VFPPROPERTIES_HPP_
 
+#include <opm/simulators/wells/VFPHelpers.hpp>
 #include <opm/simulators/wells/VFPInjProperties.hpp>
 #include <opm/simulators/wells/VFPProdProperties.hpp>
 #include <opm/simulators/wells/WellState.hpp>
-#include <opm/simulators/wells/VFPHelpers.hpp>
 
 #include <cstddef>
 
-namespace Opm {
+namespace Opm
+{
 
 class VFPInjTable;
 class VFPProdTable;
@@ -36,8 +37,9 @@ class VFPProdTable;
  * A thin wrapper class that holds one VFPProdProperties and one
  * VFPInjProperties object.
  */
-template<typename Scalar, typename IndexTraits>
-class VFPProperties {
+template <typename Scalar, typename IndexTraits>
+class VFPProperties
+{
 public:
     /**
      * Constructor
@@ -53,10 +55,10 @@ public:
         : well_state_(well_state)
     {
         for (const auto& vfpinj : inj_tables)
-            this->m_inj.addTable( vfpinj );
+            this->m_inj.addTable(vfpinj);
 
         for (const auto& vfpprod : prod_tables)
-            this->m_prod.addTable( vfpprod );
+            this->m_prod.addTable(vfpprod);
     };
 
     /**

@@ -28,15 +28,15 @@
 //
 // when compiling with "-Wundef".
 #define HAVE_MPI 0
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 #include <boost/test/unit_test.hpp>
 
 #include <opm/simulators/utils/satfunc/ScaledSatfuncCheckPoint.hpp>
 #include <opm/simulators/utils/satfunc/UnscaledSatfuncCheckPoint.hpp>
 
-#include <opm/input/eclipse/EclipseState/Grid/SatfuncPropertyInitializers.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
+#include <opm/input/eclipse/EclipseState/Grid/SatfuncPropertyInitializers.hpp>
 
 #include <opm/material/fluidmatrixinteractions/EclEpsGridProperties.hpp>
 #include <opm/material/fluidmatrixinteractions/EclEpsScalingPoints.hpp>
@@ -51,44 +51,132 @@
 
 // ###########################################################################
 
-namespace {
-    Opm::satfunc::RawTableEndPoints exampleRTep()
-    {
-        auto rtep = Opm::satfunc::RawTableEndPoints{};
+namespace
+{
+Opm::satfunc::RawTableEndPoints
+exampleRTep()
+{
+    auto rtep = Opm::satfunc::RawTableEndPoints {};
 
-        rtep.connate.gas  .assign({ 0.0, 0.0, 0.0, 0.0 , });
-        rtep.connate.water.assign({ 0.2, 0.1, 0.0, 0.25, });
+    rtep.connate.gas.assign({
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+    });
+    rtep.connate.water.assign({
+        0.2,
+        0.1,
+        0.0,
+        0.25,
+    });
 
-        rtep.critical.oil_in_gas  .assign({ 0.1 , 0.125, 0.02, 0.35, });
-        rtep.critical.oil_in_water.assign({ 0.2 , 0.225, 0.07, 0.5 , });
-        rtep.critical.gas         .assign({ 0.15, 0.257, 0.12, 0.04, });
-        rtep.critical.water       .assign({ 0.27, 0.325, 0.25, 0.42, });
+    rtep.critical.oil_in_gas.assign({
+        0.1,
+        0.125,
+        0.02,
+        0.35,
+    });
+    rtep.critical.oil_in_water.assign({
+        0.2,
+        0.225,
+        0.07,
+        0.5,
+    });
+    rtep.critical.gas.assign({
+        0.15,
+        0.257,
+        0.12,
+        0.04,
+    });
+    rtep.critical.water.assign({
+        0.27,
+        0.325,
+        0.25,
+        0.42,
+    });
 
-        rtep.maximum.gas  .assign({ 0.8, 0.9, 1.0, 0.75, });
-        rtep.maximum.water.assign({ 1.0, 1.0, 1.0, 0.8 , });
+    rtep.maximum.gas.assign({
+        0.8,
+        0.9,
+        1.0,
+        0.75,
+    });
+    rtep.maximum.water.assign({
+        1.0,
+        1.0,
+        1.0,
+        0.8,
+    });
 
-        return rtep;
-    }
+    return rtep;
+}
 
-    Opm::satfunc::RawFunctionValues exampleRFunc()
-    {
-        auto rfunc = Opm::satfunc::RawFunctionValues{};
+Opm::satfunc::RawFunctionValues
+exampleRFunc()
+{
+    auto rfunc = Opm::satfunc::RawFunctionValues {};
 
-        rfunc.kro.max.assign({ 0.75, 0.8, 0.85, 0.7, });
-        rfunc.kro.rg .assign({ 0.62, 0.6, 0.78, 0.7, });
-        rfunc.kro.rw .assign({ 0.53, 0.4, 0.82, 0.5, });
+    rfunc.kro.max.assign({
+        0.75,
+        0.8,
+        0.85,
+        0.7,
+    });
+    rfunc.kro.rg.assign({
+        0.62,
+        0.6,
+        0.78,
+        0.7,
+    });
+    rfunc.kro.rw.assign({
+        0.53,
+        0.4,
+        0.82,
+        0.5,
+    });
 
-        rfunc.krg.max.assign({ 1.0, 0.99, 0.98, 0.95, });
-        rfunc.krg.r  .assign({ 0.8, 0.79, 0.87, 0.75, });
+    rfunc.krg.max.assign({
+        1.0,
+        0.99,
+        0.98,
+        0.95,
+    });
+    rfunc.krg.r.assign({
+        0.8,
+        0.79,
+        0.87,
+        0.75,
+    });
 
-        rfunc.krw.max.assign({ 0.7, 0.69, 0.68, 0.65, });
-        rfunc.krw.r  .assign({ 0.5, 0.49, 0.48, 0.45, });
+    rfunc.krw.max.assign({
+        0.7,
+        0.69,
+        0.68,
+        0.65,
+    });
+    rfunc.krw.r.assign({
+        0.5,
+        0.49,
+        0.48,
+        0.45,
+    });
 
-        rfunc.pc.g.assign({  0.0, 1.0, 2.0, 3.0, });
-        rfunc.pc.w.assign({ 10.0, 8.5, 7.0, 5.5, });
+    rfunc.pc.g.assign({
+        0.0,
+        1.0,
+        2.0,
+        3.0,
+    });
+    rfunc.pc.w.assign({
+        10.0,
+        8.5,
+        7.0,
+        5.5,
+    });
 
-        return rfunc;
-    }
+    return rfunc;
+}
 } // Anonymous namespace
 
 // ===========================================================================
@@ -99,136 +187,131 @@ BOOST_AUTO_TEST_CASE(All_Regions)
 {
     using CurvePt = Opm::Satfunc::PhaseChecks::UnscaledSatfuncCheckPoint<double>;
 
-    const auto satnum = std::vector { 1, 2, 3, 4, };
-    const auto rtep   = exampleRTep();
-    const auto rfunc  = exampleRFunc();
-
-    const auto curvePt = CurvePt {
-        &satnum, 1, CurvePt::UnscaledEndPoints { &rtep, &rfunc }
+    const auto satnum = std::vector {
+        1,
+        2,
+        3,
+        4,
     };
+    const auto rtep = exampleRTep();
+    const auto rfunc = exampleRFunc();
+
+    const auto curvePt = CurvePt {&satnum, 1, CurvePt::UnscaledEndPoints {&rtep, &rfunc}};
 
     {
         const auto id = curvePt.pointID(0);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(0) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(0) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{1});
+        BOOST_CHECK_EQUAL(*id, std::size_t {1});
 
-        BOOST_CHECK_MESSAGE(! curvePt.pointID(0).has_value(),
-                            "pointID(0) must NOT return a value on second call");
+        BOOST_CHECK_MESSAGE(!curvePt.pointID(0).has_value(), "pointID(0) must NOT return a value on second call");
     }
 
     {
         const auto id = curvePt.pointID(1);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(1) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(1) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{2});
+        BOOST_CHECK_EQUAL(*id, std::size_t {2});
 
-        BOOST_CHECK_MESSAGE(! curvePt.pointID(1).has_value(),
-                            "pointID(1) must NOT return a value on second call");
+        BOOST_CHECK_MESSAGE(!curvePt.pointID(1).has_value(), "pointID(1) must NOT return a value on second call");
     }
 
     {
         const auto id = curvePt.pointID(2);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(2) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(2) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{3});
+        BOOST_CHECK_EQUAL(*id, std::size_t {3});
 
-        BOOST_CHECK_MESSAGE(! curvePt.pointID(0).has_value(),
-                            "pointID(2) must NOT return a value on second call");
+        BOOST_CHECK_MESSAGE(!curvePt.pointID(0).has_value(), "pointID(2) must NOT return a value on second call");
     }
 
     {
         const auto id = curvePt.pointID(3);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(3) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(3) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{4});
+        BOOST_CHECK_EQUAL(*id, std::size_t {4});
 
-        BOOST_CHECK_MESSAGE(! curvePt.pointID(0).has_value(),
-                            "pointID(3) must NOT return a value on second call");
+        BOOST_CHECK_MESSAGE(!curvePt.pointID(0).has_value(), "pointID(3) must NOT return a value on second call");
     }
 
     // Unscaled saturation function end-points in cell 0 (SATNUM = 1).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(0, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.2, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.27, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.15, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.2 , 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.1 , 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.27, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.15, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.2, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.1, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.Swu, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgu, 0.8, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 10.0, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxPcgo,  0.0, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxPcgo, 0.0, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.5,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.8,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.5, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.8, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorw, 0.53, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.7,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.7, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.75, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.75, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  1.0,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 1.0, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 0.  Intentionally
     // same as previous.  Member function populateCheckPoint() should not
     // care that we've called the function with the same arguments before.
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(0, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.2, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.27, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.15, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.2 , 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.1 , 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.27, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.15, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.2, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.1, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.Swu, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgu, 0.8, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 10.0, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxPcgo,  0.0, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxPcgo, 0.0, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.5,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.8,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.5, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.8, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorw, 0.53, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.7,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.7, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.75, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.75, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  1.0,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 1.0, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 1 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(1, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.325, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.257, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.325, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.257, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.225, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.125, 1.0e-8);
 
@@ -241,27 +324,27 @@ BOOST_AUTO_TEST_CASE(All_Regions)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.49, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.79, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.49, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.79, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.69, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.99, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.69, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.99, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 2 (SATNUM = 3).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(2, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.25, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.12, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.25, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.12, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.07, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.02, 1.0e-8);
 
@@ -274,31 +357,31 @@ BOOST_AUTO_TEST_CASE(All_Regions)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.48, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.87, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.48, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.87, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorw, 0.82, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Krorg, 0.78, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.68, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.68, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.85, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.85, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.98, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.98, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 3 (SATNUM = 4).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(3, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.25, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.42, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.04, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.5,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.42, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.04, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.5, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.35, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swu, 0.8,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swu, 0.8, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgu, 0.75, 1.0e-8);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 5.5, 1.0e-8);
@@ -307,15 +390,15 @@ BOOST_AUTO_TEST_CASE(All_Regions)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.45, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.75, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.5,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.7,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.45, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.75, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.5, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.7, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.65, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.7,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.7,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.95, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.65, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.7, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.7, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.95, 1.0e-8);
     }
 }
 
@@ -323,44 +406,42 @@ BOOST_AUTO_TEST_CASE(Same_Region)
 {
     using CurvePt = Opm::Satfunc::PhaseChecks::UnscaledSatfuncCheckPoint<double>;
 
-    const auto satnum = std::vector { 2, 2, 2, 2, };
-    const auto rtep   = exampleRTep();
-    const auto rfunc  = exampleRFunc();
-
-    const auto curvePt = CurvePt {
-        &satnum, 1, CurvePt::UnscaledEndPoints { &rtep, &rfunc }
+    const auto satnum = std::vector {
+        2,
+        2,
+        2,
+        2,
     };
+    const auto rtep = exampleRTep();
+    const auto rfunc = exampleRFunc();
+
+    const auto curvePt = CurvePt {&satnum, 1, CurvePt::UnscaledEndPoints {&rtep, &rfunc}};
 
     {
         const auto id = curvePt.pointID(0);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(0) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(0) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{2});
+        BOOST_CHECK_EQUAL(*id, std::size_t {2});
 
-        BOOST_CHECK_MESSAGE(! curvePt.pointID(0).has_value(),
-                            "pointID(0) must NOT return a value on second call");
+        BOOST_CHECK_MESSAGE(!curvePt.pointID(0).has_value(), "pointID(0) must NOT return a value on second call");
     }
 
-    BOOST_CHECK_MESSAGE(! curvePt.pointID(1).has_value(),
-                        "pointID(1) must NOT return a value on first call");
+    BOOST_CHECK_MESSAGE(!curvePt.pointID(1).has_value(), "pointID(1) must NOT return a value on first call");
 
-    BOOST_CHECK_MESSAGE(! curvePt.pointID(2).has_value(),
-                        "pointID(2) must NOT return a value on first call");
+    BOOST_CHECK_MESSAGE(!curvePt.pointID(2).has_value(), "pointID(2) must NOT return a value on first call");
 
-    BOOST_CHECK_MESSAGE(! curvePt.pointID(3).has_value(),
-                        "pointID(3) must NOT return a value on first call");
+    BOOST_CHECK_MESSAGE(!curvePt.pointID(3).has_value(), "pointID(3) must NOT return a value on first call");
 
     // Unscaled saturation function end-points in cell 0 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(0, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.325, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.257, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.325, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.257, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.225, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.125, 1.0e-8);
 
@@ -373,27 +454,27 @@ BOOST_AUTO_TEST_CASE(Same_Region)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.49, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.79, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.49, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.79, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.69, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.99, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.69, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.99, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 1 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(1, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.325, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.257, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.325, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.257, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.225, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.125, 1.0e-8);
 
@@ -406,27 +487,27 @@ BOOST_AUTO_TEST_CASE(Same_Region)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.49, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.79, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.49, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.79, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.69, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.99, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.69, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.99, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 2 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(2, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.325, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.257, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.325, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.257, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.225, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.125, 1.0e-8);
 
@@ -439,27 +520,27 @@ BOOST_AUTO_TEST_CASE(Same_Region)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.49, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.79, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.49, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.79, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.69, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.99, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.69, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.99, 1.0e-8);
     }
 
     // Unscaled saturation function end-points in cell 3 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         curvePt.populateCheckPoint(3, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.325, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.257, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.325, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.257, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.225, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.125, 1.0e-8);
 
@@ -472,15 +553,15 @@ BOOST_AUTO_TEST_CASE(Same_Region)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0, 1.0e-8);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.49, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.79, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6,  1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.49, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.79, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.4, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6, 1.0e-8);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.69, 1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8,  1.0e-8);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.99, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.69, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8, 1.0e-8);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.99, 1.0e-8);
     }
 }
 
@@ -490,11 +571,12 @@ BOOST_AUTO_TEST_SUITE_END() // Unscaled_Curve
 
 BOOST_AUTO_TEST_SUITE(Scaled_Curve)
 
-namespace {
-    Opm::EclipseState scaledEndpointProps()
-    {
-        return Opm::EclipseState {
-            Opm::Parser{}.parseString(R"(RUNSPEC
+namespace
+{
+Opm::EclipseState
+scaledEndpointProps()
+{
+    return Opm::EclipseState {Opm::Parser {}.parseString(R"(RUNSPEC
 DIMENS
 1 5 1 /
 ENDSCALE
@@ -561,9 +643,8 @@ REGIONS
 SATNUM
  1 3 2 2 1 /
 END
-)")
-        };
-    }
+)")};
+}
 } // Anonymous namespace
 
 BOOST_AUTO_TEST_CASE(All_Cells)
@@ -574,41 +655,35 @@ BOOST_AUTO_TEST_CASE(All_Cells)
     const auto es = scaledEndpointProps();
 
     const auto* satnum = &es.fieldProps().get_int("SATNUM"); // {1, 3, 2, 2, 1}
-    const auto rtep  = exampleRTep();
+    const auto rtep = exampleRTep();
     const auto rfunc = exampleRFunc();
 
-    const auto unscaledCurvePt = UnscaledCurvePt {
-        satnum, 1, UnscaledCurvePt::UnscaledEndPoints { &rtep, &rfunc }
-    };
+    const auto unscaledCurvePt = UnscaledCurvePt {satnum, 1, UnscaledCurvePt::UnscaledEndPoints {&rtep, &rfunc}};
 
-    const auto epsGridProps = Opm::EclEpsGridProperties { es, /* useImbibition = */ false };
+    const auto epsGridProps = Opm::EclEpsGridProperties {es, /* useImbibition = */ false};
 
     const auto scaledCurvePt = ScaledCurvePt {
-        unscaledCurvePt, &es, &epsGridProps,
-        [](const auto& i) { return static_cast<std::size_t>(i); }
-    };
+        unscaledCurvePt, &es, &epsGridProps, [](const auto& i) { return static_cast<std::size_t>(i); }};
 
     {
         const auto id = scaledCurvePt.pointID(0);
-        BOOST_REQUIRE_MESSAGE(id.has_value(),
-                              "pointID(0) must return a value on first call");
+        BOOST_REQUIRE_MESSAGE(id.has_value(), "pointID(0) must return a value on first call");
 
-        BOOST_CHECK_EQUAL(*id, std::size_t{0});
+        BOOST_CHECK_EQUAL(*id, std::size_t {0});
 
-        BOOST_CHECK_MESSAGE(scaledCurvePt.pointID(0).has_value(),
-                            "pointID(0) must return a value on second call");
+        BOOST_CHECK_MESSAGE(scaledCurvePt.pointID(0).has_value(), "pointID(0) must return a value on second call");
     }
 
     // Scaled saturation function end-points in cell 0 (SATNUM = 1).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         scaledCurvePt.populateCheckPoint(0, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.05f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.01f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.06f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.1f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.06f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.1f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.21f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.15f, 1.0e-6f);
 
@@ -616,37 +691,37 @@ BOOST_AUTO_TEST_CASE(All_Cells)
         BOOST_CHECK_CLOSE(endPoints.Sgu, 0.89f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 10.0f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxPcgo,  0.0f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxPcgo, 0.0f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.6f,   1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.775f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.55f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.6f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.775f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.55f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.72f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.72f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.75f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.75f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.85f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.85f, 1.0e-6f);
     }
 
     // Scaled saturation function end-points in cell 1 (SATNUM = 3).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         scaledCurvePt.populateCheckPoint(1, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.1f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.02f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.11f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.11f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.11f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.11f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.23f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.16f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.Swu, 0.97f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgu, 0.9f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgu, 0.9f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 7.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxPcgo, 2.0f, 1.0e-6f);
@@ -654,27 +729,27 @@ BOOST_AUTO_TEST_CASE(All_Cells)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.63f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.775f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.65f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.78f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.63f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.775f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.65f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.78f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.77f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.77f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.85f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.85f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.84f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.84f, 1.0e-6f);
     }
 
     // Scaled saturation function end-points in cell 2 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         scaledCurvePt.populateCheckPoint(2, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.15f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.03f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.16f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.12f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.16f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.12f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.25f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.17f, 1.0e-6f);
 
@@ -687,27 +762,27 @@ BOOST_AUTO_TEST_CASE(All_Cells)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.66f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.775f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.65f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6f,   1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.66f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.775f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.65f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.82f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.86f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.82f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.86f, 1.0e-6f);
     }
 
     // Scaled saturation function end-points in cell 3 (SATNUM = 2).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         scaledCurvePt.populateCheckPoint(3, endPoints);
 
-        BOOST_CHECK_CLOSE(endPoints.Swl, 0.2f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swl, 0.2f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.04f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.21f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.13f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.21f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.13f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.27f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.18f, 1.0e-6f);
 
@@ -720,27 +795,27 @@ BOOST_AUTO_TEST_CASE(All_Cells)
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.71f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.775f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.7f,   1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6f,   1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.71f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.775f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.7f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.6f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.87f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.83f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.87f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.8f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.8f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.83f, 1.0e-6f);
     }
 
     // Scaled saturation function end-points in cell 4 (SATNUM = 1).
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         scaledCurvePt.populateCheckPoint(4, endPoints);
 
         BOOST_CHECK_CLOSE(endPoints.Swl, 0.27f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sgl, 0.05f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Swcr,  0.3f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Sgcr,  0.14f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Swcr, 0.3f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Sgcr, 0.14f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sowcr, 0.29f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.Sogcr, 0.19f, 1.0e-6f);
 
@@ -748,20 +823,20 @@ BOOST_AUTO_TEST_CASE(All_Cells)
         BOOST_CHECK_CLOSE(endPoints.Sgu, 0.93f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.maxPcow, 10.0f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxPcgo,  0.0f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxPcgo, 0.0f, 1.0e-6f);
 
         BOOST_CHECK_CLOSE(endPoints.pcowLeverettFactor, 1.0f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.pcgoLeverettFactor, 1.0f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.Krwr,  0.65f,  1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krgr,  0.775f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.6f,   1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62f,  1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krwr, 0.65f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krgr, 0.775f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorw, 0.6f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.Krorg, 0.62f, 1.0e-6f);
 
-        BOOST_CHECK_CLOSE(endPoints.maxKrw,  0.92f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrw, 0.92f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrow, 0.75f, 1.0e-6f);
         BOOST_CHECK_CLOSE(endPoints.maxKrog, 0.75f, 1.0e-6f);
-        BOOST_CHECK_CLOSE(endPoints.maxKrg,  0.87f, 1.0e-6f);
+        BOOST_CHECK_CLOSE(endPoints.maxKrg, 0.87f, 1.0e-6f);
     }
 }
 

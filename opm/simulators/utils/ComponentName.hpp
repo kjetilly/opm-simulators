@@ -27,9 +27,10 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 class ComponentName
 {
 public:
@@ -41,10 +42,9 @@ public:
     }
 
 private:
-    std::vector<std::string> names_{};
+    std::vector<std::string> names_ {};
 };
 
 } // namespace Opm
 
 #endif
-

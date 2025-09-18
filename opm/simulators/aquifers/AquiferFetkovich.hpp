@@ -42,6 +42,7 @@ public:
 
     using typename Base::BlackoilIndices;
     using typename Base::ElementContext;
+    using typename Base::ElementMapper;
     using typename Base::Eval;
     using typename Base::FluidState;
     using typename Base::FluidSystem;
@@ -49,7 +50,6 @@ public:
     using typename Base::RateVector;
     using typename Base::Scalar;
     using typename Base::Simulator;
-    using typename Base::ElementMapper;
 
     AquiferFetkovich(const std::vector<Aquancon::AquancCell>& connections,
                      const Simulator& simulator,
@@ -84,15 +84,14 @@ public:
     data::AquiferData aquiferData() const override
     {
         // TODO: how to unify the two functions?
-        auto data = data::AquiferData{};
+        auto data = data::AquiferData {};
 
         data.aquiferID = this->aquiferID();
         data.pressure = this->aquifer_pressure_;
-        data.fluxRate = std::accumulate(this->Qai_.begin(), this->Qai_.end(), 0.0,
-                                        [](const double flux, const auto& q) -> double
-                                        {
-                                            return flux + q.value();
-                                        });
+        data.fluxRate = std::accumulate(this->Qai_.begin(),
+                                        this->Qai_.end(),
+                                        0.0,
+                                        [](const double flux, const auto& q) -> double { return flux + q.value(); });
         data.volume = this->W_flux_.value();
         data.initPressure = this->pa0_;
 
@@ -104,7 +103,7 @@ public:
         return data;
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(static_cast<Base&>(*this));
@@ -113,8 +112,7 @@ public:
 
     bool operator==(const AquiferFetkovich& rhs) const
     {
-        return static_cast<const Base&>(*this) == rhs &&
-               this->aquifer_pressure_ == rhs.aquifer_pressure_;
+        return static_cast<const Base&>(*this) == rhs && this->aquifer_pressure_ == rhs.aquifer_pressure_;
     }
 
 protected:
@@ -124,11 +122,9 @@ protected:
 
     void assignRestartData(const data::AquiferData& xaq) override
     {
-        if (! xaq.typeData.is<data::AquiferType::Fetkovich>()) {
-            throw std::invalid_argument {
-                "Analytic aquifer data for unexpected aquifer "
-                "type passed to Fetkovich aquifer"
-            };
+        if (!xaq.typeData.is<data::AquiferType::Fetkovich>()) {
+            throw std::invalid_argument {"Analytic aquifer data for unexpected aquifer "
+                                         "type passed to Fetkovich aquifer"};
         }
 
         this->aquifer_pressure_ = xaq.pressure;
@@ -137,11 +133,9 @@ protected:
 
     inline Eval dpai(int idx)
     {
-        const auto gdz =
-            this->gravity_() * (this->cell_depth_[idx] - this->aquiferDepth());
+        const auto gdz = this->gravity_() * (this->cell_depth_[idx] - this->aquiferDepth());
 
-        return this->aquifer_pressure_ + this->rhow_*gdz
-            - this->pressure_current_.at(idx);
+        return this->aquifer_pressure_ + this->rhow_ * gdz - this->pressure_current_.at(idx);
     }
 
     // This function implements Eq 5.12 of the EclipseTechnicalDescription
@@ -152,8 +146,7 @@ protected:
         const auto& comm = this->simulator_.vanguard().grid().comm();
         comm.sum(&Flux, 1);
 
-        const auto denom =
-            this->aqufetp_data_.total_compr * this->aqufetp_data_.initial_watvolume;
+        const auto denom = this->aqufetp_data_.total_compr * this->aqufetp_data_.initial_watvolume;
 
         return this->pa0_ - (Flux / denom);
     }
@@ -169,8 +162,7 @@ protected:
         const Scalar td_Tc_ = simulator.timeStepSize() / this->Tc_;
         const Scalar coef = (1 - exp(-td_Tc_)) / td_Tc_;
 
-        this->Qai_.at(idx) = coef * this->alphai_[idx] *
-            this->aqufetp_data_.prod_index * dpai(idx);
+        this->Qai_.at(idx) = coef * this->alphai_[idx] * this->aqufetp_data_.prod_index * dpai(idx);
     }
 
     inline void calculateAquiferCondition() override
@@ -179,12 +171,10 @@ protected:
             return;
         }
 
-        if (! this->aqufetp_data_.initial_pressure.has_value()) {
-            this->aqufetp_data_.initial_pressure =
-                this->calculateReservoirEquilibrium();
+        if (!this->aqufetp_data_.initial_pressure.has_value()) {
+            this->aqufetp_data_.initial_pressure = this->calculateReservoirEquilibrium();
 
-            const auto& tables = this->simulator_.vanguard()
-                .eclState().getTableManager();
+            const auto& tables = this->simulator_.vanguard().eclState().getTableManager();
 
             this->aqufetp_data_.finishInitialisation(tables);
         }

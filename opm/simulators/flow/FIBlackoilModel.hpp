@@ -46,7 +46,8 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename TypeTag>
 class FIBlackOilModel : public BlackOilModel<TypeTag>
@@ -67,17 +68,14 @@ class FIBlackOilModel : public BlackOilModel<TypeTag>
     // The chunked and threaded iteration over elements in this class assumes that the number
     // and order of elements is fixed, and is therefore constrained to only work with CpGrid.
     // For example, ALUGrid supports refinement and can not assume that.
-    static constexpr bool gridIsUnchanging =
-        std::is_same_v<GetPropType<TypeTag, Properties::Grid>, Dune::CpGrid>;
+    static constexpr bool gridIsUnchanging = std::is_same_v<GetPropType<TypeTag, Properties::Grid>, Dune::CpGrid>;
 
     static constexpr bool avoidElementContext = getPropValue<TypeTag, Properties::AvoidElementContext>();
 
 public:
     explicit FIBlackOilModel(Simulator& simulator)
         : BlackOilModel<TypeTag>(simulator)
-        , element_chunks_(this->gridView_,
-                          Dune::Partitions::all,
-                          ThreadManager::maxThreads())
+        , element_chunks_(this->gridView_, Dune::Partitions::all, ThreadManager::maxThreads())
     {
     }
 
@@ -206,7 +204,6 @@ public:
     }
 
 protected:
-
     template <EclMultiplexerApproach ApproachArg>
     using EMD = EclMultiplexerDispatch<ApproachArg>;
 
@@ -250,7 +247,7 @@ protected:
     }
 
 
-    template <class ...Args>
+    template <class... Args>
     void updateCachedIntQuantsLoop(const unsigned timeIdx) const
     {
         const auto& elementMapper = this->simulator_.model().elementMapper();
@@ -264,13 +261,14 @@ protected:
         }
     }
 
-    template <class ...Args>
+    template <class... Args>
     void updateSingleCachedIntQuantUnchecked(const unsigned globalIdx, const unsigned timeIdx) const
     {
         // Get the cached data.
         auto& intquant = this->intensiveQuantityCache_[timeIdx][globalIdx];
         // Update it.
-        intquant.template update<Args...>(this->simulator_.problem(), this->solution(timeIdx)[globalIdx], globalIdx, timeIdx);
+        intquant.template update<Args...>(
+            this->simulator_.problem(), this->solution(timeIdx)[globalIdx], globalIdx, timeIdx);
         // Set the up-to-date flag.
         this->intensiveQuantityCacheUpToDate_[timeIdx][globalIdx] = 1;
     }

@@ -26,28 +26,27 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackOilSolventParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteSolventSaturation>
-        ("Include the \"saturation\" of the solvent component "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSolventRsw>
-        ("Include the \"dissolved volume in water\" of the solvent component "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSolventDensity>
-        ("Include the \"density\" of the solvent component "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSolventViscosity>
-        ("Include the \"viscosity\" of the solvent component "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSolventMobility>
-        ("Include the \"mobility\" of the solvent component "
-         "in the VTK output files");
+
+void
+VtkBlackOilSolventParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteSolventSaturation>("Include the \"saturation\" of the solvent component "
+                                                                "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSolventRsw>(
+        "Include the \"dissolved volume in water\" of the solvent component "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSolventDensity>("Include the \"density\" of the solvent component "
+                                                             "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSolventViscosity>("Include the \"viscosity\" of the solvent component "
+                                                               "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSolventMobility>("Include the \"mobility\" of the solvent component "
+                                                              "in the VTK output files");
 }
 
-void VtkBlackOilSolventParams::read()
+void
+VtkBlackOilSolventParams::read()
 {
     solventSaturationOutput_ = Parameters::Get<Parameters::VtkWriteSolventSaturation>();
     solventRswOutput_ = Parameters::Get<Parameters::VtkWriteSolventRsw>();

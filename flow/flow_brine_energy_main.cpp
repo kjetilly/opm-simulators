@@ -17,7 +17,8 @@
 #include "config.h"
 #include <flow/flow_brine_energy.hpp>
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowBrineEnergyMain(argc, argv);
 }

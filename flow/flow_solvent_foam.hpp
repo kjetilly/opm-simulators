@@ -17,7 +17,8 @@
 #ifndef FLOW_SOLVENT_FOAM_HPP
 #define FLOW_SOLVENT_FOAM_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowSolventFoamMain(int argc, char** argv, bool outoutCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowSolventFoamMain(int argc, char** argv, bool outoutCout, bool outputFiles
 //! \brief Main function used in flow_solvent_foam binary.
 int flowSolventFoamMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_SOLVENT_FOAM_HPP

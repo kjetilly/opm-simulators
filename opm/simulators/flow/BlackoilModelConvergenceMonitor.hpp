@@ -27,7 +27,8 @@
 #include <opm/simulators/flow/BlackoilModelParameters.hpp>
 #include <opm/simulators/timestepping/ConvergenceReport.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Implementation of penalty cards for three-phase black oil.
 template <class Scalar>

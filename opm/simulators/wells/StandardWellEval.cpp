@@ -25,9 +25,9 @@
 #include <opm/material/densead/EvaluationFormat.hpp>
 #include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
-#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 #include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
+#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 
 #include <opm/simulators/timestepping/ConvergenceReport.hpp>
 #include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
@@ -42,11 +42,11 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem, class Indices>
-StandardWellEval<FluidSystem,Indices>::
-StandardWellEval(const WellInterfaceIndices<FluidSystem,Indices>& baseif)
+template <class FluidSystem, class Indices>
+StandardWellEval<FluidSystem, Indices>::StandardWellEval(const WellInterfaceIndices<FluidSystem, Indices>& baseif)
     : baseif_(baseif)
     , primary_variables_(baseif_)
     , F0_(numWellConservationEq)
@@ -55,55 +55,53 @@ StandardWellEval(const WellInterfaceIndices<FluidSystem,Indices>& baseif)
 {
 }
 
-template<class FluidSystem, class Indices>
-typename StandardWellEval<FluidSystem,Indices>::EvalWell
-StandardWellEval<FluidSystem,Indices>::
-extendEval(const Eval& in) const
+template <class FluidSystem, class Indices>
+typename StandardWellEval<FluidSystem, Indices>::EvalWell
+StandardWellEval<FluidSystem, Indices>::extendEval(const Eval& in) const
 {
     EvalWell out(primary_variables_.numWellEq() + Indices::numEq, in.value());
-    for(int eqIdx = 0; eqIdx < Indices::numEq;++eqIdx) {
+    for (int eqIdx = 0; eqIdx < Indices::numEq; ++eqIdx) {
         out.setDerivative(eqIdx, in.derivative(eqIdx));
     }
     return out;
 }
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 void
-StandardWellEval<FluidSystem,Indices>::
-updateWellStateFromPrimaryVariables(WellState<Scalar, IndexTraits>& well_state,
-                                    const SummaryState& summary_state,
-                                    DeferredLogger& deferred_logger) const
+StandardWellEval<FluidSystem, Indices>::updateWellStateFromPrimaryVariables(WellState<Scalar, IndexTraits>& well_state,
+                                                                            const SummaryState& summary_state,
+                                                                            DeferredLogger& deferred_logger) const
 {
     this->primary_variables_.copyToWellState(well_state, deferred_logger);
 
-    WellBhpThpCalculator(baseif_).
-            updateThp(connections_.rho(),
-                      [this,&well_state]() { return this->baseif_.getALQ(well_state); },
-                      well_state, summary_state, deferred_logger);
+    WellBhpThpCalculator(baseif_).updateThp(
+        connections_.rho(),
+        [this, &well_state]() { return this->baseif_.getALQ(well_state); },
+        well_state,
+        summary_state,
+        deferred_logger);
 }
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 void
-StandardWellEval<FluidSystem,Indices>::
-computeAccumWell()
+StandardWellEval<FluidSystem, Indices>::computeAccumWell()
 {
     for (std::size_t eq_idx = 0; eq_idx < F0_.size(); ++eq_idx) {
         F0_[eq_idx] = this->primary_variables_.surfaceVolumeFraction(eq_idx).value();
     }
 }
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 ConvergenceReport
-StandardWellEval<FluidSystem,Indices>::
-getWellConvergence(const WellState<Scalar, IndexTraits>& well_state,
-                   const std::vector<Scalar>& B_avg,
-                   const Scalar maxResidualAllowed,
-                   const Scalar tol_wells,
-                   const Scalar relaxed_tolerance_flow,
-                   const bool relax_tolerance,
-                   const bool well_is_stopped, 
-                   std::vector<Scalar>& res,
-                   DeferredLogger& deferred_logger) const
+StandardWellEval<FluidSystem, Indices>::getWellConvergence(const WellState<Scalar, IndexTraits>& well_state,
+                                                           const std::vector<Scalar>& B_avg,
+                                                           const Scalar maxResidualAllowed,
+                                                           const Scalar tol_wells,
+                                                           const Scalar relaxed_tolerance_flow,
+                                                           const bool relax_tolerance,
+                                                           const bool well_is_stopped,
+                                                           std::vector<Scalar>& res,
+                                                           DeferredLogger& deferred_logger) const
 {
     res.resize(this->primary_variables_.numWellEq());
     for (int eq_idx = 0; eq_idx < this->primary_variables_.numWellEq(); ++eq_idx) {
@@ -132,29 +130,35 @@ getWellConvergence(const WellState<Scalar, IndexTraits>& well_state,
 
         if (std::isnan(well_flux_residual[compIdx])) {
             report.setWellFailed({type, CR::Severity::NotANumber, compIdx, baseif_.name()});
-            report.setWellConvergenceMetric(type, CR::Severity::NotANumber, compIdx, well_flux_residual[compIdx], baseif_.name());
+            report.setWellConvergenceMetric(
+                type, CR::Severity::NotANumber, compIdx, well_flux_residual[compIdx], baseif_.name());
         } else if (well_flux_residual[compIdx] > maxResidualAllowed) {
             report.setWellFailed({type, CR::Severity::TooLarge, compIdx, baseif_.name()});
-            report.setWellConvergenceMetric(type, CR::Severity::TooLarge, compIdx, well_flux_residual[compIdx], baseif_.name());
+            report.setWellConvergenceMetric(
+                type, CR::Severity::TooLarge, compIdx, well_flux_residual[compIdx], baseif_.name());
         } else if (!relax_tolerance && well_flux_residual[compIdx] > tol_wells) {
             report.setWellFailed({type, CR::Severity::Normal, compIdx, baseif_.name()});
-            report.setWellConvergenceMetric(type, CR::Severity::Normal, compIdx, well_flux_residual[compIdx], baseif_.name());
+            report.setWellConvergenceMetric(
+                type, CR::Severity::Normal, compIdx, well_flux_residual[compIdx], baseif_.name());
         } else if (well_flux_residual[compIdx] > relaxed_tolerance_flow) {
             report.setWellFailed({type, CR::Severity::Normal, compIdx, baseif_.name()});
-            report.setWellConvergenceMetric(type, CR::Severity::Normal, compIdx, well_flux_residual[compIdx], baseif_.name());
+            report.setWellConvergenceMetric(
+                type, CR::Severity::Normal, compIdx, well_flux_residual[compIdx], baseif_.name());
         } else {
-            report.setWellConvergenceMetric(CR::WellFailure::Type::Invalid, CR::Severity::None, compIdx, well_flux_residual[compIdx], baseif_.name());
+            report.setWellConvergenceMetric(CR::WellFailure::Type::Invalid,
+                                            CR::Severity::None,
+                                            compIdx,
+                                            well_flux_residual[compIdx],
+                                            baseif_.name());
         }
-
     }
 
-    WellConvergence(baseif_).
-        checkConvergenceControlEq(well_state,
-                                  {1.e3, 1.e4, 1.e-4, 1.e-6, maxResidualAllowed},
-                                  std::abs(this->linSys_.residual()[0][Bhp]),
-                                  well_is_stopped, 
-                                  report,
-                                  deferred_logger);
+    WellConvergence(baseif_).checkConvergenceControlEq(well_state,
+                                                       {1.e3, 1.e4, 1.e-4, 1.e-6, maxResidualAllowed},
+                                                       std::abs(this->linSys_.residual()[0][Bhp]),
+                                                       well_is_stopped,
+                                                       report,
+                                                       deferred_logger);
 
     // for stopped well, we do not enforce the following checking to avoid dealing with sign of near-zero values
     // for BHP or THP controlled wells, we need to make sure the flow direction is correct
@@ -165,19 +169,18 @@ getWellConvergence(const WellState<Scalar, IndexTraits>& well_state,
         constexpr int dummy_phase = -1;
         if (weight_total_flux < 0.) {
             report.setWellFailed(
-                    {CR::WellFailure::Type::WrongFlowDirection, CR::Severity::Normal, dummy_phase, baseif_.name()});
+                {CR::WellFailure::Type::WrongFlowDirection, CR::Severity::Normal, dummy_phase, baseif_.name()});
         }
     }
 
     return report;
 }
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 void
-StandardWellEval<FluidSystem,Indices>::
-init(std::vector<Scalar>& perf_depth,
-     const std::vector<Scalar>& depth_arg,
-     const bool has_polymermw)
+StandardWellEval<FluidSystem, Indices>::init(std::vector<Scalar>& perf_depth,
+                                             const std::vector<Scalar>& depth_arg,
+                                             const bool has_polymermw)
 {
     perf_depth.resize(baseif_.numLocalPerfs(), 0.);
     for (int perf = 0; perf < baseif_.numLocalPerfs(); ++perf) {
@@ -211,4 +214,4 @@ INSTANTIATE_TYPE_INDICES(StandardWellEval, double)
 INSTANTIATE_TYPE_INDICES(StandardWellEval, float)
 #endif
 
-}
+} // namespace Opm

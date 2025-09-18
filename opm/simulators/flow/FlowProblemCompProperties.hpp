@@ -37,34 +37,37 @@
 
 #include <tuple>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class FlowProblemComp;
 }
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct FlowBaseProblemComp {
-    using InheritsFrom = std::tuple<FlowBaseProblem>;
+    struct FlowBaseProblemComp {
+        using InheritsFrom = std::tuple<FlowBaseProblem>;
+    };
+
+} // namespace TTag
+// Set the problem property
+template <class TypeTag>
+struct Problem<TypeTag, TTag::FlowBaseProblemComp> {
+    using type = FlowProblemComp<TypeTag>;
 };
 
-}
-// Set the problem property
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FlowBaseProblemComp>
-{ using type = FlowProblemComp<TypeTag>; };
-
-template<class TypeTag>
+template <class TypeTag>
 struct TracerModel<TypeTag, TTag::FlowBaseProblemComp> {
     using type = ::Opm::TracerModel<TypeTag>;
 };
 
 // Set the material law for fluid fluxes
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::FlowBaseProblemComp>
-{
+template <class TypeTag>
+struct MaterialLaw<TypeTag, TTag::FlowBaseProblemComp> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -81,9 +84,10 @@ public:
 };
 
 // Enable diffusion
-template<class TypeTag>
-struct EnableDiffusion<TypeTag, TTag::FlowBaseProblemComp>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableDiffusion<TypeTag, TTag::FlowBaseProblemComp> {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Properties
 #endif // OPM_FLOW_PROBLEM_COMP_PROPERTIES_HPP

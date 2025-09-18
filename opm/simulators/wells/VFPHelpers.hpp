@@ -23,120 +23,122 @@
 
 #include <functional>
 #include <map>
-#include <vector>
 #include <optional>
+#include <vector>
 
 /**
  * This file contains a set of helper functions used by VFPProd / VFPInj.
  */
-namespace Opm {
+namespace Opm
+{
 
 class VFPInjTable;
 class VFPProdTable;
 
-namespace detail {
-
-/**
- * An "ADB-like" structure with a single value and a set of derivatives
- */
-template<class Scalar>
-struct VFPEvaluation
+namespace detail
 {
-    VFPEvaluation() : value(0.0), dthp(0.0), dwfr(0.0), dgfr(0.0), dalq(0.0), dflo(0.0) {};
-    Scalar value;
-    Scalar dthp;
-    Scalar dwfr;
-    Scalar dgfr;
-    Scalar dalq;
-    Scalar dflo;
-};
 
-template<class Scalar>
-VFPEvaluation<Scalar> operator+(VFPEvaluation<Scalar> lhs, const VFPEvaluation<Scalar>& rhs);
-template<class Scalar>
-VFPEvaluation<Scalar> operator-(VFPEvaluation<Scalar> lhs, const VFPEvaluation<Scalar>& rhs);
-template<class Scalar>
-VFPEvaluation<Scalar> operator*(Scalar lhs, const VFPEvaluation<Scalar>& rhs);
+    /**
+     * An "ADB-like" structure with a single value and a set of derivatives
+     */
+    template <class Scalar>
+    struct VFPEvaluation {
+        VFPEvaluation()
+            : value(0.0)
+            , dthp(0.0)
+            , dwfr(0.0)
+            , dgfr(0.0)
+            , dalq(0.0)
+            , dflo(0.0) { };
+        Scalar value;
+        Scalar dthp;
+        Scalar dwfr;
+        Scalar dgfr;
+        Scalar dalq;
+        Scalar dflo;
+    };
 
-/**
- * Helper struct for linear interpolation
- */
-template<class Scalar>
-struct InterpData
+    template <class Scalar>
+    VFPEvaluation<Scalar> operator+(VFPEvaluation<Scalar> lhs, const VFPEvaluation<Scalar>& rhs);
+    template <class Scalar>
+    VFPEvaluation<Scalar> operator-(VFPEvaluation<Scalar> lhs, const VFPEvaluation<Scalar>& rhs);
+    template <class Scalar>
+    VFPEvaluation<Scalar> operator*(Scalar lhs, const VFPEvaluation<Scalar>& rhs);
+
+    /**
+     * Helper struct for linear interpolation
+     */
+    template <class Scalar>
+    struct InterpData {
+        InterpData()
+            : ind_ {0, 0}
+            , inv_dist_(0.0)
+            , factor_(0.0)
+        {
+        }
+        int ind_[2]; //[First element greater than or equal to value, Last element smaller than or equal to value]
+        Scalar inv_dist_; // 1 / distance between the two end points of the segment. Used to calculate derivatives and
+                          // uses 1.0 / 0.0 = 0.0 as a convention
+        Scalar factor_; // Interpolation factor
+    };
+
+    /**
+     * Computes the flo parameter according to the flo_type_
+     * for production tables
+     * @return Production rate of oil, gas or liquid.
+     */
+    template <typename T>
+    T getFlo(const VFPProdTable& table, const T& aqua, const T& liquid, const T& vapour);
+
+    /**
+     * Computes the flo parameter according to the flo_type_
+     * for injection tables
+     * @return Production rate of oil, gas or liquid.
+     */
+    template <typename T>
+    T getFlo(const VFPInjTable& table, const T& aqua, const T& liquid, const T& vapour);
+
+    /**
+     * Computes the wfr parameter according to the wfr_type_
+     * @return Production rate of oil, gas or liquid.
+     */
+    template <typename T>
+    T getWFR(const VFPProdTable& table, const T& aqua, const T& liquid, const T& vapour);
+
+    /**
+     * Computes the gfr parameter according to the gfr_type_
+     * @return Production rate of oil, gas or liquid.
+     */
+    template <typename T>
+    T getGFR(const VFPProdTable& table, const T& aqua, const T& liquid, const T& vapour);
+
+    /**
+     * Returns the table from the map if found, or throws an exception
+     */
+    template <typename T>
+    const T& getTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id);
+
+    /**
+     * Check whether we have a table with the table number
+     */
+    template <typename T>
+    bool hasTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id)
+    {
+        const auto entry = tables.find(table_id);
+        return (entry != tables.end());
+    }
+
+    /**
+     * Returns the type variable for FLO/GFR/WFR for production tables
+     */
+    template <typename TYPE, typename TABLE>
+    TYPE getType(const TABLE& table);
+
+} // namespace detail
+
+template <class Scalar>
+class VFPHelpers
 {
-    InterpData() : ind_{0, 0}, inv_dist_(0.0), factor_(0.0) {}
-    int ind_[2]; //[First element greater than or equal to value, Last element smaller than or equal to value]
-    Scalar inv_dist_; // 1 / distance between the two end points of the segment. Used to calculate derivatives and uses 1.0 / 0.0 = 0.0 as a convention
-    Scalar factor_; // Interpolation factor
-};
-
-/**
- * Computes the flo parameter according to the flo_type_
- * for production tables
- * @return Production rate of oil, gas or liquid.
- */
-template <typename T>
-T getFlo(const VFPProdTable& table,
-         const T& aqua,
-         const T& liquid,
-         const T& vapour);
-
-/**
- * Computes the flo parameter according to the flo_type_
- * for injection tables
- * @return Production rate of oil, gas or liquid.
- */
-template <typename T>
-T getFlo(const VFPInjTable& table,
-         const T& aqua,
-         const T& liquid,
-         const T& vapour);
-
-/**
- * Computes the wfr parameter according to the wfr_type_
- * @return Production rate of oil, gas or liquid.
- */
-template <typename T>
-T getWFR(const VFPProdTable& table,
-         const T& aqua,
-         const T& liquid,
-         const T& vapour);
-
-/**
- * Computes the gfr parameter according to the gfr_type_
- * @return Production rate of oil, gas or liquid.
- */
-template <typename T>
-T getGFR(const VFPProdTable& table,
-         const T& aqua,
-         const T& liquid,
-         const T& vapour);
-
-/**
- * Returns the table from the map if found, or throws an exception
- */
-template <typename T>
-const T& getTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id);
-
-/**
- * Check whether we have a table with the table number
- */
-template <typename T>
-bool hasTable(const std::map<int, std::reference_wrapper<const T>>& tables, int table_id) {
-    const auto entry = tables.find(table_id);
-    return (entry != tables.end() );
-}
-
-/**
- * Returns the type variable for FLO/GFR/WFR for production tables
- */
-template <typename TYPE, typename TABLE>
-TYPE getType(const TABLE& table);
-
-}
-
-template<class Scalar>
-class VFPHelpers {
 public:
     /**
      * Helper function to find indices etc. for linear interpolation and extrapolation
@@ -144,8 +146,7 @@ public:
      *  @param values Sorted list of values to search for value in.
      *  @return Data required to find the interpolated value
      */
-    static detail::InterpData<Scalar> findInterpData(const Scalar value_in,
-                                                     const std::vector<double>& values);
+    static detail::InterpData<Scalar> findInterpData(const Scalar value_in, const std::vector<double>& values);
 
     /**
      * Helper function which interpolates data using the indices etc. given in the inputs.
@@ -173,13 +174,10 @@ public:
                                              const Scalar alq,
                                              const Scalar explicit_wfr,
                                              const Scalar explicit_gfr,
-                                             const bool   use_vfpexplicit);
+                                             const bool use_vfpexplicit);
 
-    static detail::VFPEvaluation<Scalar> bhp(const VFPInjTable& table,
-                                             const Scalar aqua,
-                                             const Scalar liquid,
-                                             const Scalar vapour,
-                                             const Scalar thp);
+    static detail::VFPEvaluation<Scalar>
+    bhp(const VFPInjTable& table, const Scalar aqua, const Scalar liquid, const Scalar vapour, const Scalar thp);
 
     /**
      * This function finds the value of THP given a specific BHP.
@@ -189,23 +187,19 @@ public:
      */
     static Scalar findTHP(const std::vector<Scalar>& bhp_array,
                           const std::vector<double>& thp_array,
-                          Scalar bhp, 
+                          Scalar bhp,
                           const bool find_largest = true);
 
     /**
-    * Get (flo, bhp) at minimum bhp for given thp,wfr,gfr,alq
-    */
-    static std::pair<Scalar, Scalar>
-    getMinimumBHPCoordinate(const VFPProdTable& table,
-                            const Scalar thp,
-                            const Scalar wfr,
-                            const Scalar gfr,
-                            const Scalar alq);
+     * Get (flo, bhp) at minimum bhp for given thp,wfr,gfr,alq
+     */
+    static std::pair<Scalar, Scalar> getMinimumBHPCoordinate(
+        const VFPProdTable& table, const Scalar thp, const Scalar wfr, const Scalar gfr, const Scalar alq);
 
     /**
-    * Get (flo, bhp) at largest occuring stable vfp/ipr-intersection
-    * if it exists
-    */
+     * Get (flo, bhp) at largest occuring stable vfp/ipr-intersection
+     * if it exists
+     */
     static std::optional<std::pair<Scalar, Scalar>>
     intersectWithIPR(const VFPProdTable& table,
                      const Scalar thp,
@@ -217,6 +211,6 @@ public:
                      const std::function<Scalar(const Scalar)>& adjust_bhp);
 };
 
-} // namespace
+} // namespace Opm
 
 #endif /* OPM_AUTODIFF_VFPHELPERS_HPP_ */

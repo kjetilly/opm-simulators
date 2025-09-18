@@ -22,9 +22,13 @@
 #ifndef OPM_SIMULATOR_REPORT_BANNERS_HEADER_INCLUDED
 #define OPM_SIMULATOR_REPORT_BANNERS_HEADER_INCLUDED
 
-namespace Opm { class SimulatorTimer; }
+namespace Opm
+{
+class SimulatorTimer;
+}
 
-namespace Opm::details {
+namespace Opm::details
+{
 
 void outputReportStep(const SimulatorTimer& timer);
 

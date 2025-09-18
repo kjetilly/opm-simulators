@@ -29,13 +29,13 @@
 
 // Note: we do not use boost.test as it does not cleanly combine with fork() usage
 
+#include <cassert>
 #include <chrono>
 #include <iostream>
 #include <mutex>
-#include <thread>
 #include <sys/wait.h>
+#include <thread>
 #include <unistd.h>
-#include <cassert>
 
 #include "config.h"
 #include <opm/models/parallel/tasklets.hpp>
@@ -43,23 +43,26 @@
 std::mutex outputMutex;
 
 // The runner is created on the heap for the assertion and outputs in the run function of the tasklets.
-std::unique_ptr<Opm::TaskletRunner> runner{};
+std::unique_ptr<Opm::TaskletRunner> runner {};
 
 class SleepTasklet : public Opm::TaskletInterface
 {
 public:
     SleepTasklet(int mseconds, int id)
-        : mseconds_(mseconds),
-          id_(id)
-    {}
+        : mseconds_(mseconds)
+        , id_(id)
+    {
+    }
 
     void run() override
     {
         assert(0 <= runner->workerThreadIndex() && runner->workerThreadIndex() < runner->numWorkerThreads());
-        std::cout << "Sleep tasklet " << id_ << " of " << mseconds_ << " ms starting sleep on worker thread " << runner->workerThreadIndex() << std::endl;
+        std::cout << "Sleep tasklet " << id_ << " of " << mseconds_ << " ms starting sleep on worker thread "
+                  << runner->workerThreadIndex() << std::endl;
         std::this_thread::sleep_for(std::chrono::milliseconds(mseconds_));
         std::lock_guard<std::mutex> guard(outputMutex);
-        std::cout << "Sleep tasklet " << id_ << " of " << mseconds_ << " ms completed by worker thread " << runner->workerThreadIndex() << std::endl;
+        std::cout << "Sleep tasklet " << id_ << " of " << mseconds_ << " ms completed by worker thread "
+                  << runner->workerThreadIndex() << std::endl;
     }
 
 private:
@@ -72,12 +75,14 @@ class FailingSleepTasklet : public Opm::TaskletInterface
 public:
     explicit FailingSleepTasklet(int mseconds)
         : mseconds_(mseconds)
-    {}
+    {
+    }
     void run() override
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(mseconds_));
         std::lock_guard<std::mutex> guard(outputMutex);
-        std::cout << "Failing sleep tasklet of " << mseconds_ << " ms failing now, on work thread " << runner->workerThreadIndex() << std::endl;
+        std::cout << "Failing sleep tasklet of " << mseconds_ << " ms failing now, on work thread "
+                  << runner->workerThreadIndex() << std::endl;
         throw std::logic_error("Intentional failure for testing");
     }
 
@@ -85,7 +90,9 @@ private:
     int mseconds_;
 };
 
-void execute () {
+void
+execute()
+{
     int numWorkers = 2;
     runner = std::make_unique<Opm::TaskletRunner>(numWorkers);
 
@@ -100,7 +107,7 @@ void execute () {
         if (runner->failure()) {
             exit(EXIT_FAILURE);
         }
-        auto st = std::make_shared<SleepTasklet>(10,i);
+        auto st = std::make_shared<SleepTasklet>(10, i);
         runner->dispatch(st);
     }
 
@@ -119,7 +126,7 @@ void execute () {
         if (runner->failure()) {
             exit(EXIT_FAILURE);
         }
-        auto st = std::make_shared<SleepTasklet>(10,i);
+        auto st = std::make_shared<SleepTasklet>(10, i);
         runner->dispatch(st);
     }
 
@@ -127,7 +134,8 @@ void execute () {
     runner->barrier();
 }
 
-int main()
+int
+main()
 {
     pid_t pid = fork(); // Create a new process, such that this child process can call exit(EXIT_FAILURE)
     if (pid == -1) {
@@ -135,13 +143,13 @@ int main()
     } else if (pid == 0) {
         // Child process
         execute();
-        _exit(0);  // Should never reach here
+        _exit(0); // Should never reach here
     } else {
         // Parent process
         std::cout << "Checking failure of child process with parent process, process id " << pid << std::endl;
         int status;
         waitpid(pid, &status, 0);
-        assert(WIFEXITED(status));  // Check if the child process exited
-        assert(WEXITSTATUS(status) == EXIT_FAILURE);  // Check if the exit status is EXIT_FAILURE
+        assert(WIFEXITED(status)); // Check if the child process exited
+        assert(WEXITSTATUS(status) == EXIT_FAILURE); // Check if the exit status is EXIT_FAILURE
     }
 }

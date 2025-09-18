@@ -18,7 +18,8 @@
 #include <flow/flow_gasoil.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowGasOilMainStandalone(argc, argv);
 }

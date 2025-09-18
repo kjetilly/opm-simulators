@@ -37,43 +37,43 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
-
-namespace details {
-
-/**
-  * Struct holding information about domains used for printing a summary.
-*/
-struct DomainInfo
+namespace Opm
 {
-    std::vector<int> all_owned; //!< All owned cells
-    std::vector<int> all_overlap; //!< All overlap cells
-    std::vector<int> all_wells; //!< All wells
-    std::vector<int> all_domains; //!< All domains
 
-    explicit DomainInfo(std::size_t size)
-        : all_owned(size)
-        , all_overlap(size)
-        , all_wells(size)
-        , all_domains(size)
-    {}
-};
+namespace details
+{
 
-/**
- * Print a summary of domain distribution to the log
- * @param info Struct holding info about the domains
- */
-void printDistributionSummary(const DomainInfo& info);
+    /**
+     * Struct holding information about domains used for printing a summary.
+     */
+    struct DomainInfo {
+        std::vector<int> all_owned; //!< All owned cells
+        std::vector<int> all_overlap; //!< All overlap cells
+        std::vector<int> all_wells; //!< All wells
+        std::vector<int> all_domains; //!< All domains
 
-/**
- * Write NLDD information to a text file
- * @param file File to write to
- * @param header Header in file
- * @param data Data to write to file
- */
-void writeNlddFile(const std::string& file,
-                   std::string_view header,
-                   const std::vector<int>& data);
+        explicit DomainInfo(std::size_t size)
+            : all_owned(size)
+            , all_overlap(size)
+            , all_wells(size)
+            , all_domains(size)
+        {
+        }
+    };
+
+    /**
+     * Print a summary of domain distribution to the log
+     * @param info Struct holding info about the domains
+     */
+    void printDistributionSummary(const DomainInfo& info);
+
+    /**
+     * Write NLDD information to a text file
+     * @param file File to write to
+     * @param header Header in file
+     * @param data Data to write to file
+     */
+    void writeNlddFile(const std::string& file, std::string_view header, const std::vector<int>& data);
 
 } // namespace details
 
@@ -101,13 +101,13 @@ void reportNlddStatistics(const std::vector<SimulatorReport>& domain_reports,
  * @param cartMapper The cartesian index mapper
  */
 template <class Grid, class Domain, class ElementMapper, class CartMapper>
-void writeNonlinearIterationsPerCell(
-    const std::filesystem::path& odir,
-    const std::vector<Domain>& domains,
-    const std::vector<SimulatorReport>& domain_reports,
-    const Grid& grid,
-    const ElementMapper& elementMapper,
-    const CartMapper& cartMapper)
+void
+writeNonlinearIterationsPerCell(const std::filesystem::path& odir,
+                                const std::vector<Domain>& domains,
+                                const std::vector<SimulatorReport>& domain_reports,
+                                const Grid& grid,
+                                const ElementMapper& elementMapper,
+                                const CartMapper& cartMapper)
 {
     const auto& dims = cartMapper.cartesianDimensions();
     const auto total_size = dims[0] * dims[1] * dims[2];
@@ -119,11 +119,10 @@ void writeNonlinearIterationsPerCell(
 
     // Populate the mapping with iteration counts for each domain
     const auto ds = domains.size();
-    for (auto domain_idx = 0*ds; domain_idx < ds; ++domain_idx) {
+    for (auto domain_idx = 0 * ds; domain_idx < ds; ++domain_idx) {
         const auto& domain = domains[domain_idx];
         const auto& report = domain_reports[domain_idx];
-        const int iterations = report.success.total_newton_iterations + 
-                              report.failure.total_newton_iterations;
+        const int iterations = report.success.total_newton_iterations + report.failure.total_newton_iterations;
 
         for (const int cell_idx : domain.cells) {
             cell_iterations[cell_idx] = iterations;
@@ -146,8 +145,7 @@ void writeNonlinearIterationsPerCell(
 
     // Only rank 0 writes the file
     if (rank == 0) {
-        details::writeNlddFile(odir / "ResInsight_nonlinear_iterations.txt",
-                               "NLDD_ITER", full_iterations);
+        details::writeNlddFile(odir / "ResInsight_nonlinear_iterations.txt", "NLDD_ITER", full_iterations);
     }
 }
 
@@ -161,12 +159,12 @@ void writeNonlinearIterationsPerCell(
  * @param cartMapper The cartesian index mapper
  */
 template <class Grid, class Domain, class ElementMapper, class CartMapper>
-void writePartitions(
-    const std::filesystem::path& odir,
-    const std::vector<Domain>& domains,
-    const Grid& grid,
-    const ElementMapper& elementMapper,
-    const CartMapper& cartMapper)
+void
+writePartitions(const std::filesystem::path& odir,
+                const std::vector<Domain>& domains,
+                const Grid& grid,
+                const ElementMapper& elementMapper,
+                const CartMapper& cartMapper)
 {
     const auto& dims = cartMapper.cartesianDimensions();
     const auto total_size = dims[0] * dims[1] * dims[2];
@@ -189,18 +187,16 @@ void writePartitions(
 
     // Only rank 0 writes the file
     if (rank == 0) {
-        details::writeNlddFile(odir / "ResInsight_compatible_partition.txt",
-                               "NLDD_DOM", full_partition);
+        details::writeNlddFile(odir / "ResInsight_compatible_partition.txt", "NLDD_DOM", full_partition);
     }
 
     const auto nDigit = 1 + static_cast<int>(std::floor(std::log10(comm.size())));
     auto partition_fname = odir / fmt::format("{1:0>{0}}", nDigit, rank);
-    std::ofstream pfile { partition_fname };
+    std::ofstream pfile {partition_fname};
 
     auto cell_index = 0;
     for (const auto& cell : elements(grid.leafGridView(), Dune::Partitions::interior)) {
-        pfile << rank << ' '
-              << cartMapper.cartesianIndex(elementMapper.index(cell)) << ' '
+        pfile << rank << ' ' << cartMapper.cartesianIndex(elementMapper.index(cell)) << ' '
               << partition_vector[cell_index++] << '\n';
     }
 }
@@ -216,13 +212,13 @@ void writePartitions(
  * @param num_wells The number of wells
  */
 template <class Grid, class Domain>
-void printDomainDistributionSummary(
-    const std::vector<int>& partition_vector,
-    const std::vector<Domain>& domains,
-    SimulatorReport& local_reports_accumulated,
-    std::vector<SimulatorReport>& domain_reports_accumulated,
-    const Grid& grid,
-    int num_wells)
+void
+printDomainDistributionSummary(const std::vector<int>& partition_vector,
+                               const std::vector<Domain>& domains,
+                               SimulatorReport& local_reports_accumulated,
+                               std::vector<SimulatorReport>& domain_reports_accumulated,
+                               const Grid& grid,
+                               int num_wells)
 {
     const auto& gridView = grid.leafGridView();
     const auto& comm = grid.comm();
@@ -232,8 +228,9 @@ void printDomainDistributionSummary(
     const int owned_cells = partition_vector.size();
 
     // Count overlap cells using grid view iteration
-    int overlap_cells = std::count_if(elements(gridView).begin(), elements(gridView).end(),
-                                      [](const auto& cell) { return cell.partitionType() == Dune::OverlapEntity; });
+    int overlap_cells = std::count_if(elements(gridView).begin(), elements(gridView).end(), [](const auto& cell) {
+        return cell.partitionType() == Dune::OverlapEntity;
+    });
 
     // Store data for summary output
     local_reports_accumulated.success.num_wells = num_wells;
@@ -243,7 +240,7 @@ void printDomainDistributionSummary(
 
     // Set statistics for each domain report
     const auto dr_size = domain_reports_accumulated.size();
-    for (auto i = 0*dr_size; i < dr_size; ++i) {
+    for (auto i = 0 * dr_size; i < dr_size; ++i) {
         auto& domain_report = domain_reports_accumulated[i];
         domain_report.success.num_domains = 1;
         domain_report.success.num_overlap_cells = 0;
@@ -272,9 +269,8 @@ void printDomainDistributionSummary(
  * @return The reconstructed partition vector
  */
 template <class Grid, class Domain>
-std::vector<int> reconstitutePartitionVector(
-    const std::vector<Domain>& domains,
-    const Grid& grid)
+std::vector<int>
+reconstitutePartitionVector(const std::vector<Domain>& domains, const Grid& grid)
 {
     const auto& comm = grid.comm();
     const int rank = comm.rank();

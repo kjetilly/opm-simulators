@@ -20,76 +20,93 @@
 #include <config.h>
 #include <opm/simulators/linalg/gpubridge/opencl/openclKernels.hpp>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
-#include <opm/simulators/linalg/gpubridge/opencl/ChowPatelIlu.hpp>  // defines CHOW_PATEL
+#include <opm/simulators/linalg/gpubridge/opencl/ChowPatelIlu.hpp> // defines CHOW_PATEL
 
 #include <opm/simulators/linalg/gpubridge/Misc.hpp>
 
 #include <cmath>
 #include <sstream>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-using Opm::OpmLog;
 using Dune::Timer;
+using Opm::OpmLog;
 
 // define static variables and kernels
-template<class Scalar> int OpenclKernels<Scalar>::verbosity;
-template<class Scalar> cl::CommandQueue* OpenclKernels<Scalar>::queue;
-template<class Scalar> std::vector<Scalar> OpenclKernels<Scalar>::tmp;
-template<class Scalar> bool OpenclKernels<Scalar>::initialized = false;
-template<class Scalar> std::size_t OpenclKernels<Scalar>::preferred_workgroup_size_multiple = 0;
+template <class Scalar>
+int OpenclKernels<Scalar>::verbosity;
+template <class Scalar>
+cl::CommandQueue* OpenclKernels<Scalar>::queue;
+template <class Scalar>
+std::vector<Scalar> OpenclKernels<Scalar>::tmp;
+template <class Scalar>
+bool OpenclKernels<Scalar>::initialized = false;
+template <class Scalar>
+std::size_t OpenclKernels<Scalar>::preferred_workgroup_size_multiple = 0;
 
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > OpenclKernels<Scalar>::dot_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > OpenclKernels<Scalar>::norm_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::axpy_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int> > OpenclKernels<Scalar>::scale_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::vmul_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int> > OpenclKernels<Scalar>::custom_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::full_to_pressure_restriction_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int> > OpenclKernels<Scalar>::add_coarse_pressure_correction_k;
-template<class Scalar>
-std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int> > OpenclKernels<Scalar>::prolongate_vector_k;
-template<class Scalar>
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>>
+    OpenclKernels<Scalar>::dot_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>>
+    OpenclKernels<Scalar>::norm_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int>>
+    OpenclKernels<Scalar>::axpy_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int>> OpenclKernels<Scalar>::scale_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>>
+    OpenclKernels<Scalar>::vmul_k;
+template <class Scalar>
+std::unique_ptr<
+    cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int>>
+    OpenclKernels<Scalar>::custom_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>>
+    OpenclKernels<Scalar>::full_to_pressure_restriction_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int>>
+    OpenclKernels<Scalar>::add_coarse_pressure_correction_k;
+template <class Scalar>
+std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int>>
+    OpenclKernels<Scalar>::prolongate_vector_k;
+template <class Scalar>
 std::unique_ptr<spmv_blocked_kernel_type> OpenclKernels<Scalar>::spmv_blocked_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<spmv_blocked_kernel_type> OpenclKernels<Scalar>::spmv_blocked_add_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<spmv_kernel_type> OpenclKernels<Scalar>::spmv_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<spmv_kernel_type> OpenclKernels<Scalar>::spmv_noreset_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<residual_blocked_kernel_type> OpenclKernels<Scalar>::residual_blocked_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<residual_kernel_type> OpenclKernels<Scalar>::residual_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<ilu_apply1_kernel_type> OpenclKernels<Scalar>::ILU_apply1_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<ilu_apply2_kernel_type> OpenclKernels<Scalar>::ILU_apply2_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<stdwell_apply_kernel_type> OpenclKernels<Scalar>::stdwell_apply_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<ilu_decomp_kernel_type> OpenclKernels<Scalar>::ilu_decomp_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<isaiL_kernel_type> OpenclKernels<Scalar>::isaiL_k;
-template<class Scalar>
+template <class Scalar>
 std::unique_ptr<isaiU_kernel_type> OpenclKernels<Scalar>::isaiU_k;
 
-template<class Scalar>
-void OpenclKernels<Scalar>::init(cl::Context *context,
-                                 cl::CommandQueue *queue_,
-                                 std::vector<cl::Device>& devices, int verbosity_)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::init(cl::Context* context,
+                            cl::CommandQueue* queue_,
+                            std::vector<cl::Device>& devices,
+                            int verbosity_)
 {
     if (initialized) {
         OpmLog::debug("Warning OpenclKernels is already initialized");
@@ -134,15 +151,27 @@ void OpenclKernels<Scalar>::init(cl::Context *context,
     // cl::KernelFunctor<> myKernel(); myKernel(args, arg1, arg2); is also blocking
 
     // actually creating the kernels
-    dot_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(cl::Kernel(program, "dot_1")));
-    norm_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(cl::Kernel(program, "norm")));
-    axpy_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int>(cl::Kernel(program, "axpy")));
+    dot_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(
+        cl::Kernel(program, "dot_1")));
+    norm_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>(
+        cl::Kernel(program, "norm")));
+    axpy_k.reset(
+        new cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int>(cl::Kernel(program, "axpy")));
     scale_k.reset(new cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int>(cl::Kernel(program, "scale")));
-    vmul_k.reset(new cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(cl::Kernel(program, "vmul")));
-    custom_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int>(cl::Kernel(program, "custom")));
-    full_to_pressure_restriction_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(cl::Kernel(program, "full_to_pressure_restriction")));
-    add_coarse_pressure_correction_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int>(cl::Kernel(program, "add_coarse_pressure_correction")));
-    prolongate_vector_k.reset(new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int>(cl::Kernel(program, "prolongate_vector")));
+    vmul_k.reset(new cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(
+        cl::Kernel(program, "vmul")));
+    custom_k.reset(
+        new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int>(
+            cl::Kernel(program, "custom")));
+    full_to_pressure_restriction_k.reset(
+        new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>(
+            cl::Kernel(program, "full_to_pressure_restriction")));
+    add_coarse_pressure_correction_k.reset(
+        new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int>(
+            cl::Kernel(program, "add_coarse_pressure_correction")));
+    prolongate_vector_k.reset(
+        new cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int>(
+            cl::Kernel(program, "prolongate_vector")));
     spmv_blocked_k.reset(new spmv_blocked_kernel_type(cl::Kernel(program, "spmv_blocked")));
     spmv_blocked_add_k.reset(new spmv_blocked_kernel_type(cl::Kernel(program, "spmv_blocked_add")));
     spmv_k.reset(new spmv_kernel_type(cl::Kernel(program, "spmv")));
@@ -159,13 +188,15 @@ void OpenclKernels<Scalar>::init(cl::Context *context,
     // testing shows all kernels have the same preferred_workgroup_size_multiple
     // 32 for NVIDIA
     // 64 for AMD
-    cl::Kernel(program, "ILU_apply1").getWorkGroupInfo(devices[0], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, &preferred_workgroup_size_multiple);
+    cl::Kernel(program, "ILU_apply1")
+        .getWorkGroupInfo(devices[0], CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, &preferred_workgroup_size_multiple);
 
     initialized = true;
 } // end get_opencl_kernels()
 
-template<class Scalar>
-Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
+template <class Scalar>
+Scalar
+OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
 {
     const unsigned int work_group_size = 256;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
@@ -174,7 +205,12 @@ Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& 
     Timer t_dot;
     tmp.resize(num_work_groups);
 
-    cl::Event event = (*dot_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in1, in2, out, N, cl::Local(lmem_per_work_group));
+    cl::Event event = (*dot_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                               in1,
+                               in2,
+                               out,
+                               N,
+                               cl::Local(lmem_per_work_group));
 
     queue->enqueueReadBuffer(out, CL_TRUE, 0, sizeof(Scalar) * num_work_groups, tmp.data());
 
@@ -193,8 +229,9 @@ Scalar OpenclKernels<Scalar>::dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& 
     return gpu_sum;
 }
 
-template<class Scalar>
-Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
+template <class Scalar>
+Scalar
+OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
 {
     const unsigned int work_group_size = 256;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
@@ -203,7 +240,11 @@ Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
     Timer t_norm;
     tmp.resize(num_work_groups);
 
-    cl::Event event = (*norm_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, out, N, cl::Local(lmem_per_work_group));
+    cl::Event event = (*norm_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                                in,
+                                out,
+                                N,
+                                cl::Local(lmem_per_work_group));
 
     queue->enqueueReadBuffer(out, CL_TRUE, 0, sizeof(Scalar) * num_work_groups, tmp.data());
 
@@ -223,15 +264,17 @@ Scalar OpenclKernels<Scalar>::norm(cl::Buffer& in, cl::Buffer& out, int N)
     return gpu_norm;
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, int N)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out, int N)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t_axpy;
 
-    cl::Event event = (*axpy_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, out, N);
+    cl::Event event = (*axpy_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, out, N);
 
     if (verbosity >= 4) {
         event.wait();
@@ -241,15 +284,17 @@ void OpenclKernels<Scalar>::axpy(cl::Buffer& in, const Scalar a, cl::Buffer& out
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, int N)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, int N)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t_scale;
 
-    cl::Event event = (*scale_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, N);
+    cl::Event event
+        = (*scale_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, a, N);
 
     if (verbosity >= 4) {
         event.wait();
@@ -259,15 +304,17 @@ void OpenclKernels<Scalar>::scale(cl::Buffer& in, const Scalar a, int N)
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t_vmul;
 
-    cl::Event event = (*vmul_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), alpha, in1, in2, out, N);
+    cl::Event event = (*vmul_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), alpha, in1, in2, out, N);
 
     if (verbosity >= 4) {
         event.wait();
@@ -277,16 +324,17 @@ void OpenclKernels<Scalar>::vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r,
-                                   const Scalar omega, const Scalar beta, int N)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r, const Scalar omega, const Scalar beta, int N)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t_custom;
 
-    cl::Event event = (*custom_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), p, v, r, omega, beta, N);
+    cl::Event event = (*custom_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), p, v, r, omega, beta, N);
 
     if (verbosity >= 4) {
         event.wait();
@@ -296,15 +344,24 @@ void OpenclKernels<Scalar>::custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r,
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, int Nb)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_y,
+                                                    cl::Buffer& weights,
+                                                    cl::Buffer& coarse_y,
+                                                    int Nb)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t;
 
-    cl::Event event = (*full_to_pressure_restriction_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), fine_y, weights, coarse_y, Nb);
+    cl::Event event = (*full_to_pressure_restriction_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+        fine_y,
+        weights,
+        coarse_y,
+        Nb);
 
     if (verbosity >= 4) {
         event.wait();
@@ -314,15 +371,24 @@ void OpenclKernels<Scalar>::full_to_pressure_restriction(const cl::Buffer& fine_
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, int pressure_idx, int Nb)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x,
+                                                      cl::Buffer& fine_x,
+                                                      int pressure_idx,
+                                                      int Nb)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t;
 
-    cl::Event event = (*add_coarse_pressure_correction_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), coarse_x, fine_x, pressure_idx, Nb);
+    cl::Event event = (*add_coarse_pressure_correction_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+        coarse_x,
+        fine_x,
+        pressure_idx,
+        Nb);
 
     if (verbosity >= 4) {
         event.wait();
@@ -332,15 +398,17 @@ void OpenclKernels<Scalar>::add_coarse_pressure_correction(cl::Buffer& coarse_x,
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, int N)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, int N)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(N, work_group_size);
     const unsigned int total_work_items = num_work_groups * work_group_size;
     Timer t;
 
-    cl::Event event = (*prolongate_vector_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, out, cols, N);
+    cl::Event event = (*prolongate_vector_k)(
+        cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)), in, out, cols, N);
 
     if (verbosity >= 4) {
         event.wait();
@@ -350,10 +418,17 @@ void OpenclKernels<Scalar>::prolongate_vector(const cl::Buffer& in, cl::Buffer& 
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-                                 const cl::Buffer& x, cl::Buffer& b, int Nb,
-                                 unsigned int block_size, bool reset, bool add)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::spmv(cl::Buffer& vals,
+                            cl::Buffer& cols,
+                            cl::Buffer& rows,
+                            const cl::Buffer& x,
+                            cl::Buffer& b,
+                            int Nb,
+                            unsigned int block_size,
+                            bool reset,
+                            bool add)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
@@ -364,19 +439,48 @@ void OpenclKernels<Scalar>::spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer&
 
     if (block_size > 1) {
         if (add) {
-            event = (*spmv_blocked_add_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                          vals, cols, rows, Nb, x, b, block_size, cl::Local(lmem_per_work_group));
+            event = (*spmv_blocked_add_k)(
+                cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                vals,
+                cols,
+                rows,
+                Nb,
+                x,
+                b,
+                block_size,
+                cl::Local(lmem_per_work_group));
         } else {
-            event = (*spmv_blocked_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      vals, cols, rows, Nb, x, b, block_size, cl::Local(lmem_per_work_group));
+            event = (*spmv_blocked_k)(
+                cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                vals,
+                cols,
+                rows,
+                Nb,
+                x,
+                b,
+                block_size,
+                cl::Local(lmem_per_work_group));
         }
     } else {
         if (reset) {
             event = (*spmv_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                              vals, cols, rows, Nb, x, b, cl::Local(lmem_per_work_group));
+                              vals,
+                              cols,
+                              rows,
+                              Nb,
+                              x,
+                              b,
+                              cl::Local(lmem_per_work_group));
         } else {
-            event = (*spmv_noreset_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      vals, cols, rows, Nb, x, b, cl::Local(lmem_per_work_group));
+            event = (*spmv_noreset_k)(
+                cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                vals,
+                cols,
+                rows,
+                Nb,
+                x,
+                b,
+                cl::Local(lmem_per_work_group));
         }
     }
 
@@ -388,10 +492,16 @@ void OpenclKernels<Scalar>::spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer&
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-                                     cl::Buffer& x, const cl::Buffer& rhs,
-                                     cl::Buffer& out, int Nb, unsigned int block_size)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::residual(cl::Buffer& vals,
+                                cl::Buffer& cols,
+                                cl::Buffer& rows,
+                                cl::Buffer& x,
+                                const cl::Buffer& rhs,
+                                cl::Buffer& out,
+                                int Nb,
+                                unsigned int block_size)
 {
     const unsigned int work_group_size = 32;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
@@ -401,11 +511,27 @@ void OpenclKernels<Scalar>::residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buf
     cl::Event event;
 
     if (block_size > 1) {
-        event = (*residual_blocked_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      vals, cols, rows, Nb, x, rhs, out, block_size, cl::Local(lmem_per_work_group));
+        event = (*residual_blocked_k)(
+            cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+            vals,
+            cols,
+            rows,
+            Nb,
+            x,
+            rhs,
+            out,
+            block_size,
+            cl::Local(lmem_per_work_group));
     } else {
         event = (*residual_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                              vals, cols, rows, Nb, x, rhs, out, cl::Local(lmem_per_work_group));
+                              vals,
+                              cols,
+                              rows,
+                              Nb,
+                              x,
+                              rhs,
+                              out,
+                              cl::Local(lmem_per_work_group));
     }
 
     if (verbosity >= 4) {
@@ -416,12 +542,19 @@ void OpenclKernels<Scalar>::residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buf
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols,
-                                       cl::Buffer& rows, cl::Buffer& diagIndex,
-                                       const cl::Buffer& y, cl::Buffer& x,
-                                       cl::Buffer& rowsPerColor, int color,
-                                       int rowsThisColor, unsigned int block_size)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::ILU_apply1(cl::Buffer& rowIndices,
+                                  cl::Buffer& vals,
+                                  cl::Buffer& cols,
+                                  cl::Buffer& rows,
+                                  cl::Buffer& diagIndex,
+                                  const cl::Buffer& y,
+                                  cl::Buffer& x,
+                                  cl::Buffer& rowsPerColor,
+                                  int color,
+                                  int rowsThisColor,
+                                  unsigned int block_size)
 {
     const unsigned int work_group_size = preferred_workgroup_size_multiple;
     const unsigned int num_work_groups = rowsThisColor;
@@ -429,10 +562,19 @@ void OpenclKernels<Scalar>::ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals,
     const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_ilu_apply1;
 
-    cl::Event event = (*ILU_apply1_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      rowIndices, vals, cols, rows, diagIndex,
-                                      y, x, rowsPerColor, color, block_size,
-                                      cl::Local(lmem_per_work_group));
+    cl::Event event
+        = (*ILU_apply1_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                          rowIndices,
+                          vals,
+                          cols,
+                          rows,
+                          diagIndex,
+                          y,
+                          x,
+                          rowsPerColor,
+                          color,
+                          block_size,
+                          cl::Local(lmem_per_work_group));
 
     if (verbosity >= 5) {
         event.wait();
@@ -442,12 +584,19 @@ void OpenclKernels<Scalar>::ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals,
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols,
-                                       cl::Buffer& rows, cl::Buffer& diagIndex,
-                                       cl::Buffer& invDiagVals, cl::Buffer& x,
-                                       cl::Buffer& rowsPerColor, int color,
-                                       int rowsThisColor, unsigned int block_size)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices,
+                                  cl::Buffer& vals,
+                                  cl::Buffer& cols,
+                                  cl::Buffer& rows,
+                                  cl::Buffer& diagIndex,
+                                  cl::Buffer& invDiagVals,
+                                  cl::Buffer& x,
+                                  cl::Buffer& rowsPerColor,
+                                  int color,
+                                  int rowsThisColor,
+                                  unsigned int block_size)
 {
     const unsigned int work_group_size = preferred_workgroup_size_multiple;
     const unsigned int num_work_groups = rowsThisColor;
@@ -455,10 +604,19 @@ void OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals,
     const unsigned int lmem_per_work_group = sizeof(Scalar) * work_group_size;
     Timer t_ilu_apply2;
 
-    cl::Event event = (*ILU_apply2_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      rowIndices, vals, cols, rows, diagIndex,
-                                      invDiagVals, x, rowsPerColor, color, block_size,
-                                      cl::Local(lmem_per_work_group));
+    cl::Event event
+        = (*ILU_apply2_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                          rowIndices,
+                          vals,
+                          cols,
+                          rows,
+                          diagIndex,
+                          invDiagVals,
+                          x,
+                          rowsPerColor,
+                          color,
+                          block_size,
+                          cl::Local(lmem_per_work_group));
 
     if (verbosity >= 5) {
         event.wait();
@@ -468,24 +626,39 @@ void OpenclKernels<Scalar>::ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals,
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::ILU_decomp(int firstRow, int lastRow, cl::Buffer& rowIndices,
-                                       cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-                                       cl::Buffer& diagIndex, cl::Buffer& invDiagVals,
-                                       int rowsThisColor, unsigned int block_size)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::ILU_decomp(int firstRow,
+                                  int lastRow,
+                                  cl::Buffer& rowIndices,
+                                  cl::Buffer& vals,
+                                  cl::Buffer& cols,
+                                  cl::Buffer& rows,
+                                  cl::Buffer& diagIndex,
+                                  cl::Buffer& invDiagVals,
+                                  int rowsThisColor,
+                                  unsigned int block_size)
 {
     const unsigned int work_group_size = 128;
     const unsigned int num_work_groups = rowsThisColor;
     const unsigned int total_work_items = num_work_groups * work_group_size;
     const unsigned int num_hwarps_per_group = work_group_size / 16;
-    const unsigned int lmem_per_work_group = num_hwarps_per_group * block_size * block_size * sizeof(Scalar);           // each block needs a pivot
+    const unsigned int lmem_per_work_group
+        = num_hwarps_per_group * block_size * block_size * sizeof(Scalar); // each block needs a pivot
     Timer t_ilu_decomp;
 
-    cl::Event event = (*ilu_decomp_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                      firstRow, lastRow, rowIndices,
-                                      vals, cols, rows,
-                                      invDiagVals, diagIndex, rowsThisColor,
-                                      cl::Local(lmem_per_work_group));
+    cl::Event event
+        = (*ilu_decomp_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                          firstRow,
+                          lastRow,
+                          rowIndices,
+                          vals,
+                          cols,
+                          rows,
+                          invDiagVals,
+                          diagIndex,
+                          rowsThisColor,
+                          cl::Local(lmem_per_work_group));
 
     if (verbosity >= 4) {
         event.wait();
@@ -495,10 +668,19 @@ void OpenclKernels<Scalar>::ILU_decomp(int firstRow, int lastRow, cl::Buffer& ro
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &d_Dnnzs_ocl, cl::Buffer &d_Bnnzs_ocl,
-                                           cl::Buffer &d_Ccols_ocl, cl::Buffer &d_Bcols_ocl, cl::Buffer &d_x, cl::Buffer &d_y,
-                                           int dim, int dim_wells, cl::Buffer &d_val_pointers_ocl, int num_std_wells)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl,
+                                      cl::Buffer& d_Dnnzs_ocl,
+                                      cl::Buffer& d_Bnnzs_ocl,
+                                      cl::Buffer& d_Ccols_ocl,
+                                      cl::Buffer& d_Bcols_ocl,
+                                      cl::Buffer& d_x,
+                                      cl::Buffer& d_y,
+                                      int dim,
+                                      int dim_wells,
+                                      cl::Buffer& d_val_pointers_ocl,
+                                      int num_std_wells)
 {
     const unsigned int work_group_size = 32;
     const unsigned int total_work_items = num_std_wells * work_group_size;
@@ -506,9 +688,21 @@ void OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &
     const unsigned int lmem2 = sizeof(Scalar) * dim_wells;
     Timer t_apply_stdwells;
 
-    cl::Event event = (*stdwell_apply_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                         d_Cnnzs_ocl, d_Dnnzs_ocl, d_Bnnzs_ocl, d_Ccols_ocl, d_Bcols_ocl, d_x, d_y, dim, dim_wells, d_val_pointers_ocl,
-                                         cl::Local(lmem1), cl::Local(lmem2), cl::Local(lmem2));
+    cl::Event event
+        = (*stdwell_apply_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                             d_Cnnzs_ocl,
+                             d_Dnnzs_ocl,
+                             d_Bnnzs_ocl,
+                             d_Ccols_ocl,
+                             d_Bcols_ocl,
+                             d_x,
+                             d_y,
+                             dim,
+                             dim_wells,
+                             d_val_pointers_ocl,
+                             cl::Local(lmem1),
+                             cl::Local(lmem2),
+                             cl::Local(lmem2));
 
     if (verbosity >= 4) {
         event.wait();
@@ -518,9 +712,18 @@ void OpenclKernels<Scalar>::apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& mapping, cl::Buffer& nvc,
-                                  cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, unsigned int Nb)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex,
+                             cl::Buffer& colPointers,
+                             cl::Buffer& mapping,
+                             cl::Buffer& nvc,
+                             cl::Buffer& luIdxs,
+                             cl::Buffer& xxIdxs,
+                             cl::Buffer& dxIdxs,
+                             cl::Buffer& LUvals,
+                             cl::Buffer& invLvals,
+                             unsigned int Nb)
 {
     const unsigned int work_group_size = 256;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
@@ -528,7 +731,16 @@ void OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers
 
     Timer t_isaiL;
     cl::Event event = (*isaiL_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                 diagIndex, colPointers, mapping, nvc, luIdxs, xxIdxs, dxIdxs, LUvals, invLvals, Nb);
+                                 diagIndex,
+                                 colPointers,
+                                 mapping,
+                                 nvc,
+                                 luIdxs,
+                                 xxIdxs,
+                                 dxIdxs,
+                                 LUvals,
+                                 invLvals,
+                                 Nb);
 
     if (verbosity >= 4) {
         event.wait();
@@ -538,10 +750,20 @@ void OpenclKernels<Scalar>::isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers
     }
 }
 
-template<class Scalar>
-void OpenclKernels<Scalar>::isaiU(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& rowIndices, cl::Buffer& mapping,
-                                  cl::Buffer& nvc, cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals,
-                                  cl::Buffer& invDiagVals, cl::Buffer& invUvals, unsigned int Nb)
+template <class Scalar>
+void
+OpenclKernels<Scalar>::isaiU(cl::Buffer& diagIndex,
+                             cl::Buffer& colPointers,
+                             cl::Buffer& rowIndices,
+                             cl::Buffer& mapping,
+                             cl::Buffer& nvc,
+                             cl::Buffer& luIdxs,
+                             cl::Buffer& xxIdxs,
+                             cl::Buffer& dxIdxs,
+                             cl::Buffer& LUvals,
+                             cl::Buffer& invDiagVals,
+                             cl::Buffer& invUvals,
+                             unsigned int Nb)
 {
     const unsigned int work_group_size = 256;
     const unsigned int num_work_groups = ceilDivision(Nb, work_group_size);
@@ -549,7 +771,18 @@ void OpenclKernels<Scalar>::isaiU(cl::Buffer& diagIndex, cl::Buffer& colPointers
 
     Timer t_isaiU;
     cl::Event event = (*isaiU_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                                 diagIndex, colPointers, rowIndices, mapping, nvc, luIdxs, xxIdxs, dxIdxs, LUvals, invDiagVals, invUvals, Nb);
+                                 diagIndex,
+                                 colPointers,
+                                 rowIndices,
+                                 mapping,
+                                 nvc,
+                                 luIdxs,
+                                 xxIdxs,
+                                 dxIdxs,
+                                 LUvals,
+                                 invDiagVals,
+                                 invUvals,
+                                 Nb);
 
     if (verbosity >= 4) {
         event.wait();

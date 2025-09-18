@@ -25,9 +25,10 @@
 
 #include <opm/simulators/wells/ConnFiltrateData.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 PerfData<Scalar>::PerfData(const std::size_t num_perf,
                            const Scalar pressure_first_connection_,
                            const bool injector_,
@@ -59,8 +60,9 @@ PerfData<Scalar>::PerfData(const std::size_t num_perf,
     }
 }
 
-template<class Scalar>
-void PerfData<Scalar>::prepareInjectorContainers()
+template <class Scalar>
+void
+PerfData<Scalar>::prepareInjectorContainers()
 {
     auto num_perf = pressure.size();
     this->water_throughput.resize(num_perf);
@@ -69,8 +71,9 @@ void PerfData<Scalar>::prepareInjectorContainers()
     this->filtrate_data.resize(num_perf);
 }
 
-template<class Scalar>
-PerfData<Scalar> PerfData<Scalar>::serializationTestObject()
+template <class Scalar>
+PerfData<Scalar>
+PerfData<Scalar>::serializationTestObject()
 {
     PerfData result;
     result.injector = true;
@@ -78,7 +81,7 @@ PerfData<Scalar> PerfData<Scalar>::serializationTestObject()
     result.pressure = {2.0, 3.0, 4.0};
     result.rates = {5.0, 6.0};
     result.phase_rates = {7.0};
-    result.phase_mixing_rates = { {1.0, 2.0, 3.0, 4.0}};
+    result.phase_mixing_rates = {{1.0, 2.0, 3.0, 4.0}};
     result.solvent_rates = {8.0, 9.0};
     result.polymer_rates = {10.0, 11.0, 12.0};
     result.brine_rates = {13.0};
@@ -103,20 +106,23 @@ PerfData<Scalar> PerfData<Scalar>::serializationTestObject()
     return result;
 }
 
-template<class Scalar>
-std::size_t PerfData<Scalar>::size() const
+template <class Scalar>
+std::size_t
+PerfData<Scalar>::size() const
 {
     return this->pressure.size();
 }
 
-template<class Scalar>
-bool PerfData<Scalar>::empty() const
+template <class Scalar>
+bool
+PerfData<Scalar>::empty() const
 {
     return this->pressure.empty();
 }
 
-template<class Scalar>
-bool PerfData<Scalar>::try_assign(const PerfData& other)
+template <class Scalar>
+bool
+PerfData<Scalar>::try_assign(const PerfData& other)
 {
     if (this->size() != other.size()) {
         return false;
@@ -149,36 +155,24 @@ bool PerfData<Scalar>::try_assign(const PerfData& other)
     return true;
 }
 
-template<class Scalar>
-bool PerfData<Scalar>::operator==(const PerfData& rhs) const
+template <class Scalar>
+bool
+PerfData<Scalar>::operator==(const PerfData& rhs) const
 {
-    return (this->injector == rhs.injector)
-        && (this->pressure_first_connection == rhs.pressure_first_connection)
-        && (this->pressure == rhs.pressure)
-        && (this->rates == rhs.rates)
-        && (this->phase_rates == rhs.phase_rates)
-        && (this->phase_mixing_rates == rhs.phase_mixing_rates)
-        && (this->solvent_rates == rhs.solvent_rates)
-        && (this->polymer_rates == rhs.polymer_rates)
-        && (this->brine_rates == rhs.brine_rates)
-        && (this->prod_index == rhs.prod_index)
-        && (this->microbial_rates == rhs.microbial_rates)
-        && (this->oxygen_rates == rhs.oxygen_rates)
-        && (this->urea_rates == rhs.urea_rates)
+    return (this->injector == rhs.injector) && (this->pressure_first_connection == rhs.pressure_first_connection)
+        && (this->pressure == rhs.pressure) && (this->rates == rhs.rates) && (this->phase_rates == rhs.phase_rates)
+        && (this->phase_mixing_rates == rhs.phase_mixing_rates) && (this->solvent_rates == rhs.solvent_rates)
+        && (this->polymer_rates == rhs.polymer_rates) && (this->brine_rates == rhs.brine_rates)
+        && (this->prod_index == rhs.prod_index) && (this->microbial_rates == rhs.microbial_rates)
+        && (this->oxygen_rates == rhs.oxygen_rates) && (this->urea_rates == rhs.urea_rates)
         && (this->cell_index == rhs.cell_index)
         && (this->connection_transmissibility_factor == rhs.connection_transmissibility_factor)
         && (this->connection_d_factor == rhs.connection_d_factor)
-        && (this->connection_compaction_tmult == rhs.connection_compaction_tmult)
-        && (this->satnum_id == rhs.satnum_id)
-        && (this->ecl_index == rhs.ecl_index)
-        && (this->water_throughput == rhs.water_throughput)
-        && (this->skin_pressure == rhs.skin_pressure)
-        && (this->water_velocity == rhs.water_velocity)
-        && (this->filtrate_data == rhs.filtrate_data)
-        && (this->connFracStatistics == rhs.connFracStatistics)
-        && (this->gas_mass_rates == rhs.gas_mass_rates)
-        && (this->wat_mass_rates == rhs.wat_mass_rates)
-        ;
+        && (this->connection_compaction_tmult == rhs.connection_compaction_tmult) && (this->satnum_id == rhs.satnum_id)
+        && (this->ecl_index == rhs.ecl_index) && (this->water_throughput == rhs.water_throughput)
+        && (this->skin_pressure == rhs.skin_pressure) && (this->water_velocity == rhs.water_velocity)
+        && (this->filtrate_data == rhs.filtrate_data) && (this->connFracStatistics == rhs.connFracStatistics)
+        && (this->gas_mass_rates == rhs.gas_mass_rates) && (this->wat_mass_rates == rhs.wat_mass_rates);
 }
 
 template class PerfData<double>;

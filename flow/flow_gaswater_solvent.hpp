@@ -17,7 +17,8 @@
 #ifndef FLOW_GASWATER_SOLVENT_HPP
 #define FLOW_GASWATER_SOLVENT_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasWaterSolventMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowGasWaterSolventMain(int argc, char** argv, bool outputCout, bool outputF
 //! \brief Main function used in flow_gaswater_solvent binary.
 int flowGasWaterSolventMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_GASWATER_SOLVENT_HPP

@@ -69,7 +69,8 @@
 #include <utility>
 #include <vector>
 
-namespace {
+namespace
+{
 
 /*!
  * \brief Detect whether two cells are direct vertical neighbours.
@@ -85,32 +86,31 @@ namespace {
  * \return True if the cells have the same i and j indices and all cartesian cells
  *         between them are inactive.
  */
-bool directVerticalNeighbors(const std::array<int, 3>& cartDims,
-                             const std::unordered_map<int,int>& cartesianToActive,
-                             int smallGlobalIndex, int largeGlobalIndex)
+bool
+directVerticalNeighbors(const std::array<int, 3>& cartDims,
+                        const std::unordered_map<int, int>& cartesianToActive,
+                        int smallGlobalIndex,
+                        int largeGlobalIndex)
 {
     assert(smallGlobalIndex <= largeGlobalIndex);
     std::array<int, 3> ijk1, ijk2;
     auto globalToIjk = [cartDims](int gc) {
-                           std::array<int, 3> ijk;
-                           ijk[0] = gc % cartDims[0];
-                           gc /= cartDims[0];
-                           ijk[1] = gc % cartDims[1];
-                           ijk[2] = gc / cartDims[1];
-                           return ijk;
-                       };
+        std::array<int, 3> ijk;
+        ijk[0] = gc % cartDims[0];
+        gc /= cartDims[0];
+        ijk[1] = gc % cartDims[1];
+        ijk[2] = gc / cartDims[1];
+        return ijk;
+    };
     ijk1 = globalToIjk(smallGlobalIndex);
     ijk2 = globalToIjk(largeGlobalIndex);
-    assert(ijk2[2]>=ijk1[2]);
+    assert(ijk2[2] >= ijk1[2]);
 
-    if ( ijk1[0] == ijk2[0] && ijk1[1] == ijk2[1] && (ijk2[2] - ijk1[2]) > 1)
-    {
-        assert((largeGlobalIndex-smallGlobalIndex)%(cartDims[0]*cartDims[1])==0);
-        for ( int gi = smallGlobalIndex + cartDims[0] * cartDims[1]; gi < largeGlobalIndex;
-              gi += cartDims[0] * cartDims[1] )
-        {
-            if ( cartesianToActive.find( gi ) != cartesianToActive.end() )
-            {
+    if (ijk1[0] == ijk2[0] && ijk1[1] == ijk2[1] && (ijk2[2] - ijk1[2]) > 1) {
+        assert((largeGlobalIndex - smallGlobalIndex) % (cartDims[0] * cartDims[1]) == 0);
+        for (int gi = smallGlobalIndex + cartDims[0] * cartDims[1]; gi < largeGlobalIndex;
+             gi += cartDims[0] * cartDims[1]) {
+            if (cartesianToActive.find(gi) != cartesianToActive.end()) {
                 return false;
             }
         }
@@ -122,22 +122,21 @@ bool directVerticalNeighbors(const std::array<int, 3>& cartDims,
 std::unordered_map<std::string, Opm::data::InterRegFlowMap>
 getInterRegFlowsAsMap(const Opm::InterRegFlowMap& map)
 {
-    auto maps = std::unordered_map<std::string, Opm::data::InterRegFlowMap>{};
+    auto maps = std::unordered_map<std::string, Opm::data::InterRegFlowMap> {};
 
     const auto& regionNames = map.names();
     auto flows = map.getInterRegFlows();
     const auto nmap = regionNames.size();
 
     maps.reserve(nmap);
-    for (auto mapID = 0*nmap; mapID < nmap; ++mapID) {
+    for (auto mapID = 0 * nmap; mapID < nmap; ++mapID) {
         maps.emplace(regionNames[mapID], std::move(flows[mapID]));
     }
 
     return maps;
 }
 
-struct EclWriteTasklet : public Opm::TaskletInterface
-{
+struct EclWriteTasklet : public Opm::TaskletInterface {
     Opm::Action::State actionState_;
     Opm::WellTestState wtestState_;
     Opm::SummaryState summaryState_;
@@ -172,7 +171,8 @@ struct EclWriteTasklet : public Opm::TaskletInterface
         , secondsElapsed_(secondsElapsed)
         , restartValue_(std::move(restartValue))
         , writeDoublePrecision_(writeDoublePrecision)
-    {}
+    {
+    }
 
     // callback to eclIO serial writeTimeStep method
     void run() override
@@ -186,46 +186,45 @@ struct EclWriteTasklet : public Opm::TaskletInterface
                                    this->secondsElapsed_,
                                    std::move(this->restartValue_),
                                    this->writeDoublePrecision_,
-                                   this->timeStepNum_
-);
+                                   this->timeStepNum_);
     }
 };
 
-}
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-EclGenericWriter(const Schedule& schedule,
-                 const EclipseState& eclState,
-                 const SummaryConfig& summaryConfig,
-                 const Grid& grid,
-                 const EquilGrid* equilGrid,
-                 const GridView& gridView,
-                 const Dune::CartesianIndexMapper<Grid>& cartMapper,
-                 const Dune::CartesianIndexMapper<EquilGrid>* equilCartMapper,
-                 bool enableAsyncOutput,
-                 bool enableEsmry )
-    : collectOnIORank_(grid,
-                       equilGrid,
-                       gridView,
-                       cartMapper,
-                       equilCartMapper,
-                       summaryConfig.fip_regions_interreg_flow())
-    , grid_           (grid)
-    , gridView_       (gridView)
-    , schedule_       (schedule)
-    , eclState_       (eclState)
-    , cartMapper_     (cartMapper)
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::EclGenericWriter(
+    const Schedule& schedule,
+    const EclipseState& eclState,
+    const SummaryConfig& summaryConfig,
+    const Grid& grid,
+    const EquilGrid* equilGrid,
+    const GridView& gridView,
+    const Dune::CartesianIndexMapper<Grid>& cartMapper,
+    const Dune::CartesianIndexMapper<EquilGrid>* equilCartMapper,
+    bool enableAsyncOutput,
+    bool enableEsmry)
+    : collectOnIORank_(
+          grid, equilGrid, gridView, cartMapper, equilCartMapper, summaryConfig.fip_regions_interreg_flow())
+    , grid_(grid)
+    , gridView_(gridView)
+    , schedule_(schedule)
+    , eclState_(eclState)
+    , cartMapper_(cartMapper)
     , equilCartMapper_(equilCartMapper)
-    , equilGrid_      (equilGrid)
+    , equilGrid_(equilGrid)
 {
     if (this->collectOnIORank_.isIORank()) {
-        this->eclIO_ = std::make_unique<EclipseIO>
-            (this->eclState_,
-             UgGridHelpers::createEclipseGrid(*equilGrid, eclState_.getInputGrid()),
-             this->schedule_, summaryConfig, "", enableEsmry);
+        this->eclIO_
+            = std::make_unique<EclipseIO>(this->eclState_,
+                                          UgGridHelpers::createEclipseGrid(*equilGrid, eclState_.getInputGrid()),
+                                          this->schedule_,
+                                          summaryConfig,
+                                          "",
+                                          enableEsmry);
     }
 
     // create output thread if enabled and rank is I/O rank
@@ -238,17 +237,17 @@ EclGenericWriter(const Schedule& schedule,
     this->taskletRunner_.reset(new TaskletRunner(numWorkerThreads));
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-const EclipseIO& EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-eclIO() const
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+const EclipseIO&
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::eclIO() const
 {
     assert(eclIO_);
     return *eclIO_;
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-void EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-writeInit()
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+void
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::writeInit()
 {
     if (collectOnIORank_.isIORank()) {
         std::map<std::string, std::vector<int>> integerVectors;
@@ -256,16 +255,14 @@ writeInit()
             integerVectors.emplace("MPI_RANK", collectOnIORank_.globalRanks());
         }
 
-        eclIO_->writeInitial(*this->outputTrans_,
-                             integerVectors,
-                             this->outputNnc_);
+        eclIO_->writeInitial(*this->outputTrans_, integerVectors, this->outputNnc_);
         this->outputTrans_.reset();
     }
 }
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
 void
-EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-extractOutputTransAndNNC(const std::function<unsigned int(unsigned int)>& map)
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::extractOutputTransAndNNC(
+    const std::function<unsigned int(unsigned int)>& map)
 {
     if (collectOnIORank_.isIORank()) {
         auto cartMap = cartesianToCompressed(equilGrid_->size(0), UgGridHelpers::globalCell(*equilGrid_));
@@ -277,16 +274,15 @@ extractOutputTransAndNNC(const std::function<unsigned int(unsigned int)>& map)
     if (collectOnIORank_.isParallel()) {
         const auto& comm = grid_.comm();
         Parallel::MpiSerializer ser(comm);
-        ser.broadcast(Parallel::RootRank{0}, outputNnc_);
+        ser.broadcast(Parallel::RootRank {0}, outputNnc_);
     }
 #endif
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
 void
-EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
-              const std::function<unsigned int(unsigned int)>& map) const
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::computeTrans_(
+    const std::unordered_map<int, int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const
 {
     if (!outputTrans_) {
         outputTrans_ = std::make_unique<data::Solution>();
@@ -296,11 +292,9 @@ computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
     const auto& cartDims = cartMapper.cartesianDimensions();
 
     auto createCellData = [&cartDims]() {
-        return data::CellData{
-                UnitSystem::measure::transmissibility,
-                std::vector<double>(cartDims[0] * cartDims[1] * cartDims[2], 0.0),
-                data::TargetType::INIT
-        };
+        return data::CellData {UnitSystem::measure::transmissibility,
+                               std::vector<double>(cartDims[0] * cartDims[1] * cartDims[2], 0.0),
+                               data::TargetType::INIT};
     };
 
     outputTrans_->clear();
@@ -315,13 +309,11 @@ computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
     using GlobalGridView = typename EquilGrid::LeafGridView;
     using GlobElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GlobalGridView>;
     const GlobalGridView& globalGridView = this->equilGrid_->leafGridView();
-    const GlobElementMapper globalElemMapper { globalGridView, Dune::mcmgElementLayout() };
+    const GlobElementMapper globalElemMapper {globalGridView, Dune::mcmgElementLayout()};
 
     auto isNumAquCell = [numAquCell = this->eclState_.aquifer().hasNumericalAquifer()
-                         ? this->eclState_.aquifer().numericalAquifers().allAquiferCellIds()
-                         : std::vector<std::size_t>{}]
-        (const std::size_t cellIdx)
-    {
+                             ? this->eclState_.aquifer().numericalAquifers().allAquiferCellIds()
+                             : std::vector<std::size_t> {}](const std::size_t cellIdx) {
         return std::binary_search(numAquCell.begin(), numAquCell.end(), cellIdx);
     };
 
@@ -338,8 +330,8 @@ computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
                 continue; // we only need to handle each connection once, thank you.
 
             // Ordering of compressed and uncompressed index should be the same
-            const int cartIdx1 = cartMapper.cartesianIndex( c1 );
-            const int cartIdx2 = cartMapper.cartesianIndex( c2 );
+            const int cartIdx1 = cartMapper.cartesianIndex(c1);
+            const int cartIdx2 = cartMapper.cartesianIndex(c2);
 
             if (isNumAquCell(cartIdx1) || isNumAquCell(cartIdx2)) {
                 // Connections involving numerical aquifers are always NNCs
@@ -360,7 +352,7 @@ computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
                 c2 = map(c2);
             }
 
-            if (gc2 - gc1 == 1 && cartDims[0] > 1 ) {
+            if (gc2 - gc1 == 1 && cartDims[0] > 1) {
                 tranx.template data<double>()[gc1] = globalTrans().transmissibility(c1, c2);
                 continue; // skip other if clauses as they are false, last one needs some computation
             }
@@ -370,46 +362,37 @@ computeTrans_(const std::unordered_map<int,int>& cartesianToActive,
                 continue; // skipt next if clause as it needs some computation
             }
 
-            if ( gc2 - gc1 == cartDims[0]*cartDims[1] ||
-                 directVerticalNeighbors(cartDims, cartesianToActive, gc1, gc2))
+            if (gc2 - gc1 == cartDims[0] * cartDims[1]
+                || directVerticalNeighbors(cartDims, cartesianToActive, gc1, gc2))
                 tranz.template data<double>()[gc1] = globalTrans().transmissibility(c1, c2);
         }
     }
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
 std::vector<NNCdata>
-EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
-                    const std::function<unsigned int(unsigned int)>& map) const
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::exportNncStructure_(
+    const std::unordered_map<int, int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const
 {
     auto isNumAquCell = [numAquCell = this->eclState_.aquifer().hasNumericalAquifer()
-                         ? this->eclState_.aquifer().numericalAquifers().allAquiferCellIds()
-                         : std::vector<std::size_t>{}]
-        (const std::size_t cellIdx)
-    {
+                             ? this->eclState_.aquifer().numericalAquifers().allAquiferCellIds()
+                             : std::vector<std::size_t> {}](const std::size_t cellIdx) {
         return std::binary_search(numAquCell.begin(), numAquCell.end(), cellIdx);
     };
 
-    auto isNumAquConn = [&isNumAquCell](const std::size_t cellIdx1,
-                                        const std::size_t cellIdx2)
-    {
+    auto isNumAquConn = [&isNumAquCell](const std::size_t cellIdx1, const std::size_t cellIdx2) {
         return isNumAquCell(cellIdx1) || isNumAquCell(cellIdx2);
     };
 
-    auto isCartesianNeighbour = [nx = this->eclState_.getInputGrid().getNX(),
-                                 ny = this->eclState_.getInputGrid().getNY()]
-        (const std::size_t cellIdx1, const std::size_t cellIdx2)
-    {
-        const auto cellDiff = cellIdx2 - cellIdx1;
+    auto isCartesianNeighbour
+        = [nx = this->eclState_.getInputGrid().getNX(),
+           ny = this->eclState_.getInputGrid().getNY()](const std::size_t cellIdx1, const std::size_t cellIdx2) {
+              const auto cellDiff = cellIdx2 - cellIdx1;
 
-        return (cellDiff == 1)
-            || (cellDiff == nx)
-            || (cellDiff == nx * ny);
-    };
+              return (cellDiff == 1) || (cellDiff == nx) || (cellDiff == nx * ny);
+          };
 
-    auto activeCell = [&cartesianToActive](const std::size_t cellIdx)
-    {
+    auto activeCell = [&cartesianToActive](const std::size_t cellIdx) {
         auto pos = cartesianToActive.find(cellIdx);
         return (pos == cartesianToActive.end()) ? -1 : pos->second;
     };
@@ -426,11 +409,9 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
         // transmissibility value is sufficiently large.
         //
         // The condition cell2 >= cell1 holds by construction of nncData.
-        assert (entry.cell2 >= entry.cell1);
+        assert(entry.cell2 >= entry.cell1);
 
-        if (! isCartesianNeighbour(entry.cell1, entry.cell2) ||
-            isNumAquConn(entry.cell1, entry.cell2))
-        {
+        if (!isCartesianNeighbour(entry.cell1, entry.cell2) || isNumAquConn(entry.cell1, entry.cell2)) {
             // Pick up transmissibility value from 'globalTrans()' since
             // multiplier keywords like MULTREGT might have impacted the
             // values entered in primary sources like NNC/EDITNNC/EDITNNCR.
@@ -444,30 +425,28 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
             }
 
             const auto trans = this->globalTrans().transmissibility(c1, c2);
-            const auto tt = unitSystem
-                .from_si(UnitSystem::measure::transmissibility, trans);
+            const auto tt = unitSystem.from_si(UnitSystem::measure::transmissibility, trans);
 
             // ECLIPSE ignores NNCs (with EDITNNC/EDITNNCR applied) with
             // small transmissibility values.  Seems like the threshold is
             // 1.0e-6 in output units.
-            if (std::isnormal(tt) && ! (tt < 1.0e-6)) {
+            if (std::isnormal(tt) && !(tt < 1.0e-6)) {
                 this->outputNnc_.emplace_back(entry.cell1, entry.cell2, trans);
             }
         }
     }
 
-    auto isDirectNeighbours = [&isCartesianNeighbour, &cartesianToActive,
-                               cartDims = &this->cartMapper_.cartesianDimensions()]
-        (const std::size_t cellIdx1, const std::size_t cellIdx2)
-    {
-        return isCartesianNeighbour(cellIdx1, cellIdx2)
-            || directVerticalNeighbors(*cartDims, cartesianToActive, cellIdx1, cellIdx2);
-    };
+    auto isDirectNeighbours
+        = [&isCartesianNeighbour, &cartesianToActive, cartDims = &this->cartMapper_.cartesianDimensions()](
+              const std::size_t cellIdx1, const std::size_t cellIdx2) {
+              return isCartesianNeighbour(cellIdx1, cellIdx2)
+                  || directVerticalNeighbors(*cartDims, cartesianToActive, cellIdx1, cellIdx2);
+          };
 
     using GlobalGridView = typename EquilGrid::LeafGridView;
     using GlobElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GlobalGridView>;
     const GlobalGridView& globalGridView = this->equilGrid_->leafGridView();
-    const GlobElementMapper globalElemMapper { globalGridView, Dune::mcmgElementLayout() };
+    const GlobElementMapper globalElemMapper {globalGridView, Dune::mcmgElementLayout()};
 
     // Cartesian index mapper for the serial I/O grid
     const auto& equilCartMapper = *equilCartMapper_;
@@ -483,10 +462,10 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
             if (c1 > c2)
                 continue; // we only need to handle each connection once, thank you.
 
-            std::size_t cc1 = equilCartMapper.cartesianIndex( c1 );
-            std::size_t cc2 = equilCartMapper.cartesianIndex( c2 );
+            std::size_t cc1 = equilCartMapper.cartesianIndex(c1);
+            std::size_t cc2 = equilCartMapper.cartesianIndex(c2);
 
-            if ( cc2 < cc1 )
+            if (cc2 < cc1)
                 std::swap(cc1, cc2);
 
             // Re-ordering in case of non-empty mapping between equilGrid to grid
@@ -495,17 +474,13 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
                 c2 = map(c2);
             }
 
-            if (isNumAquConn(cc1, cc2) || ! isDirectNeighbours(cc1, cc2)) {
+            if (isNumAquConn(cc1, cc2) || !isDirectNeighbours(cc1, cc2)) {
                 // We need to check whether an NNC for this face was also
                 // specified via the NNC keyword in the deck.
                 auto t = this->globalTrans().transmissibility(c1, c2);
-                auto candidate = std::lower_bound(nncData.begin(), nncData.end(),
-                                                  NNCdata { cc1, cc2, 0.0 });
+                auto candidate = std::lower_bound(nncData.begin(), nncData.end(), NNCdata {cc1, cc2, 0.0});
 
-                while ((candidate != nncData.end()) &&
-                       (candidate->cell1 == cc1) &&
-                       (candidate->cell2 == cc2))
-                {
+                while ((candidate != nncData.end()) && (candidate->cell1 == cc1) && (candidate->cell2 == cc2)) {
                     t -= candidate->trans;
                     ++candidate;
                 }
@@ -515,8 +490,7 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
                 // EDITNNC above).  In addition we do set small
                 // transmissibilities to zero when setting up the simulator.
                 // These will be ignored here, too.
-                const auto tt = unitSystem
-                    .from_si(UnitSystem::measure::transmissibility, t);
+                const auto tt = unitSystem.from_si(UnitSystem::measure::transmissibility, t);
 
                 if (std::isnormal(tt) && (tt > 1.0e-12)) {
                     this->outputNnc_.emplace_back(cc1, cc2, t);
@@ -528,53 +502,47 @@ exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive,
     return this->outputNnc_;
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-void EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-doWriteOutput(const int                          reportStepNum,
-              const std::optional<int>           timeStepNum,
-              const bool                         isSubStep,
-              data::Solution&&                   localCellData,
-              data::Wells&&                      localWellData,
-              data::GroupAndNetworkValues&&      localGroupAndNetworkData,
-              data::Aquifers&&                   localAquiferData,
-              WellTestState&&                    localWTestState,
-              const Action::State&               actionState,
-              const UDQState&                    udqState,
-              const SummaryState&                summaryState,
-              const std::vector<Scalar>&         thresholdPressure,
-              Scalar                             curTime,
-              Scalar                             nextStepSize,
-              bool                               doublePrecision,
-              bool                               isFlowsn,
-              std::array<FlowsData<double>, 3>&& flowsn,
-              bool                               isFloresn,
-              std::array<FlowsData<double>, 3>&& floresn)
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+void
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::doWriteOutput(
+    const int reportStepNum,
+    const std::optional<int> timeStepNum,
+    const bool isSubStep,
+    data::Solution&& localCellData,
+    data::Wells&& localWellData,
+    data::GroupAndNetworkValues&& localGroupAndNetworkData,
+    data::Aquifers&& localAquiferData,
+    WellTestState&& localWTestState,
+    const Action::State& actionState,
+    const UDQState& udqState,
+    const SummaryState& summaryState,
+    const std::vector<Scalar>& thresholdPressure,
+    Scalar curTime,
+    Scalar nextStepSize,
+    bool doublePrecision,
+    bool isFlowsn,
+    std::array<FlowsData<double>, 3>&& flowsn,
+    bool isFloresn,
+    std::array<FlowsData<double>, 3>&& floresn)
 {
     const auto isParallel = this->collectOnIORank_.isParallel();
     const bool needsReordering = this->collectOnIORank_.doesNeedReordering();
 
     RestartValue restartValue {
-        (isParallel || needsReordering)
-        ? this->collectOnIORank_.globalCellData()
-        : std::move(localCellData),
+        (isParallel || needsReordering) ? this->collectOnIORank_.globalCellData() : std::move(localCellData),
 
-        isParallel ? this->collectOnIORank_.globalWellData()
-                   : std::move(localWellData),
+        isParallel ? this->collectOnIORank_.globalWellData() : std::move(localWellData),
 
-        isParallel ? this->collectOnIORank_.globalGroupAndNetworkData()
-                   : std::move(localGroupAndNetworkData),
+        isParallel ? this->collectOnIORank_.globalGroupAndNetworkData() : std::move(localGroupAndNetworkData),
 
-        isParallel ? this->collectOnIORank_.globalAquiferData()
-                   : std::move(localAquiferData)
-    };
+        isParallel ? this->collectOnIORank_.globalAquiferData() : std::move(localAquiferData)};
 
     if (eclState_.getSimulationConfig().useThresholdPressure()) {
-        restartValue.addExtra("THRESHPR", UnitSystem::measure::pressure,
-                              thresholdPressure);
+        restartValue.addExtra("THRESHPR", UnitSystem::measure::pressure, thresholdPressure);
     }
 
     // Add suggested next timestep to extra data.
-    if (! isSubStep) {
+    if (!isSubStep) {
         restartValue.addExtra("OPMEXTRA", std::vector<double>(1, nextStepSize));
     }
 
@@ -611,51 +579,56 @@ doWriteOutput(const int                          reportStepNum,
     }
 
     // create a tasklet to write the data for the current time step to disk
-    auto eclWriteTasklet = std::make_shared<EclWriteTasklet>(
-        actionState,
-        isParallel ? this->collectOnIORank_.globalWellTestState() : std::move(localWTestState),
-        summaryState, udqState, *this->eclIO_,
-        reportStepNum, timeStepNum, isSubStep, curTime, std::move(restartValue), doublePrecision);
+    auto eclWriteTasklet = std::make_shared<EclWriteTasklet>(actionState,
+                                                             isParallel ? this->collectOnIORank_.globalWellTestState()
+                                                                        : std::move(localWTestState),
+                                                             summaryState,
+                                                             udqState,
+                                                             *this->eclIO_,
+                                                             reportStepNum,
+                                                             timeStepNum,
+                                                             isSubStep,
+                                                             curTime,
+                                                             std::move(restartValue),
+                                                             doublePrecision);
 
     // finally, start a new output writing job
     this->taskletRunner_->dispatch(std::move(eclWriteTasklet));
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-void EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-evalSummary(const int                                            reportStepNum,
-            const Scalar                                         curTime,
-            const data::Wells&                                   localWellData,
-            const data::WellBlockAveragePressures&               localWBPData,
-            const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
-            const std::map<int,data::AquiferData>&               localAquiferData,
-            const std::map<std::pair<std::string, int>, double>& blockData,
-            const std::map<std::string, double>&                 miscSummaryData,
-            const std::map<std::string, std::vector<double>>&    regionData,
-            const Inplace&                                       inplace,
-            const std::optional<Inplace>&                        initialInPlace,
-            const InterRegFlowMap&                               interRegFlows,
-            SummaryState&                                        summaryState,
-            UDQState&                                            udqState)
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+void
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::evalSummary(
+    const int reportStepNum,
+    const Scalar curTime,
+    const data::Wells& localWellData,
+    const data::WellBlockAveragePressures& localWBPData,
+    const data::GroupAndNetworkValues& localGroupAndNetworkData,
+    const std::map<int, data::AquiferData>& localAquiferData,
+    const std::map<std::pair<std::string, int>, double>& blockData,
+    const std::map<std::string, double>& miscSummaryData,
+    const std::map<std::string, std::vector<double>>& regionData,
+    const Inplace& inplace,
+    const std::optional<Inplace>& initialInPlace,
+    const InterRegFlowMap& interRegFlows,
+    SummaryState& summaryState,
+    UDQState& udqState)
 {
     if (collectOnIORank_.isIORank()) {
         const auto& summary = eclIO_->summary();
 
-        const auto& wellData = this->collectOnIORank_.isParallel()
-            ? this->collectOnIORank_.globalWellData()
-            : localWellData;
+        const auto& wellData
+            = this->collectOnIORank_.isParallel() ? this->collectOnIORank_.globalWellData() : localWellData;
 
-        const auto& wbpData = this->collectOnIORank_.isParallel()
-            ? this->collectOnIORank_.globalWBPData()
-            : localWBPData;
+        const auto& wbpData
+            = this->collectOnIORank_.isParallel() ? this->collectOnIORank_.globalWBPData() : localWBPData;
 
         const auto& groupAndNetworkData = this->collectOnIORank_.isParallel()
             ? this->collectOnIORank_.globalGroupAndNetworkData()
             : localGroupAndNetworkData;
 
-        const auto& aquiferData = this->collectOnIORank_.isParallel()
-            ? this->collectOnIORank_.globalAquiferData()
-            : localAquiferData;
+        const auto& aquiferData
+            = this->collectOnIORank_.isParallel() ? this->collectOnIORank_.globalAquiferData() : localAquiferData;
 
         summary.eval(summaryState,
                      reportStepNum,
@@ -677,16 +650,16 @@ evalSummary(const int                                            reportStepNum,
         // step we are currently on.
         const auto udq_step = reportStepNum - 1;
 
-        this->schedule_[udq_step].udq()
-            .eval(udq_step,
-                  this->schedule_.wellMatcher(udq_step),
-                  this->schedule_[udq_step].group_order(),
-                  this->schedule_.segmentMatcherFactory(udq_step),
-                  [es = std::cref(this->eclState_)]() {
-                      return std::make_unique<RegionSetMatcher>
-                          (es.get().fipRegionStatistics());
-                  },
-                  summaryState, udqState);
+        this->schedule_[udq_step].udq().eval(
+            udq_step,
+            this->schedule_.wellMatcher(udq_step),
+            this->schedule_[udq_step].group_order(),
+            this->schedule_.segmentMatcherFactory(udq_step),
+            [es = std::cref(this->eclState_)]() {
+                return std::make_unique<RegionSetMatcher>(es.get().fipRegionStatistics());
+            },
+            summaryState,
+            udqState);
     }
 
 #if HAVE_MPI
@@ -697,12 +670,11 @@ evalSummary(const int                                            reportStepNum,
 #endif
 }
 
-template<class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
-const typename EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::TransmissibilityType&
-EclGenericWriter<Grid,EquilGrid,GridView,ElementMapper,Scalar>::
-globalTrans() const
+template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
+const typename EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::TransmissibilityType&
+EclGenericWriter<Grid, EquilGrid, GridView, ElementMapper, Scalar>::globalTrans() const
 {
-    assert (globalTrans_);
+    assert(globalTrans_);
     return *globalTrans_;
 }
 

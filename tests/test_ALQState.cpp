@@ -34,15 +34,15 @@ BOOST_AUTO_TEST_CASE(ALQStateCreate)
     ALQState<double> alq_state;
 
     alq_state.update_default(100);
-    BOOST_CHECK_EQUAL( alq_state.get(), 100);
+    BOOST_CHECK_EQUAL(alq_state.get(), 100);
     alq_state.set(1);
-    BOOST_CHECK_EQUAL( alq_state.get(), 1);
+    BOOST_CHECK_EQUAL(alq_state.get(), 1);
 
     alq_state.update_default(100);
-    BOOST_CHECK_EQUAL( alq_state.get(), 1);
+    BOOST_CHECK_EQUAL(alq_state.get(), 1);
 
     alq_state.update_default(0);
-    BOOST_CHECK_EQUAL( alq_state.get(), 0);
+    BOOST_CHECK_EQUAL(alq_state.get(), 0);
 
     BOOST_CHECK(!alq_state.oscillation());
 

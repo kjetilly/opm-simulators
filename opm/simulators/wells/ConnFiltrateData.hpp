@@ -23,15 +23,17 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 struct ConnFiltrateData {
 
     void resize(std::size_t num_perf);
 
-    template<class Serializer>
-    void serializeOp(Serializer& serializer) {
+    template <class Serializer>
+    void serializeOp(Serializer& serializer)
+    {
         serializer(rates);
         serializer(total);
         serializer(skin_factor);
@@ -56,6 +58,6 @@ struct ConnFiltrateData {
     std::vector<Scalar> area_of_flow;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_CONNFILTRATEDATA_HPP

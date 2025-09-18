@@ -181,7 +181,6 @@ public:
     virtual int getSolveCount() const = 0;
 
 protected:
-
     /**
      * \brief Check the convergence of the linear solver.
      *

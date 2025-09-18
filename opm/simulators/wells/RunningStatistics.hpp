@@ -24,7 +24,8 @@
 #include <limits>
 #include <optional>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Facility for calculating simple sample statistics without having full
 /// sample available.
@@ -53,11 +54,11 @@ public:
     /// Create a serialisation test object.
     static RunningStatistics serializationTestObject()
     {
-        auto stat = RunningStatistics{};
+        auto stat = RunningStatistics {};
 
         stat.sampleSize_ = 12;
         stat.min_ = -static_cast<Scalar>(1);
-        stat.max_ =  static_cast<Scalar>(2);
+        stat.max_ = static_cast<Scalar>(2);
         stat.mean_ = static_cast<Scalar>(0.03);
         stat.totalVariance_ = static_cast<Scalar>(0.4);
 
@@ -72,12 +73,8 @@ public:
     /// \return Whether or not \code *this \endcode is the same as \p that.
     bool operator==(const RunningStatistics& that) const
     {
-        return (this->sampleSize_ == that.sampleSize_)
-            && (this->min_ == that.min_)
-            && (this->max_ == that.max_)
-            && (this->mean_ == that.mean_)
-            && (this->totalVariance_ == that.totalVariance_)
-            ;
+        return (this->sampleSize_ == that.sampleSize_) && (this->min_ == that.min_) && (this->max_ == that.max_)
+            && (this->mean_ == that.mean_) && (this->totalVariance_ == that.totalVariance_);
     }
 
     /// Reset internal counters to prepare for calculating a new set of
@@ -87,8 +84,8 @@ public:
         this->sampleSize_ = 0;
         this->min_ = std::numeric_limits<Scalar>::max();
         this->max_ = std::numeric_limits<Scalar>::lowest();
-        this->mean_ = Scalar{};
-        this->totalVariance_ = Scalar{};
+        this->mean_ = Scalar {};
+        this->totalVariance_ = Scalar {};
     }
 
     /// Include new element into sample.
@@ -98,8 +95,12 @@ public:
     /// \param[in] x Sample point.
     void addSamplePoint(const Scalar x)
     {
-        if (x < this->min_) { this->min_ = x; }
-        if (x > this->max_) { this->max_ = x; }
+        if (x < this->min_) {
+            this->min_ = x;
+        }
+        if (x > this->max_) {
+            this->max_ = x;
+        }
 
         // https://en.wikipedia.org/wiki/Algorithms_for_calculating_variance
 
@@ -116,16 +117,28 @@ public:
     ///
     /// Effectively returns the number of calls to addSamplePoint() since
     /// object was constructed or since the previous call to reset().
-    std::size_t sampleSize() const { return this->sampleSize_; }
+    std::size_t sampleSize() const
+    {
+        return this->sampleSize_;
+    }
 
     /// Retrieve smallest sample value seen so far.
-    Scalar min() const { return this->min_; }
+    Scalar min() const
+    {
+        return this->min_;
+    }
 
     /// Retrieve largest sample value seen so far.
-    Scalar max() const { return this->max_; }
+    Scalar max() const
+    {
+        return this->max_;
+    }
 
     /// Retrieve arithmetic average of all sample points seen so far.
-    Scalar mean() const { return this->mean_; }
+    Scalar mean() const
+    {
+        return this->mean_;
+    }
 
     /// Retrieve unbiased standard deviation of all sample points seen so
     /// far.
@@ -143,19 +156,19 @@ public:
 
 private:
     /// Current sample size.
-    std::size_t sampleSize_{};
+    std::size_t sampleSize_ {};
 
     /// Smallest sample value seen so far.
-    Scalar min_ { std::numeric_limits<Scalar>::max() };
+    Scalar min_ {std::numeric_limits<Scalar>::max()};
 
     /// Largest sample value seen so far.
-    Scalar max_ { std::numeric_limits<Scalar>::lowest() };
+    Scalar max_ {std::numeric_limits<Scalar>::lowest()};
 
     /// Arithmetic average of all sample points seen so far.
-    Scalar mean_{};
+    Scalar mean_ {};
 
     /// Variance measure.  In particular, N-1 * Var{x_i}.
-    Scalar totalVariance_{};
+    Scalar totalVariance_ {};
 };
 
 } // namespace Opm

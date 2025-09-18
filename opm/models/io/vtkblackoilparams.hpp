@@ -27,30 +27,53 @@
 #ifndef OPM_VTK_BLACK_OIL_PARAMS_HPP
 #define OPM_VTK_BLACK_OIL_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteGasDissolutionFactor { static constexpr bool value = false; };
-struct VtkWriteOilVaporizationFactor { static constexpr bool value = false; };
-struct VtkWriteOilFormationVolumeFactor { static constexpr bool value = false; };
-struct VtkWriteGasFormationVolumeFactor { static constexpr bool value = false; };
-struct VtkWriteWaterFormationVolumeFactor { static constexpr bool value = false; };
-struct VtkWriteOilSaturationPressure { static constexpr bool value = false; };
-struct VtkWriteGasSaturationPressure { static constexpr bool value = false; };
-struct VtkWriteSaturationRatios { static constexpr bool value = false; };
-struct VtkWriteSaturatedOilGasDissolutionFactor { static constexpr bool value = false; };
-struct VtkWriteSaturatedGasOilVaporizationFactor { static constexpr bool value = false; };
-struct VtkWritePrimaryVarsMeaning { static constexpr bool value = false; };
+struct VtkWriteGasDissolutionFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteOilVaporizationFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteOilFormationVolumeFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteGasFormationVolumeFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteWaterFormationVolumeFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteOilSaturationPressure {
+    static constexpr bool value = false;
+};
+struct VtkWriteGasSaturationPressure {
+    static constexpr bool value = false;
+};
+struct VtkWriteSaturationRatios {
+    static constexpr bool value = false;
+};
+struct VtkWriteSaturatedOilGasDissolutionFactor {
+    static constexpr bool value = false;
+};
+struct VtkWriteSaturatedGasOilVaporizationFactor {
+    static constexpr bool value = false;
+};
+struct VtkWritePrimaryVarsMeaning {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkBlackoilOutputModule.
  */
-struct VtkBlackoilParams
-{
+struct VtkBlackoilParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

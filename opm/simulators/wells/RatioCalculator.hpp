@@ -28,21 +28,20 @@
 #include <string_view>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
-template<class Scalar> struct PerforationRates;
+template <class Scalar>
+struct PerforationRates;
 
-template<class Value>
+template <class Value>
 class RatioCalculator
 {
 public:
-    using Scalar = decltype(getValue(Value{}));
+    using Scalar = decltype(getValue(Value {}));
 
-    RatioCalculator(int gasCompIdx,
-                    int oilCompIdx,
-                    int waterCompIdx,
-                    std::string_view name);
+    RatioCalculator(int gasCompIdx, int oilCompIdx, int waterCompIdx, std::string_view name);
 
     void disOilVapWatVolumeRatio(Value& volumeRatio,
                                  const Value& rvw,

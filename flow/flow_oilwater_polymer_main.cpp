@@ -18,7 +18,8 @@
 #include <flow/flow_oilwater_polymer.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowOilWaterPolymerMainStandalone(argc, argv);
 }

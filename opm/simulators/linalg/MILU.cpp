@@ -21,8 +21,8 @@
 #include <config.h>
 #include <opm/simulators/linalg/MILU.hpp>
 
-#include <dune/common/version.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/version.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/ilu.hh>
 
@@ -31,43 +31,69 @@
 
 #include <opm/simulators/linalg/matrixblock.hh>
 
-#include <array>
 #include <algorithm>
+#include <array>
 
 template <typename T>
-T Opm::detail::identityFunctor(const T& t){return t;};
+T
+Opm::detail::identityFunctor(const T& t)
+{
+    return t;
+};
 
 template <typename T>
-T Opm::detail::oneFunctor(const T&){return 1.0;};
+T
+Opm::detail::oneFunctor(const T&)
+{
+    return 1.0;
+};
 
 template <typename T>
-T Opm::detail::signFunctor(const T& t){if (t< 0){return -1;} else{return 1;}};
+T
+Opm::detail::signFunctor(const T& t)
+{
+    if (t < 0) {
+        return -1;
+    } else {
+        return 1;
+    }
+};
 
 template <typename T>
-T Opm::detail::isPositiveFunctor(const T& t){if (t<0){return 0;} else{return 1;}};
+T
+Opm::detail::isPositiveFunctor(const T& t)
+{
+    if (t < 0) {
+        return 0;
+    } else {
+        return 1;
+    }
+};
 
 template <typename T>
-T Opm::detail::absFunctor(const T& t){return std::abs(t);};
+T
+Opm::detail::absFunctor(const T& t)
+{
+    return std::abs(t);
+};
 
 namespace Opm
 {
 
-MILU_VARIANT convertString2Milu(const std::string& milu)
+MILU_VARIANT
+convertString2Milu(const std::string& milu)
 {
     // We use lower case as the internal canonical representation of solver names
     std::string milu_lower = milu;
     std::transform(milu_lower.begin(), milu_lower.end(), milu_lower.begin(), ::tolower);
 
-    if( 0 == milu_lower.compare("milu_1") )
-    {
+    if (0 == milu_lower.compare("milu_1")) {
         return MILU_VARIANT::MILU_1;
     }
-    if ( 0 == milu_lower.compare("milu_2") )
-    {
+    if (0 == milu_lower.compare("milu_2")) {
         return MILU_VARIANT::MILU_2;
     }
-    if ( 0 == milu_lower.compare("milu_3") )
-    {
+    if (0 == milu_lower.compare("milu_3")) {
         return MILU_VARIANT::MILU_3;
     }
     return MILU_VARIANT::ILU;
@@ -76,219 +102,195 @@ MILU_VARIANT convertString2Milu(const std::string& milu)
 namespace detail
 {
 
-template<class M>
-void milu0_decomposition(M& A, FieldFunct<M> absFunctor, FieldFunct<M> signFunctor,
-                         std::vector<typename M::block_type>* diagonal)
-{
-    if( diagonal )
+    template <class M>
+    void milu0_decomposition(M& A,
+                             FieldFunct<M> absFunctor,
+                             FieldFunct<M> signFunctor,
+                             std::vector<typename M::block_type>* diagonal)
     {
-        diagonal->reserve(A.N());
-    }
+        if (diagonal) {
+            diagonal->reserve(A.N());
+        }
 
-    for ( auto irow = A.begin(), iend = A.end(); irow != iend; ++irow)
-    {
-        auto a_i_end = irow->end();
-        auto a_ik    = irow->begin();
+        for (auto irow = A.begin(), iend = A.end(); irow != iend; ++irow) {
+            auto a_i_end = irow->end();
+            auto a_ik = irow->begin();
 
-        std::array<typename M::field_type, M::block_type::rows> sum_dropped{};
+            std::array<typename M::field_type, M::block_type::rows> sum_dropped {};
 
-        // Eliminate entries in lower triangular matrix
-        // and store factors for L
-        for ( ; a_ik.index() < irow.index(); ++a_ik )
-        {
-            auto k = a_ik.index();
-            auto a_kk = A[k].find(k);
-            // L_ik = A_kk^-1 * A_ik
-            a_ik->rightmultiply(*a_kk);
+            // Eliminate entries in lower triangular matrix
+            // and store factors for L
+            for (; a_ik.index() < irow.index(); ++a_ik) {
+                auto k = a_ik.index();
+                auto a_kk = A[k].find(k);
+                // L_ik = A_kk^-1 * A_ik
+                a_ik->rightmultiply(*a_kk);
 
-            // modify the rest of the row, everything right of a_ik
-            // a_i* -=a_ik * a_k*
-            auto a_k_end = A[k].end();
-            auto a_kj = a_kk, a_ij = a_ik;
-            ++a_kj; ++a_ij;
+                // modify the rest of the row, everything right of a_ik
+                // a_i* -=a_ik * a_k*
+                auto a_k_end = A[k].end();
+                auto a_kj = a_kk, a_ij = a_ik;
+                ++a_kj;
+                ++a_ij;
 
-            while ( a_kj != a_k_end)
-            {
-                auto modifier = *a_kj;
-                modifier.leftmultiply(*a_ik);
+                while (a_kj != a_k_end) {
+                    auto modifier = *a_kj;
+                    modifier.leftmultiply(*a_ik);
 
-                while( a_ij != a_i_end && a_ij.index() < a_kj.index())
-                {
-                    ++a_ij;
-                }
-
-                if ( a_ij != a_i_end && a_ij.index() == a_kj.index() )
-                {
-                    // Value is not dropped
-                    *a_ij -= modifier;
-                    ++a_ij; ++a_kj;
-                }
-                else
-                {
-                    auto entry = sum_dropped.begin();
-                    for( const auto& row: modifier )
-                    {
-                        for( const auto& colEntry: row )
-                        {
-                            *entry += absFunctor(-colEntry);
-                        }
-                        ++entry;
+                    while (a_ij != a_i_end && a_ij.index() < a_kj.index()) {
+                        ++a_ij;
                     }
-                    ++a_kj;
+
+                    if (a_ij != a_i_end && a_ij.index() == a_kj.index()) {
+                        // Value is not dropped
+                        *a_ij -= modifier;
+                        ++a_ij;
+                        ++a_kj;
+                    } else {
+                        auto entry = sum_dropped.begin();
+                        for (const auto& row : modifier) {
+                            for (const auto& colEntry : row) {
+                                *entry += absFunctor(-colEntry);
+                            }
+                            ++entry;
+                        }
+                        ++a_kj;
+                    }
                 }
             }
-        }
 
-        if ( a_ik.index() != irow.index() )
-            OPM_THROW(std::logic_error,
-                      "Matrix is missing diagonal for row " + std::to_string(irow.index()));
+            if (a_ik.index() != irow.index())
+                OPM_THROW(std::logic_error, "Matrix is missing diagonal for row " + std::to_string(irow.index()));
 
-        int index = 0;
-        for(const auto& entry: sum_dropped)
-        {
-            auto& bdiag = (*a_ik)[index][index];
-            bdiag += signFunctor(bdiag) * entry;
-            ++index;
-        }
+            int index = 0;
+            for (const auto& entry : sum_dropped) {
+                auto& bdiag = (*a_ik)[index][index];
+                bdiag += signFunctor(bdiag) * entry;
+                ++index;
+            }
 
-        if ( diagonal )
-        {
-            diagonal->push_back(*a_ik);
+            if (diagonal) {
+                diagonal->push_back(*a_ik);
+            }
+            a_ik->invert(); // compute inverse of diagonal block
         }
-        a_ik->invert();   // compute inverse of diagonal block
     }
-}
 
-template<class M>
-void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
-                         Reorderer& ordering, Reorderer& inverseOrdering)
-{
-    using Map = std::map<std::size_t, int>;
-
-    auto iluRow = ILU.createbegin();
-
-    for(std::size_t i = 0, iend = A.N(); i < iend; ++i)
+    template <class M>
+    void
+    milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU, Reorderer& ordering, Reorderer& inverseOrdering)
     {
-        auto& orow = A[inverseOrdering[i]];
+        using Map = std::map<std::size_t, int>;
 
-        Map rowPattern;
-        for ( auto col = orow.begin(), cend = orow.end(); col != cend; ++col)
-        {
-            rowPattern[ordering[col.index()]] = 0;
-        }
+        auto iluRow = ILU.createbegin();
 
-        for(auto ik = rowPattern.begin(); ik->first < i; ++ik)
-        {
-            if ( ik->second < n )
-            {
-                auto& rowk = ILU[ik->first];
+        for (std::size_t i = 0, iend = A.N(); i < iend; ++i) {
+            auto& orow = A[inverseOrdering[i]];
 
-                for ( auto kj = rowk.find(ik->first), endk = rowk.end();
-                      kj != endk; ++kj)
-                {
-                    // Assume double and block_type FieldMatrix
-                    // first element is misused to store generation number
-                    int generation = (*kj)[0][0];
-                    if(generation < n)
-                    {
-                        auto ij = rowPattern.find(kj.index());
-                        if ( ij == rowPattern.end() )
-                        {
-                            rowPattern[ordering[kj.index()]] = generation + 1;
+            Map rowPattern;
+            for (auto col = orow.begin(), cend = orow.end(); col != cend; ++col) {
+                rowPattern[ordering[col.index()]] = 0;
+            }
+
+            for (auto ik = rowPattern.begin(); ik->first < i; ++ik) {
+                if (ik->second < n) {
+                    auto& rowk = ILU[ik->first];
+
+                    for (auto kj = rowk.find(ik->first), endk = rowk.end(); kj != endk; ++kj) {
+                        // Assume double and block_type FieldMatrix
+                        // first element is misused to store generation number
+                        int generation = (*kj)[0][0];
+                        if (generation < n) {
+                            auto ij = rowPattern.find(kj.index());
+                            if (ij == rowPattern.end()) {
+                                rowPattern[ordering[kj.index()]] = generation + 1;
+                            }
                         }
                     }
                 }
             }
-        }
-        // create the row
-        for (const auto& entry : rowPattern)
-        {
-            iluRow.insert(entry.first);
-        }
-        ++iluRow;
+            // create the row
+            for (const auto& entry : rowPattern) {
+                iluRow.insert(entry.first);
+            }
+            ++iluRow;
 
-        // write generation to newly created row.
-        auto generationPair = rowPattern.begin();
-        for ( auto col = ILU[i].begin(), cend = ILU[i].end(); col != cend;
-              ++col, ++generationPair)
-        {
-            assert(col.index() == generationPair->first);
-            (*col)[0][0] = generationPair->second;
+            // write generation to newly created row.
+            auto generationPair = rowPattern.begin();
+            for (auto col = ILU[i].begin(), cend = ILU[i].end(); col != cend; ++col, ++generationPair) {
+                assert(col.index() == generationPair->first);
+                (*col)[0][0] = generationPair->second;
+            }
+        }
+
+        // copy Entries from A
+        for (auto iter = A.begin(), iend = A.end(); iter != iend; ++iter) {
+            auto& newRow = ILU[ordering[iter.index()]];
+            // reset stored generation
+            std::fill(newRow.begin(), newRow.end(), 0);
+
+            // copy row.
+            for (auto col = iter->begin(), cend = iter->end(); col != cend; ++col) {
+                newRow[ordering[col.index()]] = *col;
+            }
+        }
+        // call decomposition on pattern
+        switch (milu) {
+        case MILU_VARIANT::MILU_1:
+            detail::milu0_decomposition(ILU);
+            break;
+        case MILU_VARIANT::MILU_2:
+            detail::milu0_decomposition(
+                ILU, identityFunctor<typename M::field_type>, signFunctor<typename M::field_type>);
+
+            break;
+        case MILU_VARIANT::MILU_3:
+            detail::milu0_decomposition(ILU, absFunctor<typename M::field_type>, signFunctor<typename M::field_type>);
+            break;
+        case MILU_VARIANT::MILU_4:
+            detail::milu0_decomposition(
+                ILU, identityFunctor<typename M::field_type>, isPositiveFunctor<typename M::field_type>);
+            break;
+        default:
+            Dune::ILU::blockILU0Decomposition(ILU);
+            break;
         }
     }
 
-    // copy Entries from A
-    for(auto iter=A.begin(), iend = A.end(); iter != iend; ++iter)
-    {
-        auto& newRow = ILU[ordering[iter.index()]];
-        // reset stored generation
-        std::fill(newRow.begin(), newRow.end(), 0);
+#define INSTANTIATE(T, ...)                                                                                            \
+    template void milu0_decomposition<__VA_ARGS__>(__VA_ARGS__&,                                                       \
+                                                   std::function<T(const T&)>,                                         \
+                                                   std::function<T(const T&)>,                                         \
+                                                   std::vector<typename __VA_ARGS__::block_type>*);
 
-        // copy row.
-        for(auto col = iter->begin(), cend = iter->end(); col != cend; ++col)
-        {
-            newRow[ordering[col.index()]] = *col;
-        }
-    }
-    // call decomposition on pattern
-    switch ( milu )
-    {
-    case MILU_VARIANT::MILU_1:
-        detail::milu0_decomposition ( ILU);
-        break;
-    case MILU_VARIANT::MILU_2:
-        detail::milu0_decomposition ( ILU, identityFunctor<typename M::field_type>,
-                                      signFunctor<typename M::field_type>);
+#define INSTANTIATE_ILUN(...)                                                                                          \
+    template void milun_decomposition(const __VA_ARGS__&, int, MILU_VARIANT, __VA_ARGS__&, Reorderer&, Reorderer&);
 
-        break;
-    case MILU_VARIANT::MILU_3:
-        detail::milu0_decomposition ( ILU, absFunctor<typename M::field_type>,
-                                      signFunctor<typename M::field_type>);
-        break;
-    case MILU_VARIANT::MILU_4:
-        detail::milu0_decomposition ( ILU, identityFunctor<typename M::field_type> ,
-                                      isPositiveFunctor<typename M::field_type>);
-        break;
-    default:
-        Dune::ILU::blockILU0Decomposition( ILU );
-        break;
-    }
-}
-
-#define INSTANTIATE(T, ...)                                               \
-    template void milu0_decomposition<__VA_ARGS__>                        \
-    (__VA_ARGS__&,std::function<T(const T&)>, std::function<T(const T&)>, \
-    std::vector<typename __VA_ARGS__::block_type>*);
-
-#define INSTANTIATE_ILUN(...)                                                \
-    template void milun_decomposition(const __VA_ARGS__&, int, MILU_VARIANT, \
-                                      __VA_ARGS__&,Reorderer&,Reorderer&);
-
-#define INSTANTIATE_FULL(T,...)   \
-    INSTANTIATE(T,__VA_ARGS__)    \
+#define INSTANTIATE_FULL(T, ...)                                                                                       \
+    INSTANTIATE(T, __VA_ARGS__)                                                                                        \
     INSTANTIATE_ILUN(__VA_ARGS__)
 
-#define INSTANTIATE_DIM(T,Dim)                                         \
-    INSTANTIATE_FULL(T,Dune::BCRSMatrix<MatrixBlock<T,Dim,Dim>>)       \
-    INSTANTIATE_FULL(T,Dune::BCRSMatrix<Dune::FieldMatrix<T,Dim,Dim>>)
+#define INSTANTIATE_DIM(T, Dim)                                                                                        \
+    INSTANTIATE_FULL(T, Dune::BCRSMatrix<MatrixBlock<T, Dim, Dim>>)                                                    \
+    INSTANTIATE_FULL(T, Dune::BCRSMatrix<Dune::FieldMatrix<T, Dim, Dim>>)
 
-#define INSTANTIATE_TYPE(T)                 \
-    template T identityFunctor(const T&);   \
-    template T oneFunctor(const T&);        \
-    template T signFunctor(const T&);       \
-    template T isPositiveFunctor(const T&); \
-    template T absFunctor(const T&);        \
-    INSTANTIATE_DIM(T,1)                    \
-    INSTANTIATE_DIM(T,2)                    \
-    INSTANTIATE_DIM(T,3)                    \
-    INSTANTIATE_DIM(T,4)                    \
-    INSTANTIATE_DIM(T,5)                    \
-    INSTANTIATE_DIM(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template T identityFunctor(const T&);                                                                              \
+    template T oneFunctor(const T&);                                                                                   \
+    template T signFunctor(const T&);                                                                                  \
+    template T isPositiveFunctor(const T&);                                                                            \
+    template T absFunctor(const T&);                                                                                   \
+    INSTANTIATE_DIM(T, 1)                                                                                              \
+    INSTANTIATE_DIM(T, 2)                                                                                              \
+    INSTANTIATE_DIM(T, 3)                                                                                              \
+    INSTANTIATE_DIM(T, 4)                                                                                              \
+    INSTANTIATE_DIM(T, 5)                                                                                              \
+    INSTANTIATE_DIM(T, 6)
 
-INSTANTIATE_TYPE(double)
+    INSTANTIATE_TYPE(double)
 
 #if FLOW_INSTANTIATE_FLOAT
-INSTANTIATE_TYPE(float)
+    INSTANTIATE_TYPE(float)
 #endif
 
 } // end namespace detail

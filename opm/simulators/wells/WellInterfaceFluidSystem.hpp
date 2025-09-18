@@ -34,22 +34,26 @@ namespace Opm
 {
 namespace RateConverter
 {
-  template <class FluidSystem, class Region> class SurfaceToReservoirVoidage;
+    template <class FluidSystem, class Region>
+    class SurfaceToReservoirVoidage;
 }
 
 class Group;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 class Schedule;
 struct RatioLimitCheckReport;
-template<typename Scalar, typename IndexTraits> class SingleWellState;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class SingleWellState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<class FluidSystem>
-class WellInterfaceFluidSystem : public WellInterfaceGeneric<typename FluidSystem::Scalar, typename FluidSystem::IndexTraitsType>
+template <class FluidSystem>
+class WellInterfaceFluidSystem
+    : public WellInterfaceGeneric<typename FluidSystem::Scalar, typename FluidSystem::IndexTraitsType>
 {
 protected:
-    using RateConverterType = RateConverter::
-    SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
+    using RateConverterType = RateConverter::SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
     // to indicate a invalid completion
     static constexpr int INVALIDCOMPLETION = std::numeric_limits<int>::max();
 
@@ -101,24 +105,22 @@ protected:
                           const SummaryState& summaryState,
                           DeferredLogger& deferred_logger) const;
 
-    std::optional<Scalar>
-    getGroupInjectionTargetRate(const Group& group,
-                                const WellState<Scalar, IndexTraits>& well_state,
-                                const GroupState<Scalar>& group_state,
-                                const Schedule& schedule,
-                                const SummaryState& summaryState,
-                                const InjectorType& injectorType,
-                                Scalar efficiencyFactor,
-                                DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> getGroupInjectionTargetRate(const Group& group,
+                                                      const WellState<Scalar, IndexTraits>& well_state,
+                                                      const GroupState<Scalar>& group_state,
+                                                      const Schedule& schedule,
+                                                      const SummaryState& summaryState,
+                                                      const InjectorType& injectorType,
+                                                      Scalar efficiencyFactor,
+                                                      DeferredLogger& deferred_logger) const;
 
-    Scalar
-    getGroupProductionTargetRate(const Group& group,
-                                 const WellState<Scalar, IndexTraits>& well_state,
-                                 const GroupState<Scalar>& group_state,
-                                 const Schedule& schedule,
-                                 const SummaryState& summaryState,
-                                 Scalar efficiencyFactor,
-                                 DeferredLogger& deferred_logger) const;
+    Scalar getGroupProductionTargetRate(const Group& group,
+                                        const WellState<Scalar, IndexTraits>& well_state,
+                                        const GroupState<Scalar>& group_state,
+                                        const Schedule& schedule,
+                                        const SummaryState& summaryState,
+                                        Scalar efficiencyFactor,
+                                        DeferredLogger& deferred_logger) const;
 
     bool zeroGroupRateTarget(const SummaryState& summary_state,
                              const Schedule& schedule,
@@ -130,6 +132,6 @@ protected:
     const RateConverterType& rateConverter_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELLINTERFACE_FLUID_SYSTEM_HEADER_INCLUDED

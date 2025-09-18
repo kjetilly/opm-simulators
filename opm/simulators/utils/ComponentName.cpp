@@ -26,16 +26,17 @@
 
 #include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
-#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 #include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
+#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 
 #include <cassert>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem, class Indices>
-ComponentName<FluidSystem,Indices>::ComponentName()
+template <class FluidSystem, class Indices>
+ComponentName<FluidSystem, Indices>::ComponentName()
     : names_(Indices::numEq)
 {
     for (unsigned phaseIdx = 0; phaseIdx < FluidSystem::numPhases; ++phaseIdx) {
@@ -44,8 +45,7 @@ ComponentName<FluidSystem,Indices>::ComponentName()
         }
 
         const unsigned canonicalCompIdx = FluidSystem::solventComponentIndex(phaseIdx);
-        names_[FluidSystem::canonicalToActiveCompIdx(canonicalCompIdx)]
-            = FluidSystem::componentName(canonicalCompIdx);
+        names_[FluidSystem::canonicalToActiveCompIdx(canonicalCompIdx)] = FluidSystem::componentName(canonicalCompIdx);
     }
 
     if constexpr (Indices::enableSolvent) {

@@ -32,18 +32,18 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
 class EclipseState;
 #endif
 
 //! \brief Struct holding the parameters for the BlackOilMICPModule class.
-template<class Scalar>
-struct BlackOilMICPParams
-{
+template <class Scalar>
+struct BlackOilMICPParams {
 #if HAVE_ECL_INPUT
-    template<bool enableMICP>
+    template <bool enableMICP>
     void initFromState(const EclipseState& eclState);
 #endif
 

@@ -28,39 +28,40 @@
 #include <string>
 #include <unordered_map>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits> class BlackoilWellModelGeneric;
-namespace data {
-struct GroupData;
-struct GroupGuideRates;
-class GuideRateValue;
-class Wells;
-}
+template <typename Scalar, typename IndexTraits>
+class BlackoilWellModelGeneric;
+namespace data
+{
+    struct GroupData;
+    struct GroupGuideRates;
+    class GuideRateValue;
+    class Wells;
+} // namespace data
 class Group;
 class Well;
 
 /// Class for handling the guide rates in the blackoil well model.
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class BlackoilWellModelGuideRates
 {
 public:
     //! \brief Constructor initializes reference to the well model.
     explicit BlackoilWellModelGuideRates(const BlackoilWellModelGeneric<Scalar, IndexTraits>& wellModel)
         : wellModel_(wellModel)
-    {}
+    {
+    }
 
     //! \brief Calculate guide rate values for all wells.
-    std::unordered_map<std::string, data::GuideRateValue>
-    calculateWellGuideRates(const int reportStepIdx) const;
+    std::unordered_map<std::string, data::GuideRateValue> calculateWellGuideRates(const int reportStepIdx) const;
 
     //! \brief Assign well guide rates.
-    void assignWellGuideRates(data::Wells& wsrpt,
-                              const int    reportStepIdx) const;
+    void assignWellGuideRates(data::Wells& wsrpt, const int reportStepIdx) const;
 
     //! \brief Calculates guide rate for all groups.
-    std::unordered_map<std::string, data::GroupGuideRates>
-    calculateAllGroupGuideRates(const int reportStepIdx) const;
+    std::unordered_map<std::string, data::GroupGuideRates> calculateAllGroupGuideRates(const int reportStepIdx) const;
 
     //! \brief Assign group guide rates.
     void assignGroupGuideRates(const Group& group,
@@ -73,9 +74,9 @@ public:
 private:
     //! \brief Obtain guide rate values.
     void getGuideRateValues(const GuideRate::RateVector& qs,
-                            const bool                   is_inj,
-                            const std::string&           wgname,
-                            data::GuideRateValue&        grval) const;
+                            const bool is_inj,
+                            const std::string& wgname,
+                            data::GuideRateValue& grval) const;
 
     //! \brief Obtain guide rate values for well.
     data::GuideRateValue getGuideRateValues(const Well& well) const;

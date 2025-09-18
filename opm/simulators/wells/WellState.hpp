@@ -21,8 +21,8 @@
 #ifndef OPM_WELLSTATEFULLYIMPLICITBLACKOIL_HEADER_INCLUDED
 #define OPM_WELLSTATEFULLYIMPLICITBLACKOIL_HEADER_INCLUDED
 
-#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/version.hh>
 
 #include <opm/common/ErrorMacros.hpp>
 
@@ -53,21 +53,23 @@
 namespace Opm
 {
 
-template<class Scalar> class ParallelWellInfo;
-template<class Scalar> struct PerforationData;
-template<class Scalar> class ConnFracStatistics;
+template <class Scalar>
+class ParallelWellInfo;
+template <class Scalar>
+struct PerforationData;
+template <class Scalar>
+class ConnFracStatistics;
 class Schedule;
 enum class WellStatus : std::uint8_t;
 
 /// The state of a set of wells, tailored for use by the fully
 /// implicit blackoil simulator.
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class WellState
 {
 public:
-    static const std::uint64_t event_mask = ScheduleEvents::WELL_STATUS_CHANGE
-        | ScheduleEvents::PRODUCTION_UPDATE
-        | ScheduleEvents::INJECTION_UPDATE;
+    static const std::uint64_t event_mask
+        = ScheduleEvents::WELL_STATUS_CHANGE | ScheduleEvents::PRODUCTION_UPDATE | ScheduleEvents::INJECTION_UPDATE;
 
     // TODO: same definition with WellInterface, eventually they should go to a common header file.
 
@@ -82,7 +84,8 @@ public:
 
     explicit WellState(const PhaseUsageInfo<IndexTraits>& pu)
         : phaseUsageInfo_(pu)
-    {}
+    {
+    }
 
     static WellState serializationTestObject(const ParallelWellInfo<Scalar>& pinfo);
 
@@ -132,8 +135,7 @@ public:
                 const SummaryState& summary_state,
                 const bool enable_distributed_wells);
 
-    void setCurrentWellRates(const std::string& wellName,
-                             const std::vector<Scalar>& new_rates)
+    void setCurrentWellRates(const std::string& wellName, const std::vector<Scalar>& new_rates)
     {
         auto& [owner, rates] = this->well_rates.at(wellName);
         if (owner)
@@ -156,33 +158,28 @@ public:
                              std::vector<data::Connection>& to_connections,
                              const Parallel::Communication& comm) const;
 
-    data::Wells
-    report(const int* globalCellIdxMap,
-           const std::function<bool(const int)>& wasDynamicallyClosed) const;
+    data::Wells report(const int* globalCellIdxMap, const std::function<bool(const int)>& wasDynamicallyClosed) const;
 
     void reportConnections(std::vector<data::Connection>& connections,
                            std::size_t well_index,
                            const int* globalCellIdxMap) const;
 
     /// init the MS well related.
-    void initWellStateMSWell(const std::vector<Well>& wells_ecl,
-                             const WellState* prev_well_state);
+    void initWellStateMSWell(const std::vector<Well>& wells_ecl, const WellState* prev_well_state);
 
-    static void calculateSegmentRates(const ParallelWellInfo<Scalar>&      pw_info,
+    static void calculateSegmentRates(const ParallelWellInfo<Scalar>& pw_info,
                                       const std::vector<std::vector<int>>& segment_inlets,
                                       const std::vector<std::vector<int>>& segment_perforations,
-                                      const std::vector<Scalar>&           perforation_rates,
-                                      const int                            np,
-                                      const int                            segment,
-                                      std::vector<Scalar>&                 segment_rates);
+                                      const std::vector<Scalar>& perforation_rates,
+                                      const int np,
+                                      const int segment,
+                                      std::vector<Scalar>& segment_rates);
 
 
     void communicateGroupRates(const Parallel::Communication& comm);
 
-    void updateGlobalIsGrup(const Parallel::Communication& comm,
-                            const std::vector<WellStatus>& well_status);
-    void updateEfficiencyScalingFactor(const std::string& wellName,
-                                       const Scalar value);
+    void updateGlobalIsGrup(const Parallel::Communication& comm, const std::vector<WellStatus>& well_status);
+    void updateEfficiencyScalingFactor(const std::string& wellName, const Scalar value);
 
     bool isInjectionGrup(const std::string& name) const
     {
@@ -208,9 +205,7 @@ public:
     // reset current_alq and update default_alq. ALQ is used for
     // constant lift gas injection and for gas lift optimization
     // (THP controlled wells).
-    void updateWellsDefaultALQ(const Schedule& schedule,
-                              const int report_step,
-                              const SummaryState& summary_state);
+    void updateWellsDefaultALQ(const Schedule& schedule, const int report_step, const SummaryState& summary_state);
 
     void gliftTimeStepInit()
     {
@@ -230,12 +225,12 @@ public:
         return this->global_well_info.value().well_name(index);
     }
 
-    bool wellIsOwned(std::size_t well_index,
-                     const std::string& wellName) const;
+    bool wellIsOwned(std::size_t well_index, const std::string& wellName) const;
 
     bool wellIsOwned(const std::string& wellName) const;
 
-    bool isRank0() const {
+    bool isRank0() const
+    {
         return this->global_well_info.value().isRank0();
     }
 
@@ -253,9 +248,13 @@ public:
 
     /// One rate per well and phase.
     std::vector<Scalar>& wellRates(std::size_t well_index)
-    { return this->wells_[well_index].surface_rates; }
+    {
+        return this->wells_[well_index].surface_rates;
+    }
     const std::vector<Scalar>& wellRates(std::size_t well_index) const
-    { return this->wells_[well_index].surface_rates; }
+    {
+        return this->wells_[well_index].surface_rates;
+    }
 
     const std::string& name(std::size_t well_index) const
     {
@@ -314,7 +313,7 @@ public:
 
     bool operator==(const WellState&) const;
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(well_rates);
@@ -333,8 +332,11 @@ public:
         serializer(permanently_inactive_well_names_);
     }
 
-    bool is_permanently_inactive_well(const std::string& wname) const {
-        return std::find(this->permanently_inactive_well_names_.begin(), this->permanently_inactive_well_names_.end(), wname) != this->permanently_inactive_well_names_.end();
+    bool is_permanently_inactive_well(const std::string& wname) const
+    {
+        return std::find(
+                   this->permanently_inactive_well_names_.begin(), this->permanently_inactive_well_names_.end(), wname)
+            != this->permanently_inactive_well_names_.end();
     }
 
 private:
@@ -363,10 +365,7 @@ private:
     // Keep track of permanently inactive well names
     std::vector<std::string> permanently_inactive_well_names_;
 
-    data::Segment
-    reportSegmentResults(const int         well_id,
-                         const int         seg_ix,
-                         const int         seg_no) const;
+    data::Segment reportSegmentResults(const int well_id, const int seg_ix, const int seg_no) const;
 
 
     /// Allocate and initialize if wells is non-null.
@@ -401,22 +400,20 @@ private:
                             const std::vector<PerforationData<Scalar>>& well_perf_data,
                             const SummaryState& summary_state);
 
-    static void calculateSegmentRatesBeforeSum(const ParallelWellInfo<Scalar>&      pw_info,
+    static void calculateSegmentRatesBeforeSum(const ParallelWellInfo<Scalar>& pw_info,
                                                const std::vector<std::vector<int>>& segment_inlets,
                                                const std::vector<std::vector<int>>& segment_perforations,
-                                               const std::vector<Scalar>&           perforation_rates,
-                                               const int                            np,
-                                               const int                            segment,
-                                               std::vector<Scalar>&                 segment_rates);
+                                               const std::vector<Scalar>& perforation_rates,
+                                               const int np,
+                                               const int segment,
+                                               std::vector<Scalar>& segment_rates);
 
-    void reportConnectionFactors(const std::size_t well_index,
-                                 std::vector<data::Connection>& connections) const;
+    void reportConnectionFactors(const std::size_t well_index, std::vector<data::Connection>& connections) const;
 
     void reportConnectionPressuresAndRates(const std::size_t well_index,
                                            std::vector<data::Connection>& connections) const;
 
-    void reportConnectionFilterCake(const std::size_t well_index,
-                                    std::vector<data::Connection>& connections) const;
+    void reportConnectionFilterCake(const std::size_t well_index, std::vector<data::Connection>& connections) const;
 
     void reportFractureStatistics(const std::vector<ConnFracStatistics<Scalar>>& stats,
                                   std::vector<data::Connection>& connections) const;

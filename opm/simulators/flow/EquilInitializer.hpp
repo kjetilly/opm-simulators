@@ -41,7 +41,8 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup EclBlackOilSimulator
@@ -99,8 +100,7 @@ public:
 
 
     template <class EclMaterialLawManager>
-    EquilInitializer(const Simulator& simulator,
-                     EclMaterialLawManager& materialLawManager)
+    EquilInitializer(const Simulator& simulator, EclMaterialLawManager& materialLawManager)
         : simulator_(simulator)
     {
         const auto& vanguard = simulator.vanguard();
@@ -110,11 +110,8 @@ public:
         using ElementMapper = GetPropType<TypeTag, Properties::ElementMapper>;
         using Grid = GetPropType<TypeTag, Properties::Grid>;
         using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
-        using Initializer = EQUIL::DeckDependent::InitialStateComputer<FluidSystem,
-                                                                       Grid,
-                                                                       GridView,
-                                                                       ElementMapper,
-                                                                       CartesianIndexMapper>;
+        using Initializer = EQUIL::DeckDependent::
+            InitialStateComputer<FluidSystem, Grid, GridView, ElementMapper, CartesianIndexMapper>;
 
         Initializer initialState(materialLawManager,
                                  eclState,
@@ -182,8 +179,8 @@ public:
             // set the salt concentration
             if constexpr (enableBrine)
                 fluidState.setSaltConcentration(initialState.saltConcentration()[elemIdx]);
-                
-            //set the (solid) salt saturation
+
+            // set the (solid) salt saturation
             if constexpr (enableSaltPrecipitation)
                 fluidState.setSaltSaturation(initialState.saltSaturation()[elemIdx]);
         }

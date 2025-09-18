@@ -18,26 +18,27 @@
 */
 
 #include <config.h>
-#include <opm/common/TimingMacros.hpp>
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 #include <dune/common/shared_ptr.hh>
 
 #include <opm/simulators/linalg/PreconditionerFactory.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
 
-#include <opm/simulators/linalg/gpubridge/GpuBridge.hpp>
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/CprCreation.hpp>
+#include <opm/simulators/linalg/gpubridge/GpuBridge.hpp>
 
 #include <opm/simulators/linalg/gpubridge/Misc.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-using Opm::OpmLog;
 using Dune::Timer;
+using Opm::OpmLog;
 
 template <class Scalar, unsigned int block_size>
 CprCreation<Scalar, block_size>::CprCreation()
@@ -46,8 +47,8 @@ CprCreation<Scalar, block_size>::CprCreation()
 }
 
 template <class Scalar, unsigned int block_size>
-bool CprCreation<Scalar, block_size>::
-create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
+bool
+CprCreation<Scalar, block_size>::create_preconditioner_amg(BlockedMatrix<Scalar>* mat_)
 {
     mat = mat_;
     cprNb = mat_->Nb;
@@ -60,11 +61,11 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
     coarse_y.resize(cprNb);
 
     static int gpusolves = 0;
-    const int step = 30;//Extracted from OPM: this->parameters_[activeSolverNum_].cpr_reuse_interval_;
+    const int step = 30; // Extracted from OPM: this->parameters_[activeSolverNum_].cpr_reuse_interval_;
 
     bool create = ((gpusolves % step) == 0);
 
-    if(create) {
+    if (create) {
         recalculate_aggregates = true;
         weights.resize(cprN);
     }
@@ -73,7 +74,7 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         Scalar rhs[] = {0, 0, 0};
         rhs[pressure_idx] = 1;
 
-        if(create) {
+        if (create) {
             // find diagonal index for each row
             if (diagIndices[0].empty()) {
                 diagIndices[0].resize(cprNb);
@@ -88,12 +89,12 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
             // calculate weights for each row
             for (int row = 0; row < cprNb; ++row) {
                 // solve to find weights
-                Scalar *row_weights = weights.data() + block_size * row; // weights for this row
+                Scalar* row_weights = weights.data() + block_size * row; // weights for this row
                 solve_transposed_3x3(mat->nnzValues + block_size * block_size * diagIndices[0][row], rhs, row_weights);
 
                 // normalize weights for this row
                 Scalar abs_max = get_absmax(row_weights, block_size);
-                for(unsigned int i = 0; i < block_size; i++){
+                for (unsigned int i = 0; i < block_size; i++) {
                     row_weights[i] /= abs_max;
                 }
             }
@@ -105,8 +106,8 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
             int start = mat->rowPointers[row];
             int end = mat->rowPointers[row + 1];
             for (int idx = start; idx < end; ++idx) {
-                Scalar *block = mat->nnzValues + idx * block_size * block_size;
-                Scalar *row_weights = weights.data() + block_size * row;
+                Scalar* block = mat->nnzValues + idx * block_size * block_size;
+                Scalar* row_weights = weights.data() + block_size * row;
                 Scalar value = 0.0;
                 for (unsigned int i = 0; i < block_size; ++i) {
                     value += block[block_size * i + pressure_idx] * row_weights[i];
@@ -125,11 +126,11 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
         if (recalculate_aggregates) {
             dune_coarse = std::make_unique<DuneMat>(cprNb, cprNb, cprnnzb, DuneMat::row_wise);
 
-//             typedef DuneMat::CreateIterator Iter;
+            //             typedef DuneMat::CreateIterator Iter;
             using Iter = typename DuneMat::CreateIterator;
 
             // setup sparsity pattern
-            for(Iter row = dune_coarse->createbegin(); row != dune_coarse->createend(); ++row){
+            for (Iter row = dune_coarse->createbegin(); row != dune_coarse->createend(); ++row) {
                 int start = mat->rowPointers[row.index()];
                 int end = mat->rowPointers[row.index() + 1];
                 for (int idx = start; idx < end; ++idx) {
@@ -154,18 +155,22 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
 
             Opm::PropertyTree property_tree;
 
-            //NOTE-RN: FIX-BUG MSW wells not converging similarly with OPM!
+            // NOTE-RN: FIX-BUG MSW wells not converging similarly with OPM!
             property_tree.put("beta", 0);
             property_tree.put("prolongationdamping", 1);
-            property_tree.put("alpha",1.0/3.0);
+            property_tree.put("alpha", 1.0 / 3.0);
 
             // The matrix has a symmetric sparsity pattern, but the values are not symmetric
             // Yet a SymmetricDependency is used in AMGCPR
             // An UnSymmetricCriterion is also available
-            // using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<DuneMat, Dune::Amg::FirstDiagonal> >;
-            using CriterionBase = Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricDependency<DuneMat, Dune::Amg::FirstDiagonal>>;
+            // using Criterion = Dune::Amg::CoarsenCriterion<Dune::Amg::UnSymmetricCriterion<DuneMat,
+            // Dune::Amg::FirstDiagonal> >;
+            using CriterionBase
+                = Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricDependency<DuneMat, Dune::Amg::FirstDiagonal>>;
             using Criterion = Dune::Amg::CoarsenCriterion<CriterionBase>;
-            const Criterion c = Opm::AMGHelper<MatrixOperator,Dune::Amg::SequentialInformation,DuneMat,DuneVec>::criterion(property_tree);
+            const Criterion c
+                = Opm::AMGHelper<MatrixOperator, Dune::Amg::SequentialInformation, DuneMat, DuneVec>::criterion(
+                    property_tree);
             num_pre_smooth_steps = c.getNoPreSmoothSteps();
             num_post_smooth_steps = c.getNoPostSmoothSteps();
 
@@ -200,13 +205,13 @@ create_preconditioner_amg(BlockedMatrix<Scalar> *mat_)
 }
 
 template <class Scalar, unsigned int block_size>
-void CprCreation<Scalar, block_size>::
-analyzeHierarchy()
+void
+CprCreation<Scalar, block_size>::analyzeHierarchy()
 {
     const typename DuneAmg::ParallelMatrixHierarchy& matrixHierarchy = dune_amg->matrices();
 
     // store coarsest AMG level in umfpack format, also performs LU decomposition
-    if constexpr (std::is_same_v<Scalar,float>) {
+    if constexpr (std::is_same_v<Scalar, float>) {
         OPM_THROW(std::runtime_error, "Cannot use CPR with float Scalar due to UMFPACK");
     } else {
         umfpack.setMatrix((*matrixHierarchy.coarsest()).getmat());
@@ -219,7 +224,7 @@ analyzeHierarchy()
     diagIndices.resize(num_levels);
 
     Amatrices.reserve(num_levels);
-    Rmatrices.reserve(num_levels - 1);  // coarsest level does not need one
+    Rmatrices.reserve(num_levels - 1); // coarsest level does not need one
     invDiags.reserve(num_levels);
 
     Amatrices.clear();
@@ -228,7 +233,7 @@ analyzeHierarchy()
     // matrixIter.dereference() returns MatrixAdapter
     // matrixIter.dereference().getmat() returns BCRSMat
     typename DuneAmg::ParallelMatrixHierarchy::ConstIterator matrixIter = matrixHierarchy.finest();
-    for(int level = 0; level < num_levels; ++matrixIter, ++level) {
+    for (int level = 0; level < num_levels; ++matrixIter, ++level) {
         const auto& A = matrixIter.dereference().getmat();
         level_sizes[level] = A.N();
         diagIndices[level].reserve(A.N());
@@ -250,7 +255,8 @@ analyzeHierarchy()
             }
         }
 
-        Opm::GpuBridge<DuneMat, DuneVec, 1>::copySparsityPatternFromISTL(A, Amatrices.back().rowPointers, Amatrices.back().colIndices);
+        Opm::GpuBridge<DuneMat, DuneVec, 1>::copySparsityPatternFromISTL(
+            A, Amatrices.back().rowPointers, Amatrices.back().colIndices);
 
         // compute inverse diagonal values for current level
         invDiags.emplace_back(A.N());
@@ -262,8 +268,8 @@ analyzeHierarchy()
 }
 
 template <class Scalar, unsigned int block_size>
-void CprCreation<Scalar, block_size>::
-analyzeAggregateMaps() 
+void
+CprCreation<Scalar, block_size>::analyzeAggregateMaps()
 {
     PcolIndices.resize(num_levels - 1);
     Rmatrices.clear();
@@ -271,18 +277,18 @@ analyzeAggregateMaps()
     const typename DuneAmg::AggregatesMapList& aggregatesMaps = dune_amg->aggregatesMaps();
 
     typename DuneAmg::AggregatesMapList::const_iterator mapIter = aggregatesMaps.begin();
-    for(int level = 0; level < num_levels - 1; ++mapIter, ++level) {
-        typename DuneAmg::AggregatesMap *map = *mapIter;
+    for (int level = 0; level < num_levels - 1; ++mapIter, ++level) {
+        typename DuneAmg::AggregatesMap* map = *mapIter;
 
-        Rmatrices.emplace_back(level_sizes[level+1], level_sizes[level], level_sizes[level]);
+        Rmatrices.emplace_back(level_sizes[level + 1], level_sizes[level], level_sizes[level]);
         std::fill(Rmatrices.back().nnzValues.begin(), Rmatrices.back().nnzValues.end(), 1.0);
 
         // get indices for each row of P and R
-        std::vector<std::vector<unsigned> > indicesR(level_sizes[level+1]);
+        std::vector<std::vector<unsigned>> indicesR(level_sizes[level + 1]);
         PcolIndices[level].resize(level_sizes[level]);
 
         using AggregateIterator = typename DuneAmg::AggregatesMap::const_iterator;
-        for(AggregateIterator ai = map->begin(); ai != map->end(); ++ai){
+        for (AggregateIterator ai = map->begin(); ai != map->end(); ++ai) {
             if (*ai != DuneAmg::AggregatesMap::ISOLATED) {
                 const long int diff = ai - map->begin();
                 PcolIndices[level][diff] = *ai;
@@ -302,13 +308,13 @@ analyzeAggregateMaps()
     }
 }
 
-#define INSTANTIATE_TYPE(T)          \
-    template class CprCreation<T,1>; \
-    template class CprCreation<T,2>; \
-    template class CprCreation<T,3>; \
-    template class CprCreation<T,4>; \
-    template class CprCreation<T,5>; \
-    template class CprCreation<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class CprCreation<T, 1>;                                                                                  \
+    template class CprCreation<T, 2>;                                                                                  \
+    template class CprCreation<T, 3>;                                                                                  \
+    template class CprCreation<T, 4>;                                                                                  \
+    template class CprCreation<T, 5>;                                                                                  \
+    template class CprCreation<T, 6>;
 
 INSTANTIATE_TYPE(double)
 
@@ -316,6 +322,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-} // namespace Opm
-
-
+} // namespace Opm::Accelerator

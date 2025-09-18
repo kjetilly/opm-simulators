@@ -28,25 +28,29 @@
 #include "config.h"
 
 #include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
 #include <opm/models/ncp/ncpmodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/obstacleproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct ObstacleProblem
-{ using InheritsFrom = std::tuple<ObstacleBaseProblem, NcpModel>; };
+    struct ObstacleProblem {
+        using InheritsFrom = std::tuple<ObstacleBaseProblem, NcpModel>;
+    };
 
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::ObstacleProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

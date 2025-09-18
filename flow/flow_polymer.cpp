@@ -18,39 +18,45 @@
 
 #include <flow/flow_polymer.hpp>
 
-#include <opm/material/common/ResetLocale.hpp>
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowPolymerProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnablePolymer<TypeTag, TTag::FlowPolymerProblem> {
-    static constexpr bool value = true;
-};
-}}
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowPolymerProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnablePolymer<TypeTag, TTag::FlowPolymerProblem> {
+        static constexpr bool value = true;
+    };
+} // namespace Properties
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowPolymerProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowPolymerProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowPolymerMainStandalone(int argc, char** argv)
+int
+flowPolymerMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowPolymerProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -60,4 +66,4 @@ int flowPolymerMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

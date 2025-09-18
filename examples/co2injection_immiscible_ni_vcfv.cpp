@@ -28,35 +28,41 @@
  */
 #include "config.h"
 
+#include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
-#include "problems/co2injectionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionImmiscibleNiVcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>; };
+    struct Co2InjectionImmiscibleNiVcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>;
+    };
 
 } // namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleNiVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleNiVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::Co2InjectionImmiscibleNiVcfvProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableEnergy<TypeTag, TTag::Co2InjectionImmiscibleNiVcfvProblem> {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Properties
 
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using VcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionImmiscibleNiVcfvProblem;
     return Opm::start<VcfvProblemTypeTag>(argc, argv, true);

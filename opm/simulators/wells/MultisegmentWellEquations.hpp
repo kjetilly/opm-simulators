@@ -22,32 +22,39 @@
 #ifndef OPM_MULTISEGMENTWELL_EQUATIONS_HEADER_INCLUDED
 #define OPM_MULTISEGMENTWELL_EQUATIONS_HEADER_INCLUDED
 
-#include <opm/simulators/utils/ParallelCommunication.hpp>
-#include <opm/simulators/wells/ParallelWellInfo.hpp>
-#include <opm/simulators/wells/MSWellHelpers.hpp>
 #include <dune/common/fmatrix.hh>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
+#include <opm/simulators/utils/ParallelCommunication.hpp>
+#include <opm/simulators/wells/MSWellHelpers.hpp>
+#include <opm/simulators/wells/ParallelWellInfo.hpp>
 
 #include <memory>
 
-namespace Dune {
-template<class M> class UMFPack;
+namespace Dune
+{
+template <class M>
+class UMFPack;
 }
 
 namespace Opm
 {
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq> class MultisegmentWellEquationAccess;
-template<class Scalar, typename IndexTraits> class MultisegmentWellGeneric;
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+class MultisegmentWellEquationAccess;
+template <class Scalar, typename IndexTraits>
+class MultisegmentWellGeneric;
 #if COMPILE_GPU_BRIDGE
-template<class Scalar> class WellContributions;
+template <class Scalar>
+class WellContributions;
 #endif
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
 class MultisegmentWellEquations
 {
 public:
@@ -56,21 +63,22 @@ public:
     //  B  D ]   x_well]      res_well]
 
     // the vector type for the res_well and x_well
-    using VectorBlockWellType = Dune::FieldVector<Scalar,numWellEq>;
+    using VectorBlockWellType = Dune::FieldVector<Scalar, numWellEq>;
     using BVectorWell = Dune::BlockVector<VectorBlockWellType>;
 
-    using VectorBlockType = Dune::FieldVector<Scalar,numEq>;
+    using VectorBlockType = Dune::FieldVector<Scalar, numEq>;
     using BVector = Dune::BlockVector<VectorBlockType>;
 
     // the matrix type for the diagonal matrix D
-    using DiagMatrixBlockWellType = Dune::FieldMatrix<Scalar,numWellEq,numWellEq>;
+    using DiagMatrixBlockWellType = Dune::FieldMatrix<Scalar, numWellEq, numWellEq>;
     using DiagMatWell = Dune::BCRSMatrix<DiagMatrixBlockWellType>;
 
     // the matrix type for the non-diagonal matrix B and C^T
-    using OffDiagMatrixBlockWellType = Dune::FieldMatrix<Scalar,numWellEq,numEq>;
+    using OffDiagMatrixBlockWellType = Dune::FieldMatrix<Scalar, numWellEq, numEq>;
     using OffDiagMatWell = Dune::BCRSMatrix<OffDiagMatrixBlockWellType>;
 
-    MultisegmentWellEquations(const MultisegmentWellGeneric<Scalar, IndexTraits>& well, const ParallelWellInfo<Scalar>& pw_info);
+    MultisegmentWellEquations(const MultisegmentWellGeneric<Scalar, IndexTraits>& well,
+                              const ParallelWellInfo<Scalar>& pw_info);
 
     //! \brief Setup sparsity pattern for the matrices.
     //! \param numPerfs Number of perforations
@@ -110,11 +118,11 @@ public:
 #endif
 
     //! \brief Add the matrices of this well to the sparse matrix adapter.
-    template<class SparseMatrixAdapter>
+    template <class SparseMatrixAdapter>
     void extract(SparseMatrixAdapter& jacobian) const;
 
     //! \brief Extract CPR pressure matrix.
-    template<class PressureMatrix>
+    template <class PressureMatrix>
     void extractCPRPressureMatrix(PressureMatrix& jacobian,
                                   const BVector& weights,
                                   const int pressureVarIndex,
@@ -132,8 +140,8 @@ public:
         return resWell_;
     }
 
-  private:
-    friend class MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,numEq>;
+private:
+    friend class MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, numEq>;
     // two off-diagonal matrices
     OffDiagMatWell duneB_;
     OffDiagMatWell duneC_;
@@ -159,6 +167,6 @@ public:
     mswellhelpers::ParallellMSWellB<OffDiagMatWell> parallelB_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_MULTISEGMENTWELLWELL_EQUATIONS_HEADER_INCLUDED

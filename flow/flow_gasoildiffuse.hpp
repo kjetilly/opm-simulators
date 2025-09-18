@@ -17,7 +17,8 @@
 #ifndef FLOW_GASOILDIFFUSE_HPP
 #define FLOW_GASOILDIFFUSE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasOilDiffuseMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowGasOilDiffuseMain(int argc, char** argv, bool outputCout, bool outputFil
 //! \brief Main function used in flow_gasoil binary.
 int flowGasOilDiffuseMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_GASOILDIFFUSE_HPP

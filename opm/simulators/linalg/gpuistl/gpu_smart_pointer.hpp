@@ -331,36 +331,47 @@ make_view(const std::unique_ptr<T, Deleter>& ptr)
  * @brief A value stored with a pointer interface.
  * Can be used to wrap objects in GPU kernels that were otherwise stored as pointers
  */
-template<class T>
-class ValueAsPointer {
+template <class T>
+class ValueAsPointer
+{
 public:
     using element_type = T;
 
-    ValueAsPointer(const T& t) : value(t) {}
+    ValueAsPointer(const T& t)
+        : value(t)
+    {
+    }
 
-    OPM_HOST_DEVICE T* operator->() {
+    OPM_HOST_DEVICE T* operator->()
+    {
         return &value;
     }
 
-    OPM_HOST_DEVICE T* get() {
+    OPM_HOST_DEVICE T* get()
+    {
         return &value;
     }
 
-    OPM_HOST_DEVICE const T* operator->() const {
+    OPM_HOST_DEVICE const T* operator->() const
+    {
         return &value;
     }
 
-    OPM_HOST_DEVICE const T* get() const {
+    OPM_HOST_DEVICE const T* get() const
+    {
         return &value;
     }
 
-    OPM_HOST_DEVICE T& operator*() {
+    OPM_HOST_DEVICE T& operator*()
+    {
         return value;
     }
 
-    OPM_HOST_DEVICE const T& operator*() const {
+    OPM_HOST_DEVICE const T& operator*() const
+    {
         return value;
     }
+
 private:
     T value;
 };

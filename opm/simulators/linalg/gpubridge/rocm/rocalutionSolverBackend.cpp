@@ -17,14 +17,14 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <config.h>
 #include <cmath>
-#include <sstream>
+#include <config.h>
 #include <fmt/format.h>
+#include <sstream>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 // WellContributions are included via the solver
 // MultisegmentWellContribution includes the cuda runtime if found by CMake
@@ -39,35 +39,35 @@
 
 #include <opm/simulators/linalg/gpubridge/rocm/rocalutionSolverBackend.hpp>
 
-#include <rocalution.hpp>
 #include <base/matrix_formats_ind.hpp> // check if blocks are interpreted as row-major or column-major
+#include <rocalution.hpp>
 
 #ifdef HIP_HAVE_CUDA_DEFINED
 #define HAVE_CUDA HIP_HAVE_CUDA_DEFINED
 #undef HIP_HAVE_CUDA_DEFINED
 #endif
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-rocalutionSolverBackend<Scalar,block_size>::
-rocalutionSolverBackend(int verbosity_, int maxit_, Scalar tolerance_)
+template <class Scalar, unsigned int block_size>
+rocalutionSolverBackend<Scalar, block_size>::rocalutionSolverBackend(int verbosity_, int maxit_, Scalar tolerance_)
     : Base(verbosity_, maxit_, tolerance_)
 {
     rocalution::init_rocalution();
     rocalution::info_rocalution();
-    using BCGS = rocalution::BiCGStab<Mat,Vec,Scalar>;
+    using BCGS = rocalution::BiCGStab<Mat, Vec, Scalar>;
     roc_solver = std::make_unique<BCGS>();
-    using ILU = rocalution::ILU<Mat,Vec,Scalar>;
+    using ILU = rocalution::ILU<Mat, Vec, Scalar>;
     roc_prec = std::make_unique<ILU>();
     roc_solver->Verbose(0);
     roc_solver->Init(/*abs_tol=*/1e-15, tolerance, /*divergence_tol=*/1e3, maxit);
 }
 
-template<class Scalar, unsigned int block_size>
-rocalutionSolverBackend<Scalar,block_size>::~rocalutionSolverBackend()
+template <class Scalar, unsigned int block_size>
+rocalutionSolverBackend<Scalar, block_size>::~rocalutionSolverBackend()
 {
     // normally, these rocalution variables are destroyed after the destructor automatically,
     // but sometimes it segfaults, both with test_rocalutionSolver and with an actual case
@@ -77,9 +77,9 @@ rocalutionSolverBackend<Scalar,block_size>::~rocalutionSolverBackend()
     rocalution::stop_rocalution();
 }
 
-template<class Scalar, unsigned int block_size>
-void rocalutionSolverBackend<Scalar,block_size>::
-initialize(BlockedMatrix<Scalar>* matrix)
+template <class Scalar, unsigned int block_size>
+void
+rocalutionSolverBackend<Scalar, block_size>::initialize(BlockedMatrix<Scalar>* matrix)
 {
     this->Nb = matrix->Nb;
     this->N = Nb * block_size;
@@ -96,13 +96,13 @@ initialize(BlockedMatrix<Scalar>* matrix)
     initialized = true;
 } // end initialize()
 
-template<class Scalar, unsigned int block_size>
-void rocalutionSolverBackend<Scalar,block_size>::
-convert_matrix(BlockedMatrix<Scalar>* matrix)
+template <class Scalar, unsigned int block_size>
+void
+rocalutionSolverBackend<Scalar, block_size>::convert_matrix(BlockedMatrix<Scalar>* matrix)
 {
     Timer t;
 
-    for (int i = 0; i < Nb+1; ++i) {
+    for (int i = 0; i < Nb + 1; ++i) {
         tmp_rowpointers[i] = matrix->rowPointers[i];
     }
     for (int i = 0; i < nnzb; ++i) {
@@ -136,9 +136,9 @@ convert_matrix(BlockedMatrix<Scalar>* matrix)
 
 // copy result to host memory
 // caller must be sure that x is a valid array
-template<class Scalar, unsigned int block_size>
-void rocalutionSolverBackend<Scalar,block_size>::
-get_result(Scalar* x)
+template <class Scalar, unsigned int block_size>
+void
+rocalutionSolverBackend<Scalar, block_size>::get_result(Scalar* x)
 {
     Timer t;
 
@@ -151,21 +151,22 @@ get_result(Scalar* x)
     }
 } // end get_result()
 
-template<class Scalar, unsigned int block_size>
-SolverStatus rocalutionSolverBackend<Scalar,block_size>::
-solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-             Scalar* b,
-             [[maybe_unused]] std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-             [[maybe_unused]] WellContributions<Scalar>& wellContribs,
-             GpuResult& res)
+template <class Scalar, unsigned int block_size>
+SolverStatus
+rocalutionSolverBackend<Scalar, block_size>::solve_system(
+    std::shared_ptr<BlockedMatrix<Scalar>> matrix,
+    Scalar* b,
+    [[maybe_unused]] std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
+    [[maybe_unused]] WellContributions<Scalar>& wellContribs,
+    GpuResult& res)
 {
     if (initialized == false) {
         initialize(matrix.get());
     }
 
-    tmp_rowpointers = new int[Nb+1];
+    tmp_rowpointers = new int[Nb + 1];
     tmp_colindices = new int[nnzb];
-    tmp_nnzvalues = new Scalar[nnzb*block_size*block_size];
+    tmp_nnzvalues = new Scalar[nnzb * block_size * block_size];
 
     convert_matrix(matrix.get());
 
@@ -175,10 +176,7 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
 
     // this also transfers ownership to the allocated memory to rocalution
     // and sets the tmp_* pointers to nullptr
-    roc_mat.SetDataPtrBCSR(&tmp_rowpointers,
-                           &tmp_colindices,
-                           &tmp_nnzvalues,
-                           "matrix A", nnzb, Nb, Nb, block_size);
+    roc_mat.SetDataPtrBCSR(&tmp_rowpointers, &tmp_colindices, &tmp_nnzvalues, "matrix A", nnzb, Nb, Nb, block_size);
 
     roc_mat.MoveToAccelerator();
     roc_x.MoveToAccelerator();
@@ -215,7 +213,7 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     res.elapsed = t_solve.stop();
     res.iterations = roc_solver->GetIterationCount();
     res.reduction = roc_solver->GetCurrentResidual() / norm_0;
-    res.conv_rate  = static_cast<double>(pow(res.reduction, 1.0 / res.iterations));
+    res.conv_rate = static_cast<double>(pow(res.reduction, 1.0 / res.iterations));
     res.converged = (roc_solver->GetSolverStatus() == 2);
 
     // copy solution vector to host vector
@@ -226,24 +224,21 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
 
     if (verbosity >= 1) {
         std::ostringstream out;
-        out << "=== converged: " << res.converged
-            << ", conv_rate: " << res.conv_rate
-            << ", time: " << res.elapsed <<
-            ", time per iteration: " << res.elapsed / res.iterations
-            << ", iterations: " << res.iterations;
+        out << "=== converged: " << res.converged << ", conv_rate: " << res.conv_rate << ", time: " << res.elapsed
+            << ", time per iteration: " << res.elapsed / res.iterations << ", iterations: " << res.iterations;
         OpmLog::info(out.str());
     }
 
     return SolverStatus::GPU_SOLVER_SUCCESS;
 }
 
-#define INSTANTIATE_TYPE(T)                      \
-    template class rocalutionSolverBackend<T,1>; \
-    template class rocalutionSolverBackend<T,2>; \
-    template class rocalutionSolverBackend<T,3>; \
-    template class rocalutionSolverBackend<T,4>; \
-    template class rocalutionSolverBackend<T,5>; \
-    template class rocalutionSolverBackend<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class rocalutionSolverBackend<T, 1>;                                                                      \
+    template class rocalutionSolverBackend<T, 2>;                                                                      \
+    template class rocalutionSolverBackend<T, 3>;                                                                      \
+    template class rocalutionSolverBackend<T, 4>;                                                                      \
+    template class rocalutionSolverBackend<T, 5>;                                                                      \
+    template class rocalutionSolverBackend<T, 6>;
 
 INSTANTIATE_TYPE(double)
 

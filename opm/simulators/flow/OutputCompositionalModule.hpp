@@ -31,10 +31,10 @@
 
 #include <opm/simulators/utils/moduleVersion.hpp>
 
-#include <opm/common/Exceptions.hpp>
 #include <opm/common/ErrorMacros.hpp>
-#include <opm/common/TimingMacros.hpp>
+#include <opm/common/Exceptions.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
 
@@ -59,7 +59,8 @@
 #include <vector>
 
 
-namespace Opm {
+namespace Opm
+{
 
 // forward declaration
 template <class TypeTag>
@@ -94,37 +95,38 @@ public:
     OutputCompositionalModule(const Simulator& simulator,
                               const SummaryConfig& smryCfg,
                               const CollectDataToIORankType& collectToIORank)
-        : BaseType(simulator.vanguard().eclState(),
-                   simulator.vanguard().schedule(),
-                   smryCfg,
-                   simulator.vanguard().summaryState(),
-                   moduleVersionName(),
-                   [this](const int idx)
-                   { return simulator_.problem().eclWriter().collectOnIORank().localIdxToGlobalIdx(idx); },
-                   simulator.vanguard().grid().comm(),
-                   getPropValue<TypeTag, Properties::EnableEnergy>(),
-                   getPropValue<TypeTag, Properties::EnableTemperature>(),
-                   getPropValue<TypeTag, Properties::EnableMech>(),
-                   getPropValue<TypeTag, Properties::EnableSolvent>(),
-                   getPropValue<TypeTag, Properties::EnablePolymer>(),
-                   getPropValue<TypeTag, Properties::EnableFoam>(),
-                   getPropValue<TypeTag, Properties::EnableBrine>(),
-                   getPropValue<TypeTag, Properties::EnableSaltPrecipitation>(),
-                   getPropValue<TypeTag, Properties::EnableExtbo>(),
-                   getPropValue<TypeTag, Properties::EnableMICP>())
+        : BaseType(
+              simulator.vanguard().eclState(),
+              simulator.vanguard().schedule(),
+              smryCfg,
+              simulator.vanguard().summaryState(),
+              moduleVersionName(),
+              [this](const int idx) {
+                  return simulator_.problem().eclWriter().collectOnIORank().localIdxToGlobalIdx(idx);
+              },
+              simulator.vanguard().grid().comm(),
+              getPropValue<TypeTag, Properties::EnableEnergy>(),
+              getPropValue<TypeTag, Properties::EnableTemperature>(),
+              getPropValue<TypeTag, Properties::EnableMech>(),
+              getPropValue<TypeTag, Properties::EnableSolvent>(),
+              getPropValue<TypeTag, Properties::EnablePolymer>(),
+              getPropValue<TypeTag, Properties::EnableFoam>(),
+              getPropValue<TypeTag, Properties::EnableBrine>(),
+              getPropValue<TypeTag, Properties::EnableSaltPrecipitation>(),
+              getPropValue<TypeTag, Properties::EnableExtbo>(),
+              getPropValue<TypeTag, Properties::EnableMICP>())
         , simulator_(simulator)
     {
         for (auto& region_pair : this->regions_) {
             this->createLocalRegion_(region_pair.second);
         }
 
-        auto isCartIdxOnThisRank = [&collectToIORank](const int idx) {
-            return collectToIORank.isCartIdxOnThisRank(idx);
-        };
+        auto isCartIdxOnThisRank
+            = [&collectToIORank](const int idx) { return collectToIORank.isCartIdxOnThisRank(idx); };
 
         this->setupBlockData(isCartIdxOnThisRank);
 
-        if (! Parameters::Get<Parameters::OwnerCellsFirst>()) {
+        if (!Parameters::Get<Parameters::OwnerCellsFirst>()) {
             const std::string msg = "The output code does not support --owner-cells-first=false.";
             if (collectToIORank.isIORank()) {
                 OpmLog::error(msg);
@@ -139,12 +141,13 @@ public:
             // Note: We explicitly use decltype(auto) here because the
             // default scheme (-> auto) will deduce an undesirable type.  We
             // need the "reference to vector" semantics in this instance.
-            this->regionAvgDensity_
-                .emplace(this->simulator_.gridView().comm(),
-                         FluidSystem::numPhases, rset,
-                         [fp = std::cref(this->eclState_.fieldProps())]
-                         (const std::string& rsetName) -> decltype(auto)
-                         { return fp.get().get_int(rsetName); });
+            this->regionAvgDensity_.emplace(
+                this->simulator_.gridView().comm(),
+                FluidSystem::numPhases,
+                rset,
+                [fp = std::cref(this->eclState_.fieldProps())](const std::string& rsetName) -> decltype(auto) {
+                    return fp.get().get_int(rsetName);
+                });
         }
     }
 
@@ -152,23 +155,26 @@ public:
      * \brief Allocate memory for the scalar fields we would like to
      *        write to ECL output files
      */
-    void
-    allocBuffers(const unsigned bufferSize,
-                 const unsigned reportStepNum,
-                 const bool     substep,
-                 const bool     log,
-                 const bool     isRestart)
+    void allocBuffers(const unsigned bufferSize,
+                      const unsigned reportStepNum,
+                      const bool substep,
+                      const bool log,
+                      const bool isRestart)
     {
-        if (! std::is_same<Discretization, EcfvDiscretization<TypeTag>>::value) {
+        if (!std::is_same<Discretization, EcfvDiscretization<TypeTag>>::value) {
             return;
         }
 
         auto rstKeywords = this->schedule_.rst_keywords(reportStepNum);
         this->compC_.allocate(bufferSize, rstKeywords);
 
-        this->doAllocBuffers(bufferSize, reportStepNum, substep, log, isRestart,
+        this->doAllocBuffers(bufferSize,
+                             reportStepNum,
+                             substep,
+                             log,
+                             isRestart,
                              /* hysteresisConfig = */ nullptr,
-                             /* numOutputNnc =*/ 0,
+                             /* numOutputNnc =*/0,
                              std::move(rstKeywords));
     }
 
@@ -179,59 +185,50 @@ public:
     }
 
     //! \brief Setup list of active element-level data extractors
-    void setupExtractors(const bool         /*isSubStep*/,
-                         const std::size_t  /*reportStepNum*/)
+    void setupExtractors(const bool /*isSubStep*/, const std::size_t /*reportStepNum*/)
     {
         using Entry = typename Extractor::Entry;
         using ExtractContext = typename Extractor::Context;
         using ScalarEntry = typename Extractor::ScalarEntry;
         using PhaseEntry = typename Extractor::PhaseEntry;
 
-        auto extractors = std::array{
-            Entry{PhaseEntry{&this->saturation_,
-                  [](const unsigned phase, const ExtractContext& ectx)
-                  { return getValue(ectx.fs.saturation(phase)); }}
-            },
-            Entry{ScalarEntry{&this->fluidPressure_,
-                  [](const ExtractContext& ectx)
-                  {
-                      if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
-                          // Output oil pressure as default
-                          return getValue(ectx.fs.pressure(oilPhaseIdx));
-                      }
-                      else if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
-                          // Output gas if oil is not present
-                          return getValue(ectx.fs.pressure(gasPhaseIdx));
-                      }
-                      else {
-                          // Output water if neither oil nor gas is present
-                          return getValue(ectx.fs.pressure(waterPhaseIdx));
-                      }
-                  }}
-            },
-            Entry{ScalarEntry{&this->temperature_,
-                  [](const ExtractContext& ectx)
-                  { return getValue(ectx.fs.temperature(oilPhaseIdx)); }}
-            },
-            Entry{[&compC = this->compC_](const ExtractContext& ectx)
-                  {
-                      compC.assignMoleFractions(ectx.globalDofIdx,
-                                                [&fs = ectx.fs](const unsigned compIdx)
-                                                { return getValue(fs.moleFraction(compIdx)); });
+        auto extractors = std::array {
+            Entry {PhaseEntry {
+                &this->saturation_,
+                [](const unsigned phase, const ExtractContext& ectx) { return getValue(ectx.fs.saturation(phase)); }}},
+            Entry {ScalarEntry {&this->fluidPressure_,
+                                [](const ExtractContext& ectx) {
+                                    if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
+                                        // Output oil pressure as default
+                                        return getValue(ectx.fs.pressure(oilPhaseIdx));
+                                    } else if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
+                                        // Output gas if oil is not present
+                                        return getValue(ectx.fs.pressure(gasPhaseIdx));
+                                    } else {
+                                        // Output water if neither oil nor gas is present
+                                        return getValue(ectx.fs.pressure(waterPhaseIdx));
+                                    }
+                                }}},
+            Entry {ScalarEntry {&this->temperature_,
+                                [](const ExtractContext& ectx) { return getValue(ectx.fs.temperature(oilPhaseIdx)); }}},
+            Entry {[&compC = this->compC_](const ExtractContext& ectx) {
+                       compC.assignMoleFractions(ectx.globalDofIdx, [&fs = ectx.fs](const unsigned compIdx) {
+                           return getValue(fs.moleFraction(compIdx));
+                       });
 
-                      if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
-                          compC.assignGasFractions(ectx.globalDofIdx,
-                                                   [&fs = ectx.fs](const unsigned compIdx)
-                                                   { return getValue(fs.moleFraction(gasPhaseIdx, compIdx)); });
-                      }
+                       if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
+                           compC.assignGasFractions(ectx.globalDofIdx, [&fs = ectx.fs](const unsigned compIdx) {
+                               return getValue(fs.moleFraction(gasPhaseIdx, compIdx));
+                           });
+                       }
 
-                      if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
-                          compC.assignOilFractions(ectx.globalDofIdx,
-                                                   [&fs = ectx.fs](const unsigned compIdx)
-                                                   { return getValue(fs.moleFraction(oilPhaseIdx, compIdx)); });
-                      }
-                  }, this->compC_.allocated()
-            },
+                       if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
+                           compC.assignOilFractions(ectx.globalDofIdx, [&fs = ectx.fs](const unsigned compIdx) {
+                               return getValue(fs.moleFraction(oilPhaseIdx, compIdx));
+                           });
+                       }
+                   },
+                   this->compC_.allocated()},
         };
 
         this->extractors_ = Extractor::removeInactive(extractors);
@@ -239,7 +236,9 @@ public:
 
     //! \brief Clear list of active element-level data extractors
     void clearExtractors()
-    { this->extractors_.clear(); }
+    {
+        this->extractors_.clear();
+    }
 
     /*!
      * \brief Modify the internal buffers according to the intensive
@@ -252,19 +251,17 @@ public:
             return;
         }
 
-        typename Extractor::HysteresisParams hysterParams{};
+        typename Extractor::HysteresisParams hysterParams {};
         for (unsigned dofIdx = 0; dofIdx < elemCtx.numPrimaryDof(/*timeIdx=*/0); ++dofIdx) {
             const auto& intQuants = elemCtx.intensiveQuantities(dofIdx, /*timeIdx=*/0);
             const auto& fs = intQuants.fluidState();
 
-            const typename Extractor::Context ectx{
-                elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0),
-                0, // elemCtx.primaryVars(dofIdx, /*timeIdx=*/0).pvtRegionIndex(),
-                elemCtx.simulator().episodeIndex(),
-                fs,
-                intQuants,
-                hysterParams
-            };
+            const typename Extractor::Context ectx {elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0),
+                                                    0, // elemCtx.primaryVars(dofIdx, /*timeIdx=*/0).pvtRegionIndex(),
+                                                    elemCtx.simulator().episodeIndex(),
+                                                    fs,
+                                                    intQuants,
+                                                    hysterParams};
 
             Extractor::process(ectx, extractors_);
         }
@@ -314,8 +311,8 @@ public:
      */
     template <class ActiveIndex, class CartesianIndex>
     void processFluxes(const ElementContext& /* elemCtx */,
-                       ActiveIndex&&         /* activeIndex*/,
-                       CartesianIndex&&      /* cartesianIndex */)
+                       ActiveIndex&& /* activeIndex*/,
+                       CartesianIndex&& /* cartesianIndex */)
     {
     }
 
@@ -346,9 +343,9 @@ public:
         return this->interRegionFlows_;
     }
 
-    void updateFluidInPlace(const unsigned             /* globalDofIdx */,
+    void updateFluidInPlace(const unsigned /* globalDofIdx */,
                             const IntensiveQuantities& /* intQuants */,
-                            const double               /* totVolume */)
+                            const double /* totVolume */)
     {
         // this->updateFluidInPlace_(globalDofIdx, intQuants, totVolume);
     }
@@ -369,7 +366,7 @@ private:
         // Note: This statement is not correct for distributed wells and
         // will need additional logic once those are supported for
         // compositional flows.
-        return ! this->isDefunctParallelWell(wname);
+        return !this->isDefunctParallelWell(wname);
     }
 
     bool isOnCurrentRank(const std::string& wname) const override
@@ -377,7 +374,7 @@ private:
         // Note: This statement is not correct for distributed wells and
         // will need additional logic once those are supported for
         // compositional flows.
-        return ! this->isDefunctParallelWell(wname);
+        return !this->isDefunctParallelWell(wname);
     }
 
     void createLocalRegion_(std::vector<int>& region)

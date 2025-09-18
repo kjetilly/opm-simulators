@@ -18,7 +18,8 @@
 #include <flow/flow_gaswater_saltprec_vapwat.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowGasWaterSaltprecVapwatMainStandalone(argc, argv);
 }

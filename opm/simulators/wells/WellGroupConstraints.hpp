@@ -25,35 +25,40 @@
 #define OPM_WELL_GROUP_CONSTRAINTS_HEADER_INCLUDED
 
 #include <functional>
+#include <optional>
+#include <string>
 #include <utility>
 #include <vector>
-#include <string>
-#include <optional>
 
 namespace Opm
 {
 
 class DeferredLogger;
 class Group;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 enum class InjectorType;
 using RegionId = int;
 class Schedule;
 class SummaryState;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class for computing well group constraints.
-template<typename Scalar, typename IndexTraits>
-class WellGroupConstraints {
+template <typename Scalar, typename IndexTraits>
+class WellGroupConstraints
+{
 public:
     //! \brief Constructor sets reference to well.
-    explicit WellGroupConstraints(const WellInterfaceGeneric<Scalar, IndexTraits>& well) : well_(well) {}
+    explicit WellGroupConstraints(const WellInterfaceGeneric<Scalar, IndexTraits>& well)
+        : well_(well)
+    {
+    }
 
-    using RateConvFunc = std::function<void(const RegionId,
-                                            const int,
-                                            const std::optional<std::string>&,
-                                            std::vector<Scalar>&)>;
+    using RateConvFunc
+        = std::function<void(const RegionId, const int, const std::optional<std::string>&, std::vector<Scalar>&)>;
 
     bool checkGroupConstraints(WellState<Scalar, IndexTraits>& well_state,
                                const GroupState<Scalar>& group_state,
@@ -64,31 +69,29 @@ public:
                                DeferredLogger& deferred_logger) const;
 
 private:
-    std::pair<bool, Scalar>
-    checkGroupConstraintsInj(const Group& group,
-                             const WellState<Scalar, IndexTraits>& well_state,
-                             const GroupState<Scalar>& group_state,
-                             const Scalar efficiencyFactor,
-                             const Schedule& schedule,
-                             const SummaryState& summaryState,
-                             const RateConvFunc& rateConverter,
-                             const bool check_guide_rate,
-                             DeferredLogger& deferred_logger) const;
+    std::pair<bool, Scalar> checkGroupConstraintsInj(const Group& group,
+                                                     const WellState<Scalar, IndexTraits>& well_state,
+                                                     const GroupState<Scalar>& group_state,
+                                                     const Scalar efficiencyFactor,
+                                                     const Schedule& schedule,
+                                                     const SummaryState& summaryState,
+                                                     const RateConvFunc& rateConverter,
+                                                     const bool check_guide_rate,
+                                                     DeferredLogger& deferred_logger) const;
 
-    std::pair<bool, Scalar>
-    checkGroupConstraintsProd(const Group& group,
-                              const WellState<Scalar, IndexTraits>& well_state,
-                              const GroupState<Scalar>& group_state,
-                              const Scalar efficiencyFactor,
-                              const Schedule& schedule,
-                              const SummaryState& summaryState,
-                              const RateConvFunc& rateConverter,
-                              const bool check_guide_rate,
-                              DeferredLogger& deferred_logger) const;
+    std::pair<bool, Scalar> checkGroupConstraintsProd(const Group& group,
+                                                      const WellState<Scalar, IndexTraits>& well_state,
+                                                      const GroupState<Scalar>& group_state,
+                                                      const Scalar efficiencyFactor,
+                                                      const Schedule& schedule,
+                                                      const SummaryState& summaryState,
+                                                      const RateConvFunc& rateConverter,
+                                                      const bool check_guide_rate,
+                                                      DeferredLogger& deferred_logger) const;
 
     const WellInterfaceGeneric<Scalar, IndexTraits>& well_; //!< Reference to well interface
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_GROUP_CONSTRAINTS_HEADER_INCLUDED

@@ -27,86 +27,88 @@
 #include <functional>
 #include <optional>
 
-namespace Opm {
-    class EclipseState;
-    class EclEpsGridProperties;
+namespace Opm
+{
+class EclipseState;
+class EclEpsGridProperties;
 
-    template <typename Scalar>
-    struct EclEpsScalingPointsInfo;
+template <typename Scalar>
+struct EclEpsScalingPointsInfo;
 } // namespace Opm
 
-namespace Opm::Satfunc::PhaseChecks {
+namespace Opm::Satfunc::PhaseChecks
+{
 
-    /// Callbacks for defining the scaled saturation function consistency
-    /// check point of a single active grid block.
+/// Callbacks for defining the scaled saturation function consistency
+/// check point of a single active grid block.
+///
+/// \tparam Scalar Element type.  Typically \c float or \c double.
+template <typename Scalar>
+class ScaledSatfuncCheckPoint : public SatfuncCheckPointInterface<Scalar>
+{
+public:
+    /// Callback for translating active cell index to globally unique
+    /// point ID.
+    using LocalToGlobal = std::function<std::size_t(const int)>;
+
+    /// Constructor
     ///
-    /// \tparam Scalar Element type.  Typically \c float or \c double.
-    template <typename Scalar>
-    class ScaledSatfuncCheckPoint : public SatfuncCheckPointInterface<Scalar>
+    /// \param[in] unscaled Callbacks for inferring the end-points of
+    /// the underlying saturation region.
+    ///
+    /// \param[in] eclipseState Container of static properties such as
+    /// the scaled saturation function end-points.
+    ///
+    /// \param[in] epsGridProps Access interface for scaled saturation
+    /// function end-points.
+    ///
+    /// \param[in] localToGlobal Callback for translating active cell
+    /// indices to globally unique point IDs.
+    explicit ScaledSatfuncCheckPoint(const UnscaledSatfuncCheckPoint<Scalar>& unscaled,
+                                     const EclipseState* eclipseState,
+                                     const EclEpsGridProperties* epsGridProps,
+                                     const LocalToGlobal& localToGlobal)
+        : unscaled_ {unscaled}
+        , eclipseState_ {eclipseState}
+        , epsGridProps_ {epsGridProps}
+        , localToGlobal_ {localToGlobal}
     {
-    public:
-        /// Callback for translating active cell index to globally unique
-        /// point ID.
-        using LocalToGlobal = std::function<std::size_t(const int)>;
+    }
 
-        /// Constructor
-        ///
-        /// \param[in] unscaled Callbacks for inferring the end-points of
-        /// the underlying saturation region.
-        ///
-        /// \param[in] eclipseState Container of static properties such as
-        /// the scaled saturation function end-points.
-        ///
-        /// \param[in] epsGridProps Access interface for scaled saturation
-        /// function end-points.
-        ///
-        /// \param[in] localToGlobal Callback for translating active cell
-        /// indices to globally unique point IDs.
-        explicit ScaledSatfuncCheckPoint(const UnscaledSatfuncCheckPoint<Scalar>& unscaled,
-                                         const EclipseState*                      eclipseState,
-                                         const EclEpsGridProperties*              epsGridProps,
-                                         const LocalToGlobal&                     localToGlobal)
-            : unscaled_      { unscaled }
-            , eclipseState_  { eclipseState }
-            , epsGridProps_  { epsGridProps }
-            , localToGlobal_ { localToGlobal }
-        {}
+    /// Compute global unique, i.e., across all MPI ranks, ID of this
+    /// check for a particular cell index.
+    ///
+    /// \param[in] cellIdx Active cell index on current rank.
+    ///
+    /// \return Globally unique point ID for \p cellIdx
+    std::optional<std::size_t> pointID(const int cellIdx) const override
+    {
+        return {this->localToGlobal_(cellIdx)};
+    }
 
-        /// Compute global unique, i.e., across all MPI ranks, ID of this
-        /// check for a particular cell index.
-        ///
-        /// \param[in] cellIdx Active cell index on current rank.
-        ///
-        /// \return Globally unique point ID for \p cellIdx
-        std::optional<std::size_t> pointID(const int cellIdx) const override
-        {
-            return { this->localToGlobal_(cellIdx) };
-        }
+    /// Populate check point values for a particular cell.
+    ///
+    /// \param[in] cellIdx Active cell index on current rank.
+    ///
+    /// \param[out] endPoints Set of saturation function end-points.
+    void populateCheckPoint(const int cellIdx, EclEpsScalingPointsInfo<Scalar>& endPoints) const override;
 
-        /// Populate check point values for a particular cell.
-        ///
-        /// \param[in] cellIdx Active cell index on current rank.
-        ///
-        /// \param[out] endPoints Set of saturation function end-points.
-        void populateCheckPoint(const int                        cellIdx,
-                                EclEpsScalingPointsInfo<Scalar>& endPoints) const override;
+private:
+    /// Callbacks for inferring the end-points of the underlying
+    /// saturation region.
+    UnscaledSatfuncCheckPoint<Scalar> unscaled_;
 
-    private:
-        /// Callbacks for inferring the end-points of the underlying
-        /// saturation region.
-        UnscaledSatfuncCheckPoint<Scalar> unscaled_;
+    /// Container of static properties such as the scaled saturation
+    /// function end-points.
+    const EclipseState* eclipseState_ {nullptr};
 
-        /// Container of static properties such as the scaled saturation
-        /// function end-points.
-        const EclipseState* eclipseState_{nullptr};
+    /// Access interface for scaled saturation function end-points.
+    const EclEpsGridProperties* epsGridProps_ {nullptr};
 
-        /// Access interface for scaled saturation function end-points.
-        const EclEpsGridProperties* epsGridProps_{nullptr};
-
-        /// Callback for translating active cell indices to globally unique
-        /// point IDs.
-        LocalToGlobal localToGlobal_{};
-    };
+    /// Callback for translating active cell indices to globally unique
+    /// point IDs.
+    LocalToGlobal localToGlobal_ {};
+};
 
 } // namespace Opm::Satfunc::PhaseChecks
 

@@ -39,7 +39,8 @@
 
 #include <algorithm>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -107,7 +108,7 @@ private:
             elemCtx.updateAll(elem);
             const auto& stencil = elemCtx.stencil(/*timeIdx=*/0);
 
-            for (unsigned scvfIdx = 0; scvfIdx < stencil.numInteriorFaces(); ++ scvfIdx) {
+            for (unsigned scvfIdx = 0; scvfIdx < stencil.numInteriorFaces(); ++scvfIdx) {
                 const auto& face = stencil.interiorFace(scvfIdx);
 
                 unsigned i = face.interiorIndex();
@@ -126,7 +127,7 @@ private:
                 // don't include connections with negligible flow
                 const Evaluation& trans = simulator_.problem().transmissibility(elemCtx, i, j);
                 Scalar faceArea = face.area();
-                if (std::abs(faceArea*getValue(trans)) < 1e-18)
+                if (std::abs(faceArea * getValue(trans)) < 1e-18)
                     continue;
 
                 // determine the maximum difference of the pressure of any phase over the
@@ -143,8 +144,8 @@ private:
                     }
                 }
 
-                int offset1 = equilRegionInside*this->numEquilRegions_ + equilRegionOutside;
-                int offset2 = equilRegionOutside*this->numEquilRegions_ + equilRegionInside;
+                int offset1 = equilRegionInside * this->numEquilRegions_ + equilRegionOutside;
+                int offset2 = equilRegionOutside * this->numEquilRegions_ + equilRegionInside;
 
                 this->thpresDefault_[offset1] = std::max(this->thpresDefault_[offset1], pth);
                 this->thpresDefault_[offset2] = std::max(this->thpresDefault_[offset2], pth);

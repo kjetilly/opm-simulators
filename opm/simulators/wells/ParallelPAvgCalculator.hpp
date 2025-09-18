@@ -26,19 +26,21 @@
 
 #include <functional>
 
-namespace Opm {
-    class GridDims;
-    class WellConnections;
+namespace Opm
+{
+class GridDims;
+class WellConnections;
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 /// Facility for deriving well-level pressure values from selected
 /// block-averaging procedures.  Applicable to stopped wells which don't
 /// have a flowing bottom-hole pressure.  Mainly useful for reporting.
 ///
 /// Parallel edition.  Handles distributed wells.
-template<class Scalar>
+template <class Scalar>
 class ParallelPAvgCalculator : public PAvgCalculator<Scalar>
 {
 public:
@@ -52,8 +54,8 @@ public:
     /// \param[in] connections List of reservoir connections for single
     ///   well.
     ParallelPAvgCalculator(const Parallel::Communication& comm,
-                           const GridDims&                cellIndexMap,
-                           const WellConnections&         connections);
+                           const GridDims& cellIndexMap,
+                           const WellConnections& connections);
 
 private:
     using Accumulator = typename PAvgCalculator<Scalar>::Accumulator;

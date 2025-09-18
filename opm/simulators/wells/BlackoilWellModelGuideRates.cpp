@@ -23,8 +23,8 @@
 #include <config.h>
 #include <opm/simulators/wells/BlackoilWellModelGuideRates.hpp>
 
-#include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/Group/Group.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
 
 #include <opm/output/data/Groups.hpp>
 #include <opm/output/data/GuideRateValue.hpp>
@@ -47,43 +47,40 @@
 #include <unordered_set>
 #include <utility>
 
-namespace {
-
-struct RetrieveWellGuideRate
+namespace
 {
+
+struct RetrieveWellGuideRate {
     RetrieveWellGuideRate() = default;
 
-    explicit RetrieveWellGuideRate(const Opm::GuideRate& guideRate,
-                                   const std::string&    wgname);
+    explicit RetrieveWellGuideRate(const Opm::GuideRate& guideRate, const std::string& wgname);
 
-    explicit RetrieveWellGuideRate(const Opm::GuideRate& guideRate,
-                                   const Opm::Group&     group);
+    explicit RetrieveWellGuideRate(const Opm::GuideRate& guideRate, const Opm::Group& group);
 
-    bool prod      { false };
-    bool inj_water { false };
-    bool inj_gas   { false };
+    bool prod {false};
+    bool inj_water {false};
+    bool inj_gas {false};
 };
 
 RetrieveWellGuideRate
 operator||(RetrieveWellGuideRate lhs, const RetrieveWellGuideRate& rhs)
 {
-    lhs.prod      = lhs.prod      || rhs.prod;
+    lhs.prod = lhs.prod || rhs.prod;
     lhs.inj_water = lhs.inj_water || rhs.inj_water;
-    lhs.inj_gas   = lhs.inj_gas   || rhs.inj_gas;
+    lhs.inj_gas = lhs.inj_gas || rhs.inj_gas;
 
     return lhs;
 }
 
-RetrieveWellGuideRate::RetrieveWellGuideRate(const Opm::GuideRate& guideRate,
-                                             const std::string&    wgname)
-    : prod      { guideRate.has(wgname) }
-    , inj_water { guideRate.has(wgname, Opm::Phase::WATER) }
-    , inj_gas   { guideRate.has(wgname, Opm::Phase::GAS)   }
-{}
+RetrieveWellGuideRate::RetrieveWellGuideRate(const Opm::GuideRate& guideRate, const std::string& wgname)
+    : prod {guideRate.has(wgname)}
+    , inj_water {guideRate.has(wgname, Opm::Phase::WATER)}
+    , inj_gas {guideRate.has(wgname, Opm::Phase::GAS)}
+{
+}
 
-RetrieveWellGuideRate::RetrieveWellGuideRate(const Opm::GuideRate& guideRate,
-                                             const Opm::Group&     group)
-    : RetrieveWellGuideRate{ guideRate, group.name() }
+RetrieveWellGuideRate::RetrieveWellGuideRate(const Opm::GuideRate& guideRate, const Opm::Group& group)
+    : RetrieveWellGuideRate {guideRate, group.name()}
 {
     if (group.isProductionGroup()) {
         this->prod = true;
@@ -91,7 +88,7 @@ RetrieveWellGuideRate::RetrieveWellGuideRate(const Opm::GuideRate& guideRate,
 
     if (group.isInjectionGroup()) {
         this->inj_water = this->inj_water || group.hasInjectionControl(Opm::Phase::WATER);
-        this->inj_gas   = this->inj_gas   || group.hasInjectionControl(Opm::Phase::GAS);
+        this->inj_gas = this->inj_gas || group.hasInjectionControl(Opm::Phase::GAS);
     }
 }
 
@@ -101,11 +98,11 @@ public:
     using GroupOp = std::function<void(const Opm::Group&)>;
     using WellOp = std::function<void(const Opm::Well&)>;
 
-    explicit GroupTreeWalker(const Opm::Schedule& sched,
-                             const int            reportStepIdx)
-        : sched_        (sched)
+    explicit GroupTreeWalker(const Opm::Schedule& sched, const int reportStepIdx)
+        : sched_(sched)
         , reportStepIdx_(reportStepIdx)
-    {}
+    {
+    }
 
     GroupTreeWalker& groupOp(GroupOp visit)
     {
@@ -121,8 +118,8 @@ public:
 
     void clear()
     {
-        this->visitGroup_ = GroupOp{};
-        this->visitWell_ = WellOp{};
+        this->visitGroup_ = GroupOp {};
+        this->visitWell_ = WellOp {};
     }
 
     void traversePreOrder();
@@ -134,14 +131,14 @@ private:
     std::reference_wrapper<const Opm::Schedule> sched_;
     int reportStepIdx_;
 
-    GroupOp visitGroup_{};
-    WellOp visitWell_{};
+    GroupOp visitGroup_ {};
+    WellOp visitWell_ {};
 
-    std::stack<std::string_view, std::vector<std::string_view>> dfsGroupStack_{};
-    std::unordered_set<std::size_t> dfsGroupDiscovered_{};
+    std::stack<std::string_view, std::vector<std::string_view>> dfsGroupStack_ {};
+    std::unordered_set<std::size_t> dfsGroupDiscovered_ {};
 
-    NodeOp postDiscover_{nullptr};
-    NodeOp preFinish_{nullptr};
+    NodeOp postDiscover_ {nullptr};
+    NodeOp preFinish_ {nullptr};
 
     void traverse();
 
@@ -159,7 +156,8 @@ private:
     const Opm::Well& getWell(std::string_view well) const;
 };
 
-void GroupTreeWalker::traversePreOrder()
+void
+GroupTreeWalker::traversePreOrder()
 {
     this->preFinish_ = nullptr;
     this->postDiscover_ = &GroupTreeWalker::visitGroup;
@@ -167,7 +165,8 @@ void GroupTreeWalker::traversePreOrder()
     this->traverse();
 }
 
-void GroupTreeWalker::traversePostOrder()
+void
+GroupTreeWalker::traversePostOrder()
 {
     this->preFinish_ = &GroupTreeWalker::visitGroup;
     this->postDiscover_ = nullptr;
@@ -175,11 +174,12 @@ void GroupTreeWalker::traversePostOrder()
     this->traverse();
 }
 
-void GroupTreeWalker::traverse()
+void
+GroupTreeWalker::traverse()
 {
     this->startWalk();
 
-    while (! this->dfsGroupStack_.empty()) {
+    while (!this->dfsGroupStack_.empty()) {
         const auto gname = this->dfsGroupStack_.top();
 
         if (this->isSeen(gname)) {
@@ -199,14 +199,13 @@ void GroupTreeWalker::traverse()
 
         const auto& group = this->getGroup(gname);
 
-        if (! group.wellgroup()) { // Node group.  Register child groups.
+        if (!group.wellgroup()) { // Node group.  Register child groups.
             for (const auto& child : group.groups()) {
-                if (! this->isSeen(child)) {
+                if (!this->isSeen(child)) {
                     this->dfsGroupStack_.push(child);
                 }
             }
-        }
-        else { // Group is a well group--visit its wells.
+        } else { // Group is a well group--visit its wells.
             for (const auto& well : group.wells()) {
                 this->visitWell(well);
             }
@@ -214,109 +213,110 @@ void GroupTreeWalker::traverse()
     }
 }
 
-void GroupTreeWalker::startWalk()
+void
+GroupTreeWalker::startWalk()
 {
     this->dfsGroupDiscovered_.clear();
 
-    while (! this->dfsGroupStack_.empty()) {
+    while (!this->dfsGroupStack_.empty()) {
         this->dfsGroupStack_.pop();
     }
 
     this->dfsGroupStack_.push("FIELD");
 }
 
-void GroupTreeWalker::discover(std::string_view group)
+void
+GroupTreeWalker::discover(std::string_view group)
 {
     this->dfsGroupDiscovered_.insert(this->insertIndex(group));
 }
 
-void GroupTreeWalker::finish(std::string_view group)
+void
+GroupTreeWalker::finish(std::string_view group)
 {
     if (this->dfsGroupStack_.top() != group) {
         throw std::invalid_argument {
-            fmt::format("Internal Error: Expected group '{}', but got '{}'",
-                        group, this->dfsGroupStack_.top())
-        };
+            fmt::format("Internal Error: Expected group '{}', but got '{}'", group, this->dfsGroupStack_.top())};
     }
 
     this->dfsGroupStack_.pop();
 }
 
-bool GroupTreeWalker::isSeen(std::string_view group) const
+bool
+GroupTreeWalker::isSeen(std::string_view group) const
 {
-    return this->dfsGroupDiscovered_.find(this->insertIndex(group))
-        != this->dfsGroupDiscovered_.end();
+    return this->dfsGroupDiscovered_.find(this->insertIndex(group)) != this->dfsGroupDiscovered_.end();
 }
 
-std::size_t GroupTreeWalker::insertIndex(std::string_view group) const
+std::size_t
+GroupTreeWalker::insertIndex(std::string_view group) const
 {
     return this->getGroup(group).insert_index();
 }
 
-void GroupTreeWalker::visitGroup(std::string_view group) const
+void
+GroupTreeWalker::visitGroup(std::string_view group) const
 {
-    if (! this->visitGroup_) {
+    if (!this->visitGroup_) {
         return;
     }
 
     this->visitGroup_(this->getGroup(group));
 }
 
-void GroupTreeWalker::visitWell(std::string_view well) const
+void
+GroupTreeWalker::visitWell(std::string_view well) const
 {
-    if (! this->visitWell_) {
+    if (!this->visitWell_) {
         return;
     }
 
     this->visitWell_(this->getWell(well));
 }
 
-const Opm::Group& GroupTreeWalker::getGroup(std::string_view group) const
+const Opm::Group&
+GroupTreeWalker::getGroup(std::string_view group) const
 {
     return this->sched_.get().getGroup({group.data(), group.size()}, this->reportStepIdx_);
 }
 
-const Opm::Well& GroupTreeWalker::getWell(std::string_view well) const
+const Opm::Well&
+GroupTreeWalker::getWell(std::string_view well) const
 {
     return this->sched_.get().getWell({well.data(), well.size()}, this->reportStepIdx_);
 }
 
 } // anonymous namespace
 
-namespace Opm {
-
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-getGuideRateValues(const GuideRate::RateVector& qs,
-                   const bool                   is_inj,
-                   const std::string&           wgname,
-                   data::GuideRateValue&        grval) const
+namespace Opm
 {
-    auto getGR = [this, &wgname, &qs](const GuideRateModel::Target t)
-    {
-        return wellModel_.guideRate().getSI(wgname, t, qs);
-    };
+
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::getGuideRateValues(const GuideRate::RateVector& qs,
+                                                                     const bool is_inj,
+                                                                     const std::string& wgname,
+                                                                     data::GuideRateValue& grval) const
+{
+    auto getGR
+        = [this, &wgname, &qs](const GuideRateModel::Target t) { return wellModel_.guideRate().getSI(wgname, t, qs); };
 
     // Note: GuideRate does currently (2020-07-20) not support Target::RES.
-    grval.set(data::GuideRateValue::Item::Gas,
-              getGR(GuideRateModel::Target::GAS));
+    grval.set(data::GuideRateValue::Item::Gas, getGR(GuideRateModel::Target::GAS));
 
-    grval.set(data::GuideRateValue::Item::Water,
-              getGR(GuideRateModel::Target::WAT));
+    grval.set(data::GuideRateValue::Item::Water, getGR(GuideRateModel::Target::WAT));
 
     if (!is_inj) {
         // Producer.  Extract "all" guiderate values.
-        grval.set(data::GuideRateValue::Item::Oil,
-                  getGR(GuideRateModel::Target::OIL));
+        grval.set(data::GuideRateValue::Item::Oil, getGR(GuideRateModel::Target::OIL));
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 data::GuideRateValue
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-getGuideRateValues(const Well& well) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::getGuideRateValues(const Well& well) const
 {
-    auto grval = data::GuideRateValue{};
+    auto grval = data::GuideRateValue {};
 
     const auto& wname = well.name();
     if (!wellModel_.wellState().has(wname)) {
@@ -331,20 +331,18 @@ getGuideRateValues(const Well& well) const
         return grval;
     }
 
-    const auto qs = WellGroupHelpers<Scalar, IndexTraits>::
-        getWellRateVector(wellModel_.wellState(), wname);
+    const auto qs = WellGroupHelpers<Scalar, IndexTraits>::getWellRateVector(wellModel_.wellState(), wname);
 
     this->getGuideRateValues(qs, well.isInjector(), wname, grval);
 
     return grval;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 data::GuideRateValue
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-getGuideRateValues(const Group& group) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::getGuideRateValues(const Group& group) const
 {
-    auto grval = data::GuideRateValue{};
+    auto grval = data::GuideRateValue {};
     const auto& gname = group.name();
 
     if (!wellModel_.groupState().has_production_rates(gname)) {
@@ -359,8 +357,8 @@ getGuideRateValues(const Group& group) const
         return grval;
     }
 
-    const auto qs = WellGroupHelpers<Scalar, IndexTraits>::
-        getProductionGroupRateVector(wellModel_.groupState(), wellModel_.phaseUsage(), gname);
+    const auto qs = WellGroupHelpers<Scalar, IndexTraits>::getProductionGroupRateVector(
+        wellModel_.groupState(), wellModel_.phaseUsage(), gname);
 
     const auto is_inj = false; // This procedure only applies to G*PGR.
     this->getGuideRateValues(qs, is_inj, gname, grval);
@@ -368,50 +366,42 @@ getGuideRateValues(const Group& group) const
     return grval;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 data::GuideRateValue
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-getGuideRateInjectionGroupValues(const Group& group) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::getGuideRateInjectionGroupValues(const Group& group) const
 {
-    auto grval = data::GuideRateValue{};
+    auto grval = data::GuideRateValue {};
 
     const auto& gname = group.name();
     if (wellModel_.guideRate().has(gname, Phase::GAS)) {
-        grval.set(data::GuideRateValue::Item::Gas,
-                  wellModel_.guideRate().getSI(gname, Phase::GAS));
+        grval.set(data::GuideRateValue::Item::Gas, wellModel_.guideRate().getSI(gname, Phase::GAS));
     }
 
     if (wellModel_.guideRate().has(gname, Phase::WATER)) {
-        grval.set(data::GuideRateValue::Item::Water,
-                  wellModel_.guideRate().getSI(gname, Phase::WATER));
+        grval.set(data::GuideRateValue::Item::Water, wellModel_.guideRate().getSI(gname, Phase::WATER));
     }
 
     return grval;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::unordered_map<std::string, data::GuideRateValue>
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-calculateWellGuideRates(const int reportStepIdx) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::calculateWellGuideRates(const int reportStepIdx) const
 {
-    auto all = std::unordered_map<std::string, data::GuideRateValue>{};
-    auto retrieve = std::unordered_map<std::string, RetrieveWellGuideRate>{};
+    auto all = std::unordered_map<std::string, data::GuideRateValue> {};
+    auto retrieve = std::unordered_map<std::string, RetrieveWellGuideRate> {};
 
-    auto walker = GroupTreeWalker{wellModel_.schedule(), reportStepIdx};
+    auto walker = GroupTreeWalker {wellModel_.schedule(), reportStepIdx};
 
     // Populates 'retrieve'.
-    walker.groupOp([this, &retrieve](const Group& group)
-    {
+    walker.groupOp([this, &retrieve](const Group& group) {
         const auto& gname = group.name();
 
-        const auto parent = (gname == "FIELD")
-            ? RetrieveWellGuideRate{}
-            : retrieve[group.parent()];
+        const auto parent = (gname == "FIELD") ? RetrieveWellGuideRate {} : retrieve[group.parent()];
 
-        auto [elm, inserted] =
-            retrieve.emplace(std::piecewise_construct,
-                             std::forward_as_tuple(gname),
-                             std::forward_as_tuple(wellModel_.guideRate(), group));
+        auto [elm, inserted] = retrieve.emplace(std::piecewise_construct,
+                                                std::forward_as_tuple(gname),
+                                                std::forward_as_tuple(wellModel_.guideRate(), group));
 
         if (inserted) {
             elm->second = elm->second || parent;
@@ -419,31 +409,26 @@ calculateWellGuideRates(const int reportStepIdx) const
     });
 
     // Populates 'all'.
-    walker.wellOp([this, &retrieve, &all](const Well& well)
-    {
+    walker.wellOp([this, &retrieve, &all](const Well& well) {
         const auto& wname = well.name();
 
-        const auto is_nontrivial =
-            wellModel_.guideRate().has(wname) || wellModel_.guideRate().hasPotentials(wname);
+        const auto is_nontrivial = wellModel_.guideRate().has(wname) || wellModel_.guideRate().hasPotentials(wname);
 
-        if (! (is_nontrivial && wellModel_.wellState().has(wname))) {
+        if (!(is_nontrivial && wellModel_.wellState().has(wname))) {
             all[wname].clear();
             return;
         }
 
         auto parent_pos = retrieve.find(well.groupName());
-        const auto parent = (parent_pos == retrieve.end())
-            ? RetrieveWellGuideRate{} // No entry for 'parent'--unexpected.
-            : parent_pos->second;
+        const auto parent = (parent_pos == retrieve.end()) ? RetrieveWellGuideRate {}
+                                                           // No entry for 'parent'--unexpected.
+                                                           : parent_pos->second;
 
-        const auto get_gr = parent
-            || RetrieveWellGuideRate{wellModel_.guideRate(), wname};
+        const auto get_gr = parent || RetrieveWellGuideRate {wellModel_.guideRate(), wname};
 
-        const auto qs = WellGroupHelpers<Scalar, IndexTraits>::
-            getWellRateVector(wellModel_.wellState(), wname);
+        const auto qs = WellGroupHelpers<Scalar, IndexTraits>::getWellRateVector(wellModel_.wellState(), wname);
 
-        auto getGR = [this, &wname, &qs](const GuideRateModel::Target t)
-        {
+        auto getGR = [this, &wname, &qs](const GuideRateModel::Target t) {
             return wellModel_.guideRate().getSI(wname, t, qs);
         };
 
@@ -451,18 +436,14 @@ calculateWellGuideRates(const int reportStepIdx) const
 
         if (well.isInjector()) {
             if (get_gr.inj_gas) { // Well supports WGIGR
-                grval.set(data::GuideRateValue::Item::Gas,
-                          getGR(GuideRateModel::Target::GAS));
+                grval.set(data::GuideRateValue::Item::Gas, getGR(GuideRateModel::Target::GAS));
             }
             if (get_gr.inj_water) { // Well supports WWIGR
-                grval.set(data::GuideRateValue::Item::Water,
-                          getGR(GuideRateModel::Target::WAT));
+                grval.set(data::GuideRateValue::Item::Water, getGR(GuideRateModel::Target::WAT));
             }
-        }
-        else if (get_gr.prod) { // Well is producer AND we want/support WxPGR
-            grval
-                .set(data::GuideRateValue::Item::Oil  , getGR(GuideRateModel::Target::OIL))
-                .set(data::GuideRateValue::Item::Gas  , getGR(GuideRateModel::Target::GAS))
+        } else if (get_gr.prod) { // Well is producer AND we want/support WxPGR
+            grval.set(data::GuideRateValue::Item::Oil, getGR(GuideRateModel::Target::OIL))
+                .set(data::GuideRateValue::Item::Gas, getGR(GuideRateModel::Target::GAS))
                 .set(data::GuideRateValue::Item::Water, getGR(GuideRateModel::Target::WAT));
         }
     });
@@ -475,11 +456,10 @@ calculateWellGuideRates(const int reportStepIdx) const
     return all;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-assignWellGuideRates(data::Wells& wsrpt,
-                     const int    reportStepIdx) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::assignWellGuideRates(data::Wells& wsrpt,
+                                                                       const int reportStepIdx) const
 {
     auto all = calculateWellGuideRates(reportStepIdx);
     for (const auto* well : wellModel_.genericWells()) {
@@ -497,53 +477,48 @@ assignWellGuideRates(data::Wells& wsrpt,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::unordered_map<std::string, data::GroupGuideRates>
-BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-calculateAllGroupGuideRates(const int reportStepIdx) const
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::calculateAllGroupGuideRates(const int reportStepIdx) const
 {
-    auto gr = std::unordered_map<std::string, data::GroupGuideRates>{};
+    auto gr = std::unordered_map<std::string, data::GroupGuideRates> {};
 
-    auto walker = GroupTreeWalker{wellModel_.schedule(), reportStepIdx};
+    auto walker = GroupTreeWalker {wellModel_.schedule(), reportStepIdx};
 
     // Populates 'gr'.
-    walker.groupOp([this, &gr](const Group& group)
-    {
+    walker.groupOp([this, &gr](const Group& group) {
         const auto& gname = group.name();
 
-        if (gname == "FIELD") { return; }
+        if (gname == "FIELD") {
+            return;
+        }
 
         if (wellModel_.guideRate().has(gname)) {
             gr[gname].production = this->getGuideRateValues(group);
         }
 
-        if (wellModel_.guideRate().has(gname, Phase::WATER) ||
-            wellModel_.guideRate().has(gname, Phase::GAS))
-        {
+        if (wellModel_.guideRate().has(gname, Phase::WATER) || wellModel_.guideRate().has(gname, Phase::GAS)) {
             gr[gname].injection = this->getGuideRateInjectionGroupValues(group);
         }
 
         const auto parent = group.parent();
-        if (parent == "FIELD") { return; }
+        if (parent == "FIELD") {
+            return;
+        }
 
-        gr[parent].injection  += gr[gname].injection;
+        gr[parent].injection += gr[gname].injection;
         gr[parent].production += gr[gname].production;
     });
 
     // Populates 'gr'.
-    walker.wellOp([this, &gr](const Well& well)
-    {
-        if (! (wellModel_.guideRate().has(well.name()) ||
-               wellModel_.guideRate().hasPotentials(well.name())))
-        {
+    walker.wellOp([this, &gr](const Well& well) {
+        if (!(wellModel_.guideRate().has(well.name()) || wellModel_.guideRate().hasPotentials(well.name()))) {
             return;
         }
 
         const auto& gname = well.groupName();
 
-        auto& grval = well.isInjector()
-            ? gr[gname].injection
-            : gr[gname].production;
+        auto& grval = well.isInjector() ? gr[gname].injection : gr[gname].production;
 
         grval += this->getGuideRateValues(well);
     });
@@ -558,14 +533,17 @@ calculateAllGroupGuideRates(const int reportStepIdx) const
     return gr;
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-assignGroupGuideRates(const Group& group,
-                      const std::unordered_map<std::string, data::GroupGuideRates>& groupGuideRates,
-                      data::GroupData& gdata) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::assignGroupGuideRates(
+    const Group& group,
+    const std::unordered_map<std::string, data::GroupGuideRates>& groupGuideRates,
+    data::GroupData& gdata) const
 {
-    auto& prod = gdata.guideRates.production;  prod.clear();
-    auto& inj  = gdata.guideRates.injection;   inj .clear();
+    auto& prod = gdata.guideRates.production;
+    prod.clear();
+    auto& inj = gdata.guideRates.injection;
+    inj.clear();
 
     auto xgrPos = groupGuideRates.find(group.name());
     if (xgrPos == groupGuideRates.end()) {
@@ -579,36 +557,31 @@ assignGroupGuideRates(const Group& group,
         prod = xgr.production;
     }
 
-    if (wellModel_.guideRate().has(group.name(), Phase::WATER) ||
-        wellModel_.guideRate().has(group.name(), Phase::GAS))
-    {
+    if (wellModel_.guideRate().has(group.name(), Phase::WATER)
+        || wellModel_.guideRate().has(group.name(), Phase::GAS)) {
         inj = xgr.injection;
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-bool BlackoilWellModelGuideRates<Scalar, IndexTraits>::
-guideRateUpdateIsNeeded(const int reportStepIdx) const
+template <typename Scalar, typename IndexTraits>
+bool
+BlackoilWellModelGuideRates<Scalar, IndexTraits>::guideRateUpdateIsNeeded(const int reportStepIdx) const
 {
     const auto& genWells = wellModel_.genericWells();
-    auto need_update =
-    std::any_of(genWells.begin(), genWells.end(),
-                [](const WellInterfaceGeneric<Scalar, IndexTraits>* well)
-    {
-        return well->changedToOpenThisStep();
-    });
+    auto need_update
+        = std::any_of(genWells.begin(), genWells.end(), [](const WellInterfaceGeneric<Scalar, IndexTraits>* well) {
+              return well->changedToOpenThisStep();
+          });
     if (!need_update && wellModel_.reportStepStarts()) {
         const auto& events = wellModel_.schedule()[reportStepIdx].wellgroup_events();
         constexpr auto effective_events_mask = ScheduleEvents::WELL_STATUS_CHANGE
-            + ScheduleEvents::INJECTION_TYPE_CHANGED
-            + ScheduleEvents::WELL_SWITCHED_INJECTOR_PRODUCER
+            + ScheduleEvents::INJECTION_TYPE_CHANGED + ScheduleEvents::WELL_SWITCHED_INJECTOR_PRODUCER
             + ScheduleEvents::NEW_WELL;
 
-        need_update = std::any_of(genWells.begin(), genWells.end(),
-            [&events](const WellInterfaceGeneric<Scalar, IndexTraits>* well)
-        {
-            return events.hasEvent(well->name(), effective_events_mask);
-        });
+        need_update = std::any_of(
+            genWells.begin(), genWells.end(), [&events](const WellInterfaceGeneric<Scalar, IndexTraits>* well) {
+                return events.hasEvent(well->name(), effective_events_mask);
+            });
     }
     return wellModel_.comm().max(static_cast<int>(need_update));
 }

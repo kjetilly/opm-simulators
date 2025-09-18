@@ -18,16 +18,16 @@
 #define OPM_ISTLSOLVERRUNTIMEOPTIONPROXY_HEADER_INCLUDED
 
 #include "opm/simulators/linalg/FlowLinearSolverParameters.hpp"
-#include <opm/simulators/linalg/setupPropertyTree.hpp>
 #include <opm/simulators/linalg/AbstractISTLSolver.hpp>
 #include <opm/simulators/linalg/ISTLSolver.hpp>
+#include <opm/simulators/linalg/setupPropertyTree.hpp>
 #if COMPILE_GPU_BRIDGE
 #include <opm/simulators/linalg/ISTLSolverGpuBridge.hpp>
 #endif
 
 #if HAVE_CUDA
 #include <opm/simulators/linalg/gpuistl/ISTLSolverGPUISTL.hpp>
-#endif 
+#endif
 
 namespace Opm
 {
@@ -147,21 +147,22 @@ private:
     {
         const auto backend = Parameters::linearSolverAcceleratorTypeFromCLI();
         if (backend == Parameters::LinearSolverAcceleratorType::CPU) {
-        // Note that for now we keep the old behavior of using the bridge solver if it is available.
+            // Note that for now we keep the old behavior of using the bridge solver if it is available.
 #if COMPILE_GPU_BRIDGE
             istlSolver_ = std::make_unique<ISTLSolverGpuBridge<TypeTag>>(simulator, std::forward<Args>(args)...);
 #else
             istlSolver_ = std::make_unique<ISTLSolver<TypeTag>>(simulator, std::forward<Args>(args)...);
 #endif
-        } 
+        }
 #if HAVE_CUDA
         else if (backend == Parameters::LinearSolverAcceleratorType::GPU) {
             istlSolver_ = std::make_unique<gpuistl::ISTLSolverGPUISTL<TypeTag>>(simulator, std::forward<Args>(args)...);
-        } 
+        }
 #endif
         else {
-            // If we reach here, it means the backend is not supported. This could be because we have added a third backend
-            // that we need to handle. A user error would be handled in the linearSolverAcceleratorTypeFromString function called above. 
+            // If we reach here, it means the backend is not supported. This could be because we have added a third
+            // backend that we need to handle. A user error would be handled in the
+            // linearSolverAcceleratorTypeFromString function called above.
             OPM_THROW(std::invalid_argument, fmt::format("Unknown backend: {}", Parameters::toString(backend)));
         }
     }

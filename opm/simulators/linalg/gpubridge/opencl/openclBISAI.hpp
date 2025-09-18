@@ -26,26 +26,28 @@
 #include <opm/simulators/linalg/gpubridge/opencl/openclBILU0.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/openclPreconditioner.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-template<class Scalar> class BlockedMatrix;
+template <class Scalar>
+class BlockedMatrix;
 
 /// This class implements a Blocked version of the Incomplete Sparse Approximate Inverse (ISAI) preconditioner.
 /// Inspired by the paper "Incomplete Sparse Approximate Inverses for Parallel Preconditioning" by Anzt et. al.
-template<class Scalar, unsigned int block_size>
-class openclBISAI : public openclPreconditioner<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class openclBISAI : public openclPreconditioner<Scalar, block_size>
 {
-    using Base = openclPreconditioner<Scalar,block_size>;
+    using Base = openclPreconditioner<Scalar, block_size>;
 
+    using Base::context;
+    using Base::err;
+    using Base::events;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
-    using Base::context;
     using Base::queue;
-    using Base::events;
-    using Base::err;
+    using Base::verbosity;
 
 private:
     std::once_flag initialize;
@@ -68,7 +70,7 @@ private:
     cl::Buffer d_invL_x;
 
     bool opencl_ilu_parallel;
-    std::unique_ptr<openclBILU0<Scalar,block_size>> bilu0;
+    std::unique_ptr<openclBILU0<Scalar, block_size>> bilu0;
 
     /// Struct that holds the structure of the small subsystems for each column
     struct subsystemStructure {
@@ -93,45 +95,40 @@ private:
         cl::Buffer nzIndices;
         cl::Buffer knownRhsIndices;
         cl::Buffer unknownRhsIndices;
-    } ;
+    };
 
     subsystemStructure lower, upper;
     subsystemStructureGPU d_lower, d_upper;
 
-    /// An approximate inverse for L is computed by solving a small lower triangular system for each column of the main matrix.
-    /// This function finds the structure of each of these subsystems and fills the 'lower' struct.
+    /// An approximate inverse for L is computed by solving a small lower triangular system for each column of the main
+    /// matrix. This function finds the structure of each of these subsystems and fills the 'lower' struct.
     void buildLowerSubsystemsStructures();
 
-    /// An approximate inverse for U is computed by solving a small upper triangular system for each column of the main matrix.
-    /// This function finds the structure of each of theses subsystems and fills the 'upper' struct.
+    /// An approximate inverse for U is computed by solving a small upper triangular system for each column of the main
+    /// matrix. This function finds the structure of each of theses subsystems and fills the 'upper' struct.
     void buildUpperSubsystemsStructures();
 
 public:
     openclBISAI(bool opencl_ilu_parallel, int verbosity);
 
     // set own Opencl variables, but also that of the bilu0 preconditioner
-    void setOpencl(std::shared_ptr<cl::Context>& context,
-                   std::shared_ptr<cl::CommandQueue>& queue) override;
+    void setOpencl(std::shared_ptr<cl::Context>& context, std::shared_ptr<cl::CommandQueue>& queue) override;
 
     // analysis, extract parallelism
     bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
-    bool analyze_matrix(BlockedMatrix<Scalar>* mat,
-                        BlockedMatrix<Scalar>* jacMat) override;
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     // ilu_decomposition
     bool create_preconditioner(BlockedMatrix<Scalar>* mat) override;
-    bool create_preconditioner(BlockedMatrix<Scalar>* mat,
-                               BlockedMatrix<Scalar>* jacMat) override;
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     // apply preconditioner, x = prec(y)
-    void apply(const cl::Buffer& y,
-               cl::Buffer& x,
-               WellContributions<Scalar>& wellContribs) override;
+    void apply(const cl::Buffer& y, cl::Buffer& x, WellContributions<Scalar>& wellContribs) override;
 };
 
-/// Similar function to csrPatternToCsc. It gives an offset map from CSR to CSC instead of the full CSR to CSC conversion.
-/// The map works as follows: if an element 'e' of the matrix is in the i-th position in the CSR representation, it will be
-/// in the csrToCscOffsetMap[i]-th position in the CSC representation.
+/// Similar function to csrPatternToCsc. It gives an offset map from CSR to CSC instead of the full CSR to CSC
+/// conversion. The map works as follows: if an element 'e' of the matrix is in the i-th position in the CSR
+/// representation, it will be in the csrToCscOffsetMap[i]-th position in the CSC representation.
 std::vector<int> buildCsrToCscOffsetMap(std::vector<int> colPointers, std::vector<int> rowIndices);
 
 } // namespace Opm::Accelerator

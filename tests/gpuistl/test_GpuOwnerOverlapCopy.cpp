@@ -26,12 +26,12 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <memory>
+#include <mpi.h>
 #include <opm/simulators/linalg/gpuistl/GpuOwnerOverlapCopy.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/set_device.hpp>
 #include <random>
-#include <mpi.h>
 
 bool
 init_unit_test_func()
@@ -64,8 +64,10 @@ BOOST_AUTO_TEST_CASE(TestProject)
     auto xCPU = std::vector<double> {{1.0, 2.0, 3.0}};
     auto xGPU = Opm::gpuistl::GpuVector<double>(xCPU);
 
-    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(ownerOverlapCopy);
-    
+    auto gpuComm
+        = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(
+            ownerOverlapCopy);
+
     auto GpuOwnerOverlapCopy
         = Opm::gpuistl::GpuOwnerOverlapCopy<double, Dune::OwnerOverlapCopyCommunication<int>>(gpuComm);
 
@@ -96,7 +98,9 @@ BOOST_AUTO_TEST_CASE(TestDot)
     auto xCPU = std::vector<double> {{1.0, 2.0, 3.0}};
     auto xGPU = Opm::gpuistl::GpuVector<double>(xCPU);
 
-    auto gpuComm = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(ownerOverlapCopy);
+    auto gpuComm
+        = std::make_shared<Opm::gpuistl::GPUObliviousMPISender<double, 1, Dune::OwnerOverlapCopyCommunication<int>>>(
+            ownerOverlapCopy);
 
     auto GpuOwnerOverlapCopy
         = Opm::gpuistl::GpuOwnerOverlapCopy<double, Dune::OwnerOverlapCopyCommunication<int>>(gpuComm);

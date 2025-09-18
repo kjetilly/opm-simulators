@@ -33,33 +33,33 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::
-gliftDebug([[maybe_unused]] const std::string& msg,
-           [[maybe_unused]] DeferredLogger& deferred_logger) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::gliftDebug([[maybe_unused]] const std::string& msg,
+                                                                 [[maybe_unused]] DeferredLogger& deferred_logger) const
 {
     if constexpr (glift_debug) {
         if (terminal_output_) {
-            const std::string message =
-                fmt::format("  GLIFT (DEBUG) : BlackoilWellModel : {}", msg);
+            const std::string message = fmt::format("  GLIFT (DEBUG) : BlackoilWellModel : {}", msg);
             deferred_logger.debug(message);
         }
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::
-gliftDebugShowALQ(const std::vector<WellInterfaceGeneric<Scalar, IndexTraits>*>& well_container,
-                  const WellState<Scalar, IndexTraits>& wellState,
-                  DeferredLogger& deferred_logger)
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::gliftDebugShowALQ(
+    const std::vector<WellInterfaceGeneric<Scalar, IndexTraits>*>& well_container,
+    const WellState<Scalar, IndexTraits>& wellState,
+    DeferredLogger& deferred_logger)
 {
     for (const auto& well : well_container) {
         if (well->isProducer()) {
             const auto alq = wellState.well(well->name()).alq_state.get();
-            const std::string msg = fmt::format("ALQ_REPORT : {} : {}",
-                                                well->name(), alq);
+            const std::string msg = fmt::format("ALQ_REPORT : {} : {}", well->name(), alq);
             gliftDebug(msg, deferred_logger);
         }
     }
@@ -72,19 +72,20 @@ gliftDebugShowALQ(const std::vector<WellInterfaceGeneric<Scalar, IndexTraits>*>&
 // currently has the largest weighted incremental gradient. The
 // procedure takes account of any limits on the group production
 // rate or lift gas supply applied to any level of group.
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::
-gasLiftOptimizationStage2(const Parallel::Communication& comm,
-                          const Schedule& schedule,
-                          const SummaryState& summaryState,
-                          WellState<Scalar, IndexTraits>& wellState,
-                          GroupState<Scalar>& groupState,
-                          GLiftProdWells& prod_wells,
-                          GLiftOptWells& glift_wells,
-                          GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
-                          GLiftWellStateMap& glift_well_state_map,
-                          const int episodeIndex,
-                          DeferredLogger& deferred_logger)
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelGasLiftGeneric<Scalar, IndexTraits>::gasLiftOptimizationStage2(
+    const Parallel::Communication& comm,
+    const Schedule& schedule,
+    const SummaryState& summaryState,
+    WellState<Scalar, IndexTraits>& wellState,
+    GroupState<Scalar>& groupState,
+    GLiftProdWells& prod_wells,
+    GLiftOptWells& glift_wells,
+    GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
+    GLiftWellStateMap& glift_well_state_map,
+    const int episodeIndex,
+    DeferredLogger& deferred_logger)
 
 {
     OPM_TIMEFUNCTION();
@@ -99,8 +100,7 @@ gasLiftOptimizationStage2(const Parallel::Communication& comm,
                          glift_wells,
                          group_info,
                          glift_well_state_map,
-                         this->glift_debug
-    };
+                         this->glift_debug};
     glift.runOptimize();
 }
 
@@ -110,4 +110,4 @@ template class BlackoilWellModelGasLiftGeneric<double, BlackOilDefaultFluidSyste
 template class BlackoilWellModelGasLiftGeneric<float, BlackOilDefaultFluidSystemIndices>;
 #endif
 
-}
+} // namespace Opm

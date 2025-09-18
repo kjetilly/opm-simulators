@@ -58,18 +58,17 @@ public:
     enum { numPhases = FluidSystem::numPhases };
     static constexpr int numEq = BlackoilIndices::numEq;
 
-    using Eval =  DenseAd::Evaluation<Scalar, numEq>;
+    using Eval = DenseAd::Evaluation<Scalar, numEq>;
     using Toolbox = MathToolbox<Eval>;
 
     using typename AquiferInterface<TypeTag>::RateVector;
 
     // Constructor
-    AquiferNumerical(const SingleNumericalAquifer& aquifer,
-                     const Simulator& simulator)
+    AquiferNumerical(const SingleNumericalAquifer& aquifer, const Simulator& simulator)
         : AquiferInterface<TypeTag>(aquifer.id(), simulator)
-        , flux_rate_      (0.0)
+        , flux_rate_(0.0)
         , cumulative_flux_(0.0)
-        , init_pressure_  (aquifer.numCells(), 0.0)
+        , init_pressure_(aquifer.numCells(), 0.0)
     {
         this->cell_to_aquifer_cell_idx_.resize(this->simulator_.gridView().size(/*codim=*/0), -1);
 
@@ -112,19 +111,20 @@ public:
         }
 
         if (const auto* aqData = xaqPos->second.typeData.template get<data::AquiferType::Numerical>();
-            aqData != nullptr)
-        {
+            aqData != nullptr) {
             this->init_pressure_.resize(aqData->initPressure.size());
-            std::copy(aqData->initPressure.begin(),
-                      aqData->initPressure.end(),
-                      this->init_pressure_.begin());
+            std::copy(aqData->initPressure.begin(), aqData->initPressure.end(), this->init_pressure_.begin());
         }
 
         this->solution_set_from_restart_ = true;
     }
 
-    void beginTimeStep() override {}
-    void addToSource(RateVector&, const unsigned, const unsigned) override {}
+    void beginTimeStep() override
+    {
+    }
+    void addToSource(RateVector&, const unsigned, const unsigned) override
+    {
+    }
 
     void endTimeStep() override
     {
@@ -143,9 +143,7 @@ public:
 
         auto* aquNum = data.typeData.template create<data::AquiferType::Numerical>();
         aquNum->initPressure.resize(this->init_pressure_.size());
-        std::copy(this->init_pressure_.begin(),
-                  this->init_pressure_.end(),
-                  aquNum->initPressure.begin());
+        std::copy(this->init_pressure_.begin(), this->init_pressure_.end(), aquNum->initPressure.begin());
 
         return data;
     }
@@ -162,14 +160,15 @@ public:
     }
 
     void computeFaceAreaFraction(const std::vector<Scalar>& /*total_face_area*/) override
-    {}
+    {
+    }
 
     Scalar totalFaceArea() const override
     {
         return 1.0;
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(flux_rate_);
@@ -180,10 +179,8 @@ public:
 
     bool operator==(const AquiferNumerical& rhs) const
     {
-        return this->flux_rate_ == rhs.flux_rate_ &&
-               this->cumulative_flux_ == rhs.cumulative_flux_ &&
-               this->init_pressure_ == rhs.init_pressure_ &&
-               this->pressure_ == rhs.pressure_;
+        return this->flux_rate_ == rhs.flux_rate_ && this->cumulative_flux_ == rhs.cumulative_flux_
+            && this->init_pressure_ == rhs.init_pressure_ && this->pressure_ == rhs.pressure_;
     }
 
     Scalar cumulativeFlux() const
@@ -197,21 +194,18 @@ private:
         ElementContext elem_ctx(this->simulator_);
         auto elemIt = std::find_if(this->simulator_.gridView().template begin</*codim=*/0>(),
                                    this->simulator_.gridView().template end</*codim=*/0>(),
-            [&elem_ctx, this](const auto& elem) -> bool
-        {
-            elem_ctx.updateStencil(elem);
+                                   [&elem_ctx, this](const auto& elem) -> bool {
+                                       elem_ctx.updateStencil(elem);
 
-            const auto cell_index = elem_ctx
-                .globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
+                                       const auto cell_index = elem_ctx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
 
-            return this->cell_to_aquifer_cell_idx_[cell_index] == 0;
-        });
+                                       return this->cell_to_aquifer_cell_idx_[cell_index] == 0;
+                                   });
 
-        assert ((elemIt != this->simulator_.gridView().template end</*codim=*/0>())
-                && "Internal error locating numerical aquifer's connecting cell");
+        assert((elemIt != this->simulator_.gridView().template end</*codim=*/0>())
+               && "Internal error locating numerical aquifer's connecting cell");
 
-        this->connects_to_reservoir_ =
-            elemIt->partitionType() == Dune::InteriorEntity;
+        this->connects_to_reservoir_ = elemIt->partitionType() == Dune::InteriorEntity;
     }
 
     Scalar calculateAquiferPressure() const
@@ -225,7 +219,7 @@ private:
         Scalar sum_pressure_watervolume = 0.;
         Scalar sum_watervolume = 0.;
 
-        ElementContext  elem_ctx(this->simulator_);
+        ElementContext elem_ctx(this->simulator_);
         const auto& gridView = this->simulator_.gridView();
         OPM_BEGIN_PARALLEL_TRY_CATCH();
 
@@ -280,7 +274,7 @@ private:
     {
         Scalar aquifer_flux = 0.0;
 
-        if (! this->connects_to_reservoir_) {
+        if (!this->connects_to_reservoir_) {
             return aquifer_flux;
         }
 
@@ -318,7 +312,7 @@ private:
                     continue;
                 }
 
-                const Scalar water_flux = getWaterFlux(elem_ctx,face_idx);
+                const Scalar water_flux = getWaterFlux(elem_ctx, face_idx);
                 const std::size_t up_id = water_flux >= 0.0 ? i : j;
                 const auto& intQuantsIn = elem_ctx.intensiveQuantities(up_id, 0);
                 const Scalar invB = Toolbox::value(intQuantsIn.fluidState().invB(this->phaseIdx_()));
@@ -335,7 +329,7 @@ private:
 
     Scalar flux_rate_; // aquifer influx rate
     Scalar cumulative_flux_; // cumulative aquifer influx
-    std::vector<Scalar> init_pressure_{};
+    std::vector<Scalar> init_pressure_ {};
     Scalar pressure_; // aquifer pressure
     bool solution_set_from_restart_ {false};
     bool connects_to_reservoir_ {false};

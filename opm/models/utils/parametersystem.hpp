@@ -42,56 +42,57 @@
 #include <type_traits>
 #include <vector>
 
-namespace Opm::Parameters {
-
-namespace detail {
-
-template <typename, class = void>
-struct has_name : public std::false_type {};
-
-template <typename T>
-struct has_name<T, std::void_t<decltype(std::declval<T>().name)>>
-: public std::true_type {};
-
-//! get the name data member of a parameter
-template<class Parameter>
-auto getParamName()
+namespace Opm::Parameters
 {
-    if constexpr (has_name<Parameter>::value) {
-        return Parameter::name;
-    } else {
-        std::string paramName = Dune::className<Parameter>();
-        paramName.replace(0, std::strlen("Opm::Parameters::"), "");
-        const auto pos = paramName.find_first_of('<');
-        if (pos != std::string::npos) {
-            paramName.erase(pos);
+
+namespace detail
+{
+
+    template <typename, class = void>
+    struct has_name : public std::false_type {
+    };
+
+    template <typename T>
+    struct has_name<T, std::void_t<decltype(std::declval<T>().name)>> : public std::true_type {
+    };
+
+    //! get the name data member of a parameter
+    template <class Parameter>
+    auto getParamName()
+    {
+        if constexpr (has_name<Parameter>::value) {
+            return Parameter::name;
+        } else {
+            std::string paramName = Dune::className<Parameter>();
+            paramName.replace(0, std::strlen("Opm::Parameters::"), "");
+            const auto pos = paramName.find_first_of('<');
+            if (pos != std::string::npos) {
+                paramName.erase(pos);
+            }
+            return paramName;
         }
-        return paramName;
     }
-}
 
-//! \brief Private implementation.
-template<class ParamType>
-ParamType Get_(const std::string& paramName, ParamType defaultValue,
-               bool errorIfNotRegistered);
+    //! \brief Private implementation.
+    template <class ParamType>
+    ParamType Get_(const std::string& paramName, ParamType defaultValue, bool errorIfNotRegistered);
 
-//! \brief Private implementation.
-void Hide_(const std::string& paramName);
+    //! \brief Private implementation.
+    void Hide_(const std::string& paramName);
 
-//! \brief Private implementation.
-bool IsSet_(const std::string& paramName, bool errorIfNotRegistered);
+    //! \brief Private implementation.
+    bool IsSet_(const std::string& paramName, bool errorIfNotRegistered);
 
-//! \brief Private implementation.
-void Register_(const std::string& paramName,
-               const std::string& paramTypeName,
-               const std::string& defaultValue,
-               const char* usageString);
+    //! \brief Private implementation.
+    void Register_(const std::string& paramName,
+                   const std::string& paramTypeName,
+                   const std::string& defaultValue,
+                   const char* usageString);
 
-//! \brief Private implementation.
-void SetDefault_(const std::string& paramName,
-                 const std::string& paramValue);
+    //! \brief Private implementation.
+    void SetDefault_(const std::string& paramName, const std::string& paramValue);
 
-}
+} // namespace detail
 
 //! \endcond
 
@@ -111,8 +112,7 @@ void printUsage(const std::string& helpPreamble,
                 const bool showAll = false);
 
 //! \brief Callback function for command line parsing.
-using PositionalArgumentCallback = std::function<int(std::function<void(const std::string&,
-                                                                        const std::string&)>,
+using PositionalArgumentCallback = std::function<int(std::function<void(const std::string&, const std::string&)>,
                                                      std::set<std::string>&,
                                                      std::string&,
                                                      int,
@@ -136,11 +136,10 @@ using PositionalArgumentCallback = std::function<int(std::function<void(const st
  * \return Empty string if everything worked out. Otherwise the thing that could
  *         not be read.
  */
-std::string
-parseCommandLineOptions(int argc,
-                        const char **argv,
-                        const PositionalArgumentCallback& posArgCallback,
-                        const std::string& helpPreamble = "");
+std::string parseCommandLineOptions(int argc,
+                                    const char** argv,
+                                    const PositionalArgumentCallback& posArgCallback,
+                                    const std::string& helpPreamble = "");
 
 /*!
  * \ingroup Parameter
@@ -184,14 +183,14 @@ bool printUnused(std::ostream& os);
  * \endcode
  */
 template <class Param>
-auto Get(bool errorIfNotRegistered = true)
+auto
+Get(bool errorIfNotRegistered = true)
 {
-    using ParamType = std::conditional_t<std::is_same_v<decltype(Param::value),
-                                                        const char* const>, std::string,
+    using ParamType = std::conditional_t<std::is_same_v<decltype(Param::value), const char* const>,
+                                         std::string,
                                          std::remove_const_t<decltype(Param::value)>>;
     ParamType defaultValue = Param::value;
-    return detail::Get_(detail::getParamName<Param>(),
-                        defaultValue, errorIfNotRegistered);
+    return detail::Get_(detail::getParamName<Param>(), defaultValue, errorIfNotRegistered);
 }
 
 /*!
@@ -209,7 +208,8 @@ auto Get(bool errorIfNotRegistered = true)
  * \endcode
  */
 template <class Param>
-void SetDefault(decltype(Param::value) new_value)
+void
+SetDefault(decltype(Param::value) new_value)
 {
     const std::string paramName = detail::getParamName<Param>();
     std::ostringstream oss;
@@ -220,11 +220,12 @@ void SetDefault(decltype(Param::value) new_value)
 /*!
  * \brief A struct holding the key-value pair for a parameter.
  */
-struct Parameter
-{
+struct Parameter {
     Parameter(const std::string& k, const std::string& v)
-        : key(k), value(v)
-    {}
+        : key(k)
+        , value(v)
+    {
+    }
 
     friend std::ostream& operator<<(std::ostream& os, const Parameter& param)
     {
@@ -234,11 +235,10 @@ struct Parameter
 
     bool operator==(const Parameter& setting) const
     {
-        return setting.key == key
-            && setting.value == value;
+        return setting.key == key && setting.value == value;
     }
 
-    bool operator !=(const Parameter& setting) const
+    bool operator!=(const Parameter& setting) const
     {
         return !(*this == setting);
     }
@@ -252,8 +252,7 @@ struct Parameter
  * The two arguments besides the TypeTag are assumed to be STL containers which store
  * std::pair<std::string, std::string>.
  */
-void getLists(std::vector<Parameter>& usedParams,
-              std::vector<Parameter>& unusedParams);
+void getLists(std::vector<Parameter>& usedParams, std::vector<Parameter>& unusedParams);
 
 /*!
  *  \brief Reset parameter system.
@@ -267,7 +266,8 @@ void reset();
  * If the parameter in question has not been registered, this throws an exception.
  */
 template <class Param>
-bool IsSet(bool errorIfNotRegistered = true)
+bool
+IsSet(bool errorIfNotRegistered = true)
 {
     return detail::IsSet_(detail::getParamName<Param>(), errorIfNotRegistered);
 }
@@ -289,12 +289,13 @@ bool IsSet(bool errorIfNotRegistered = true)
  * \endcode
  */
 template <class Param>
-void Register(const char* usageString)
+void
+Register(const char* usageString)
 {
     const std::string paramName = detail::getParamName<Param>();
     const auto defaultValue = Param::value;
-    using ParamType = std::conditional_t<std::is_same_v<decltype(defaultValue),
-                                                        const char* const>, std::string,
+    using ParamType = std::conditional_t<std::is_same_v<decltype(defaultValue), const char* const>,
+                                         std::string,
                                          std::remove_const_t<decltype(defaultValue)>>;
 
     std::ostringstream oss;
@@ -308,7 +309,8 @@ void Register(const char* usageString)
  * This allows to deal with unused parameters
  */
 template <class Param>
-void Hide()
+void
+Hide()
 {
     detail::Hide_(detail::getParamName<Param>());
 }

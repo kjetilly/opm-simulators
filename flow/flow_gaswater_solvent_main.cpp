@@ -18,7 +18,8 @@
 #include <flow/flow_gaswater_solvent.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowGasWaterSolventMainStandalone(argc, argv);
 }

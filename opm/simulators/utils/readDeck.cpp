@@ -29,23 +29,23 @@
 #include <opm/simulators/utils/readDeck.hpp>
 
 #include <opm/common/ErrorMacros.hpp>
-#include <opm/common/TimingMacros.hpp>
 #include <opm/common/OpmLog/EclipsePRTLog.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/TimingMacros.hpp>
 #include <opm/common/utility/OpmInputError.hpp>
 #include <opm/common/utility/String.hpp>
 
-#include <opm/io/eclipse/EclIOdata.hpp>
 #include <opm/io/eclipse/ERst.hpp>
+#include <opm/io/eclipse/EclIOdata.hpp>
 #include <opm/io/eclipse/RestartFileView.hpp>
 #include <opm/io/eclipse/rst/aquifer.hpp>
 #include <opm/io/eclipse/rst/state.hpp>
 
 #include <opm/input/eclipse/Deck/Deck.hpp>
 
-#include <opm/input/eclipse/EclipseState/checkDeck.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/FieldData.hpp>
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
+#include <opm/input/eclipse/EclipseState/checkDeck.hpp>
 
 #include <opm/input/eclipse/Parser/ErrorGuard.hpp>
 #include <opm/input/eclipse/Parser/InputErrorAction.hpp>
@@ -54,8 +54,8 @@
 
 #include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/Schedule/ArrayDimChecker.hpp>
-#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/ResCoup/MasterGroup.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/ResCoup/Slaves.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 
@@ -87,369 +87,377 @@
 #include <utility>
 #include <vector>
 
-namespace {
+namespace
+{
 
-    void setupMessageLimiter(const Opm::MessageLimits& msgLimits,
-                             const std::string& stdout_log_id)
-    {
-        const auto limits = std::map<std::int64_t, int> {
-            {Opm::Log::MessageType::Note,     msgLimits.getCommentPrintLimit()},
-            {Opm::Log::MessageType::Info,     msgLimits.getMessagePrintLimit()},
-            {Opm::Log::MessageType::Warning,  msgLimits.getWarningPrintLimit()},
-            {Opm::Log::MessageType::Error,    msgLimits.getErrorPrintLimit()},
-            {Opm::Log::MessageType::Problem,  msgLimits.getProblemPrintLimit()},
-            {Opm::Log::MessageType::Bug,      msgLimits.getBugPrintLimit()},
-        };
+void
+setupMessageLimiter(const Opm::MessageLimits& msgLimits, const std::string& stdout_log_id)
+{
+    const auto limits = std::map<std::int64_t, int> {
+        {Opm::Log::MessageType::Note, msgLimits.getCommentPrintLimit()},
+        {Opm::Log::MessageType::Info, msgLimits.getMessagePrintLimit()},
+        {Opm::Log::MessageType::Warning, msgLimits.getWarningPrintLimit()},
+        {Opm::Log::MessageType::Error, msgLimits.getErrorPrintLimit()},
+        {Opm::Log::MessageType::Problem, msgLimits.getProblemPrintLimit()},
+        {Opm::Log::MessageType::Bug, msgLimits.getBugPrintLimit()},
+    };
 
-        Opm::OpmLog::getBackend<Opm::StreamLog>(stdout_log_id)
-            ->setMessageLimiter(std::make_shared<Opm::MessageLimiter>(10, limits));
+    Opm::OpmLog::getBackend<Opm::StreamLog>(stdout_log_id)
+        ->setMessageLimiter(std::make_shared<Opm::MessageLimiter>(10, limits));
+}
+
+void
+loadObjectsFromRestart(const Opm::Deck& deck,
+                       const Opm::Parser& parser,
+                       const Opm::ParseContext& parseContext,
+                       const bool initFromRestart,
+                       const std::optional<int>& outputInterval,
+                       const bool lowActionParsingStrictness,
+                       const bool keepKeywords,
+                       Opm::EclipseState& eclipseState,
+                       std::shared_ptr<Opm::Python> python,
+                       std::shared_ptr<Opm::Schedule>& schedule,
+                       std::unique_ptr<Opm::UDQState>& udqState,
+                       std::unique_ptr<Opm::Action::State>& actionState,
+                       std::unique_ptr<Opm::WellTestState>& wtestState,
+                       Opm::ErrorGuard& errorGuard)
+{
+    // Analytic aquifers must always be loaded from the restart file in
+    // restarted runs and the corresponding keywords (e.g., AQUANCON and
+    // AQUCT) do not exist in the input deck in this case.  In other
+    // words, there's no way to check if there really are analytic
+    // aquifers in the run until we attempt to read the specifications
+    // from the restart file.  If the loader determines that there are
+    // no analytic aquifers, then 'EclipseState::loadRestartAquifers()'
+    // does nothing.
+    const auto& init_config = eclipseState.getInitConfig();
+    const int report_step = init_config.getRestartStep();
+    const auto rst_filename
+        = eclipseState.getIOConfig().getRestartFileName(init_config.getRestartRootName(), report_step, false);
+
+    auto rst_file = std::make_shared<Opm::EclIO::ERst>(rst_filename);
+    auto rst_view = std::make_shared<Opm::EclIO::RestartFileView>(std::move(rst_file), report_step);
+
+    // Note: RstState::load() will just *read* from the grid structure,
+    // and only do so if the case actually includes analytic aquifers.
+    // The pointer to the input grid is just to allow 'nullptr' to
+    // signify "don't load aquifers" in certain unit tests.  Passing an
+    // optional<EclipseGrid> is too expensive however since doing so
+    // will create a copy of the grid inside the optional<>.
+    const auto rst_state = Opm::RestartIO::RstState::load(
+        std::move(rst_view), eclipseState.runspec(), parser, &eclipseState.getInputGrid());
+
+    eclipseState.loadRestartAquifers(rst_state.aquifers);
+
+    // For the time being initializing wells and groups from the restart
+    // file is not possible.  Work is underway and the ability is
+    // included here contingent on user-level switch 'initFromRestart'
+    // (i.e., setting "--sched-restart=false" as a command line
+    // invocation parameter).
+    const auto* init_state = initFromRestart ? &rst_state : nullptr;
+    if (schedule == nullptr) {
+        schedule = std::make_shared<Opm::Schedule>(deck,
+                                                   eclipseState,
+                                                   parseContext,
+                                                   errorGuard,
+                                                   std::move(python),
+                                                   lowActionParsingStrictness,
+                                                   /*slaveMode=*/false,
+                                                   keepKeywords,
+                                                   outputInterval,
+                                                   init_state);
     }
 
-    void loadObjectsFromRestart(const Opm::Deck&                     deck,
-                                const Opm::Parser&                   parser,
-                                const Opm::ParseContext&             parseContext,
-                                const bool                           initFromRestart,
-                                const std::optional<int>&            outputInterval,
-                                const bool                           lowActionParsingStrictness,
-                                const bool                           keepKeywords,
-                                Opm::EclipseState&                   eclipseState,
-                                std::shared_ptr<Opm::Python>         python,
-                                std::shared_ptr<Opm::Schedule>&      schedule,
-                                std::unique_ptr<Opm::UDQState>&      udqState,
-                                std::unique_ptr<Opm::Action::State>& actionState,
-                                std::unique_ptr<Opm::WellTestState>& wtestState,
-                                Opm::ErrorGuard&                     errorGuard)
-    {
-        // Analytic aquifers must always be loaded from the restart file in
-        // restarted runs and the corresponding keywords (e.g., AQUANCON and
-        // AQUCT) do not exist in the input deck in this case.  In other
-        // words, there's no way to check if there really are analytic
-        // aquifers in the run until we attempt to read the specifications
-        // from the restart file.  If the loader determines that there are
-        // no analytic aquifers, then 'EclipseState::loadRestartAquifers()'
-        // does nothing.
-        const auto& init_config = eclipseState.getInitConfig();
-        const int report_step = init_config.getRestartStep();
-        const auto rst_filename = eclipseState.getIOConfig()
-            .getRestartFileName(init_config.getRestartRootName(), report_step, false);
-
-        auto rst_file = std::make_shared<Opm::EclIO::ERst>(rst_filename);
-        auto rst_view = std::make_shared<Opm::EclIO::RestartFileView>
-            (std::move(rst_file), report_step);
-
-        // Note: RstState::load() will just *read* from the grid structure,
-        // and only do so if the case actually includes analytic aquifers.
-        // The pointer to the input grid is just to allow 'nullptr' to
-        // signify "don't load aquifers" in certain unit tests.  Passing an
-        // optional<EclipseGrid> is too expensive however since doing so
-        // will create a copy of the grid inside the optional<>.
-        const auto rst_state = Opm::RestartIO::RstState::
-            load(std::move(rst_view),
-                 eclipseState.runspec(), parser,
-                 &eclipseState.getInputGrid());
-
-        eclipseState.loadRestartAquifers(rst_state.aquifers);
-
-        // For the time being initializing wells and groups from the restart
-        // file is not possible.  Work is underway and the ability is
-        // included here contingent on user-level switch 'initFromRestart'
-        // (i.e., setting "--sched-restart=false" as a command line
-        // invocation parameter).
-        const auto* init_state = initFromRestart ? &rst_state : nullptr;
-        if (schedule == nullptr) {
-            schedule = std::make_shared<Opm::Schedule>
-                (deck, eclipseState, parseContext, errorGuard,
-                 std::move(python), lowActionParsingStrictness,  /*slaveMode=*/false,
-                 keepKeywords, outputInterval, init_state);
-        }
-
-        // Read network pressures from restart
-        if (rst_state.network.isActive()) {
-            eclipseState.loadRestartNetworkPressures(rst_state.network);
-        }
-
-        udqState = std::make_unique<Opm::UDQState>
-            ((*schedule)[0].udq().params().undefinedValue());
-        udqState->load_rst(rst_state);
-
-        actionState = std::make_unique<Opm::Action::State>();
-        actionState->load_rst((*schedule)[report_step].actions(), rst_state);
-
-        wtestState = std::make_unique<Opm::WellTestState>(schedule->runspec().start_time(), rst_state);
+    // Read network pressures from restart
+    if (rst_state.network.isActive()) {
+        eclipseState.loadRestartNetworkPressures(rst_state.network);
     }
 
-    void createNonRestartDynamicObjects(const Opm::Deck&                     deck,
-                                        const Opm::EclipseState&             eclipseState,
-                                        const Opm::ParseContext&             parseContext,
-                                        const bool                           lowActionParsingStrictness,
-                                        const bool                           keepKeywords,
-                                        std::shared_ptr<Opm::Python>         python,
-                                        std::shared_ptr<Opm::Schedule>&      schedule,
-                                        std::unique_ptr<Opm::UDQState>&      udqState,
-                                        std::unique_ptr<Opm::Action::State>& actionState,
-                                        std::unique_ptr<Opm::WellTestState>& wtestState,
-                                        Opm::ErrorGuard&                     errorGuard,
-                                        const bool                           slaveMode)
-    {
-        if (schedule == nullptr) {
-            schedule = std::make_shared<Opm::Schedule>
-                (deck, eclipseState, parseContext,
-                 errorGuard, std::move(python), lowActionParsingStrictness, slaveMode, keepKeywords);
-        }
-        udqState = std::make_unique<Opm::UDQState>
-            ((*schedule)[0].udq().params().undefinedValue());
+    udqState = std::make_unique<Opm::UDQState>((*schedule)[0].udq().params().undefinedValue());
+    udqState->load_rst(rst_state);
 
+    actionState = std::make_unique<Opm::Action::State>();
+    actionState->load_rst((*schedule)[report_step].actions(), rst_state);
+
+    wtestState = std::make_unique<Opm::WellTestState>(schedule->runspec().start_time(), rst_state);
+}
+
+void
+createNonRestartDynamicObjects(const Opm::Deck& deck,
+                               const Opm::EclipseState& eclipseState,
+                               const Opm::ParseContext& parseContext,
+                               const bool lowActionParsingStrictness,
+                               const bool keepKeywords,
+                               std::shared_ptr<Opm::Python> python,
+                               std::shared_ptr<Opm::Schedule>& schedule,
+                               std::unique_ptr<Opm::UDQState>& udqState,
+                               std::unique_ptr<Opm::Action::State>& actionState,
+                               std::unique_ptr<Opm::WellTestState>& wtestState,
+                               Opm::ErrorGuard& errorGuard,
+                               const bool slaveMode)
+{
+    if (schedule == nullptr) {
+        schedule = std::make_shared<Opm::Schedule>(deck,
+                                                   eclipseState,
+                                                   parseContext,
+                                                   errorGuard,
+                                                   std::move(python),
+                                                   lowActionParsingStrictness,
+                                                   slaveMode,
+                                                   keepKeywords);
+    }
+    udqState = std::make_unique<Opm::UDQState>((*schedule)[0].udq().params().undefinedValue());
+
+    actionState = std::make_unique<Opm::Action::State>();
+    wtestState = std::make_unique<Opm::WellTestState>();
+}
+
+Opm::Deck
+readDeckFile(const std::string& deckFilename,
+             const bool checkDeck,
+             const Opm::Parser& parser,
+             const Opm::ParseContext& parseContext,
+             const bool treatCriticalAsNonCritical,
+             Opm::ErrorGuard& errorGuard)
+{
+    Opm::Deck deck(parser.parseFile(deckFilename, parseContext, errorGuard));
+
+    Opm::KeywordValidation::SupportedKeywords partiallySupported {
+        Opm::FlowKeywordValidation::partiallySupported<std::string>(),
+        Opm::FlowKeywordValidation::partiallySupported<int>(),
+        Opm::FlowKeywordValidation::partiallySupported<double>()};
+
+    Opm::KeywordValidation::SupportedKeywords fullySupported {Opm::FlowKeywordValidation::fullySupported<std::string>(),
+                                                              Opm::FlowKeywordValidation::fullySupported<int>(),
+                                                              Opm::FlowKeywordValidation::fullySupported<double>()};
+
+    auto keyword_validator
+        = Opm::KeywordValidation::KeywordValidator {Opm::FlowKeywordValidation::unsupportedKeywords(),
+                                                    partiallySupported,
+                                                    fullySupported,
+                                                    Opm::KeywordValidation::specialValidation()};
+
+    keyword_validator.validateDeck(deck, parseContext, treatCriticalAsNonCritical, errorGuard);
+
+    if (checkDeck) {
+        Opm::checkDeck(deck, parser, parseContext, errorGuard);
+    }
+
+    return deck;
+}
+
+std::shared_ptr<Opm::EclipseState>
+createEclipseState([[maybe_unused]] Opm::Parallel::Communication comm, const Opm::Deck& deck)
+{
+#if HAVE_MPI
+    return std::make_shared<Opm::ParallelEclipseState>(deck, comm);
+#else
+    return std::make_shared<Opm::EclipseState>(deck);
+#endif
+}
+
+void
+inconsistentScheduleError(const std::string& message)
+{
+    OPM_THROW(std::logic_error, fmt::format("Inconsistent SCHEDULE section: {}", message));
+}
+
+void
+checkScheduleKeywordConsistency(const Opm::Schedule& schedule)
+{
+    const auto& final_state = schedule.back();
+    const auto& rescoup = final_state.rescoup();
+    if (rescoup.slaveCount() > 0 && rescoup.masterGroupCount() == 0) {
+        inconsistentScheduleError("SLAVES keyword without GRUPMAST keyword");
+    }
+    if (rescoup.slaveCount() == 0 && rescoup.masterGroupCount() > 0) {
+        inconsistentScheduleError("GRUPMAST keyword without SLAVES keyword");
+    }
+}
+
+void
+readOnIORank(Opm::Parallel::Communication comm,
+             const std::string& deckFilename,
+             const Opm::ParseContext* parseContext,
+             std::shared_ptr<Opm::EclipseState>& eclipseState,
+             std::shared_ptr<Opm::Schedule>& schedule,
+             std::unique_ptr<Opm::UDQState>& udqState,
+             std::unique_ptr<Opm::Action::State>& actionState,
+             std::unique_ptr<Opm::WellTestState>& wtestState,
+             std::shared_ptr<Opm::SummaryConfig>& summaryConfig,
+             std::shared_ptr<Opm::Python> python,
+             const bool initFromRestart,
+             const bool checkDeck,
+             const bool treatCriticalAsNonCritical,
+             const bool lowActionParsingStrictness,
+             const bool keepKeywords,
+             const std::optional<int>& outputInterval,
+             Opm::ErrorGuard& errorGuard,
+             const bool slaveMode)
+{
+    OPM_TIMEBLOCK(readDeck);
+    if (((schedule == nullptr) || (summaryConfig == nullptr)) && (parseContext == nullptr)) {
+        OPM_THROW(std::logic_error,
+                  "We need a parse context if schedule "
+                  "or summaryConfig are not initialized");
+    }
+
+    auto parser = Opm::Parser {};
+    const auto deck
+        = readDeckFile(deckFilename, checkDeck, parser, *parseContext, treatCriticalAsNonCritical, errorGuard);
+
+    if (eclipseState == nullptr) {
+        OPM_TIMEBLOCK(createEclState);
+        eclipseState = createEclipseState(comm, deck);
+    }
+
+    if (eclipseState->getInitConfig().restartRequested()) {
+        loadObjectsFromRestart(deck,
+                               parser,
+                               *parseContext,
+                               initFromRestart,
+                               outputInterval,
+                               lowActionParsingStrictness,
+                               keepKeywords,
+                               *eclipseState,
+                               std::move(python),
+                               schedule,
+                               udqState,
+                               actionState,
+                               wtestState,
+                               errorGuard);
+    } else {
+        createNonRestartDynamicObjects(deck,
+                                       *eclipseState,
+                                       *parseContext,
+                                       lowActionParsingStrictness,
+                                       keepKeywords,
+                                       std::move(python),
+                                       schedule,
+                                       udqState,
+                                       actionState,
+                                       wtestState,
+                                       errorGuard,
+                                       slaveMode);
+    }
+
+    checkScheduleKeywordConsistency(*schedule);
+    eclipseState->appendAqufluxSchedule(schedule->getAquiferFluxSchedule());
+
+    if (Opm::OpmLog::hasBackend("STDOUT_LOGGER")) {
+        // loggers might not be set up!
+        setupMessageLimiter((*schedule)[0].message_limits(), "STDOUT_LOGGER");
+    }
+
+    if (summaryConfig == nullptr) {
+        summaryConfig = std::make_shared<Opm::SummaryConfig>(
+            deck, *schedule, eclipseState->fieldProps(), eclipseState->aquifer(), *parseContext, errorGuard);
+    }
+
+    Opm::checkConsistentArrayDimensions(*eclipseState, *schedule, *parseContext, errorGuard);
+}
+
+#if HAVE_MPI
+void
+defineStateObjectsOnNonIORank(Opm::Parallel::Communication comm,
+                              std::shared_ptr<Opm::Python> python,
+                              std::shared_ptr<Opm::EclipseState>& eclipseState,
+                              std::shared_ptr<Opm::Schedule>& schedule,
+                              std::unique_ptr<Opm::UDQState>& udqState,
+                              std::unique_ptr<Opm::Action::State>& actionState,
+                              std::unique_ptr<Opm::WellTestState>& wtestState,
+                              std::shared_ptr<Opm::SummaryConfig>& summaryConfig)
+{
+    if (eclipseState == nullptr) {
+        eclipseState = std::make_shared<Opm::ParallelEclipseState>(comm);
+    }
+
+    if (schedule == nullptr) {
+        schedule = std::make_shared<Opm::Schedule>(std::move(python));
+    }
+
+    if (udqState == nullptr) {
+        udqState = std::make_unique<Opm::UDQState>(0);
+    }
+
+    if (actionState == nullptr) {
         actionState = std::make_unique<Opm::Action::State>();
+    }
+
+    if (wtestState == nullptr) {
         wtestState = std::make_unique<Opm::WellTestState>();
     }
 
-    Opm::Deck
-    readDeckFile(const std::string&       deckFilename,
-                 const bool               checkDeck,
-                 const Opm::Parser&       parser,
-                 const Opm::ParseContext& parseContext,
-                 const bool               treatCriticalAsNonCritical,
-                 Opm::ErrorGuard&         errorGuard)
-    {
-        Opm::Deck deck(parser.parseFile(deckFilename, parseContext, errorGuard));
-
-        Opm::KeywordValidation::SupportedKeywords partiallySupported  {
-            Opm::FlowKeywordValidation::partiallySupported<std::string>(),
-            Opm::FlowKeywordValidation::partiallySupported<int>(),
-            Opm::FlowKeywordValidation::partiallySupported<double>()
-        };
-
-        Opm::KeywordValidation::SupportedKeywords fullySupported  {
-            Opm::FlowKeywordValidation::fullySupported<std::string>(),
-            Opm::FlowKeywordValidation::fullySupported<int>(),
-            Opm::FlowKeywordValidation::fullySupported<double>()
-        };
-
-        auto keyword_validator = Opm::KeywordValidation::KeywordValidator {
-            Opm::FlowKeywordValidation::unsupportedKeywords(),
-            partiallySupported,
-            fullySupported,
-            Opm::KeywordValidation::specialValidation()
-        };
-
-        keyword_validator.validateDeck(deck, parseContext, treatCriticalAsNonCritical, errorGuard);
-
-        if (checkDeck) {
-            Opm::checkDeck(deck, parser, parseContext, errorGuard);
-        }
-
-        return deck;
-    }
-
-    std::shared_ptr<Opm::EclipseState>
-    createEclipseState([[maybe_unused]] Opm::Parallel::Communication comm,
-                       const Opm::Deck&                              deck)
-    {
-#if HAVE_MPI
-        return std::make_shared<Opm::ParallelEclipseState>(deck, comm);
-#else
-        return std::make_shared<Opm::EclipseState>(deck);
-#endif
-    }
-
-    void inconsistentScheduleError(const std::string& message)
-    {
-        OPM_THROW(std::logic_error,
-                  fmt::format("Inconsistent SCHEDULE section: {}", message));
-    }
-
-    void checkScheduleKeywordConsistency(const Opm::Schedule& schedule)
-    {
-        const auto& final_state = schedule.back();
-        const auto& rescoup = final_state.rescoup();
-        if (rescoup.slaveCount() > 0 && rescoup.masterGroupCount() == 0) {
-            inconsistentScheduleError("SLAVES keyword without GRUPMAST keyword");
-        }
-        if (rescoup.slaveCount() == 0 && rescoup.masterGroupCount() > 0) {
-            inconsistentScheduleError("GRUPMAST keyword without SLAVES keyword");
-        }
-    }
-
-    void readOnIORank(Opm::Parallel::Communication         comm,
-                      const std::string&                   deckFilename,
-                      const Opm::ParseContext*             parseContext,
-                      std::shared_ptr<Opm::EclipseState>&  eclipseState,
-                      std::shared_ptr<Opm::Schedule>&      schedule,
-                      std::unique_ptr<Opm::UDQState>&      udqState,
-                      std::unique_ptr<Opm::Action::State>& actionState,
-                      std::unique_ptr<Opm::WellTestState>& wtestState,
-                      std::shared_ptr<Opm::SummaryConfig>& summaryConfig,
-                      std::shared_ptr<Opm::Python>         python,
-                      const bool                           initFromRestart,
-                      const bool                           checkDeck,
-                      const bool                           treatCriticalAsNonCritical,
-                      const bool                           lowActionParsingStrictness,
-                      const bool                           keepKeywords,
-                      const std::optional<int>&            outputInterval,
-                      Opm::ErrorGuard&                     errorGuard,
-                      const bool                           slaveMode)
-    {
-        OPM_TIMEBLOCK(readDeck);
-        if (((schedule == nullptr) || (summaryConfig == nullptr)) &&
-            (parseContext == nullptr))
-        {
-            OPM_THROW(std::logic_error,
-                      "We need a parse context if schedule "
-                      "or summaryConfig are not initialized");
-        }
-
-        auto parser = Opm::Parser{};
-        const auto deck = readDeckFile(deckFilename, checkDeck, parser,
-                                       *parseContext, treatCriticalAsNonCritical, errorGuard);
-
-        if (eclipseState == nullptr) {
-            OPM_TIMEBLOCK(createEclState);
-            eclipseState = createEclipseState(comm, deck);
-        }
-
-        if (eclipseState->getInitConfig().restartRequested()) {
-            loadObjectsFromRestart(deck, parser, *parseContext,
-                                   initFromRestart, outputInterval,
-                                   lowActionParsingStrictness, keepKeywords,
-                                   *eclipseState, std::move(python),
-                                   schedule, udqState, actionState, wtestState,
-                                   errorGuard);
-        }
-        else {
-            createNonRestartDynamicObjects(deck, *eclipseState, *parseContext,
-                                           lowActionParsingStrictness, keepKeywords,
-                                           std::move(python),
-                                           schedule, udqState, actionState, wtestState,
-                                           errorGuard, slaveMode);
-        }
-
-        checkScheduleKeywordConsistency(*schedule);
-        eclipseState->appendAqufluxSchedule(schedule->getAquiferFluxSchedule());
-
-        if (Opm::OpmLog::hasBackend("STDOUT_LOGGER")) {
-            // loggers might not be set up!
-            setupMessageLimiter((*schedule)[0].message_limits(), "STDOUT_LOGGER");
-        }
-
-        if (summaryConfig == nullptr) {
-            summaryConfig = std::make_shared<Opm::SummaryConfig>
-                (deck, *schedule, eclipseState->fieldProps(),
-                 eclipseState->aquifer(), *parseContext, errorGuard);
-        }
-
-        Opm::checkConsistentArrayDimensions(*eclipseState, *schedule,
-                                            *parseContext, errorGuard);
-    }
-
-#if HAVE_MPI
-    void defineStateObjectsOnNonIORank(Opm::Parallel::Communication         comm,
-                                       std::shared_ptr<Opm::Python>         python,
-                                       std::shared_ptr<Opm::EclipseState>&  eclipseState,
-                                       std::shared_ptr<Opm::Schedule>&      schedule,
-                                       std::unique_ptr<Opm::UDQState>&      udqState,
-                                       std::unique_ptr<Opm::Action::State>& actionState,
-                                       std::unique_ptr<Opm::WellTestState>& wtestState,
-                                       std::shared_ptr<Opm::SummaryConfig>& summaryConfig)
-    {
-        if (eclipseState == nullptr) {
-            eclipseState = std::make_shared<Opm::ParallelEclipseState>(comm);
-        }
-
-        if (schedule == nullptr) {
-            schedule = std::make_shared<Opm::Schedule>(std::move(python));
-        }
-
-        if (udqState == nullptr) {
-            udqState = std::make_unique<Opm::UDQState>(0);
-        }
-
-        if (actionState == nullptr) {
-            actionState = std::make_unique<Opm::Action::State>();
-        }
-
-        if (wtestState == nullptr) {
-            wtestState = std::make_unique<Opm::WellTestState>();
-        }
-
-        if (summaryConfig == nullptr) {
-            summaryConfig = std::make_shared<Opm::SummaryConfig>();
-        }
-    }
-#endif
-
-    std::pair<bool, std::string>
-    gridHasValidCellGeometry(const Opm::EclipseGrid& inputGrid,
-                             const Opm::UnitSystem&  usys)
-    {
-        const auto numActive = inputGrid.getNumActive();
-
-        if (numActive == 0)
-        {
-            return {false, R"(Input grid has no active cells at all.
-Please check geometry keywords and modifications to e.g. pore volume,
-especially if grid is imported through GDFILE.)"};
-        }
-
-        for (auto activeCell = 0*numActive; activeCell < numActive; ++activeCell) {
-            if (inputGrid.isValidCellGeomtry(inputGrid.getGlobalIndex(activeCell), usys)) {
-                return {true, ""};
-            }
-        }
-
-        return {false, R"(No active cell in input grid has valid/finite cell geometry
-Please check geometry keywords and modifications to e.g. pore volume,
-especially if the grid is imported through GDFILE.)"};
-    }
-
-    std::pair<bool, std::string>
-    gridHasValidCellGeometry(Opm::Parallel::Communication comm,
-                                  const Opm::EclipseState&     eclipseState)
-    {
-        bool hasValidCells = false;
-        std::string message;
-
-        if (comm.rank() == 0) {
-            std::tie(hasValidCells, message) =
-                gridHasValidCellGeometry(eclipseState.getInputGrid(),
-                                         eclipseState.getDeckUnitSystem());
-        }
-
-#if HAVE_MPI
-        const auto status = comm.broadcast(&hasValidCells, 1, 0);
-
-        if (status != MPI_SUCCESS) {
-            throw std::invalid_argument {
-                "Unable to establish cell geometry validity across MPI ranks"
-            };
-        }
-#endif  // HAVE_MPI
-
-        return {hasValidCells, message};
+    if (summaryConfig == nullptr) {
+        summaryConfig = std::make_shared<Opm::SummaryConfig>();
     }
 }
+#endif
+
+std::pair<bool, std::string>
+gridHasValidCellGeometry(const Opm::EclipseGrid& inputGrid, const Opm::UnitSystem& usys)
+{
+    const auto numActive = inputGrid.getNumActive();
+
+    if (numActive == 0) {
+        return {false, R"(Input grid has no active cells at all.
+Please check geometry keywords and modifications to e.g. pore volume,
+especially if grid is imported through GDFILE.)"};
+    }
+
+    for (auto activeCell = 0 * numActive; activeCell < numActive; ++activeCell) {
+        if (inputGrid.isValidCellGeomtry(inputGrid.getGlobalIndex(activeCell), usys)) {
+            return {true, ""};
+        }
+    }
+
+    return {false, R"(No active cell in input grid has valid/finite cell geometry
+Please check geometry keywords and modifications to e.g. pore volume,
+especially if the grid is imported through GDFILE.)"};
+}
+
+std::pair<bool, std::string>
+gridHasValidCellGeometry(Opm::Parallel::Communication comm, const Opm::EclipseState& eclipseState)
+{
+    bool hasValidCells = false;
+    std::string message;
+
+    if (comm.rank() == 0) {
+        std::tie(hasValidCells, message)
+            = gridHasValidCellGeometry(eclipseState.getInputGrid(), eclipseState.getDeckUnitSystem());
+    }
+
+#if HAVE_MPI
+    const auto status = comm.broadcast(&hasValidCells, 1, 0);
+
+    if (status != MPI_SUCCESS) {
+        throw std::invalid_argument {"Unable to establish cell geometry validity across MPI ranks"};
+    }
+#endif // HAVE_MPI
+
+    return {hasValidCells, message};
+}
+} // namespace
 
 // ---------------------------------------------------------------------------
 
 
-void Opm::ensureOutputDirExists(const std::string& cmdline_output_dir)
+void
+Opm::ensureOutputDirExists(const std::string& cmdline_output_dir)
 {
     namespace fs = std::filesystem;
 
-    if (! fs::is_directory(cmdline_output_dir)) {
+    if (!fs::is_directory(cmdline_output_dir)) {
         try {
             fs::create_directories(cmdline_output_dir);
-        }
-        catch (...) {
-            throw std::runtime_error {
-                fmt::format("Creation of output directory '{}' failed",
-                            cmdline_output_dir)
-                    };
+        } catch (...) {
+            throw std::runtime_error {fmt::format("Creation of output directory '{}' failed", cmdline_output_dir)};
         }
     }
 }
 
-void Opm::prepareResultOutputDirectory(const std::string&           baseName,
-                                       const std::filesystem::path& outputDir)  
+void
+Opm::prepareResultOutputDirectory(const std::string& baseName, const std::filesystem::path& outputDir)
 {
     namespace fs = std::filesystem;
 
@@ -471,40 +479,33 @@ void Opm::prepareResultOutputDirectory(const std::string&           baseName,
     // want to inadvertently cause "file not found" errors and subsequent
     // run failures in that situation.
     const auto extensionRegEx = std::regex {
-        R"(\.(F?(INIT|RFT|SMSPEC|UNSMRY|UNRST)|([ABCFGHSTUXYZ]\d{4})|PRT|DBG|INFO(STEP|ITER)|OPMRST|ESMRY))"
-    };
+        R"(\.(F?(INIT|RFT|SMSPEC|UNSMRY|UNRST)|([ABCFGHSTUXYZ]\d{4})|PRT|DBG|INFO(STEP|ITER)|OPMRST|ESMRY))"};
 
     // We collect a list of files to remove in order that the directory
     // traversal not be disturbed by remove() calls.  The downside to this
     // approach is that it opens up the common race window between the "time
     // of check" and the "time of use".
-    auto fileRemovalList = std::vector<fs::path>{};
+    auto fileRemovalList = std::vector<fs::path> {};
 
-    std::for_each(fs::directory_iterator { outputDir },
+    std::for_each(fs::directory_iterator {outputDir},
                   fs::directory_iterator {}, // End iterator
-                  [&baseName, &extensionRegEx, &fileRemovalList]
-                  (const fs::directory_entry& dirEntry)
-    {
-        if (! dirEntry.is_regular_file()) {
-            return;
-        }
+                  [&baseName, &extensionRegEx, &fileRemovalList](const fs::directory_entry& dirEntry) {
+                      if (!dirEntry.is_regular_file()) {
+                          return;
+                      }
 
-        const auto& file = dirEntry.path();
+                      const auto& file = dirEntry.path();
 
-        // Note: Normal string matching for the stem() since 'baseName'
-        // might contain regular expression metacharacters like '+' or '-'.
-        if ((file.stem() == baseName) &&
-            std::regex_match(file.extension().string(), extensionRegEx))
-        {
-            fileRemovalList.push_back(file);
-        }
-    });
+                      // Note: Normal string matching for the stem() since 'baseName'
+                      // might contain regular expression metacharacters like '+' or '-'.
+                      if ((file.stem() == baseName) && std::regex_match(file.extension().string(), extensionRegEx)) {
+                          fileRemovalList.push_back(file);
+                      }
+                  });
 
     // Affect actual file removal.
-    std::for_each(fileRemovalList.begin(), fileRemovalList.end(),
-                  [](const fs::path& file)
-    {
-        auto ec = std::error_code{};
+    std::for_each(fileRemovalList.begin(), fileRemovalList.end(), [](const fs::path& file) {
+        auto ec = std::error_code {};
         fs::remove(file, ec);
 
         if (ec) {
@@ -514,7 +515,8 @@ void Opm::prepareResultOutputDirectory(const std::string&           baseName,
             // logging system is operational.
             std::cerr << fmt::format("Failed to remove existing "
                                      "result file '{}': {}\n",
-                                     file.string(), ec.message());
+                                     file.string(),
+                                     ec.message());
         }
     });
 }
@@ -522,12 +524,12 @@ void Opm::prepareResultOutputDirectory(const std::string&           baseName,
 // Setup the OpmLog backends
 Opm::FileOutputMode
 Opm::setupLogging(Parallel::Communication& comm,
-                  const std::string&       deck_filename,
-                  const std::string&       cmdline_output_dir,
-                  const std::string&       cmdline_output,
-                  const bool               output_cout_,
-                  const std::string&       stdout_log_id,
-                  const bool               allRanksDbgLog)
+                  const std::string& deck_filename,
+                  const std::string& cmdline_output_dir,
+                  const std::string& cmdline_output,
+                  const bool output_cout_,
+                  const std::string& stdout_log_id,
+                  const bool allRanksDbgLog)
 {
     if (!cmdline_output_dir.empty()) {
         ensureOutputDirExists(cmdline_output_dir);
@@ -544,20 +546,18 @@ Opm::setupLogging(Parallel::Communication& comm,
     std::string extension = uppercase(fpath.extension().string());
     if (extension == ".DATA" || extension == ".") {
         baseName = uppercase(fpath.stem().string());
-    }
-    else {
+    } else {
         baseName = uppercase(fpath.filename().string());
     }
 
     std::string output_dir = cmdline_output_dir;
     if (output_dir.empty()) {
-        output_dir = fpath.has_parent_path()
-            ? absolute(fpath.parent_path()).generic_string()
-            : std::filesystem::current_path().generic_string();
+        output_dir = fpath.has_parent_path() ? absolute(fpath.parent_path()).generic_string()
+                                             : std::filesystem::current_path().generic_string();
     }
 
     // Cleans up the result output directory, we only do this on process 0
-    if (comm.rank() == 0) { 
+    if (comm.rank() == 0) {
         prepareResultOutputDirectory(baseName, output_dir);
     }
     //... and the other processes need to wait for this to be finished.
@@ -579,29 +579,26 @@ Opm::setupLogging(Parallel::Communication& comm,
     debugFileStream << ".DBG";
     FileOutputMode output;
     {
-        static std::map<std::string, FileOutputMode> stringToOutputMode =
-            { {"none", FileOutputMode::OUTPUT_NONE },
-              {"false", FileOutputMode::OUTPUT_LOG_ONLY },
-              {"log", FileOutputMode::OUTPUT_LOG_ONLY },
-              {"all" , FileOutputMode::OUTPUT_ALL },
-              {"true" , FileOutputMode::OUTPUT_ALL }};
+        static std::map<std::string, FileOutputMode> stringToOutputMode = {{"none", FileOutputMode::OUTPUT_NONE},
+                                                                           {"false", FileOutputMode::OUTPUT_LOG_ONLY},
+                                                                           {"log", FileOutputMode::OUTPUT_LOG_ONLY},
+                                                                           {"all", FileOutputMode::OUTPUT_ALL},
+                                                                           {"true", FileOutputMode::OUTPUT_ALL}};
         auto outputModeIt = stringToOutputMode.find(cmdline_output);
         if (outputModeIt != stringToOutputMode.end()) {
             output = outputModeIt->second;
-        }
-        else {
+        } else {
             output = FileOutputMode::OUTPUT_ALL;
-            std::cerr << "Value " << cmdline_output
-                      << " is not a recognized output mode. Using \"all\" instead.\n";
+            std::cerr << "Value " << cmdline_output << " is not a recognized output mode. Using \"all\" instead.\n";
         }
-        if (!allRanksDbgLog && comm.rank() != 0)
-        {
+        if (!allRanksDbgLog && comm.rank() != 0) {
             output = FileOutputMode::OUTPUT_NONE;
         }
     }
 
     if (output > FileOutputMode::OUTPUT_NONE) {
-        std::shared_ptr<Opm::EclipsePRTLog> prtLog = std::make_shared<Opm::EclipsePRTLog>(logFileStream.str(), Opm::Log::NoDebugMessageTypes, false, output_cout_);
+        std::shared_ptr<Opm::EclipsePRTLog> prtLog = std::make_shared<Opm::EclipsePRTLog>(
+            logFileStream.str(), Opm::Log::NoDebugMessageTypes, false, output_cout_);
         Opm::OpmLog::addBackend("ECLIPSEPRTLOG", prtLog);
         prtLog->setMessageLimiter(std::make_shared<Opm::MessageLimiter>());
         prtLog->setMessageFormatter(std::make_shared<Opm::SimpleMessageFormatter>(false));
@@ -609,7 +606,8 @@ Opm::setupLogging(Parallel::Communication& comm,
 
     if (output >= FileOutputMode::OUTPUT_LOG_ONLY) {
         std::string debugFile = debugFileStream.str();
-        std::shared_ptr<Opm::StreamLog> debugLog = std::make_shared<Opm::EclipsePRTLog>(debugFileStream.str(), Opm::Log::DefaultMessageTypes, false, output_cout_);
+        std::shared_ptr<Opm::StreamLog> debugLog = std::make_shared<Opm::EclipsePRTLog>(
+            debugFileStream.str(), Opm::Log::DefaultMessageTypes, false, output_cout_);
         Opm::OpmLog::addBackend("DEBUGLOG", debugLog);
     }
 
@@ -620,23 +618,24 @@ Opm::setupLogging(Parallel::Communication& comm,
     return output;
 }
 
-void Opm::readDeck(Opm::Parallel::Communication    comm,
-                   const std::string&              deckFilename,
-                   std::shared_ptr<EclipseState>&  eclipseState,
-                   std::shared_ptr<Schedule>&      schedule,
-                   std::unique_ptr<UDQState>&      udqState,
-                   std::unique_ptr<Action::State>& actionState,
-                   std::unique_ptr<WellTestState>& wtestState,
-                   std::shared_ptr<SummaryConfig>& summaryConfig,
-                   std::shared_ptr<Python>         python,
-                   const std::string&              parsingStrictness,
-                   const std::string&              actionParsingStrictness,
-                   const std::string&              inputSkipMode,
-                   const bool                      initFromRestart,
-                   const bool                      checkDeck,
-                   const bool                      keepKeywords,
-                   const std::optional<int>&       outputInterval,
-                   const bool                      slaveMode)
+void
+Opm::readDeck(Opm::Parallel::Communication comm,
+              const std::string& deckFilename,
+              std::shared_ptr<EclipseState>& eclipseState,
+              std::shared_ptr<Schedule>& schedule,
+              std::unique_ptr<UDQState>& udqState,
+              std::unique_ptr<Action::State>& actionState,
+              std::unique_ptr<WellTestState>& wtestState,
+              std::shared_ptr<SummaryConfig>& summaryConfig,
+              std::shared_ptr<Python> python,
+              const std::string& parsingStrictness,
+              const std::string& actionParsingStrictness,
+              const std::string& inputSkipMode,
+              const bool initFromRestart,
+              const bool checkDeck,
+              const bool keepKeywords,
+              const std::optional<int>& outputInterval,
+              const bool slaveMode)
 {
     auto errorGuard = std::make_unique<ErrorGuard>();
     int parseSuccess = 1; // > 0 is success
@@ -644,15 +643,18 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
 
     if (parsingStrictness != "high" && parsingStrictness != "normal" && parsingStrictness != "low") {
         OPM_THROW(std::runtime_error,
-                  fmt::format("Incorrect value {} for parameter ParsingStrictness, must be 'high', 'normal', or 'low'", parsingStrictness));
+                  fmt::format("Incorrect value {} for parameter ParsingStrictness, must be 'high', 'normal', or 'low'",
+                              parsingStrictness));
     }
     if (actionParsingStrictness != "normal" && actionParsingStrictness != "low") {
         OPM_THROW(std::runtime_error,
-                  fmt::format("Incorrect value {} for parameter ActionParsingStrictness, must be 'normal', or 'low'", actionParsingStrictness));
+                  fmt::format("Incorrect value {} for parameter ActionParsingStrictness, must be 'normal', or 'low'",
+                              actionParsingStrictness));
     }
     if (inputSkipMode != "100" && inputSkipMode != "300" && inputSkipMode != "all") {
         OPM_THROW(std::runtime_error,
-                  fmt::format("Incorrect value {} for parameter InputSkipMode, must be '100', '300', or 'all'", inputSkipMode));
+                  fmt::format("Incorrect value {} for parameter InputSkipMode, must be '100', '300', or 'all'",
+                              inputSkipMode));
     }
 
     if (comm.rank() == 0) { // Always true when !HAVE_MPI
@@ -665,21 +667,32 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
                 parseContext->update(ParseContext::SCHEDULE_INVALID_NAME, InputErrorAction::WARN);
             }
             parseContext->setInputSkipMode(inputSkipMode);
-            readOnIORank(comm, deckFilename, parseContext.get(),
-                         eclipseState, schedule, udqState, actionState, wtestState,
-                         summaryConfig, std::move(python), initFromRestart,
-                         checkDeck, treatCriticalAsNonCritical, lowActionParsingStrictness,
-                         keepKeywords, outputInterval, *errorGuard, slaveMode);
+            readOnIORank(comm,
+                         deckFilename,
+                         parseContext.get(),
+                         eclipseState,
+                         schedule,
+                         udqState,
+                         actionState,
+                         wtestState,
+                         summaryConfig,
+                         std::move(python),
+                         initFromRestart,
+                         checkDeck,
+                         treatCriticalAsNonCritical,
+                         lowActionParsingStrictness,
+                         keepKeywords,
+                         outputInterval,
+                         *errorGuard,
+                         slaveMode);
 
             // Update schedule so that re-parsing after actions use same strictness
             assert(schedule);
             schedule->treat_critical_as_non_critical(treatCriticalAsNonCritical);
-        }
-        catch (const OpmInputError& input_error) {
+        } catch (const OpmInputError& input_error) {
             failureMessage = input_error.what();
             parseSuccess = 0;
-        }
-        catch (const std::exception& std_error) {
+        } catch (const std::exception& std_error) {
             failureMessage = std_error.what();
             parseSuccess = 0;
         }
@@ -687,9 +700,8 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
 
 #if HAVE_MPI
     else {
-        defineStateObjectsOnNonIORank(comm, std::move(python), eclipseState,
-                                      schedule, udqState, actionState, wtestState,
-                                      summaryConfig);
+        defineStateObjectsOnNonIORank(
+            comm, std::move(python), eclipseState, schedule, udqState, actionState, wtestState, summaryConfig);
     }
 
     // In case of parse errors eclipseState/schedule might be null and
@@ -699,14 +711,13 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
     try {
         if (parseSuccess) {
             OPM_TIMEBLOCK(eclBcast);
-            eclStateBroadcast(comm, *eclipseState, *schedule,
-                              *summaryConfig, *udqState, *actionState, *wtestState);
+            eclStateBroadcast(comm, *eclipseState, *schedule, *summaryConfig, *udqState, *actionState, *wtestState);
         }
-    }
-    catch (const std::exception& broadcast_error) {
+    } catch (const std::exception& broadcast_error) {
         failureMessage = broadcast_error.what();
         OpmLog::error(fmt::format("Distributing properties to all processes failed\n"
-                                  "Internal error message: {}", broadcast_error.what()));
+                                  "Internal error message: {}",
+                                  broadcast_error.what()));
         parseSuccess = 0;
     }
 #endif
@@ -719,7 +730,7 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
 
     parseSuccess = comm.min(parseSuccess);
 
-    if (! parseSuccess) {
+    if (!parseSuccess) {
         if (comm.rank() == 0) {
             OpmLog::error(fmt::format("Unrecoverable errors while loading input:\n{}", failureMessage));
         }
@@ -732,34 +743,36 @@ void Opm::readDeck(Opm::Parallel::Communication    comm,
     }
 }
 
-void Opm::verifyValidCellGeometry(Parallel::Communication comm,
-                                  const EclipseState&     eclipseState)
+void
+Opm::verifyValidCellGeometry(Parallel::Communication comm, const EclipseState& eclipseState)
 {
     auto [hasValidCells, message] = gridHasValidCellGeometry(comm, eclipseState);
     if (hasValidCells) {
         return;
     }
 
-    throw std::invalid_argument { message };
+    throw std::invalid_argument {message};
 }
 
-std::unique_ptr<Opm::ParseContext> Opm::setupParseContext(const bool strictParsing)
+std::unique_ptr<Opm::ParseContext>
+Opm::setupParseContext(const bool strictParsing)
 {
-    auto parseContext =
-        std::make_unique<ParseContext>(std::vector<std::pair<std::string , InputErrorAction>>
-                                       {{ParseContext::PARSE_RANDOM_SLASH, InputErrorAction::IGNORE},
-                                       {ParseContext::PARSE_MISSING_DIMS_KEYWORD, InputErrorAction::WARN},
-                                       {ParseContext::SUMMARY_UNKNOWN_WELL, InputErrorAction::WARN},
-                                       {ParseContext::SUMMARY_UNKNOWN_GROUP, InputErrorAction::WARN}});
+    auto parseContext = std::make_unique<ParseContext>(std::vector<std::pair<std::string, InputErrorAction>> {
+        {ParseContext::PARSE_RANDOM_SLASH, InputErrorAction::IGNORE},
+        {ParseContext::PARSE_MISSING_DIMS_KEYWORD, InputErrorAction::WARN},
+        {ParseContext::SUMMARY_UNKNOWN_WELL, InputErrorAction::WARN},
+        {ParseContext::SUMMARY_UNKNOWN_GROUP, InputErrorAction::WARN}});
     if (strictParsing)
         parseContext->update(InputErrorAction::DELAYED_EXIT1);
 
     return parseContext;
 }
 
-void Opm::setupStreamLogging(const std::string& stdout_log_id)
+void
+Opm::setupStreamLogging(const std::string& stdout_log_id)
 {
-    std::shared_ptr<Opm::StreamLog> streamLog = std::make_shared<Opm::StreamLog>(std::cout, Opm::Log::StdoutMessageTypes);
+    std::shared_ptr<Opm::StreamLog> streamLog
+        = std::make_shared<Opm::StreamLog>(std::cout, Opm::Log::StdoutMessageTypes);
     Opm::OpmLog::addBackend(stdout_log_id, streamLog);
     // Set a tag limit of 10 (no category limit). Will later in
     // the run be replaced by calling setupMessageLimiter(), after

@@ -27,8 +27,8 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
 #include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/solvers.hh>
 
 #include <opm/simulators/linalg/HyprePreconditioner.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
@@ -45,7 +45,8 @@
 #include <numeric>
 #include <vector>
 
-namespace HypreTestHelpers {
+namespace HypreTestHelpers
+{
 
 /**
  * @brief Per-test fixture for HYPRE state isolation
@@ -106,12 +107,13 @@ bool HypreTestFixture::hypre_is_initialized = false;
  * @param N Grid size (N×N total points)
  * @param mat Output matrix to be filled
  */
-template<class Matrix>
-void setupLaplace2d(int N, Matrix& mat)
+template <class Matrix>
+void
+setupLaplace2d(int N, Matrix& mat)
 {
-    const int nonZeroes = N*N * 5; // max 5 entries per row (diagonal + 4 neighbors)
+    const int nonZeroes = N * N * 5; // max 5 entries per row (diagonal + 4 neighbors)
     mat.setBuildMode(Matrix::row_wise);
-    mat.setSize(N*N, N*N, nonZeroes);
+    mat.setSize(N * N, N * N, nonZeroes);
 
     // Set up sparsity pattern
     for (auto row = mat.createbegin(); row != mat.createend(); ++row) {
@@ -119,15 +121,15 @@ void setupLaplace2d(int N, Matrix& mat)
         int x = i % N;
         int y = i / N;
 
-        row.insert(i);  // diagonal
-        if (x > 0)      // left neighbor
-            row.insert(i-1);
-        if (x < N-1)    // right neighbor
-            row.insert(i+1);
-        if (y > 0)      // upper neighbor
-            row.insert(i-N);
-        if (y < N-1)    // lower neighbor
-            row.insert(i+N);
+        row.insert(i); // diagonal
+        if (x > 0) // left neighbor
+            row.insert(i - 1);
+        if (x < N - 1) // right neighbor
+            row.insert(i + 1);
+        if (y > 0) // upper neighbor
+            row.insert(i - N);
+        if (y < N - 1) // lower neighbor
+            row.insert(i + N);
     }
 
     // Fill the matrix with values
@@ -140,14 +142,14 @@ void setupLaplace2d(int N, Matrix& mat)
         (*row)[i] = 4.0;
 
         // Set off-diagonal entries
-        if (x > 0)         // left neighbor
-            (*row)[i-1] = -1.0;
-        if (x < N-1)       // right neighbor
-            (*row)[i+1] = -1.0;
-        if (y > 0)         // upper neighbor
-            (*row)[i-N] = -1.0;
-        if (y < N-1)       // lower neighbor
-            (*row)[i+N] = -1.0;
+        if (x > 0) // left neighbor
+            (*row)[i - 1] = -1.0;
+        if (x < N - 1) // right neighbor
+            (*row)[i + 1] = -1.0;
+        if (y > 0) // upper neighbor
+            (*row)[i - N] = -1.0;
+        if (y < N - 1) // lower neighbor
+            (*row)[i + N] = -1.0;
     }
 }
 
@@ -162,10 +164,11 @@ void setupLaplace2d(int N, Matrix& mat)
  * @param cols Column indices
  */
 template <typename Matrix>
-void setupMatrixHelperArrays(const Matrix& matrix,
-                            std::vector<HYPRE_Int>& ncols,
-                            std::vector<HYPRE_BigInt>& rows,
-                            std::vector<HYPRE_BigInt>& cols)
+void
+setupMatrixHelperArrays(const Matrix& matrix,
+                        std::vector<HYPRE_Int>& ncols,
+                        std::vector<HYPRE_BigInt>& rows,
+                        std::vector<HYPRE_BigInt>& cols)
 {
     const int N = matrix.N();
     const int nnz = matrix.nonzeroes();
@@ -199,10 +202,11 @@ void setupMatrixHelperArrays(const Matrix& matrix,
  * @param cols Column indices
  */
 template <typename T>
-void setupGpuMatrixHelperArrays(const Opm::gpuistl::GpuSparseMatrix<T>& gpu_matrix,
-                               std::vector<HYPRE_Int>& ncols,
-                               std::vector<HYPRE_BigInt>& rows,
-                               std::vector<HYPRE_BigInt>& cols)
+void
+setupGpuMatrixHelperArrays(const Opm::gpuistl::GpuSparseMatrix<T>& gpu_matrix,
+                           std::vector<HYPRE_Int>& ncols,
+                           std::vector<HYPRE_BigInt>& rows,
+                           std::vector<HYPRE_BigInt>& cols)
 {
     const int N = gpu_matrix.N();
     const int nnz = gpu_matrix.nonzeroes();
@@ -237,15 +241,16 @@ void setupGpuMatrixHelperArrays(const Opm::gpuistl::GpuSparseMatrix<T>& gpu_matr
  * @param matrix Input matrix (CPU or GPU)
  * @param use_gpu Whether to use GPU backend in HYPRE
  */
-template<class MatrixType, class VectorType>
-void testHyprePreconditioner(const MatrixType& matrix, bool use_gpu)
+template <class MatrixType, class VectorType>
+void
+testHyprePreconditioner(const MatrixType& matrix, bool use_gpu)
 {
     constexpr int N = 100; // 100x100 grid
 
     // Create vectors
-    VectorType x(N*N), b(N*N);
-    x = 100.0;  // Initial guess
-    b = 0.0;    // RHS
+    VectorType x(N * N), b(N * N);
+    x = 100.0; // Initial guess
+    b = 0.0; // RHS
 
     // Create operator
     using Operator = Dune::MatrixAdapter<MatrixType, VectorType, VectorType>;
@@ -256,7 +261,9 @@ void testHyprePreconditioner(const MatrixType& matrix, bool use_gpu)
     prm.put("use_gpu", use_gpu ? 1 : 0);
 
     // Create preconditioner
-    auto prec = std::make_shared<Hypre::HyprePreconditioner<MatrixType, VectorType, VectorType, Dune::Amg::SequentialInformation>>(matrix, prm, Dune::Amg::SequentialInformation());
+    auto prec = std::make_shared<
+        Hypre::HyprePreconditioner<MatrixType, VectorType, VectorType, Dune::Amg::SequentialInformation>>(
+        matrix, prm, Dune::Amg::SequentialInformation());
 
     // Create solver
     double reduction = 1e-8;
@@ -280,8 +287,9 @@ void testHyprePreconditioner(const MatrixType& matrix, bool use_gpu)
  *
  * @param use_gpu_backend Whether to use GPU backend
  */
-template<typename VectorType>
-void testVectorTransfer(bool use_gpu_backend)
+template <typename VectorType>
+void
+testVectorTransfer(bool use_gpu_backend)
 {
     using namespace Opm::gpuistl;
 
@@ -325,8 +333,12 @@ void testVectorTransfer(bool use_gpu_backend)
         device_arrays.vector_buffer_device = hypre_CTAlloc(HYPRE_Real, 5, HYPRE_MEMORY_DEVICE);
 
         // Copy indices to device
-        hypre_TMemcpy(device_arrays.indices_device, host_arrays.indices.data(),
-                     HYPRE_BigInt, 5, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
+        hypre_TMemcpy(device_arrays.indices_device,
+                      host_arrays.indices.data(),
+                      HYPRE_BigInt,
+                      5,
+                      HYPRE_MEMORY_DEVICE,
+                      HYPRE_MEMORY_HOST);
 #endif
     }
 
@@ -336,7 +348,8 @@ void testVectorTransfer(bool use_gpu_backend)
     parallel_info.local_hypre_to_local_dune.clear(); // Empty for owner_first = true
 
     // Test transfer to HYPRE
-    HypreInterface::transferVectorToHypre(input_vec, hypre_vec, host_arrays, device_arrays, parallel_info, use_gpu_backend);
+    HypreInterface::transferVectorToHypre(
+        input_vec, hypre_vec, host_arrays, device_arrays, parallel_info, use_gpu_backend);
 
     // Test transfer back from HYPRE
     VectorType result_vec = [&]() {
@@ -351,7 +364,8 @@ void testVectorTransfer(bool use_gpu_backend)
 #endif
     }();
 
-    HypreInterface::transferVectorFromHypre(hypre_vec, result_vec, host_arrays, device_arrays, parallel_info, use_gpu_backend);
+    HypreInterface::transferVectorFromHypre(
+        hypre_vec, result_vec, host_arrays, device_arrays, parallel_info, use_gpu_backend);
 
     // Verify values
     if constexpr (std::is_same_v<VectorType, Dune::BlockVector<Dune::FieldVector<double, 1>>>) {
@@ -391,8 +405,9 @@ void testVectorTransfer(bool use_gpu_backend)
  *
  * @param use_gpu_backend Whether to use GPU backend
  */
-template<typename MatrixType>
-void testMatrixTransfer(bool use_gpu_backend)
+template <typename MatrixType>
+void
+testMatrixTransfer(bool use_gpu_backend)
 {
     using namespace Opm::gpuistl;
 
@@ -477,13 +492,20 @@ void testMatrixTransfer(bool use_gpu_backend)
         // Copy data to device
         hypre_TMemcpy(device_arrays.ncols_device, ncols.data(), HYPRE_Int, N, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
         hypre_TMemcpy(device_arrays.rows_device, rows.data(), HYPRE_BigInt, N, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-        hypre_TMemcpy(device_arrays.cols_device, cols.data(), HYPRE_BigInt, nnz, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-        hypre_TMemcpy(device_arrays.row_indexes_device, host_arrays.row_indexes.data(), HYPRE_Int, N, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
+        hypre_TMemcpy(
+            device_arrays.cols_device, cols.data(), HYPRE_BigInt, nnz, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
+        hypre_TMemcpy(device_arrays.row_indexes_device,
+                      host_arrays.row_indexes.data(),
+                      HYPRE_Int,
+                      N,
+                      HYPRE_MEMORY_DEVICE,
+                      HYPRE_MEMORY_HOST);
 #endif
     }
 
     // Test matrix update
-    HypreInterface::updateMatrixValues(matrix, hypre_matrix, sparsity_pattern, host_arrays, device_arrays, use_gpu_backend);
+    HypreInterface::updateMatrixValues(
+        matrix, hypre_matrix, sparsity_pattern, host_arrays, device_arrays, use_gpu_backend);
 
     // Verify values
     auto values_hypre = HypreInterface::getMatrixValues(hypre_matrix, ncols, rows, cols, use_gpu_backend);
@@ -497,11 +519,16 @@ void testMatrixTransfer(bool use_gpu_backend)
     // Clean up
     if (use_gpu_backend) {
 #if HYPRE_USING_CUDA || HYPRE_USING_HIP
-        if (device_arrays.ncols_device) hypre_TFree(device_arrays.ncols_device, HYPRE_MEMORY_DEVICE);
-        if (device_arrays.rows_device) hypre_TFree(device_arrays.rows_device, HYPRE_MEMORY_DEVICE);
-        if (device_arrays.cols_device) hypre_TFree(device_arrays.cols_device, HYPRE_MEMORY_DEVICE);
-        if (device_arrays.row_indexes_device) hypre_TFree(device_arrays.row_indexes_device, HYPRE_MEMORY_DEVICE);
-        if (device_arrays.matrix_buffer_device) hypre_TFree(device_arrays.matrix_buffer_device, HYPRE_MEMORY_DEVICE);
+        if (device_arrays.ncols_device)
+            hypre_TFree(device_arrays.ncols_device, HYPRE_MEMORY_DEVICE);
+        if (device_arrays.rows_device)
+            hypre_TFree(device_arrays.rows_device, HYPRE_MEMORY_DEVICE);
+        if (device_arrays.cols_device)
+            hypre_TFree(device_arrays.cols_device, HYPRE_MEMORY_DEVICE);
+        if (device_arrays.row_indexes_device)
+            hypre_TFree(device_arrays.row_indexes_device, HYPRE_MEMORY_DEVICE);
+        if (device_arrays.matrix_buffer_device)
+            hypre_TFree(device_arrays.matrix_buffer_device, HYPRE_MEMORY_DEVICE);
 #endif
     }
 
@@ -511,7 +538,8 @@ void testMatrixTransfer(bool use_gpu_backend)
 /**
  * @brief Test basic HypreInterface resource management
  */
-inline void testResourceManagement(bool use_gpu_backend)
+inline void
+testResourceManagement(bool use_gpu_backend)
 {
     using namespace Opm::gpuistl;
 
@@ -533,7 +561,8 @@ inline void testResourceManagement(bool use_gpu_backend)
 /**
  * @brief Test error handling in HypreInterface
  */
-inline void testErrorHandling(bool use_gpu_backend)
+inline void
+testErrorHandling(bool use_gpu_backend)
 {
     using namespace Opm::gpuistl;
 

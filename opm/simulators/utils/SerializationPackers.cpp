@@ -22,32 +22,34 @@
 
 #include <boost/date_time/gregorian/gregorian.hpp>
 
-namespace Opm {
-namespace Serialization {
-namespace detail {
-
-std::size_t Packing<false,boost::gregorian::date>::
-packSize(const boost::gregorian::date& data)
+namespace Opm
 {
-    return Packing<false,std::string>::packSize(boost::gregorian::to_simple_string(data));
-}
-
-void Packing<false,boost::gregorian::date>::
-pack(const boost::gregorian::date& data,
-     std::vector<char>& buffer, std::size_t& position)
+namespace Serialization
 {
-    Packing<false,std::string>::pack(boost::gregorian::to_simple_string(data), buffer, position);
-}
+    namespace detail
+    {
 
-void Packing<false,boost::gregorian::date>::
-unpack(boost::gregorian::date& data,
-       const std::vector<char>& buffer, std::size_t& position)
-{
-    std::string date;
-    Packing<false,std::string>::unpack(date, buffer, position);
-    data = boost::gregorian::from_simple_string(date);
-}
+        std::size_t Packing<false, boost::gregorian::date>::packSize(const boost::gregorian::date& data)
+        {
+            return Packing<false, std::string>::packSize(boost::gregorian::to_simple_string(data));
+        }
 
-} // end namespace detail
+        void Packing<false, boost::gregorian::date>::pack(const boost::gregorian::date& data,
+                                                          std::vector<char>& buffer,
+                                                          std::size_t& position)
+        {
+            Packing<false, std::string>::pack(boost::gregorian::to_simple_string(data), buffer, position);
+        }
+
+        void Packing<false, boost::gregorian::date>::unpack(boost::gregorian::date& data,
+                                                            const std::vector<char>& buffer,
+                                                            std::size_t& position)
+        {
+            std::string date;
+            Packing<false, std::string>::unpack(date, buffer, position);
+            data = boost::gregorian::from_simple_string(date);
+        }
+
+    } // end namespace detail
 } // end namespace Serialization
 } // end namespace Opm

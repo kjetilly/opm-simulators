@@ -25,19 +25,23 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/version.hh>
 #include <opm/simulators/timestepping/gatherConvergenceReport.hpp>
-#include <dune/common/parallel/mpihelper.hh>
 
 #if HAVE_MPI
-struct MPIError
-{
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+struct MPIError {
+    MPIError(std::string s, int e)
+        : errorstring(std::move(s))
+        , errorcode(e)
+    {
+    }
     std::string errorstring;
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
     int err_length;
@@ -54,12 +58,10 @@ init_unit_test_func()
     return true;
 }
 
-bool operator==(const Opm::ConvergenceReport::WellFailure& wf1,
-                const Opm::ConvergenceReport::WellFailure& wf2)
+bool
+operator==(const Opm::ConvergenceReport::WellFailure& wf1, const Opm::ConvergenceReport::WellFailure& wf2)
 {
-    return wf1.type() == wf2.type()
-        && wf1.severity() == wf2.severity()
-        && wf1.phase() == wf2.phase()
+    return wf1.type() == wf2.type() && wf1.severity() == wf2.severity() && wf1.phase() == wf2.phase()
         && wf1.wellName() == wf2.wellName();
 }
 
@@ -94,9 +96,9 @@ BOOST_AUTO_TEST_CASE(EvenHaveFailure)
         cr.setWellFailed({CR::WellFailure::Type::ControlBHP, CR::Severity::Normal, -1, name.str()});
     }
     CR global_cr = gatherConvergenceReport(cr, cc);
-    BOOST_CHECK(global_cr.wellFailures().size() == std::size_t((cc.size())+1) / 2);
+    BOOST_CHECK(global_cr.wellFailures().size() == std::size_t((cc.size()) + 1) / 2);
     if (cc.rank() % 2 == 0) {
-        BOOST_CHECK(global_cr.wellFailures()[cc.rank()/2] == cr.wellFailures()[0]);
+        BOOST_CHECK(global_cr.wellFailures()[cc.rank() / 2] == cr.wellFailures()[0]);
     }
     // Extra output for debugging.
     if (cc.rank() == 0) {
@@ -106,41 +108,38 @@ BOOST_AUTO_TEST_CASE(EvenHaveFailure)
     }
 }
 
-namespace {
+namespace
+{
 
-    class NProc_Is_Not
+class NProc_Is_Not
+{
+public:
+    explicit NProc_Is_Not(const int rejectNP)
+        : rejectNP_ {rejectNP}
     {
-    public:
-        explicit NProc_Is_Not(const int rejectNP)
-            : rejectNP_ { rejectNP }
-        {}
+    }
 
-        boost::test_tools::assertion_result
-        operator()(boost::unit_test::test_unit_id) const
-        {
-            auto comm = Opm::Parallel::Communication {
-                Dune::MPIHelper::getCommunicator()
-            };
+    boost::test_tools::assertion_result operator()(boost::unit_test::test_unit_id) const
+    {
+        auto comm = Opm::Parallel::Communication {Dune::MPIHelper::getCommunicator()};
 
-            if (comm.size() != this->rejectNP_) {
-                return true;
-            }
-
-            boost::test_tools::assertion_result response(false);
-            response.message() << "Number of MPI processes ("
-                               << comm.size()
-                               << ") matches rejected case.";
-
-            return response;
+        if (comm.size() != this->rejectNP_) {
+            return true;
         }
 
-    private:
-        int rejectNP_{};
-    };
+        boost::test_tools::assertion_result response(false);
+        response.message() << "Number of MPI processes (" << comm.size() << ") matches rejected case.";
+
+        return response;
+    }
+
+private:
+    int rejectNP_ {};
+};
 
 } // Anonymous namespace
 
-BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, * boost::unit_test::precondition(NProc_Is_Not{1}))
+BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, *boost::unit_test::precondition(NProc_Is_Not {1}))
 {
     const auto cc = Dune::MPIHelper::getCommunication();
 
@@ -148,10 +147,16 @@ BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, * boost::unit_test::precondition(NProc_Is_Not
     if (cc.rank() != 0) {
         // All ranks are supposed to have the *same* pore-volume split of
         // the CNV metrics, except if the pv split is empty.
-        const auto pvSplit = Opm::ConvergenceReport::CnvPvSplit {
-            { 0.75, 0.2, 0.05, },
-            { 1234, 56 , 7   , }
-        };
+        const auto pvSplit = Opm::ConvergenceReport::CnvPvSplit {{
+                                                                     0.75,
+                                                                     0.2,
+                                                                     0.05,
+                                                                 },
+                                                                 {
+                                                                     1234,
+                                                                     56,
+                                                                     7,
+                                                                 }};
 
         loc_rpt.setCnvPoreVolSplit(pvSplit, 9.876e5);
     }
@@ -160,8 +165,8 @@ BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, * boost::unit_test::precondition(NProc_Is_Not
 
     const auto& [pvFrac, cellCnt] = cr.cnvPvSplit();
 
-    BOOST_REQUIRE_EQUAL(pvFrac.size(), std::size_t{3});
-    BOOST_REQUIRE_EQUAL(cellCnt.size(), std::size_t{3});
+    BOOST_REQUIRE_EQUAL(pvFrac.size(), std::size_t {3});
+    BOOST_REQUIRE_EQUAL(cellCnt.size(), std::size_t {3});
 
     BOOST_CHECK_CLOSE(cr.eligiblePoreVolume(), 9.876e5, 1.0e-8);
 
@@ -170,11 +175,12 @@ BOOST_AUTO_TEST_CASE(CNV_PV_SPLIT, * boost::unit_test::precondition(NProc_Is_Not
     BOOST_CHECK_CLOSE(pvFrac[2], 0.05, 1.0e-8);
 
     BOOST_CHECK_EQUAL(cellCnt[0], 1234);
-    BOOST_CHECK_EQUAL(cellCnt[1],   56);
-    BOOST_CHECK_EQUAL(cellCnt[2],    7);
+    BOOST_CHECK_EQUAL(cellCnt[1], 56);
+    BOOST_CHECK_EQUAL(cellCnt[2], 7);
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

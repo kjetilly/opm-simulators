@@ -31,13 +31,17 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 class Schedule;
 class SummaryConfig;
 
-template<class FluidSystem>
+template <class FluidSystem>
 class FlowsContainer
 {
     using Scalar = typename FluidSystem::Scalar;
@@ -53,8 +57,7 @@ class FlowsContainer
     static constexpr auto waterCompIdx = FluidSystem::waterCompIdx;
 
 public:
-    FlowsContainer(const Schedule& schedule,
-                   const SummaryConfig& summaryConfig);
+    FlowsContainer(const Schedule& schedule, const SummaryConfig& summaryConfig);
 
     void allocate(const std::size_t bufferSize,
                   const unsigned numOutputNnc,
@@ -78,45 +81,63 @@ public:
     void outputRestart(data::Solution& sol);
 
     const std::array<FlowsData<double>, 3>& getFlowsn() const
-    { return this->flowsn_; }
+    {
+        return this->flowsn_;
+    }
 
     bool hasFlowsn() const
-    { return enableFlowsn_; }
+    {
+        return enableFlowsn_;
+    }
 
     bool hasFlows() const
-    { return enableFlows_; }
+    {
+        return enableFlows_;
+    }
 
     bool hasBlockFlows() const
-    { return blockFlows_; }
+    {
+        return blockFlows_;
+    }
 
     bool anyFlows() const
-    { return anyFlows_; }
+    {
+        return anyFlows_;
+    }
 
     const std::array<FlowsData<double>, 3>& getFloresn() const
-    { return this->floresn_; }
+    {
+        return this->floresn_;
+    }
 
     bool hasFloresn() const
-    { return enableFloresn_; }
+    {
+        return enableFloresn_;
+    }
 
     bool hasFlores() const
-    { return enableFlores_; }
+    {
+        return enableFlores_;
+    }
 
     bool anyFlores() const
-    { return anyFlores_; }
+    {
+        return anyFlores_;
+    }
 
-    Scalar getFlow(const unsigned globalDofIdx,
-                   const FaceDir::DirEnum dir,
-                   const int comp_idx) const
-    { return flows_[comp_idx][FaceDir::ToIntersectionIndex(dir)][globalDofIdx]; }
+    Scalar getFlow(const unsigned globalDofIdx, const FaceDir::DirEnum dir, const int comp_idx) const
+    {
+        return flows_[comp_idx][FaceDir::ToIntersectionIndex(dir)][globalDofIdx];
+    }
 
 private:
-    bool anyFlows_{false};
-    bool anyFlores_{false};
-    bool blockFlows_{false};
-    bool enableFlows_{false};
-    bool enableFlores_{false};
-    bool enableFlowsn_{false};
-    bool enableFloresn_{false};
+    bool anyFlows_ {false};
+    bool anyFlores_ {false};
+    bool blockFlows_ {false};
+    bool enableFlows_ {false};
+    bool enableFlores_ {false};
+    bool enableFlowsn_ {false};
+    bool enableFloresn_ {false};
 
     std::array<std::array<ScalarBuffer, 6>, numPhases> flows_;
     std::array<std::array<ScalarBuffer, 6>, numPhases> flores_;

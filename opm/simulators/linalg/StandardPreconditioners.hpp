@@ -23,9 +23,9 @@
 // Note that you probably should not include this header directly, but rather
 // include the PreconditionerFactory.hpp header, which will handle this.
 
-#include <opm/simulators/linalg/is_gpu_operator.hpp>
 #include <opm/simulators/linalg/StandardPreconditioners_mpi.hpp>
 #include <opm/simulators/linalg/StandardPreconditioners_serial.hpp>
+#include <opm/simulators/linalg/is_gpu_operator.hpp>
 
 #if HAVE_CUDA
 #include <opm/simulators/linalg/StandardPreconditioners_gpu_mpi.hpp>

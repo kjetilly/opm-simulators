@@ -4,7 +4,7 @@
   Copyright 2015 IRIS AS
   Copyright 2014 STATOIL ASA.
   Copyright 2023 Inria
-  
+
   This file is part of the Open Porous Media project (OPM).
 
   OPM is free software: you can redistribute it and/or modify
@@ -25,8 +25,8 @@
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 
-#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/utils/parametersystem.hpp>
+#include <opm/models/utils/propertysystem.hh>
 
 #include <opm/simulators/flow/Banners.hpp>
 #include <opm/simulators/flow/FlowMain.hpp>
@@ -62,27 +62,34 @@
 #include <type_traits>
 #include <utility>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // this is a dummy type tag that is used to setup the parameters before the actual
 // simulator.
-namespace TTag {
-struct FlowEarlyBird {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
+namespace TTag
+{
+    struct FlowEarlyBird {
+        using InheritsFrom = std::tuple<FlowProblem>;
+    };
+} // namespace TTag
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
-namespace Action { class State; }
+namespace Action
+{
+    class State;
+}
 class UDQState;
 class WellTestState;
 
 // ----------------- Main program -----------------
 template <class TypeTag>
-int flowMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
@@ -199,7 +206,8 @@ protected:
         typedef TypeTagEarlyBird PreTypeTag;
         using PreProblem = GetPropType<PreTypeTag, Properties::Problem>;
 
-        PreProblem::setBriefDescription("Flow, an advanced reservoir simulator for ECL-decks provided by the Open Porous Media project.");
+        PreProblem::setBriefDescription(
+            "Flow, an advanced reservoir simulator for ECL-decks provided by the Open Porous Media project.");
         int status = FlowMain<PreTypeTag>::setupParameters_(argc_, argv_, FlowGenericVanguard::comm());
         if (status != 0) {
             // if setupParameters_ returns a value smaller than 0, there was no error, but
@@ -217,31 +225,31 @@ protected:
 
         std::string deckFilename;
         std::string outputDir;
-        if ( eclipseState_ ) {
+        if (eclipseState_) {
             deckFilename = eclipseState_->getIOConfig().fullBasePath();
             outputDir = eclipseState_->getIOConfig().getOutputDir();
-        }
-        else {
+        } else {
             deckFilename = Parameters::Get<Parameters::EclDeckFileName>();
             outputDir = Parameters::Get<Parameters::OutputDir>();
         }
 
 #if HAVE_DAMARIS
         enableDamarisOutput_ = Parameters::Get<Parameters::EnableDamarisOutput>();
-        
+
         // Reset to false as we cannot use Damaris if there is only one rank.
         if ((enableDamarisOutput_ == true) && (FlowGenericVanguard::comm().size() == 1)) {
-            std::string msg ;
-            msg = "\nUse of Damaris (command line argument --enable-damaris-output=true) has been disabled for run with only one rank.\n" ;
+            std::string msg;
+            msg = "\nUse of Damaris (command line argument --enable-damaris-output=true) has been disabled for run "
+                  "with only one rank.\n";
             OpmLog::warning(msg);
-            enableDamarisOutput_ = false ;
+            enableDamarisOutput_ = false;
         }
 
         if (enableDamarisOutput_) {
             // Deal with empty (defaulted) output dir, should be deck dir
             auto damarisOutputDir = outputDir;
             if (outputDir.empty()) {
-                auto odir = std::filesystem::path{deckFilename}.parent_path();
+                auto odir = std::filesystem::path {deckFilename}.parent_path();
                 if (odir.empty()) {
                     damarisOutputDir = ".";
                 } else {
@@ -253,13 +261,13 @@ protected:
         }
 #endif // HAVE_DAMARIS
 
-        // Guard for when the Damaris core(s) return from damaris_start() 
+        // Guard for when the Damaris core(s) return from damaris_start()
         // which happens when damaris_stop() is called in main simulation
         if (!isSimulationRank_) {
             exitCode = EXIT_SUCCESS;
             return true;
         }
-        
+
         int mpiRank = FlowGenericVanguard::comm().rank();
         outputCout_ = false;
         if (mpiRank == 0)
@@ -276,9 +284,8 @@ protected:
         using PreVanguard = GetPropType<PreTypeTag, Properties::Vanguard>;
         try {
             deckFilename = PreVanguard::canonicalDeckPath(deckFilename);
-        }
-        catch (const std::exception& e) {
-            if ( mpiRank == 0 ) {
+        } catch (const std::exception& e) {
+            if (mpiRank == 0) {
                 std::cerr << "Exception received: " << e.what() << ". Try '--help' for a usage description.\n";
             }
 #if HAVE_MPI
@@ -290,9 +297,7 @@ protected:
 
         std::string cmdline_params;
         if (outputCout_) {
-            printFlowBanner(FlowGenericVanguard::comm().size(),
-                            getNumThreads(),
-                            Opm::moduleVersionName());
+            printFlowBanner(FlowGenericVanguard::comm().size(), getNumThreads(), Opm::moduleVersionName());
             std::ostringstream str;
             Parameters::printValues(str);
             cmdline_params = str.str();
@@ -316,9 +321,7 @@ protected:
                            Opm::moduleVersion(),
                            Opm::compileTimestamp());
             setupTime_ = externalSetupTimer.elapsed();
-        }
-        catch (const std::invalid_argument& e)
-        {
+        } catch (const std::invalid_argument& e) {
             if (outputCout_) {
                 std::cerr << "Failed to create valid EclipseState object." << std::endl;
                 std::cerr << "Exception caught: " << e.what() << std::endl;
@@ -331,7 +334,7 @@ protected:
         }
 
 #if HAVE_CUDA
-    Opm::gpuistl::printDevice();
+        Opm::gpuistl::printDevice();
 #endif
 
         exitCode = EXIT_SUCCESS;
@@ -348,8 +351,7 @@ private:
     //
     // the call is intercepted by this function which will print "flow $version"
     // on stdout and exit(0).
-    void handleVersionCmdLine_(int argc, char** argv,
-                               std::string_view moduleVersionName);
+    void handleVersionCmdLine_(int argc, char** argv, std::string_view moduleVersionName);
 
     // This function is a special case, if the program has been invoked
     // with the argument "--test-split-communicator=true" as the FIRST
@@ -512,33 +514,33 @@ private:
 #endif
 
 protected:
-    int argc_{0};
-    char** argv_{nullptr};
-    bool outputCout_{false};
-    bool outputFiles_{false};
+    int argc_ {0};
+    char** argv_ {nullptr};
+    bool outputCout_ {false};
+    bool outputFiles_ {false};
 
 private:
-    bool ownMPI_{true}; //!< True if we "own" MPI and should init / finalize
-    double setupTime_{0.0};
-    std::string deckFilename_{};
-    std::string flowProgName_{};
-    char *saveArgs_[3]{nullptr};
-    std::unique_ptr<UDQState> udqState_{};
-    std::unique_ptr<Action::State> actionState_{};
-    std::unique_ptr<WellTestState> wtestState_{};
+    bool ownMPI_ {true}; //!< True if we "own" MPI and should init / finalize
+    double setupTime_ {0.0};
+    std::string deckFilename_ {};
+    std::string flowProgName_ {};
+    char* saveArgs_[3] {nullptr};
+    std::unique_ptr<UDQState> udqState_ {};
+    std::unique_ptr<Action::State> actionState_ {};
+    std::unique_ptr<WellTestState> wtestState_ {};
 
     // These variables may be owned by both Python and the simulator
-    std::shared_ptr<EclipseState> eclipseState_{};
-    std::shared_ptr<Schedule> schedule_{};
-    std::shared_ptr<SummaryConfig> summaryConfig_{};
-    bool mpi_init_{true}; //!< True if MPI_Init should be called
-    bool mpi_finalize_{true}; //!< True if MPI_Finalize should be called
+    std::shared_ptr<EclipseState> eclipseState_ {};
+    std::shared_ptr<Schedule> schedule_ {};
+    std::shared_ptr<SummaryConfig> summaryConfig_ {};
+    bool mpi_init_ {true}; //!< True if MPI_Init should be called
+    bool mpi_finalize_ {true}; //!< True if MPI_Finalize should be called
 
     // To demonstrate run with non_world_comm
     bool test_split_comm_ = false;
     bool isSimulationRank_ = true;
 #if HAVE_MPI
-    std::string reservoirCouplingSlaveOutputFilename_{};
+    std::string reservoirCouplingSlaveOutputFilename_ {};
 #endif
 #if HAVE_DAMARIS
     bool enableDamarisOutput_ = false;

@@ -42,7 +42,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -133,25 +134,23 @@ public:
                 const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
 
                 if (params_.rockInternalEnergyOutput_) {
-                    rockInternalEnergy_[globalDofIdx] =
-                        scalarValue(intQuants.rockInternalEnergy());
+                    rockInternalEnergy_[globalDofIdx] = scalarValue(intQuants.rockInternalEnergy());
                 }
 
                 if (params_.totalThermalConductivityOutput_) {
-                    totalThermalConductivity_[globalDofIdx] =
-                        scalarValue(intQuants.totalThermalConductivity());
+                    totalThermalConductivity_[globalDofIdx] = scalarValue(intQuants.totalThermalConductivity());
                 }
 
                 for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                     if (FluidSystem::phaseIsActive(phaseIdx)) {
                         if (params_.fluidInternalEnergiesOutput_) {
-                            fluidInternalEnergies_[phaseIdx][globalDofIdx] =
-                                scalarValue(intQuants.fluidState().internalEnergy(phaseIdx));
+                            fluidInternalEnergies_[phaseIdx][globalDofIdx]
+                                = scalarValue(intQuants.fluidState().internalEnergy(phaseIdx));
                         }
 
                         if (params_.fluidEnthalpiesOutput_) {
-                            fluidEnthalpies_[phaseIdx][globalDofIdx] =
-                                scalarValue(intQuants.fluidState().enthalpy(phaseIdx));
+                            fluidEnthalpies_[phaseIdx][globalDofIdx]
+                                = scalarValue(intQuants.fluidState().enthalpy(phaseIdx));
                         }
                     }
                 }
@@ -170,34 +169,32 @@ public:
             }
 
             if (params_.rockInternalEnergyOutput_) {
-                this->commitScalarBuffer_(baseWriter, "volumetric internal energy rock",
-                                          rockInternalEnergy_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "volumetric internal energy rock", rockInternalEnergy_, BufferType::Dof);
             }
 
             if (params_.totalThermalConductivityOutput_) {
-                this->commitScalarBuffer_(baseWriter, "total thermal conductivity",
-                                          totalThermalConductivity_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "total thermal conductivity", totalThermalConductivity_, BufferType::Dof);
             }
 
             if (params_.fluidInternalEnergiesOutput_) {
-                this->commitPhaseBuffer_(baseWriter, "internal energy_%s",
-                                         fluidInternalEnergies_, BufferType::Dof);
+                this->commitPhaseBuffer_(baseWriter, "internal energy_%s", fluidInternalEnergies_, BufferType::Dof);
             }
 
             if (params_.fluidEnthalpiesOutput_) {
-                this->commitPhaseBuffer_(baseWriter, "enthalpy_%s",
-                                         fluidEnthalpies_, BufferType::Dof);
+                this->commitPhaseBuffer_(baseWriter, "enthalpy_%s", fluidEnthalpies_, BufferType::Dof);
             }
         }
     }
 
 private:
-    VtkBlackoilEnergyParams params_{};
+    VtkBlackoilEnergyParams params_ {};
 
-    ScalarBuffer rockInternalEnergy_{};
-    ScalarBuffer totalThermalConductivity_{};
-    PhaseBuffer fluidInternalEnergies_{};
-    PhaseBuffer fluidEnthalpies_{};
+    ScalarBuffer rockInternalEnergy_ {};
+    ScalarBuffer totalThermalConductivity_ {};
+    PhaseBuffer fluidInternalEnergies_ {};
+    PhaseBuffer fluidEnthalpies_ {};
 };
 
 } // namespace Opm

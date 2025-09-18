@@ -20,22 +20,25 @@
 #ifndef OPM_GASLIFT_SINGLE_WELL_HEADER_INCLUDED
 #define OPM_GASLIFT_SINGLE_WELL_HEADER_INCLUDED
 
-#include <opm/models/utils/propertysystem.hh>
-#include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/blackoil/blackoilmodel.hh>
 #include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/simulators/wells/GasLiftSingleWellGeneric.hpp>
+#include <opm/models/utils/parametersystem.hpp>
+#include <opm/models/utils/propertysystem.hh>
 #include <opm/simulators/wells/GasLiftGroupInfo.hpp>
+#include <opm/simulators/wells/GasLiftSingleWellGeneric.hpp>
 
 #include <optional>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class TypeTag> class WellInterface;
+template <class TypeTag>
+class WellInterface;
 
-template<class TypeTag>
-class GasLiftSingleWell : public GasLiftSingleWellGeneric<GetPropType<TypeTag, Properties::Scalar>,
-                                         typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
+template <class TypeTag>
+class GasLiftSingleWell
+    : public GasLiftSingleWellGeneric<GetPropType<TypeTag, Properties::Scalar>,
+                                      typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
 {
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
@@ -56,16 +59,15 @@ public:
                       const Parallel::Communication& comm,
                       bool glift_debug);
 
-    const WellInterfaceGeneric<Scalar, IndexTraits>& getWell() const override { return well_; }
+    const WellInterfaceGeneric<Scalar, IndexTraits>& getWell() const override
+    {
+        return well_;
+    }
 
 private:
-    std::optional<Scalar>
-    computeBhpAtThpLimit_(Scalar alq,
-                          bool debug_ouput = true) const override;
+    std::optional<Scalar> computeBhpAtThpLimit_(Scalar alq, bool debug_ouput = true) const override;
 
-    BasicRates computeWellRates_(Scalar bhp,
-                                 bool bhp_is_limited,
-                                 bool debug_output = true) const override;
+    BasicRates computeWellRates_(Scalar bhp, bool bhp_is_limited, bool debug_output = true) const override;
 
     void setAlqMaxRate_(const GasLiftWell& well);
     void setupPhaseVariables_();

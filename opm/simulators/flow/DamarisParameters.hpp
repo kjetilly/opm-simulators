@@ -3,7 +3,7 @@
 /*
   Copyright 2022 SINTEF Digital, Mathematics and Cybernetics.
   Copyright 2023 Inria, Bretagne–Atlantique Research Center
-  
+
   This file is part of the Open Porous Media project (OPM).
 
   OPM is free software: you can redistribute it and/or modify
@@ -31,30 +31,60 @@
 #ifndef OPM_DAMARIS_PARAMETERS_HPP
 #define OPM_DAMARIS_PARAMETERS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct EnableDamarisOutput { static constexpr bool value = false; };
-struct DamarisOutputHdfCollective { static constexpr bool value = true; };
-struct DamarisSaveMeshToHdf { static constexpr bool value = false; };
-struct DamarisSaveToHdf { static constexpr bool value = true; };
-struct DamarisPythonScript { static constexpr auto value = ""; };
-struct DamarisPythonParaviewScript { static constexpr auto value = ""; };
-struct DamarisSimName { static constexpr auto value = ""; };
-struct DamarisDedicatedCores { static constexpr int value = 1; };
-struct DamarisDedicatedNodes { static constexpr int value = 0; };
-struct DamarisSharedMemoryName { static constexpr auto value = "" ; };
-struct DamarisSharedMemorySizeBytes { static constexpr long value = 536870912; }; // 512 MB
-struct DamarisLogLevel { static constexpr auto value = "info"; };
-struct DamarisDaskFile { static constexpr auto value = ""; };
-struct DamarisLimitVariables  { static constexpr auto value = ""; };
+struct EnableDamarisOutput {
+    static constexpr bool value = false;
+};
+struct DamarisOutputHdfCollective {
+    static constexpr bool value = true;
+};
+struct DamarisSaveMeshToHdf {
+    static constexpr bool value = false;
+};
+struct DamarisSaveToHdf {
+    static constexpr bool value = true;
+};
+struct DamarisPythonScript {
+    static constexpr auto value = "";
+};
+struct DamarisPythonParaviewScript {
+    static constexpr auto value = "";
+};
+struct DamarisSimName {
+    static constexpr auto value = "";
+};
+struct DamarisDedicatedCores {
+    static constexpr int value = 1;
+};
+struct DamarisDedicatedNodes {
+    static constexpr int value = 0;
+};
+struct DamarisSharedMemoryName {
+    static constexpr auto value = "";
+};
+struct DamarisSharedMemorySizeBytes {
+    static constexpr long value = 536870912;
+}; // 512 MB
+struct DamarisLogLevel {
+    static constexpr auto value = "info";
+};
+struct DamarisDaskFile {
+    static constexpr auto value = "";
+};
+struct DamarisLimitVariables {
+    static constexpr auto value = "";
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Register damaris runtime parameters.
 void registerDamarisParameters();
 
-}
+} // namespace Opm
 
 #endif // OPM_DAMARIS_PARAMETERS_HPP

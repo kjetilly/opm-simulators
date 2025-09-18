@@ -47,7 +47,8 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup CompositionalSimulator
@@ -61,18 +62,18 @@ class FlowProblemComp : public FlowProblem<TypeTag>
     // TODO: the naming of the Types will be adjusted
     using FlowProblemType = FlowProblem<TypeTag>;
 
+    using typename FlowProblemType::FluidSystem;
+    using typename FlowProblemType::GridView;
     using typename FlowProblemType::Scalar;
     using typename FlowProblemType::Simulator;
-    using typename FlowProblemType::GridView;
-    using typename FlowProblemType::FluidSystem;
     using typename FlowProblemType::Vanguard;
 
     // might not be needed
     using FlowProblemType::dim;
     using FlowProblemType::dimWorld;
 
-    using FlowProblemType::numPhases;
     using FlowProblemType::numComponents;
+    using FlowProblemType::numPhases;
 
     using FlowProblemType::gasPhaseIdx;
     using FlowProblemType::oilPhaseIdx;
@@ -86,7 +87,7 @@ class FlowProblemComp : public FlowProblem<TypeTag>
     using typename FlowProblemType::RateVector;
 
     using InitialFluidState = CompositionalFluidState<Scalar, FluidSystem>;
-    using EclWriterType = EclWriter<TypeTag, OutputCompositionalModule<TypeTag> >;
+    using EclWriterType = EclWriter<TypeTag, OutputCompositionalModule<TypeTag>>;
 
 public:
     using FlowProblemType::porosity;
@@ -104,7 +105,7 @@ public:
         // tighter tolerance is needed for compositional modeling here
         Parameters::SetDefault<Parameters::NewtonTolerance<Scalar>>(1e-7);
     }
-    
+
     Opm::CompositionalConfig::EOSType getEosType() const
     {
         auto& simulator = this->simulator();
@@ -149,9 +150,8 @@ public:
 
         if (enableEclOutput_) {
             eclWriter_->setTransmissibilities(&simulator.problem().eclTransmissibilities());
-            std::function<unsigned int(unsigned int)> equilGridToGrid = [&simulator](unsigned int i) {
-                return simulator.vanguard().gridEquilIdxToGridIdx(i);
-            };
+            std::function<unsigned int(unsigned int)> equilGridToGrid
+                = [&simulator](unsigned int i) { return simulator.vanguard().gridEquilIdxToGridIdx(i); };
             eclWriter_->extractOutputTransAndNNC(equilGridToGrid);
         }
 
@@ -196,8 +196,7 @@ public:
         this->readRockParameters_(simulator.vanguard().cellCenterDepths(), [&simulator](const unsigned idx) {
             std::array<int, dim> coords;
             simulator.vanguard().cartesianCoordinate(idx, coords);
-            std::transform(coords.begin(), coords.end(), coords.begin(),
-                           [](const auto c) { return c + 1; });
+            std::transform(coords.begin(), coords.end(), coords.begin(), [](const auto c) { return c + 1; });
             return coords;
         });
         FlowProblemType::readMaterialParameters_();
@@ -265,12 +264,13 @@ public:
         using GridType = std::remove_cv_t<std::remove_reference_t<decltype(grid)>>;
         constexpr bool isCpGrid = std::is_same_v<GridType, Dune::CpGrid>;
         if (!isCpGrid || (grid.maxLevel() == 0)) {
-            this->eclWriter_->evalSummaryState(! this->episodeWillBeOver());
+            this->eclWriter_->evalSummaryState(!this->episodeWillBeOver());
         }
     }
 
-    void writeReports(const SimulatorTimer& timer) {
-        if (enableEclOutput_){
+    void writeReports(const SimulatorTimer& timer)
+    {
+        if (enableEclOutput_) {
             eclWriter_->writeReports(timer);
         }
     }
@@ -283,7 +283,7 @@ public:
     {
         FlowProblemType::writeOutput(verbose);
 
-        if (! this->enableEclOutput_) {
+        if (!this->enableEclOutput_) {
             return;
         }
 
@@ -302,10 +302,7 @@ public:
      * Reservoir simulation uses no-flow conditions as default for all boundaries.
      */
     template <class Context>
-    void boundary(BoundaryRateVector& values,
-                  const Context& context,
-                  unsigned spaceIdx,
-                  unsigned /* timeIdx */) const
+    void boundary(BoundaryRateVector& values, const Context& context, unsigned spaceIdx, unsigned /* timeIdx */) const
     {
         OPM_TIMEBLOCK_LOCAL(eclProblemBoundary);
         if (!context.intersection(spaceIdx).boundary())
@@ -361,7 +358,7 @@ public:
             Dune::FieldVector<Scalar, numComponents> z(0.0);
             Scalar sumMoles = 0.0;
             for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                if (Indices::waterEnabled && phaseIdx == static_cast<unsigned int>(waterPhaseIdx)){ 
+                if (Indices::waterEnabled && phaseIdx == static_cast<unsigned int>(waterPhaseIdx)) {
                     continue;
                 }
                 const auto saturation = fs.saturation(phaseIdx);
@@ -401,37 +398,48 @@ public:
     }
 
     const InitialFluidState& initialFluidState(unsigned globalDofIdx) const
-    { return initialFluidStates_[globalDofIdx]; }
+    {
+        return initialFluidStates_[globalDofIdx];
+    }
 
     std::vector<InitialFluidState>& initialFluidStates()
-    { return initialFluidStates_; }
+    {
+        return initialFluidStates_;
+    }
 
     const std::vector<InitialFluidState>& initialFluidStates() const
-    { return initialFluidStates_; }
+    {
+        return initialFluidStates_;
+    }
 
     const FlowThresholdPressure<TypeTag>& thresholdPressure() const
     {
-        assert( !thresholdPressures_.enableThresholdPressure() &&
-                " Threshold Pressures are not supported by compostional simulation ");
+        assert(!thresholdPressures_.enableThresholdPressure()
+               && " Threshold Pressures are not supported by compostional simulation ");
         return thresholdPressures_;
     }
 
     const EclWriterType& eclWriter() const
-    { return *eclWriter_; }
+    {
+        return *eclWriter_;
+    }
 
     EclWriterType& eclWriter()
-    { return *eclWriter_; }
+    {
+        return *eclWriter_;
+    }
 
     // TODO: do we need this one?
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(static_cast<FlowProblemType&>(*this));
         serializer(*eclWriter_);
     }
-protected:
 
-    void updateExplicitQuantities_(int /* episodeIdx*/, int /* timeStepSize */, bool /* first_step_after_restart */) override
+protected:
+    void
+    updateExplicitQuantities_(int /* episodeIdx*/, int /* timeStepSize */, bool /* first_step_after_restart */) override
     {
         // we do nothing here for now
     }
@@ -450,7 +458,7 @@ protected:
     {
         readExplicitInitialConditionCompositional_();
     }
-    
+
     void readExplicitInitialConditionCompositional_()
     {
         const auto& simulator = this->simulator();
@@ -465,7 +473,7 @@ protected:
         const bool has_xmf = fp.has_double("XMF");
         const bool has_ymf = fp.has_double("YMF");
         const bool has_zmf = fp.has_double("ZMF");
-        if ( !has_zmf && !(has_xmf && has_ymf) ) {
+        if (!has_zmf && !(has_xmf && has_ymf)) {
             throw std::runtime_error("The ECL input file requires the presence of ZMF or XMF and YMF "
                                      "keyword if the model is initialized explicitly");
         }
@@ -526,24 +534,21 @@ protected:
             dofFluidState.setTemperature(temperatureLoc);
 
             if (gas_active) {
-                dofFluidState.setSaturation(FluidSystem::gasPhaseIdx,
-                                            gasSaturationData[dofIdx]);
+                dofFluidState.setSaturation(FluidSystem::gasPhaseIdx, gasSaturationData[dofIdx]);
             }
             if (oil_active) {
                 dofFluidState.setSaturation(FluidSystem::oilPhaseIdx,
-                                            1.0
-                                            - waterSaturationData[dofIdx]
-                                            - gasSaturationData[dofIdx]);
+                                            1.0 - waterSaturationData[dofIdx] - gasSaturationData[dofIdx]);
             }
             if (water_active) {
-                dofFluidState.setSaturation(FluidSystem::waterPhaseIdx,
-                                            waterSaturationData[dofIdx]);
+                dofFluidState.setSaturation(FluidSystem::waterPhaseIdx, waterSaturationData[dofIdx]);
             }
 
             //////
             // set phase pressures
             //////
-            const Scalar pressure = pressureData[dofIdx]; // oil pressure (or gas pressure for water-gas system or water pressure for single phase)
+            const Scalar pressure = pressureData[dofIdx]; // oil pressure (or gas pressure for water-gas system or water
+                                                          // pressure for single phase)
 
             // TODO: zero capillary pressure for now
             const std::array<Scalar, numPhases> pc = {0};
@@ -582,11 +587,11 @@ protected:
                     dofFluidState.setMoleFraction(compIdx, zmf);
 
                     if (gas_active) {
-                        const auto ymf = (dofFluidState.saturation(FluidSystem::gasPhaseIdx) > 0.) ? zmf : Scalar{0};
+                        const auto ymf = (dofFluidState.saturation(FluidSystem::gasPhaseIdx) > 0.) ? zmf : Scalar {0};
                         dofFluidState.setMoleFraction(FluidSystem::gasPhaseIdx, compIdx, ymf);
                     }
                     if (oil_active) {
-                        const auto xmf = (dofFluidState.saturation(FluidSystem::oilPhaseIdx) > 0.) ? zmf : Scalar{0};
+                        const auto xmf = (dofFluidState.saturation(FluidSystem::oilPhaseIdx) > 0.) ? zmf : Scalar {0};
                         dofFluidState.setMoleFraction(FluidSystem::oilPhaseIdx, compIdx, xmf);
                     }
                 }
@@ -595,7 +600,6 @@ protected:
     }
 
 private:
-
     void handleSolventBC(const BCProp::BCFace& /* bc */, RateVector& /* rate */) const override
     {
         throw std::logic_error("solvent is disabled for compositional modeling and you're trying to add solvent to BC");
@@ -627,7 +631,7 @@ private:
 
     bool zmf_initialization_ {false};
 
-    bool enableEclOutput_{false};
+    bool enableEclOutput_ {false};
     std::unique_ptr<EclWriterType> eclWriter_;
 };
 

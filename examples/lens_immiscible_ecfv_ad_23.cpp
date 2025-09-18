@@ -35,58 +35,57 @@
 
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Use Dune-grid's GeometryGrid< YaspGrid >
-template<class TypeTag>
-struct Grid <TypeTag, TTag::LensProblemEcfvAd>
-{
-  template< class ctype, unsigned int dim, unsigned int dimworld >
-  class IdentityCoordFct
-    : public Dune::AnalyticalCoordFunction
-      < ctype, dim, dimworld, IdentityCoordFct< ctype, dim, dimworld > >
-  {
-    using This = IdentityCoordFct< ctype, dim, dimworld >;
-    using Base = Dune::AnalyticalCoordFunction< ctype, dim, dimworld, This >;
-
-  public:
-    using DomainVector = typename Base :: DomainVector;
-    using RangeVector = typename Base :: RangeVector ;
-
-    template< typename... Args >
-    IdentityCoordFct( Args&... )
-    {}
-
-    RangeVector operator()(const DomainVector& x) const
+template <class TypeTag>
+struct Grid<TypeTag, TTag::LensProblemEcfvAd> {
+    template <class ctype, unsigned int dim, unsigned int dimworld>
+    class IdentityCoordFct
+        : public Dune::AnalyticalCoordFunction<ctype, dim, dimworld, IdentityCoordFct<ctype, dim, dimworld>>
     {
-      RangeVector y;
-      evaluate( x, y );
-      return y;
-    }
+        using This = IdentityCoordFct<ctype, dim, dimworld>;
+        using Base = Dune::AnalyticalCoordFunction<ctype, dim, dimworld, This>;
 
-    void evaluate( const DomainVector &x, RangeVector &y ) const
-    {
-      y = 0;
-      for( unsigned int i = 0; i<dim; ++i )
-        y[ i ] = x[ i ];
-    }
+    public:
+        using DomainVector = typename Base ::DomainVector;
+        using RangeVector = typename Base ::RangeVector;
 
-  };
+        template <typename... Args>
+        IdentityCoordFct(Args&...)
+        {
+        }
 
-  using MyYaspGrid = Dune::YaspGrid< 2 >;
+        RangeVector operator()(const DomainVector& x) const
+        {
+            RangeVector y;
+            evaluate(x, y);
+            return y;
+        }
+
+        void evaluate(const DomainVector& x, RangeVector& y) const
+        {
+            y = 0;
+            for (unsigned int i = 0; i < dim; ++i)
+                y[i] = x[i];
+        }
+    };
+
+    using MyYaspGrid = Dune::YaspGrid<2>;
 
 public:
-  using type = Dune::GeometryGrid< MyYaspGrid,
-                                   IdentityCoordFct< typename MyYaspGrid::ctype,
-                                                     MyYaspGrid::dimension,
-                                                     MyYaspGrid::dimensionworld+1> >;
+    using type = Dune::GeometryGrid<
+        MyYaspGrid,
+        IdentityCoordFct<typename MyYaspGrid::ctype, MyYaspGrid::dimension, MyYaspGrid::dimensionworld + 1>>;
 };
 
 } // namespace Opm::Properties
 
 #include <opm/models/utils/start.hh>
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemEcfvAd;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

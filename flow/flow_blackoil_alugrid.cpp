@@ -23,7 +23,7 @@
 // can switch to it by defining the macro #define DISABLE_SFC_ORDERING 1.
 // This will change the default cell order to Cartesian.
 // Note that this option is not available for pre-built or installed versions of dune-ALUGrid.
-// To enable changig to Cartesian ordering, you will need to rebuild dune-ALUGrid from source, ensuring 
+// To enable changig to Cartesian ordering, you will need to rebuild dune-ALUGrid from source, ensuring
 // the build configuration allows disabling SFC ordering from OPM.
 // For more details, refer to the files gridfactory.hh and aluinline.hh located in the dune-alugrid/3d/
 
@@ -46,43 +46,47 @@
 #include <opm/simulators/flow/equil/InitStateEquil_impl.hpp>
 #include <opm/simulators/utils/GridDataOutput_impl.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowProblemAlugrid {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowProblemAlugrid {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
 
-template<class TypeTag>
-struct Grid<TypeTag, TTag::FlowProblemAlugrid> {
-    static const int dim = 3;
+    template <class TypeTag>
+    struct Grid<TypeTag, TTag::FlowProblemAlugrid> {
+        static const int dim = 3;
 #if HAVE_MPI
-     using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming,Dune::ALUGridMPIComm>;
+        using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>;
 #else
-     using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
+        using type = Dune::ALUGrid<dim, dim, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
 #endif
+    };
+
+    // alugrid need cp grid as equilgrid
+    template <class TypeTag>
+    struct EquilGrid<TypeTag, TTag::FlowProblemAlugrid> {
+        using type = Dune::CpGrid;
+    };
+    template <class TypeTag>
+    struct Vanguard<TypeTag, TTag::FlowProblemAlugrid> {
+        using type = Opm::AluGridVanguard<TypeTag>;
+    };
+} // namespace Properties
+
+template <>
+class SupportsFaceTag<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>> : public std::bool_constant<true>
+{
 };
 
-// alugrid need cp grid as equilgrid
-template<class TypeTag>
-struct EquilGrid<TypeTag, TTag::FlowProblemAlugrid> {
-    using type = Dune::CpGrid;
-};
-template<class TypeTag>
-struct Vanguard<TypeTag, TTag::FlowProblemAlugrid> {
-    using type = Opm::AluGridVanguard<TypeTag>;
-};
-}
+} // namespace Opm
 
-template<>
-class SupportsFaceTag<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>>
-    : public std::bool_constant<true>
-{};
-
-}
-
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowProblemAlugrid;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

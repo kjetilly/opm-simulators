@@ -38,13 +38,12 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 
-#define INSTANTIATE_TYPE(T)                                               \
-    template class FlowGenericProblem<                                    \
-                      Dune::GridView<                                     \
-                          Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>, \
-                      BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class FlowGenericProblem<Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,                   \
+                                      BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>>;
 
 INSTANTIATE_TYPE(double)
 
@@ -53,14 +52,10 @@ INSTANTIATE_TYPE(float)
 #endif
 
 #if HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
-template class FlowGenericProblem<GV,
-                                  BlackOilFluidSystem<double, BlackOilDefaultFluidSystemIndices>>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
+template class FlowGenericProblem<GV, BlackOilFluidSystem<double, BlackOilDefaultFluidSystemIndices>>;
 #if FLOW_INSTANTIATE_FLOAT
-template class FlowGenericProblem<GV,
-                                  BlackOilFluidSystem<float, BlackOilDefaultFluidSystemIndices>>;
+template class FlowGenericProblem<GV, BlackOilFluidSystem<float, BlackOilDefaultFluidSystemIndices>>;
 #endif
 
 #endif // HAVE_DUNE_FEM

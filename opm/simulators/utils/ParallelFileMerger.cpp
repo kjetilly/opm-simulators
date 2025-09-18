@@ -22,86 +22,81 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include <opm/simulators/utils/ParallelFileMerger.hpp>
 #include <fstream>
 #include <iostream>
+#include <opm/simulators/utils/ParallelFileMerger.hpp>
 
-namespace Opm {
-namespace detail {
-
-ParallelFileMerger::ParallelFileMerger(const fs::path& output_dir,
-                                       const std::string& deckname,
-                                       bool show_fallout)
-    : debugFileRegex_(deckname+"\\.\\d+\\.DBG")
-    , logFileRegex_(deckname+"\\.\\d+\\.PRT")
-    , fileWarningRegex_(deckname+"\\.(\\d+)\\.[^.]+")
-    , show_fallout_(show_fallout)
+namespace Opm
 {
-    if (show_fallout_) {
-        auto debugPath = output_dir;
-        debugPath /= (deckname + ".DBG");
-        debugStream_ = std::make_unique<std::ofstream>(debugPath,
-                                                       std::ofstream::app);
-        auto logPath = output_dir;
-        logPath /= ( deckname + ".PRT");
-        logStream_ = std::make_unique<std::ofstream>(logPath,
-                                                     std::ofstream::app);
+namespace detail
+{
+
+    ParallelFileMerger::ParallelFileMerger(const fs::path& output_dir, const std::string& deckname, bool show_fallout)
+        : debugFileRegex_(deckname + "\\.\\d+\\.DBG")
+        , logFileRegex_(deckname + "\\.\\d+\\.PRT")
+        , fileWarningRegex_(deckname + "\\.(\\d+)\\.[^.]+")
+        , show_fallout_(show_fallout)
+    {
+        if (show_fallout_) {
+            auto debugPath = output_dir;
+            debugPath /= (deckname + ".DBG");
+            debugStream_ = std::make_unique<std::ofstream>(debugPath, std::ofstream::app);
+            auto logPath = output_dir;
+            logPath /= (deckname + ".PRT");
+            logStream_ = std::make_unique<std::ofstream>(logPath, std::ofstream::app);
+        }
     }
-}
 
-void ParallelFileMerger::operator()(const fs::path& file)
-{
-    std::smatch matches;
-    std::string filename = file.filename().native();
+    void ParallelFileMerger::operator()(const fs::path& file)
+    {
+        std::smatch matches;
+        std::string filename = file.filename().native();
 
-    if (std::regex_match(filename, matches, fileWarningRegex_)) {
-        std::string rank = std::regex_replace(filename, fileWarningRegex_, "$1");
+        if (std::regex_match(filename, matches, fileWarningRegex_)) {
+            std::string rank = std::regex_replace(filename, fileWarningRegex_, "$1");
 
-        if (std::regex_match(filename, logFileRegex_)) {
-            if (show_fallout_) {
-                appendFile(*logStream_, file, rank);
-            } else {
-                fs::remove(file);
-            }
-        } else {
-            if (std::regex_match(filename, debugFileRegex_)) {
+            if (std::regex_match(filename, logFileRegex_)) {
                 if (show_fallout_) {
-                    appendFile(*debugStream_, file, rank);
+                    appendFile(*logStream_, file, rank);
                 } else {
                     fs::remove(file);
                 }
             } else {
-                if (show_fallout_) {
-                    std::cerr << "WARNING: Unrecognized file with name "
-                              << filename
-                              << " that might stem from a parallel run."
-                              << std::endl;
+                if (std::regex_match(filename, debugFileRegex_)) {
+                    if (show_fallout_) {
+                        appendFile(*debugStream_, file, rank);
+                    } else {
+                        fs::remove(file);
+                    }
+                } else {
+                    if (show_fallout_) {
+                        std::cerr << "WARNING: Unrecognized file with name " << filename
+                                  << " that might stem from a parallel run." << std::endl;
+                    }
                 }
             }
         }
     }
-}
 
-void ParallelFileMerger::appendFile(std::ofstream& of, const fs::path& file, const std::string& rank)
-{
-    if (fs::file_size(file)) {
-        std::cerr << "WARNING: There has been logging to file "
-                      << file.string() <<" by process "
-                      << rank << std::endl;
+    void ParallelFileMerger::appendFile(std::ofstream& of, const fs::path& file, const std::string& rank)
+    {
+        if (fs::file_size(file)) {
+            std::cerr << "WARNING: There has been logging to file " << file.string() << " by process " << rank
+                      << std::endl;
 
-        std::ifstream in(file);
-        of<<std::endl<< std::endl;
-        of<<"=======================================================";
-        of<<std::endl<<std::endl;
-        of << " Output written by rank " << rank << " to file " << file.string();
-        of << ":" << std::endl << std::endl;
-        of << in.rdbuf() << std::endl << std::endl;
-        of << "======================== end output =====================";
-        of << std::endl;
-        in.close();
+            std::ifstream in(file);
+            of << std::endl << std::endl;
+            of << "=======================================================";
+            of << std::endl << std::endl;
+            of << " Output written by rank " << rank << " to file " << file.string();
+            of << ":" << std::endl << std::endl;
+            of << in.rdbuf() << std::endl << std::endl;
+            of << "======================== end output =====================";
+            of << std::endl;
+            in.close();
+        }
+        fs::remove(file);
     }
-    fs::remove(file);
-}
 
 } // end namespace detail
 } // end namespace Opm

@@ -23,7 +23,8 @@
 #include <cstddef>
 #include <string_view>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Parse comma separated option strings into a runtime configuration object
 /// for whether to output additional convergence information and, if so,
@@ -66,13 +67,12 @@ public:
     /// \param[in] optionName Name of command line option whose value is \p
     ///    options.  Used as diagnostic information only, and only if
     ///    specified.
-    explicit ConvergenceOutputConfiguration(std::string_view options,
-                                            std::string_view optionName = "");
+    explicit ConvergenceOutputConfiguration(std::string_view options, std::string_view optionName = "");
 
     /// Whether or not user wants any additional convergence output at all.
     bool any() const
     {
-        return this->flag_ != std::byte{0};
+        return this->flag_ != std::byte {0};
     }
 
     /// Whether or not user wants specific convergence output.
@@ -85,7 +85,7 @@ public:
 
 private:
     /// Option flags.  Treated as a small bitset.
-    std::byte flag_{0};
+    std::byte flag_ {0};
 };
 
 } // namespace Opm

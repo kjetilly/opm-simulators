@@ -23,32 +23,32 @@
 #include <opm/models/utils/propertysystem.hh>
 
 #include <opm/simulators/flow/FlowMain.hpp>
-#include <opm/simulators/flow/python/PyMain.hpp>
 #include <opm/simulators/flow/python/PyFluidState.hpp>
+#include <opm/simulators/flow/python/PyMain.hpp>
 #include <opm/simulators/flow/python/PyMaterialState.hpp>
 #include <opm/simulators/flow/python/Pybind11Exporter.hpp>
 
+#include <opm/input/eclipse/Deck/Deck.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
-#include <opm/input/eclipse/Deck/Deck.hpp>
 
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
-template<class TypeTag>
+template <class TypeTag>
 class PyBaseSimulator
 {
 private:
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
 
 public:
-    PyBaseSimulator(const std::string& deckFilename,
-                    const std::vector<std::string>& args);
+    PyBaseSimulator(const std::string& deckFilename, const std::vector<std::string>& args);
 
     PyBaseSimulator(std::shared_ptr<Deck> deck,
                     std::shared_ptr<EclipseState> state,
@@ -62,8 +62,7 @@ public:
 
     int currentStep();
 
-    py::array_t<double>
-    getFluidStateVariable(const std::string& name) const;
+    py::array_t<double> getFluidStateVariable(const std::string& name) const;
 
     py::array_t<double> getCellVolumes();
 
@@ -74,8 +73,7 @@ public:
     py::array_t<double> getPrimaryVariable(const std::string& variable) const;
     py::array_t<int> getPrimaryVarMeaning(const std::string& variable) const;
 
-    std::map<std::string, int>
-    getPrimaryVarMeaningMap(const std::string& variable) const;
+    std::map<std::string, int> getPrimaryVarMeaningMap(const std::string& variable) const;
 
     int run();
 
@@ -83,8 +81,7 @@ public:
 
     void setPorosity(PyCArray array);
 
-    void setPrimaryVariable(const std::string& idx_name,
-                            PyCArray array);
+    void setPrimaryVariable(const std::string& idx_name, PyCArray array);
 
     void setupMpi(bool init_mpi, bool finalize_mpi);
     int step();
@@ -96,30 +93,30 @@ protected:
     PyFluidState<TypeTag>& getFluidState() const;
     PyMaterialState<TypeTag>& getMaterialState() const;
 
-    const std::string deck_filename_{};
-    bool has_run_init_{false};
-    bool has_run_cleanup_{false};
-    bool mpi_init_{true};
-    bool mpi_finalize_{true};
+    const std::string deck_filename_ {};
+    bool has_run_init_ {false};
+    bool has_run_cleanup_ {false};
+    bool mpi_init_ {true};
+    bool mpi_finalize_ {true};
 
     // NOTE: the main_ pointer *must* be declared before the flow_main_ pointer
     // to ensure that it is destroyed before the main object since the main object
     // destructor will call MPI_Finalize() and flow_main_ object destructor will call
     // MPI_Comm_free().
-    std::unique_ptr<PyMain<TypeTag>> main_{};
-    std::unique_ptr<FlowMain<TypeTag>> flow_main_{};
-    Simulator* simulator_{nullptr};
-    std::unique_ptr<PyFluidState<TypeTag>> fluid_state_{};
-    std::unique_ptr<PyMaterialState<TypeTag>> material_state_{};
-    std::shared_ptr<Deck> deck_{};
-    std::shared_ptr<EclipseState> eclipse_state_{};
-    std::shared_ptr<Schedule> schedule_{};
-    std::shared_ptr<SummaryConfig> summary_config_{};
-    std::vector<std::string> args_{};
-};  // class PyBaseSimulator
+    std::unique_ptr<PyMain<TypeTag>> main_ {};
+    std::unique_ptr<FlowMain<TypeTag>> flow_main_ {};
+    Simulator* simulator_ {nullptr};
+    std::unique_ptr<PyFluidState<TypeTag>> fluid_state_ {};
+    std::unique_ptr<PyMaterialState<TypeTag>> material_state_ {};
+    std::shared_ptr<Deck> deck_ {};
+    std::shared_ptr<EclipseState> eclipse_state_ {};
+    std::shared_ptr<Schedule> schedule_ {};
+    std::shared_ptr<SummaryConfig> summary_config_ {};
+    std::vector<std::string> args_ {};
+}; // class PyBaseSimulator
 
-}  // namespace Opm::Pybind
+} // namespace Opm::Pybind
 
 #include <opm/simulators/flow/python/PyBaseSimulator_impl.hpp>
 
-#endif  // OPM_PY_BASE_SIMULATOR_HEADER_INCLUDED
+#endif // OPM_PY_BASE_SIMULATOR_HEADER_INCLUDED

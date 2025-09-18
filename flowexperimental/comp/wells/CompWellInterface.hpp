@@ -27,7 +27,8 @@
 
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename TypeTag> // TODO: do we need to use TypeTag here?
 class CompWellInterface
@@ -55,34 +56,31 @@ public:
 
     const std::string& name() const;
 
-    virtual void calculateExplicitQuantities(const Simulator& simulator,
-                                             const SingleWellState& well_state) = 0;
+    virtual void calculateExplicitQuantities(const Simulator& simulator, const SingleWellState& well_state) = 0;
 
-    virtual void updatePrimaryVariables(const Simulator& simulator,
-                                        const SingleWellState& well_state) = 0;
+    virtual void updatePrimaryVariables(const Simulator& simulator, const SingleWellState& well_state) = 0;
 
-    virtual bool iterateWellEq(const Simulator& simulator,
-                               const Scalar dt,
-                               SingleWellState& well_state) = 0;
+    virtual bool iterateWellEq(const Simulator& simulator, const Scalar dt, SingleWellState& well_state) = 0;
 
     void addCellRates(RateVector& rates, unsigned cellIdx) const;
 
-    const std::vector<std::size_t>& cells() const { return well_cells_; }
+    const std::vector<std::size_t>& cells() const
+    {
+        return well_cells_;
+    }
 
     virtual void apply(BVector& r) const = 0;
 
     /// using the solution x to recover the solution xw for wells and applying
     /// xw to update Well State
-    virtual void recoverWellSolutionAndUpdateWellState(const BVector& x,
-                                                       SingleWellState& well_state) = 0;
+    virtual void recoverWellSolutionAndUpdateWellState(const BVector& x, SingleWellState& well_state) = 0;
     virtual bool getConvergence() const = 0;
 
     virtual void addWellContributions(SparseMatrixAdapter&) const = 0;
 
 protected:
-
     const Well& well_ecl_;
-    int index_of_well_{-1};
+    int index_of_well_ {-1};
 
     int number_of_connection_ {};
     Scalar reference_depth_ {}; // TODO: we might not need it since it in well_ecl_.
@@ -98,7 +96,6 @@ protected:
     std::vector<int> saturation_table_number_;
 
     // std::string name_;
-
 };
 
 

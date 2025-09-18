@@ -30,22 +30,22 @@
 
 #include <csignal>
 #include <iostream>
-#include <string.h>             // strsignal()
+#include <string.h> // strsignal()
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-namespace Opm {
+namespace Opm
+{
 
-std::string breakLines(const std::string& msg,
-                       int indentWidth,
-                       int maxWidth)
+std::string
+breakLines(const std::string& msg, int indentWidth, int maxWidth)
 {
     std::string result;
     int startInPos = 0;
     int inPos = 0;
     int lastBreakPos = 0;
     int ttyPos = 0;
-    for (; inPos < int(msg.size()); ++ inPos, ++ ttyPos) {
+    for (; inPos < int(msg.size()); ++inPos, ++ttyPos) {
         if (msg[inPos] == '\n') {
             result += msg.substr(startInPos, inPos - startInPos + 1);
             startInPos = inPos + 1;
@@ -66,8 +66,7 @@ std::string breakLines(const std::string& msg,
                 startInPos = lastBreakPos + 1;
                 lastBreakPos = startInPos;
                 inPos = startInPos;
-            }
-            else {
+            } else {
                 result += msg.substr(startInPos, inPos - startInPos);
                 startInPos = inPos;
                 lastBreakPos = startInPos;
@@ -87,9 +86,10 @@ std::string breakLines(const std::string& msg,
     return result;
 }
 
-int getTtyWidth()
+int
+getTtyWidth()
 {
-    int ttyWidth = 10*1000; // effectively do not break lines at all.
+    int ttyWidth = 10 * 1000; // effectively do not break lines at all.
     if (isatty(STDOUT_FILENO)) {
 #if defined TIOCGWINSZ
         // This is a bit too linux specific, IMO. let's do it anyway
@@ -105,7 +105,8 @@ int getTtyWidth()
     return ttyWidth;
 }
 
-void assignResetTerminalSignalHandlers()
+void
+assignResetTerminalSignalHandlers()
 {
     // set the signal handlers to reset the TTY to a well defined state on unexpected
     // program aborts
@@ -120,7 +121,8 @@ void assignResetTerminalSignalHandlers()
     }
 }
 
-void resetTerminal()
+void
+resetTerminal()
 {
     // make sure stderr and stderr do not contain any unwritten data and make sure that
     // the TTY does not see any unfinished ANSI escape sequence.
@@ -131,7 +133,7 @@ void resetTerminal()
 
     // it seems like some terminals sometimes takes their time to react, so let's
     // accommodate them.
-    usleep(/*usec=*/500*1000);
+    usleep(/*usec=*/500 * 1000);
 
     // this requires the 'stty' command to be available in the command search path. on
     // most linux systems, is the case. (but even if the system() function fails, the
@@ -142,7 +144,8 @@ void resetTerminal()
     }
 }
 
-void resetTerminal(int signum)
+void
+resetTerminal(int signum)
 {
     // first thing to do when a nuke hits: restore the default signal handler
     signal(signum, SIG_DFL);
@@ -159,8 +162,7 @@ void resetTerminal(int signum)
 #endif
 
     if (isatty(fileno(stdout)) && isatty(fileno(stdin))) {
-        std::cout << "\n\nReceived signal " << signum
-                  << " (\"" << strsignal(signum) << "\")."
+        std::cout << "\n\nReceived signal " << signum << " (\"" << strsignal(signum) << "\")."
                   << " Trying to reset the terminal.\n";
 
         resetTerminal();

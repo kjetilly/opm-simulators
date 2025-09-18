@@ -37,13 +37,14 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableMICP>
-void BlackOilMICPParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enableMICP>
+void
+BlackOilMICPParams<Scalar>::initFromState(const EclipseState& eclState)
 {
     // some sanity checks: if MICP is enabled, the MICP keyword must be
     // present, if MICP is disabled the keyword must not be present.
@@ -52,8 +53,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Non-trivial MICP treatment requested at compile time, but "
                                      "the deck does not contain the MICP keyword");
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().micp()) {
             throw std::runtime_error("MICP treatment disabled at compile time, but the deck "
                                      "contains the MICP keyword");
@@ -112,8 +112,7 @@ initFromState(const EclipseState& eclState)
             microbialDiffusion_[pvtRegionIdx] = diffMICPTable.getMicrobialDiffusion().front();
             oxygenDiffusion_[pvtRegionIdx] = diffMICPTable.getOxygenDiffusion().front();
             ureaDiffusion_[pvtRegionIdx] = diffMICPTable.getUreaDiffusion().front();
-        }
-        else {
+        } else {
             microbialDiffusion_[pvtRegionIdx] = 0.0;
             oxygenDiffusion_[pvtRegionIdx] = 0.0;
             ureaDiffusion_[pvtRegionIdx] = 0.0;
@@ -127,14 +126,15 @@ initFromState(const EclipseState& eclState)
     permfactTable_.resize(numSatRegions);
     for (std::size_t i = 0; i < permfactTables.size(); ++i) {
         const PermfactTable& permfactTable = permfactTables.getTable<PermfactTable>(i);
-        permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(), permfactTable.getPermeabilityMultiplierColumn());
+        permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(),
+                                          permfactTable.getPermeabilityMultiplierColumn());
     }
 }
 #endif
 
-#define INSTANTIATE_TYPE(T)                                                         \
-    template struct BlackOilMICPParams<T>;                                          \
-    template void BlackOilMICPParams<T>::initFromState<false>(const EclipseState&); \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilMICPParams<T>;                                                                             \
+    template void BlackOilMICPParams<T>::initFromState<false>(const EclipseState&);                                    \
     template void BlackOilMICPParams<T>::initFromState<true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)

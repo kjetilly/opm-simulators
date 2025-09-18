@@ -24,11 +24,11 @@
 #ifndef OPM_ALUGRID_CARTESIAN_INDEX_MAPPER_HPP
 #define OPM_ALUGRID_CARTESIAN_INDEX_MAPPER_HPP
 
-#include <dune/alugrid/grid.hh>
 #include <dune/alugrid/3d/gridview.hh>
-#include <opm/grid/common/CartesianIndexMapper.hpp>
+#include <dune/alugrid/grid.hh>
 #include <dune/grid/common/datahandleif.hh>
 #include <dune/grid/utility/persistentcontainer.hh>
+#include <opm/grid/common/CartesianIndexMapper.hpp>
 
 #include <array>
 #include <cassert>
@@ -37,24 +37,24 @@
 #include <stdexcept>
 #include <vector>
 
-namespace Dune {
+namespace Dune
+{
 
 /*!
  * \brief Interface class to access the logical Cartesian grid as used in industry
  *        standard simulator decks.
  */
-//#if HAVE_MPI
-    template <>
-    class CartesianIndexMapper<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>>
+// #if HAVE_MPI
+template <>
+class CartesianIndexMapper<Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming>>
 {
 public:
-
 #if HAVE_MPI
-    using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>; 
-#else    
+    using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>;
+#else
     using Grid = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
-#endif //HAVE_MPI
-    
+#endif // HAVE_MPI
+
     // data handle for communicating global ids during load balance and communication
     template <class GridView>
     class GlobalIndexDataHandle : public Dune::CommDataHandleIF<GlobalIndexDataHandle<GridView>, int>
@@ -65,7 +65,8 @@ public:
         public:
             GlobalCellIndex()
                 : idx_(-1)
-            {}
+            {
+            }
 
             GlobalCellIndex& operator=(const int index)
             {
@@ -74,7 +75,9 @@ public:
             }
 
             int index() const
-            { return idx_; }
+            {
+                return idx_;
+            }
 
         private:
             int idx_;
@@ -84,8 +87,7 @@ public:
 
     public:
         // constructor copying cartesian index to persistent container
-        GlobalIndexDataHandle(const GridView& gridView,
-                               std::vector<int>& cartesianIndex)
+        GlobalIndexDataHandle(const GridView& gridView, std::vector<int>& cartesianIndex)
             : gridView_(gridView)
             , globalIndex_(gridView.grid(), 0)
             , cartesianIndex_(cartesianIndex)
@@ -95,21 +97,27 @@ public:
         }
 
         // constructor copying cartesian index to persistent container
-        GlobalIndexDataHandle(const GlobalIndexDataHandle& other) = delete ;
+        GlobalIndexDataHandle(const GlobalIndexDataHandle& other) = delete;
 
         // destrcutor writing load balanced cartesian index back to vector
         ~GlobalIndexDataHandle()
-        { finalize(); }
+        {
+            finalize();
+        }
 
         bool contains(int /* dim */, int codim) const
-        { return codim == 0; }
+        {
+            return codim == 0;
+        }
 
         bool fixedsize(int /* dim */, int /* codim */) const
-        { return true; }
+        {
+            return true;
+        }
 
         //! \brief loop over all internal data handlers and call gather for
         //! given entity
-        template<class MessageBufferImp, class EntityType>
+        template <class MessageBufferImp, class EntityType>
         void gather(MessageBufferImp& buff, const EntityType& element) const
         {
             int globalIdx = globalIndex_[element].index();
@@ -118,13 +126,12 @@ public:
 
         //! \brief loop over all internal data handlers and call scatter for
         //! given entity
-        template<class MessageBufferImp, class EntityType>
+        template <class MessageBufferImp, class EntityType>
         void scatter(MessageBufferImp& buff, const EntityType& element, std::size_t /* n */)
         {
             int globalIdx = -1;
             buff.read(globalIdx);
-            if (globalIdx >= 0)
-            {
+            if (globalIdx >= 0) {
                 globalIndex_.resize();
                 globalIndex_[element] = globalIdx;
             }
@@ -132,9 +139,11 @@ public:
 
         //! \brief loop over all internal data handlers and return sum of data
         //! size of given entity
-        template<class EntityType>
+        template <class EntityType>
         std::size_t size(const EntityType& /* en */) const
-        { return 1; }
+        {
+            return 1;
+        }
 
     protected:
         // initialize persistent container from given vector
@@ -151,13 +160,13 @@ public:
         // update vector from given persistent container
         void finalize()
         {
-            std::vector<int> newIndex ;
+            std::vector<int> newIndex;
             newIndex.reserve(gridView_.indexSet().size(0));
 
             auto it = gridView_.template begin<0>();
             const auto& endIt = gridView_.template end<0>();
             for (; it != endIt; ++it)
-                newIndex.push_back(globalIndex_[*it].index()) ;
+                newIndex.push_back(globalIndex_[*it].index());
 
             cartesianIndex_.swap(newIndex);
         }
@@ -169,7 +178,7 @@ public:
 
 public:
     /** \brief dimension of the grid */
-    static constexpr int dimension = Grid::dimension ;
+    static constexpr int dimension = Grid::dimension;
 
     /** \brief constructor taking grid */
     CartesianIndexMapper(const Grid& grid,
@@ -179,19 +188,26 @@ public:
         , cartesianDimensions_(cartDims)
         , cartesianIndex_(cartesianIndex)
         , cartesianSize_(computeCartesianSize())
-    {}
+    {
+    }
 
     /** \brief return Cartesian dimensions, i.e. number of cells in each direction  */
     const std::array<int, dimension>& cartesianDimensions() const
-    { return cartesianDimensions_; }
+    {
+        return cartesianDimensions_;
+    }
 
     /** \brief return total number of cells in the logical Cartesian grid */
     int cartesianSize() const
-    { return cartesianSize_; }
+    {
+        return cartesianSize_;
+    }
 
     /** \brief return number of cells in the active grid */
     int compressedSize() const
-    { return cartesianIndex_.size(); }
+    {
+        return cartesianIndex_.size();
+    }
 
     /** \brief return index of the cells in the logical Cartesian grid */
     int cartesianIndex(const int compressedElementIndex) const
@@ -205,7 +221,7 @@ public:
     {
         int cartIndex = coords[0];
         int factor = cartesianDimensions()[0];
-        for (int i=1; i < dimension; ++i) {
+        for (int i = 1; i < dimension; ++i) {
             cartIndex += coords[i] * factor;
             factor *= cartesianDimensions()[i];
         }
@@ -222,19 +238,18 @@ public:
             gc /= cartesianDimensions()[0];
             coords[1] = gc % cartesianDimensions()[1];
             coords[2] = gc / cartesianDimensions()[1];
-        }
-        else if constexpr (dimension == 2) {
+        } else if constexpr (dimension == 2) {
             coords[0] = gc % cartesianDimensions()[0];
             coords[1] = gc / cartesianDimensions()[0];
-        }
-        else if constexpr (dimension == 1)
-            coords[0] = gc ;
+        } else if constexpr (dimension == 1)
+            coords[0] = gc;
         else
-            throw std::invalid_argument("cartesianCoordinate not implemented for dimension " + std::to_string(dimension));
+            throw std::invalid_argument("cartesianCoordinate not implemented for dimension "
+                                        + std::to_string(dimension));
     }
 
     template <class GridView>
-    std::unique_ptr<GlobalIndexDataHandle<GridView> > dataHandle(const GridView& gridView)
+    std::unique_ptr<GlobalIndexDataHandle<GridView>> dataHandle(const GridView& gridView)
     {
         using DataHandle = GlobalIndexDataHandle<GridView>;
         assert(&grid_ == &gridView.grid());
@@ -245,15 +260,15 @@ protected:
     int computeCartesianSize() const
     {
         int size = cartesianDimensions()[0];
-        for (int d=1; d<dimension; ++d)
+        for (int d = 1; d < dimension; ++d)
             size *= cartesianDimensions()[d];
-        return size ;
+        return size;
     }
 
     const Grid& grid_;
     const std::array<int, dimension> cartesianDimensions_;
     std::vector<int> cartesianIndex_;
-    const int cartesianSize_ ;
+    const int cartesianSize_;
 };
 
 } // end namespace Dune

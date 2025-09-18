@@ -20,12 +20,13 @@
 #ifndef OPM_PY_BLACKOIL_SIMULATOR_HEADER_INCLUDED
 #define OPM_PY_BLACKOIL_SIMULATOR_HEADER_INCLUDED
 
-#include <opm/simulators/flow/python/PyBaseSimulator.hpp>
 #include <opm/simulators/flow/TTagFlowProblemTPFA.hpp>
+#include <opm/simulators/flow/python/PyBaseSimulator.hpp>
 
 #include <memory>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
 class PyBlackOilSimulator : public PyBaseSimulator<Opm::Properties::TTag::FlowProblemTPFA>
 {
@@ -34,10 +35,10 @@ private:
     using TypeTag = Opm::Properties::TTag::FlowProblemTPFA;
 
 public:
-    PyBlackOilSimulator(const std::string& deck_filename,
-                        const std::vector<std::string>& args)
+    PyBlackOilSimulator(const std::string& deck_filename, const std::vector<std::string>& args)
         : BaseType(deck_filename, args)
-    {}
+    {
+    }
 
     PyBlackOilSimulator(std::shared_ptr<Opm::Deck> deck,
                         std::shared_ptr<Opm::EclipseState> state,
@@ -45,7 +46,8 @@ public:
                         std::shared_ptr<Opm::SummaryConfig> summary_config,
                         const std::vector<std::string>& args)
         : BaseType(deck, state, schedule, summary_config, args)
-    {}
+    {
+    }
 };
 
 } // namespace Opm::Pybind

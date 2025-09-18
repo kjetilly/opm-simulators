@@ -26,21 +26,23 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkDiffusionParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteTortuosities>
-        ("Include the tortuosity for each phase in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteDiffusionCoefficients>
-        ("Include the molecular diffusion coefficients in "
-         "the VTK output files");
-    Parameters::Register<Parameters::VtkWriteEffectiveDiffusionCoefficients>
-        ("Include the effective molecular diffusion "
-         "coefficients the medium in the VTK output files");
+
+void
+VtkDiffusionParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteTortuosities>(
+        "Include the tortuosity for each phase in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteDiffusionCoefficients>("Include the molecular diffusion coefficients in "
+                                                                    "the VTK output files");
+    Parameters::Register<Parameters::VtkWriteEffectiveDiffusionCoefficients>(
+        "Include the effective molecular diffusion "
+        "coefficients the medium in the VTK output files");
 }
 
-void VtkDiffusionParams::read()
+void
+VtkDiffusionParams::read()
 {
     tortuosityOutput_ = Parameters::Get<Parameters::VtkWriteTortuosities>();
     diffusionCoefficientOutput_ = Parameters::Get<Parameters::VtkWriteDiffusionCoefficients>();

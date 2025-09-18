@@ -17,7 +17,8 @@
 #ifndef FLOW_MICP_HPP
 #define FLOW_MICP_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowMICPMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowMICPMain(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_micp binary.
 int flowMICPMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_MICP_HPP

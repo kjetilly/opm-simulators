@@ -36,46 +36,45 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 
-template<class Scalar>
+template <class Scalar>
 class MechContainer
 {
     using ScalarBuffer = std::vector<Scalar>;
 
 public:
-    void allocate(const std::size_t bufferSize,
-                  std::map<std::string, int>& rstKeywords);
+    void allocate(const std::size_t bufferSize, std::map<std::string, int>& rstKeywords);
 
-    void assignDisplacement(const unsigned globalDofIdx,
-                            const Dune::FieldVector<Scalar,3>& disp);
+    void assignDisplacement(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 3>& disp);
 
-    void assignDelStress(const unsigned globalDofIdx,
-                         const Dune::FieldVector<Scalar,6>& delStress);
+    void assignDelStress(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 6>& delStress);
 
     void assignPotentialForces(const unsigned globalDofIdx,
                                const Scalar force,
                                const Scalar pressForce,
                                const Scalar tempForce);
 
-    void assignFracStress(const unsigned globalDofIdx,
-                          const Dune::FieldVector<Scalar,6>& fracStress);
+    void assignFracStress(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 6>& fracStress);
 
-    void assignLinStress(const unsigned globalDofIdx,
-                         const Dune::FieldVector<Scalar,6>& linStress);
+    void assignLinStress(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 6>& linStress);
 
-    void assignStrain(const unsigned globalDofIdx,
-                      const Dune::FieldVector<Scalar,6>& strain);
+    void assignStrain(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 6>& strain);
 
-    void assignStress(const unsigned globalDofIdx,
-                      const Dune::FieldVector<Scalar,6>& stress);
+    void assignStress(const unsigned globalDofIdx, const Dune::FieldVector<Scalar, 6>& stress);
 
     void outputRestart(data::Solution& sol);
 
     bool allocated() const
-    { return allocated_; }
+    {
+        return allocated_;
+    }
 
 private:
     bool allocated_ = false;
@@ -83,7 +82,7 @@ private:
     ScalarBuffer potentialPressForce_;
     ScalarBuffer potentialTempForce_;
 
-    std::array<ScalarBuffer,3> disp_;
+    std::array<ScalarBuffer, 3> disp_;
     VoigtArray<Scalar> delstress_;
     VoigtArray<Scalar> fracstress_;
     VoigtArray<Scalar> linstress_;

@@ -128,8 +128,7 @@ public:
      * polyhedralCellPresent() to test if polyhedral cells are present and decide
      * what they want to do before copying data using the data accessor methods.
      */
-    explicit SimMeshDataAccessor(const GridView& gridView,
-                                 Dune::PartitionSet<partitions> dunePartition);
+    explicit SimMeshDataAccessor(const GridView& gridView, Dune::PartitionSet<partitions> dunePartition);
 
     /**
       Checks for cells that have polyhedral type within the current partition of
@@ -243,8 +242,7 @@ public:
       Returns the number of corner indices written.
     */
     template <typename Integer>
-    long writeConnectivity(Integer* connectivity_inout,
-                           ConnectivityVertexOrder whichOrder, long max_size = 0) const;
+    long writeConnectivity(Integer* connectivity_inout, ConnectivityVertexOrder whichOrder, long max_size = 0) const;
 
     /**
     * Write the connectivity array - directly to a VectType object given in parameter 1
@@ -259,8 +257,7 @@ public:
       Returns the number of corner indices written.
     */
     template <typename VectType>
-    long writeConnectivity(VectType& connectivity_inout,
-                           ConnectivityVertexOrder whichOrder) const;
+    long writeConnectivity(VectType& connectivity_inout, ConnectivityVertexOrder whichOrder) const;
 
     /**
      * Write the offsets values  - directly to the pointer given in parameter 1

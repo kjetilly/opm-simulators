@@ -18,7 +18,8 @@
 #include <flow/flow_micp.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowMICPMainStandalone(argc, argv);
 }

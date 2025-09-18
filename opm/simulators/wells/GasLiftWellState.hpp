@@ -23,9 +23,10 @@
 #include <optional>
 #include <utility>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class GasLiftWellState
 {
 public:
@@ -38,28 +39,62 @@ public:
                      Scalar water_rate,
                      bool water_is_limited,
                      std::optional<bool> increase)
-        : oil_rate_{oil_rate}
-        , oil_is_limited_{oil_is_limited}
-        , gas_rate_{gas_rate}
-        , gas_is_limited_{gas_is_limited}
-        , alq_{alq}
-        , alq_is_limited_{alq_is_limited}
-        , water_rate_{water_rate}
-        , water_is_limited_{water_is_limited}
-        , increase_{increase}
-    {}
+        : oil_rate_ {oil_rate}
+        , oil_is_limited_ {oil_is_limited}
+        , gas_rate_ {gas_rate}
+        , gas_is_limited_ {gas_is_limited}
+        , alq_ {alq}
+        , alq_is_limited_ {alq_is_limited}
+        , water_rate_ {water_rate}
+        , water_is_limited_ {water_is_limited}
+        , increase_ {increase}
+    {
+    }
 
-    Scalar alq() const { return alq_; }
-    bool alqChanged() { return increase_.has_value(); }
-    bool alqIsLimited() const { return alq_is_limited_; }
-    bool gasIsLimited() const { return gas_is_limited_; }
-    Scalar gasRate() const { return gas_rate_; }
-    std::pair<Scalar, Scalar> getRates() { return {oil_rate_, gas_rate_}; }
-    std::optional<bool> increase() const { return increase_; }
-    bool oilIsLimited() const { return oil_is_limited_; }
-    Scalar oilRate() const { return oil_rate_; }
-    Scalar waterRate() const { return water_rate_; }
-    bool waterIsLimited() const { return water_is_limited_; }
+    Scalar alq() const
+    {
+        return alq_;
+    }
+    bool alqChanged()
+    {
+        return increase_.has_value();
+    }
+    bool alqIsLimited() const
+    {
+        return alq_is_limited_;
+    }
+    bool gasIsLimited() const
+    {
+        return gas_is_limited_;
+    }
+    Scalar gasRate() const
+    {
+        return gas_rate_;
+    }
+    std::pair<Scalar, Scalar> getRates()
+    {
+        return {oil_rate_, gas_rate_};
+    }
+    std::optional<bool> increase() const
+    {
+        return increase_;
+    }
+    bool oilIsLimited() const
+    {
+        return oil_is_limited_;
+    }
+    Scalar oilRate() const
+    {
+        return oil_rate_;
+    }
+    Scalar waterRate() const
+    {
+        return water_rate_;
+    }
+    bool waterIsLimited() const
+    {
+        return water_is_limited_;
+    }
     void update(Scalar oil_rate,
                 bool oil_is_limited,
                 Scalar gas_rate,

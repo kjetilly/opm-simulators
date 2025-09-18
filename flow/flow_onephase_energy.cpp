@@ -22,60 +22,63 @@
 
 #include <flow/flow_onephase_energy.hpp>
 
-#include <opm/simulators/flow/Main.hpp>
-#include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/material/common/ResetLocale.hpp>
+#include <opm/models/blackoil/blackoilonephaseindices.hh>
+#include <opm/simulators/flow/Main.hpp>
 
-namespace Opm {
-namespace Properties {
-
-namespace TTag {
-struct FlowWaterOnlyEnergyProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::FlowWaterOnlyEnergyProblem> {
-    static constexpr bool value = true;
-};
-//! The indices required by the model
-template<class TypeTag>
-struct Indices<TypeTag, TTag::FlowWaterOnlyEnergyProblem>
+namespace Opm
 {
-private:
-    // it is unfortunately not possible to simply use 'TypeTag' here because this leads
-    // to cyclic definitions of some properties. if this happens the compiler error
-    // messages unfortunately are *really* confusing and not really helpful.
-    using BaseTypeTag = TTag::FlowProblem;
-    using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+namespace Properties
+{
 
-public:
-    using type = Opm::BlackOilOnePhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
-                                              getPropValue<TypeTag, Properties::EnableExtbo>(),
-                                              getPropValue<TypeTag, Properties::EnablePolymer>(),
-                                              getPropValue<TypeTag, Properties::EnableEnergy>(),
-                                              getPropValue<TypeTag, Properties::EnableFoam>(),
-                                              getPropValue<TypeTag, Properties::EnableBrine>(),
-                                              /*PVOffset=*/0,
-                                              /*enebledCompIdx=*/FluidSystem::waterCompIdx,
-                                              getPropValue<TypeTag, Properties::EnableMICP>()>;
-};
+    namespace TTag
+    {
+        struct FlowWaterOnlyEnergyProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnableEnergy<TypeTag, TTag::FlowWaterOnlyEnergyProblem> {
+        static constexpr bool value = true;
+    };
+    //! The indices required by the model
+    template <class TypeTag>
+    struct Indices<TypeTag, TTag::FlowWaterOnlyEnergyProblem> {
+    private:
+        // it is unfortunately not possible to simply use 'TypeTag' here because this leads
+        // to cyclic definitions of some properties. if this happens the compiler error
+        // messages unfortunately are *really* confusing and not really helpful.
+        using BaseTypeTag = TTag::FlowProblem;
+        using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
 
-} // namespace Opm::Properties
+    public:
+        using type = Opm::BlackOilOnePhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
+                                                  getPropValue<TypeTag, Properties::EnableExtbo>(),
+                                                  getPropValue<TypeTag, Properties::EnablePolymer>(),
+                                                  getPropValue<TypeTag, Properties::EnableEnergy>(),
+                                                  getPropValue<TypeTag, Properties::EnableFoam>(),
+                                                  getPropValue<TypeTag, Properties::EnableBrine>(),
+                                                  /*PVOffset=*/0,
+                                                  /*enebledCompIdx=*/FluidSystem::waterCompIdx,
+                                                  getPropValue<TypeTag, Properties::EnableMICP>()>;
+    };
+
+} // namespace Properties
 
 // ----------------- Main program -----------------
-int flowWaterOnlyEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowWaterOnlyEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowWaterOnlyEnergyProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowWaterOnlyEnergyProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowWaterOnlyEnergyMainStandalone(int argc, char** argv)
+int
+flowWaterOnlyEnergyMainStandalone(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowWaterOnlyEnergyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -85,4 +88,4 @@ int flowWaterOnlyEnergyMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

@@ -23,18 +23,19 @@
 #define OPM_WELLOPERATORS_HEADER_INCLUDED
 
 #include <dune/common/parallel/communication.hh>
-#include <dune/istl/operators.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/operators.hh>
 
 #include <opm/common/TimingMacros.hpp>
 
-#include <opm/simulators/linalg/matrixblock.hh>
 #include <dune/common/shared_ptr.hh>
 #include <dune/istl/paamg/smoother.hh>
+#include <opm/simulators/linalg/matrixblock.hh>
 
 #include <cstddef>
 
-namespace Opm {
+namespace Opm
+{
 
 //=====================================================================
 // Implementation for ISTL-matrix based operators
@@ -58,9 +59,8 @@ class LinearOperatorExtra : public Dune::LinearOperator<X, Y>
 public:
     using field_type = typename X::field_type;
     using PressureMatrix = Dune::BCRSMatrix<MatrixBlock<field_type, 1, 1>>;
-    virtual void addWellPressureEquations(PressureMatrix& jacobian,
-                                          const X& weights,
-                                          const bool use_well_weights) const = 0;
+    virtual void addWellPressureEquations(PressureMatrix& jacobian, const X& weights, const bool use_well_weights) const
+        = 0;
     virtual void addWellPressureEquationsStruct(PressureMatrix& jacobian) const = 0;
     virtual int getNumberOfExtraEquations() const = 0;
 };
@@ -118,9 +118,8 @@ public:
         return Dune::SolverCategory::sequential;
     }
 
-    void addWellPressureEquations(PressureMatrix& jacobian,
-                                  const X& weights,
-                                  const bool use_well_weights) const override
+    void
+    addWellPressureEquations(PressureMatrix& jacobian, const X& weights, const bool use_well_weights) const override
     {
         OPM_TIMEBLOCK(addWellPressureEquations);
         wellMod_.addWellPressureEquations(jacobian, weights, use_well_weights);
@@ -140,10 +139,8 @@ public:
 protected:
     const WellModel& wellMod_;
 
-    template<class WellType, class ArrayType>
-    void applySingleWell(const X& x, Y& y,
-                         const WellType& well,
-                         const ArrayType& cells) const
+    template <class WellType, class ArrayType>
+    void applySingleWell(const X& x, Y& y, const WellType& well, const ArrayType& cells) const
     {
         // Well equations B and C uses only the perforated cells, so need to apply on local vectors
         x_local_.resize(cells.size());
@@ -160,15 +157,14 @@ protected:
             // only need to update Ax
             y[cells[i]] = Ax_local_[i];
         }
-
     }
 
     // These members are used to avoid reallocation.
     // Their state is not relevant between function calls, so they can
     // (and must) be mutable, as the functions using them are const.
-    mutable X x_local_{};
-    mutable Y Ax_local_{};
-    mutable Y scaleAddRes_{};
+    mutable X x_local_ {};
+    mutable Y Ax_local_ {};
+    mutable Y scaleAddRes_ {};
 };
 
 template <class WellModel, class X, class Y>
@@ -176,11 +172,14 @@ class DomainWellModelAsLinearOperator : public WellModelAsLinearOperator<WellMod
 {
 public:
     using WBase = WellModelAsLinearOperator<WellModel, X, Y>;
-    using WBase::WBase;  // inherit all constructors from the base class
+    using WBase::WBase; // inherit all constructors from the base class
     using field_type = typename WBase::field_type;
     using PressureMatrix = typename WBase::PressureMatrix;
 
-    void setDomainIndex(int index) { domainIndex_ = index; }
+    void setDomainIndex(int index)
+    {
+        domainIndex_ = index;
+    }
 
     void apply(const X& x, Y& y) const override
     {
@@ -188,22 +187,17 @@ public:
         std::size_t well_index = 0;
         for (const auto& well : this->wellMod_) {
             if (this->wellMod_.well_domain().at(well->name()) == domainIndex_) {
-                this->applySingleWell(x, y, well,
-                                      this->wellMod_.well_local_cells()[well_index]);
+                this->applySingleWell(x, y, well, this->wellMod_.well_local_cells()[well_index]);
             }
             ++well_index;
         }
     }
 
-    void addWellPressureEquations(PressureMatrix& jacobian,
-                                  const X& weights,
-                                  const bool use_well_weights) const override
+    void
+    addWellPressureEquations(PressureMatrix& jacobian, const X& weights, const bool use_well_weights) const override
     {
         OPM_TIMEBLOCK(addWellPressureEquations);
-        this->wellMod_.addWellPressureEquationsDomain(jacobian,
-                                                      weights,
-                                                      use_well_weights,
-                                                      domainIndex_);
+        this->wellMod_.addWellPressureEquationsDomain(jacobian, weights, use_well_weights, domainIndex_);
     }
 
 private:
@@ -220,8 +214,8 @@ private:
    and W to the input vector. The adapter is for serial use only as the
    current parallel version in use is WellModelGhostLastMatrixAdapter.
  */
-template<class M, class X, class Y>
-class WellModelMatrixAdapter : public Dune::AssembledLinearOperator<M,X,Y>
+template <class M, class X, class Y>
+class WellModelMatrixAdapter : public Dune::AssembledLinearOperator<M, X, Y>
 {
 public:
     using matrix_type = M;
@@ -236,35 +230,37 @@ public:
     }
 
     //! constructor: just store a reference to a matrix
-    WellModelMatrixAdapter (const M& A,
-                            const LinearOperatorExtra<X, Y>& wellOper)
-        : A_( A ), wellOper_( wellOper )
-    {}
-
-    void apply( const X& x, Y& y ) const override
+    WellModelMatrixAdapter(const M& A, const LinearOperatorExtra<X, Y>& wellOper)
+        : A_(A)
+        , wellOper_(wellOper)
     {
-      OPM_TIMEBLOCK(apply);
-      A_.mv(x, y);
+    }
 
-      // add well model modification to y
-      wellOper_.apply(x, y);
+    void apply(const X& x, Y& y) const override
+    {
+        OPM_TIMEBLOCK(apply);
+        A_.mv(x, y);
+
+        // add well model modification to y
+        wellOper_.apply(x, y);
     }
 
     // y += \alpha * A * x
-    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
+    void applyscaleadd(field_type alpha, const X& x, Y& y) const override
     {
-      OPM_TIMEBLOCK(applyscaleadd);
-      A_.usmv(alpha, x, y);
+        OPM_TIMEBLOCK(applyscaleadd);
+        A_.usmv(alpha, x, y);
 
-      // add scaled well model modification to y
-      wellOper_.applyscaleadd(alpha, x, y);
+        // add scaled well model modification to y
+        wellOper_.applyscaleadd(alpha, x, y);
     }
 
-    const matrix_type& getmat() const override { return A_; }
+    const matrix_type& getmat() const override
+    {
+        return A_;
+    }
 
-    void addWellPressureEquations(PressureMatrix& jacobian,
-                                  const X& weights,
-                                  const bool use_well_weights) const
+    void addWellPressureEquations(PressureMatrix& jacobian, const X& weights, const bool use_well_weights) const
     {
         OPM_TIMEBLOCK(addWellPressureEquations);
         wellOper_.addWellPressureEquations(jacobian, weights, use_well_weights);
@@ -282,7 +278,7 @@ public:
     }
 
 protected:
-    const matrix_type& A_ ;
+    const matrix_type& A_;
     const LinearOperatorExtra<X, Y>& wellOper_;
 };
 
@@ -294,8 +290,8 @@ protected:
    here we assume a parallel ordering of rows, where ghost rows are
    located after interior rows.
  */
-template<class M, class X, class Y, bool overlapping >
-class WellModelGhostLastMatrixAdapter : public Dune::AssembledLinearOperator<M,X,Y>
+template <class M, class X, class Y, bool overlapping>
+class WellModelGhostLastMatrixAdapter : public Dune::AssembledLinearOperator<M, X, Y>
 {
 public:
     using matrix_type = M;
@@ -304,30 +300,31 @@ public:
     using field_type = typename X::field_type;
     using PressureMatrix = Dune::BCRSMatrix<MatrixBlock<field_type, 1, 1>>;
 #if HAVE_MPI
-    using communication_type = Dune::OwnerOverlapCopyCommunication<int,int>;
+    using communication_type = Dune::OwnerOverlapCopyCommunication<int, int>;
 #else
     using communication_type = Dune::Communication<int>;
 #endif
 
     Dune::SolverCategory::Category category() const override
     {
-        return overlapping ?
-            Dune::SolverCategory::overlapping : Dune::SolverCategory::sequential;
+        return overlapping ? Dune::SolverCategory::overlapping : Dune::SolverCategory::sequential;
     }
 
     //! constructor: just store a reference to a matrix
-    WellModelGhostLastMatrixAdapter (const M& A,
-                                     const LinearOperatorExtra<X, Y>& wellOper,
-                                     const std::size_t interiorSize )
-        : A_( A ), wellOper_( wellOper ), interiorSize_(interiorSize)
-    {}
+    WellModelGhostLastMatrixAdapter(const M& A,
+                                    const LinearOperatorExtra<X, Y>& wellOper,
+                                    const std::size_t interiorSize)
+        : A_(A)
+        , wellOper_(wellOper)
+        , interiorSize_(interiorSize)
+    {
+    }
 
     void apply(const X& x, Y& y) const override
     {
         OPM_TIMEBLOCK(apply);
-        for (auto row = A_.begin(); row.index() < interiorSize_; ++row)
-        {
-            y[row.index()]=0;
+        for (auto row = A_.begin(); row.index() < interiorSize_; ++row) {
+            y[row.index()] = 0;
             auto endc = (*row).end();
             for (auto col = (*row).begin(); col != endc; ++col)
                 (*col).umv(x[col.index()], y[row.index()]);
@@ -340,11 +337,10 @@ public:
     }
 
     // y += \alpha * A * x
-    void applyscaleadd (field_type alpha, const X& x, Y& y) const override
+    void applyscaleadd(field_type alpha, const X& x, Y& y) const override
     {
         OPM_TIMEBLOCK(applyscaleadd);
-        for (auto row = A_.begin(); row.index() < interiorSize_; ++row)
-        {
+        for (auto row = A_.begin(); row.index() < interiorSize_; ++row) {
             auto endc = (*row).end();
             for (auto col = (*row).begin(); col != endc; ++col)
                 (*col).usmv(alpha, x[col.index()], y[row.index()]);
@@ -355,11 +351,12 @@ public:
         ghostLastProject(y);
     }
 
-    const matrix_type& getmat() const override { return A_; }
+    const matrix_type& getmat() const override
+    {
+        return A_;
+    }
 
-    void addWellPressureEquations(PressureMatrix& jacobian,
-                                  const X& weights,
-                                  const bool use_well_weights) const
+    void addWellPressureEquations(PressureMatrix& jacobian, const X& weights, const bool use_well_weights) const
     {
         OPM_TIMEBLOCK(addWellPressureEquations);
         wellOper_.addWellPressureEquations(jacobian, weights, use_well_weights);
@@ -384,21 +381,21 @@ protected:
             y[i] = 0;
     }
 
-    const matrix_type& A_ ;
+    const matrix_type& A_;
     const LinearOperatorExtra<X, Y>& wellOper_;
     std::size_t interiorSize_;
 };
 
 /*!
-   \brief Dune linear operator that assumes ghost rows are ordered after 
+   \brief Dune linear operator that assumes ghost rows are ordered after
    interior rows. Avoids some computations because of this.
- 
+
    This is similar to WellModelGhostLastMatrixAdapter, with the difference that
    here we do not have a well model, and also do calcilate the interiorSize
    using the parallel index set. Created for use in AMG/CPR smoothers.
  */
-template<class M, class X, class Y, class C>
-class GhostLastMatrixAdapter : public Dune::AssembledLinearOperator<M,X,Y>
+template <class M, class X, class Y, class C>
+class GhostLastMatrixAdapter : public Dune::AssembledLinearOperator<M, X, Y>
 {
 public:
     typedef M matrix_type;
@@ -415,56 +412,60 @@ public:
     }
 
     //! constructor: just store a reference to a matrix
-    GhostLastMatrixAdapter (const M& A,
-                            const communication_type& comm)
-        : A_( Dune::stackobject_to_shared_ptr(A) ), comm_(comm)
+    GhostLastMatrixAdapter(const M& A, const communication_type& comm)
+        : A_(Dune::stackobject_to_shared_ptr(A))
+        , comm_(comm)
     {
         interiorSize_ = setInteriorSize(comm_);
     }
 
-    GhostLastMatrixAdapter (const std::shared_ptr<M> A,
-                            const communication_type& comm)
-        : A_( A ), comm_(comm)
+    GhostLastMatrixAdapter(const std::shared_ptr<M> A, const communication_type& comm)
+        : A_(A)
+        , comm_(comm)
     {
         interiorSize_ = setInteriorSize(comm_);
     }
 
-    virtual void apply( const X& x, Y& y ) const override
+    virtual void apply(const X& x, Y& y) const override
     {
-        for (auto row = A_->begin(); row.index() < interiorSize_; ++row)
-        {
-            y[row.index()]=0;
+        for (auto row = A_->begin(); row.index() < interiorSize_; ++row) {
+            y[row.index()] = 0;
             auto endc = (*row).end();
             for (auto col = (*row).begin(); col != endc; ++col)
                 (*col).umv(x[col.index()], y[row.index()]);
         }
 
-        ghostLastProject( y );
+        ghostLastProject(y);
     }
 
     // y += \alpha * A * x
-    virtual void applyscaleadd (field_type alpha, const X& x, Y& y) const override
+    virtual void applyscaleadd(field_type alpha, const X& x, Y& y) const override
     {
-        for (auto row = A_->begin(); row.index() < interiorSize_; ++row)
-        {
+        for (auto row = A_->begin(); row.index() < interiorSize_; ++row) {
             auto endc = (*row).end();
             for (auto col = (*row).begin(); col != endc; ++col)
                 (*col).usmv(alpha, x[col.index()], y[row.index()]);
         }
 
-        ghostLastProject( y );
+        ghostLastProject(y);
     }
 
-    virtual const matrix_type& getmat() const override { return *A_; }
+    virtual const matrix_type& getmat() const override
+    {
+        return *A_;
+    }
 
-    size_t getInteriorSize() const { return interiorSize_;}
+    size_t getInteriorSize() const
+    {
+        return interiorSize_;
+    }
 
 private:
     void ghostLastProject(Y& y) const
     {
         size_t end = y.size();
         for (size_t i = interiorSize_; i < end; ++i)
-            y[i] = 0; //project to interiorsize, i.e. ignore ghost
+            y[i] = 0; // project to interiorsize, i.e. ignore ghost
     }
 
     size_t setInteriorSize(const communication_type& comm) const
@@ -473,10 +474,10 @@ private:
 
         size_t is = 0;
         // Loop over index set
-        for (auto idx = indexSet.begin(); idx!=indexSet.end(); ++idx) {
-            //Only take "owner" indices
-            if (idx->local().attribute()==1) {
-                //get local index
+        for (auto idx = indexSet.begin(); idx != indexSet.end(); ++idx) {
+            // Only take "owner" indices
+            if (idx->local().attribute() == 1) {
+                // get local index
                 auto loc = idx->local().local();
                 // if loc is higher than "old interior size", update it
                 if (loc > is) {
@@ -484,33 +485,33 @@ private:
                 }
             }
         }
-        return is + 1; //size is plus 1 since we start at 0
+        return is + 1; // size is plus 1 since we start at 0
     }
-    const std::shared_ptr<const matrix_type> A_ ;
-    const communication_type&  comm_;
+    const std::shared_ptr<const matrix_type> A_;
+    const communication_type& comm_;
     size_t interiorSize_;
 };
 
 } // namespace Opm
 
-namespace Dune {
-namespace Amg {
-
-template<class M, class X, class Y, class C>
-class ConstructionTraits<Opm::GhostLastMatrixAdapter<M,X,Y,C> >
+namespace Dune
 {
-public:
-    typedef ParallelOperatorArgs<M,C> Arguments;
+namespace Amg
+{
 
-    static inline std::shared_ptr<Opm::GhostLastMatrixAdapter<M,X,Y,C>> construct(const Arguments& args)
+    template <class M, class X, class Y, class C>
+    class ConstructionTraits<Opm::GhostLastMatrixAdapter<M, X, Y, C>>
     {
-        return std::make_shared<Opm::GhostLastMatrixAdapter<M,X,Y,C>>
-            (args.matrix_, args.comm_);
-    }
-};
+    public:
+        typedef ParallelOperatorArgs<M, C> Arguments;
+
+        static inline std::shared_ptr<Opm::GhostLastMatrixAdapter<M, X, Y, C>> construct(const Arguments& args)
+        {
+            return std::make_shared<Opm::GhostLastMatrixAdapter<M, X, Y, C>>(args.matrix_, args.comm_);
+        }
+    };
 
 } // end namespace Amg
 } // end namespace Dune
 
 #endif // OPM_WELLOPERATORS_HEADER_INCLUDED
-

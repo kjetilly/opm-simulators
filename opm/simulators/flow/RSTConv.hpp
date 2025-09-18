@@ -26,9 +26,13 @@
 
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 class RSTConfig;
 
 //! \brief Class computing RPTRST CONV output.
@@ -39,25 +43,23 @@ public:
     //! \brief Constructor.
     //! \param globalCell Mapping from local to global cell indices
     //! \param comm Parallel communicator
-    RSTConv(LocalToGlobalCellFunc globalCell,
-            Parallel::Communication comm)
+    RSTConv(LocalToGlobalCellFunc globalCell, Parallel::Communication comm)
         : globalCell_(std::move(globalCell))
         , comm_(comm)
-    {}
+    {
+    }
 
     //! \brief Init state at beginning of step.
     //! \param numCells Global number of active cells in the model
     //! \param rst_config RPTRST configuration
     //! \param compIdx Component index for phases {OIL, GAS, WAT, POLYMER, BRINE, SOLVENT}, negative if inactive
-    void init(const std::size_t numCells,
-              const RSTConfig& rst_config,
-              const std::array<int,6>& compIdx);
+    void init(const std::size_t numCells, const RSTConfig& rst_config, const std::array<int, 6>& compIdx);
 
     //! \brief Inserts the CONV output into the restart output container.
     void outputRestart(data::Solution& sol);
 
     //! \brief Adds the CONV output for given residual vector.
-    template<class ResidualVector>
+    template <class ResidualVector>
     void update(const ResidualVector& resid);
 
     //! \brief Adds the CONV_NEW output.
@@ -65,11 +67,15 @@ public:
 
     //! \brief Obtain a const-ref to the accumulated data (only used for unit testing).
     const std::vector<std::vector<int>>& getData() const
-    { return cnv_X_; }
+    {
+        return cnv_X_;
+    }
 
     //! \brief Obtain a const-ref to the CONV_NEW (only used for unit testing).
     const std::vector<int>& getConvNew() const
-    { return conv_new_; }
+    {
+        return conv_new_;
+    }
 
     //! \brief Check if CONV is required.
     bool hasConv() const;
@@ -83,15 +89,14 @@ private:
     //! \param resid Residual vector
     //! \param comp Component to consider
     //! \details Handles parallel reduction
-    template<class ResidualVector>
-    void gatherAndAccumulate(const std::vector<int>& lIdx,
-                             const ResidualVector& resid, int comp);
+    template <class ResidualVector>
+    void gatherAndAccumulate(const std::vector<int>& lIdx, const ResidualVector& resid, int comp);
 
     LocalToGlobalCellFunc globalCell_; //!< Global cell indices
     Parallel::Communication comm_; //!< Communicator
-    std::vector<std::vector<int>> cnv_X_{}; //!< Counts of worst cells for RPTRST CONV
-    std::vector<int> conv_new_{}; //!< Number of Newtons by each cell
-    std::array<int,6> compIdx_{}; //!< Component indices
+    std::vector<std::vector<int>> cnv_X_ {}; //!< Counts of worst cells for RPTRST CONV
+    std::vector<int> conv_new_ {}; //!< Number of Newtons by each cell
+    std::array<int, 6> compIdx_ {}; //!< Component indices
     int N_ = 0; //!< Number of cells to consider
 };
 

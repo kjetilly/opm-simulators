@@ -27,12 +27,15 @@
 #include <string>
 #include <vector>
 
-namespace boost::property_tree {
-    template<class T1, class T2, class T3> class basic_ptree;
-    using ptree = basic_ptree<std::string, std::string, std::less<std::string>>;
+namespace boost::property_tree
+{
+template <class T1, class T2, class T3>
+class basic_ptree;
+using ptree = basic_ptree<std::string, std::string, std::less<std::string>>;
 } // namespace boost::property_tree
 
-namespace Opm {
+namespace Opm
+{
 
 /// Hierarchical collection of key/value pairs
 class PropertyTree
@@ -76,7 +79,7 @@ public:
     /// hierarchy levels.
     ///
     /// \param[in] data Property value corresponding to \p key.
-    template<class T>
+    template <class T>
     void put(const std::string& key, const T& data);
 
     /// Retrieve property value given hierarchical property key.
@@ -88,7 +91,7 @@ public:
     /// hierarchy levels.
     ///
     /// \return Copy of internal property value for \p key.
-    template<class T>
+    template <class T>
     T get(const std::string& key) const;
 
     /// Retrieve property value given hierarchical property key.
@@ -104,7 +107,7 @@ public:
     ///
     /// \return Copy of internal property value for \p key, or a copy of \p
     /// defValue if the \p key is not in the property tree.
-    template<class T>
+    template <class T>
     T get(const std::string& key, const T& defValue) const;
 
     /// Retrieve copy of sub tree rooted at node.
@@ -126,8 +129,7 @@ public:
     ///
     /// \return Copy of property sub tree rooted at \p key.  Nullopt if no
     /// sub tree exists that is rooted at \p key.
-    std::optional<PropertyTree>
-    get_child_optional(const std::string& key) const;
+    std::optional<PropertyTree> get_child_optional(const std::string& key) const;
 
     /// Retrieve node items as linearised vector.
     ///
@@ -143,8 +145,7 @@ public:
     /// \return Array of property values.  Nullopt if no node named by \p
     /// child exists.
     template <typename T>
-    std::optional<std::vector<T>>
-    get_child_items_as_vector(const std::string& child) const;
+    std::optional<std::vector<T>> get_child_items_as_vector(const std::string& child) const;
 
     /// Emit a textual representation of the property tree in JSON form
     ///

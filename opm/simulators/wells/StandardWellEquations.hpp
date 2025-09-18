@@ -23,26 +23,31 @@
 #ifndef OPM_STANDARDWELL_EQUATIONS_HEADER_INCLUDED
 #define OPM_STANDARDWELL_EQUATIONS_HEADER_INCLUDED
 
-#include <opm/simulators/utils/ParallelCommunication.hpp>
-#include <opm/simulators/wells/WellHelpers.hpp>
-#include <opm/common/TimingMacros.hpp>
 #include <dune/common/dynmatrix.hh>
 #include <dune/common/dynvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
+#include <opm/common/TimingMacros.hpp>
+#include <opm/simulators/utils/ParallelCommunication.hpp>
+#include <opm/simulators/wells/WellHelpers.hpp>
 
 namespace Opm
 {
 
-template<class Scalar> class ParallelWellInfo;
-template<class Scalar, typename IndexTraits, int numEq> class StandardWellEquationAccess;
+template <class Scalar>
+class ParallelWellInfo;
+template <class Scalar, typename IndexTraits, int numEq>
+class StandardWellEquationAccess;
 #if COMPILE_GPU_BRIDGE
-template<class Scalar> class WellContributions;
+template <class Scalar>
+class WellContributions;
 #endif
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename Scalar, typename IndexTraits, int numEq>
+template <typename Scalar, typename IndexTraits, int numEq>
 class StandardWellEquations
 {
 public:
@@ -63,7 +68,7 @@ public:
     using OffDiagMatWell = Dune::BCRSMatrix<OffDiagMatrixBlockWellType>;
 
     // block vector type
-    using BVector = Dune::BlockVector<Dune::FieldVector<Scalar,numEq>>;
+    using BVector = Dune::BlockVector<Dune::FieldVector<Scalar, numEq>>;
 
     explicit StandardWellEquations(const ParallelWellInfo<Scalar>& parallel_well_info);
 
@@ -71,9 +76,7 @@ public:
     //! \param numWellEq Number of well equations
     //! \param numPerfs Number of perforations
     //! \param cells Cell indices for perforations
-    void init(const int numWellEq,
-              const int numPerfs,
-              const std::vector<int>& cells);
+    void init(const int numWellEq, const int numPerfs, const std::vector<int>& cells);
 
     //! \brief Set all coefficients to 0.
     void clear();
@@ -89,7 +92,7 @@ public:
 
     //! \brief Apply inverted D matrix to rhs and store in vector.
     void solve(const BVectorWell& rhs_well, BVectorWell& x_well) const;
-    
+
     //! \brief Invert D matrix.
     void invert();
 
@@ -99,16 +102,15 @@ public:
 
 #if COMPILE_GPU_BRIDGE
     //! \brief Add the matrices of this well to the WellContributions object.
-    void extract(const int numStaticWellEq,
-                 WellContributions<Scalar>& wellContribs) const;
+    void extract(const int numStaticWellEq, WellContributions<Scalar>& wellContribs) const;
 #endif
 
     //! \brief Add the matrices of this well to the sparse matrix adapter.
-    template<class SparseMatrixAdapter>
+    template <class SparseMatrixAdapter>
     void extract(SparseMatrixAdapter& jacobian) const;
 
     //! \brief Extract CPR pressure matrix.
-    template<class PressureMatrix>
+    template <class PressureMatrix>
     void extractCPRPressureMatrix(PressureMatrix& jacobian,
                                   const BVector& weights,
                                   const int pressureVarIndex,
@@ -153,6 +155,6 @@ private:
     std::vector<int> cells_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_STANDARDWELL_EQUATIONS_HEADER_INCLUDED

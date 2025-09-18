@@ -23,35 +23,42 @@
 #include <boost/test/unit_test.hpp>
 #include <opm/simulators/linalg/PreconditionerFactory.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
-#include <opm/simulators/linalg/getQuasiImpesWeights.hpp>
 #include <opm/simulators/linalg/WellOperators.hpp>
+#include <opm/simulators/linalg/getQuasiImpesWeights.hpp>
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fmatrix.hh>
-#include <dune/common/unused.hh>
-#include <dune/common/parallel/indexset.hh>
-#include <dune/common/parallel/plocalindex.hh>
 #include <dune/common/parallel/communication.hh>
+#include <dune/common/parallel/indexset.hh>
+#include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/parallel/plocalindex.hh>
+#include <dune/common/unused.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/schwarz.hh>
 
-class MPIError {
+class MPIError
+{
 public:
     /** @brief Constructor. */
-    MPIError(std::string s, int e) : errorstring(s), errorcode(e){}
+    MPIError(std::string s, int e)
+        : errorstring(s)
+        , errorcode(e)
+    {
+    }
     /** @brief The error string. */
     std::string errorstring;
     /** @brief The mpi error code. */
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm *, int *err_code, ...){
-    char *err_string=new char[MPI_MAX_ERROR_STRING];
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
+{
+    char* err_string = new char[MPI_MAX_ERROR_STRING];
     int err_length;
     MPI_Error_string(*err_code, err_string, &err_length);
     std::string s(err_string, err_length);
-    std::cerr << "An MPI Error ocurred:"<<std::endl<<s<<std::endl;
+    std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
     delete[] err_string;
     throw MPIError(s, *err_code);
 }
@@ -60,38 +67,42 @@ typedef Dune::OwnerOverlapCopyAttributeSet GridAttributes;
 typedef GridAttributes::AttributeSet GridFlag;
 typedef Dune::ParallelLocalIndex<GridFlag> LocalIndex;
 
-template<class M, class G, class L, int n>
-void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,n>& indices, int overlapStart, int overlapEnd,
-                  int start, int end);
+template <class M, class G, class L, int n>
+void setupPattern(
+    int N, M& mat, Dune::ParallelIndexSet<G, L, n>& indices, int overlapStart, int overlapEnd, int start, int end);
 
-template<class M>
+template <class M>
 void fillValues(int N, M& mat, int overlapStart, int overlapEnd, int start, int end);
 
 
-template<class M, class G, class L, class C, int n>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,n>& indices,
-                     const C& p, int *nout, typename M::block_type::value_type eps=1.0);
+template <class M, class G, class L, class C, int n>
+M setupAnisotropic2d(int N,
+                     Dune::ParallelIndexSet<G, L, n>& indices,
+                     const C& p,
+                     int* nout,
+                     typename M::block_type::value_type eps = 1.0);
 
 
-template<class M, class G, class L, int s>
-void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int overlapStart, int overlapEnd,
-                  int start, int end)
+template <class M, class G, class L, int s>
+void
+setupPattern(
+    int N, M& mat, Dune::ParallelIndexSet<G, L, s>& indices, int overlapStart, int overlapEnd, int start, int end)
 {
     int n = overlapEnd - overlapStart;
 
     typename M::CreateIterator iter = mat.createbegin();
     indices.beginResize();
 
-    for(int j=0; j < N; j++)
-        for(int i=overlapStart; i < overlapEnd; i++, ++iter) {
-            int global = j*N+i;
+    for (int j = 0; j < N; j++)
+        for (int i = overlapStart; i < overlapEnd; i++, ++iter) {
+            int global = j * N + i;
             GridFlag flag = GridAttributes::owner;
             bool isPublic = false;
 
-            if((i<start && i > 0) || (i>= end && i < N-1))
-                flag=GridAttributes::copy;
+            if ((i < start && i > 0) || (i >= end && i < N - 1))
+                flag = GridAttributes::copy;
 
-            if(i<start+1 || i>= end-1) {
+            if (i < start + 1 || i >= end - 1) {
                 isPublic = true;
                 indices.add(global, LocalIndex(iter.index(), flag, isPublic));
             }
@@ -100,47 +111,48 @@ void setupPattern(int N, M& mat, Dune::ParallelIndexSet<G,L,s>& indices, int ove
             iter.insert(iter.index());
 
             // i direction
-            if(i > overlapStart )
+            if (i > overlapStart)
                 // We have a left neighbour
-                iter.insert(iter.index()-1);
+                iter.insert(iter.index() - 1);
 
-            if(i < overlapEnd-1)
+            if (i < overlapEnd - 1)
                 // We have a rigt neighbour
-                iter.insert(iter.index()+1);
+                iter.insert(iter.index() + 1);
 
             // j direction
             // Overlap is a dirichlet border, discard neighbours
-            if(flag != GridAttributes::copy) {
-                if(j>0)
+            if (flag != GridAttributes::copy) {
+                if (j > 0)
                     // lower neighbour
-                    iter.insert(iter.index()-n);
-                if(j<N-1)
+                    iter.insert(iter.index() - n);
+                if (j < N - 1)
                     // upper neighbour
-                    iter.insert(iter.index()+n);
+                    iter.insert(iter.index() + n);
             }
         }
     indices.endResize();
 }
 
-template<class M, class T>
-void fillValues([[maybe_unused]] int N, M& mat, int overlapStart, int overlapEnd, int start, int end, T eps)
+template <class M, class T>
+void
+fillValues([[maybe_unused]] int N, M& mat, int overlapStart, int overlapEnd, int start, int end, T eps)
 {
     typedef typename M::block_type Block;
     Block dval(0), bone(0), bmone(0), beps(0);
 
-    for(typename Block::RowIterator b = dval.begin(); b !=  dval.end(); ++b)
-        b->operator[](b.index())=2.0+2.0*eps;
+    for (typename Block::RowIterator b = dval.begin(); b != dval.end(); ++b)
+        b->operator[](b.index()) = 2.0 + 2.0 * eps;
 
-    for(typename Block::RowIterator b=bone.begin(); b !=  bone.end(); ++b)
-        b->operator[](b.index())=1.0;
+    for (typename Block::RowIterator b = bone.begin(); b != bone.end(); ++b)
+        b->operator[](b.index()) = 1.0;
 
-    for(typename Block::RowIterator b=bmone.begin(); b !=  bmone.end(); ++b)
-        b->operator[](b.index())=-1.0;
+    for (typename Block::RowIterator b = bmone.begin(); b != bmone.end(); ++b)
+        b->operator[](b.index()) = -1.0;
 
-    for(typename Block::RowIterator b=beps.begin(); b !=  beps.end(); ++b)
-        b->operator[](b.index())=-eps;
+    for (typename Block::RowIterator b = beps.begin(); b != beps.end(); ++b)
+        b->operator[](b.index()) = -eps;
 
-    int n = overlapEnd-overlapStart;
+    int n = overlapEnd - overlapStart;
     typedef typename M::ColIterator ColIterator;
     typedef typename M::RowIterator RowIterator;
 
@@ -151,169 +163,175 @@ void fillValues([[maybe_unused]] int N, M& mat, int overlapStart, int overlapEnd
 
         ColIterator endi = (*i).end();
 
-        if(x<start || x >= end) { // || x==0 || x==N-1 || y==0 || y==N-1){
+        if (x < start || x >= end) { // || x==0 || x==N-1 || y==0 || y==N-1){
             // overlap node is dirichlet border
             ColIterator j = (*i).begin();
 
-            for(; j.index() < i.index(); ++j)
-                *j=0;
+            for (; j.index() < i.index(); ++j)
+                *j = 0;
 
             *j = bone;
 
-            for(++j; j != endi; ++j)
-                *j=0;
-        }else{
-            for(ColIterator j = (*i).begin(); j != endi; ++j)
-                if(j.index() == i.index())
-                    *j=dval;
-                else if(j.index()+1==i.index() || j.index()-1==i.index())
-                    *j=beps;
+            for (++j; j != endi; ++j)
+                *j = 0;
+        } else {
+            for (ColIterator j = (*i).begin(); j != endi; ++j)
+                if (j.index() == i.index())
+                    *j = dval;
+                else if (j.index() + 1 == i.index() || j.index() - 1 == i.index())
+                    *j = beps;
                 else
-                    *j=bmone;
+                    *j = bmone;
         }
     }
 }
 
-template<class V, class G, class L, int s>
-void setBoundary(V& lhs, V& rhs, const G& n, Dune::ParallelIndexSet<G,L,s>& indices)
+template <class V, class G, class L, int s>
+void
+setBoundary(V& lhs, V& rhs, const G& n, Dune::ParallelIndexSet<G, L, s>& indices)
 {
-    typedef typename Dune::ParallelIndexSet<G,L,s>::const_iterator Iter;
-    for(Iter i=indices.begin(); i != indices.end(); ++i) {
-        G x = i->global()/n;
-        G y = i->global()%n;
+    typedef typename Dune::ParallelIndexSet<G, L, s>::const_iterator Iter;
+    for (Iter i = indices.begin(); i != indices.end(); ++i) {
+        G x = i->global() / n;
+        G y = i->global() % n;
 
-        if(x==0 || y ==0 || x==n-1 || y==n-1) {
-            //double h = 1.0 / ((double) (n-1));
-            lhs[i->local()]=rhs[i->local()]=0; //((double)x)*((double)y)*h*h;
+        if (x == 0 || y == 0 || x == n - 1 || y == n - 1) {
+            // double h = 1.0 / ((double) (n-1));
+            lhs[i->local()] = rhs[i->local()] = 0; //((double)x)*((double)y)*h*h;
         }
     }
 }
 
-template<class V, class G>
-void setBoundary(V& lhs, V& rhs, const G& N)
+template <class V, class G>
+void
+setBoundary(V& lhs, V& rhs, const G& N)
 {
     typedef typename V::block_type Block;
     typedef typename Block::value_type T;
-    for(int j=0; j < N; ++j)
-        for(int i=0; i < N; i++)
-            if(i==0 || j ==0 || i==N-1 || j==N-1) {
-                T h = 1.0 / ((double) (N-1));
+    for (int j = 0; j < N; ++j)
+        for (int i = 0; i < N; i++)
+            if (i == 0 || j == 0 || i == N - 1 || j == N - 1) {
+                T h = 1.0 / ((double)(N - 1));
                 T x, y;
-                if(i==N-1)
-                    x=1;
+                if (i == N - 1)
+                    x = 1;
                 else
-                    x = ((T) i)*h;
-                if(j==N-1)
+                    x = ((T)i) * h;
+                if (j == N - 1)
                     y = 1;
                 else
-                    y = ((T) j)*h;
+                    y = ((T)j) * h;
 
-                lhs[j*N+i]=rhs[j*N+i]=0; //x*y;
+                lhs[j * N + i] = rhs[j * N + i] = 0; // x*y;
             }
 }
 
-template<class M, class G, class L, class C, int s>
-M setupAnisotropic2d(int N, Dune::ParallelIndexSet<G,L,s>& indices, const C& p, int *nout, typename M::block_type::value_type eps)
+template <class M, class G, class L, class C, int s>
+M
+setupAnisotropic2d(
+    int N, Dune::ParallelIndexSet<G, L, s>& indices, const C& p, int* nout, typename M::block_type::value_type eps)
 {
-    int procs=p.size(), rank=p.rank();
+    int procs = p.size(), rank = p.rank();
 
     typedef M BCRSMat;
 
     // calculate size of local matrix in the distributed direction
     int start, end, overlapStart, overlapEnd;
 
-    int n = N/procs; // number of unknowns per process
-    int bigger = N%procs; // number of process with n+1 unknows
+    int n = N / procs; // number of unknowns per process
+    int bigger = N % procs; // number of process with n+1 unknows
 
     // Compute owner region
-    if(rank<bigger) {
-        start = rank*(n+1);
-        end   = start+(n+1);
-    }else{
-        start = bigger*(n+1) + (rank-bigger) * n;
-        end   = start+n;
+    if (rank < bigger) {
+        start = rank * (n + 1);
+        end = start + (n + 1);
+    } else {
+        start = bigger * (n + 1) + (rank - bigger) * n;
+        end = start + n;
     }
 
     // Compute overlap region
-    if(start>0)
+    if (start > 0)
         overlapStart = start - 1;
     else
         overlapStart = start;
 
-    if(end<N)
+    if (end < N)
         overlapEnd = end + 1;
     else
         overlapEnd = end;
 
-    int noKnown = overlapEnd-overlapStart;
+    int noKnown = overlapEnd - overlapStart;
 
     *nout = noKnown;
 
-    BCRSMat mat(noKnown*N, noKnown*N, noKnown*N*5, BCRSMat::row_wise);
+    BCRSMat mat(noKnown * N, noKnown * N, noKnown * N * 5, BCRSMat::row_wise);
 
     setupPattern(N, mat, indices, overlapStart, overlapEnd, start, end);
     fillValues(N, mat, overlapStart, overlapEnd, start, end, eps);
 
-    //Dune::printmatrix(std::cout,mat,"aniso 2d","row",9,1); //das hier auf zwei Prozessen ausgeben
+    // Dune::printmatrix(std::cout,mat,"aniso 2d","row",9,1); //das hier auf zwei Prozessen ausgeben
 
     return mat;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 
-    constexpr int BS=2, N=100;
-    using MatrixBlock = Dune::FieldMatrix<double,BS,BS>;
+    constexpr int BS = 2, N = 100;
+    using MatrixBlock = Dune::FieldMatrix<double, BS, BS>;
     using BCRSMat = Dune::BCRSMatrix<MatrixBlock>;
-    using VectorBlock = Dune::FieldVector<double,BS>;
+    using VectorBlock = Dune::FieldVector<double, BS>;
     using Vector = Dune::BlockVector<VectorBlock>;
     using Communication = Dune::OwnerOverlapCopyCommunication<int>;
-    using Operator = Dune::OverlappingSchwarzOperator<BCRSMat,Vector,Vector,Communication>;
+    using Operator = Dune::OverlappingSchwarzOperator<BCRSMat, Vector, Vector, Communication>;
 
     const auto& ccomm = Dune::MPIHelper::getCommunication();
 
     Communication comm(ccomm);
-    int n=0;
+    int n = 0;
     BCRSMat mat = setupAnisotropic2d<BCRSMat>(N, comm.indexSet(), comm.communicator(), &n, 1);
 
     comm.remoteIndices().template rebuild<false>();
 
     Vector b(mat.N()), x(mat.M());
 
-    b=10;
-    x=100;
+    b = 10;
+    x = 100;
     setBoundary(x, b, N, comm.indexSet());
 
     Operator op(mat, comm);
-    Dune::OverlappingSchwarzScalarProduct<Vector,Communication> sp(comm);
+    Dune::OverlappingSchwarzScalarProduct<Vector, Communication> sp(comm);
 
     using namespace std::string_literals;
     Opm::PropertyTree prm;
     prm.put("type", "Jac"s);
-    std::function<Vector()> weights = [&mat]() {
-        return Opm::Amg::getQuasiImpesWeights<BCRSMat, Vector>(mat, 0, false);
-    };
+    std::function<Vector()> weights
+        = [&mat]() { return Opm::Amg::getQuasiImpesWeights<BCRSMat, Vector>(mat, 0, false); };
 
     auto fullPreconditioner = Opm::PreconditionerFactory<Operator, Communication>::create(op, prm, weights, comm);
-    Dune::BiCGSTABSolver<Vector> amgBiCGSTAB(op, sp, *fullPreconditioner, 10e-8, 300, (ccomm.rank()==0) ? 2 : 0);
-    
+    Dune::BiCGSTABSolver<Vector> amgBiCGSTAB(op, sp, *fullPreconditioner, 10e-8, 300, (ccomm.rank() == 0) ? 2 : 0);
+
     using PreconditionerOperatorType = Opm::GhostLastMatrixAdapter<BCRSMat, Vector, Vector, Communication>;
     auto ghostOperator = std::make_unique<PreconditionerOperatorType>(mat, comm);
-    auto ghostPreconditioner = Opm::PreconditionerFactory<PreconditionerOperatorType, Communication>::create(*ghostOperator, prm, weights, comm);
-    Dune::BiCGSTABSolver<Vector> amgGhostBiCGSTAB(op, sp, *ghostPreconditioner, 10e-8, 300, (ccomm.rank()==0) ? 2 : 0);
+    auto ghostPreconditioner = Opm::PreconditionerFactory<PreconditionerOperatorType, Communication>::create(
+        *ghostOperator, prm, weights, comm);
+    Dune::BiCGSTABSolver<Vector> amgGhostBiCGSTAB(
+        op, sp, *ghostPreconditioner, 10e-8, 300, (ccomm.rank() == 0) ? 2 : 0);
 
     auto x2 = x;
     auto b2 = b;
 
     Dune::InverseOperatorResult r;
     Dune::Timer timerFull;
-    amgBiCGSTAB.apply(x,b,r);
+    amgBiCGSTAB.apply(x, b, r);
     auto timeFull = timerFull.elapsed();
 
     Dune::InverseOperatorResult r2;
     Dune::Timer timerGhost;
-    amgGhostBiCGSTAB.apply(x2,b2,r2);
+    amgGhostBiCGSTAB.apply(x2, b2, r2);
     auto timeGhost = timerGhost.elapsed();
 
     for (size_t i = 0; i < x.size(); i++)

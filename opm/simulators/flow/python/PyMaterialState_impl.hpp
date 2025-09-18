@@ -27,12 +27,12 @@
 
 #include <fmt/format.h>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
 template <class TypeTag>
 std::vector<double>
-PyMaterialState<TypeTag>::
-getCellVolumes()
+PyMaterialState<TypeTag>::getCellVolumes()
 {
     Model& model = this->simulator_->model();
     const auto size = model.numGridDof();
@@ -45,32 +45,28 @@ getCellVolumes()
 
 template <class TypeTag>
 std::vector<double>
-PyMaterialState<TypeTag>::
-getPorosity()
+PyMaterialState<TypeTag>::getPorosity()
 {
     Problem& problem = this->simulator_->problem();
     Model& model = this->simulator_->model();
     const auto size = model.numGridDof();
     std::vector<double> array(size);
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {
-        array[dof_idx] = problem.referencePorosity(dof_idx, /*timeIdx*/0);
+        array[dof_idx] = problem.referencePorosity(dof_idx, /*timeIdx*/ 0);
     }
     return array;
 }
 
 template <class TypeTag>
 void
-PyMaterialState<TypeTag>::
-setPorosity(const double* poro, std::size_t size)
+PyMaterialState<TypeTag>::setPorosity(const double* poro, std::size_t size)
 {
     Problem& problem = this->simulator_->problem();
     Model& model = this->simulator_->model();
     const auto model_size = model.numGridDof();
     if (model_size != size) {
-        const std::string msg = fmt::format(
-            "Cannot set porosity. Expected array of size: {}, got array of size: ",
-            model_size, size
-        );
+        const std::string msg
+            = fmt::format("Cannot set porosity. Expected array of size: {}, got array of size: ", model_size, size);
         throw std::runtime_error(msg);
     }
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {

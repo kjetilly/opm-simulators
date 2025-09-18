@@ -17,7 +17,8 @@
 #ifndef FLOW_BRINE_SALTPRECIPITATION_HPP
 #define FLOW_BRINE_SALTPRECIPITATION_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool 
 //! \brief Main function used in flow_brine binary.
 int flowBrineSaltPrecipitationMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_BRINE_HPP

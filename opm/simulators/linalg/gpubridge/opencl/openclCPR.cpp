@@ -18,50 +18,54 @@
 */
 
 #include <config.h>
-#include <opm/common/TimingMacros.hpp>
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 #include <dune/common/shared_ptr.hh>
 
 #include <opm/simulators/linalg/PreconditionerFactory.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
 
-#include <opm/simulators/linalg/gpubridge/GpuBridge.hpp>
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
-#include <opm/simulators/linalg/gpubridge/opencl/openclCPR.hpp>
+#include <opm/simulators/linalg/gpubridge/GpuBridge.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/OpenclMatrix.hpp>
+#include <opm/simulators/linalg/gpubridge/opencl/openclCPR.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/openclKernels.hpp>
 
 #include <opm/simulators/linalg/gpubridge/Misc.hpp>
 
 #include <type_traits>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-openclCPR<Scalar,block_size>::openclCPR(bool opencl_ilu_parallel_, int verbosity_)
+template <class Scalar, unsigned int block_size>
+openclCPR<Scalar, block_size>::openclCPR(bool opencl_ilu_parallel_, int verbosity_)
     : Base(verbosity_)
     , opencl_ilu_parallel(opencl_ilu_parallel_)
 {
-    bilu0 = std::make_unique<openclBILU0<Scalar,block_size> >(opencl_ilu_parallel, verbosity_);
+    bilu0 = std::make_unique<openclBILU0<Scalar, block_size>>(opencl_ilu_parallel, verbosity_);
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::
-setOpencl(std::shared_ptr<cl::Context>& context_, std::shared_ptr<cl::CommandQueue>& queue_) {
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::setOpencl(std::shared_ptr<cl::Context>& context_,
+                                         std::shared_ptr<cl::CommandQueue>& queue_)
+{
     context = context_;
     queue = queue_;
 
     bilu0->setOpencl(context, queue);
 }
 
-template<class Scalar, unsigned int block_size>
-bool openclCPR<Scalar,block_size>::
-analyze_matrix(BlockedMatrix<Scalar>* mat_) {
+template <class Scalar, unsigned int block_size>
+bool
+openclCPR<Scalar, block_size>::analyze_matrix(BlockedMatrix<Scalar>* mat_)
+{
     this->Nb = mat_->Nb;
     this->nnzb = mat_->nnzbs;
     this->N = this->Nb * block_size;
@@ -72,9 +76,10 @@ analyze_matrix(BlockedMatrix<Scalar>* mat_) {
     return success;
 }
 
-template<class Scalar, unsigned int block_size>
-bool openclCPR<Scalar,block_size>::
-analyze_matrix(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
+template <class Scalar, unsigned int block_size>
+bool
+openclCPR<Scalar, block_size>::analyze_matrix(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat)
+{
     this->Nb = mat_->Nb;
     this->nnzb = mat_->nnzbs;
     this->N = this->Nb * block_size;
@@ -86,9 +91,10 @@ analyze_matrix(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
     return success;
 }
 
-template<class Scalar, unsigned int block_size>
-bool openclCPR<Scalar,block_size>::
-create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat) {
+template <class Scalar, unsigned int block_size>
+bool
+openclCPR<Scalar, block_size>::create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat)
+{
     Dune::Timer t_bilu0;
     bool result = bilu0->create_preconditioner(mat_, jacMat);
     if (verbosity >= 3) {
@@ -99,13 +105,13 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat
 
     Dune::Timer t_amg;
     this->create_preconditioner_amg(this->mat); // already points to bilu0::rmat if needed
-    
+
     if (verbosity >= 3) {
         std::ostringstream out;
         out << "openclCPR create_preconditioner_amg(): " << t_amg.stop() << " s";
         OpmLog::info(out.str());
     }
-    
+
     // initialize OpenclMatrices and Buffers if needed
     auto init_func = std::bind(&openclCPR::init_opencl_buffers, this);
     std::call_once(opencl_buffers_allocated, init_func);
@@ -116,9 +122,10 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_, BlockedMatrix<Scalar>* jacMat
     return result;
 }
 
-template<class Scalar, unsigned int block_size>
-bool openclCPR<Scalar,block_size>::
-create_preconditioner(BlockedMatrix<Scalar>* mat_) {
+template <class Scalar, unsigned int block_size>
+bool
+openclCPR<Scalar, block_size>::create_preconditioner(BlockedMatrix<Scalar>* mat_)
+{
     Dune::Timer t_bilu0;
     bool result = bilu0->create_preconditioner(mat_);
     if (verbosity >= 3) {
@@ -134,7 +141,7 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_) {
         out << "openclCPR create_preconditioner_amg(): " << t_amg.stop() << " s";
         OpmLog::info(out.str());
     }
-    
+
     // initialize OpenclMatrices and Buffers if needed
     auto init_func = std::bind(&openclCPR::init_opencl_buffers, this);
     std::call_once(opencl_buffers_allocated, init_func);
@@ -145,9 +152,10 @@ create_preconditioner(BlockedMatrix<Scalar>* mat_) {
     return result;
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar, block_size>::
-init_opencl_buffers() {
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::init_opencl_buffers()
+{
     d_Amatrices.reserve(this->num_levels);
     d_Rmatrices.reserve(this->num_levels - 1);
     d_invDiags.reserve(this->num_levels - 1);
@@ -170,24 +178,33 @@ init_opencl_buffers() {
     d_coarse_x = std::make_unique<cl::Buffer>(*context, CL_MEM_READ_WRITE, sizeof(Scalar) * this->Nb);
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::opencl_upload()
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::opencl_upload()
 {
     d_mat->upload(queue.get(), this->mat);
 
     err = CL_SUCCESS;
     events.resize(2 * this->Rmatrices.size() + 1);
-    err |= queue->enqueueWriteBuffer(*d_weights, CL_FALSE, 0,
-                                     sizeof(Scalar) * this->N, this->weights.data(), nullptr, &events[0]);
+    err |= queue->enqueueWriteBuffer(
+        *d_weights, CL_FALSE, 0, sizeof(Scalar) * this->N, this->weights.data(), nullptr, &events[0]);
     for (unsigned int i = 0; i < this->Rmatrices.size(); ++i) {
         d_Amatrices[i].upload(queue.get(), &this->Amatrices[i]);
 
-        err |= queue->enqueueWriteBuffer(d_invDiags[i], CL_FALSE, 0,
-                                         sizeof(Scalar) * this->Amatrices[i].N, this->invDiags[i].data(),
-                                         nullptr, &events[2*i+1]);
-        err |= queue->enqueueWriteBuffer(d_PcolIndices[i], CL_FALSE, 0,
-                                         sizeof(int) * this->Amatrices[i].N, this->PcolIndices[i].data(),
-                                         nullptr, &events[2*i+2]);
+        err |= queue->enqueueWriteBuffer(d_invDiags[i],
+                                         CL_FALSE,
+                                         0,
+                                         sizeof(Scalar) * this->Amatrices[i].N,
+                                         this->invDiags[i].data(),
+                                         nullptr,
+                                         &events[2 * i + 1]);
+        err |= queue->enqueueWriteBuffer(d_PcolIndices[i],
+                                         CL_FALSE,
+                                         0,
+                                         sizeof(int) * this->Amatrices[i].N,
+                                         this->PcolIndices[i].data(),
+                                         nullptr,
+                                         &events[2 * i + 2]);
     }
     cl::WaitForEvents(events);
     events.clear();
@@ -200,8 +217,9 @@ void openclCPR<Scalar,block_size>::opencl_upload()
     }
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y, cl::Buffer& x)
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::amg_cycle_gpu(const int level, cl::Buffer& y, cl::Buffer& x)
 {
     OpenclMatrix<Scalar>* A = &d_Amatrices[level];
     OpenclMatrix<Scalar>* R = &d_Rmatrices[level];
@@ -212,8 +230,7 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
         std::vector<Scalar> h_y(Ncur), h_x(Ncur, 0);
 
         events.resize(1);
-        err = queue->enqueueReadBuffer(y, CL_FALSE, 0,
-                                       sizeof(Scalar) * Ncur, h_y.data(), nullptr, &events[0]);
+        err = queue->enqueueReadBuffer(y, CL_FALSE, 0, sizeof(Scalar) * Ncur, h_y.data(), nullptr, &events[0]);
         cl::WaitForEvents(events);
         events.clear();
         if (err != CL_SUCCESS) {
@@ -222,15 +239,14 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
         }
 
         // solve coarsest level using umfpack
-        if constexpr (std::is_same_v<Scalar,float>) {
+        if constexpr (std::is_same_v<Scalar, float>) {
             OPM_THROW(std::runtime_error, "Cannot use CPR with floats due to UMFPACK usage");
         } else {
             this->umfpack.apply(h_x.data(), h_y.data());
         }
 
         events.resize(1);
-        err = queue->enqueueWriteBuffer(x, CL_FALSE, 0,
-                                        sizeof(Scalar) * Ncur, h_x.data(), nullptr, &events[0]);
+        err = queue->enqueueWriteBuffer(x, CL_FALSE, 0, sizeof(Scalar) * Ncur, h_x.data(), nullptr, &events[0]);
         cl::WaitForEvents(events);
         events.clear();
         if (err != CL_SUCCESS) {
@@ -239,7 +255,7 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
         }
         return;
     }
-    int Nnext = d_Amatrices[level+1].Nb;
+    int Nnext = d_Amatrices[level + 1].Nb;
 
     cl::Buffer& t = d_t[level];
     cl::Buffer& f = d_f[level];
@@ -260,23 +276,21 @@ void openclCPR<Scalar,block_size>::amg_cycle_gpu(const int level, cl::Buffer& y,
 
     // postsmooth
     for (unsigned i = 0; i < this->num_post_smooth_steps; ++i) {
-        OpenclKernels<Scalar>::residual(A->nnzValues, A->colIndices, A->rowPointers,
-                                        x, y, t, Ncur, 1);
+        OpenclKernels<Scalar>::residual(A->nnzValues, A->colIndices, A->rowPointers, x, y, t, Ncur, 1);
         OpenclKernels<Scalar>::vmul(jacobi_damping, d_invDiags[level], t, x, Ncur);
     }
 }
 
 // x = prec(y)
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
 {
     // 0-initialize u and x vectors
     events.resize(d_u.size() + 1);
-    err = queue->enqueueFillBuffer(*d_coarse_x, 0, 0,
-                                   sizeof(Scalar) * this->Nb, nullptr, &events[0]);
+    err = queue->enqueueFillBuffer(*d_coarse_x, 0, 0, sizeof(Scalar) * this->Nb, nullptr, &events[0]);
     for (unsigned int i = 0; i < d_u.size(); ++i) {
-        err |= queue->enqueueFillBuffer(d_u[i], 0, 0,
-                                        sizeof(Scalar) * this->Rmatrices[i].N, nullptr, &events[i + 1]);
+        err |= queue->enqueueFillBuffer(d_u[i], 0, 0, sizeof(Scalar) * this->Rmatrices[i].N, nullptr, &events[i + 1]);
     }
     cl::WaitForEvents(events);
     events.clear();
@@ -285,8 +299,8 @@ void openclCPR<Scalar,block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
         OPM_THROW(std::logic_error, "CPR OpenCL enqueueWriteBuffer error");
     }
 
-    OpenclKernels<Scalar>::residual(d_mat->nnzValues, d_mat->colIndices,
-                                    d_mat->rowPointers, x, y, *d_rs, this->Nb, block_size);
+    OpenclKernels<Scalar>::residual(
+        d_mat->nnzValues, d_mat->colIndices, d_mat->rowPointers, x, y, *d_rs, this->Nb, block_size);
     OpenclKernels<Scalar>::full_to_pressure_restriction(*d_rs, *d_weights, *d_coarse_y, this->Nb);
 
     amg_cycle_gpu(0, *d_coarse_y, *d_coarse_x);
@@ -294,8 +308,9 @@ void openclCPR<Scalar,block_size>::apply_amg(const cl::Buffer& y, cl::Buffer& x)
     OpenclKernels<Scalar>::add_coarse_pressure_correction(*d_coarse_x, x, this->pressure_idx, this->Nb);
 }
 
-template<class Scalar, unsigned int block_size>
-void openclCPR<Scalar,block_size>::apply(const cl::Buffer& y, cl::Buffer& x, WellContributions<Scalar>& wellContribs)
+template <class Scalar, unsigned int block_size>
+void
+openclCPR<Scalar, block_size>::apply(const cl::Buffer& y, cl::Buffer& x, WellContributions<Scalar>& wellContribs)
 {
     Dune::Timer t_bilu0;
     bilu0->apply(y, x, wellContribs);
@@ -314,13 +329,13 @@ void openclCPR<Scalar,block_size>::apply(const cl::Buffer& y, cl::Buffer& x, Wel
     }
 }
 
-#define INSTANTIATE_TYPE(T)        \
-    template class openclCPR<T,1>; \
-    template class openclCPR<T,2>; \
-    template class openclCPR<T,3>; \
-    template class openclCPR<T,4>; \
-    template class openclCPR<T,5>; \
-    template class openclCPR<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class openclCPR<T, 1>;                                                                                    \
+    template class openclCPR<T, 2>;                                                                                    \
+    template class openclCPR<T, 3>;                                                                                    \
+    template class openclCPR<T, 4>;                                                                                    \
+    template class openclCPR<T, 5>;                                                                                    \
+    template class openclCPR<T, 6>;
 
 INSTANTIATE_TYPE(double)
 

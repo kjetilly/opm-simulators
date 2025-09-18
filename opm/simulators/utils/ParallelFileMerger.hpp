@@ -27,50 +27,50 @@
 #include <regex>
 #include <string>
 
-namespace Opm {
-namespace detail {
-
-namespace fs = ::std::filesystem;
-
-/// \brief A functor that merges multiple files of a parallel run to one file.
-///
-/// Without care multiple processes might log messages in a parallel run.
-/// Non-root processes will do that to seperate files
-/// <basename>.<rank>.<extension. This functor will append those file
-/// to usual ones and delete the other files.
-class ParallelFileMerger
+namespace Opm
 {
-public:
-    /// \brief Constructor
-    /// \param output_dir The output directory to use for reading/Writing.
-    /// \param deckname The name of the deck.
-    /// \param show_fallout True to show fall-out
-    ParallelFileMerger(const fs::path& output_dir,
-                       const std::string& deckname,
-                       bool show_fallout = false);
+namespace detail
+{
 
-    void operator()(const fs::path& file);
+    namespace fs = ::std::filesystem;
 
-private:
-    /// \brief Append contents of a file to a stream
-    /// \brief of The output stream to use.
-    /// \brief file The file whose content to append.
-    /// \brief rank The rank that wrote the file.
-    void appendFile(std::ofstream& of, const fs::path& file, const std::string& rank);
+    /// \brief A functor that merges multiple files of a parallel run to one file.
+    ///
+    /// Without care multiple processes might log messages in a parallel run.
+    /// Non-root processes will do that to seperate files
+    /// <basename>.<rank>.<extension. This functor will append those file
+    /// to usual ones and delete the other files.
+    class ParallelFileMerger
+    {
+    public:
+        /// \brief Constructor
+        /// \param output_dir The output directory to use for reading/Writing.
+        /// \param deckname The name of the deck.
+        /// \param show_fallout True to show fall-out
+        ParallelFileMerger(const fs::path& output_dir, const std::string& deckname, bool show_fallout = false);
 
-    /// \brief Regex to capture *.DBG
-    std::regex debugFileRegex_;
-    /// \brief Regex to capture  *.PRT
-    std::regex logFileRegex_;
-    /// \brief Regex to capture  CASENAME.[0-9]+.[A-Z]+
-    std::regex fileWarningRegex_;
-    /// \brief Stream to *.DBG file
-    std::unique_ptr<std::ofstream> debugStream_;
-    /// \brief Stream to *.PRT file
-    std::unique_ptr<std::ofstream> logStream_;
-    /// \brief Whether to show any logging fallout
-    bool show_fallout_;
-};
+        void operator()(const fs::path& file);
+
+    private:
+        /// \brief Append contents of a file to a stream
+        /// \brief of The output stream to use.
+        /// \brief file The file whose content to append.
+        /// \brief rank The rank that wrote the file.
+        void appendFile(std::ofstream& of, const fs::path& file, const std::string& rank);
+
+        /// \brief Regex to capture *.DBG
+        std::regex debugFileRegex_;
+        /// \brief Regex to capture  *.PRT
+        std::regex logFileRegex_;
+        /// \brief Regex to capture  CASENAME.[0-9]+.[A-Z]+
+        std::regex fileWarningRegex_;
+        /// \brief Stream to *.DBG file
+        std::unique_ptr<std::ofstream> debugStream_;
+        /// \brief Stream to *.PRT file
+        std::unique_ptr<std::ofstream> logStream_;
+        /// \brief Whether to show any logging fallout
+        bool show_fallout_;
+    };
 
 } // end namespace detail
 } // end namespace Opm

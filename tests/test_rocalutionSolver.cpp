@@ -28,11 +28,11 @@
 #include <rocalution.hpp>
 
 #include <dune/common/fvector.hh>
-#include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/istl/matrixmarket.hh>
-#include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/solvers.hh>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -43,7 +43,11 @@ template <int bz>
 using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
 template <int bz>
-void readLinearSystem(const std::string& matrix_filename, const std::string& rhs_filename, Matrix<bz>& matrix, Vector<bz>& rhs)
+void
+readLinearSystem(const std::string& matrix_filename,
+                 const std::string& rhs_filename,
+                 Matrix<bz>& matrix,
+                 Vector<bz>& rhs)
 {
     {
         std::ifstream mfile(matrix_filename);
@@ -69,14 +73,14 @@ getDuneSolution(Matrix<bz>& matrix, Vector<bz>& rhs)
 
     Vector<bz> x(rhs.size());
 
-    typedef Dune::MatrixAdapter<Matrix<bz>,Vector<bz>,Vector<bz> > Operator;
+    typedef Dune::MatrixAdapter<Matrix<bz>, Vector<bz>, Vector<bz>> Operator;
     Operator fop(matrix);
     double relaxation = 0.9;
-    Dune::SeqILU<Matrix<bz>,Vector<bz>,Vector<bz> > prec(matrix, relaxation);
+    Dune::SeqILU<Matrix<bz>, Vector<bz>, Vector<bz>> prec(matrix, relaxation);
     double reduction = 1e-2;
     int maxit = 10;
     int verbosity = 0;
-    Dune::BiCGSTABSolver<Vector<bz> > solver(fop, prec, reduction, maxit, verbosity);
+    Dune::BiCGSTABSolver<Vector<bz>> solver(fop, prec, reduction, maxit, verbosity);
     solver.apply(x, rhs, result);
     return x;
 }
@@ -97,16 +101,16 @@ testRocalutionSolver(const boost::property_tree::ptree& prm, Matrix<bz>& matrix,
 
     Vector<bz> x(rhs.size());
     auto wellContribs = Opm::WellContributions<double>::create(accelerator_mode, true);
-    std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> > bridge;
+    std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>> bridge;
     try {
-        bridge = std::make_unique<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >(accelerator_mode,
-                                                                               linear_solver_verbosity,
-                                                                               maxit,
-                                                                               tolerance,
-                                                                               platformID,
-                                                                               deviceID,
-                                                                               opencl_ilu_parallel,
-                                                                               linsolver);
+        bridge = std::make_unique<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>>(accelerator_mode,
+                                                                              linear_solver_verbosity,
+                                                                              maxit,
+                                                                              tolerance,
+                                                                              platformID,
+                                                                              deviceID,
+                                                                              opencl_ilu_parallel,
+                                                                              linsolver);
     } catch (const std::logic_error& error) {
         BOOST_WARN_MESSAGE(true, error.what());
     }
@@ -120,7 +124,8 @@ testRocalutionSolver(const boost::property_tree::ptree& prm, Matrix<bz>& matrix,
 
 namespace pt = boost::property_tree;
 
-void test3(const pt::ptree& prm)
+void
+test3(const pt::ptree& prm)
 {
     const int bz = 3;
     Matrix<bz> matrix;

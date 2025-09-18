@@ -23,8 +23,8 @@
 
 #include <opm/common/utility/numeric/RootFinders.hpp>
 
-#include <opm/input/eclipse/Schedule/VFPInjTable.hpp>
 #include <opm/input/eclipse/Schedule/MSW/WellSegments.hpp>
+#include <opm/input/eclipse/Schedule/VFPInjTable.hpp>
 
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
 
@@ -40,29 +40,30 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-MultisegmentWellGeneric(WellInterfaceGeneric<Scalar, IndexTraits>& baseif)
+template <typename Scalar, typename IndexTraits>
+MultisegmentWellGeneric<Scalar, IndexTraits>::MultisegmentWellGeneric(WellInterfaceGeneric<Scalar, IndexTraits>& baseif)
     : baseif_(baseif)
 {
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inlets,
-                               const std::vector<std::vector<int>>& segment_perforations,
-                               WellState<Scalar, IndexTraits>& well_state) const
+MultisegmentWellGeneric<Scalar, IndexTraits>::scaleSegmentRatesWithWellRates(
+    const std::vector<std::vector<int>>& segment_inlets,
+    const std::vector<std::vector<int>>& segment_perforations,
+    WellState<Scalar, IndexTraits>& well_state) const
 {
     auto& ws = well_state.well(baseif_.indexOfWell());
     auto& segments = ws.segments;
     auto& segment_rates = segments.rates;
     Scalar sumTw = 0;
-    bool calculateSumTw = std::any_of(segment_rates.begin(), segment_rates.end(), [](const auto& unscaled_top_seg_rate) {
-        return std::abs(unscaled_top_seg_rate) <= 1e-12;
-    });
+    bool calculateSumTw
+        = std::any_of(segment_rates.begin(), segment_rates.end(), [](const auto& unscaled_top_seg_rate) {
+              return std::abs(unscaled_top_seg_rate) <= 1e-12;
+          });
     if (calculateSumTw) {
         // Due to various reasons, the well/top segment rate can be zero for this phase.
         // We can not scale this rate directly. The following approach is used to initialize the segment rates.
@@ -89,11 +90,8 @@ scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inle
             }
 
             std::vector<Scalar> rates;
-            WellState<Scalar, IndexTraits>::calculateSegmentRates(ws.parallel_info,
-                                                     segment_inlets,
-                                                     segment_perforations,
-                                                     perforation_rates,
-                                                     num_single_phase, 0, rates);
+            WellState<Scalar, IndexTraits>::calculateSegmentRates(
+                ws.parallel_info, segment_inlets, segment_perforations, perforation_rates, num_single_phase, 0, rates);
             for (int seg = 0; seg < numberOfSegments(); ++seg) {
                 segment_rates[baseif_.numPhases() * seg + phase] = rates[seg];
             }
@@ -103,53 +101,51 @@ scaleSegmentRatesWithWellRates(const std::vector<std::vector<int>>& segment_inle
 
 template <typename Scalar, typename IndexTraits>
 void
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-scaleSegmentPressuresWithBhp(WellState<Scalar, IndexTraits>& well_state) const
+MultisegmentWellGeneric<Scalar, IndexTraits>::scaleSegmentPressuresWithBhp(
+    WellState<Scalar, IndexTraits>& well_state) const
 {
     auto& ws = well_state.well(baseif_.indexOfWell());
     auto& segments = ws.segments;
     segments.scale_pressure(ws.bhp);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 const WellSegments&
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-segmentSet() const
+MultisegmentWellGeneric<Scalar, IndexTraits>::segmentSet() const
 {
     return baseif_.wellEcl().getSegments();
 }
 
 template <typename Scalar, typename IndexTraits>
 int
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-numberOfSegments() const
+MultisegmentWellGeneric<Scalar, IndexTraits>::numberOfSegments() const
 {
     return segmentSet().size();
 }
 
 template <typename Scalar, typename IndexTraits>
 WellSegments::CompPressureDrop
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-compPressureDrop() const
+MultisegmentWellGeneric<Scalar, IndexTraits>::compPressureDrop() const
 {
     return segmentSet().compPressureDrop();
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 int
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-segmentNumberToIndex(const int segment_number) const
+MultisegmentWellGeneric<Scalar, IndexTraits>::segmentNumberToIndex(const int segment_number) const
 {
     return segmentSet().segmentNumberToIndex(segment_number);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 bool
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-update_relaxation_factor(const std::vector<Scalar>& measure_history, Scalar& relaxation_factor, bool& regularize, DeferredLogger& deferred_logger) const
+MultisegmentWellGeneric<Scalar, IndexTraits>::update_relaxation_factor(const std::vector<Scalar>& measure_history,
+                                                                       Scalar& relaxation_factor,
+                                                                       bool& regularize,
+                                                                       DeferredLogger& deferred_logger) const
 {
     const auto it = measure_history.size() - 1;
-    if ( it < 2 ) {
+    if (it < 2) {
         return false;
     }
     const Scalar F0 = measure_history[it];
@@ -162,12 +158,12 @@ update_relaxation_factor(const std::vector<Scalar>& measure_history, Scalar& rel
     bool oscillate = (d1 < oscillaton_rel_tol) && (oscillaton_rel_tol < d2);
     if (!oscillate)
         return false;
-   
+
     const Scalar min_relaxation_factor = 0.6;
     std::ostringstream sstr;
     if (relaxation_factor == min_relaxation_factor) {
-        sstr << " well " << baseif_.name() << " observes severe oscillation. Terminates after " << it << "iterations.\n";
-
+        sstr << " well " << baseif_.name() << " observes severe oscillation. Terminates after " << it
+             << "iterations.\n";
     }
     const Scalar reduction_mutliplier = 0.9;
     relaxation_factor = std::max(relaxation_factor * reduction_mutliplier, min_relaxation_factor);
@@ -182,13 +178,14 @@ update_relaxation_factor(const std::vector<Scalar>& measure_history, Scalar& rel
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 bool
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-repeatedStagnation(const std::vector<Scalar>& measure_history, bool& regularize, DeferredLogger& deferred_logger) const
+MultisegmentWellGeneric<Scalar, IndexTraits>::repeatedStagnation(const std::vector<Scalar>& measure_history,
+                                                                 bool& regularize,
+                                                                 DeferredLogger& deferred_logger) const
 {
     const auto it = measure_history.size() - 1;
-    if ( it < 2 ) {
+    if (it < 2) {
         return false;
     }
     const Scalar F0 = measure_history[it];
@@ -202,7 +199,7 @@ repeatedStagnation(const std::vector<Scalar>& measure_history, bool& regularize,
     std::ostringstream sstr;
     sstr << " well " << baseif_.name() << " observes stagnation in inner iteration " << it << "\n";
     // we frist try to regularize and only stop iterating if it still stagnates
-    if (regularize ) {
+    if (regularize) {
         sstr << "Inner iterations are terminated.\n";
         return true;
     }
@@ -213,35 +210,34 @@ repeatedStagnation(const std::vector<Scalar>& measure_history, bool& regularize,
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 bool
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-frictionalPressureLossConsidered() const
+MultisegmentWellGeneric<Scalar, IndexTraits>::frictionalPressureLossConsidered() const
 {
     // HF- and HFA needs to consider frictional pressure loss
     return (segmentSet().compPressureDrop() != WellSegments::CompPressureDrop::H__);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 bool
-MultisegmentWellGeneric<Scalar, IndexTraits>::
-accelerationalPressureLossConsidered() const
+MultisegmentWellGeneric<Scalar, IndexTraits>::accelerationalPressureLossConsidered() const
 {
     return (segmentSet().compPressureDrop() == WellSegments::CompPressureDrop::HFA);
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
 MultisegmentWellGeneric<Scalar, IndexTraits>::getSegmentDp(const int seg,
-                                              const Scalar density,
-                                              const std::vector<Scalar>& seg_dp) const
+                                                           const Scalar density,
+                                                           const std::vector<Scalar>& seg_dp) const
 {
     const Scalar segment_depth = this->segmentSet()[seg].depth();
     const int outlet_segment_index = this->segmentNumberToIndex(this->segmentSet()[seg].outletSegment());
-    const Scalar segment_depth_outlet = seg == 0 ? baseif_.refDepth() : this->segmentSet()[outlet_segment_index].depth();
-    Scalar dp = wellhelpers::computeHydrostaticCorrection(segment_depth_outlet, segment_depth,
-                                                          density, baseif_.gravity());
+    const Scalar segment_depth_outlet
+        = seg == 0 ? baseif_.refDepth() : this->segmentSet()[outlet_segment_index].depth();
+    Scalar dp
+        = wellhelpers::computeHydrostaticCorrection(segment_depth_outlet, segment_depth, density, baseif_.gravity());
     // we add the hydrostatic correction from the outlet segment
     // in order to get the correction all the way to the bhp ref depth.
     if (seg > 0) {

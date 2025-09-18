@@ -27,25 +27,32 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/fingerproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct FingerProblemEcfv { using InheritsFrom = std::tuple<FingerBaseProblem, ImmiscibleTwoPhaseModel>; };
+namespace TTag
+{
+    struct FingerProblemEcfv {
+        using InheritsFrom = std::tuple<FingerBaseProblem, ImmiscibleTwoPhaseModel>;
+    };
 } // end namespace TTag
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::FingerProblemEcfv> { using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::FingerProblemEcfv> {
+    using type = TTag::EcfvDiscretization;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::FingerProblemEcfv;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

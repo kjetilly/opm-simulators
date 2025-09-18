@@ -22,12 +22,12 @@
 
 #include <dune/common/fvector.hh>
 
-#include <opm/grid/utility/ElementChunks.hpp>
-#include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
-#include <opm/material/common/MathToolbox.hpp>
-#include <opm/models/parallel/threadmanager.hpp>
 #include <algorithm>
 #include <cmath>
+#include <opm/grid/utility/ElementChunks.hpp>
+#include <opm/material/common/MathToolbox.hpp>
+#include <opm/models/parallel/threadmanager.hpp>
+#include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
 
 namespace Opm
 {
@@ -63,10 +63,10 @@ namespace Amg
         VectorBlockType bweights;
         MatrixBlockType diag_block_transpose;
 
-        // Use OpenMP to parallelize over matrix rows
-        #ifdef _OPENMP
-        #pragma omp parallel for private(diag_block, bweights, diag_block_transpose)
-        #endif
+// Use OpenMP to parallelize over matrix rows
+#ifdef _OPENMP
+#pragma omp parallel for private(diag_block, bweights, diag_block_transpose)
+#endif
         for (int row_idx = 0; row_idx < static_cast<int>(A.N()); ++row_idx) {
             diag_block = MatrixBlockType(0.0);
             // Find diagonal block for this row
@@ -100,8 +100,9 @@ namespace Amg
         return weights;
     }
 
-    template<class Vector, class ElementContext, class Model, class ElementChunksType>
-    void getTrueImpesWeights(int pressureVarIndex, Vector& weights,
+    template <class Vector, class ElementContext, class Model, class ElementChunksType>
+    void getTrueImpesWeights(int pressureVarIndex,
+                             Vector& weights,
                              const ElementContext& elemCtx,
                              const Model& model,
                              const ElementChunksType& element_chunks)
@@ -110,8 +111,8 @@ namespace Amg
         using Matrix = typename std::decay_t<decltype(model.linearizer().jacobian())>;
         using MatrixBlockType = typename Matrix::MatrixBlock;
         constexpr int numEq = VectorBlockType::size();
-        using Evaluation = typename std::decay_t<decltype(model.localLinearizer(ThreadManager::threadId()).localResidual().residual(0))>
-            ::block_type;
+        using Evaluation = typename std::decay_t<
+            decltype(model.localLinearizer(ThreadManager::threadId()).localResidual().residual(0))>::block_type;
 
         VectorBlockType rhs(0.0);
         rhs[pressureVarIndex] = 1.0;
@@ -123,9 +124,9 @@ namespace Amg
         Dune::FieldVector<Evaluation, numEq> storage;
 
         OPM_BEGIN_PARALLEL_TRY_CATCH();
-        #ifdef _OPENMP
-        #pragma omp parallel for private(block, bweights, block_transpose, storage)
-        #endif
+#ifdef _OPENMP
+#pragma omp parallel for private(block, bweights, block_transpose, storage)
+#endif
         for (const auto& chunk : element_chunks) {
             const std::size_t thread_id = ThreadManager::threadId();
             ElementContext localElemCtx(elemCtx.simulator());
@@ -134,7 +135,8 @@ namespace Amg
                 localElemCtx.updatePrimaryStencil(elem);
                 localElemCtx.updatePrimaryIntensiveQuantities(/*timeIdx=*/0);
 
-                model.localLinearizer(thread_id).localResidual().computeStorage(storage, localElemCtx, /*spaceIdx=*/0, /*timeIdx=*/0);
+                model.localLinearizer(thread_id).localResidual().computeStorage(
+                    storage, localElemCtx, /*spaceIdx=*/0, /*timeIdx=*/0);
 
                 auto extrusionFactor = localElemCtx.intensiveQuantities(0, /*timeIdx=*/0).extrusionFactor();
                 auto scvVolume = localElemCtx.stencil(/*timeIdx=*/0).subControlVolume(0).volume() * extrusionFactor;
@@ -144,7 +146,7 @@ namespace Amg
                 // Build the transposed matrix directly to avoid separate transpose step
                 for (int ii = 0; ii < numEq; ++ii) {
                     for (int jj = 0; jj < numEq; ++jj) {
-                        block_transpose[jj][ii] = storage[ii].derivative(jj)/storage_scale;
+                        block_transpose[jj][ii] = storage[ii].derivative(jj) / storage_scale;
                         if (jj == pressureVarIndex) {
                             block_transpose[jj][ii] *= pressure_scale;
                         }
@@ -155,7 +157,7 @@ namespace Amg
                 double abs_max = *std::max_element(
                     bweights.begin(), bweights.end(), [](double a, double b) { return std::fabs(a) < std::fabs(b); });
                 // probably a scaling which could give approximately total compressibility would be better
-                bweights /=  std::fabs(abs_max); // given normal densities this scales weights to about 1.
+                bweights /= std::fabs(abs_max); // given normal densities this scales weights to about 1.
 
                 const auto index = localElemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
                 weights[index] = bweights;
@@ -184,8 +186,8 @@ namespace Amg
 
         using PrimaryVariables = typename Model::PrimaryVariables;
         using VectorBlockType = typename Vector::block_type;
-        using Evaluation =
-            typename std::decay_t<decltype(model.localLinearizer(ThreadManager::threadId()).localResidual().residual(0))>::block_type;
+        using Evaluation = typename std::decay_t<
+            decltype(model.localLinearizer(ThreadManager::threadId()).localResidual().residual(0))>::block_type;
         using Toolbox = MathToolbox<Evaluation>;
 
         const auto& solution = model.solution(/*timeIdx*/ 0);
@@ -193,9 +195,9 @@ namespace Amg
 
         // Use OpenMP to parallelize over element chunks
         OPM_BEGIN_PARALLEL_TRY_CATCH();
-        #ifdef _OPENMP
-        #pragma omp parallel for private(bweights)
-        #endif
+#ifdef _OPENMP
+#pragma omp parallel for private(bweights)
+#endif
         for (const auto& chunk : element_chunks) {
 
             // Each thread gets a unique copy of elemCtx
@@ -212,8 +214,7 @@ namespace Amg
                 if (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) {
                     const unsigned activeCompIdx = FluidSystem::canonicalToActiveCompIdx(
                         FluidSystem::solventComponentIndex(FluidSystem::waterPhaseIdx));
-                    bweights[activeCompIdx]
-                        = Toolbox::template decay<LhsEval>(1 / fs.invB(FluidSystem::waterPhaseIdx));
+                    bweights[activeCompIdx] = Toolbox::template decay<LhsEval>(1 / fs.invB(FluidSystem::waterPhaseIdx));
                 }
 
                 double denominator = 1.0;
@@ -235,21 +236,20 @@ namespace Amg
                     const unsigned activeCompIdx = FluidSystem::canonicalToActiveCompIdx(
                         FluidSystem::solventComponentIndex(FluidSystem::oilPhaseIdx));
                     bweights[activeCompIdx] = Toolbox::template decay<LhsEval>(
-                        (1 / fs.invB(FluidSystem::oilPhaseIdx) - rs / fs.invB(FluidSystem::gasPhaseIdx))
-                        / denominator);
+                        (1 / fs.invB(FluidSystem::oilPhaseIdx) - rs / fs.invB(FluidSystem::gasPhaseIdx)) / denominator);
                 }
                 if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx)) {
                     const unsigned activeCompIdx = FluidSystem::canonicalToActiveCompIdx(
                         FluidSystem::solventComponentIndex(FluidSystem::gasPhaseIdx));
                     bweights[activeCompIdx] = Toolbox::template decay<LhsEval>(
-                        (1 / fs.invB(FluidSystem::gasPhaseIdx) - rv / fs.invB(FluidSystem::oilPhaseIdx))
-                        / denominator);
+                        (1 / fs.invB(FluidSystem::gasPhaseIdx) - rv / fs.invB(FluidSystem::oilPhaseIdx)) / denominator);
                 }
 
                 weights[index] = bweights;
             }
         }
-        OPM_END_PARALLEL_TRY_CATCH("getTrueImpesAnalyticWeights() failed: ", elemCtx.simulator().vanguard().grid().comm());
+        OPM_END_PARALLEL_TRY_CATCH("getTrueImpesAnalyticWeights() failed: ",
+                                   elemCtx.simulator().vanguard().grid().comm());
     }
 } // namespace Amg
 

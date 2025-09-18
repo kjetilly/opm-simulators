@@ -27,32 +27,31 @@
 namespace Opm
 {
 
-#define INSTANTIATE_PAR(T, Dim, ...)                                                     \
-  template class ParallelOverlappingILU0<Dune::BCRSMatrix<MatrixBlock<T,Dim,Dim>>,       \
-                                         Dune::BlockVector<Dune::FieldVector<T,Dim>>,    \
-                                         Dune::BlockVector<Dune::FieldVector<T,Dim>>,    \
-                                         __VA_ARGS__>;                                   \
-  template class ParallelOverlappingILU0<Dune::BCRSMatrix<Dune::FieldMatrix<T,Dim,Dim>>, \
-                                         Dune::BlockVector<Dune::FieldVector<T,Dim>>,    \
-                                         Dune::BlockVector<Dune::FieldVector<T,Dim>>,    \
-                                         __VA_ARGS__>;
+#define INSTANTIATE_PAR(T, Dim, ...)                                                                                   \
+    template class ParallelOverlappingILU0<Dune::BCRSMatrix<MatrixBlock<T, Dim, Dim>>,                                 \
+                                           Dune::BlockVector<Dune::FieldVector<T, Dim>>,                               \
+                                           Dune::BlockVector<Dune::FieldVector<T, Dim>>,                               \
+                                           __VA_ARGS__>;                                                               \
+    template class ParallelOverlappingILU0<Dune::BCRSMatrix<Dune::FieldMatrix<T, Dim, Dim>>,                           \
+                                           Dune::BlockVector<Dune::FieldVector<T, Dim>>,                               \
+                                           Dune::BlockVector<Dune::FieldVector<T, Dim>>,                               \
+                                           __VA_ARGS__>;
 
 #if HAVE_MPI
-#define INSTANTIATE(T,Dim)                                                \
-    INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)             \
-    INSTANTIATE_PAR(T, Dim, Dune::OwnerOverlapCopyCommunication<int,int>)
+#define INSTANTIATE(T, Dim)                                                                                            \
+    INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)                                                          \
+    INSTANTIATE_PAR(T, Dim, Dune::OwnerOverlapCopyCommunication<int, int>)
 #else
-#define INSTANTIATE(T,Dim) \
-    INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)
+#define INSTANTIATE(T, Dim) INSTANTIATE_PAR(T, Dim, Dune::Amg::SequentialInformation)
 #endif
 
-#define INSTANTIATE_TYPE(T) \
-    INSTANTIATE(T,1)        \
-    INSTANTIATE(T,2)        \
-    INSTANTIATE(T,3)        \
-    INSTANTIATE(T,4)        \
-    INSTANTIATE(T,5)        \
-    INSTANTIATE(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    INSTANTIATE(T, 1)                                                                                                  \
+    INSTANTIATE(T, 2)                                                                                                  \
+    INSTANTIATE(T, 3)                                                                                                  \
+    INSTANTIATE(T, 4)                                                                                                  \
+    INSTANTIATE(T, 5)                                                                                                  \
+    INSTANTIATE(T, 6)
 
 INSTANTIATE_TYPE(double)
 

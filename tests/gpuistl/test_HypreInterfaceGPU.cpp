@@ -24,8 +24,8 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include "../MpiFixture.hpp"
 #include "../HypreTestHelper.hpp"
+#include "../MpiFixture.hpp"
 
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>

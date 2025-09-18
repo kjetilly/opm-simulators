@@ -26,16 +26,18 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkPhasePresenceParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWritePhasePresence>
-        ("Include the phase presence pseudo primary "
-         "variable in the VTK output files");
+
+void
+VtkPhasePresenceParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWritePhasePresence>("Include the phase presence pseudo primary "
+                                                            "variable in the VTK output files");
 }
 
-void VtkPhasePresenceParams::read()
+void
+VtkPhasePresenceParams::read()
 {
     phasePresenceOutput_ = Parameters::Get<Parameters::VtkWritePhasePresence>();
 }

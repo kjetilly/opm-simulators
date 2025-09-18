@@ -20,120 +20,95 @@
 #ifndef OPM_RELPERMDIAGNOSTICS_HEADER_INCLUDED
 #define OPM_RELPERMDIAGNOSTICS_HEADER_INCLUDED
 
-#include <vector>
 #include <utility>
+#include <vector>
 
 #include <opm/material/fluidmatrixinteractions/EclEpsScalingPoints.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-    class EclipseState;
-    template <typename Grid> class LevelCartesianIndexMapper;
-    class MiscTable;
-    class MsfnTable;
-    class SgcwmisTable;
-    class SgfnTable;
-    class SgofTable;
-    class SgwfnTable;
-    class SlgofTable;
-    class Sof2Table;
-    class Sof3Table;
-    class SorwmisTable;
-    class SsfnTable;
-    class SwfnTable;
-    class SwofTable;
-    class GsfTable;
-    class WsfTable;
+class EclipseState;
+template <typename Grid>
+class LevelCartesianIndexMapper;
+class MiscTable;
+class MsfnTable;
+class SgcwmisTable;
+class SgfnTable;
+class SgofTable;
+class SgwfnTable;
+class SlgofTable;
+class Sof2Table;
+class Sof3Table;
+class SorwmisTable;
+class SsfnTable;
+class SwfnTable;
+class SwofTable;
+class GsfTable;
+class WsfTable;
 
-    ///This class is intend to be a relperm diagnostics, to detect
-    ///wrong input of relperm table and endpoints.
-    class RelpermDiagnostics
-    {
-    public:
-        ///This function is used to diagnosis relperm in
-        ///eclipse data file. Errors and warings will be
-        ///output if they're found.
-        ///\param[in] eclState  eclipse state.
-        ///\param[in] levelCartesianIndexMapper Cartesian index mapper
-        template <class LevelCartesianIndexMapper>
-        void diagnosis(const EclipseState& eclState,
-                       const LevelCartesianIndexMapper& levelCartesianIndexMapper);
+/// This class is intend to be a relperm diagnostics, to detect
+/// wrong input of relperm table and endpoints.
+class RelpermDiagnostics
+{
+public:
+    /// This function is used to diagnosis relperm in
+    /// eclipse data file. Errors and warings will be
+    /// output if they're found.
+    ///\param[in] eclState  eclipse state.
+    ///\param[in] levelCartesianIndexMapper Cartesian index mapper
+    template <class LevelCartesianIndexMapper>
+    void diagnosis(const EclipseState& eclState, const LevelCartesianIndexMapper& levelCartesianIndexMapper);
 
-    private:
-        enum FluidSystem {
-            OilWater,
-            OilGas,
-            WaterGas,
-            BlackOil,
-            Solvent
-        };
+private:
+    enum FluidSystem { OilWater, OilGas, WaterGas, BlackOil, Solvent };
 
-        FluidSystem fluidSystem_;
+    FluidSystem fluidSystem_;
 
-        enum SaturationFunctionFamily {
-            FamilyI,
-            FamilyII,
-            FamilyIII,
-            NoFamily
-        };
+    enum SaturationFunctionFamily { FamilyI, FamilyII, FamilyIII, NoFamily };
 
-        SaturationFunctionFamily satFamily_{NoFamily};
+    SaturationFunctionFamily satFamily_ {NoFamily};
 
-        std::vector<EclEpsScalingPointsInfo<double> > unscaledEpsInfo_{};
-        std::vector<EclEpsScalingPointsInfo<double> > scaledEpsInfo_{};
+    std::vector<EclEpsScalingPointsInfo<double>> unscaledEpsInfo_ {};
+    std::vector<EclEpsScalingPointsInfo<double>> scaledEpsInfo_ {};
 
 
-        ///Check the phase that used.
-        /// return false if one-phase system
-        bool phaseCheck_(const EclipseState& es);
+    /// Check the phase that used.
+    ///  return false if one-phase system
+    bool phaseCheck_(const EclipseState& es);
 
-        ///Check saturation family I and II.
-        void satFamilyCheck_(const EclipseState& eclState);
+    /// Check saturation family I and II.
+    void satFamilyCheck_(const EclipseState& eclState);
 
-        ///Check saturation tables.
-        void tableCheck_(const EclipseState& eclState);
+    /// Check saturation tables.
+    void tableCheck_(const EclipseState& eclState);
 
-        ///Check endpoints in the saturation tables.
-        void unscaledEndPointsCheck_(const EclipseState& eclState);
+    /// Check endpoints in the saturation tables.
+    void unscaledEndPointsCheck_(const EclipseState& eclState);
 
-        template <class LevelCartesianIndexMapper>
-        void scaledEndPointsCheck_(const EclipseState& eclState,
-                                   const LevelCartesianIndexMapper& levelCartesianIndexMapper);
+    template <class LevelCartesianIndexMapper>
+    void scaledEndPointsCheck_(const EclipseState& eclState,
+                               const LevelCartesianIndexMapper& levelCartesianIndexMapper);
 
-        ///For every table, need to deal with case by case.
-        void swofTableCheck_(const SwofTable& swofTables,
-                             const int satnumIdx);
-        void sgofTableCheck_(const SgofTable& sgofTables,
-                             const int satnumIdx);
-        void slgofTableCheck_(const SlgofTable& slgofTables,
-                              const int satnumIdx);
-        void swfnTableCheck_(const SwfnTable& swfnTables,
-                             const int satnumIdx);
-        void sgfnTableCheck_(const SgfnTable& sgfnTables,
-                             const int satnumIdx);
-        void wsfTableCheck_(const WsfTable& wsfTables,
-                            const int satnumIdx);
-        void gsfTableCheck_(const GsfTable& gsfTables,
-                            const int satnumIdx);
-        void sof3TableCheck_(const Sof3Table& sof3Tables,
-                             const int satnumIdx);
-        void sof2TableCheck_(const Sof2Table& sof2Tables,
-                             const int satnumIdx);
-        void sgwfnTableCheck_(const SgwfnTable& sgwfnTables,
-                              const int satnumIdx);
-        ///Tables for solvent model
-        void sgcwmisTableCheck_(const SgcwmisTable& sgcwmisTables,
-                                const int satnumIdx);
-        void sorwmisTableCheck_(const SorwmisTable& sorwmisTables,
-                                const int satnumIdx);
-        void ssfnTableCheck_(const SsfnTable& ssfnTables,
-                             const int satnumIdx);
-        void miscTableCheck_(const MiscTable& miscTables,
-                             const int miscnumIdx);
-        void msfnTableCheck_(const MsfnTable& msfnTables,
-                             const int satnumIdx);
-    };
+    /// For every table, need to deal with case by case.
+    void swofTableCheck_(const SwofTable& swofTables, const int satnumIdx);
+    void sgofTableCheck_(const SgofTable& sgofTables, const int satnumIdx);
+    void slgofTableCheck_(const SlgofTable& slgofTables, const int satnumIdx);
+    void swfnTableCheck_(const SwfnTable& swfnTables, const int satnumIdx);
+    void sgfnTableCheck_(const SgfnTable& sgfnTables, const int satnumIdx);
+    void wsfTableCheck_(const WsfTable& wsfTables, const int satnumIdx);
+    void gsfTableCheck_(const GsfTable& gsfTables, const int satnumIdx);
+    void sof3TableCheck_(const Sof3Table& sof3Tables, const int satnumIdx);
+    void sof2TableCheck_(const Sof2Table& sof2Tables, const int satnumIdx);
+    void sgwfnTableCheck_(const SgwfnTable& sgwfnTables, const int satnumIdx);
+    /// Tables for solvent model
+    void sgcwmisTableCheck_(const SgcwmisTable& sgcwmisTables, const int satnumIdx);
+    void sorwmisTableCheck_(const SorwmisTable& sorwmisTables, const int satnumIdx);
+    void ssfnTableCheck_(const SsfnTable& ssfnTables, const int satnumIdx);
+    void miscTableCheck_(const MiscTable& miscTables, const int miscnumIdx);
+    void msfnTableCheck_(const MsfnTable& msfnTables, const int satnumIdx);
+};
 
-} //namespace Opm
+} // namespace Opm
 
 #endif // OPM_RELPERMDIAGNOSTICS_HEADER_INCLUDED

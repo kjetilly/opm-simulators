@@ -28,22 +28,29 @@
 #ifndef OPM_VTK_DIFFUSION_PARAMS_HPP
 #define OPM_VTK_DIFFUSION_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteTortuosities { static constexpr bool value = false; };
-struct VtkWriteDiffusionCoefficients { static constexpr bool value = false; };
-struct VtkWriteEffectiveDiffusionCoefficients { static constexpr bool value = false; };
+struct VtkWriteTortuosities {
+    static constexpr bool value = false;
+};
+struct VtkWriteDiffusionCoefficients {
+    static constexpr bool value = false;
+};
+struct VtkWriteEffectiveDiffusionCoefficients {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkDiffusionModule.
  */
-struct VtkDiffusionParams
-{
+struct VtkDiffusionParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

@@ -27,21 +27,26 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
-#include <opm/models/flash/flashmodel.hh>
-#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 #include "problems/diffusionproblem.hh"
+#include <opm/models/flash/flashmodel.hh>
+#include <opm/models/utils/start.hh>
+#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct DiffusionProblem { using InheritsFrom = std::tuple<DiffusionBaseProblem, FlashModel>; };
+namespace TTag
+{
+    struct DiffusionProblem {
+        using InheritsFrom = std::tuple<DiffusionBaseProblem, FlashModel>;
+    };
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::DiffusionProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

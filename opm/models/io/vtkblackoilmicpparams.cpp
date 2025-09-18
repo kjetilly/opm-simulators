@@ -26,26 +26,29 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackoilMICPParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteMicrobialConcentration>
-        ("Include the concentration of the microbial component in the water phase "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteOxygenConcentration>
-        ("Include the concentration of the oxygen component in the water phase "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteUreaConcentration>
-        ("Include the concentration of the urea component in the water phase "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteBiofilmConcentration>
-        ("Include the biofilm volume fraction in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteCalciteConcentration>
-        ("Include the calcite volume fraction in the VTK output files");
+
+void
+VtkBlackoilMICPParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteMicrobialConcentration>(
+        "Include the concentration of the microbial component in the water phase "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteOxygenConcentration>(
+        "Include the concentration of the oxygen component in the water phase "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteUreaConcentration>(
+        "Include the concentration of the urea component in the water phase "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteBiofilmConcentration>(
+        "Include the biofilm volume fraction in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteCalciteConcentration>(
+        "Include the calcite volume fraction in the VTK output files");
 }
 
-void VtkBlackoilMICPParams::read()
+void
+VtkBlackoilMICPParams::read()
 {
     microbialConcentrationOutput_ = Parameters::Get<Parameters::VtkWriteMicrobialConcentration>();
     oxygenConcentrationOutput_ = Parameters::Get<Parameters::VtkWriteOxygenConcentration>();

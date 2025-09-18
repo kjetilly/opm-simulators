@@ -25,9 +25,10 @@
 #include <string>
 
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class ALQState
 {
 public:
@@ -39,10 +40,10 @@ public:
     bool oscillation() const;
     void update_count(bool increase);
     void reset_count();
-    int  get_increment_count() const;
-    int  get_decrement_count() const;
+    int get_increment_count() const;
+    int get_decrement_count() const;
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(current_alq_);
@@ -55,14 +56,11 @@ public:
 
 private:
     std::optional<Scalar> current_alq_;
-    Scalar default_alq_{0.0};
-    int alq_increase_count_{0};
-    int alq_decrease_count_{0};
+    Scalar default_alq_ {0.0};
+    int alq_increase_count_ {0};
+    int alq_decrease_count_ {0};
 };
 
-}
+} // namespace Opm
 
 #endif
-
-
-

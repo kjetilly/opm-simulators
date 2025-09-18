@@ -26,24 +26,26 @@
 
 #include <opm/simulators/utils/DeferredLogger.hpp>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/OpmLog/LogBackend.hpp>
 #include <opm/common/OpmLog/CounterLog.hpp>
-#include <opm/common/OpmLog/TimerLog.hpp>
-#include <opm/common/OpmLog/StreamLog.hpp>
+#include <opm/common/OpmLog/LogBackend.hpp>
 #include <opm/common/OpmLog/LogUtil.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/OpmLog/StreamLog.hpp>
+#include <opm/common/OpmLog/TimerLog.hpp>
 
 using namespace Opm;
 
-void initLogger(std::ostringstream& log_stream) {
+void
+initLogger(std::ostringstream& log_stream)
+{
     OpmLog::removeAllBackends();
     std::shared_ptr<CounterLog> counter = std::make_shared<CounterLog>();
-    std::shared_ptr<StreamLog> streamLog = std::make_shared<StreamLog>( log_stream , Log::DefaultMessageTypes);
+    std::shared_ptr<StreamLog> streamLog = std::make_shared<StreamLog>(log_stream, Log::DefaultMessageTypes);
 
-    OpmLog::addBackend("COUNTER" , counter);
-    OpmLog::addBackend("STREAM" , streamLog);
-    BOOST_CHECK_EQUAL( true , OpmLog::hasBackend("COUNTER"));
-    BOOST_CHECK_EQUAL( true , OpmLog::hasBackend("STREAM"));
+    OpmLog::addBackend("COUNTER", counter);
+    OpmLog::addBackend("STREAM", streamLog);
+    BOOST_CHECK_EQUAL(true, OpmLog::hasBackend("COUNTER"));
+    BOOST_CHECK_EQUAL(true, OpmLog::hasBackend("STREAM"));
 
     streamLog->setMessageFormatter(std::make_shared<SimpleMessageFormatter>(true, false));
     streamLog->setMessageLimiter(std::make_shared<MessageLimiter>(2));
@@ -87,14 +89,13 @@ BOOST_AUTO_TEST_CASE(deferredlogger)
     deferred_logger.logMessages();
 
     auto counter = OpmLog::getBackend<CounterLog>("COUNTER");
-    BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Warning) );
-    BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Info) );
-    BOOST_CHECK_EQUAL( 2 , counter->numMessages(Log::MessageType::Error) );
-    BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Problem) );
-    BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Bug) );
-    BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Debug) );
-    BOOST_CHECK_EQUAL( 8 , counter->numMessages(Log::MessageType::Note) );
+    BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Warning));
+    BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Info));
+    BOOST_CHECK_EQUAL(2, counter->numMessages(Log::MessageType::Error));
+    BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Problem));
+    BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Bug));
+    BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Debug));
+    BOOST_CHECK_EQUAL(8, counter->numMessages(Log::MessageType::Note));
 
     BOOST_CHECK_EQUAL(log_stream.str(), expected);
-
 }

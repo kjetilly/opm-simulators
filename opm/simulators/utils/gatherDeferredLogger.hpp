@@ -26,8 +26,9 @@
 namespace Opm
 {
 
-    /// Create a global log combining local logs
-    Opm::DeferredLogger gatherDeferredLogger(const Opm::DeferredLogger& local_deferredlogger, Parallel::Communication communicator);
+/// Create a global log combining local logs
+Opm::DeferredLogger gatherDeferredLogger(const Opm::DeferredLogger& local_deferredlogger,
+                                         Parallel::Communication communicator);
 
 } // namespace Opm
 

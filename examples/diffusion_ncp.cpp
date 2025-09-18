@@ -27,22 +27,27 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
 #include <opm/models/ncp/ncpmodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/diffusionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct DiffusionProblem { using InheritsFrom = std::tuple<DiffusionBaseProblem, NcpModel>; };
+namespace TTag
+{
+    struct DiffusionProblem {
+        using InheritsFrom = std::tuple<DiffusionBaseProblem, NcpModel>;
+    };
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::DiffusionProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

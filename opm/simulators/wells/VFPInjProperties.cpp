@@ -22,22 +22,20 @@
 
 #include <opm/input/eclipse/Schedule/VFPInjTable.hpp>
 
-#include <opm/material/densead/Math.hpp>
 #include <opm/material/densead/Evaluation.hpp>
+#include <opm/material/densead/Math.hpp>
 
 #include <opm/simulators/wells/VFPHelpers.hpp>
 
 #include <limits>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-Scalar VFPInjProperties<Scalar>::
-bhp(const int    table_id,
-    const Scalar aqua,
-    const Scalar liquid,
-    const Scalar vapour,
-    const Scalar thp_arg) const
+template <class Scalar>
+Scalar
+VFPInjProperties<Scalar>::bhp(
+    const int table_id, const Scalar aqua, const Scalar liquid, const Scalar vapour, const Scalar thp_arg) const
 {
     const VFPInjTable& table = detail::getTable(m_tables, table_id);
 
@@ -45,17 +43,14 @@ bhp(const int    table_id,
     return retval.value;
 }
 
-template<class Scalar>
-Scalar VFPInjProperties<Scalar>::
-thp(const int    table_id,
-    const Scalar aqua,
-    const Scalar liquid,
-    const Scalar vapour,
-    const Scalar bhp_arg) const
+template <class Scalar>
+Scalar
+VFPInjProperties<Scalar>::thp(
+    const int table_id, const Scalar aqua, const Scalar liquid, const Scalar vapour, const Scalar bhp_arg) const
 {
     const VFPInjTable& table = detail::getTable(m_tables, table_id);
 
-    //Find interpolation variables
+    // Find interpolation variables
     const Scalar flo = detail::getFlo(table, aqua, liquid, vapour);
     if (std::abs(flo) < std::numeric_limits<Scalar>::epsilon()) {
         return 0.;
@@ -79,42 +74,42 @@ thp(const int    table_id,
     return VFPHelpers<Scalar>::findTHP(bhp_array, thp_array, bhp_arg, /*find_largest*/ false);
 }
 
-template<class Scalar>
+template <class Scalar>
 const VFPInjTable&
 VFPInjProperties<Scalar>::getTable(const int table_id) const
 {
     return detail::getTable(m_tables, table_id);
 }
 
-template<class Scalar>
-bool VFPInjProperties<Scalar>::hasTable(const int table_id) const
+template <class Scalar>
+bool
+VFPInjProperties<Scalar>::hasTable(const int table_id) const
 {
     return detail::hasTable(m_tables, table_id);
 }
 
-template<class Scalar>
-void VFPInjProperties<Scalar>::addTable(const VFPInjTable& new_table)
+template <class Scalar>
+void
+VFPInjProperties<Scalar>::addTable(const VFPInjTable& new_table)
 {
-    this->m_tables.emplace( new_table.getTableNum(), new_table );
+    this->m_tables.emplace(new_table.getTableNum(), new_table);
 }
 
-template<class Scalar>
+template <class Scalar>
 template <class EvalWell>
-EvalWell VFPInjProperties<Scalar>::bhp(const int       table_id,
-                                       const EvalWell& aqua,
-                                       const EvalWell& liquid,
-                                       const EvalWell& vapour,
-                                       const Scalar    thp) const
+EvalWell
+VFPInjProperties<Scalar>::bhp(
+    const int table_id, const EvalWell& aqua, const EvalWell& liquid, const EvalWell& vapour, const Scalar thp) const
 {
-    //Get the table
+    // Get the table
     const VFPInjTable& table = detail::getTable(m_tables, table_id);
     EvalWell bhp = 0.0 * aqua;
 
-    //Find interpolation variables
+    // Find interpolation variables
     EvalWell flo = detail::getFlo(table, aqua, liquid, vapour);
 
-    //First, find the values to interpolate between
-    //Value of FLO is negative in OPM for producers, but positive in VFP table
+    // First, find the values to interpolate between
+    // Value of FLO is negative in OPM for producers, but positive in VFP table
     const auto flo_i = VFPHelpers<Scalar>::findInterpData(flo.value(), table.getFloAxis());
     const auto thp_i = VFPHelpers<Scalar>::findInterpData(thp, table.getTHPAxis()); // assume constant
 
@@ -125,32 +120,28 @@ EvalWell VFPInjProperties<Scalar>::bhp(const int       table_id,
     return bhp;
 }
 
-#define INSTANTIATE(T,...)                           \
-    template __VA_ARGS__                             \
-        VFPInjProperties<T>::bhp(const int,          \
-                                 const __VA_ARGS__&, \
-                                 const __VA_ARGS__&, \
-                                 const __VA_ARGS__&, \
-                                 const T) const;
+#define INSTANTIATE(T, ...)                                                                                            \
+    template __VA_ARGS__ VFPInjProperties<T>::bhp(                                                                     \
+        const int, const __VA_ARGS__&, const __VA_ARGS__&, const __VA_ARGS__&, const T) const;
 
-#define INSTANTIATE_TYPE(T)                        \
-    template class VFPInjProperties<T>;            \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 4u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 5u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 6u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 7u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 8u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 9u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 10u>) \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 11u>) \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 3, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 4, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 5, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 6, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 7, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 8, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 9, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 10, 0u>)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class VFPInjProperties<T>;                                                                                \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 4u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 5u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 6u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 7u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 8u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 9u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 10u>)                                                                    \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 11u>)                                                                    \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 3, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 4, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 5, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 6, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 7, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 8, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 9, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 10, 0u>)
 
 INSTANTIATE_TYPE(double)
 
@@ -158,4 +149,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-} //Namespace Opm
+} // Namespace Opm

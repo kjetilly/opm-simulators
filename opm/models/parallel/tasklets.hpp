@@ -34,7 +34,8 @@
 #include <queue>
 #include <thread>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief The base class for tasklets.
@@ -46,17 +47,27 @@ class TaskletInterface
 public:
     explicit TaskletInterface(int refCount = 1)
         : referenceCount_(refCount)
-    {}
+    {
+    }
 
-    virtual ~TaskletInterface() {}
+    virtual ~TaskletInterface()
+    {
+    }
     virtual void run() = 0;
-    virtual bool isEndMarker () const { return false; }
+    virtual bool isEndMarker() const
+    {
+        return false;
+    }
 
     void dereference()
-    { -- referenceCount_; }
+    {
+        --referenceCount_;
+    }
 
     int referenceCount() const
-    { return referenceCount_; }
+    {
+        return referenceCount_;
+    }
 
 private:
     int referenceCount_;
@@ -74,10 +85,13 @@ public:
     FunctionRunnerTasklet(int numInvocations, const Fn& fn)
         : TaskletInterface(numInvocations)
         , fn_(fn)
-    {}
+    {
+    }
 
     void run() override
-    { fn_(); }
+    {
+        fn_();
+    }
 
 private:
     const Fn& fn_;
@@ -115,10 +129,13 @@ class TaskletRunner
     {
     public:
         void run() override
-        {}
+        {
+        }
 
         bool isEndMarker() const override
-        { return true; }
+        {
+            return true;
+        }
     };
 
 public:
@@ -155,7 +172,9 @@ public:
      * \brief Returns the number of worker threads for the tasklet runner.
      */
     int numWorkerThreads() const
-    { return threads_.size(); }
+    {
+        return threads_.size();
+    }
 
     /*!
      * \brief Add a new tasklet.
@@ -168,7 +187,7 @@ public:
      * \brief Convenience method to construct a new function runner tasklet and dispatch it immediately.
      */
     template <class Fn>
-    std::shared_ptr<FunctionRunnerTasklet<Fn> > dispatchFunction(Fn &fn, int numInvocations = 1)
+    std::shared_ptr<FunctionRunnerTasklet<Fn>> dispatchFunction(Fn& fn, int numInvocations = 1)
     {
         using Tasklet = FunctionRunnerTasklet<Fn>;
         auto tasklet = std::make_shared<Tasklet>(numInvocations, fn);
@@ -199,8 +218,8 @@ protected:
     //! do the work until the queue received an end tasklet
     void run_();
 
-    std::vector<std::unique_ptr<std::thread> > threads_;
-    std::queue<std::shared_ptr<TaskletInterface> > taskletQueue_;
+    std::vector<std::unique_ptr<std::thread>> threads_;
+    std::queue<std::shared_ptr<TaskletInterface>> taskletQueue_;
     std::mutex taskletQueueMutex_;
     std::condition_variable workAvailableCondition_;
 

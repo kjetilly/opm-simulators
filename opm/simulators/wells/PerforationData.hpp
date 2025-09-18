@@ -22,23 +22,22 @@
 
 #include <cstddef>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Static data associated with a well perforation.
-template<class Scalar>
-struct PerforationData
-{
-    int cell_index{};
-    Scalar connection_transmissibility_factor{};
-    Scalar connection_d_factor{};
-    int satnum_id{};
+template <class Scalar>
+struct PerforationData {
+    int cell_index {};
+    Scalar connection_transmissibility_factor {};
+    Scalar connection_d_factor {};
+    int satnum_id {};
     /// \brief The original index of the perforation in ECL Schedule
-    std::size_t ecl_index{};
+    std::size_t ecl_index {};
 };
 
-template<class Scalar>
-struct PerforationRates
-{
+template <class Scalar>
+struct PerforationRates {
     Scalar dis_gas = 0.0;
     Scalar dis_gas_in_water = 0.0;
     Scalar vap_oil = 0.0;

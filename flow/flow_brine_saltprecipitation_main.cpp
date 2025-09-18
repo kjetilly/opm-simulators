@@ -18,7 +18,8 @@
 #include <flow/flow_brine_saltprecipitation.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowBrineSaltPrecipitationMainStandalone(argc, argv);
 }

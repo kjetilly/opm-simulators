@@ -25,19 +25,19 @@
 #include <opm/simulators/linalg/is_gpu_operator.hpp>
 
 #if HAVE_CUDA
-#include <opm/simulators/linalg/gpuistl/GpuDILU.hpp>
-#include <opm/simulators/linalg/gpuistl/GpuSeqILU0.hpp>
-#include <opm/simulators/linalg/gpuistl/GpuJac.hpp>
-#include <opm/simulators/linalg/gpuistl/OpmGpuILU0.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuBlockPreconditioner.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuDILU.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuJac.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuSeqILU0.hpp>
+#include <opm/simulators/linalg/gpuistl/OpmGpuILU0.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_preconditioner_utils.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
 template <class Operator, class Comm>
-struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is_gpu_operator_v<Operator>>>
-{
+struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is_gpu_operator_v<Operator>>> {
     using O = Operator;
     using C = Comm;
     using F = PreconditionerFactory<O, C>;
@@ -67,41 +67,50 @@ struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is
             return std::make_shared<gpuistl::GpuBlockPreconditioner<V, V, C>>(gpuPrec, comm);
         });
 
-        F::addCreator("dilu", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t, const C& comm) -> PrecPtr {
-            return op.getmat().dispatchOnBlocksize([&](auto blockSizeVal) -> PrecPtr {
-                constexpr int blockSize = decltype(blockSizeVal)::value;
-                const auto cpuMatrix = gpuistl::detail::makeCPUMatrix<O, Dune::FieldMatrix<field_type, blockSize, blockSize>>(op);
-                const bool split_matrix = prm.get<bool>("split_matrix", true);
-                const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
-                const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
-                const bool reorder = prm.get<bool>("reorder", true);
-                using CPUMatrixType = std::remove_const_t<std::remove_reference_t<decltype(cpuMatrix)>>;
-                using GPUDILU = typename gpuistl::GpuDILU<CPUMatrixType, V, V>;
-                auto gpuPrec = std::make_shared<GPUDILU>(op.getmat(), cpuMatrix, split_matrix, tune_gpu_kernels, mixed_precision_scheme, reorder);
-                return std::make_shared<gpuistl::GpuBlockPreconditioner<V, V, C>>(gpuPrec, comm);
+        F::addCreator(
+            "dilu",
+            [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t, const C& comm)
+                -> PrecPtr {
+                return op.getmat().dispatchOnBlocksize([&](auto blockSizeVal) -> PrecPtr {
+                    constexpr int blockSize = decltype(blockSizeVal)::value;
+                    const auto cpuMatrix
+                        = gpuistl::detail::makeCPUMatrix<O, Dune::FieldMatrix<field_type, blockSize, blockSize>>(op);
+                    const bool split_matrix = prm.get<bool>("split_matrix", true);
+                    const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
+                    const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
+                    const bool reorder = prm.get<bool>("reorder", true);
+                    using CPUMatrixType = std::remove_const_t<std::remove_reference_t<decltype(cpuMatrix)>>;
+                    using GPUDILU = typename gpuistl::GpuDILU<CPUMatrixType, V, V>;
+                    auto gpuPrec = std::make_shared<GPUDILU>(
+                        op.getmat(), cpuMatrix, split_matrix, tune_gpu_kernels, mixed_precision_scheme, reorder);
+                    return std::make_shared<gpuistl::GpuBlockPreconditioner<V, V, C>>(gpuPrec, comm);
+                });
             });
-        });
 
-        F::addCreator("opmilu0", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t, const C& comm) -> PrecPtr {
-            return op.getmat().dispatchOnBlocksize([&](auto blockSizeVal) -> PrecPtr {
-                constexpr int blockSize = decltype(blockSizeVal)::value;
-                const auto cpuMatrix = gpuistl::detail::makeCPUMatrix<O, Dune::FieldMatrix<field_type, blockSize, blockSize>>(op);
-                const bool split_matrix = prm.get<bool>("split_matrix", true);
-                const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
-                const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
-                using CPUMatrixType = std::remove_const_t<std::remove_reference_t<decltype(cpuMatrix)>>;
-                using GPUILU0 = typename gpuistl::OpmGpuILU0<CPUMatrixType, V, V>;
-                auto gpuPrec = std::make_shared<GPUILU0>(op.getmat(), cpuMatrix, split_matrix, tune_gpu_kernels, mixed_precision_scheme);
-                return std::make_shared<gpuistl::GpuBlockPreconditioner<V, V, C>>(gpuPrec, comm);
+        F::addCreator(
+            "opmilu0",
+            [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t, const C& comm)
+                -> PrecPtr {
+                return op.getmat().dispatchOnBlocksize([&](auto blockSizeVal) -> PrecPtr {
+                    constexpr int blockSize = decltype(blockSizeVal)::value;
+                    const auto cpuMatrix
+                        = gpuistl::detail::makeCPUMatrix<O, Dune::FieldMatrix<field_type, blockSize, blockSize>>(op);
+                    const bool split_matrix = prm.get<bool>("split_matrix", true);
+                    const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
+                    const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
+                    using CPUMatrixType = std::remove_const_t<std::remove_reference_t<decltype(cpuMatrix)>>;
+                    using GPUILU0 = typename gpuistl::OpmGpuILU0<CPUMatrixType, V, V>;
+                    auto gpuPrec = std::make_shared<GPUILU0>(
+                        op.getmat(), cpuMatrix, split_matrix, tune_gpu_kernels, mixed_precision_scheme);
+                    return std::make_shared<gpuistl::GpuBlockPreconditioner<V, V, C>>(gpuPrec, comm);
+                });
             });
-        });
 #endif // HAVE_CUDA
     }
-
 };
 
 
-}// namespace Opm
+} // namespace Opm
 
 
 #endif // OPM_STANDARDPRECONDITIONERS_GPU_MPI_HEADER

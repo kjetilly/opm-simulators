@@ -25,7 +25,8 @@
 #include <vector>
 
 
-namespace Opm {
+namespace Opm
+{
 
 class VFPProdTable;
 
@@ -34,8 +35,9 @@ class VFPProdTable;
  * water fraction, gas fraction, and artificial lift for production VFP tables, and similarly
  * the BHP as a function of the rate and tubing head pressure.
  */
-template<class Scalar>
-class VFPProdProperties {
+template <class Scalar>
+class VFPProdProperties
+{
 public:
     /**
      * Takes *no* ownership of data.
@@ -63,15 +65,15 @@ public:
      * input ADB objects.
      */
     template <class EvalWell>
-    EvalWell bhp(const int       table_id,
+    EvalWell bhp(const int table_id,
                  const EvalWell& aqua,
                  const EvalWell& liquid,
                  const EvalWell& vapour,
-                 const Scalar    thp,
-                 const Scalar    alq,
-                 const Scalar    explicit_wfr,
-                 const Scalar    explicit_gfr,
-                 const bool      use_expvfp) const;
+                 const Scalar thp,
+                 const Scalar alq,
+                 const Scalar explicit_wfr,
+                 const Scalar explicit_gfr,
+                 const bool use_expvfp) const;
 
     /**
      * Linear interpolation of bhp as a function of the input parameters
@@ -88,7 +90,7 @@ public:
      * @return The bottom hole pressure, interpolated/extrapolated linearly using
      * the above parameters from the values in the input table.
      */
-    Scalar bhp(const int    table_id,
+    Scalar bhp(const int table_id,
                const Scalar aqua,
                const Scalar liquid,
                const Scalar vapour,
@@ -96,7 +98,7 @@ public:
                const Scalar alq,
                const Scalar explicit_wfr,
                const Scalar explicit_gfr,
-               const bool   use_expvfp) const;
+               const bool use_expvfp) const;
 
     /**
      * Linear interpolation of thp as a function of the input parameters
@@ -143,10 +145,9 @@ public:
     }
 
     /**
-     * Returns minimum bhp for given thp, wfr, gfr and alq 
+     * Returns minimum bhp for given thp, wfr, gfr and alq
      */
-    Scalar minimumBHP(const int table_id, const Scalar thp,
-                      const Scalar wfr, const Scalar gfr, const Scalar alq) const;
+    Scalar minimumBHP(const int table_id, const Scalar thp, const Scalar wfr, const Scalar gfr, const Scalar alq) const;
 
 protected:
     // calculate a group bhp values with a group of flo rate values

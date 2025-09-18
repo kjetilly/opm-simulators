@@ -463,8 +463,8 @@ public:
      * Downloads the matrix data from AMGX and updates the GpuSparseMatrix with the values.
      * The sparsity pattern is assumed to be identical, so only values are updated.
      *
-     * @note This function is intended primarily for testing purposes and should not be used in performance-critical code paths,
-     *       as it may involve unnecessary device-to-device transfers and temporary allocations.
+     * @note This function is intended primarily for testing purposes and should not be used in performance-critical
+     * code paths, as it may involve unnecessary device-to-device transfers and temporary allocations.
      *
      * @param amgxMatrix The source AMGX matrix
      * @param gpuSparseMatrix The GpuSparseMatrix to update
@@ -491,11 +491,8 @@ public:
         void* diag_data_ptr = nullptr;
 
         // Download matrix values directly from AMGX to GpuSparseMatrix
-        OPM_AMGX_SAFE_CALL(AMGX_matrix_download_all(amgxMatrix,
-                                                    temp_row_ptrs,
-                                                    temp_col_indices,
-                                                    gpu_values,
-                                                    &diag_data_ptr));
+        OPM_AMGX_SAFE_CALL(
+            AMGX_matrix_download_all(amgxMatrix, temp_row_ptrs, temp_col_indices, gpu_values, &diag_data_ptr));
 
         // Clean up temporary device memory
         OPM_GPU_SAFE_CALL(cudaFree(temp_row_ptrs));

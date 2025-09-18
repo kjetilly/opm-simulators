@@ -35,35 +35,37 @@
 #include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
 #endif
 
+#include <opm/simulators/linalg/SmallDenseMatrixUtils.hpp>
 #include <opm/simulators/linalg/istlsparsematrixadapter.hh>
 #include <opm/simulators/linalg/matrixblock.hh>
-#include <opm/simulators/linalg/SmallDenseMatrixUtils.hpp>
 
-#include <opm/simulators/wells/WellHelpers.hpp>
 #include <opm/simulators/wells/MultisegmentWellGeneric.hpp>
+#include <opm/simulators/wells/WellHelpers.hpp>
 #include <opm/simulators/wells/WellInterfaceGeneric.hpp>
 
 #include <cstddef>
 #include <numeric>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-MultisegmentWellEquations(const MultisegmentWellGeneric<Scalar, IndexTraits>& well, const ParallelWellInfo<Scalar>& pw_info)
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::MultisegmentWellEquations(
+    const MultisegmentWellGeneric<Scalar, IndexTraits>& well, const ParallelWellInfo<Scalar>& pw_info)
     : well_(well)
     , pw_info_(pw_info)
     , parallelB_(duneB_, pw_info)
 {
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-init(const int numPerfs,
-     const std::vector<int>& cells,
-     const std::vector<std::vector<int>>& segment_inlets,
-     const std::vector<std::vector<int>>& perforations)
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::init(
+    const int numPerfs,
+    const std::vector<int>& cells,
+    const std::vector<std::vector<int>>& segment_inlets,
+    const std::vector<std::vector<int>>& perforations)
 {
     duneB_.setBuildMode(OffDiagMatWell::row_wise);
     duneC_.setBuildMode(OffDiagMatWell::row_wise);
@@ -76,18 +78,17 @@ init(const int numPerfs,
     // calculating the NNZ for duneD_
     // NNZ = number_of_segments + 2 * (number_of_inlets / number_of_outlets)
     {
-        const int nnz_d = std::accumulate(segment_inlets.begin(), segment_inlets.end(),
+        const int nnz_d = std::accumulate(segment_inlets.begin(),
+                                          segment_inlets.end(),
                                           well_.numberOfSegments(),
-                                          [](const auto acc, const auto& inlets)
-                                          { return acc + 2 * inlets.size(); });
+                                          [](const auto acc, const auto& inlets) { return acc + 2 * inlets.size(); });
         duneD_.setSize(well_.numberOfSegments(), well_.numberOfSegments(), nnz_d);
     }
     duneB_.setSize(well_.numberOfSegments(), numPerfs, numPerfs);
     duneC_.setSize(well_.numberOfSegments(), numPerfs, numPerfs);
 
     // we need to add the off diagonal ones
-    for (auto row = duneD_.createbegin(),
-              end = duneD_.createend(); row != end; ++row) {
+    for (auto row = duneD_.createbegin(), end = duneD_.createend(); row != end; ++row) {
         // the number of the row corrspnds to the segment now
         const int seg = row.index();
         // adding the item related to outlet relation
@@ -108,8 +109,7 @@ init(const int numPerfs,
     }
 
     // make the C matrix
-    for (auto row = duneC_.createbegin(),
-              end = duneC_.createend(); row != end; ++row) {
+    for (auto row = duneC_.createbegin(), end = duneC_.createend(); row != end; ++row) {
         // the number of the row corresponds to the segment number now.
         for (const int& perf : perforations[row.index()]) {
             const int local_perf_index = pw_info_.activePerfToLocalPerf(perf);
@@ -120,8 +120,7 @@ init(const int numPerfs,
     }
 
     // make the B^T matrix
-    for (auto row = duneB_.createbegin(),
-              end = duneB_.createend(); row != end; ++row) {
+    for (auto row = duneB_.createbegin(), end = duneB_.createend(); row != end; ++row) {
         // the number of the row corresponds to the segment number now.
         for (const int& perf : perforations[row.index()]) {
             const int local_perf_index = pw_info_.activePerfToLocalPerf(perf);
@@ -137,8 +136,9 @@ init(const int numPerfs,
     cells_ = cells;
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::clear()
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::clear()
 {
     duneB_ = 0.0;
     duneC_ = 0.0;
@@ -147,9 +147,9 @@ void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::clear()
     duneDSolver_.reset();
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-apply(const BVector& x, BVector& Ax) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::apply(const BVector& x, BVector& Ax) const
 {
     BVectorWell Bx(duneB_.N());
 
@@ -164,13 +164,13 @@ apply(const BVector& x, BVector& Ax) const
     // Then, Ax does not need to be updated by the following calculation.
     if (Ax.size() > 0) {
         // Ax = Ax - duneC_^T * invDBx
-        duneC_.mmtv(invDBx,Ax);
+        duneC_.mmtv(invDBx, Ax);
     }
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-apply(BVector& r) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::apply(BVector& r) const
 {
     // r.size() == 0 indicates that there are no active perforations on this process.
     // Then, r does not need to be updated by the following calculation.
@@ -185,27 +185,30 @@ apply(BVector& r) const
     }
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::createSolver()
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::createSolver()
 {
 #if HAVE_SUITESPARSE_UMFPACK
     if (duneDSolver_) {
         return;
     }
 
-    if constexpr (std::is_same_v<Scalar,float>) {
-        OPM_THROW(std::runtime_error, "MultisegmentWell support requires UMFPACK, "
-                                      "and UMFPACK does not support float");
+    if constexpr (std::is_same_v<Scalar, float>) {
+        OPM_THROW(std::runtime_error,
+                  "MultisegmentWell support requires UMFPACK, "
+                  "and UMFPACK does not support float");
     } else {
         duneDSolver_ = std::make_shared<Dune::UMFPack<DiagMatWell>>(duneD_, 0);
     }
 #else
-    OPM_THROW(std::runtime_error, "MultisegmentWell support requires UMFPACK. "
+    OPM_THROW(std::runtime_error,
+              "MultisegmentWell support requires UMFPACK. "
               "Reconfigure opm-simulators with SuiteSparse/UMFPACK support and recompile.");
 #endif
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
 typename MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::BVectorWell
 MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::solve() const
 {
@@ -215,7 +218,7 @@ MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::solve() const
     return mswellhelpers::applyUMFPack(*duneDSolver_, resWell_);
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
 typename MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::BVectorWell
 MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::solve(const BVectorWell& rhs) const
 {
@@ -225,9 +228,10 @@ MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::solve(const BV
     return mswellhelpers::applyUMFPack(*duneDSolver_, rhs);
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-recoverSolutionWell(const BVector& x, BVectorWell& xw) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::recoverSolutionWell(const BVector& x,
+                                                                                      BVectorWell& xw) const
 {
     BVectorWell resWell = resWell_;
     // resWell = resWell - B * x
@@ -241,11 +245,11 @@ recoverSolutionWell(const BVector& x, BVectorWell& xw) const
 }
 
 #if COMPILE_GPU_BRIDGE
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-extract(WellContributions<Scalar>& wellContribs) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::extract(WellContributions<Scalar>& wellContribs) const
 {
-    unsigned int Mb = duneB_.N();       // number of blockrows in duneB_, duneC_ and duneD_
+    unsigned int Mb = duneB_.N(); // number of blockrows in duneB_, duneC_ and duneD_
     unsigned int BnumBlocks = duneB_.nonzeroes();
     unsigned int DnumBlocks = duneD_.nonzeroes();
 
@@ -266,7 +270,7 @@ extract(WellContributions<Scalar>& wellContribs) const
     }
 
     // duneD
-    if constexpr (std::is_same_v<Scalar,float>) {
+    if constexpr (std::is_same_v<Scalar, float>) {
         OPM_THROW(std::runtime_error, "Cannot use UMFPack with floats");
     } else {
         Dune::UMFPack<DiagMatWell> umfpackMatrix(duneD_, 0);
@@ -279,7 +283,7 @@ extract(WellContributions<Scalar>& wellContribs) const
         std::vector<unsigned int> Brows;
         std::vector<double> Bvals;
         Bcols.reserve(BnumBlocks);
-        Brows.reserve(Mb+1);
+        Brows.reserve(Mb + 1);
         Bvals.reserve(BnumBlocks * numEq * numWellEq);
         Brows.emplace_back(0);
         unsigned int sumBlocks = 0;
@@ -298,29 +302,18 @@ extract(WellContributions<Scalar>& wellContribs) const
             Brows.emplace_back(sumBlocks);
         }
 
-        wellContribs.addMultisegmentWellContribution(numEq,
-                                                     numWellEq,
-                                                     Mb,
-                                                     Bvals,
-                                                     Bcols,
-                                                     Brows,
-                                                     DnumBlocks,
-                                                     Dvals,
-                                                     Dcols,
-                                                     Drows,
-                                                     Cvals);
+        wellContribs.addMultisegmentWellContribution(
+            numEq, numWellEq, Mb, Bvals, Bcols, Brows, DnumBlocks, Dvals, Dcols, Drows, Cvals);
     }
 }
 #endif
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-template<class SparseMatrixAdapter>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-extract(SparseMatrixAdapter& jacobian) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+template <class SparseMatrixAdapter>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::extract(SparseMatrixAdapter& jacobian) const
 {
-    const auto invDuneD = mswellhelpers::invertWithUMFPack<BVectorWell>(duneD_.M(),
-                                                                        numWellEq,
-                                                                        *duneDSolver_);
+    const auto invDuneD = mswellhelpers::invertWithUMFPack<BVectorWell>(duneD_.M(), numWellEq, *duneDSolver_);
 
     // We need to change matrix A as follows
     // A -= C^T D^-1 B
@@ -331,13 +324,11 @@ extract(SparseMatrixAdapter& jacobian) const
     // assumes that no cell is connected to more than one segment,
     // i.e. the columns of B/C have no more than one nonzero.
     for (std::size_t rowC = 0; rowC < duneC_.N(); ++rowC) {
-        for (auto colC = duneC_[rowC].begin(),
-                  endC = duneC_[rowC].end(); colC != endC; ++colC) {
+        for (auto colC = duneC_[rowC].begin(), endC = duneC_[rowC].end(); colC != endC; ++colC) {
             // map the well perforated cell index to global cell index
             const auto row_index = cells_[colC.index()];
             for (std::size_t rowB = 0; rowB < duneB_.N(); ++rowB) {
-                for (auto colB = duneB_[rowB].begin(),
-                          endB = duneB_[rowB].end(); colB != endB; ++colB) {
+                for (auto colB = duneB_[rowB].begin(), endB = duneB_[rowB].end(); colB != endB; ++colB) {
                     const auto col_index = cells_[colB.index()];
                     OffDiagMatrixBlockWellType tmp1;
                     detail::multMatrixImpl(invDuneD[rowC][rowB], (*colB), tmp1, std::true_type());
@@ -350,16 +341,17 @@ extract(SparseMatrixAdapter& jacobian) const
     }
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-template<class PressureMatrix>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-extractCPRPressureMatrix(PressureMatrix& jacobian,
-                         const BVector& weights,
-                         const int pressureVarIndex,
-                         const bool /*use_well_weights*/,
-                         const WellInterfaceGeneric<Scalar, IndexTraits>& well,
-                         const int seg_pressure_var_ind,
-                         const WellState<Scalar, IndexTraits>& well_state) const
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+template <class PressureMatrix>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::extractCPRPressureMatrix(
+    PressureMatrix& jacobian,
+    const BVector& weights,
+    const int pressureVarIndex,
+    const bool /*use_well_weights*/,
+    const WellInterfaceGeneric<Scalar, IndexTraits>& well,
+    const int seg_pressure_var_ind,
+    const WellState<Scalar, IndexTraits>& well_state) const
 {
     // Add the pressure contribution to the cpr system for the well
 
@@ -368,15 +360,14 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
     const int welldof_ind = number_cells + well.indexOfWell();
     if (!well.isPressureControlled(well_state)) {
         for (std::size_t rowC = 0; rowC < duneC_.N(); ++rowC) {
-            for (auto colC = duneC_[rowC].begin(),
-                      endC = duneC_[rowC].end(); colC != endC; ++colC) {
+            for (auto colC = duneC_[rowC].begin(), endC = duneC_[rowC].end(); colC != endC; ++colC) {
                 // map the well perforated cell index to global cell index
                 const auto row_index = cells_[colC.index()];
                 const auto& bw = weights[row_index];
                 double matel = 0.0;
 
-                for (std::size_t i = 0; i< bw.size(); ++i) {
-                    matel += bw[i]*(*colC)[seg_pressure_var_ind][i];
+                for (std::size_t i = 0; i < bw.size(); ++i) {
+                    matel += bw[i] * (*colC)[seg_pressure_var_ind][i];
                 }
                 jacobian[row_index][welldof_ind] += matel;
             }
@@ -389,8 +380,7 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
         well_weight = 0.0;
         int num_perfs = 0;
         for (std::size_t rowB = 0; rowB < duneB_.N(); ++rowB) {
-            for (auto colB = duneB_[rowB].begin(),
-                      endB = duneB_[rowB].end(); colB != endB; ++colB) {
+            for (auto colB = duneB_[rowB].begin(), endB = duneB_[rowB].end(); colB != endB; ++colB) {
                 // map the well perforated cell index to global cell index
                 const auto col_index = cells_[colB.index()];
                 const auto& bw = weights[col_index];
@@ -402,17 +392,17 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
         well_weight /= num_perfs;
         assert(num_perfs > 0);
 
-        // Add for coupling from reservoir to well and caclulate diag elelement corresping to incompressible standard well
+        // Add for coupling from reservoir to well and caclulate diag elelement corresping to incompressible standard
+        // well
         double diag_ell = 0.0;
         for (std::size_t rowB = 0; rowB < duneB_.N(); ++rowB) {
             const auto& bw = well_weight;
-            for (auto colB = duneB_[rowB].begin(),
-                      endB = duneB_[rowB].end(); colB != endB; ++colB) {
+            for (auto colB = duneB_[rowB].begin(), endB = duneB_[rowB].end(); colB != endB; ++colB) {
                 // map the well perforated cell index to global cell index
                 const auto col_index = cells_[colB.index()];
                 double matel = 0.0;
-                for (std::size_t i = 0; i< bw.size(); ++i) {
-                    matel += bw[i] *(*colB)[i][pressureVarIndex];
+                for (std::size_t i = 0; i < bw.size(); ++i) {
+                    matel += bw[i] * (*colB)[i][pressureVarIndex];
                 }
                 jacobian[welldof_ind][col_index] += matel;
                 diag_ell -= matel;
@@ -423,9 +413,7 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
 #if EXTRA_DEBUG_MSW
         if (diag_ell <= 0.0) {
             std::stringstream msg;
-            msg << "Diagonal element for cprw on "
-                      << this->name()
-                      << " is " << diag_ell;
+            msg << "Diagonal element for cprw on " << this->name() << " is " << diag_ell;
             OpmLog::warning(msg.str());
         }
 #endif
@@ -436,39 +424,40 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
     }
 }
 
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-void MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::
-sumDistributed(Parallel::Communication comm)
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+void
+MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::sumDistributed(Parallel::Communication comm)
 {
     // accumulate resWell_ and duneD_ in parallel to get effects of all perforations (might be distributed)
-    // we need to do this for all segments in the residual and on the diagonal of D 
+    // we need to do this for all segments in the residual and on the diagonal of D
     for (int seg = 0; seg < well_.numberOfSegments(); ++seg)
         Opm::wellhelpers::sumDistributedWellEntries(duneD_[seg][seg], resWell_[seg], comm);
 }
 
-#define INSTANTIATE(T, numWellEq, numEq)                                                       \
-    template class MultisegmentWellEquations<T,BlackOilDefaultFluidSystemIndices,numWellEq,numEq>;                               \
-    template void MultisegmentWellEquations<T,BlackOilDefaultFluidSystemIndices,numWellEq,numEq>::                               \
-        extract(Linear::IstlSparseMatrixAdapter<MatrixBlock<T,numEq,numEq>>&) const;           \
-    template void MultisegmentWellEquations<T, BlackOilDefaultFluidSystemIndices, numWellEq,numEq>::                               \
-        extractCPRPressureMatrix(Dune::BCRSMatrix<MatrixBlock<T,1,1>>&,                        \
-                                 const MultisegmentWellEquations<T,BlackOilDefaultFluidSystemIndices,numWellEq,numEq>::BVector&, \
-                                 const int,                                                    \
-                                 const bool,                                                   \
-                                 const WellInterfaceGeneric<T,BlackOilDefaultFluidSystemIndices>&,                               \
-                                 const int,                                                    \
-                                 const WellState<T,BlackOilDefaultFluidSystemIndices>&) const;
+#define INSTANTIATE(T, numWellEq, numEq)                                                                               \
+    template class MultisegmentWellEquations<T, BlackOilDefaultFluidSystemIndices, numWellEq, numEq>;                  \
+    template void MultisegmentWellEquations<T, BlackOilDefaultFluidSystemIndices, numWellEq, numEq>::extract(          \
+        Linear::IstlSparseMatrixAdapter<MatrixBlock<T, numEq, numEq>>&) const;                                         \
+    template void                                                                                                      \
+    MultisegmentWellEquations<T, BlackOilDefaultFluidSystemIndices, numWellEq, numEq>::extractCPRPressureMatrix(       \
+        Dune::BCRSMatrix<MatrixBlock<T, 1, 1>>&,                                                                       \
+        const MultisegmentWellEquations<T, BlackOilDefaultFluidSystemIndices, numWellEq, numEq>::BVector&,             \
+        const int,                                                                                                     \
+        const bool,                                                                                                    \
+        const WellInterfaceGeneric<T, BlackOilDefaultFluidSystemIndices>&,                                             \
+        const int,                                                                                                     \
+        const WellState<T, BlackOilDefaultFluidSystemIndices>&) const;
 
-#define INSTANTIATE_TYPE(T) \
-    INSTANTIATE(T,2,1)      \
-    INSTANTIATE(T,2,2)      \
-    INSTANTIATE(T,2,6)      \
-    INSTANTIATE(T,3,2)      \
-    INSTANTIATE(T,3,3)      \
-    INSTANTIATE(T,3,4)      \
-    INSTANTIATE(T,4,3)      \
-    INSTANTIATE(T,4,4)      \
-    INSTANTIATE(T,4,5)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    INSTANTIATE(T, 2, 1)                                                                                               \
+    INSTANTIATE(T, 2, 2)                                                                                               \
+    INSTANTIATE(T, 2, 6)                                                                                               \
+    INSTANTIATE(T, 3, 2)                                                                                               \
+    INSTANTIATE(T, 3, 3)                                                                                               \
+    INSTANTIATE(T, 3, 4)                                                                                               \
+    INSTANTIATE(T, 4, 3)                                                                                               \
+    INSTANTIATE(T, 4, 4)                                                                                               \
+    INSTANTIATE(T, 4, 5)
 
 INSTANTIATE_TYPE(double)
 
@@ -476,4 +465,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-}
+} // namespace Opm
