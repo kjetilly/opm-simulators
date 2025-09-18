@@ -88,9 +88,7 @@ public:
                                           BlackoilIndices::numPhases>;
 
     // Constructor
-    AquiferAnalytical(const int aqID,
-                      const std::vector<Aquancon::AquancCell>& connections,
-                      const Simulator& simulator)
+    AquiferAnalytical(const int aqID, const std::vector<Aquancon::AquancCell>& connections, const Simulator& simulator)
         : AquiferInterface<TypeTag>(aqID, simulator)
         , connections_(connections)
     {
@@ -99,22 +97,18 @@ public:
 
     void computeFaceAreaFraction(const std::vector<Scalar>& total_face_area) override
     {
-        assert (total_face_area.size() >= static_cast<typename std::vector<Scalar>::size_type>(this->aquiferID()));
+        assert(total_face_area.size() >= static_cast<typename std::vector<Scalar>::size_type>(this->aquiferID()));
 
         const auto tfa = total_face_area[this->aquiferID() - 1];
         const auto eps_sqrt = std::sqrt(std::numeric_limits<Scalar>::epsilon());
 
         if (tfa < eps_sqrt) {
-            this->alphai_.assign(this->size(), Scalar{0});
-        }
-        else {
+            this->alphai_.assign(this->size(), Scalar {0});
+        } else {
             std::transform(this->faceArea_connected_.begin(),
                            this->faceArea_connected_.end(),
                            this->alphai_.begin(),
-                           [tfa](const Scalar area)
-                           {
-                               return area / tfa;
-                           });
+                           [tfa](const Scalar area) { return area / tfa; });
         }
 
         this->area_fraction_ = this->totalFaceArea() / tfa;
@@ -166,9 +160,7 @@ public:
                                    this->simulator_.vanguard().grid().comm());
     }
 
-    void addToSource(RateVector& rates,
-                     const unsigned cellIdx,
-                     const unsigned timeIdx) override
+    void addToSource(RateVector& rates, const unsigned cellIdx, const unsigned timeIdx) override
     {
         const auto& model = this->simulator_.model();
 
@@ -182,13 +174,11 @@ public:
         this->updateCellPressure(this->pressure_current_, idx, intQuants);
         this->calculateInflowRate(idx, this->simulator_);
 
-        rates[BlackoilIndices::conti0EqIdx + compIdx_()]
-            += this->Qai_[idx] / model.dofTotalVolume(cellIdx);
+        rates[BlackoilIndices::conti0EqIdx + compIdx_()] += this->Qai_[idx] / model.dofTotalVolume(cellIdx);
 
         if constexpr (enableEnergy) {
             auto fs = intQuants.fluidState();
-            if (this->Ta0_.has_value() && this->Qai_[idx] > 0)
-            {
+            if (this->Ta0_.has_value() && this->Qai_[idx] > 0) {
                 fs.setTemperature(this->Ta0_.value());
                 typedef typename std::decay<decltype(fs)>::type::Scalar FsScalar;
                 typename FluidSystem::template ParameterCache<FsScalar> paramCache;
@@ -198,9 +188,9 @@ public:
                 const auto& h = FluidSystem::enthalpy(fs, paramCache, this->phaseIdx_());
                 fs.setEnthalpy(this->phaseIdx_(), h);
             }
-            rates[BlackoilIndices::contiEnergyEqIdx]
-            += this->Qai_[idx] *fs.enthalpy(this->phaseIdx_()) * FluidSystem::referenceDensity( this->phaseIdx_(), intQuants.pvtRegionIndex()) / model.dofTotalVolume(cellIdx);
-
+            rates[BlackoilIndices::contiEnergyEqIdx] += this->Qai_[idx] * fs.enthalpy(this->phaseIdx_())
+                * FluidSystem::referenceDensity(this->phaseIdx_(), intQuants.pvtRegionIndex())
+                / model.dofTotalVolume(cellIdx);
         }
     }
 
@@ -209,7 +199,7 @@ public:
         return this->connections_.size();
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(pressure_previous_);
@@ -221,11 +211,8 @@ public:
 
     bool operator==(const AquiferAnalytical& rhs) const
     {
-        return this->pressure_previous_ == rhs.pressure_previous_ &&
-               this->pressure_current_ == rhs.pressure_current_ &&
-               this->Qai_ == rhs.Qai_ &&
-               this->rhow_ == rhs.rhow_ &&
-               this->W_flux_ == rhs.W_flux_;
+        return this->pressure_previous_ == rhs.pressure_previous_ && this->pressure_current_ == rhs.pressure_current_
+            && this->Qai_ == rhs.Qai_ && this->rhow_ == rhs.rhow_ && this->W_flux_ == rhs.W_flux_;
     }
 
 protected:
@@ -251,30 +238,26 @@ protected:
     void initQuantities()
     {
         // We reset the cumulative flux at the start of any simulation, so, W_flux = 0
-        if (! this->solution_set_from_restart_) {
-            W_flux_ = Scalar{0};
+        if (!this->solution_set_from_restart_) {
+            W_flux_ = Scalar {0};
         }
 
         this->initializeConnectionDepths();
         this->calculateAquiferCondition();
         this->calculateAquiferConstants();
 
-        this->pressure_previous_.resize(this->size(), Scalar{0});
-        this->pressure_current_.resize(this->size(), Scalar{0});
-        this->Qai_.resize(this->size(), Scalar{0});
+        this->pressure_previous_.resize(this->size(), Scalar {0});
+        this->pressure_current_.resize(this->size(), Scalar {0});
+        this->Qai_.resize(this->size(), Scalar {0});
     }
 
-    void updateCellPressure(std::vector<Eval>& pressure_water,
-                            const int idx,
-                            const IntensiveQuantities& intQuants)
+    void updateCellPressure(std::vector<Eval>& pressure_water, const int idx, const IntensiveQuantities& intQuants)
     {
         const auto& fs = intQuants.fluidState();
         pressure_water.at(idx) = fs.pressure(this->phaseIdx_());
     }
 
-    void updateCellPressure(std::vector<Scalar>& pressure_water,
-                            const int idx,
-                            const IntensiveQuantities& intQuants)
+    void updateCellPressure(std::vector<Scalar>& pressure_water, const int idx, const IntensiveQuantities& intQuants)
     {
         const auto& fs = intQuants.fluidState();
         pressure_water.at(idx) = fs.pressure(this->phaseIdx_()).value();
@@ -283,10 +266,10 @@ protected:
     void initializeConnectionMappings()
     {
         this->alphai_.resize(this->size(), 1.0);
-        this->faceArea_connected_.resize(this->size(), Scalar{0});
+        this->faceArea_connected_.resize(this->size(), Scalar {0});
 
         // total_face_area_ is the sum of the areas connected to an aquifer
-        this->total_face_area_ = Scalar{0};
+        this->total_face_area_ = Scalar {0};
         this->cellToConnectionIdx_.resize(this->simulator_.gridView().size(/*codim=*/0), -1);
         const auto& gridView = this->simulator_.vanguard().gridView();
         for (std::size_t idx = 0; idx < this->size(); ++idx) {
@@ -296,7 +279,7 @@ protected:
                 continue;
             }
 
-            auto elemIt = gridView.template begin</*codim=*/ 0>();
+            auto elemIt = gridView.template begin</*codim=*/0>();
             std::advance(elemIt, cell_index);
 
             // The global_index is not part of this grid
@@ -323,7 +306,7 @@ protected:
 
             for (const auto& intersection : intersections(gridView, elem)) {
                 // Only deal with grid boundaries
-                if (! intersection.boundary()) {
+                if (!intersection.boundary()) {
                     continue;
                 }
 
@@ -347,8 +330,7 @@ protected:
                     faceDirection = FaceDir::ZPlus;
                     break;
                 default:
-                    OPM_THROW(std::logic_error,
-                              "Internal error in initialization of aquifer.");
+                    OPM_THROW(std::logic_error, "Internal error in initialization of aquifer.");
                 }
 
                 if (faceDirection == this->connections_[idx].face_dir) {
@@ -367,13 +349,12 @@ protected:
 
         const auto& gridView = this->simulator_.vanguard().gridView();
         for (std::size_t idx = 0; idx < this->size(); ++idx) {
-            const int cell_index = this->simulator_.vanguard()
-                .compressedIndex(this->connections_[idx].global_index);
+            const int cell_index = this->simulator_.vanguard().compressedIndex(this->connections_[idx].global_index);
             if (cell_index < 0) {
                 continue;
             }
 
-            auto elemIt = gridView.template begin</*codim=*/ 0>();
+            auto elemIt = gridView.template begin</*codim=*/0>();
             std::advance(elemIt, cell_index);
 
             // The global_index is not part of this grid
@@ -409,19 +390,17 @@ protected:
             water_pressure_reservoir = fs.pressure(this->phaseIdx_()).value();
             const auto water_density = fs.density(this->phaseIdx_());
 
-            const auto gdz =
-                this->gravity_() * (this->cell_depth_[idx] - this->aquiferDepth());
+            const auto gdz = this->gravity_() * (this->cell_depth_[idx] - this->aquiferDepth());
 
-            pw_aquifer.push_back(this->alphai_[idx] *
-                (water_pressure_reservoir - water_density.value()*gdz));
+            pw_aquifer.push_back(this->alphai_[idx] * (water_pressure_reservoir - water_density.value() * gdz));
         }
 
         // We take the average of the calculated equilibrium pressures.
         const auto& comm = this->simulator_.vanguard().grid().comm();
 
         Scalar vals[2];
-        vals[0] = std::accumulate(this->alphai_.begin(), this->alphai_.end(), Scalar{0});
-        vals[1] = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), Scalar{0});
+        vals[0] = std::accumulate(this->alphai_.begin(), this->alphai_.end(), Scalar {0});
+        vals[1] = std::accumulate(pw_aquifer.begin(), pw_aquifer.end(), Scalar {0});
 
         comm.sum(vals, 2);
 
@@ -441,18 +420,18 @@ protected:
     std::vector<Eval> Qai_;
     std::vector<Scalar> alphai_;
 
-    Scalar Tc_{}; // Time constant
-    Scalar pa0_{}; // initial aquifer pressure
-    std::optional<Scalar> Ta0_{}; // initial aquifer temperature
-    Scalar rhow_{};
+    Scalar Tc_ {}; // Time constant
+    Scalar pa0_ {}; // initial aquifer pressure
+    std::optional<Scalar> Ta0_ {}; // initial aquifer temperature
+    Scalar rhow_ {};
 
-    Scalar total_face_area_{};
-    Scalar area_fraction_{Scalar{1}};
+    Scalar total_face_area_ {};
+    Scalar area_fraction_ {Scalar {1}};
 
     Eval W_flux_;
 
     bool solution_set_from_restart_ {false};
-    bool has_active_connection_on_proc_{false};
+    bool has_active_connection_on_proc_ {false};
 };
 
 } // namespace Opm

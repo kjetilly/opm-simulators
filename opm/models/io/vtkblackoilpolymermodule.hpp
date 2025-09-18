@@ -42,14 +42,17 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm::Properties::TTag {
+namespace Opm::Properties::TTag
+{
 
 // create new type tag for the VTK multi-phase output
-struct VtkBlackOilPolymer {};
+struct VtkBlackOilPolymer {
+};
 
 } // namespace Opm::Properties::TTag
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -143,33 +146,27 @@ public:
                 const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
 
                 if (params_.polymerConcentrationOutput_) {
-                    polymerConcentration_[globalDofIdx] =
-                        scalarValue(intQuants.polymerConcentration());
+                    polymerConcentration_[globalDofIdx] = scalarValue(intQuants.polymerConcentration());
                 }
 
                 if (params_.polymerDeadPoreVolumeOutput_) {
-                    polymerDeadPoreVolume_[globalDofIdx] =
-                        scalarValue(intQuants.polymerDeadPoreVolume());
+                    polymerDeadPoreVolume_[globalDofIdx] = scalarValue(intQuants.polymerDeadPoreVolume());
                 }
 
                 if (params_.polymerRockDensityOutput_) {
-                    polymerRockDensity_[globalDofIdx] =
-                        scalarValue(intQuants.polymerRockDensity());
+                    polymerRockDensity_[globalDofIdx] = scalarValue(intQuants.polymerRockDensity());
                 }
 
                 if (params_.polymerAdsorptionOutput_) {
-                    polymerAdsorption_[globalDofIdx] =
-                        scalarValue(intQuants.polymerAdsorption());
+                    polymerAdsorption_[globalDofIdx] = scalarValue(intQuants.polymerAdsorption());
                 }
 
                 if (params_.polymerViscosityCorrectionOutput_) {
-                    polymerViscosityCorrection_[globalDofIdx] =
-                        scalarValue(intQuants.polymerViscosityCorrection());
+                    polymerViscosityCorrection_[globalDofIdx] = scalarValue(intQuants.polymerViscosityCorrection());
                 }
 
                 if (params_.waterViscosityCorrectionOutput_) {
-                    waterViscosityCorrection_[globalDofIdx] =
-                        scalarValue(intQuants.waterViscosityCorrection());
+                    waterViscosityCorrection_[globalDofIdx] = scalarValue(intQuants.waterViscosityCorrection());
                 }
             }
         }
@@ -186,45 +183,42 @@ public:
             }
 
             if (params_.polymerConcentrationOutput_) {
-                this->commitScalarBuffer_(baseWriter, "polymer concentration",
-                                          polymerConcentration_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "polymer concentration", polymerConcentration_, BufferType::Dof);
             }
 
             if (params_.polymerDeadPoreVolumeOutput_) {
-                this->commitScalarBuffer_(baseWriter, "dead pore volume fraction",
-                                          polymerDeadPoreVolume_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "dead pore volume fraction", polymerDeadPoreVolume_, BufferType::Dof);
             }
 
             if (params_.polymerRockDensityOutput_) {
-                this->commitScalarBuffer_(baseWriter, "polymer rock density",
-                                          polymerRockDensity_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "polymer rock density", polymerRockDensity_, BufferType::Dof);
             }
 
             if (params_.polymerAdsorptionOutput_) {
-                this->commitScalarBuffer_(baseWriter, "polymer adsorption",
-                                          polymerAdsorption_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "polymer adsorption", polymerAdsorption_, BufferType::Dof);
             }
 
             if (params_.polymerViscosityCorrectionOutput_) {
-                this->commitScalarBuffer_(baseWriter, "polymer viscosity correction",
-                                          polymerViscosityCorrection_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "polymer viscosity correction", polymerViscosityCorrection_, BufferType::Dof);
             }
 
             if (params_.waterViscosityCorrectionOutput_) {
-                this->commitScalarBuffer_(baseWriter, "water viscosity correction",
-                                          waterViscosityCorrection_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "water viscosity correction", waterViscosityCorrection_, BufferType::Dof);
             }
         }
     }
 
 private:
-    VtkBlackoilPolymerParams params_{};
-    ScalarBuffer polymerConcentration_{};
-    ScalarBuffer polymerDeadPoreVolume_{};
-    ScalarBuffer polymerRockDensity_{};
-    ScalarBuffer polymerAdsorption_{};
-    ScalarBuffer polymerViscosityCorrection_{};
-    ScalarBuffer waterViscosityCorrection_{};
+    VtkBlackoilPolymerParams params_ {};
+    ScalarBuffer polymerConcentration_ {};
+    ScalarBuffer polymerDeadPoreVolume_ {};
+    ScalarBuffer polymerRockDensity_ {};
+    ScalarBuffer polymerAdsorption_ {};
+    ScalarBuffer polymerViscosityCorrection_ {};
+    ScalarBuffer waterViscosityCorrection_ {};
 };
 
 } // namespace Opm

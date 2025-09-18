@@ -30,70 +30,71 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class Well;
 
-template<class Matrix, class Vector, int block_size> class GpuBridge;
-template<class Scalar> class WellContributions;
-namespace detail {
-
-template<class Matrix, class Vector>
-struct GpuSolverInfo
+template <class Matrix, class Vector, int block_size>
+class GpuBridge;
+template <class Scalar>
+class WellContributions;
+namespace detail
 {
-    using Scalar = typename Vector::field_type;
-    using WellContribFunc = std::function<void(WellContributions<Scalar>&)>;
-    using Bridge = GpuBridge<Matrix,Vector,Matrix::block_type::rows>;
 
-    GpuSolverInfo(const std::string& accelerator_mode,
-                  const int linear_solver_verbosity,
-                  const int maxit,
-                  const Scalar tolerance,
-                  const int platformID,
-                  const int deviceID,
-                  const bool opencl_ilu_parallel,
-                  const std::string& linsolver);
+    template <class Matrix, class Vector>
+    struct GpuSolverInfo {
+        using Scalar = typename Vector::field_type;
+        using WellContribFunc = std::function<void(WellContributions<Scalar>&)>;
+        using Bridge = GpuBridge<Matrix, Vector, Matrix::block_type::rows>;
 
-    ~GpuSolverInfo();
+        GpuSolverInfo(const std::string& accelerator_mode,
+                      const int linear_solver_verbosity,
+                      const int maxit,
+                      const Scalar tolerance,
+                      const int platformID,
+                      const int deviceID,
+                      const bool opencl_ilu_parallel,
+                      const std::string& linsolver);
 
-    template<class Grid>
-    void prepare(const Grid& grid,
-                 const Dune::CartesianIndexMapper<Grid>& cartMapper,
-                 const std::vector<Well>& wellsForConn,
-                 const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-                 const std::vector<int>& cellPartition,
-                 const std::size_t nonzeroes,
-                 const bool useWellConn);
+        ~GpuSolverInfo();
 
-    bool apply(Vector& rhs,
-               const bool useWellConn,
-               WellContribFunc getContribs,
-               const int rank,
-               Matrix& matrix,
-               Vector& x,
-               Dune::InverseOperatorResult& result);
+        template <class Grid>
+        void prepare(const Grid& grid,
+                     const Dune::CartesianIndexMapper<Grid>& cartMapper,
+                     const std::vector<Well>& wellsForConn,
+                     const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+                     const std::vector<int>& cellPartition,
+                     const std::size_t nonzeroes,
+                     const bool useWellConn);
 
-    bool gpuActive();
+        bool apply(Vector& rhs,
+                   const bool useWellConn,
+                   WellContribFunc getContribs,
+                   const int rank,
+                   Matrix& matrix,
+                   Vector& x,
+                   Dune::InverseOperatorResult& result);
 
-    int numJacobiBlocks_ = 0;
+        bool gpuActive();
 
-private:
-    /// Create sparsity pattern for block-Jacobi matrix based on partitioning of grid.
-    /// Do not initialize the values, that is done in copyMatToBlockJac()
-    template<class Grid>
-    void blockJacobiAdjacency(const Grid& grid,
-                              const std::vector<int>& cell_part,
-                              std::size_t nonzeroes);
+        int numJacobiBlocks_ = 0;
 
-    void copyMatToBlockJac(const Matrix& mat, Matrix& blockJac);
+    private:
+        /// Create sparsity pattern for block-Jacobi matrix based on partitioning of grid.
+        /// Do not initialize the values, that is done in copyMatToBlockJac()
+        template <class Grid>
+        void blockJacobiAdjacency(const Grid& grid, const std::vector<int>& cell_part, std::size_t nonzeroes);
 
-    std::unique_ptr<Bridge> bridge_;
-    std::string accelerator_mode_;
-    std::unique_ptr<Matrix> blockJacobiForGPUILU0_;
-    std::vector<std::set<int>> wellConnectionsGraph_;
-};
+        void copyMatToBlockJac(const Matrix& mat, Matrix& blockJac);
 
-}
+        std::unique_ptr<Bridge> bridge_;
+        std::string accelerator_mode_;
+        std::unique_ptr<Matrix> blockJacobiForGPUILU0_;
+        std::vector<std::set<int>> wellConnectionsGraph_;
+    };
+
+} // namespace detail
 
 /// This class solves the fully implicit black-oil system by
 /// solving the reduced system (after eliminating well variables)
@@ -122,13 +123,13 @@ protected:
     constexpr static std::size_t pressureIndex = GetPropType<TypeTag, Properties::Indices>::pressureSwitchIdx;
 
 #if HAVE_MPI
-    using CommunicationType = Dune::OwnerOverlapCopyCommunication<int,int>;
+    using CommunicationType = Dune::OwnerOverlapCopyCommunication<int, int>;
 #else
     using CommunicationType = Dune::Communication<int>;
 #endif
 
 public:
-    using AssembledLinearOperatorType = Dune::AssembledLinearOperator< Matrix, Vector, Vector >;
+    using AssembledLinearOperatorType = Dune::AssembledLinearOperator<Matrix, Vector, Vector>;
 
     /// Construct a system solver.
     /// \param[in] simulator   The opm-models simulator object
@@ -174,14 +175,14 @@ public:
         const bool opencl_ilu_parallel = Parameters::Get<Parameters::OpenclIluParallel>();
         const int linear_solver_verbosity = this->parameters_[0].linear_solver_verbosity_;
         std::string linsolver = Parameters::Get<Parameters::LinearSolver>();
-        gpuBridge_ = std::make_unique<detail::GpuSolverInfo<Matrix,Vector>>(accelerator_mode,
-                                                                            linear_solver_verbosity,
-                                                                            maxit,
-                                                                            tolerance,
-                                                                            platformID,
-                                                                            deviceID,
-                                                                            opencl_ilu_parallel,
-                                                                            linsolver);
+        gpuBridge_ = std::make_unique<detail::GpuSolverInfo<Matrix, Vector>>(accelerator_mode,
+                                                                             linear_solver_verbosity,
+                                                                             maxit,
+                                                                             tolerance,
+                                                                             platformID,
+                                                                             deviceID,
+                                                                             opencl_ilu_parallel,
+                                                                             linsolver);
     }
 
     void prepare(const Matrix& M, Vector& b)
@@ -192,9 +193,9 @@ public:
         // Avoid performing the decomposition on CPU when we also do it on GPU,
         // but we do need to initialize the pointers.
         if (gpuBridge_) {
-            ParentType::initPrepare(M,b);
+            ParentType::initPrepare(M, b);
         } else {
-            ParentType::prepare(M,b);
+            ParentType::prepare(M, b);
         }
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
@@ -206,11 +207,12 @@ public:
             // setup sparsity pattern for jacobi matrix for preconditioner (only used for openclSolver)
             gpuBridge_->numJacobiBlocks_ = Parameters::Get<Parameters::NumJacobiBlocks>();
             gpuBridge_->prepare(this->simulator_.vanguard().grid(),
-                               this->simulator_.vanguard().cartesianIndexMapper(),
-                               this->simulator_.vanguard().schedule().getWellsatEnd(),
-                               this->simulator_.vanguard().schedule().getPossibleFutureConnections(),
-                               this->simulator_.vanguard().cellPartition(),
-                               this->getMatrix().nonzeroes(), this->useWellConn_);
+                                this->simulator_.vanguard().cartesianIndexMapper(),
+                                this->simulator_.vanguard().schedule().getWellsatEnd(),
+                                this->simulator_.vanguard().schedule().getPossibleFutureConnections(),
+                                this->simulator_.vanguard().cellPartition(),
+                                this->getMatrix().nonzeroes(),
+                                this->useWellConn_);
         }
 #endif
     }
@@ -243,7 +245,7 @@ public:
         const int verbosity = this->prm_[this->activeSolverNum_].template get<int>("verbosity", 0);
         const bool write_matrix = verbosity > 10;
         if (write_matrix) {
-            Helper::writeSystem(this->simulator_, //simulator is only used to get names
+            Helper::writeSystem(this->simulator_, // simulator is only used to get names
                                 this->getMatrix(),
                                 *(this->rhs_),
                                 this->comm_.get());
@@ -252,17 +254,16 @@ public:
         // Solve system.
         Dune::InverseOperatorResult result;
 
-        std::function<void(WellContributions<Scalar>&)> getContribs =
-            [this](WellContributions<Scalar>& w)
-            {
-                this->simulator_.problem().wellModel().getWellContributions(w);
-            };
-        if (!gpuBridge_->apply(*(this->rhs_), this->useWellConn_, getContribs,
-                              this->simulator_.gridView().comm().rank(),
-                              const_cast<Matrix&>(this->getMatrix()),
-                              x, result))
-        {
-            if(gpuBridge_->gpuActive()){
+        std::function<void(WellContributions<Scalar>&)> getContribs
+            = [this](WellContributions<Scalar>& w) { this->simulator_.problem().wellModel().getWellContributions(w); };
+        if (!gpuBridge_->apply(*(this->rhs_),
+                               this->useWellConn_,
+                               getContribs,
+                               this->simulator_.gridView().comm().rank(),
+                               const_cast<Matrix&>(this->getMatrix()),
+                               x,
+                               result)) {
+            if (gpuBridge_->gpuActive()) {
                 // gpu solve fails use istl solver setup need to be done since it is not setup in prepare
                 ParentType::prepareFlexibleSolver();
             }

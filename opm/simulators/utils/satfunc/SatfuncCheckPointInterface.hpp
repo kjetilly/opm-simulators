@@ -23,50 +23,48 @@
 #include <cstddef>
 #include <optional>
 
-namespace Opm {
-    template <typename Scalar>
-    struct EclEpsScalingPointsInfo;
+namespace Opm
+{
+template <typename Scalar>
+struct EclEpsScalingPointsInfo;
 } // namespace Opm
 
-namespace Opm::Satfunc::PhaseChecks {
+namespace Opm::Satfunc::PhaseChecks
+{
 
-    /// Callback protocol for single saturation function consistency check point.
+/// Callback protocol for single saturation function consistency check point.
+///
+/// Intended to be used as a base class.
+///
+/// \tparam Scalar Element type.  Typically \c float or \c double.
+template <typename Scalar>
+struct SatfuncCheckPointInterface {
+    /// Virtual destructor for public inheritance
+    virtual ~SatfuncCheckPointInterface() = default;
+
+    /// Compute locally unique, i.e., per MPI rank, ID of this check for
+    /// a particular cell index.
     ///
-    /// Intended to be used as a base class.
+    /// Common examples include the drainage or imbibition region ID
+    /// (i.e., SATNUM or IMBNUM) or the Cartesian block index of a cell.
     ///
-    /// \tparam Scalar Element type.  Typically \c float or \c double.
-    template <typename Scalar>
-    struct SatfuncCheckPointInterface
-    {
-        /// Virtual destructor for public inheritance
-        virtual ~SatfuncCheckPointInterface() = default;
+    /// \param[in] cellIdx Active cell index on current rank.
+    ///
+    /// \return Locally unique point ID for \p cellIdx.  Nullopt if this
+    /// check point does not apply to \p cellIdx.  A common cause of the
+    /// latter is running a region based check and the region already
+    /// having been visited.
+    virtual std::optional<std::size_t> pointID(const int cellIdx) const = 0;
 
-        /// Compute locally unique, i.e., per MPI rank, ID of this check for
-        /// a particular cell index.
-        ///
-        /// Common examples include the drainage or imbibition region ID
-        /// (i.e., SATNUM or IMBNUM) or the Cartesian block index of a cell.
-        ///
-        /// \param[in] cellIdx Active cell index on current rank.
-        ///
-        /// \return Locally unique point ID for \p cellIdx.  Nullopt if this
-        /// check point does not apply to \p cellIdx.  A common cause of the
-        /// latter is running a region based check and the region already
-        /// having been visited.
-        virtual std::optional<std::size_t>
-        pointID(const int cellIdx) const = 0;
-
-        /// Populate check point values for a particular cell.
-        ///
-        /// \param[in] cellIdx Active cell index on current rank.
-        ///
-        /// \param[out] endPoints Set of saturation function end-points.
-        /// Member function populateCheckPoint() assigns all data members
-        /// and derived classes must abide by this requirement.
-        virtual void
-        populateCheckPoint(const int                        cellIdx,
-                           EclEpsScalingPointsInfo<Scalar>& endPoints) const = 0;
-    };
+    /// Populate check point values for a particular cell.
+    ///
+    /// \param[in] cellIdx Active cell index on current rank.
+    ///
+    /// \param[out] endPoints Set of saturation function end-points.
+    /// Member function populateCheckPoint() assigns all data members
+    /// and derived classes must abide by this requirement.
+    virtual void populateCheckPoint(const int cellIdx, EclEpsScalingPointsInfo<Scalar>& endPoints) const = 0;
+};
 
 } // namespace Opm::Satfunc::PhaseChecks
 

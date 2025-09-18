@@ -26,15 +26,18 @@
 #include <set>
 #include <string_view>
 
-namespace Opm { struct SimulatorReport; }
+namespace Opm
+{
+struct SimulatorReport;
+}
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
 void checkAllMPIProcesses();
 
-void mergeParallelLogFiles(std::string_view output_dir,
-                           std::string_view deck_filename,
-                           bool enableLoggingFalloutWarning);
+void
+mergeParallelLogFiles(std::string_view output_dir, std::string_view deck_filename, bool enableLoggingFalloutWarning);
 
 void handleExtraConvergenceOutput(const SimulatorReport& report,
                                   std::string_view option,
@@ -43,11 +46,10 @@ void handleExtraConvergenceOutput(const SimulatorReport& report,
                                   std::string_view base_name);
 
 //! \brief Hides unused runtime parameters.
-template<class Scalar>
+template <class Scalar>
 void hideUnusedParameters();
 
-int eclPositionalParameter(std::function<void(const std::string&,
-                                              const std::string&)> addKey,
+int eclPositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
                            std::set<std::string>& seenParams,
                            std::string& errorMsg,
                            const char** argv,

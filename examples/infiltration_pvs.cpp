@@ -27,23 +27,27 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/pvs/pvsmodel.hh>
-#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 #include "problems/infiltrationproblem.hh"
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/pvs/pvsmodel.hh>
+#include <opm/models/utils/start.hh>
+#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct InfiltrationProblem
-{ using InheritsFrom = std::tuple<InfiltrationBaseProblem, PvsModel>; };
+namespace TTag
+{
+    struct InfiltrationProblem {
+        using InheritsFrom = std::tuple<InfiltrationBaseProblem, PvsModel>;
+    };
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::InfiltrationProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

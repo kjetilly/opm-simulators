@@ -42,7 +42,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 /*!
  * \ingroup Vtk
  *
@@ -136,25 +137,20 @@ public:
                 const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
 
                 if (params_.microbialConcentrationOutput_) {
-                    microbialConcentration_[globalDofIdx] =
-                        scalarValue(intQuants.microbialConcentration());
+                    microbialConcentration_[globalDofIdx] = scalarValue(intQuants.microbialConcentration());
                 }
                 if (params_.biofilmConcentrationOutput_) {
-                    biofilmConcentration_[globalDofIdx] =
-                        scalarValue(intQuants.biofilmConcentration());
+                    biofilmConcentration_[globalDofIdx] = scalarValue(intQuants.biofilmConcentration());
                 }
                 if constexpr (enableMICP) {
                     if (params_.oxygenConcentrationOutput_) {
-                        oxygenConcentration_[globalDofIdx] =
-                            scalarValue(intQuants.oxygenConcentration());
+                        oxygenConcentration_[globalDofIdx] = scalarValue(intQuants.oxygenConcentration());
                     }
                     if (params_.ureaConcentrationOutput_) {
-                        ureaConcentration_[globalDofIdx] =
-                            scalarValue(intQuants.ureaConcentration());
+                        ureaConcentration_[globalDofIdx] = scalarValue(intQuants.ureaConcentration());
                     }
                     if (params_.calciteConcentrationOutput_) {
-                        calciteConcentration_[globalDofIdx] =
-                            scalarValue(intQuants.calciteConcentration());
+                        calciteConcentration_[globalDofIdx] = scalarValue(intQuants.calciteConcentration());
                     }
                 }
             }
@@ -172,37 +168,34 @@ public:
             }
 
             if (params_.microbialConcentrationOutput_) {
-                this->commitScalarBuffer_(baseWriter, "microbial concentration",
-                                          microbialConcentration_, BufferType::Dof);
+                this->commitScalarBuffer_(
+                    baseWriter, "microbial concentration", microbialConcentration_, BufferType::Dof);
             }
             if (params_.biofilmConcentrationOutput_) {
-                this->commitScalarBuffer_(baseWriter, "biofilm fraction",
-                                          biofilmConcentration_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "biofilm fraction", biofilmConcentration_, BufferType::Dof);
             }
             if constexpr (enableMICP) {
                 if (params_.oxygenConcentrationOutput_) {
-                    this->commitScalarBuffer_(baseWriter, "oxygen concentration",
-                                              oxygenConcentration_, BufferType::Dof);
+                    this->commitScalarBuffer_(
+                        baseWriter, "oxygen concentration", oxygenConcentration_, BufferType::Dof);
                 }
                 if (params_.ureaConcentrationOutput_) {
-                    this->commitScalarBuffer_(baseWriter, "urea concentration",
-                                              ureaConcentration_, BufferType::Dof);
+                    this->commitScalarBuffer_(baseWriter, "urea concentration", ureaConcentration_, BufferType::Dof);
                 }
                 if (params_.calciteConcentrationOutput_) {
-                    this->commitScalarBuffer_(baseWriter, "calcite fraction",
-                                              calciteConcentration_, BufferType::Dof);
+                    this->commitScalarBuffer_(baseWriter, "calcite fraction", calciteConcentration_, BufferType::Dof);
                 }
             }
         }
     }
 
 private:
-    VtkBlackOilBioeffectsParams params_{};
-    ScalarBuffer microbialConcentration_{};
-    ScalarBuffer oxygenConcentration_{};
-    ScalarBuffer ureaConcentration_{};
-    ScalarBuffer biofilmConcentration_{};
-    ScalarBuffer calciteConcentration_{};
+    VtkBlackOilBioeffectsParams params_ {};
+    ScalarBuffer microbialConcentration_ {};
+    ScalarBuffer oxygenConcentration_ {};
+    ScalarBuffer ureaConcentration_ {};
+    ScalarBuffer biofilmConcentration_ {};
+    ScalarBuffer calciteConcentration_ {};
 };
 
 } // namespace Opm

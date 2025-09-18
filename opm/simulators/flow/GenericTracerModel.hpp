@@ -47,13 +47,15 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseState;
 class Well;
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-class GenericTracerModel {
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+class GenericTracerModel
+{
 public:
     using TracerVectorSingle = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
     using TracerMatrix = Dune::BCRSMatrix<Opm::MatrixBlock<Scalar, 2, 2>>;
@@ -87,24 +89,29 @@ public:
     void setEnableSolTracers(int tracerIdx, bool enableSolTracer);
 
     /*!
-    * \brief Return well tracer rates
-    */
-    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>&
-    getWellTracerRates() const
-    { return wellTracerRate_; }
+     * \brief Return well tracer rates
+     */
+    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>& getWellTracerRates() const
+    {
+        return wellTracerRate_;
+    }
 
-    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>&
-    getWellFreeTracerRates() const
-    { return wellFreeTracerRate_; }
+    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>& getWellFreeTracerRates() const
+    {
+        return wellFreeTracerRate_;
+    }
 
-    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>&
-    getWellSolTracerRates() const
-    { return wellSolTracerRate_; }
+    const std::unordered_map<int, std::vector<WellTracerRate<Scalar>>>& getWellSolTracerRates() const
+    {
+        return wellSolTracerRate_;
+    }
 
-    const std::unordered_map<int, std::vector<MSWellTracerRate<Scalar>>>&
-    getMswTracerRates() const {return mSwTracerRate_;}
+    const std::unordered_map<int, std::vector<MSWellTracerRate<Scalar>>>& getMswTracerRates() const
+    {
+        return mSwTracerRate_;
+    }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(tracerConcentration_);
@@ -121,28 +128,23 @@ protected:
                        const EclipseState& eclState,
                        const CartesianIndexMapper& cartMapper,
                        const DofMapper& dofMapper,
-                       const std::function<std::array<double,dimWorld>(int)> centroids);
+                       const std::function<std::array<double, dimWorld>(int)> centroids);
 
     /*!
      * \brief Initialize all internal data structures needed by the tracer module
      */
-    void doInit(bool rst,
-                std::size_t numGridDof,
-                std::size_t gasPhaseIdx,
-                std::size_t oilPhaseIdx,
-                std::size_t waterPhaseIdx);
+    void doInit(
+        bool rst, std::size_t numGridDof, std::size_t gasPhaseIdx, std::size_t oilPhaseIdx, std::size_t waterPhaseIdx);
 
     bool linearSolve_(const TracerMatrix& M, TracerVector& x, TracerVector& b);
 
-    bool linearSolveBatchwise_(const TracerMatrix& M,
-                               std::vector<TracerVector>& x,
-                               std::vector<TracerVector>& b);
+    bool linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::vector<TracerVector>& b);
 
     Scalar currentConcentration_(const Well& eclWell, const std::string& name) const;
 
     //! \brief Tracer type index
     enum TracerTypeIdx {
-        Free     = 0,
+        Free = 0,
         Solution = 1,
     };
 
@@ -166,7 +168,7 @@ protected:
     std::unordered_map<int, std::vector<MSWellTracerRate<Scalar>>> mSwTracerRate_;
 
     /// \brief Function returning the cell centers
-    std::function<std::array<double,dimWorld>(int)> centroids_;
+    std::function<std::array<double, dimWorld>(int)> centroids_;
 };
 
 } // namespace Opm

@@ -34,9 +34,13 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Wells; }
+namespace data
+{
+    class Wells;
+}
 class EclipseState;
 class Schedule;
 
@@ -47,8 +51,9 @@ class Schedule;
 ///
 /// \tparam FluidSystem Run's fluid system.  Needed, in particular, to infer
 /// the simulator's \c Scalar type and its active phases.
-template<class FluidSystem>
-class RFTContainer {
+template <class FluidSystem>
+class RFTContainer
+{
     /// Simulator's floating-point element type.
     using Scalar = typename FluidSystem::Scalar;
 
@@ -100,7 +105,8 @@ public:
         , schedule_(schedule)
         , wellIsOwnedByCurrentRank_(wellIsOwnedByCurrent)
         , wellOnCurrentRank_(wellOnCurrent)
-    {}
+    {
+    }
 
     /// Export RFT cell level state data to requisite connections.
     ///
@@ -119,9 +125,7 @@ public:
     ///
     /// \param[in] comm MPI communication object.  Needed to collect RFT
     /// state data from all ranks that share a well.
-    void addToWells(data::Wells& wellDatas,
-                    const std::size_t reportStepNum,
-                    const Parallel::Communication& comm);
+    void addToWells(data::Wells& wellDatas, const std::size_t reportStepNum, const Parallel::Communication& comm);
 
     /// Prepare internal data structures to collect RFT state.
     ///

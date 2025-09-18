@@ -90,12 +90,14 @@ BOOST_FIXTURE_TEST_CASE(TestHyprePreconditioner_GpuInputCpuBackend, HypreTestFix
     testHyprePreconditioner<GpuMatrixType, GpuVectorType>(gpu_matrix, false);
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

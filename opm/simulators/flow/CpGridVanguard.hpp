@@ -29,8 +29,8 @@
 
 #include <opm/common/TimingMacros.hpp>
 
-#include <opm/models/common/multiphasebaseproperties.hh>
 #include <opm/models/blackoil/blackoilproperties.hh>
+#include <opm/models/common/multiphasebaseproperties.hh>
 
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #include <opm/simulators/flow/FlowBaseVanguard.hpp>
@@ -44,36 +44,40 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class CpGridVanguard;
 }
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
-struct CpGridVanguard {
-    using InheritsFrom = std::tuple<FlowBaseVanguard>;
-};
-}
+namespace TTag
+{
+    struct CpGridVanguard {
+        using InheritsFrom = std::tuple<FlowBaseVanguard>;
+    };
+} // namespace TTag
 
 // declare the properties
-template<class TypeTag>
+template <class TypeTag>
 struct Vanguard<TypeTag, TTag::CpGridVanguard> {
     using type = CpGridVanguard<TypeTag>;
 };
-template<class TypeTag>
+template <class TypeTag>
 struct Grid<TypeTag, TTag::CpGridVanguard> {
     using type = Dune::CpGrid;
 };
-template<class TypeTag>
+template <class TypeTag>
 struct EquilGrid<TypeTag, TTag::CpGridVanguard> {
     using type = GetPropType<TypeTag, Properties::Grid>;
 };
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -83,8 +87,8 @@ namespace Opm {
  * This class uses Dune::CpGrid as the simulation grid.
  */
 template <class TypeTag>
-class CpGridVanguard : public FlowBaseVanguard<TypeTag>
-                     , public GenericCpGridVanguard<GetPropType<TypeTag, Properties::ElementMapper>,
+class CpGridVanguard : public FlowBaseVanguard<TypeTag>,
+                       public GenericCpGridVanguard<GetPropType<TypeTag, Properties::ElementMapper>,
                                                     GetPropType<TypeTag, Properties::GridView>,
                                                     GetPropType<TypeTag, Properties::Scalar>>
 {
@@ -106,6 +110,7 @@ public:
     static constexpr bool waterEnabled = Indices::waterEnabled;
     static constexpr bool gasEnabled = Indices::gasEnabled;
     static constexpr bool oilEnabled = Indices::oilEnabled;
+
 private:
     using Element = typename GridView::template Codim<0>::Entity;
 
@@ -119,15 +124,16 @@ public:
 
     int compressedIndexForInteriorLGR(const std::string& lgr_tag, const Connection& conn) const override
     {
-        const std::array<int,3> lgr_ijk = {conn.getI(), conn.getJ(), conn.getK()};
+        const std::array<int, 3> lgr_ijk = {conn.getI(), conn.getJ(), conn.getK()};
         const auto& lgr_level = this->grid().getLgrNameToLevel().at(lgr_tag);
         if (ParentType::lgrMappers_.has_value() == false) {
             ParentType::lgrMappers_.emplace(this->grid().mapLocalCartesianIndexSetsToLeafIndexSet());
         }
         const auto& lgr_dim = this->grid().currentData()[lgr_level]->logicalCartesianSize();
-        const auto lgr_cartesian_index = (lgr_ijk[2]*lgr_dim[0]*lgr_dim[1]) + (lgr_ijk[1]*lgr_dim[0]) + (lgr_ijk[0]);
+        const auto lgr_cartesian_index
+            = (lgr_ijk[2] * lgr_dim[0] * lgr_dim[1]) + (lgr_ijk[1] * lgr_dim[0]) + (lgr_ijk[0]);
         return ParentType::lgrMappers_.value()[lgr_level].at(lgr_cartesian_index);
-    }   
+    }
     /*!
      * Checking consistency of simulator
      */
@@ -144,13 +150,15 @@ public:
             }
         } else {
             if (getPropValue<TypeTag, Properties::EnableEnergy>() == true) {
-                throw std::runtime_error("Input specifies no energy while simulator has energy, try run without _energy");
+                throw std::runtime_error(
+                    "Input specifies no energy while simulator has energy, try run without _energy");
             }
         }
 
         if (config.isDiffusive()) {
             if (getPropValue<TypeTag, Properties::EnableDiffusion>() == false) {
-                throw std::runtime_error("Input specifies diffusion while simulator has disabled it, try xxx_diffusion");
+                throw std::runtime_error(
+                    "Input specifies diffusion while simulator has disabled it, try xxx_diffusion");
             }
         }
 
@@ -195,22 +203,21 @@ public:
                 throw std::runtime_error("Input specifies Solvent while simulator has it disabled");
             }
         }
-        if(phases.active(Phase::WATER)){
-            if(waterEnabled == false){
+        if (phases.active(Phase::WATER)) {
+            if (waterEnabled == false) {
                 throw std::runtime_error("Input specifies water while simulator has it disabled");
             }
         }
-        if(phases.active(Phase::GAS)){
-            if(gasEnabled == false){
+        if (phases.active(Phase::GAS)) {
+            if (gasEnabled == false) {
                 throw std::runtime_error("Input specifies gas while simulator has it disabled");
             }
         }
-        if(phases.active(Phase::OIL)){
-            if(oilEnabled == false){
+        if (phases.active(Phase::OIL)) {
+            if (oilEnabled == false) {
                 throw std::runtime_error("Input specifies oil while simulator has it disabled");
             }
         }
-
     }
 
     /*!
@@ -225,7 +232,7 @@ public:
 
     const TransmissibilityType& globalTransmissibility() const
     {
-        assert( globalTrans_ != nullptr );
+        assert(globalTrans_ != nullptr);
         return *globalTrans_;
     }
 
@@ -237,21 +244,25 @@ public:
     void loadBalance()
     {
 #if HAVE_MPI
-        if (const auto& extPFile = this->externalPartitionFile();
-            !extPFile.empty() && (extPFile != "none"))
-        {
-            this->setExternalLoadBalancer(details::MPIPartitionFromFile { extPFile });
+        if (const auto& extPFile = this->externalPartitionFile(); !extPFile.empty() && (extPFile != "none")) {
+            this->setExternalLoadBalancer(details::MPIPartitionFromFile {extPFile});
         }
 
-        this->doLoadBalance_(this->edgeWeightsMethod(), this->ownersFirst(),
-                             this->addCorners(), this->numOverlap(),
-                             this->partitionMethod(), this->serialPartitioning(),
+        this->doLoadBalance_(this->edgeWeightsMethod(),
+                             this->ownersFirst(),
+                             this->addCorners(),
+                             this->numOverlap(),
+                             this->partitionMethod(),
+                             this->serialPartitioning(),
                              this->enableDistributedWells(),
                              this->allow_splitting_inactive_wells_,
                              this->imbalanceTol(),
-                             this->gridView(), this->schedule(),
-                             this->eclState(), this->parallelWells_,
-                             this->numJacobiBlocks(), this->enableEclOutput());
+                             this->gridView(),
+                             this->schedule(),
+                             this->eclState(),
+                             this->parallelWells_,
+                             this->numJacobiBlocks(),
+                             this->enableEclOutput());
 #endif
 
         this->updateGridView_();
@@ -279,7 +290,7 @@ public:
             this->updateCellDepths_();
             this->updateCellThickness_();
 
-            if (this->grid_->comm().size()>1) {
+            if (this->grid_->comm().size() > 1) {
                 // Add LGRs and update the leaf grid view in the global (undistributed) simulation grid.
                 // Purpose: To enable synchronization of cell ids in 'serial mode',
                 //          we rely on the "parent-to-children" cell id mapping.
@@ -292,11 +303,13 @@ public:
         }
     }
 
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
+    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const
+    {
         return elemIndex;
     }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const
+    {
         return elemIndex;
     }
     /*!
@@ -306,8 +319,7 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,dimensionworld>(int)>
-    cellCentroids() const
+    std::function<std::array<double, dimensionworld>(int)> cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), true);
     }
@@ -339,7 +351,7 @@ protected:
 
     double getTransmissibility(unsigned I, unsigned J) const override
     {
-       return globalTrans_->transmissibility(I,J);
+        return globalTrans_->transmissibility(I, J);
     }
 
 #if HAVE_MPI

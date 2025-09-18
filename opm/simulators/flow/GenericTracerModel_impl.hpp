@@ -29,10 +29,9 @@
 #define OPM_GENERIC_TRACER_MODEL_IMPL_HPP
 
 #include <dune/istl/operators.hh>
-#include <dune/istl/solvers.hh>
-#include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/schwarz.hh>
+#include <dune/istl/solvers.hh>
 
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/TimingMacros.hpp>
@@ -47,9 +46,9 @@
 #include <opm/models/discretization/ecfv/ecfvstencil.hh>
 
 #include <opm/simulators/flow/GenericTracerModel.hpp>
-#include <opm/simulators/linalg/ilufirstelement.hh>
-#include <opm/simulators/linalg/PropertyTree.hpp>
 #include <opm/simulators/linalg/FlexibleSolver.hpp>
+#include <opm/simulators/linalg/PropertyTree.hpp>
+#include <opm/simulators/linalg/ilufirstelement.hh>
 
 #include <fmt/format.h>
 
@@ -60,50 +59,50 @@
 #include <stdexcept>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_MPI
-template<class M, class V>
-struct TracerSolverSelector
-{
+template <class M, class V>
+struct TracerSolverSelector {
     using Comm = Dune::OwnerOverlapCopyCommunication<int, int>;
     using TracerOperator = Dune::OverlappingSchwarzOperator<M, V, V, Comm>;
     using type = Dune::FlexibleSolver<TracerOperator>;
 };
 
-template<class Vector, class Grid, class Matrix>
-std::tuple<std::unique_ptr<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                            Dune::OwnerOverlapCopyCommunication<int,int>>>,
-           std::unique_ptr<typename TracerSolverSelector<Matrix,Vector>::type>>
+template <class Vector, class Grid, class Matrix>
+std::tuple<std::unique_ptr<
+               Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, Dune::OwnerOverlapCopyCommunication<int, int>>>,
+           std::unique_ptr<typename TracerSolverSelector<Matrix, Vector>::type>>
 createParallelFlexibleSolver(const Grid&, const Matrix&, const PropertyTree&)
 {
     OPM_THROW(std::logic_error, "Grid not supported for parallel Tracers.");
     return {nullptr, nullptr};
 }
 
-template<class Vector, class Matrix>
-std::tuple<std::unique_ptr<Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                            Dune::OwnerOverlapCopyCommunication<int,int>>>,
-           std::unique_ptr<typename TracerSolverSelector<Matrix,Vector>::type>>
+template <class Vector, class Matrix>
+std::tuple<std::unique_ptr<
+               Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, Dune::OwnerOverlapCopyCommunication<int, int>>>,
+           std::unique_ptr<typename TracerSolverSelector<Matrix, Vector>::type>>
 createParallelFlexibleSolver(const Dune::CpGrid& grid, const Matrix& M, const PropertyTree& prm)
 {
-        using TracerOperator = Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,
-                                                                Dune::OwnerOverlapCopyCommunication<int,int>>;
-        using TracerSolver = Dune::FlexibleSolver<TracerOperator>;
-        const auto& cellComm = grid.cellCommunication();
-        auto op = std::make_unique<TracerOperator>(M, cellComm);
-        auto dummyWeights = [](){ return Vector();};
-        return {std::move(op), std::make_unique<TracerSolver>(*op, cellComm, prm, dummyWeights, 0)};
+    using TracerOperator
+        = Dune::OverlappingSchwarzOperator<Matrix, Vector, Vector, Dune::OwnerOverlapCopyCommunication<int, int>>;
+    using TracerSolver = Dune::FlexibleSolver<TracerOperator>;
+    const auto& cellComm = grid.cellCommunication();
+    auto op = std::make_unique<TracerOperator>(M, cellComm);
+    auto dummyWeights = []() { return Vector(); };
+    return {std::move(op), std::make_unique<TracerSolver>(*op, cellComm, prm, dummyWeights, 0)};
 }
 #endif
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-GenericTracerModel(const GridView& gridView,
-                   const EclipseState& eclState,
-                   const CartesianIndexMapper& cartMapper,
-                   const DofMapper& dofMapper,
-                   const std::function<std::array<double,dimWorld>(int)> centroids)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::GenericTracerModel(
+    const GridView& gridView,
+    const EclipseState& eclState,
+    const CartesianIndexMapper& cartMapper,
+    const DofMapper& dofMapper,
+    const std::function<std::array<double, dimWorld>(int)> centroids)
     : gridView_(gridView)
     , eclState_(eclState)
     , cartMapper_(cartMapper)
@@ -112,9 +111,10 @@ GenericTracerModel(const GridView& gridView,
 {
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-Scalar GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-freeTracerConcentration(int tracerIdx, int globalDofIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+Scalar
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::freeTracerConcentration(
+    int tracerIdx, int globalDofIdx) const
 {
     if (freeTracerConcentration_.empty()) {
         return 0.0;
@@ -123,9 +123,10 @@ freeTracerConcentration(int tracerIdx, int globalDofIdx) const
     return freeTracerConcentration_[tracerIdx][globalDofIdx];
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-Scalar GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-solTracerConcentration(int tracerIdx, int globalDofIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+Scalar
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::solTracerConcentration(
+    int tracerIdx, int globalDofIdx) const
 {
     if (solTracerConcentration_.empty()) {
         return 0.0;
@@ -134,96 +135,101 @@ solTracerConcentration(int tracerIdx, int globalDofIdx) const
     return solTracerConcentration_[tracerIdx][globalDofIdx];
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setFreeTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+void
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::setFreeTracerConcentration(
+    int tracerIdx, int globalDofIdx, Scalar value)
 {
     this->freeTracerConcentration_[tracerIdx][globalDofIdx] = value;
     this->tracerConcentration_[tracerIdx][globalDofIdx][0] = value;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setSolTracerConcentration(int tracerIdx, int globalDofIdx, Scalar value)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+void
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::setSolTracerConcentration(int tracerIdx,
+                                                                                                       int globalDofIdx,
+                                                                                                       Scalar value)
 {
     this->solTracerConcentration_[tracerIdx][globalDofIdx] = value;
     this->tracerConcentration_[tracerIdx][globalDofIdx][1] = value;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-setEnableSolTracers(int tracerIdx, bool enableSolTracer)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+void
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::setEnableSolTracers(int tracerIdx,
+                                                                                                 bool enableSolTracer)
 {
     this->enableSolTracers_[tracerIdx] = enableSolTracer;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-int GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-numTracers() const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+int
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::numTracers() const
 {
     return this->eclState_.tracer().size();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-fname(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+std::string
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::fname(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].fname();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-sname(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+std::string
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::sname(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].sname();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-wellfname(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+std::string
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::wellfname(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].wellfname();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-std::string GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-wellsname(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+std::string
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::wellsname(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].wellsname();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-Phase GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-phase(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+Phase
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::phase(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].phase;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-const std::vector<bool>& GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-enableSolTracers() const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+const std::vector<bool>&
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::enableSolTracers() const
 {
     return this->enableSolTracers_;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-Scalar GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-currentConcentration_(const Well& eclWell, const std::string& name) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+Scalar
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::currentConcentration_(
+    const Well& eclWell, const std::string& name) const
 {
     return eclWell.getTracerProperties().getConcentration(name);
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-const std::string& GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-name(int tracerIdx) const
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+const std::string&
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::name(int tracerIdx) const
 {
     return this->eclState_.tracer()[tracerIdx].name;
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-void GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-doInit(bool rst, std::size_t numGridDof,
-       std::size_t gasPhaseIdx, std::size_t oilPhaseIdx, std::size_t waterPhaseIdx)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+void
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::doInit(
+    bool rst, std::size_t numGridDof, std::size_t gasPhaseIdx, std::size_t oilPhaseIdx, std::size_t waterPhaseIdx)
 {
     const auto& tracers = eclState_.tracer();
 
@@ -259,10 +265,10 @@ doInit(bool rst, std::size_t numGridDof,
 
 
         // TBLKF keyword
-        if (tracer.free_concentration.has_value()){
+        if (tracer.free_concentration.has_value()) {
             const auto& free_concentration = tracer.free_concentration.value();
             int tblkDatasize = free_concentration.size();
-            if (tblkDatasize < cartMapper_.cartesianSize()){
+            if (tblkDatasize < cartMapper_.cartesianSize()) {
                 throw std::runtime_error("Wrong size of TBLKF for" + tracer.name);
             }
             for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
@@ -275,17 +281,15 @@ doInit(bool rst, std::size_t numGridDof,
         else if (tracer.free_tvdp.has_value()) {
             const auto& free_tvdp = tracer.free_tvdp.value();
             for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
-                tracerConcentration_[tracerIdx][globalDofIdx][0] =
-                    free_tvdp.evaluate("TRACER_CONCENTRATION",
-                                       centroids_(globalDofIdx)[2]);
-                freeTracerConcentration_[tracerIdx][globalDofIdx] =
-                    free_tvdp.evaluate("TRACER_CONCENTRATION",
-                                       centroids_(globalDofIdx)[2]);
+                tracerConcentration_[tracerIdx][globalDofIdx][0]
+                    = free_tvdp.evaluate("TRACER_CONCENTRATION", centroids_(globalDofIdx)[2]);
+                freeTracerConcentration_[tracerIdx][globalDofIdx]
+                    = free_tvdp.evaluate("TRACER_CONCENTRATION", centroids_(globalDofIdx)[2]);
             }
-        } 
-        else {
+        } else {
             OpmLog::warning(fmt::format("No TBLKF or TVDPF given for free tracer {}. "
-                                        "Initial values set to zero. ", tracer.name));
+                                        "Initial values set to zero. ",
+                                        tracer.name));
             for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
                 tracerConcentration_[tracerIdx][globalDofIdx][0] = 0.0;
                 freeTracerConcentration_[tracerIdx][globalDofIdx] = 0.0;
@@ -293,15 +297,15 @@ doInit(bool rst, std::size_t numGridDof,
         }
 
         // Solution tracer initialization only needed for gas/oil tracers with DISGAS/VAPOIL active
-        if (tracer.phase != Phase::WATER && 
-            ((tracer.phase == Phase::GAS && FluidSystem::enableDissolvedGas()) || 
-             (tracer.phase == Phase::OIL && FluidSystem::enableVaporizedOil()))) {
+        if (tracer.phase != Phase::WATER
+            && ((tracer.phase == Phase::GAS && FluidSystem::enableDissolvedGas())
+                || (tracer.phase == Phase::OIL && FluidSystem::enableVaporizedOil()))) {
             // TBLKS keyword
-            if (tracer.solution_concentration.has_value()){
+            if (tracer.solution_concentration.has_value()) {
                 enableSolTracers_[tracerIdx] = true;
                 const auto& solution_concentration = tracer.solution_concentration.value();
                 int tblkDatasize = solution_concentration.size();
-                if (tblkDatasize < cartMapper_.cartesianSize()){
+                if (tblkDatasize < cartMapper_.cartesianSize()) {
                     throw std::runtime_error("Wrong size of TBLKS for" + tracer.name);
                 }
                 for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
@@ -315,26 +319,23 @@ doInit(bool rst, std::size_t numGridDof,
                 enableSolTracers_[tracerIdx] = true;
                 const auto& solution_tvdp = tracer.solution_tvdp.value();
                 for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
-                    tracerConcentration_[tracerIdx][globalDofIdx][1] =
-                        solution_tvdp.evaluate("TRACER_CONCENTRATION",
-                                            centroids_(globalDofIdx)[2]);
-                    solTracerConcentration_[tracerIdx][globalDofIdx] =
-                        solution_tvdp.evaluate("TRACER_CONCENTRATION",
-                                            centroids_(globalDofIdx)[2]);
+                    tracerConcentration_[tracerIdx][globalDofIdx][1]
+                        = solution_tvdp.evaluate("TRACER_CONCENTRATION", centroids_(globalDofIdx)[2]);
+                    solTracerConcentration_[tracerIdx][globalDofIdx]
+                        = solution_tvdp.evaluate("TRACER_CONCENTRATION", centroids_(globalDofIdx)[2]);
                 }
-            } 
-            else {
+            } else {
                 // No solution tracers, default to zero
                 enableSolTracers_[tracerIdx] = false;
                 OpmLog::warning(fmt::format("No TBLKS or TVDPS given for solution tracer {}. "
-                                            "Initial values set to zero. ", tracer.name));
+                                            "Initial values set to zero. ",
+                                            tracer.name));
                 for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
-                        tracerConcentration_[tracerIdx][globalDofIdx][1] = 0.0;
-                        solTracerConcentration_[tracerIdx][globalDofIdx] = 0.0;
+                    tracerConcentration_[tracerIdx][globalDofIdx][1] = 0.0;
+                    solTracerConcentration_[tracerIdx][globalDofIdx] = 0.0;
                 }
             }
-        }
-        else {
+        } else {
             // No solution tracers, default to zero
             enableSolTracers_[tracerIdx] = false;
             for (std::size_t globalDofIdx = 0; globalDofIdx < numGridDof; ++globalDofIdx) {
@@ -366,7 +367,7 @@ doInit(bool rst, std::size_t numGridDof,
     }
 
     // allocate space for the rows of the matrix
-    for (unsigned dofIdx = 0; dofIdx < numGridDof; ++ dofIdx) {
+    for (unsigned dofIdx = 0; dofIdx < numGridDof; ++dofIdx) {
         tracerMatrix_->setrowsize(dofIdx, neighbors[dofIdx].size());
     }
     tracerMatrix_->endrowsizes();
@@ -374,7 +375,7 @@ doInit(bool rst, std::size_t numGridDof,
     // fill the rows with indices. each degree of freedom talks to
     // all of its neighbors. (it also talks to itself since
     // degrees of freedom are sometimes quite egocentric.)
-    for (unsigned dofIdx = 0; dofIdx < numGridDof; ++ dofIdx) {
+    for (unsigned dofIdx = 0; dofIdx < numGridDof; ++dofIdx) {
         for (const auto& index : neighbors[dofIdx]) {
             tracerMatrix_->addindex(dofIdx, index);
         }
@@ -382,9 +383,11 @@ doInit(bool rst, std::size_t numGridDof,
     tracerMatrix_->endindices();
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-bool GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-linearSolve_(const TracerMatrix& M, TracerVector& x, TracerVector& b)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+bool
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::linearSolve_(const TracerMatrix& M,
+                                                                                          TracerVector& x,
+                                                                                          TracerVector& b)
 {
     x = 0.0;
     Scalar tolerance = 1e-2;
@@ -399,33 +402,27 @@ linearSolve_(const TracerMatrix& M, TracerVector& x, TracerVector& b)
     prm.put("preconditioner.type", std::string("paroverilu0"));
 
 #if HAVE_MPI
-    if(gridView_.grid().comm().size() > 1)
-    {
-        auto [tracerOperator, solver] =
-            createParallelFlexibleSolver<TracerVector>(gridView_.grid(), M, prm);
-        (void) tracerOperator;
+    if (gridView_.grid().comm().size() > 1) {
+        auto [tracerOperator, solver] = createParallelFlexibleSolver<TracerVector>(gridView_.grid(), M, prm);
+        (void)tracerOperator;
 
         Dune::InverseOperatorResult result;
         solver->apply(x, b, result);
 
         // return the result of the solver
         return result.converged;
-    }
-    else
-    {
+    } else {
 #endif
         using TracerSolver = Dune::BiCGSTABSolver<TracerVector>;
-        using TracerOperator = Dune::MatrixAdapter<TracerMatrix,TracerVector,TracerVector>;
+        using TracerOperator = Dune::MatrixAdapter<TracerMatrix, TracerVector, TracerVector>;
         using TracerScalarProduct = Dune::SeqScalarProduct<TracerVector>;
-        using TracerPreconditioner = Dune::SeqILU< TracerMatrix,TracerVector,TracerVector>;
+        using TracerPreconditioner = Dune::SeqILU<TracerMatrix, TracerVector, TracerVector>;
 
         TracerOperator tracerOperator(M);
         TracerScalarProduct tracerScalarProduct;
         TracerPreconditioner tracerPreconditioner(M, 0, 1); // results in ILU0
 
-        TracerSolver solver (tracerOperator, tracerScalarProduct,
-                             tracerPreconditioner, tolerance, maxIter,
-                             verbosity);
+        TracerSolver solver(tracerOperator, tracerScalarProduct, tracerPreconditioner, tolerance, maxIter, verbosity);
 
         Dune::InverseOperatorResult result;
         solver.apply(x, b, result);
@@ -437,9 +434,10 @@ linearSolve_(const TracerMatrix& M, TracerVector& x, TracerVector& b)
 #endif
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-bool GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>::
-linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::vector<TracerVector>& b)
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+bool
+GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>::linearSolveBatchwise_(
+    const TracerMatrix& M, std::vector<TracerVector>& x, std::vector<TracerVector>& b)
 {
     OPM_TIMEBLOCK(tracerSolve);
     const Scalar tolerance = 1e-2;
@@ -447,17 +445,15 @@ linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::
     const int verbosity = 0;
 
 #if HAVE_MPI
-    if (gridView_.grid().comm().size() > 1)
-    {
+    if (gridView_.grid().comm().size() > 1) {
         PropertyTree prm;
         prm.put("maxiter", maxIter);
         prm.put("tol", tolerance);
         prm.put("verbosity", verbosity);
         prm.put("solver", std::string("bicgstab"));
         prm.put("preconditioner.type", std::string("paroverilu0"));
-        auto [tracerOperator, solver] =
-            createParallelFlexibleSolver<TracerVector>(gridView_.grid(), M, prm);
-        (void) tracerOperator;
+        auto [tracerOperator, solver] = createParallelFlexibleSolver<TracerVector>(gridView_.grid(), M, prm);
+        (void)tracerOperator;
         bool converged = true;
         for (std::size_t nrhs = 0; nrhs < b.size(); ++nrhs) {
             x[nrhs] = 0.0;
@@ -466,18 +462,15 @@ linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::
             converged = (converged && result.converged);
         }
         return converged;
-    }
-    else
+    } else
 #endif
     {
         using TracerSolver = Dune::BiCGSTABSolver<TracerVector>;
-        using TracerOperator = Dune::MatrixAdapter<TracerMatrix,TracerVector,TracerVector>;
+        using TracerOperator = Dune::MatrixAdapter<TracerMatrix, TracerVector, TracerVector>;
         using TracerScalarProduct = Dune::SeqScalarProduct<TracerVector>;
-        using TracerPreconditioner = Dune::SeqILU<TracerMatrix,TracerVector,TracerVector>;
+        using TracerPreconditioner = Dune::SeqILU<TracerMatrix, TracerVector, TracerVector>;
 
-        if (std::all_of(b.begin(), b.end(),
-            [](const auto& v) { return v.infinity_norm() == 0.0; }))
-        {
+        if (std::all_of(b.begin(), b.end(), [](const auto& v) { return v.infinity_norm() == 0.0; })) {
             return true;
         }
 
@@ -485,9 +478,7 @@ linearSolveBatchwise_(const TracerMatrix& M, std::vector<TracerVector>& x, std::
         TracerScalarProduct tracerScalarProduct;
         TracerPreconditioner tracerPreconditioner(M, 0, 1); // results in ILU0
 
-        TracerSolver solver (tracerOperator, tracerScalarProduct,
-                             tracerPreconditioner, tolerance, maxIter,
-                             verbosity);
+        TracerSolver solver(tracerOperator, tracerScalarProduct, tracerPreconditioner, tolerance, maxIter, verbosity);
 
         bool converged = true;
         for (std::size_t nrhs = 0; nrhs < b.size(); ++nrhs) {

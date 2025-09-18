@@ -27,9 +27,10 @@
 
 #include <opm/simulators/wells/WellInterfaceFluidSystem.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 class WellInterfaceIndices : public WellInterfaceFluidSystem<FluidSystem>
 {
 public:
@@ -66,6 +67,6 @@ protected:
                          const std::vector<PerforationData<Scalar>>& perf_data);
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELLINTERFACE_INDICES_HEADER_INCLUDED

@@ -3,10 +3,11 @@
 
 #include <opm/simulators/flow/FIBlackoilModel.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename TypeTag>
-class FIBlackOilModelNoCache: public FIBlackOilModel<TypeTag>
+template <typename TypeTag>
+class FIBlackOilModelNoCache : public FIBlackOilModel<TypeTag>
 {
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
     using IntensiveQuantities = GetPropType<TypeTag, Properties::IntensiveQuantities>;
@@ -14,18 +15,18 @@ class FIBlackOilModelNoCache: public FIBlackOilModel<TypeTag>
 public:
     explicit FIBlackOilModelNoCache(Simulator& simulator)
         : FIBlackOilModel<TypeTag>(simulator)
-    {}
+    {
+    }
 
     IntensiveQuantities intensiveQuantities(unsigned globalIdx, unsigned timeIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(intensiveQuantitiesNoCache);
         const auto& primaryVar = this->solution(timeIdx)[globalIdx];
         const auto& problem = this->simulator_.problem();
-        if (!(this->enableIntensiveQuantityCache_) ||
-            !(this->intensiveQuantityCacheUpToDate_[timeIdx][globalIdx])) {
+        if (!(this->enableIntensiveQuantityCache_) || !(this->intensiveQuantityCacheUpToDate_[timeIdx][globalIdx])) {
             IntensiveQuantities intQuants;
-            intQuants.update(problem,primaryVar, globalIdx, timeIdx);
-            return intQuants;// reqiored for updating extrution factor
+            intQuants.update(problem, primaryVar, globalIdx, timeIdx);
+            return intQuants; // reqiored for updating extrution factor
         } else {
             IntensiveQuantities intQuants = (this->intensiveQuantityCache_[timeIdx][globalIdx]);
             return intQuants;

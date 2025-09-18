@@ -33,30 +33,28 @@
 
 #include <algorithm>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-allocate(const std::size_t bufferSize,
-         const SummaryConfig& summaryConfig,
-         const bool forceAlloc,
-         std::map<std::string, int>& rstKeywords)
+FIPContainer<FluidSystem>::allocate(const std::size_t bufferSize,
+                                    const SummaryConfig& summaryConfig,
+                                    const bool forceAlloc,
+                                    std::map<std::string, int>& rstKeywords)
 {
     using namespace std::string_literals;
 
     const auto fipctrl = std::array {
-        std::pair { "FIP"s , &OutputRestart::noPrefix  },
-        std::pair { "SFIP"s, &OutputRestart::surface   },
-        std::pair { "RFIP"s, &OutputRestart::reservoir },
+        std::pair {"FIP"s, &OutputRestart::noPrefix},
+        std::pair {"SFIP"s, &OutputRestart::surface},
+        std::pair {"RFIP"s, &OutputRestart::reservoir},
     };
 
     this->outputRestart_.clearBits();
 
     for (const auto& [mnemonic, kind] : fipctrl) {
-        if (auto fipPos = rstKeywords.find(mnemonic);
-            fipPos != rstKeywords.end())
-        {
+        if (auto fipPos = rstKeywords.find(mnemonic); fipPos != rstKeywords.end()) {
             fipPos->second = 0;
             this->outputRestart_.*kind = true;
         }
@@ -68,8 +66,7 @@ allocate(const std::size_t bufferSize,
         if (forceAlloc || summaryConfig.require3DField(Inplace::EclString(phase))) {
             this->add(phase);
             computeFip = true;
-        }
-        else {
+        } else {
             this->fip_[phase].clear();
         }
     }
@@ -77,35 +74,31 @@ allocate(const std::size_t bufferSize,
     return computeFip;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-add(const Inplace::Phase phase)
+FIPContainer<FluidSystem>::add(const Inplace::Phase phase)
 {
     this->fip_[phase].resize(bufferSize_, 0.0);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 const std::vector<typename FIPContainer<FluidSystem>::Scalar>&
-FIPContainer<FluidSystem>::
-get(const Inplace::Phase phase) const
+FIPContainer<FluidSystem>::get(const Inplace::Phase phase) const
 {
     return this->fip_.at(phase);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-has(const Inplace::Phase phase) const
+FIPContainer<FluidSystem>::has(const Inplace::Phase phase) const
 {
     const auto it = this->fip_.find(phase);
     return it != this->fip_.end() && !it->second.empty();
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasCo2InGas() const
+FIPContainer<FluidSystem>::hasCo2InGas() const
 {
     static const auto phases = std::array {
         Inplace::Phase::CO2InGasPhaseInMob,
@@ -124,14 +117,12 @@ hasCo2InGas() const
         Inplace::Phase::CO2MassInGasPhaseMaximumUnTrapped,
     };
 
-    return std::any_of(phases.begin(), phases.end(),
-                       [this](const auto phase) { return has(phase); });
+    return std::any_of(phases.begin(), phases.end(), [this](const auto phase) { return has(phase); });
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
+FIPContainer<FluidSystem>::assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
 {
     const Scalar massGas = (1.0 - v.xgW) * v.pv * v.rhog;
     if (this->has(Inplace::Phase::CO2Mass)) {
@@ -143,12 +134,12 @@ assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
     }
 
     if (this->has(Inplace::Phase::CO2InGasPhaseInMob)) {
-        const Scalar imMobileGas = massGas / v.mM * std::min(v.sgcr , v.sg);
+        const Scalar imMobileGas = massGas / v.mM * std::min(v.sgcr, v.sg);
         this->fip_[Inplace::Phase::CO2InGasPhaseInMob][globalDofIdx] = imMobileGas;
     }
 
     if (this->has(Inplace::Phase::CO2InGasPhaseMob)) {
-        const Scalar mobileGas = massGas / v.mM * std::max(Scalar{0.0}, v.sg - v.sgcr);
+        const Scalar mobileGas = massGas / v.mM * std::max(Scalar {0.0}, v.sg - v.sgcr);
         this->fip_[Inplace::Phase::CO2InGasPhaseMob][globalDofIdx] = mobileGas;
     }
 
@@ -171,12 +162,12 @@ assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
     }
 
     if (this->has(Inplace::Phase::CO2MassInGasPhaseInMob)) {
-        const Scalar imMobileMassGas = massGas * std::min(v.sgcr , v.sg);
+        const Scalar imMobileMassGas = massGas * std::min(v.sgcr, v.sg);
         this->fip_[Inplace::Phase::CO2MassInGasPhaseInMob][globalDofIdx] = imMobileMassGas;
     }
 
     if (this->has(Inplace::Phase::CO2MassInGasPhaseMob)) {
-        const Scalar mobileMassGas = massGas * std::max(Scalar{0.0}, v.sg - v.sgcr);
+        const Scalar mobileMassGas = massGas * std::max(Scalar {0.0}, v.sg - v.sgcr);
         this->fip_[Inplace::Phase::CO2MassInGasPhaseMob][globalDofIdx] = mobileMassGas;
     }
 
@@ -204,7 +195,7 @@ assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
     }
 
     if (this->has(Inplace::Phase::CO2MassInGasPhaseMaximumUnTrapped)) {
-        const Scalar mobileMassGas = massGas * std::max(Scalar{0.0}, v.sg - v.trappedGas);
+        const Scalar mobileMassGas = massGas * std::max(Scalar {0.0}, v.sg - v.trappedGas);
         this->fip_[Inplace::Phase::CO2MassInGasPhaseMaximumUnTrapped][globalDofIdx] = mobileMassGas;
     }
 
@@ -214,18 +205,17 @@ assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v)
     }
 
     if (this->has(Inplace::Phase::CO2MassInGasPhaseEffectiveUnTrapped)) {
-        const Scalar mobileMassGas = massGas * std::max(Scalar{0.0}, v.sg - v.strandedGas);
+        const Scalar mobileMassGas = massGas * std::max(Scalar {0.0}, v.sg - v.strandedGas);
         this->fip_[Inplace::Phase::CO2MassInGasPhaseEffectiveUnTrapped][globalDofIdx] = mobileMassGas;
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignGasWater(const unsigned  globalDofIdx,
-               const std::array<Scalar, numPhases>& fip,
-               const Scalar    gasInPlaceWater,
-               const Scalar    waterInPlaceGas)
+FIPContainer<FluidSystem>::assignGasWater(const unsigned globalDofIdx,
+                                          const std::array<Scalar, numPhases>& fip,
+                                          const Scalar gasInPlaceWater,
+                                          const Scalar waterInPlaceGas)
 {
     if (this->has(Inplace::Phase::WaterInGasPhase)) {
         this->fip_[Inplace::Phase::WaterInGasPhase][globalDofIdx] = waterInPlaceGas;
@@ -250,11 +240,9 @@ assignGasWater(const unsigned  globalDofIdx,
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignVolumesSurface(const unsigned globalDofIdx,
-                     const std::array<Scalar, numPhases>& fip)
+FIPContainer<FluidSystem>::assignVolumesSurface(const unsigned globalDofIdx, const std::array<Scalar, numPhases>& fip)
 {
     if (FluidSystem::phaseIsActive(oilPhaseIdx) && this->has(Inplace::Phase::OIL)) {
         this->fip_[Inplace::Phase::OIL][globalDofIdx] = fip[oilPhaseIdx];
@@ -277,12 +265,11 @@ assignVolumesSurface(const unsigned globalDofIdx,
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignVolumesReservoir(const unsigned    globalDofIdx,
-                       const Scalar      saltConcentration,
-                       const std::array<Scalar, numPhases>& fipr)
+FIPContainer<FluidSystem>::assignVolumesReservoir(const unsigned globalDofIdx,
+                                                  const Scalar saltConcentration,
+                                                  const std::array<Scalar, numPhases>& fipr)
 {
     if (FluidSystem::phaseIsActive(oilPhaseIdx) && this->has(Inplace::Phase::OilResVolume)) {
         this->fip_[Inplace::Phase::OilResVolume][globalDofIdx] = fipr[oilPhaseIdx];
@@ -297,15 +284,13 @@ assignVolumesReservoir(const unsigned    globalDofIdx,
     }
 
     if (FluidSystem::phaseIsActive(waterPhaseIdx) && this->has(Inplace::Phase::SALT)) {
-        this->fip_[Inplace::Phase::SALT][globalDofIdx] =
-            fipr[waterPhaseIdx] * saltConcentration;
+        this->fip_[Inplace::Phase::SALT][globalDofIdx] = fipr[waterPhaseIdx] * saltConcentration;
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasCo2InWater() const
+FIPContainer<FluidSystem>::hasCo2InWater() const
 {
     static const auto phases = std::array {
         Inplace::Phase::CO2InWaterPhase,
@@ -313,23 +298,19 @@ hasCo2InWater() const
         Inplace::Phase::CO2Mass,
     };
 
-    return std::any_of(phases.begin(), phases.end(),
-                       [this](const auto phase) { return has(phase); });
+    return std::any_of(phases.begin(), phases.end(), [this](const auto phase) { return has(phase); });
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignCo2InWater(const unsigned globalDofIdx,
-                 const Scalar   co2InWater,
-                 const Scalar   mM)
+FIPContainer<FluidSystem>::assignCo2InWater(const unsigned globalDofIdx, const Scalar co2InWater, const Scalar mM)
 {
     if (this->has(Inplace::Phase::CO2Mass)) {
-        this->fip_[Inplace::Phase::CO2Mass][globalDofIdx] += co2InWater  * mM;
+        this->fip_[Inplace::Phase::CO2Mass][globalDofIdx] += co2InWater * mM;
     }
 
     if (this->has(Inplace::Phase::CO2MassInWaterPhase)) {
-        this->fip_[Inplace::Phase::CO2MassInWaterPhase][globalDofIdx] = co2InWater  * mM;
+        this->fip_[Inplace::Phase::CO2MassInWaterPhase][globalDofIdx] = co2InWater * mM;
     }
 
     if (this->has(Inplace::Phase::CO2InWaterPhase)) {
@@ -337,117 +318,99 @@ assignCo2InWater(const unsigned globalDofIdx,
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasMicrobialMass() const
+FIPContainer<FluidSystem>::hasMicrobialMass() const
 {
     return has(Inplace::Phase::MicrobialMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignMicrobialMass(const unsigned globalDofIdx,
-                    const Scalar   microbialMass)
+FIPContainer<FluidSystem>::assignMicrobialMass(const unsigned globalDofIdx, const Scalar microbialMass)
 {
     this->fip_[Inplace::Phase::MicrobialMass][globalDofIdx] = microbialMass;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasOxygenMass() const
+FIPContainer<FluidSystem>::hasOxygenMass() const
 {
     return has(Inplace::Phase::OxygenMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignOxygenMass(const unsigned globalDofIdx,
-                 const Scalar   oxygenMass)
+FIPContainer<FluidSystem>::assignOxygenMass(const unsigned globalDofIdx, const Scalar oxygenMass)
 {
     this->fip_[Inplace::Phase::OxygenMass][globalDofIdx] = oxygenMass;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasUreaMass() const
+FIPContainer<FluidSystem>::hasUreaMass() const
 {
     return has(Inplace::Phase::UreaMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignUreaMass(const unsigned globalDofIdx,
-               const Scalar   ureaMass)
+FIPContainer<FluidSystem>::assignUreaMass(const unsigned globalDofIdx, const Scalar ureaMass)
 {
     this->fip_[Inplace::Phase::UreaMass][globalDofIdx] = ureaMass;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasBiofilmMass() const
+FIPContainer<FluidSystem>::hasBiofilmMass() const
 {
     return has(Inplace::Phase::BiofilmMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignBiofilmMass(const unsigned globalDofIdx,
-                  const Scalar   biofilmMass)
+FIPContainer<FluidSystem>::assignBiofilmMass(const unsigned globalDofIdx, const Scalar biofilmMass)
 {
     this->fip_[Inplace::Phase::BiofilmMass][globalDofIdx] = biofilmMass;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasCalciteMass() const
+FIPContainer<FluidSystem>::hasCalciteMass() const
 {
     return has(Inplace::Phase::CalciteMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignCalciteMass(const unsigned globalDofIdx,
-                  const Scalar   calciteMass)
+FIPContainer<FluidSystem>::assignCalciteMass(const unsigned globalDofIdx, const Scalar calciteMass)
 {
     this->fip_[Inplace::Phase::CalciteMass][globalDofIdx] = calciteMass;
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 bool
-FIPContainer<FluidSystem>::
-hasWaterMass() const
+FIPContainer<FluidSystem>::hasWaterMass() const
 {
     return has(Inplace::Phase::WaterMass);
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignWaterMass(const unsigned globalDofIdx,
-                const std::array<Scalar, numPhases>& fip,
-                const Scalar   rhoW)
+FIPContainer<FluidSystem>::assignWaterMass(const unsigned globalDofIdx,
+                                           const std::array<Scalar, numPhases>& fip,
+                                           const Scalar rhoW)
 {
     if (this->has(Inplace::Phase::WaterMass)) {
         this->fip_[Inplace::Phase::WaterMass][globalDofIdx] = fip[waterPhaseIdx] * rhoW;
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignOilGasDistribution(const unsigned globalDofIdx,
-                         const Scalar   gasInPlaceLiquid,
-                         const Scalar   oilInPlaceGas)
+FIPContainer<FluidSystem>::assignOilGasDistribution(const unsigned globalDofIdx,
+                                                    const Scalar gasInPlaceLiquid,
+                                                    const Scalar oilInPlaceGas)
 {
     if (this->has(Inplace::Phase::GasInLiquidPhase)) {
         this->fip_[Inplace::Phase::GasInLiquidPhase][globalDofIdx] = gasInPlaceLiquid;
@@ -467,10 +430,9 @@ assignOilGasDistribution(const unsigned globalDofIdx,
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-outputRestart(data::Solution& sol)
+FIPContainer<FluidSystem>::outputRestart(data::Solution& sol)
 {
     if (!this->outputRestart_) {
         return;
@@ -483,38 +445,40 @@ outputRestart(data::Solution& sol)
 
     auto fipArrays = std::vector<FIPEntry> {};
     if (this->outputRestart_.surface) {
-        fipArrays.insert(fipArrays.end(), {
-                FIPEntry {"SFIPOIL"s, M::liquid_surface_volume, Inplace::Phase::OIL   },
-                FIPEntry {"SFIPWAT"s, M::liquid_surface_volume, Inplace::Phase::WATER },
-                FIPEntry {"SFIPGAS"s, M::gas_surface_volume,    Inplace::Phase::GAS   },
-            });
+        fipArrays.insert(fipArrays.end(),
+                         {
+                             FIPEntry {"SFIPOIL"s, M::liquid_surface_volume, Inplace::Phase::OIL},
+                             FIPEntry {"SFIPWAT"s, M::liquid_surface_volume, Inplace::Phase::WATER},
+                             FIPEntry {"SFIPGAS"s, M::gas_surface_volume, Inplace::Phase::GAS},
+                         });
     }
 
     if (this->outputRestart_.reservoir) {
-        fipArrays.insert(fipArrays.end(), {
-                FIPEntry {"RFIPOIL"s, M::volume, Inplace::Phase::OilResVolume   },
-                FIPEntry {"RFIPWAT"s, M::volume, Inplace::Phase::WaterResVolume },
-                FIPEntry {"RFIPGAS"s, M::volume, Inplace::Phase::GasResVolume   },
-            });
+        fipArrays.insert(fipArrays.end(),
+                         {
+                             FIPEntry {"RFIPOIL"s, M::volume, Inplace::Phase::OilResVolume},
+                             FIPEntry {"RFIPWAT"s, M::volume, Inplace::Phase::WaterResVolume},
+                             FIPEntry {"RFIPGAS"s, M::volume, Inplace::Phase::GasResVolume},
+                         });
     }
 
     if (this->outputRestart_.noPrefix && !this->outputRestart_.surface) {
-        fipArrays.insert(fipArrays.end(), {
-                FIPEntry { "FIPOIL"s, M::liquid_surface_volume, Inplace::Phase::OIL   },
-                FIPEntry { "FIPWAT"s, M::liquid_surface_volume, Inplace::Phase::WATER },
-                FIPEntry { "FIPGAS"s, M::gas_surface_volume,    Inplace::Phase::GAS   },
-            });
+        fipArrays.insert(fipArrays.end(),
+                         {
+                             FIPEntry {"FIPOIL"s, M::liquid_surface_volume, Inplace::Phase::OIL},
+                             FIPEntry {"FIPWAT"s, M::liquid_surface_volume, Inplace::Phase::WATER},
+                             FIPEntry {"FIPGAS"s, M::gas_surface_volume, Inplace::Phase::GAS},
+                         });
     }
 
     for (const auto& [mnemonic, unit, phase] : fipArrays) {
-        if (! this->fip_[phase].empty()) {
-            sol.insert(mnemonic, unit, std::move(this->fip_[phase]),
-                       data::TargetType::RESTART_SOLUTION);
+        if (!this->fip_[phase].empty()) {
+            sol.insert(mnemonic, unit, std::move(this->fip_[phase]), data::TargetType::RESTART_SOLUTION);
         }
     }
 
     for (const auto& phase : Inplace::mixingPhases()) {
-        if (! this->fip_[phase].empty()) {
+        if (!this->fip_[phase].empty()) {
             sol.insert(Inplace::EclString(phase),
                        UnitSystem::measure::volume,
                        std::move(this->fip_[phase]),
@@ -523,19 +487,17 @@ outputRestart(data::Solution& sol)
     }
 }
 
-template<class FluidSystem>
+template <class FluidSystem>
 void
-FIPContainer<FluidSystem>::
-assignPoreVolume(const unsigned globalDofIdx,
-                 const Scalar   value)
+FIPContainer<FluidSystem>::assignPoreVolume(const unsigned globalDofIdx, const Scalar value)
 {
     this->fip_[Inplace::Phase::PoreVolume][globalDofIdx] = value;
 }
 
-template<class T> using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
+template <class T>
+using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
 
-#define INSTANTIATE_TYPE(T) \
-    template class FIPContainer<FS<T>>;
+#define INSTANTIATE_TYPE(T) template class FIPContainer<FS<T>>;
 
 INSTANTIATE_TYPE(double)
 
@@ -543,19 +505,21 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-#define INSTANTIATE_COMP_THREEPHASE(NUM) \
-    template<class T> using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>; \
+#define INSTANTIATE_COMP_THREEPHASE(NUM)                                                                               \
+    template <class T>                                                                                                 \
+    using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>;                                                       \
     template class FIPContainer<FS##NUM<double>>;
 
-#define INSTANTIATE_COMP_TWOPHASE(NUM) \
-    template<class T> using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>; \
+#define INSTANTIATE_COMP_TWOPHASE(NUM)                                                                                 \
+    template <class T>                                                                                                 \
+    using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>;                                                     \
     template class FIPContainer<GFS##NUM<double>>;
 
-#define INSTANTIATE_COMP(NUM) \
-    INSTANTIATE_COMP_THREEPHASE(NUM) \
+#define INSTANTIATE_COMP(NUM)                                                                                          \
+    INSTANTIATE_COMP_THREEPHASE(NUM)                                                                                   \
     INSTANTIATE_COMP_TWOPHASE(NUM)
 
-INSTANTIATE_COMP_THREEPHASE(0)  // \Note: to register the parameter ForceDisableFluidInPlaceOutput
+INSTANTIATE_COMP_THREEPHASE(0) // \Note: to register the parameter ForceDisableFluidInPlaceOutput
 INSTANTIATE_COMP(2)
 INSTANTIATE_COMP(3)
 INSTANTIATE_COMP(4)

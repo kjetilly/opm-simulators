@@ -33,24 +33,25 @@
 
 #include <hip/hip_version.h>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class implements a rocsparse-based ilu0-bicgstab solver on GPU
-template<class Scalar, unsigned int block_size>
-class rocsparseSolverBackend : public GpuSolver<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class rocsparseSolverBackend : public GpuSolver<Scalar, block_size>
 {
-    using Base = GpuSolver<Scalar,block_size>;
+    using Base = GpuSolver<Scalar, block_size>;
 
+    using Base::deviceID;
+    using Base::initialized;
+    using Base::maxit;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
     using Base::platformID;
-    using Base::deviceID;
-    using Base::maxit;
     using Base::tolerance;
-    using Base::initialized;
+    using Base::verbosity;
 
 private:
     double c_copy = 0.0; // cummulative timer measuring the total time it takes to transfer the data to the GPU
@@ -58,8 +59,8 @@ private:
     bool useJacMatrix = false;
 
     bool analysis_done = false;
-    std::shared_ptr<BlockedMatrix<Scalar>> mat{};                 // original matrix
-    std::shared_ptr<BlockedMatrix<Scalar>> jacMat{};                 // jacobi matrix
+    std::shared_ptr<BlockedMatrix<Scalar>> mat {}; // original matrix
+    std::shared_ptr<BlockedMatrix<Scalar>> jacMat {}; // jacobi matrix
 
     rocsparse_direction dir = rocsparse_direction_row;
     rocsparse_operation operation = rocsparse_operation_none;
@@ -72,14 +73,15 @@ private:
     hipStream_t stream;
 
     rocsparse_int *d_Arows, *d_Acols;
-    Scalar *d_Avals;
+    Scalar* d_Avals;
     Scalar *d_x, *d_b, *d_r, *d_rw, *d_p; // vectors, used during linear solve
     Scalar *d_pw, *d_s, *d_t, *d_v;
-    int  ver;
+    int ver;
     char rev[64];
 
-    std::unique_ptr<rocsparsePreconditioner<Scalar, block_size> > prec; // can perform blocked ILU0 and AMG on pressure component
-    
+    std::unique_ptr<rocsparsePreconditioner<Scalar, block_size>>
+        prec; // can perform blocked ILU0 and AMG on pressure component
+
     /// Solve linear system using ilu0-bicgstab
     /// \param[in] wellContribs   WellContributions, to apply them separately, instead of adding them to matrix A
     /// \param[inout] res         summary of solver result
@@ -88,8 +90,7 @@ private:
     /// Initialize GPU and allocate memory
     /// \param[in] matrix     matrix A
     /// \param[in] jacMatrix  matrix for preconditioner
-    void initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-                    std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix);
+    void initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix, std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix);
 
     /// Copy linear system to GPU
     /// \param[in] b              input vector, contains N values
@@ -119,7 +120,8 @@ public:
     /// \param[in] tolerance                  required relative tolerance for rocsparseSolver
     /// \param[in] platformID                 the OpenCL platform to be used
     /// \param[in] deviceID                   the device to be used
-    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
+    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline
+    /// argument
     rocsparseSolverBackend(int linear_solver_verbosity,
                            int maxit,
                            Scalar tolerance,

@@ -27,12 +27,13 @@ namespace Opm::DamarisOutput
 
     The entries in the map below will be filled by corresponding Damaris
     Keywords.
-    
+
     N.B. Ensure all text items that are to be replaced are quoted with double quotes
-    e.g. unit="_REPLACE_UNIT_"   
+    e.g. unit="_REPLACE_UNIT_"
     *not* unit=_REPLACE_UNIT_
 */
-std::string initDamarisXmlFile()
+std::string
+initDamarisXmlFile()
 {
     std::string init_damaris = R"V0G0N(<?xml version="1.0"?>
 <simulation name="_SIM_NAME_" language="c" xmlns="http://damaris.gforge.inria.fr/damaris/model">

@@ -18,20 +18,21 @@
 */
 #include <config.h>
 
-#include <opm/simulators/flow/Main.hpp>
 #include <flow/flow_blackoil.hpp>
+#include <opm/simulators/flow/Main.hpp>
 
-namespace Opm::Properties {
-
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::FlowProblemTPFA>
+namespace Opm::Properties
 {
+
+template <class TypeTag>
+struct Scalar<TypeTag, TTag::FlowProblemTPFA> {
     using type = float;
 };
 
-}
+} // namespace Opm::Properties
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowProblemTPFA;
     auto mainObject = Opm::Main(argc, argv);

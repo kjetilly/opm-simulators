@@ -48,7 +48,8 @@
 #include <cstddef>
 #include <cstdio>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -68,7 +69,7 @@ namespace Opm {
  * - Porosity of the medium
  * - Norm of the intrinsic permeability of the medium
  */
-template<class TypeTag>
+template <class TypeTag>
 class VtkMultiPhaseModule : public BaseOutputModule<TypeTag>
 {
     using ParentType = BaseOutputModule<TypeTag>;
@@ -152,9 +153,9 @@ public:
 
         if (params_.velocityOutput_) {
             const std::size_t nDof = this->simulator_.model().numGridDof();
-            for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 velocity_[phaseIdx].resize(nDof);
-                for (unsigned dofIdx = 0; dofIdx < nDof; ++ dofIdx) {
+                for (unsigned dofIdx = 0; dofIdx < nDof; ++dofIdx) {
                     velocity_[phaseIdx][dofIdx].resize(dimWorld);
                     velocity_[phaseIdx][dofIdx] = 0.0;
                 }
@@ -164,9 +165,9 @@ public:
 
         if (params_.potentialGradientOutput_) {
             const std::size_t nDof = this->simulator_.model().numGridDof();
-            for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+            for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                 potentialGradient_[phaseIdx].resize(nDof);
-                for (unsigned dofIdx = 0; dofIdx < nDof; ++ dofIdx) {
+                for (unsigned dofIdx = 0; dofIdx < nDof; ++dofIdx) {
                     potentialGradient_[phaseIdx][dofIdx].resize(dimWorld);
                     potentialGradient_[phaseIdx][dofIdx] = 0.0;
                 }
@@ -271,8 +272,7 @@ public:
                 const unsigned J = elemCtx.globalSpaceIndex(j, /*timeIdx=*/0);
 
                 for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    Scalar weight = std::max(Scalar{1e-16},
-                                             std::abs(getValue(extQuants.volumeFlux(phaseIdx))));
+                    Scalar weight = std::max(Scalar {1e-16}, std::abs(getValue(extQuants.volumeFlux(phaseIdx))));
                     Valgrind::CheckDefined(extQuants.extrusionFactor());
                     assert(extQuants.extrusionFactor() > 0);
                     weight *= extQuants.extrusionFactor();
@@ -307,8 +307,7 @@ public:
         }
 
         if (params_.extrusionFactorOutput_) {
-            this->commitScalarBuffer_(baseWriter, "extrusionFactor",
-                                      extrusionFactor_, BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "extrusionFactor", extrusionFactor_, BufferType::Dof);
         }
         if (params_.pressureOutput_) {
             this->commitPhaseBuffer_(baseWriter, "pressure_%s", pressure_, BufferType::Dof);
@@ -323,23 +322,20 @@ public:
             this->commitPhaseBuffer_(baseWriter, "mobility_%s", mobility_, BufferType::Dof);
         }
         if (params_.relativePermeabilityOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "relativePerm_%s",
-                                     relativePermeability_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "relativePerm_%s", relativePermeability_, BufferType::Dof);
         }
         if (params_.viscosityOutput_) {
             this->commitPhaseBuffer_(baseWriter, "viscosity_%s", viscosity_, BufferType::Dof);
         }
         if (params_.averageMolarMassOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "averageMolarMass_%s",
-                                     averageMolarMass_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "averageMolarMass_%s", averageMolarMass_, BufferType::Dof);
         }
 
         if (params_.porosityOutput_) {
             this->commitScalarBuffer_(baseWriter, "porosity", porosity_, BufferType::Dof);
         }
         if (params_.intrinsicPermeabilityOutput_) {
-            this->commitTensorBuffer_(baseWriter, "intrinsicPerm",
-                                      intrinsicPermeability_, BufferType::Dof);
+            this->commitTensorBuffer_(baseWriter, "intrinsicPerm", intrinsicPermeability_, BufferType::Dof);
         }
 
         if (params_.velocityOutput_) {
@@ -370,9 +366,7 @@ public:
                 char name[512];
                 snprintf(name, 512, "gradP_%s", FluidSystem::phaseName(phaseIdx).data());
 
-                DiscBaseOutputModule::attachVectorDofData_(baseWriter,
-                                                           potentialGradient_[phaseIdx],
-                                                           name);
+                DiscBaseOutputModule::attachVectorDofData_(baseWriter, potentialGradient_[phaseIdx], name);
             }
         }
     }
@@ -391,24 +385,24 @@ public:
     }
 
 private:
-    VtkMultiPhaseParams params_{};
-    ScalarBuffer extrusionFactor_{};
-    PhaseBuffer pressure_{};
-    PhaseBuffer density_{};
-    PhaseBuffer saturation_{};
-    PhaseBuffer mobility_{};
-    PhaseBuffer relativePermeability_{};
-    PhaseBuffer viscosity_{};
-    PhaseBuffer averageMolarMass_{};
+    VtkMultiPhaseParams params_ {};
+    ScalarBuffer extrusionFactor_ {};
+    PhaseBuffer pressure_ {};
+    PhaseBuffer density_ {};
+    PhaseBuffer saturation_ {};
+    PhaseBuffer mobility_ {};
+    PhaseBuffer relativePermeability_ {};
+    PhaseBuffer viscosity_ {};
+    PhaseBuffer averageMolarMass_ {};
 
-    ScalarBuffer porosity_{};
-    TensorBuffer intrinsicPermeability_{};
+    ScalarBuffer porosity_ {};
+    TensorBuffer intrinsicPermeability_ {};
 
-    PhaseVectorBuffer velocity_{};
-    PhaseBuffer velocityWeight_{};
+    PhaseVectorBuffer velocity_ {};
+    PhaseBuffer velocityWeight_ {};
 
-    PhaseVectorBuffer potentialGradient_{};
-    PhaseBuffer potentialWeight_{};
+    PhaseVectorBuffer potentialGradient_ {};
+    PhaseBuffer potentialWeight_ {};
 };
 
 } // namespace Opm

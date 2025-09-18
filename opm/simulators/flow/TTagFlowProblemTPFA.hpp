@@ -22,18 +22,19 @@
 
 #include <tuple>
 
-namespace Opm::Properties::TTag {
+namespace Opm::Properties::TTag
+{
 
-    struct FlowProblem;
+struct FlowProblem;
 
-    /// Specialised type tag for simulations that can use the customised
-    /// assembly process for TPFA discretisation schemes.
-    ///
-    /// All properties are otherwise the same as for the regular
-    /// FlowProblem.
-    struct FlowProblemTPFA {
-        using InheritsFrom = std::tuple<FlowProblem>;
-    };
+/// Specialised type tag for simulations that can use the customised
+/// assembly process for TPFA discretisation schemes.
+///
+/// All properties are otherwise the same as for the regular
+/// FlowProblem.
+struct FlowProblemTPFA {
+    using InheritsFrom = std::tuple<FlowProblem>;
+};
 
 } // namespace Opm::Properties::TTag
 

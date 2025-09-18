@@ -19,64 +19,62 @@
 
 #include <config.h>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
-#include <opm/simulators/linalg/gpubridge/opencl/OpenclMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/Matrix.hpp>
+#include <opm/simulators/linalg/gpubridge/opencl/OpenclMatrix.hpp>
 
 namespace Opm
 {
 namespace Accelerator
 {
 
-template<class Scalar>
-void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue,
-                                  Scalar* vals, int* cols, int* rows)
-{
-    std::vector<cl::Event> events(3);
+    template <class Scalar>
+    void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue, Scalar* vals, int* cols, int* rows)
+    {
+        std::vector<cl::Event> events(3);
 
-    cl_int err = queue->enqueueWriteBuffer(nnzValues, CL_FALSE, 0,
-                                           sizeof(Scalar) * block_size * block_size * nnzbs,
-                                           vals, nullptr, &events[0]);
-    err |= queue->enqueueWriteBuffer(colIndices, CL_FALSE, 0, sizeof(int) * nnzbs,
-                                     cols, nullptr, &events[1]);
-    err |= queue->enqueueWriteBuffer(rowPointers, CL_FALSE, 0, sizeof(int) * (Nb + 1),
-                                     rows, nullptr, &events[2]);
+        cl_int err = queue->enqueueWriteBuffer(
+            nnzValues, CL_FALSE, 0, sizeof(Scalar) * block_size * block_size * nnzbs, vals, nullptr, &events[0]);
+        err |= queue->enqueueWriteBuffer(colIndices, CL_FALSE, 0, sizeof(int) * nnzbs, cols, nullptr, &events[1]);
+        err |= queue->enqueueWriteBuffer(rowPointers, CL_FALSE, 0, sizeof(int) * (Nb + 1), rows, nullptr, &events[2]);
 
-    cl::WaitForEvents(events);
-    events.clear();
-    if (err != CL_SUCCESS) {
-        // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
-        OPM_THROW(std::logic_error, "OpenclMatrix OpenCL enqueueWriteBuffer error");
-    }
-}
-
-template<class Scalar>
-void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue, Matrix<Scalar>* matrix)
-{
-    if (block_size != 1) {
-        OPM_THROW(std::logic_error, "Error trying to upload a BlockedMatrix to OpenclMatrix with different block_size");
+        cl::WaitForEvents(events);
+        events.clear();
+        if (err != CL_SUCCESS) {
+            // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
+            OPM_THROW(std::logic_error, "OpenclMatrix OpenCL enqueueWriteBuffer error");
+        }
     }
 
-    upload(queue, matrix->nnzValues.data(), matrix->colIndices.data(), matrix->rowPointers.data());
-}
+    template <class Scalar>
+    void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue, Matrix<Scalar>* matrix)
+    {
+        if (block_size != 1) {
+            OPM_THROW(std::logic_error,
+                      "Error trying to upload a BlockedMatrix to OpenclMatrix with different block_size");
+        }
 
-template<class Scalar>
-void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue, BlockedMatrix<Scalar>* matrix)
-{
-    if (matrix->block_size != block_size) {
-        OPM_THROW(std::logic_error, "Error trying to upload a BlockedMatrix to OpenclMatrix with different block_size");
+        upload(queue, matrix->nnzValues.data(), matrix->colIndices.data(), matrix->rowPointers.data());
     }
 
-    upload(queue, matrix->nnzValues, matrix->colIndices, matrix->rowPointers);
-}
+    template <class Scalar>
+    void OpenclMatrix<Scalar>::upload(cl::CommandQueue* queue, BlockedMatrix<Scalar>* matrix)
+    {
+        if (matrix->block_size != block_size) {
+            OPM_THROW(std::logic_error,
+                      "Error trying to upload a BlockedMatrix to OpenclMatrix with different block_size");
+        }
 
-template class OpenclMatrix<double>;
+        upload(queue, matrix->nnzValues, matrix->colIndices, matrix->rowPointers);
+    }
+
+    template class OpenclMatrix<double>;
 
 #if FLOW_INSTANTIATE_FLOAT
-template class OpenclMatrix<float>;
+    template class OpenclMatrix<float>;
 #endif
 
 } // namespace Accelerator

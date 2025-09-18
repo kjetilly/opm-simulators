@@ -26,14 +26,14 @@
 
 #include <boost/property_tree/ptree.hpp>
 
+#include <amgcl/adapter/crs_tuple.hpp>
 #include <amgcl/amg.hpp>
 #include <amgcl/backend/builtin.hpp>
-#include <amgcl/adapter/crs_tuple.hpp>
 #include <amgcl/make_block_solver.hpp>
+#include <amgcl/preconditioner/runtime.hpp>
 #include <amgcl/relaxation/as_preconditioner.hpp>
 #include <amgcl/relaxation/ilu0.hpp>
 #include <amgcl/solver/bicgstab.hpp>
-#include <amgcl/preconditioner/runtime.hpp>
 #include <amgcl/value_type/static_matrix.hpp>
 
 #include <memory>
@@ -41,42 +41,38 @@
 #include <type_traits>
 #include <vector>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class does not implement a solver, but converts the BCSR format to normal CSR and uses amgcl for solving
 /// Note amgcl also implements blocked solvers, but looks like it needs unblocked input data
-template<class Scalar, unsigned int block_size>
-class amgclSolverBackend : public GpuSolver<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class amgclSolverBackend : public GpuSolver<Scalar, block_size>
 {
-    using Base = GpuSolver<Scalar,block_size>;
+    using Base = GpuSolver<Scalar, block_size>;
 
+    using Base::deviceID;
+    using Base::initialized;
+    using Base::maxit;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
     using Base::platformID;
-    using Base::deviceID;
-    using Base::maxit;
     using Base::tolerance;
-    using Base::initialized;
+    using Base::verbosity;
 
     using dmat_type = amgcl::static_matrix<Scalar, block_size, block_size>; // matrix value type in double precision
     using dvec_type = amgcl::static_matrix<Scalar, block_size, 1>; // the corresponding vector value type
-    using CPU_Backend = std::conditional_t<block_size == 1,
-                                           amgcl::backend::builtin<Scalar>,
-                                           amgcl::backend::builtin<dmat_type>>;
+    using CPU_Backend
+        = std::conditional_t<block_size == 1, amgcl::backend::builtin<Scalar>, amgcl::backend::builtin<dmat_type>>;
 
-    using CPU_Solver = amgcl::make_solver<amgcl::runtime::preconditioner<CPU_Backend>,
-                                          amgcl::runtime::solver::wrapper<CPU_Backend>>;
+    using CPU_Solver
+        = amgcl::make_solver<amgcl::runtime::preconditioner<CPU_Backend>, amgcl::runtime::solver::wrapper<CPU_Backend>>;
 
 private:
     // amgcl can use different backends, this lets the user choose
-    enum Amgcl_backend_type {
-        cpu,
-        cuda,
-        vexcl
-    };
+    enum Amgcl_backend_type { cpu, cuda, vexcl };
 
     // store matrix in CSR format
     std::vector<unsigned> A_rows, A_cols;
@@ -85,7 +81,7 @@ private:
     std::once_flag print_info;
     Amgcl_backend_type backend_type = cpu;
 
-    boost::property_tree::ptree prm;         // amgcl parameters
+    boost::property_tree::ptree prm; // amgcl parameters
     int iters = 0;
     Scalar error = 0.0;
 
@@ -105,7 +101,7 @@ private:
     /// Convert the BCSR sparsity pattern to a CSR one
     /// \param[in] rows           array of rowPointers, contains N/dim+1 values
     /// \param[in] cols           array of columnIndices, contains nnz values
-    void convert_sparsity_pattern(const int *rows, const int *cols);
+    void convert_sparsity_pattern(const int* rows, const int* cols);
 
     /// Convert the BCSR nonzero data to a CSR format
     /// \param[in] vals           array of nonzeroes, each block is stored row-wise and contiguous, contains nnz values
@@ -124,9 +120,8 @@ public:
     /// \param[in] tolerance                  required relative tolerance for amgclSolver
     /// \param[in] platformID                 the OpenCL platform to be used
     /// \param[in] deviceID                   the device to be used
-    amgclSolverBackend(int linear_solver_verbosity, int maxit,
-                       Scalar tolerance, unsigned int platformID,
-                       unsigned int deviceID);
+    amgclSolverBackend(
+        int linear_solver_verbosity, int maxit, Scalar tolerance, unsigned int platformID, unsigned int deviceID);
 
     /// Destroy a openclSolver, and free memory
     ~amgclSolverBackend() override;
@@ -143,7 +138,7 @@ public:
                               std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
                               WellContributions<Scalar>& wellContribs,
                               GpuResult& res) override;
-    
+
     /// Get result after linear solve, and peform postprocessing if necessary
     /// \param[inout] x          resulting x vector, caller must guarantee that x points to a valid array
     void get_result(Scalar* x) override;

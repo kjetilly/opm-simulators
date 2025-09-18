@@ -22,19 +22,20 @@
 #define BOOST_TEST_MODULE OPM_test_extractMatrix
 #include <boost/test/unit_test.hpp>
 
-#include <opm/simulators/linalg/extractMatrix.hpp>
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
+#include <opm/simulators/linalg/extractMatrix.hpp>
 
 using B = Dune::FieldMatrix<double, 2, 2>;
 using M = Dune::BCRSMatrix<B>;
 using V = Dune::BlockVector<Dune::FieldVector<double, 2>>;
 
-M build3x3BlockMatrix()
+M
+build3x3BlockMatrix()
 {
     // Build matrix with this pattern:
-    //   ( x     ) 
+    //   ( x     )
     //   (   x   )
     //   (   x x )
     M res(3, 3, 4, M::row_wise);
@@ -90,23 +91,23 @@ BOOST_AUTO_TEST_CASE(copySubMatrixAndMatrixEqual)
 BOOST_AUTO_TEST_CASE(vectorOps)
 {
     V v1(4);
-    v1[0] = { 0.1, 0.2 };
-    v1[1] = { 0.3, 0.4 };
-    v1[2] = { 0.5, 0.6 };
-    v1[3] = { 0.6, 0.8 };
-    std::vector<int> indices = { 0, 2, 3 };
+    v1[0] = {0.1, 0.2};
+    v1[1] = {0.3, 0.4};
+    v1[2] = {0.5, 0.6};
+    v1[3] = {0.6, 0.8};
+    std::vector<int> indices = {0, 2, 3};
 
     V vref(3);
-    vref[0] = { 0.1, 0.2 };
-    vref[1] = { 0.5, 0.6 };
-    vref[2] = { 0.6, 0.8 };
+    vref[0] = {0.1, 0.2};
+    vref[1] = {0.5, 0.6};
+    vref[2] = {0.6, 0.8};
 
     auto v2 = Opm::Details::extractVector(v1, indices);
     BOOST_CHECK_EQUAL_COLLECTIONS(vref.begin(), vref.end(), v2.begin(), v2.end());
 
     V v3 = v1;
-    v3[2] = { 1.1, 1.2 };
-    v2[1] = { 1.1, 1.2 };
+    v3[2] = {1.1, 1.2};
+    v2[1] = {1.1, 1.2};
     Opm::Details::setGlobal(v2, indices, v1);
     BOOST_CHECK_EQUAL_COLLECTIONS(v1.begin(), v1.end(), v3.begin(), v3.end());
 }

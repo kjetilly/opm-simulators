@@ -32,11 +32,11 @@
 #include <cmath>
 #include <numeric>
 
-namespace Opm {
+namespace Opm
+{
 
-void RSTConv::init(const std::size_t numCells,
-                   const RSTConfig& rst_config,
-                   const std::array<int,6>& compIdx)
+void
+RSTConv::init(const std::size_t numCells, const RSTConfig& rst_config, const std::array<int, 6>& compIdx)
 {
     const auto kw = rst_config.keywords.find("CONV");
     if (kw == rst_config.keywords.end()) {
@@ -58,34 +58,35 @@ void RSTConv::init(const std::size_t numCells,
     conv_new_.resize(numCells, 1);
 }
 
-void RSTConv::outputRestart(data::Solution& sol)
+void
+RSTConv::outputRestart(data::Solution& sol)
 {
     if (!this->cnv_X_.empty()) {
-        constexpr const std::array names{"CNV_OIL", "CNV_GAS", "CNV_WAT",
-                                         "CNV_PLY", "CNV_SAL", "CNV_SOL"};
-        std::for_each(this->cnv_X_.begin(), this->cnv_X_.end(),
-                      [i = 0, &names, &sol](auto& cnv) mutable
-                      {
-                          if (!cnv.empty()) {
-                              sol.insert(names[i], std::move(cnv), data::TargetType::RESTART_SOLUTION);
-                          }
-                          ++i;
-                      });
+        constexpr const std::array names {"CNV_OIL", "CNV_GAS", "CNV_WAT", "CNV_PLY", "CNV_SAL", "CNV_SOL"};
+        std::for_each(this->cnv_X_.begin(), this->cnv_X_.end(), [i = 0, &names, &sol](auto& cnv) mutable {
+            if (!cnv.empty()) {
+                sol.insert(names[i], std::move(cnv), data::TargetType::RESTART_SOLUTION);
+            }
+            ++i;
+        });
         sol.insert("CONV_NEW", std::move(conv_new_), data::TargetType::RESTART_SOLUTION);
     }
 }
 
-bool RSTConv::hasConv() const
+bool
+RSTConv::hasConv() const
 {
     return !conv_new_.empty();
 }
 
-void RSTConv::prepareConv()
+void
+RSTConv::prepareConv()
 {
     std::fill(conv_new_.begin(), conv_new_.end(), 1);
 }
 
-void RSTConv::updateNewton(const std::vector<int>& convNewt)
+void
+RSTConv::updateNewton(const std::vector<int>& convNewt)
 {
     const std::size_t numGloCells = conv_new_.size();
 
@@ -110,8 +111,9 @@ void RSTConv::updateNewton(const std::vector<int>& convNewt)
     }
 }
 
-template<class ResidualVector>
-void RSTConv::update(const ResidualVector& resid)
+template <class ResidualVector>
+void
+RSTConv::update(const ResidualVector& resid)
 {
     if (N_ == 0) {
         return;
@@ -123,17 +125,18 @@ void RSTConv::update(const ResidualVector& resid)
         if (cnv_X_[i].empty()) {
             continue;
         }
-        std::partial_sort(cix.begin(), cix.begin() + N_, cix.end(),
-                          [&resid,c = compIdx_[i]](const int a, const int b)
-                          { return std::abs(resid[a][c]) > std::abs(resid[b][c]); });
+        std::partial_sort(
+            cix.begin(), cix.begin() + N_, cix.end(), [&resid, c = compIdx_[i]](const int a, const int b) {
+                return std::abs(resid[a][c]) > std::abs(resid[b][c]);
+            });
 
         this->gatherAndAccumulate(cix, resid, i);
     }
 }
 
-template<class ResidualVector>
-void RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx,
-                                  const ResidualVector& resid, int comp)
+template <class ResidualVector>
+void
+RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx, const ResidualVector& resid, int comp)
 {
     if (comm_.size() == 1) {
         for (int n = 0; n < N_; ++n) {
@@ -160,30 +163,29 @@ void RSTConv::gatherAndAccumulate(const std::vector<int>& lIdx,
     std::vector<int> valIdx(values.size());
     std::iota(valIdx.begin(), valIdx.end(), 0);
 
-    std::partial_sort(valIdx.begin(), valIdx.begin() + N_, valIdx.end(),
-                      [&values](const int i1, const int i2)
-                      { return values[i1] > values[i2]; });
+    std::partial_sort(valIdx.begin(), valIdx.begin() + N_, valIdx.end(), [&values](const int i1, const int i2) {
+        return values[i1] > values[i2];
+    });
 
     for (int n = 0; n < N_; ++n) {
         ++cnv_X_[comp][gIdx[valIdx[n]]];
     }
 }
 
-template<class Scalar, std::size_t Size>
-using BFV = Dune::BlockVector<Dune::FieldVector<Scalar,Size>>;
+template <class Scalar, std::size_t Size>
+using BFV = Dune::BlockVector<Dune::FieldVector<Scalar, Size>>;
 
-#define INSTANTIATE(T,SIZE)                                              \
-    template void RSTConv::update(const BFV<T,SIZE>&);                   \
-    template void RSTConv::gatherAndAccumulate(const std::vector<int>&,  \
-                                               const BFV<T,SIZE>&, int);
+#define INSTANTIATE(T, SIZE)                                                                                           \
+    template void RSTConv::update(const BFV<T, SIZE>&);                                                                \
+    template void RSTConv::gatherAndAccumulate(const std::vector<int>&, const BFV<T, SIZE>&, int);
 
-#define INSTANTIATE_TYPE(T) \
-    INSTANTIATE(T,1)        \
-    INSTANTIATE(T,2)        \
-    INSTANTIATE(T,3)        \
-    INSTANTIATE(T,4)        \
-    INSTANTIATE(T,5)        \
-    INSTANTIATE(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    INSTANTIATE(T, 1)                                                                                                  \
+    INSTANTIATE(T, 2)                                                                                                  \
+    INSTANTIATE(T, 3)                                                                                                  \
+    INSTANTIATE(T, 4)                                                                                                  \
+    INSTANTIATE(T, 5)                                                                                                  \
+    INSTANTIATE(T, 6)
 
 INSTANTIATE_TYPE(double)
 

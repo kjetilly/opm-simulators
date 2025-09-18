@@ -37,7 +37,7 @@
 std::mutex outputMutex;
 
 // The runner is created on the heap for the assertion and outputs in the run function of the tasklets.
-std::unique_ptr<Opm::TaskletRunner> runner{};
+std::unique_ptr<Opm::TaskletRunner> runner {};
 
 class SleepTasklet : public Opm::TaskletInterface
 {
@@ -46,7 +46,7 @@ public:
         : mseconds_(mseconds)
     {
         n_ = numInstantiated_;
-        ++ numInstantiated_;
+        ++numInstantiated_;
     }
 
     void run() override
@@ -54,7 +54,8 @@ public:
         assert(0 <= runner->workerThreadIndex() && runner->workerThreadIndex() < runner->numWorkerThreads());
         std::this_thread::sleep_for(std::chrono::milliseconds(mseconds_));
         std::lock_guard<std::mutex> guard(outputMutex);
-        std::cout << "Sleep tasklet " << n_ << " of " << mseconds_ << " ms completed by worker thread " << runner->workerThreadIndex() << std::endl;
+        std::cout << "Sleep tasklet " << n_ << " of " << mseconds_ << " ms completed by worker thread "
+                  << runner->workerThreadIndex() << std::endl;
     }
 
 private:
@@ -64,7 +65,8 @@ private:
 };
 
 void sleepAndPrintFunction();
-void sleepAndPrintFunction()
+void
+sleepAndPrintFunction()
 {
     int ms = 100;
     std::this_thread::sleep_for(std::chrono::milliseconds(ms));
@@ -74,7 +76,8 @@ void sleepAndPrintFunction()
 
 int SleepTasklet::numInstantiated_ = 0;
 
-int main()
+int
+main()
 {
     int numWorkers = 2;
     runner = std::make_unique<Opm::TaskletRunner>(numWorkers);
@@ -83,8 +86,8 @@ int main()
     assert(runner->workerThreadIndex() < 0);
     assert(runner->numWorkerThreads() == numWorkers);
 
-    for (int i = 0; i < 5; ++ i) {
-        //auto st = std::make_shared<SleepTasklet>((i + 1)*1000);
+    for (int i = 0; i < 5; ++i) {
+        // auto st = std::make_shared<SleepTasklet>((i + 1)*1000);
         auto st = std::make_shared<SleepTasklet>(100);
         runner->dispatch(st);
     }
@@ -98,4 +101,3 @@ int main()
 
     return 0;
 }
-

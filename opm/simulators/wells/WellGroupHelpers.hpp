@@ -23,34 +23,43 @@
 
 #include "opm/material/fluidsystems/PhaseUsageInfo.hpp"
 
-#include <opm/input/eclipse/Schedule/Group/GuideRate.hpp>
-#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
-#include <opm/simulators/utils/ParallelCommunication.hpp>
+#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
+#include <opm/input/eclipse/Schedule/Group/GuideRate.hpp>
 #include <opm/input/eclipse/Schedule/ScheduleState.hpp>
+#include <opm/simulators/utils/ParallelCommunication.hpp>
 
 #include <map>
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
 class Group;
-template<class Scalar> class GroupState;
-namespace Network { class ExtNetwork; }
+template <class Scalar>
+class GroupState;
+namespace Network
+{
+    class ExtNetwork;
+}
 class Schedule;
-template<class Scalar> class VFPProdProperties;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class Scalar>
+class VFPProdProperties;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 class FieldPropsManager;
 
-namespace Network { class ExtNetwork; }
+namespace Network
+{
+    class ExtNetwork;
+}
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class WellGroupHelpers
 {
 public:
-
     using WellStateType = WellState<Scalar, IndexTraits>;
 
     static Scalar sumWellPhaseRates(bool res_rates,
@@ -75,8 +84,8 @@ public:
                                           const GSatProd::GSatProdGroupProp::Rate rateComp,
                                           bool res_rates);
 
-    static std::optional<GSatProd::GSatProdGroupProp::Rate>
-    selectRateComponent(const PhaseUsageInfo<IndexTraits>& pu, const int phasePos);
+    static std::optional<GSatProd::GSatProdGroupProp::Rate> selectRateComponent(const PhaseUsageInfo<IndexTraits>& pu,
+                                                                                const int phasePos);
 
     static void setCmodeGroup(const Group& group,
                               const Schedule& schedule,
@@ -198,23 +207,19 @@ public:
                                     bool sum_rank);
 
 
-    static std::map<std::string, Scalar>
-    computeNetworkPressures(const Network::ExtNetwork& network,
-                            const WellStateType& well_state,
-                            const GroupState<Scalar>& group_state,
-                            const VFPProdProperties<Scalar>& vfp_prod_props,
-                            const Schedule& schedule,
-                            const Parallel::Communication& comm,
-                            const int report_time_step);
+    static std::map<std::string, Scalar> computeNetworkPressures(const Network::ExtNetwork& network,
+                                                                 const WellStateType& well_state,
+                                                                 const GroupState<Scalar>& group_state,
+                                                                 const VFPProdProperties<Scalar>& vfp_prod_props,
+                                                                 const Schedule& schedule,
+                                                                 const Parallel::Communication& comm,
+                                                                 const int report_time_step);
 
-    static GuideRate::RateVector
-    getWellRateVector(const WellStateType& well_state,
-                      const std::string& name);
+    static GuideRate::RateVector getWellRateVector(const WellStateType& well_state, const std::string& name);
 
-    static GuideRate::RateVector
-    getProductionGroupRateVector(const GroupState<Scalar>& group_state,
-                                 const PhaseUsageInfo<IndexTraits>& pu,
-                                 const std::string& group_name);
+    static GuideRate::RateVector getProductionGroupRateVector(const GroupState<Scalar>& group_state,
+                                                              const PhaseUsageInfo<IndexTraits>& pu,
+                                                              const std::string& group_name);
 
     static Scalar getGuideRate(const std::string& name,
                                const Schedule& schedule,
@@ -245,7 +250,8 @@ public:
                                           const bool is_production_group,
                                           const Phase injection_phase);
 
-    /// returns the number of wells that are actively under group control for a given group with name given by group_name
+    /// returns the number of wells that are actively under group control for a given group with name given by
+    /// group_name
     static int groupControlledWells(const Schedule& schedule,
                                     const WellStateType& well_state,
                                     const GroupState<Scalar>& group_state,
@@ -255,95 +261,89 @@ public:
                                     const bool is_production_group,
                                     const Phase injection_phase);
 
-    static std::pair<bool, Scalar>
-    checkGroupConstraintsInj(const std::string& name,
-                             const std::string& parent,
-                             const Group& group,
-                             const WellStateType& wellState,
-                             const GroupState<Scalar>& group_state,
-                             const int reportStepIdx,
-                             const GuideRate* guideRate,
-                             const Scalar* rates,
-                             Phase injectionPhase,
-                             const Scalar efficiencyFactor,
-                             const Schedule& schedule,
-                             const SummaryState& summaryState,
-                             const std::vector<Scalar>& resv_coeff,
-                             const bool check_guide_rate,
-                             DeferredLogger& deferred_logger);
+    static std::pair<bool, Scalar> checkGroupConstraintsInj(const std::string& name,
+                                                            const std::string& parent,
+                                                            const Group& group,
+                                                            const WellStateType& wellState,
+                                                            const GroupState<Scalar>& group_state,
+                                                            const int reportStepIdx,
+                                                            const GuideRate* guideRate,
+                                                            const Scalar* rates,
+                                                            Phase injectionPhase,
+                                                            const Scalar efficiencyFactor,
+                                                            const Schedule& schedule,
+                                                            const SummaryState& summaryState,
+                                                            const std::vector<Scalar>& resv_coeff,
+                                                            const bool check_guide_rate,
+                                                            DeferredLogger& deferred_logger);
 
-    static Scalar
-    getWellGroupTargetInjector(const std::string& name,
-                               const std::string& parent,
-                               const Group& group,
-                               const WellStateType& wellState,
-                               const GroupState<Scalar>& group_state,
-                               const int reportStepIdx,
-                               const GuideRate* guideRate,
-                               const Scalar* rates,
-                               Phase injectionPhase,
-                               const Scalar efficiencyFactor,
-                               const Schedule& schedule,
-                               const SummaryState& summaryState,
-                               const std::vector<Scalar>& resv_coeff,
-                               DeferredLogger& deferred_logger);
+    static Scalar getWellGroupTargetInjector(const std::string& name,
+                                             const std::string& parent,
+                                             const Group& group,
+                                             const WellStateType& wellState,
+                                             const GroupState<Scalar>& group_state,
+                                             const int reportStepIdx,
+                                             const GuideRate* guideRate,
+                                             const Scalar* rates,
+                                             Phase injectionPhase,
+                                             const Scalar efficiencyFactor,
+                                             const Schedule& schedule,
+                                             const SummaryState& summaryState,
+                                             const std::vector<Scalar>& resv_coeff,
+                                             DeferredLogger& deferred_logger);
 
-    static std::vector<std::string>
-    groupChainTopBot(const std::string& bottom,
-                     const std::string& top,
-                     const Schedule& schedule,
-                     const int report_step);
+    static std::vector<std::string> groupChainTopBot(const std::string& bottom,
+                                                     const std::string& top,
+                                                     const Schedule& schedule,
+                                                     const int report_step);
 
-    
+
     // check if well/group bottom is a sub well/group of the group top
-    static bool
-    isInGroupChainTopBot(const std::string& bottom,
-                         const std::string& top,
-                         const Schedule& schedule,
-                         const int report_step);
+    static bool isInGroupChainTopBot(const std::string& bottom,
+                                     const std::string& top,
+                                     const Schedule& schedule,
+                                     const int report_step);
 
-    static std::string
-    control_group(const Group& group,
-                  const GroupState<Scalar>& group_state,
-                  const int reportStepIdx,
-                  const Schedule& schedule);
+    static std::string control_group(const Group& group,
+                                     const GroupState<Scalar>& group_state,
+                                     const int reportStepIdx,
+                                     const Schedule& schedule);
 
-    static std::pair<bool, Scalar>
-    checkGroupConstraintsProd(const std::string& name,
-                              const std::string& parent,
-                              const Group& group,
-                              const WellStateType& wellState,
-                              const GroupState<Scalar>& group_state,
-                              const int reportStepIdx,
-                              const GuideRate* guideRate,
-                              const Scalar* rates,
-                              const Scalar efficiencyFactor,
-                              const Schedule& schedule,
-                              const SummaryState& summaryState,
-                              const std::vector<Scalar>& resv_coeff,
-                              const bool check_guide_rate,
-                              DeferredLogger& deferred_logger);
-    static Scalar
-    getWellGroupTargetProducer(const std::string& name,
-                               const std::string& parent,
-                               const Group& group,
-                               const WellStateType& wellState,
-                               const GroupState<Scalar>& group_state,
-                               const int reportStepIdx,
-                               const GuideRate* guideRate,
-                               const Scalar* rates,
-                               const Scalar efficiencyFactor,
-                               const Schedule& schedule,
-                               const SummaryState& summaryState,
-                               const std::vector<Scalar>& resv_coeff,
-                               DeferredLogger& deferred_logger);
+    static std::pair<bool, Scalar> checkGroupConstraintsProd(const std::string& name,
+                                                             const std::string& parent,
+                                                             const Group& group,
+                                                             const WellStateType& wellState,
+                                                             const GroupState<Scalar>& group_state,
+                                                             const int reportStepIdx,
+                                                             const GuideRate* guideRate,
+                                                             const Scalar* rates,
+                                                             const Scalar efficiencyFactor,
+                                                             const Schedule& schedule,
+                                                             const SummaryState& summaryState,
+                                                             const std::vector<Scalar>& resv_coeff,
+                                                             const bool check_guide_rate,
+                                                             DeferredLogger& deferred_logger);
+    static Scalar getWellGroupTargetProducer(const std::string& name,
+                                             const std::string& parent,
+                                             const Group& group,
+                                             const WellStateType& wellState,
+                                             const GroupState<Scalar>& group_state,
+                                             const int reportStepIdx,
+                                             const GuideRate* guideRate,
+                                             const Scalar* rates,
+                                             const Scalar efficiencyFactor,
+                                             const Schedule& schedule,
+                                             const SummaryState& summaryState,
+                                             const std::vector<Scalar>& resv_coeff,
+                                             DeferredLogger& deferred_logger);
 
     template <class AverageRegionalPressureType>
-    static void setRegionAveragePressureCalculator(const Group& group,
-                                                   const Schedule& schedule,
-                                                   const int reportStepIdx,
-                                                   const FieldPropsManager& fp,
-                                                   std::map<std::string, std::unique_ptr<AverageRegionalPressureType>>& regionalAveragePressureCalculator);
+    static void setRegionAveragePressureCalculator(
+        const Group& group,
+        const Schedule& schedule,
+        const int reportStepIdx,
+        const FieldPropsManager& fp,
+        std::map<std::string, std::unique_ptr<AverageRegionalPressureType>>& regionalAveragePressureCalculator);
 };
 
 } // namespace Opm

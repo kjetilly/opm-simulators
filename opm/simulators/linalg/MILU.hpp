@@ -31,7 +31,7 @@
 namespace Opm
 {
 
-enum class MILU_VARIANT{
+enum class MILU_VARIANT {
     /// \brief Do not perform modified ILU
     ILU = 0,
     /// \brief \f$U_{ii} = U_{ii} +\f$  sum(dropped entries)
@@ -50,71 +50,72 @@ MILU_VARIANT convertString2Milu(const std::string& milu);
 namespace detail
 {
 
-template <typename T>
-T identityFunctor(const T&);
+    template <typename T>
+    T identityFunctor(const T&);
 
-template <typename T>
-T oneFunctor(const T&);
+    template <typename T>
+    T oneFunctor(const T&);
 
-template <typename T>
-T signFunctor(const T&);
+    template <typename T>
+    T signFunctor(const T&);
 
-template <typename T>
-T isPositiveFunctor(const T&);
+    template <typename T>
+    T isPositiveFunctor(const T&);
 
-template <typename T>
-T absFunctor(const T&);
+    template <typename T>
+    T absFunctor(const T&);
 
 
-struct Reorderer
-{
-    virtual std::size_t operator[](std::size_t i) const = 0;
-    virtual ~Reorderer() {}
-};
+    struct Reorderer {
+        virtual std::size_t operator[](std::size_t i) const = 0;
+        virtual ~Reorderer()
+        {
+        }
+    };
 
-struct NoReorderer : public Reorderer
-{
-    std::size_t operator[](std::size_t i) const override
+    struct NoReorderer : public Reorderer {
+        std::size_t operator[](std::size_t i) const override
+        {
+            return i;
+        }
+    };
+
+    struct RealReorderer : public Reorderer {
+        explicit RealReorderer(const std::vector<std::size_t>& ordering)
+            : ordering_(&ordering)
+        {
+        }
+
+        std::size_t operator[](std::size_t i) const override
+        {
+            return (*ordering_)[i];
+        }
+
+        const std::vector<std::size_t>* ordering_;
+    };
+
+
+    template <class M>
+    using FieldFunct = std::function<typename M::field_type(const typename M::field_type&)>;
+
+    template <typename M>
+    void milu0_decomposition(M& A,
+                             FieldFunct<M> absFunctor = signFunctor<typename M::field_type>,
+                             FieldFunct<M> signFunctor = oneFunctor<typename M::field_type>,
+                             std::vector<typename M::block_type>* diagonal = nullptr);
+
+    template <class M>
+    void milu0_decomposition(M& A, std::vector<typename M::block_type>* diagonal)
     {
-        return i;
-    }
-};
-
-struct RealReorderer : public Reorderer
-{
-    explicit RealReorderer(const std::vector<std::size_t>& ordering)
-        : ordering_(&ordering)
-    {}
-
-    std::size_t operator[](std::size_t i) const override
-    {
-        return (*ordering_)[i];
+        milu0_decomposition(A, identityFunctor<typename M::field_type>, oneFunctor<typename M::field_type>, diagonal);
     }
 
-    const std::vector<std::size_t>* ordering_;
-};
 
+    template <class M>
+    void
+    milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU, Reorderer& ordering, Reorderer& inverseOrdering);
 
-template<class M>
-using FieldFunct = std::function<typename M::field_type(const typename M::field_type&)>;
-
-template <typename M>
-void milu0_decomposition(M& A, FieldFunct<M> absFunctor = signFunctor<typename M::field_type>,
-                         FieldFunct<M> signFunctor = oneFunctor<typename M::field_type>,
-                         std::vector<typename M::block_type>* diagonal = nullptr);
-
-template<class M>
-void  milu0_decomposition(M& A, std::vector<typename M::block_type>* diagonal)
-{
-    milu0_decomposition(A, identityFunctor<typename M::field_type>, oneFunctor<typename M::field_type>, diagonal);
-}
-
-
-template<class M>
-void milun_decomposition(const M& A, int n, MILU_VARIANT milu, M& ILU,
-                         Reorderer& ordering, Reorderer& inverseOrdering);
-
-} // end namespace details
+} // namespace detail
 
 } // end namespace Opm
 

@@ -20,37 +20,49 @@
 #ifndef OPM_RESERVOIR_COUPLING_SLAVE_HPP
 #define OPM_RESERVOIR_COUPLING_SLAVE_HPP
 
-#include <opm/simulators/flow/ReservoirCoupling.hpp>
-#include <opm/input/eclipse/Schedule/Schedule.hpp>
-#include <opm/simulators/utils/ParallelCommunication.hpp>
-#include <opm/simulators/timestepping/SimulatorTimer.hpp>
 #include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
+#include <opm/simulators/flow/ReservoirCoupling.hpp>
+#include <opm/simulators/timestepping/SimulatorTimer.hpp>
+#include <opm/simulators/utils/ParallelCommunication.hpp>
 
 #include <mpi.h>
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-class ReservoirCouplingSlave {
+class ReservoirCouplingSlave
+{
 public:
     using MessageTag = ReservoirCoupling::MessageTag;
     using Potentials = ReservoirCoupling::Potentials;
 
-    ReservoirCouplingSlave(
-        const Parallel::Communication &comm, const Schedule &schedule, const SimulatorTimer &timer
-    );
-    bool activated() const { return activated_; }
-    void clearDeferredLogger() { logger_.clearDeferredLogger(); }
-    const Parallel::Communication& getComm() const { return comm_; }
-    const std::map<std::string, std::string>& getSlaveToMasterGroupNameMap() const {
-        return slave_to_master_group_map_; }
+    ReservoirCouplingSlave(const Parallel::Communication& comm, const Schedule& schedule, const SimulatorTimer& timer);
+    bool activated() const
+    {
+        return activated_;
+    }
+    void clearDeferredLogger()
+    {
+        logger_.clearDeferredLogger();
+    }
+    const Parallel::Communication& getComm() const
+    {
+        return comm_;
+    }
+    const std::map<std::string, std::string>& getSlaveToMasterGroupNameMap() const
+    {
+        return slave_to_master_group_map_;
+    }
     void maybeActivate(int report_step);
     double receiveNextTimeStepFromMaster();
     void sendAndReceiveInitialData();
     void sendNextReportDateToMasterProcess() const;
-    void sendPotentialsToMaster(const std::vector<Potentials> &potentials) const;
-    void setDeferredLogger(DeferredLogger *deferred_logger) {
+    void sendPotentialsToMaster(const std::vector<Potentials>& potentials) const;
+    void setDeferredLogger(DeferredLogger* deferred_logger)
+    {
         this->logger_.setDeferredLogger(deferred_logger);
     }
 
@@ -64,14 +76,14 @@ private:
     void sendActivationHandshakeToMasterProcess_() const;
     void sendSimulationStartDateToMasterProcess_() const;
 
-    const Parallel::Communication &comm_;
+    const Parallel::Communication& comm_;
     const Schedule& schedule_;
-    const SimulatorTimer &timer_;
+    const SimulatorTimer& timer_;
     // MPI parent communicator for a slave process
-    MPI_Comm slave_master_comm_{MPI_COMM_NULL};
+    MPI_Comm slave_master_comm_ {MPI_COMM_NULL};
     std::map<std::string, std::string> slave_to_master_group_map_;
-    bool activated_{false};
-    std::string slave_name_;  // This is the slave name as defined in the master process
+    bool activated_ {false};
+    std::string slave_name_; // This is the slave name as defined in the master process
     ReservoirCoupling::Logger logger_;
 };
 

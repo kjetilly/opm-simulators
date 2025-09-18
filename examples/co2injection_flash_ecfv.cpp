@@ -32,53 +32,61 @@
 #include <opm/material/common/quad.hpp>
 #endif
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/flash/flashmodel.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include "problems/co2injectionflash.hh"
 #include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/flash/flashmodel.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/utils/start.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionFlashEcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, FlashModel>; };
+    struct Co2InjectionFlashEcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, FlashModel>;
+    };
 
 } // end namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionFlashEcfvProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionFlashEcfvProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
 // use automatic differentiation for this simulator
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionFlashEcfvProblem>
-{ using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionFlashEcfvProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 // use the flash solver adapted to the CO2 injection problem
-template<class TypeTag>
-struct FlashSolver<TypeTag, TTag::Co2InjectionFlashEcfvProblem>
-{ using type = Opm::Co2InjectionFlash<GetPropType<TypeTag, Properties::Scalar>,
-                                      GetPropType<TypeTag, Properties::FluidSystem>>; };
+template <class TypeTag>
+struct FlashSolver<TypeTag, TTag::Co2InjectionFlashEcfvProblem> {
+    using type = Opm::Co2InjectionFlash<GetPropType<TypeTag, Properties::Scalar>,
+                                        GetPropType<TypeTag, Properties::FluidSystem>>;
+};
 
 // the flash model has serious problems with the numerical
 // precision. if quadruple precision math is available, we use it,
 // else we increase the tolerance of the Newton solver
 #if HAVE_QUAD
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::Co2InjectionFlashEcfvProblem>
-{ using type = quad; };
+template <class TypeTag>
+struct Scalar<TypeTag, TTag::Co2InjectionFlashEcfvProblem> {
+    using type = quad;
+};
 #endif
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionFlashEcfvProblem;
-#if ! HAVE_QUAD
+#if !HAVE_QUAD
     Opm::Co2InjectionTolerance = 1e-5;
 #endif
     return Opm::start<EcfvProblemTypeTag>(argc, argv, true);

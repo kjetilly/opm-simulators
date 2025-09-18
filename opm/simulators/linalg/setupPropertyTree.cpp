@@ -25,8 +25,8 @@
 
 #include <opm/simulators/linalg/FlowLinearSolverParameters.hpp>
 
-#include <filesystem>
 #include <boost/version.hpp>
+#include <filesystem>
 
 namespace Opm
 {
@@ -44,15 +44,15 @@ setupPropertyTree(FlowLinearSolverParameters p, // Note: copying the parameters 
     std::string conf = p.linsolver_;
 
     // Get configuration from file.
-    if (conf.size() > 5 && conf.substr(conf.size() - 5, 5) == ".json") { // the ends_with() method is not available until C++20
+    if (conf.size() > 5
+        && conf.substr(conf.size() - 5, 5) == ".json") { // the ends_with() method is not available until C++20
 #if BOOST_VERSION / 100 % 1000 > 48
-        if ( !std::filesystem::exists(conf) ) {
+        if (!std::filesystem::exists(conf)) {
             OPM_THROW(std::invalid_argument, "JSON file " + conf + " does not exist.");
         }
         try {
             return PropertyTree(conf);
-        }
-        catch (...) {
+        } catch (...) {
             OPM_THROW(std::invalid_argument, "Failed reading linear solver configuration from JSON file " + conf);
         }
 #else
@@ -117,18 +117,17 @@ setupPropertyTree(FlowLinearSolverParameters p, // Note: copying the parameters 
 
     // No valid configuration option found.
     OPM_THROW(std::invalid_argument,
-              conf + " is not a valid setting for --linear-solver-configuration."
-              " Please use ilu0, dilu, cpr, cprw, cpr_trueimpes, cpr_quasiimpes, cpr_trueimpesanalytic or isai");
+              conf
+                  + " is not a valid setting for --linear-solver-configuration."
+                    " Please use ilu0, dilu, cpr, cprw, cpr_trueimpes, cpr_quasiimpes, cpr_trueimpesanalytic or isai");
 }
 
-std::string getSolverString(const FlowLinearSolverParameters& p)
+std::string
+getSolverString(const FlowLinearSolverParameters& p)
 {
-    if (p.newton_use_gmres_)
-    {
+    if (p.newton_use_gmres_) {
         return {"gmres"};
-    }
-    else
-    {
+    } else {
         return {"bicgstab"};
     }
 }

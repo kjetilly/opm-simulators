@@ -19,7 +19,7 @@
 
 #include "config.h"
 
-#define NVERBOSE  // Suppress own messages when throw()ing
+#define NVERBOSE // Suppress own messages when throw()ing
 
 #define BOOST_TEST_MODULE RelpermDiagnostics
 
@@ -37,12 +37,12 @@
 
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/OpmLog/CounterLog.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
+#include <dune/grid/common/mcmgmapper.hh>
 #include <opm/grid/CpGrid.hpp>
 #include <opm/grid/cpgrid/LevelCartesianIndexMapper.hpp>
-#include <dune/grid/common/mcmgmapper.hh>
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/TableManager.hpp>
@@ -57,14 +57,14 @@
 #include <dune/common/parallel/mpihelper.hh>
 #endif
 
-BOOST_AUTO_TEST_SUITE (RelPermDiagnostics)
+BOOST_AUTO_TEST_SUITE(RelPermDiagnostics)
 
 BOOST_AUTO_TEST_CASE(diagnosis)
 {
     // MPI setup.
     int argcDummy = 1;
-    const char *tmp[] = {"test_relpermdiagnostic"};
-    char **argvDummy = const_cast<char**>(tmp);
+    const char* tmp[] = {"test_relpermdiagnostic"};
+    char** argvDummy = const_cast<char**>(tmp);
 
 #if HAVE_DUNE_FEM
     Dune::Fem::MPIManager::initialize(argcDummy, argvDummy);
@@ -81,14 +81,14 @@ BOOST_AUTO_TEST_CASE(diagnosis)
     Grid grid = Grid();
     grid.processEclipseFormat(&eclState.getInputGrid(),
                               &eclState,
-                               /*isPeriodic=*/false,
-                               /*flipNormals=*/false,
-                               /*clipZ=*/false);
+                              /*isPeriodic=*/false,
+                              /*flipNormals=*/false,
+                              /*clipZ=*/false);
 
     typedef Opm::LevelCartesianIndexMapper<Grid> LevelCartesianIndexMapper;
     LevelCartesianIndexMapper levelCartesianIndexMapper = LevelCartesianIndexMapper(grid);
     std::shared_ptr<CounterLog> counterLog = std::make_shared<CounterLog>(Log::DefaultMessageTypes);
-    OpmLog::addBackend( "COUNTERLOG" , counterLog );
+    OpmLog::addBackend("COUNTERLOG", counterLog);
     RelpermDiagnostics diagnostics;
     diagnostics.diagnosis(eclState, levelCartesianIndexMapper);
     BOOST_CHECK_EQUAL(1, counterLog->numMessages(Log::MessageType::Warning));

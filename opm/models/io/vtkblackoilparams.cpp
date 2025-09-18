@@ -26,45 +26,48 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackoilParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteGasDissolutionFactor>
-        ("Include the gas dissolution factor (R_s) of the observed oil "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteOilVaporizationFactor>
-        ("Include the oil vaporization factor (R_v) of the observed gas "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteOilFormationVolumeFactor>
-        ("Include the oil formation volume factor (B_o) in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteGasFormationVolumeFactor>
-        ("Include the gas formation volume factor (B_g) in the "
-         "VTK output files");
-    Parameters::Register<Parameters::VtkWriteWaterFormationVolumeFactor>
-        ("Include the water formation volume factor (B_w) in the "
-         "VTK output files");
-    Parameters::Register<Parameters::VtkWriteOilSaturationPressure>
-        ("Include the saturation pressure of oil (p_o,sat) in the "
-         "VTK output files");
-    Parameters::Register<Parameters::VtkWriteGasSaturationPressure>
-        ("Include the saturation pressure of gas (p_g,sat) in the "
-         "VTK output files");
-    Parameters::Register<Parameters::VtkWriteSaturatedOilGasDissolutionFactor>
-        ("Include the gas dissolution factor (R_s,sat) of gas saturated "
-         "oil in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSaturatedGasOilVaporizationFactor>
-        ("Include the oil vaporization factor (R_v,sat) of oil saturated "
-         "gas in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSaturationRatios>
-        ("Write the ratio of the actually and maximum dissolved component of "
-         "the mixtures");
-    Parameters::Register<Parameters::VtkWritePrimaryVarsMeaning>
-        ("Include how the primary variables should be interpreted to the "
-         "VTK output files");
+
+void
+VtkBlackoilParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteGasDissolutionFactor>(
+        "Include the gas dissolution factor (R_s) of the observed oil "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteOilVaporizationFactor>(
+        "Include the oil vaporization factor (R_v) of the observed gas "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteOilFormationVolumeFactor>(
+        "Include the oil formation volume factor (B_o) in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteGasFormationVolumeFactor>(
+        "Include the gas formation volume factor (B_g) in the "
+        "VTK output files");
+    Parameters::Register<Parameters::VtkWriteWaterFormationVolumeFactor>(
+        "Include the water formation volume factor (B_w) in the "
+        "VTK output files");
+    Parameters::Register<Parameters::VtkWriteOilSaturationPressure>(
+        "Include the saturation pressure of oil (p_o,sat) in the "
+        "VTK output files");
+    Parameters::Register<Parameters::VtkWriteGasSaturationPressure>(
+        "Include the saturation pressure of gas (p_g,sat) in the "
+        "VTK output files");
+    Parameters::Register<Parameters::VtkWriteSaturatedOilGasDissolutionFactor>(
+        "Include the gas dissolution factor (R_s,sat) of gas saturated "
+        "oil in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSaturatedGasOilVaporizationFactor>(
+        "Include the oil vaporization factor (R_v,sat) of oil saturated "
+        "gas in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSaturationRatios>(
+        "Write the ratio of the actually and maximum dissolved component of "
+        "the mixtures");
+    Parameters::Register<Parameters::VtkWritePrimaryVarsMeaning>(
+        "Include how the primary variables should be interpreted to the "
+        "VTK output files");
 }
 
-void VtkBlackoilParams::read()
+void
+VtkBlackoilParams::read()
 {
     gasDissolutionFactorOutput_ = Parameters::Get<Parameters::VtkWriteGasDissolutionFactor>();
     oilVaporizationFactorOutput_ = Parameters::Get<Parameters::VtkWriteOilVaporizationFactor>();

@@ -28,20 +28,24 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
 class GasLiftOpt;
 class Group;
-template<class Scalar> class GroupState;
-template<typename IndexTraits> class PhaseUsageInfo;
+template <class Scalar>
+class GroupState;
+template <typename IndexTraits>
+class PhaseUsageInfo;
 class Schedule;
 class SummaryState;
 class Well;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class GasLiftGroupInfo : public GasLiftCommon<Scalar, IndexTraits>
 {
 protected:
@@ -51,17 +55,15 @@ protected:
     //    are the product of the wells efficiency factor and all the efficiency
     //    factors of the child groups of the group all the way down
     //    to the well group.
-    using Well2GroupMap =
-        std::map<std::string, std::vector<std::pair<std::string, Scalar>>>;
-    using GroupRateMap =
-        std::map<std::string, GroupRates>;
+    using Well2GroupMap = std::map<std::string, std::vector<std::pair<std::string, Scalar>>>;
+    using GroupRateMap = std::map<std::string, GroupRates>;
     using GroupIdxMap = std::map<std::string, int>;
     using Communication = Dune::Communication<Dune::MPIHelper::MPICommunicator>;
 
 public:
-    enum class Rate {oil, gas, water, liquid};
+    enum class Rate { oil, gas, water, liquid };
 
-    using GLiftEclWells = std::map<std::string,std::pair<const Well *,int>>;
+    using GLiftEclWells = std::map<std::string, std::pair<const Well*, int>>;
     GasLiftGroupInfo(GLiftEclWells& ecl_wells,
                      const Schedule& schedule,
                      const SummaryState& summary_state,
@@ -73,8 +75,7 @@ public:
                      const Parallel::Communication& comm,
                      bool glift_debug);
 
-    std::vector<std::pair<std::string,Scalar>>&
-    getWellGroups(const std::string& well_name);
+    std::vector<std::pair<std::string, Scalar>>& getWellGroups(const std::string& well_name);
 
     Scalar alqRate(const std::string& group_name);
     Scalar gasRate(const std::string& group_name) const;
@@ -84,7 +85,7 @@ public:
     int getGroupIdx(const std::string& group_name);
     Scalar getRate(Rate rate_type, const std::string& group_name) const;
     Scalar getPotential(Rate rate_type, const std::string& group_name) const;
-    std::tuple<Scalar,Scalar,Scalar,Scalar> getRates(const int group_idx) const;
+    std::tuple<Scalar, Scalar, Scalar, Scalar> getRates(const int group_idx) const;
     std::optional<Scalar> gasTarget(const std::string& group_name) const;
     std::optional<Scalar> getTarget(Rate rate_type, const std::string& group_name) const;
     const std::string& groupIdxToName(int group_idx) const;
@@ -99,17 +100,12 @@ public:
     static const std::string rateToString(Rate rate);
     Scalar waterRate(const std::string& group_name) const;
     std::optional<Scalar> waterTarget(const std::string& group_name) const;
-    void update(const std::string& well_name,
-                Scalar delta_oil,
-                Scalar delta_gas,
-                Scalar delta_water,
-                Scalar delta_alq);
-    void updateRate(int idx,
-                    Scalar oil_rate,
-                    Scalar gas_rate,
-                    Scalar water_rate,
-                    Scalar alq);
-    const Well2GroupMap& wellGroupMap() { return well_group_map_; }
+    void update(const std::string& well_name, Scalar delta_oil, Scalar delta_gas, Scalar delta_water, Scalar delta_alq);
+    void updateRate(int idx, Scalar oil_rate, Scalar gas_rate, Scalar water_rate, Scalar alq);
+    const Well2GroupMap& wellGroupMap()
+    {
+        return well_group_map_;
+    }
 
 protected:
     bool checkDoGasLiftOptimization_(const std::string& well_name);
@@ -125,21 +121,17 @@ protected:
                                        Scalar gas_rate,
                                        Scalar water_rate,
                                        Scalar alq) const;
-    void debugDisplayUpdatedGroupRates(const std::string& name,
-                                       Scalar oil_rate,
-                                       Scalar gas_rate,
-                                       Scalar water_rate,
-                                       Scalar alq) const;
+    void debugDisplayUpdatedGroupRates(
+        const std::string& name, Scalar oil_rate, Scalar gas_rate, Scalar water_rate, Scalar alq) const;
     void debugEndInitializeGroup(const std::string& name) const;
     void debugStartInitializeGroup(const std::string& name) const;
     void displayDebugMessage_(const std::string& msg) const override;
     void displayDebugMessage_(const std::string& msg, const std::string& well_name);
 
-    std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar>
-    getProducerWellRates_(const Well* well, const int index);
+    std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar> getProducerWellRates_(const Well* well, const int index);
 
     std::tuple<Scalar, Scalar, Scalar, Scalar, Scalar, Scalar, Scalar>
-    initializeGroupRatesRecursive_(const Group &group);
+    initializeGroupRatesRecursive_(const Group& group);
 
     void initializeWell2GroupMapRecursive_(const Group& group,
                                            std::vector<std::string>& group_names,
@@ -147,7 +139,8 @@ protected:
                                            Scalar cur_efficiency);
     void updateGroupIdxMap_(const std::string& group_name);
 
-    class GroupRates {
+    class GroupRates
+    {
     public:
         GroupRates(Scalar oil_rate,
                    Scalar gas_rate,
@@ -162,49 +155,83 @@ protected:
                    std::optional<Scalar> liquid_target,
                    std::optional<Scalar> total_gas,
                    std::optional<Scalar> max_alq)
-            : oil_rate_{oil_rate}
-            , gas_rate_{gas_rate}
-            , water_rate_{water_rate}
-            , alq_{alq}
-            , oil_potential_{oil_potential}
-            , gas_potential_{gas_potential}
-            , water_potential_{water_potential}
-            , oil_target_{oil_target}
-            , gas_target_{gas_target}
-            , water_target_{water_target}
-            , liquid_target_{liquid_target}
-            , total_gas_{total_gas}
-            , max_alq_{max_alq}
-        {}
+            : oil_rate_ {oil_rate}
+            , gas_rate_ {gas_rate}
+            , water_rate_ {water_rate}
+            , alq_ {alq}
+            , oil_potential_ {oil_potential}
+            , gas_potential_ {gas_potential}
+            , water_potential_ {water_potential}
+            , oil_target_ {oil_target}
+            , gas_target_ {gas_target}
+            , water_target_ {water_target}
+            , liquid_target_ {liquid_target}
+            , total_gas_ {total_gas}
+            , max_alq_ {max_alq}
+        {
+        }
 
-        Scalar alq() const { return alq_; }
-        void assign(Scalar oil_rate,
-                    Scalar gas_rate,
-                    Scalar water_rate,
-                    Scalar alq)
+        Scalar alq() const
+        {
+            return alq_;
+        }
+        void assign(Scalar oil_rate, Scalar gas_rate, Scalar water_rate, Scalar alq)
         {
             oil_rate_ = oil_rate;
             gas_rate_ = gas_rate;
             water_rate_ = water_rate;
             alq_ = alq;
         }
-        Scalar gasRate() const { return gas_rate_; }
-        Scalar waterRate() const { return water_rate_; }
-        std::optional<Scalar> gasTarget() const { return gas_target_; }
-        std::optional<Scalar> waterTarget() const { return water_target_; }
-        std::optional<Scalar> maxAlq() const { return max_alq_; }
-        std::optional<Scalar > maxTotalGasRate() const { return total_gas_; }
-        Scalar oilRate() const { return oil_rate_; }
-        std::optional<Scalar> oilTarget() const { return oil_target_; }
-        std::optional<Scalar> liquidTarget() const { return liquid_target_; }
-        Scalar oilPotential() const { return oil_potential_; }
-        Scalar gasPotential() const { return gas_potential_; }
-        Scalar waterPotential() const { return water_potential_; }
+        Scalar gasRate() const
+        {
+            return gas_rate_;
+        }
+        Scalar waterRate() const
+        {
+            return water_rate_;
+        }
+        std::optional<Scalar> gasTarget() const
+        {
+            return gas_target_;
+        }
+        std::optional<Scalar> waterTarget() const
+        {
+            return water_target_;
+        }
+        std::optional<Scalar> maxAlq() const
+        {
+            return max_alq_;
+        }
+        std::optional<Scalar> maxTotalGasRate() const
+        {
+            return total_gas_;
+        }
+        Scalar oilRate() const
+        {
+            return oil_rate_;
+        }
+        std::optional<Scalar> oilTarget() const
+        {
+            return oil_target_;
+        }
+        std::optional<Scalar> liquidTarget() const
+        {
+            return liquid_target_;
+        }
+        Scalar oilPotential() const
+        {
+            return oil_potential_;
+        }
+        Scalar gasPotential() const
+        {
+            return gas_potential_;
+        }
+        Scalar waterPotential() const
+        {
+            return water_potential_;
+        }
 
-        void update(Scalar delta_oil,
-                    Scalar delta_gas,
-                    Scalar delta_water,
-                    Scalar delta_alq)
+        void update(Scalar delta_oil, Scalar delta_gas, Scalar delta_water, Scalar delta_alq)
         {
             oil_rate_ += delta_oil;
             gas_rate_ += delta_gas;

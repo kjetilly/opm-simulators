@@ -35,7 +35,8 @@
 
 #include <iostream>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 ///////////////////
 // Define some hierarchy of type tags:
@@ -48,40 +49,68 @@ namespace Opm::Properties {
 //         \                                         \.
 //          +- Tank ----------------------------------+- HummerH1
 ///////////////////
-namespace TTag {
-struct Vehicle {};
+namespace TTag
+{
+    struct Vehicle {
+    };
 
-struct CompactCar { using InheritsFrom = std::tuple<Vehicle>; };
-struct Truck { using InheritsFrom = std::tuple<Vehicle>; };
-struct Tank { using InheritsFrom = std::tuple<Vehicle>; };
+    struct CompactCar {
+        using InheritsFrom = std::tuple<Vehicle>;
+    };
+    struct Truck {
+        using InheritsFrom = std::tuple<Vehicle>;
+    };
+    struct Tank {
+        using InheritsFrom = std::tuple<Vehicle>;
+    };
 
-struct Sedan { using InheritsFrom = std::tuple<CompactCar>; };
-struct Pickup { using InheritsFrom = std::tuple<Truck, Sedan>; };
+    struct Sedan {
+        using InheritsFrom = std::tuple<CompactCar>;
+    };
+    struct Pickup {
+        using InheritsFrom = std::tuple<Truck, Sedan>;
+    };
 
-struct HummerH1 { using InheritsFrom = std::tuple<Pickup, Tank, Sedan>; };
+    struct HummerH1 {
+        using InheritsFrom = std::tuple<Pickup, Tank, Sedan>;
+    };
 } // end namespace TTag
 
 ///////////////////
 // Define the property tags:
 // TopSpeed, NumSeats, CanonCaliber, GasUsage, AutomaticTransmission, Payload
 ///////////////////
-template<class TypeTag, class MyTypeTag>
-struct TopSpeed { using type = UndefinedProperty; }; // [km/h]
-template<class TypeTag, class MyTypeTag>
-struct NumSeats { using type = UndefinedProperty; }; // []
-template<class TypeTag, class MyTypeTag>
-struct CanonCaliber { using type = UndefinedProperty; }; // [mm]
-template<class TypeTag, class MyTypeTag>
-struct GasUsage { using type = UndefinedProperty; }; // [l/100km]
-template<class TypeTag, class MyTypeTag>
-struct AutomaticTransmission { using type = UndefinedProperty; }; // true/false
-template<class TypeTag, class MyTypeTag>
-struct Payload { using type = UndefinedProperty; }; // [t]
+template <class TypeTag, class MyTypeTag>
+struct TopSpeed {
+    using type = UndefinedProperty;
+}; // [km/h]
+template <class TypeTag, class MyTypeTag>
+struct NumSeats {
+    using type = UndefinedProperty;
+}; // []
+template <class TypeTag, class MyTypeTag>
+struct CanonCaliber {
+    using type = UndefinedProperty;
+}; // [mm]
+template <class TypeTag, class MyTypeTag>
+struct GasUsage {
+    using type = UndefinedProperty;
+}; // [l/100km]
+template <class TypeTag, class MyTypeTag>
+struct AutomaticTransmission {
+    using type = UndefinedProperty;
+}; // true/false
+template <class TypeTag, class MyTypeTag>
+struct Payload {
+    using type = UndefinedProperty;
+}; // [t]
 
 ///////////////////
 // Make the AutomaticTransmission default to false
-template<class TypeTag>
-struct AutomaticTransmission<TypeTag, TTag::Vehicle> { static constexpr bool value = false; };
+template <class TypeTag>
+struct AutomaticTransmission<TypeTag, TTag::Vehicle> {
+    static constexpr bool value = false;
+};
 
 ///////////////////
 // Define some values for the properties on the type tags:
@@ -108,46 +137,77 @@ struct AutomaticTransmission<TypeTag, TTag::Vehicle> { static constexpr bool val
 // (HummmerH1, TopSpeed) = (Pickup, TopSpeed)
 ///////////////////
 
-template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::CompactCar> { static constexpr int value = getPropValue<TypeTag, GasUsage>() * 30; };
-template<class TypeTag>
-struct NumSeats<TypeTag, TTag::CompactCar> { static constexpr int value = 5; };
-template<class TypeTag>
-struct GasUsage<TypeTag, TTag::CompactCar> { static constexpr int value = 4; };
+template <class TypeTag>
+struct TopSpeed<TypeTag, TTag::CompactCar> {
+    static constexpr int value = getPropValue<TypeTag, GasUsage>() * 30;
+};
+template <class TypeTag>
+struct NumSeats<TypeTag, TTag::CompactCar> {
+    static constexpr int value = 5;
+};
+template <class TypeTag>
+struct GasUsage<TypeTag, TTag::CompactCar> {
+    static constexpr int value = 4;
+};
 
-template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Truck> { static constexpr int value = 100; };
-template<class TypeTag>
-struct NumSeats<TypeTag, TTag::Truck> { static constexpr int value = 2; };
-template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Truck> { static constexpr int value = 12; };
-template<class TypeTag>
-struct Payload<TypeTag, TTag::Truck> { static constexpr int value = 35; };
+template <class TypeTag>
+struct TopSpeed<TypeTag, TTag::Truck> {
+    static constexpr int value = 100;
+};
+template <class TypeTag>
+struct NumSeats<TypeTag, TTag::Truck> {
+    static constexpr int value = 2;
+};
+template <class TypeTag>
+struct GasUsage<TypeTag, TTag::Truck> {
+    static constexpr int value = 12;
+};
+template <class TypeTag>
+struct Payload<TypeTag, TTag::Truck> {
+    static constexpr int value = 35;
+};
 
-template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Tank> { static constexpr int value = 60; };
-template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Tank> { static constexpr int value = 65; };
-template<class TypeTag>
-struct CanonCaliber<TypeTag, TTag::Tank> { static constexpr int value = 120; };
+template <class TypeTag>
+struct TopSpeed<TypeTag, TTag::Tank> {
+    static constexpr int value = 60;
+};
+template <class TypeTag>
+struct GasUsage<TypeTag, TTag::Tank> {
+    static constexpr int value = 65;
+};
+template <class TypeTag>
+struct CanonCaliber<TypeTag, TTag::Tank> {
+    static constexpr int value = 120;
+};
 
-template<class TypeTag>
-struct GasUsage<TypeTag, TTag::Sedan> { static constexpr int value = 7; };
-template<class TypeTag>
-struct AutomaticTransmission<TypeTag, TTag::Sedan> { static constexpr bool value = true; };
+template <class TypeTag>
+struct GasUsage<TypeTag, TTag::Sedan> {
+    static constexpr int value = 7;
+};
+template <class TypeTag>
+struct AutomaticTransmission<TypeTag, TTag::Sedan> {
+    static constexpr bool value = true;
+};
 
-template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::Pickup> { static constexpr int value = 120; };
-template<class TypeTag>
-struct Payload<TypeTag, TTag::Pickup> { static constexpr int value = 5; };
+template <class TypeTag>
+struct TopSpeed<TypeTag, TTag::Pickup> {
+    static constexpr int value = 120;
+};
+template <class TypeTag>
+struct Payload<TypeTag, TTag::Pickup> {
+    static constexpr int value = 5;
+};
 
-template<class TypeTag>
-struct TopSpeed<TypeTag, TTag::HummerH1> { static constexpr int value = getPropValue<TTag::Pickup, TopSpeed>(); };
+template <class TypeTag>
+struct TopSpeed<TypeTag, TTag::HummerH1> {
+    static constexpr int value = getPropValue<TTag::Pickup, TopSpeed>();
+};
 
 } // namespace Opm::Properties
 
 
-int main()
+int
+main()
 {
     using namespace Opm;
     using namespace Opm::Properties;
@@ -162,7 +222,8 @@ int main()
     std::cout << "(CompactCar, TopSpeed) = " << getPropValue<TTag::CompactCar, TopSpeed>() << "\n";
     std::cout << "(CompactCar, NumSeats) = " << getPropValue<TTag::CompactCar, NumSeats>() << "\n";
     std::cout << "(CompactCar, GasUsage) = " << getPropValue<TTag::CompactCar, GasUsage>() << "\n";
-    std::cout << "(CompactCar, AutomaticTransmission) = " << getPropValue<TTag::CompactCar, AutomaticTransmission>() << "\n";
+    std::cout << "(CompactCar, AutomaticTransmission) = " << getPropValue<TTag::CompactCar, AutomaticTransmission>()
+              << "\n";
 
     std::cout << "---------- Values for Truck ----------\n";
 
@@ -198,7 +259,8 @@ int main()
     std::cout << "(HummerH1, NumSeats) = " << getPropValue<TTag::HummerH1, NumSeats>() << "\n";
     std::cout << "(HummerH1, GasUsage) = " << getPropValue<TTag::HummerH1, GasUsage>() << "\n";
     std::cout << "(HummerH1, Payload) = " << getPropValue<TTag::HummerH1, Payload>() << "\n";
-    std::cout << "(HummerH1, AutomaticTransmission) = " << getPropValue<TTag::HummerH1, AutomaticTransmission>() << "\n";
+    std::cout << "(HummerH1, AutomaticTransmission) = " << getPropValue<TTag::HummerH1, AutomaticTransmission>()
+              << "\n";
 
     return 0;
 }

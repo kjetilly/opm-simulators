@@ -19,9 +19,9 @@
 
 #include <config.h>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/ChowPatelIlu.hpp>
@@ -33,29 +33,29 @@ namespace Opm
 namespace Accelerator
 {
 
-using Opm::OpmLog;
-using Dune::Timer;
+    using Dune::Timer;
+    using Opm::OpmLog;
 
-// if CHOW_PATEL_GPU_PARALLEL is 0:
-//    Each row gets 1 workgroup, 1 workgroup can do multiple rows sequentially.
-//    Each block in a row gets 1 workitem, all blocks are expected to be processed simultaneously,
-//    except when the number of blocks in that row exceeds the number of workitems per workgroup.
-//    In that case some workitems will process multiple blocks sequentially.
-// else:
-//    Each row gets 1 workgroup, 1 workgroup can do multiple rows sequentially
-//    Each block in a row gets a warp of 32 workitems, of which 9 are always active.
-//    Multiple blocks can be processed in parallel if a workgroup contains multiple warps.
-//    If the number of blocks exceeds the number of warps, some warps will process multiple blocks sequentially.
+    // if CHOW_PATEL_GPU_PARALLEL is 0:
+    //    Each row gets 1 workgroup, 1 workgroup can do multiple rows sequentially.
+    //    Each block in a row gets 1 workitem, all blocks are expected to be processed simultaneously,
+    //    except when the number of blocks in that row exceeds the number of workitems per workgroup.
+    //    In that case some workitems will process multiple blocks sequentially.
+    // else:
+    //    Each row gets 1 workgroup, 1 workgroup can do multiple rows sequentially
+    //    Each block in a row gets a warp of 32 workitems, of which 9 are always active.
+    //    Multiple blocks can be processed in parallel if a workgroup contains multiple warps.
+    //    If the number of blocks exceeds the number of warps, some warps will process multiple blocks sequentially.
 
-// Notes:
-// CHOW_PATEL_GPU_PARALLEL 0 should be able to run with any number of workitems per workgroup, but 8 and 16 tend to be quicker than 32.
-// CHOW_PATEL_GPU_PARALLEL 1 should be run with at least 32 workitems per workgroup.
-// The recommended number of workgroups for both options is Nb, which gives every row their own workgroup.
-// CHOW_PATEL_GPU_PARALLEL 0 is generally faster, despite not having parallelization.
-// only 3x3 blocks are supported
+    // Notes:
+    // CHOW_PATEL_GPU_PARALLEL 0 should be able to run with any number of workitems per workgroup, but 8 and 16 tend to
+    // be quicker than 32. CHOW_PATEL_GPU_PARALLEL 1 should be run with at least 32 workitems per workgroup. The
+    // recommended number of workgroups for both options is Nb, which gives every row their own workgroup.
+    // CHOW_PATEL_GPU_PARALLEL 0 is generally faster, despite not having parallelization.
+    // only 3x3 blocks are supported
 
 #if CHOW_PATEL_GPU_PARALLEL
-inline const char* chow_patel_ilu_sweep_s  = R"(
+    inline const char* chow_patel_ilu_sweep_s = R"(
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
@@ -272,7 +272,7 @@ __kernel void chow_patel_ilu_sweep(
 
 #else // CHOW_PATEL_GPU_PARALLEL
 
-inline const char* chow_patel_ilu_sweep_s  = R"(
+    inline const char* chow_patel_ilu_sweep_s = R"(
 
 #pragma OPENCL EXTENSION cl_khr_fp64 : enable
 
@@ -478,526 +478,646 @@ __kernel void chow_patel_ilu_sweep(
 
 
 
-// implements Fine-Grained Parallel ILU algorithm (FGPILU), Chow and Patel 2015
-template <unsigned int block_size>
-void ChowPatelIlu<block_size>::decomposition(
-    cl::CommandQueue *queue, [[maybe_unused]] cl::Context *context,
-    BlockedMatrix *LUmat, BlockedMatrix *Lmat, BlockedMatrix *Umat,
-    double *invDiagVals, std::vector<int>& diagIndex,
-    cl::Buffer& d_diagIndex, cl::Buffer& d_invDiagVals,
-    cl::Buffer& d_Lvals, cl::Buffer& d_Lcols, cl::Buffer& d_Lrows,
-    cl::Buffer& d_Uvals, cl::Buffer& d_Ucols, cl::Buffer& d_Urows)
-{
-    if (block_size != 3) {
-        OPM_THROW(std::logic_error, "ChowPatelIlu::decomposition only supports block_size = 3");
-    }
+    // implements Fine-Grained Parallel ILU algorithm (FGPILU), Chow and Patel 2015
+    template <unsigned int block_size>
+    void ChowPatelIlu<block_size>::decomposition(cl::CommandQueue* queue,
+                                                 [[maybe_unused]] cl::Context* context,
+                                                 BlockedMatrix* LUmat,
+                                                 BlockedMatrix* Lmat,
+                                                 BlockedMatrix* Umat,
+                                                 double* invDiagVals,
+                                                 std::vector<int>& diagIndex,
+                                                 cl::Buffer& d_diagIndex,
+                                                 cl::Buffer& d_invDiagVals,
+                                                 cl::Buffer& d_Lvals,
+                                                 cl::Buffer& d_Lcols,
+                                                 cl::Buffer& d_Lrows,
+                                                 cl::Buffer& d_Uvals,
+                                                 cl::Buffer& d_Ucols,
+                                                 cl::Buffer& d_Urows)
+    {
+        if (block_size != 3) {
+            OPM_THROW(std::logic_error, "ChowPatelIlu::decomposition only supports block_size = 3");
+        }
 
-    const unsigned int bs = block_size;
-    const int Nb = LUmat->Nb;
-    const int nnzbs = LUmat->nnzbs;
-    int num_sweeps = 6;
+        const unsigned int bs = block_size;
+        const int Nb = LUmat->Nb;
+        const int nnzbs = LUmat->nnzbs;
+        int num_sweeps = 6;
 
-    // split matrix into L and U
-    // also convert U into BSC format (Ut)
-    // Ut stores diagonal for now
-    // original matrix LUmat is assumed to be symmetric
+        // split matrix into L and U
+        // also convert U into BSC format (Ut)
+        // Ut stores diagonal for now
+        // original matrix LUmat is assumed to be symmetric
 
 #ifndef NDEBUG
-    // verify that matrix is symmetric
-    for (int i = 0; i < Nb; ++i){
-        int iRowStart = LUmat->rowPointers[i];
-        int iRowEnd = LUmat->rowPointers[i + 1];
-        // for every block (i, j) in this row, check if (j, i) also exists
-        for (int ij = iRowStart; ij < iRowEnd; ij++) {
-            int j = LUmat->colIndices[ij];
-            int jRowStart = LUmat->rowPointers[j];
-            int jRowEnd = LUmat->rowPointers[j + 1];
-            bool blockFound = false;
-            // check all blocks on row j
-            // binary search is possible
-            for (int ji = jRowStart; ji < jRowEnd; ji++) {
-                int row = LUmat->colIndices[ji];
-                if (i == row) {
-                    blockFound = true;
-                    break;
-                }
-            }
-            if (false == blockFound) {
-                OPM_THROW(std::logic_error, "Error sparsity pattern must be symmetric when using chow_patel_decomposition()");
-            }
-        }
-    }
-#endif
-
-    Timer t_total, t_preprocessing;
-
-    // Ut is actually BSC format
-    std::unique_ptr<BlockedMatrix> Ut = std::make_unique<BlockedMatrix>(Nb, (nnzbs + Nb) / 2, bs);
-
-    Lmat->rowPointers[0] = 0;
-    for (int i = 0; i < Nb+1; i++) {
-        Ut->rowPointers[i] = 0;
-    }
-
-    Opm::Detail::Inverter<bs> inverter;
-
-    // store inverted diagonal
-    for (int i = 0; i < Nb; i++) {
-        int iRowStart = LUmat->rowPointers[i];
-        int iRowEnd = LUmat->rowPointers[i + 1];
-        // for every block in this row
-        for (int ij = iRowStart; ij < iRowEnd; ij++) {
-            int j = LUmat->colIndices[ij];
-            if (i == j) {
-                inverter(LUmat->nnzValues + ij * bs * bs, invDiagVals + i * bs * bs);
-            }
-        }
-    }
-
-    // initialize initial guess for L: L_A * D
-    // L_A is strictly lower triangular part of A
-    // D is inv(diag(A))
-    int num_blocks_L = 0;
-    for (int i = 0; i < Nb; i++) {
-        int iRowStart = LUmat->rowPointers[i];
-        int iRowEnd = LUmat->rowPointers[i + 1];
-        // for every block in this row
-        for (int ij = iRowStart; ij < iRowEnd; ij++) {
-            int j = LUmat->colIndices[ij];
-            if (i <= j) {
-                Ut->rowPointers[j+1]++;   // actually colPointers, now simply indicates how many blocks this col holds
-            } else {
-                Lmat->colIndices[num_blocks_L] = j;
-                // multiply block of L with corresponding diag block
-                blockMult(LUmat->nnzValues + ij * bs * bs, invDiagVals + i * bs * bs, Lmat->nnzValues + num_blocks_L * bs * bs, bs);
-                num_blocks_L++;
-            }
-        }
-        // TODO: copy all blocks for L at once, instead of copying each block individually
-        Lmat->rowPointers[i+1] = num_blocks_L;
-    }
-
-    // prefix sum to sum rowsizes into colpointers
-    std::partial_sum(Ut->rowPointers, Ut->rowPointers+Nb+1, Ut->rowPointers);
-
-    // initialize initial guess for U
-    for (int i = 0; i < Nb; i++) {
-        int iRowStart = LUmat->rowPointers[i];
-        int iRowEnd = LUmat->rowPointers[i + 1];
-        // for every block in this row
-        for (int ij = iRowStart; ij < iRowEnd; ij++) {
-            int j = LUmat->colIndices[ij];
-            if (i <= j){
-                int idx = Ut->rowPointers[j]++; // rowPointers[i] is (mis)used as the write offset of the current row i
-                Ut->colIndices[idx] = i;     // actually rowIndices
-                memcpy(Ut->nnzValues + idx * bs * bs, LUmat->nnzValues + ij * bs * bs, sizeof(double) * bs * bs);
-            }
-        }
-    }
-
-    // rotate
-    // the Ut->rowPointers were increased in the last loop
-    // now Ut->rowPointers[i+1] is at the same position as Ut->rowPointers[i] should have for a crs matrix. reset to correct expected value
-    for (int i = Nb; i > 0; --i) {
-        Ut->rowPointers[i] = Ut->rowPointers[i-1];
-    }
-    Ut->rowPointers[0] = 0;
-
-
-    // Utmp is needed for CPU and GPU decomposition, because U is transposed, and reversed after decomposition
-    // U will be reversed because it is used with backwards substitution, the last row is used first
-    // Ltmp is only needed for CPU decomposition, GPU creates GPU buffer for Ltmp
-    double *Utmp = new double[Ut->nnzbs * block_size * block_size];
-
-    if (verbosity >= 3) {
-        std::ostringstream out;
-        out << "BILU0 ChowPatel preprocessing: " << t_preprocessing.stop() << " s";
-        OpmLog::info(out.str());
-    }
-
-    // actual ILU decomposition
-    Timer t_decomposition;
-#if CHOW_PATEL_GPU
-    gpu_decomposition(queue, context,
-                Ut->rowPointers, Ut->colIndices, Ut->nnzValues, Ut->nnzbs,
-                Lmat->rowPointers, Lmat->colIndices, Lmat->nnzValues, Lmat->nnzbs,
-                LUmat->rowPointers, LUmat->colIndices, LUmat->nnzValues, LUmat->nnzbs,
-                Nb, num_sweeps);
-#else
-    double *Ltmp = new double[Lmat->nnzbs * block_size * block_size];
-    for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-
-        // algorithm
-        // for every block in A (LUmat):
-        //     if i > j:
-        //         Lij = (Aij - sum k=1 to j-1 {Lik*Ukj}) / Ujj
-        //     else:
-        //         Uij = (Aij - sum k=1 to i-1 {Lik*Ukj})
-
-        // for every row
-        for (int row = 0; row < Nb; row++) {
-            // update U
-            // Uij = (Aij - sum k=1 to i-1 {Lik*Ukj})
-            int jColStart = Ut->rowPointers[row];
-            int jColEnd = Ut->rowPointers[row + 1];
-            int colU = row; // rename for clarity, next row in Ut means next col in U
-            // for every block in this row
-            for (int ij = jColStart; ij < jColEnd; ij++) {
-                int rowU1 = Ut->colIndices[ij]; // actually rowIndices for U
-                // refine Uij element (or diagonal)
-                int i1 = LUmat->rowPointers[rowU1];
-                int i2 = LUmat->rowPointers[rowU1+1];
-
-                // search on row rowU1, find blockIndex in LUmat of block with same col (colU) as Uij
-                // LUmat->nnzValues[kk] is block Aij
-                auto candidate = std::find(LUmat->colIndices + i1, LUmat->colIndices + i2, colU);
-                assert(candidate != LUmat->colIndices + i2);
-                auto kk = candidate - LUmat->colIndices;
-
-                double aij[bs*bs];
-                // copy block to Aij so operations can be done on it without affecting LUmat
-                memcpy(&aij[0], LUmat->nnzValues + kk * bs * bs, sizeof(double) * bs * bs);
-
-                int jk = Lmat->rowPointers[rowU1]; // points to row rowU1 in L
-                // if row rowU1 is empty, skip row
-                if (jk < Lmat->rowPointers[rowU1+1]) {
-                    int colL = Lmat->colIndices[jk];
-                    // only check until block U(i,j) is reached
-                    for (int k = jColStart; k < ij; ++k) {
-                        int rowU2 = Ut->colIndices[k];
-                        while (colL < rowU2) {
-                            ++jk; // check next block on row rowU1 of L
-                            colL = Lmat->colIndices[jk];
-                        }
-                        if (colL == rowU2) {
-                            // Aij -= (Lik * Ukj)
-                            blockMultSub(&aij[0], Lmat->nnzValues + jk * bs * bs, Ut->nnzValues + k * bs * bs, bs);
-                        }
-                    }
-                }
-
-                // Uij_new = Aij - sum
-                memcpy(Utmp + ij * bs * bs, &aij[0], sizeof(double) * bs * bs);
-            }
-
-            // update L
-            // Lij = (Aij - sum k=1 to j-1 {Lik*Ukj}) / Ujj
-            int iRowStart = Lmat->rowPointers[row];
-            int iRowEnd = Lmat->rowPointers[row + 1];
-
+        // verify that matrix is symmetric
+        for (int i = 0; i < Nb; ++i) {
+            int iRowStart = LUmat->rowPointers[i];
+            int iRowEnd = LUmat->rowPointers[i + 1];
+            // for every block (i, j) in this row, check if (j, i) also exists
             for (int ij = iRowStart; ij < iRowEnd; ij++) {
-                int j = Lmat->colIndices[ij];
-                // refine Lij element
-                // search on row 'row', find blockIndex in LUmat of block with same col (j) as Lij
-                // LUmat->nnzValues[kk] is block Aij
-                int i1 = LUmat->rowPointers[row];
-                int i2 = LUmat->rowPointers[row+1];
-
-                auto candidate = std::find(LUmat->colIndices + i1, LUmat->colIndices + i2, j);
-                assert(candidate != LUmat->colIndices + i2);
-                auto kk = candidate - LUmat->colIndices;
-
-                double aij[bs*bs];
-                // copy block to Aij so operations can be done on it without affecting LUmat
-                memcpy(&aij[0], LUmat->nnzValues + kk * bs * bs, sizeof(double) * bs * bs);
-
-                int jk = Ut->rowPointers[j];  // actually colPointers, jk points to col j in U
-                int rowU = Ut->colIndices[jk];  // actually rowIndices, rowU is the row of block jk
-                // only check until block L(i,j) is reached
-                for (int k = iRowStart; k < ij; ++k) {
-                    int colL = Lmat->colIndices[k];
-                    while (rowU < colL) {
-                        ++jk; // check next block on col j of U
-                        rowU = Ut->colIndices[jk];
-                    }
-
-                    if (rowU == colL) {
-                        // Aij -= (Lik * Ukj)
-                        blockMultSub(&aij[0], Lmat->nnzValues + k * bs * bs , Ut->nnzValues + jk * bs * bs, bs);
+                int j = LUmat->colIndices[ij];
+                int jRowStart = LUmat->rowPointers[j];
+                int jRowEnd = LUmat->rowPointers[j + 1];
+                bool blockFound = false;
+                // check all blocks on row j
+                // binary search is possible
+                for (int ji = jRowStart; ji < jRowEnd; ji++) {
+                    int row = LUmat->colIndices[ji];
+                    if (i == row) {
+                        blockFound = true;
+                        break;
                     }
                 }
-
-                // calculate (Aij - sum) / Ujj
-                double ujj[bs*bs];
-                inverter(Ut->nnzValues + (Ut->rowPointers[j+1] - 1) * bs * bs, &ujj[0]);
-                // Lij_new = (Aij - sum) / Ujj
-                blockMult(&aij[0], &ujj[0], Ltmp + ij * bs * bs, bs);
+                if (false == blockFound) {
+                    OPM_THROW(std::logic_error,
+                              "Error sparsity pattern must be symmetric when using chow_patel_decomposition()");
+                }
             }
         }
-        // 1st sweep writes to Ltmp
-        // 2nd sweep writes to Lmat->nnzValues
-        std::swap(Lmat->nnzValues, Ltmp);
-        std::swap(Ut->nnzValues, Utmp);
-    } // end sweep
-
-    // if number of sweeps is even, swap again so data is in Lmat->nnzValues
-    if (num_sweeps % 2 == 0) {
-        std::swap(Lmat->nnzValues, Ltmp);
-        std::swap(Ut->nnzValues, Utmp);
-    }
-    delete[] Ltmp;
 #endif
 
-    if (verbosity >= 3){
-        std::ostringstream out;
-        out << "BILU0 ChowPatel decomposition: " << t_decomposition.stop() << " s";
-        OpmLog::info(out.str());
-    }
+        Timer t_total, t_preprocessing;
 
-    Timer t_postprocessing;
+        // Ut is actually BSC format
+        std::unique_ptr<BlockedMatrix> Ut = std::make_unique<BlockedMatrix>(Nb, (nnzbs + Nb) / 2, bs);
 
-    // convert Ut to BSR
-    // diagonal stored separately
-    std::vector<int> ptr(Nb+1, 0);
-    std::vector<int> cols(Ut->rowPointers[Nb]);
+        Lmat->rowPointers[0] = 0;
+        for (int i = 0; i < Nb + 1; i++) {
+            Ut->rowPointers[i] = 0;
+        }
 
-    // count blocks per row for U (BSR)
-    // store diagonal in invDiagVals
-    for(int i = 0; i < Nb; ++i) {
-        for(int k = Ut->rowPointers[i]; k < Ut->rowPointers[i+1]; ++k) {
-            int j = Ut->colIndices[k];
-            if (j != i) {
-                ++ptr[j+1];
+        Opm::Detail::Inverter<bs> inverter;
+
+        // store inverted diagonal
+        for (int i = 0; i < Nb; i++) {
+            int iRowStart = LUmat->rowPointers[i];
+            int iRowEnd = LUmat->rowPointers[i + 1];
+            // for every block in this row
+            for (int ij = iRowStart; ij < iRowEnd; ij++) {
+                int j = LUmat->colIndices[ij];
+                if (i == j) {
+                    inverter(LUmat->nnzValues + ij * bs * bs, invDiagVals + i * bs * bs);
+                }
             }
         }
-    }
 
-    // prefix sum
-    std::partial_sum(ptr.begin(), ptr.end(), ptr.begin());
+        // initialize initial guess for L: L_A * D
+        // L_A is strictly lower triangular part of A
+        // D is inv(diag(A))
+        int num_blocks_L = 0;
+        for (int i = 0; i < Nb; i++) {
+            int iRowStart = LUmat->rowPointers[i];
+            int iRowEnd = LUmat->rowPointers[i + 1];
+            // for every block in this row
+            for (int ij = iRowStart; ij < iRowEnd; ij++) {
+                int j = LUmat->colIndices[ij];
+                if (i <= j) {
+                    Ut->rowPointers[j
+                                    + 1]++; // actually colPointers, now simply indicates how many blocks this col holds
+                } else {
+                    Lmat->colIndices[num_blocks_L] = j;
+                    // multiply block of L with corresponding diag block
+                    blockMult(LUmat->nnzValues + ij * bs * bs,
+                              invDiagVals + i * bs * bs,
+                              Lmat->nnzValues + num_blocks_L * bs * bs,
+                              bs);
+                    num_blocks_L++;
+                }
+            }
+            // TODO: copy all blocks for L at once, instead of copying each block individually
+            Lmat->rowPointers[i + 1] = num_blocks_L;
+        }
 
-    // actually copy nonzero values for U
-    for(int i = 0; i < Nb; ++i) {
-        for(int k = Ut->rowPointers[i]; k < Ut->rowPointers[i+1]; ++k) {
-            int j = Ut->colIndices[k];
-            if (j != i) {
-                int head = ptr[j]++;
-                cols[head]  = i;
-                memcpy(Utmp + head * bs * bs, Ut->nnzValues + k * bs * bs, sizeof(double) * bs * bs);
+        // prefix sum to sum rowsizes into colpointers
+        std::partial_sum(Ut->rowPointers, Ut->rowPointers + Nb + 1, Ut->rowPointers);
+
+        // initialize initial guess for U
+        for (int i = 0; i < Nb; i++) {
+            int iRowStart = LUmat->rowPointers[i];
+            int iRowEnd = LUmat->rowPointers[i + 1];
+            // for every block in this row
+            for (int ij = iRowStart; ij < iRowEnd; ij++) {
+                int j = LUmat->colIndices[ij];
+                if (i <= j) {
+                    int idx
+                        = Ut->rowPointers[j]++; // rowPointers[i] is (mis)used as the write offset of the current row i
+                    Ut->colIndices[idx] = i; // actually rowIndices
+                    memcpy(Ut->nnzValues + idx * bs * bs, LUmat->nnzValues + ij * bs * bs, sizeof(double) * bs * bs);
+                }
             }
         }
-    }
 
-    // the ptr[] were increased in the last loop
-    std::rotate(ptr.begin(), ptr.end() - 1, ptr.end());
-    ptr.front() = 0;
-
-
-    if (verbosity >= 3){
-        std::ostringstream out;
-        out << "BILU0 ChowPatel postprocessing: " << t_postprocessing.stop() << " s";
-        OpmLog::info(out.str());
-    }
-
-    Timer t_copyToGpu;
-
-    events.resize(3);
-    err = queue->enqueueWriteBuffer(d_Lvals, CL_FALSE, 0, Lmat->nnzbs * bs * bs * sizeof(double), Lmat->nnzValues, nullptr, &events[0]);
-    err |= queue->enqueueWriteBuffer(d_Uvals, CL_FALSE, 0, Umat->nnzbs * bs * bs * sizeof(double), Utmp, nullptr, &events[1]);
-    err |= queue->enqueueWriteBuffer(d_invDiagVals, CL_FALSE, 0, LUmat->Nb * bs * bs * sizeof(double), invDiagVals, nullptr, &events[2]);
-
-    std::call_once(pattern_uploaded, [&](){
-        // find the positions of each diagonal block
-        for (int row = 0; row < Nb; ++row) {
-            int rowStart = LUmat->rowPointers[row];
-            int rowEnd = LUmat->rowPointers[row+1];
-
-            auto candidate = std::find(LUmat->colIndices + rowStart, LUmat->colIndices + rowEnd, row);
-            assert(candidate != LUmat->colIndices + rowEnd);
-            diagIndex[row] = candidate - LUmat->colIndices;
+        // rotate
+        // the Ut->rowPointers were increased in the last loop
+        // now Ut->rowPointers[i+1] is at the same position as Ut->rowPointers[i] should have for a crs matrix. reset to
+        // correct expected value
+        for (int i = Nb; i > 0; --i) {
+            Ut->rowPointers[i] = Ut->rowPointers[i - 1];
         }
-        events.resize(8);
-        err |= queue->enqueueWriteBuffer(d_diagIndex, CL_FALSE, 0, Nb * sizeof(int), diagIndex.data(), nullptr, &events[3]);
-        err |= queue->enqueueWriteBuffer(d_Lcols, CL_FALSE, 0, Lmat->nnzbs * sizeof(int), Lmat->colIndices, nullptr, &events[4]);
-        err |= queue->enqueueWriteBuffer(d_Lrows, CL_FALSE, 0, (Lmat->Nb + 1) * sizeof(int), Lmat->rowPointers, nullptr, &events[5]);
-        err |= queue->enqueueWriteBuffer(d_Ucols, CL_FALSE, 0, Umat->nnzbs * sizeof(int), cols.data(), nullptr, &events[6]);
-        err |= queue->enqueueWriteBuffer(d_Urows, CL_FALSE, 0, (Umat->Nb + 1) * sizeof(int), ptr.data(), nullptr, &events[7]);
-    });
-
-    cl::WaitForEvents(events);
-    events.clear();
-    if (err != CL_SUCCESS) {
-        // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
-        OPM_THROW(std::logic_error, "BILU0 OpenCL enqueueWriteBuffer error");
-    }
-
-    if (verbosity >= 3){
-        std::ostringstream out;
-        out << "BILU0 ChowPatel copy to GPU: " << t_copyToGpu.stop() << " s\n";
-        out << "BILU0 ChowPatel total: " << t_total.stop() << " s";
-        OpmLog::info(out.str());
-    }
-
-    delete[] Utmp;
-}
+        Ut->rowPointers[0] = 0;
 
 
-template <unsigned int block_size>
-void ChowPatelIlu<block_size>::gpu_decomposition(
-    cl::CommandQueue *queue, cl::Context *context,
-    int *Ut_ptrs, int *Ut_idxs, double *Ut_vals, int Ut_nnzbs,
-    int *L_rows, int *L_cols, double *L_vals, int L_nnzbs,
-    int *LU_rows, int *LU_cols, double *LU_vals, int LU_nnzbs,
-    int Nb, int num_sweeps)
-{
-    if (block_size != 3) {
-        OPM_THROW(std::logic_error, "ChowPatelIlu::gpu_decomposition only supports block_size = 3");
-    }
+        // Utmp is needed for CPU and GPU decomposition, because U is transposed, and reversed after decomposition
+        // U will be reversed because it is used with backwards substitution, the last row is used first
+        // Ltmp is only needed for CPU decomposition, GPU creates GPU buffer for Ltmp
+        double* Utmp = new double[Ut->nnzbs * block_size * block_size];
 
-    try {
-        // just put everything in the capture list
-        std::call_once(initialize_flag, [&](){
-            cl::Program::Sources source(1, chow_patel_ilu_sweep_s);  // what does this '1' mean? cl::Program::Sources is of type 'std::vector<std::pair<const char*, long unsigned int> >'
-            cl::Program program = cl::Program(*context, source, &err);
-            if (err != CL_SUCCESS) {
-                OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL could not create Program");
-            }
-
-            std::vector<cl::Device> devices = context->getInfo<CL_CONTEXT_DEVICES>();
-            program.build(devices);
-
-            chow_patel_ilu_sweep_k.reset(new cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                     cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                     cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                     cl::Buffer&, cl::Buffer&,
-                                                     const int, cl::LocalSpaceArg, cl::LocalSpaceArg>(cl::Kernel(program, "chow_patel_ilu_sweep", &err)));
-            if (err != CL_SUCCESS) {
-                OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL could not create Kernel");
-            }
-
-            // allocate GPU memory
-            d_Ut_vals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * Ut_nnzbs * block_size * block_size);
-            d_L_vals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * L_nnzbs * block_size * block_size);
-            d_LU_vals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * LU_nnzbs * block_size * block_size);
-            d_Ut_ptrs = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb+1));
-            d_L_rows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb+1));
-            d_LU_rows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb+1));
-            d_Ut_idxs = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * Ut_nnzbs);
-            d_L_cols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * L_nnzbs);
-            d_LU_cols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * LU_nnzbs);
-            d_Ltmp = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * L_nnzbs * block_size * block_size);
-            d_Utmp = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * Ut_nnzbs * block_size * block_size);
-
-            Dune::Timer t_copy_pattern;
-            events.resize(6);
-            err |= queue->enqueueWriteBuffer(d_Ut_ptrs, CL_FALSE, 0, sizeof(int) * (Nb+1), Ut_ptrs, nullptr, &events[0]);
-            err |= queue->enqueueWriteBuffer(d_L_rows, CL_FALSE, 0, sizeof(int) * (Nb+1), L_rows, nullptr, &events[1]);
-            err |= queue->enqueueWriteBuffer(d_LU_rows, CL_FALSE, 0, sizeof(int) * (Nb+1), LU_rows, nullptr, &events[2]);
-            err |= queue->enqueueWriteBuffer(d_Ut_idxs, CL_FALSE, 0, sizeof(int) * Ut_nnzbs, Ut_idxs, nullptr, &events[3]);
-            err |= queue->enqueueWriteBuffer(d_L_cols, CL_FALSE, 0, sizeof(int) * L_nnzbs, L_cols, nullptr, &events[4]);
-            err |= queue->enqueueWriteBuffer(d_LU_cols, CL_FALSE, 0, sizeof(int) * LU_nnzbs, LU_cols, nullptr, &events[5]);
-            cl::WaitForEvents(events);
-            events.clear();
-            if (verbosity >= 4){
-                std::ostringstream out;
-                out << "ChowPatelIlu copy sparsity pattern time: " << t_copy_pattern.stop() << " s";
-                OpmLog::info(out.str());
-            }
+        if (verbosity >= 3) {
             std::ostringstream out;
-            out << "ChowPatelIlu PARALLEL: " << CHOW_PATEL_GPU_PARALLEL;
+            out << "BILU0 ChowPatel preprocessing: " << t_preprocessing.stop() << " s";
             OpmLog::info(out.str());
+        }
+
+        // actual ILU decomposition
+        Timer t_decomposition;
+#if CHOW_PATEL_GPU
+        gpu_decomposition(queue,
+                          context,
+                          Ut->rowPointers,
+                          Ut->colIndices,
+                          Ut->nnzValues,
+                          Ut->nnzbs,
+                          Lmat->rowPointers,
+                          Lmat->colIndices,
+                          Lmat->nnzValues,
+                          Lmat->nnzbs,
+                          LUmat->rowPointers,
+                          LUmat->colIndices,
+                          LUmat->nnzValues,
+                          LUmat->nnzbs,
+                          Nb,
+                          num_sweeps);
+#else
+        double* Ltmp = new double[Lmat->nnzbs * block_size * block_size];
+        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+
+            // algorithm
+            // for every block in A (LUmat):
+            //     if i > j:
+            //         Lij = (Aij - sum k=1 to j-1 {Lik*Ukj}) / Ujj
+            //     else:
+            //         Uij = (Aij - sum k=1 to i-1 {Lik*Ukj})
+
+            // for every row
+            for (int row = 0; row < Nb; row++) {
+                // update U
+                // Uij = (Aij - sum k=1 to i-1 {Lik*Ukj})
+                int jColStart = Ut->rowPointers[row];
+                int jColEnd = Ut->rowPointers[row + 1];
+                int colU = row; // rename for clarity, next row in Ut means next col in U
+                // for every block in this row
+                for (int ij = jColStart; ij < jColEnd; ij++) {
+                    int rowU1 = Ut->colIndices[ij]; // actually rowIndices for U
+                    // refine Uij element (or diagonal)
+                    int i1 = LUmat->rowPointers[rowU1];
+                    int i2 = LUmat->rowPointers[rowU1 + 1];
+
+                    // search on row rowU1, find blockIndex in LUmat of block with same col (colU) as Uij
+                    // LUmat->nnzValues[kk] is block Aij
+                    auto candidate = std::find(LUmat->colIndices + i1, LUmat->colIndices + i2, colU);
+                    assert(candidate != LUmat->colIndices + i2);
+                    auto kk = candidate - LUmat->colIndices;
+
+                    double aij[bs * bs];
+                    // copy block to Aij so operations can be done on it without affecting LUmat
+                    memcpy(&aij[0], LUmat->nnzValues + kk * bs * bs, sizeof(double) * bs * bs);
+
+                    int jk = Lmat->rowPointers[rowU1]; // points to row rowU1 in L
+                    // if row rowU1 is empty, skip row
+                    if (jk < Lmat->rowPointers[rowU1 + 1]) {
+                        int colL = Lmat->colIndices[jk];
+                        // only check until block U(i,j) is reached
+                        for (int k = jColStart; k < ij; ++k) {
+                            int rowU2 = Ut->colIndices[k];
+                            while (colL < rowU2) {
+                                ++jk; // check next block on row rowU1 of L
+                                colL = Lmat->colIndices[jk];
+                            }
+                            if (colL == rowU2) {
+                                // Aij -= (Lik * Ukj)
+                                blockMultSub(&aij[0], Lmat->nnzValues + jk * bs * bs, Ut->nnzValues + k * bs * bs, bs);
+                            }
+                        }
+                    }
+
+                    // Uij_new = Aij - sum
+                    memcpy(Utmp + ij * bs * bs, &aij[0], sizeof(double) * bs * bs);
+                }
+
+                // update L
+                // Lij = (Aij - sum k=1 to j-1 {Lik*Ukj}) / Ujj
+                int iRowStart = Lmat->rowPointers[row];
+                int iRowEnd = Lmat->rowPointers[row + 1];
+
+                for (int ij = iRowStart; ij < iRowEnd; ij++) {
+                    int j = Lmat->colIndices[ij];
+                    // refine Lij element
+                    // search on row 'row', find blockIndex in LUmat of block with same col (j) as Lij
+                    // LUmat->nnzValues[kk] is block Aij
+                    int i1 = LUmat->rowPointers[row];
+                    int i2 = LUmat->rowPointers[row + 1];
+
+                    auto candidate = std::find(LUmat->colIndices + i1, LUmat->colIndices + i2, j);
+                    assert(candidate != LUmat->colIndices + i2);
+                    auto kk = candidate - LUmat->colIndices;
+
+                    double aij[bs * bs];
+                    // copy block to Aij so operations can be done on it without affecting LUmat
+                    memcpy(&aij[0], LUmat->nnzValues + kk * bs * bs, sizeof(double) * bs * bs);
+
+                    int jk = Ut->rowPointers[j]; // actually colPointers, jk points to col j in U
+                    int rowU = Ut->colIndices[jk]; // actually rowIndices, rowU is the row of block jk
+                    // only check until block L(i,j) is reached
+                    for (int k = iRowStart; k < ij; ++k) {
+                        int colL = Lmat->colIndices[k];
+                        while (rowU < colL) {
+                            ++jk; // check next block on col j of U
+                            rowU = Ut->colIndices[jk];
+                        }
+
+                        if (rowU == colL) {
+                            // Aij -= (Lik * Ukj)
+                            blockMultSub(&aij[0], Lmat->nnzValues + k * bs * bs, Ut->nnzValues + jk * bs * bs, bs);
+                        }
+                    }
+
+                    // calculate (Aij - sum) / Ujj
+                    double ujj[bs * bs];
+                    inverter(Ut->nnzValues + (Ut->rowPointers[j + 1] - 1) * bs * bs, &ujj[0]);
+                    // Lij_new = (Aij - sum) / Ujj
+                    blockMult(&aij[0], &ujj[0], Ltmp + ij * bs * bs, bs);
+                }
+            }
+            // 1st sweep writes to Ltmp
+            // 2nd sweep writes to Lmat->nnzValues
+            std::swap(Lmat->nnzValues, Ltmp);
+            std::swap(Ut->nnzValues, Utmp);
+        } // end sweep
+
+        // if number of sweeps is even, swap again so data is in Lmat->nnzValues
+        if (num_sweeps % 2 == 0) {
+            std::swap(Lmat->nnzValues, Ltmp);
+            std::swap(Ut->nnzValues, Utmp);
+        }
+        delete[] Ltmp;
+#endif
+
+        if (verbosity >= 3) {
+            std::ostringstream out;
+            out << "BILU0 ChowPatel decomposition: " << t_decomposition.stop() << " s";
+            OpmLog::info(out.str());
+        }
+
+        Timer t_postprocessing;
+
+        // convert Ut to BSR
+        // diagonal stored separately
+        std::vector<int> ptr(Nb + 1, 0);
+        std::vector<int> cols(Ut->rowPointers[Nb]);
+
+        // count blocks per row for U (BSR)
+        // store diagonal in invDiagVals
+        for (int i = 0; i < Nb; ++i) {
+            for (int k = Ut->rowPointers[i]; k < Ut->rowPointers[i + 1]; ++k) {
+                int j = Ut->colIndices[k];
+                if (j != i) {
+                    ++ptr[j + 1];
+                }
+            }
+        }
+
+        // prefix sum
+        std::partial_sum(ptr.begin(), ptr.end(), ptr.begin());
+
+        // actually copy nonzero values for U
+        for (int i = 0; i < Nb; ++i) {
+            for (int k = Ut->rowPointers[i]; k < Ut->rowPointers[i + 1]; ++k) {
+                int j = Ut->colIndices[k];
+                if (j != i) {
+                    int head = ptr[j]++;
+                    cols[head] = i;
+                    memcpy(Utmp + head * bs * bs, Ut->nnzValues + k * bs * bs, sizeof(double) * bs * bs);
+                }
+            }
+        }
+
+        // the ptr[] were increased in the last loop
+        std::rotate(ptr.begin(), ptr.end() - 1, ptr.end());
+        ptr.front() = 0;
+
+
+        if (verbosity >= 3) {
+            std::ostringstream out;
+            out << "BILU0 ChowPatel postprocessing: " << t_postprocessing.stop() << " s";
+            OpmLog::info(out.str());
+        }
+
+        Timer t_copyToGpu;
+
+        events.resize(3);
+        err = queue->enqueueWriteBuffer(
+            d_Lvals, CL_FALSE, 0, Lmat->nnzbs * bs * bs * sizeof(double), Lmat->nnzValues, nullptr, &events[0]);
+        err |= queue->enqueueWriteBuffer(
+            d_Uvals, CL_FALSE, 0, Umat->nnzbs * bs * bs * sizeof(double), Utmp, nullptr, &events[1]);
+        err |= queue->enqueueWriteBuffer(
+            d_invDiagVals, CL_FALSE, 0, LUmat->Nb * bs * bs * sizeof(double), invDiagVals, nullptr, &events[2]);
+
+        std::call_once(pattern_uploaded, [&]() {
+            // find the positions of each diagonal block
+            for (int row = 0; row < Nb; ++row) {
+                int rowStart = LUmat->rowPointers[row];
+                int rowEnd = LUmat->rowPointers[row + 1];
+
+                auto candidate = std::find(LUmat->colIndices + rowStart, LUmat->colIndices + rowEnd, row);
+                assert(candidate != LUmat->colIndices + rowEnd);
+                diagIndex[row] = candidate - LUmat->colIndices;
+            }
+            events.resize(8);
+            err |= queue->enqueueWriteBuffer(
+                d_diagIndex, CL_FALSE, 0, Nb * sizeof(int), diagIndex.data(), nullptr, &events[3]);
+            err |= queue->enqueueWriteBuffer(
+                d_Lcols, CL_FALSE, 0, Lmat->nnzbs * sizeof(int), Lmat->colIndices, nullptr, &events[4]);
+            err |= queue->enqueueWriteBuffer(
+                d_Lrows, CL_FALSE, 0, (Lmat->Nb + 1) * sizeof(int), Lmat->rowPointers, nullptr, &events[5]);
+            err |= queue->enqueueWriteBuffer(
+                d_Ucols, CL_FALSE, 0, Umat->nnzbs * sizeof(int), cols.data(), nullptr, &events[6]);
+            err |= queue->enqueueWriteBuffer(
+                d_Urows, CL_FALSE, 0, (Umat->Nb + 1) * sizeof(int), ptr.data(), nullptr, &events[7]);
         });
 
-
-        // copy to GPU
-        Dune::Timer t_copy1;
-        events.resize(3);
-        err = queue->enqueueWriteBuffer(d_Ut_vals, CL_FALSE, 0, sizeof(double) * Ut_nnzbs * block_size * block_size, Ut_vals, nullptr, &events[0]);
-        err |= queue->enqueueWriteBuffer(d_L_vals, CL_FALSE, 0, sizeof(double) * L_nnzbs * block_size * block_size, L_vals, nullptr, &events[1]);
-        err |= queue->enqueueWriteBuffer(d_LU_vals, CL_FALSE, 0, sizeof(double) * LU_nnzbs * block_size * block_size, LU_vals, nullptr, &events[2]);
         cl::WaitForEvents(events);
         events.clear();
-        if (verbosity >= 4){
-            std::ostringstream out;
-            out << "ChowPatelIlu copy1 time: " << t_copy1.stop() << " s";
-            OpmLog::info(out.str());
-        }
         if (err != CL_SUCCESS) {
             // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
-            OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL enqueueWriteBuffer error");
+            OPM_THROW(std::logic_error, "BILU0 OpenCL enqueueWriteBuffer error");
         }
 
-        // call kernel
-        for (int sweep = 0; sweep < num_sweeps; ++sweep) {
-            // normally, L_vals and Ltmp are swapped after the sweep is done
-            // these conditionals implement that without actually swapping pointers
-            // 1st sweep reads X_vals, writes to Xtmp
-            // 2nd sweep reads Xtmp, writes to X_vals
-            auto *Larg1 = (sweep % 2 == 0) ? &d_L_vals : &d_Ltmp;
-            auto *Larg2 = (sweep % 2 == 0) ? &d_Ltmp : &d_L_vals;
-            auto *Uarg1 = (sweep % 2 == 0) ? &d_Ut_vals : &d_Utmp;
-            auto *Uarg2 = (sweep % 2 == 0) ? &d_Utmp : &d_Ut_vals;
-            int num_work_groups = Nb;
-#if CHOW_PATEL_GPU_PARALLEL
-            int work_group_size = 32;
-#else
-            int work_group_size = 16;
-#endif
-            int total_work_items = num_work_groups * work_group_size;
-            int lmem_per_work_group = work_group_size * block_size * block_size * sizeof(double);
-            Dune::Timer t_kernel;
-            event = (*chow_patel_ilu_sweep_k)(cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
-                *Uarg1, *Larg1, d_LU_vals,
-                d_Ut_ptrs, d_L_rows, d_LU_rows,
-                d_Ut_idxs, d_L_cols, d_LU_cols,
-                *Larg2, *Uarg2, Nb, cl::Local(lmem_per_work_group), cl::Local(lmem_per_work_group));
-            event.wait();
-            if (verbosity >= 4){
-                std::ostringstream out;
-                out << "ChowPatelIlu sweep kernel time: " << t_kernel.stop() << " s";
-                OpmLog::info(out.str());
-            }
-        }
-
-        // copy back
-        Dune::Timer t_copy2;
-        events.resize(2);
-        if (num_sweeps % 2 == 0) {
-            err = queue->enqueueReadBuffer(d_Ut_vals, CL_FALSE, 0, sizeof(double) * Ut_nnzbs * block_size * block_size, Ut_vals, nullptr, &events[0]);
-            err |= queue->enqueueReadBuffer(d_L_vals, CL_FALSE, 0, sizeof(double) * L_nnzbs * block_size * block_size, L_vals, nullptr, &events[1]);
-        } else {
-            err = queue->enqueueReadBuffer(d_Utmp, CL_FALSE, 0, sizeof(double) * Ut_nnzbs * block_size * block_size, Ut_vals, nullptr, &events[0]);
-            err |= queue->enqueueReadBuffer(d_Ltmp, CL_FALSE, 0, sizeof(double) * L_nnzbs * block_size * block_size, L_vals, nullptr, &events[1]);
-        }
-        cl::WaitForEvents(events);
-        events.clear();
-        if (verbosity >= 4){
+        if (verbosity >= 3) {
             std::ostringstream out;
-            out << "ChowPatelIlu copy2 time: " << t_copy2.stop() << " s";
+            out << "BILU0 ChowPatel copy to GPU: " << t_copyToGpu.stop() << " s\n";
+            out << "BILU0 ChowPatel total: " << t_total.stop() << " s";
             OpmLog::info(out.str());
         }
-        if (err != CL_SUCCESS) {
-            // enqueueReadBuffer is C and does not throw exceptions like C++ OpenCL
-            OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL enqueueReadBuffer error");
+
+        delete[] Utmp;
+    }
+
+
+    template <unsigned int block_size>
+    void ChowPatelIlu<block_size>::gpu_decomposition(cl::CommandQueue* queue,
+                                                     cl::Context* context,
+                                                     int* Ut_ptrs,
+                                                     int* Ut_idxs,
+                                                     double* Ut_vals,
+                                                     int Ut_nnzbs,
+                                                     int* L_rows,
+                                                     int* L_cols,
+                                                     double* L_vals,
+                                                     int L_nnzbs,
+                                                     int* LU_rows,
+                                                     int* LU_cols,
+                                                     double* LU_vals,
+                                                     int LU_nnzbs,
+                                                     int Nb,
+                                                     int num_sweeps)
+    {
+        if (block_size != 3) {
+            OPM_THROW(std::logic_error, "ChowPatelIlu::gpu_decomposition only supports block_size = 3");
         }
 
-    } catch (const cl::Error& error) {
-        std::ostringstream oss;
-        oss << "OpenCL Error: " << error.what() << "(" << error.err() << ")\n";
-        oss << getErrorString(error.err()) << std::endl;
-        // rethrow exception
-        OPM_THROW(std::logic_error, oss.str());
-    } catch (const std::logic_error& error) {
-        // rethrow exception by OPM_THROW in the try{}
-        throw;
+        try {
+            // just put everything in the capture list
+            std::call_once(initialize_flag, [&]() {
+                cl::Program::Sources source(
+                    1, chow_patel_ilu_sweep_s); // what does this '1' mean? cl::Program::Sources is of type
+                                                // 'std::vector<std::pair<const char*, long unsigned int> >'
+                cl::Program program = cl::Program(*context, source, &err);
+                if (err != CL_SUCCESS) {
+                    OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL could not create Program");
+                }
+
+                std::vector<cl::Device> devices = context->getInfo<CL_CONTEXT_DEVICES>();
+                program.build(devices);
+
+                chow_patel_ilu_sweep_k.reset(
+                    new cl::KernelFunctor<cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          cl::Buffer&,
+                                          const int,
+                                          cl::LocalSpaceArg,
+                                          cl::LocalSpaceArg>(cl::Kernel(program, "chow_patel_ilu_sweep", &err)));
+                if (err != CL_SUCCESS) {
+                    OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL could not create Kernel");
+                }
+
+                // allocate GPU memory
+                d_Ut_vals
+                    = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * Ut_nnzbs * block_size * block_size);
+                d_L_vals = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * L_nnzbs * block_size * block_size);
+                d_LU_vals
+                    = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * LU_nnzbs * block_size * block_size);
+                d_Ut_ptrs = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb + 1));
+                d_L_rows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb + 1));
+                d_LU_rows = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * (Nb + 1));
+                d_Ut_idxs = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * Ut_nnzbs);
+                d_L_cols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * L_nnzbs);
+                d_LU_cols = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(int) * LU_nnzbs);
+                d_Ltmp = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * L_nnzbs * block_size * block_size);
+                d_Utmp = cl::Buffer(*context, CL_MEM_READ_WRITE, sizeof(double) * Ut_nnzbs * block_size * block_size);
+
+                Dune::Timer t_copy_pattern;
+                events.resize(6);
+                err |= queue->enqueueWriteBuffer(
+                    d_Ut_ptrs, CL_FALSE, 0, sizeof(int) * (Nb + 1), Ut_ptrs, nullptr, &events[0]);
+                err |= queue->enqueueWriteBuffer(
+                    d_L_rows, CL_FALSE, 0, sizeof(int) * (Nb + 1), L_rows, nullptr, &events[1]);
+                err |= queue->enqueueWriteBuffer(
+                    d_LU_rows, CL_FALSE, 0, sizeof(int) * (Nb + 1), LU_rows, nullptr, &events[2]);
+                err |= queue->enqueueWriteBuffer(
+                    d_Ut_idxs, CL_FALSE, 0, sizeof(int) * Ut_nnzbs, Ut_idxs, nullptr, &events[3]);
+                err |= queue->enqueueWriteBuffer(
+                    d_L_cols, CL_FALSE, 0, sizeof(int) * L_nnzbs, L_cols, nullptr, &events[4]);
+                err |= queue->enqueueWriteBuffer(
+                    d_LU_cols, CL_FALSE, 0, sizeof(int) * LU_nnzbs, LU_cols, nullptr, &events[5]);
+                cl::WaitForEvents(events);
+                events.clear();
+                if (verbosity >= 4) {
+                    std::ostringstream out;
+                    out << "ChowPatelIlu copy sparsity pattern time: " << t_copy_pattern.stop() << " s";
+                    OpmLog::info(out.str());
+                }
+                std::ostringstream out;
+                out << "ChowPatelIlu PARALLEL: " << CHOW_PATEL_GPU_PARALLEL;
+                OpmLog::info(out.str());
+            });
+
+
+            // copy to GPU
+            Dune::Timer t_copy1;
+            events.resize(3);
+            err = queue->enqueueWriteBuffer(d_Ut_vals,
+                                            CL_FALSE,
+                                            0,
+                                            sizeof(double) * Ut_nnzbs * block_size * block_size,
+                                            Ut_vals,
+                                            nullptr,
+                                            &events[0]);
+            err |= queue->enqueueWriteBuffer(
+                d_L_vals, CL_FALSE, 0, sizeof(double) * L_nnzbs * block_size * block_size, L_vals, nullptr, &events[1]);
+            err |= queue->enqueueWriteBuffer(d_LU_vals,
+                                             CL_FALSE,
+                                             0,
+                                             sizeof(double) * LU_nnzbs * block_size * block_size,
+                                             LU_vals,
+                                             nullptr,
+                                             &events[2]);
+            cl::WaitForEvents(events);
+            events.clear();
+            if (verbosity >= 4) {
+                std::ostringstream out;
+                out << "ChowPatelIlu copy1 time: " << t_copy1.stop() << " s";
+                OpmLog::info(out.str());
+            }
+            if (err != CL_SUCCESS) {
+                // enqueueWriteBuffer is C and does not throw exceptions like C++ OpenCL
+                OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL enqueueWriteBuffer error");
+            }
+
+            // call kernel
+            for (int sweep = 0; sweep < num_sweeps; ++sweep) {
+                // normally, L_vals and Ltmp are swapped after the sweep is done
+                // these conditionals implement that without actually swapping pointers
+                // 1st sweep reads X_vals, writes to Xtmp
+                // 2nd sweep reads Xtmp, writes to X_vals
+                auto* Larg1 = (sweep % 2 == 0) ? &d_L_vals : &d_Ltmp;
+                auto* Larg2 = (sweep % 2 == 0) ? &d_Ltmp : &d_L_vals;
+                auto* Uarg1 = (sweep % 2 == 0) ? &d_Ut_vals : &d_Utmp;
+                auto* Uarg2 = (sweep % 2 == 0) ? &d_Utmp : &d_Ut_vals;
+                int num_work_groups = Nb;
+#if CHOW_PATEL_GPU_PARALLEL
+                int work_group_size = 32;
+#else
+                int work_group_size = 16;
+#endif
+                int total_work_items = num_work_groups * work_group_size;
+                int lmem_per_work_group = work_group_size * block_size * block_size * sizeof(double);
+                Dune::Timer t_kernel;
+                event = (*chow_patel_ilu_sweep_k)(
+                    cl::EnqueueArgs(*queue, cl::NDRange(total_work_items), cl::NDRange(work_group_size)),
+                    *Uarg1,
+                    *Larg1,
+                    d_LU_vals,
+                    d_Ut_ptrs,
+                    d_L_rows,
+                    d_LU_rows,
+                    d_Ut_idxs,
+                    d_L_cols,
+                    d_LU_cols,
+                    *Larg2,
+                    *Uarg2,
+                    Nb,
+                    cl::Local(lmem_per_work_group),
+                    cl::Local(lmem_per_work_group));
+                event.wait();
+                if (verbosity >= 4) {
+                    std::ostringstream out;
+                    out << "ChowPatelIlu sweep kernel time: " << t_kernel.stop() << " s";
+                    OpmLog::info(out.str());
+                }
+            }
+
+            // copy back
+            Dune::Timer t_copy2;
+            events.resize(2);
+            if (num_sweeps % 2 == 0) {
+                err = queue->enqueueReadBuffer(d_Ut_vals,
+                                               CL_FALSE,
+                                               0,
+                                               sizeof(double) * Ut_nnzbs * block_size * block_size,
+                                               Ut_vals,
+                                               nullptr,
+                                               &events[0]);
+                err |= queue->enqueueReadBuffer(d_L_vals,
+                                                CL_FALSE,
+                                                0,
+                                                sizeof(double) * L_nnzbs * block_size * block_size,
+                                                L_vals,
+                                                nullptr,
+                                                &events[1]);
+            } else {
+                err = queue->enqueueReadBuffer(d_Utmp,
+                                               CL_FALSE,
+                                               0,
+                                               sizeof(double) * Ut_nnzbs * block_size * block_size,
+                                               Ut_vals,
+                                               nullptr,
+                                               &events[0]);
+                err |= queue->enqueueReadBuffer(d_Ltmp,
+                                                CL_FALSE,
+                                                0,
+                                                sizeof(double) * L_nnzbs * block_size * block_size,
+                                                L_vals,
+                                                nullptr,
+                                                &events[1]);
+            }
+            cl::WaitForEvents(events);
+            events.clear();
+            if (verbosity >= 4) {
+                std::ostringstream out;
+                out << "ChowPatelIlu copy2 time: " << t_copy2.stop() << " s";
+                OpmLog::info(out.str());
+            }
+            if (err != CL_SUCCESS) {
+                // enqueueReadBuffer is C and does not throw exceptions like C++ OpenCL
+                OPM_THROW(std::logic_error, "ChowPatelIlu OpenCL enqueueReadBuffer error");
+            }
+
+        } catch (const cl::Error& error) {
+            std::ostringstream oss;
+            oss << "OpenCL Error: " << error.what() << "(" << error.err() << ")\n";
+            oss << getErrorString(error.err()) << std::endl;
+            // rethrow exception
+            OPM_THROW(std::logic_error, oss.str());
+        } catch (const std::logic_error& error) {
+            // rethrow exception by OPM_THROW in the try{}
+            throw;
+        }
     }
-}
 
 
-#define INSTANTIATE_GPU_FUNCTIONS(n)                                          \
-template void ChowPatelIlu<n>::decomposition(                                 \
-    cl::CommandQueue *queue, cl::Context *context,                            \
-    BlockedMatrix *LUmat, BlockedMatrix *Lmat, BlockedMatrix *Umat,  \
-    double *invDiagVals, std::vector<int>& diagIndex,                         \
-    cl::Buffer& d_diagIndex, cl::Buffer& d_invDiagVals,                       \
-    cl::Buffer& d_Lvals, cl::Buffer& d_Lcols, cl::Buffer& d_Lrows,            \
-    cl::Buffer& d_Uvals, cl::Buffer& d_Ucols, cl::Buffer& d_Urows);
+#define INSTANTIATE_GPU_FUNCTIONS(n)                                                                                   \
+    template void ChowPatelIlu<n>::decomposition(cl::CommandQueue* queue,                                              \
+                                                 cl::Context* context,                                                 \
+                                                 BlockedMatrix* LUmat,                                                 \
+                                                 BlockedMatrix* Lmat,                                                  \
+                                                 BlockedMatrix* Umat,                                                  \
+                                                 double* invDiagVals,                                                  \
+                                                 std::vector<int>& diagIndex,                                          \
+                                                 cl::Buffer& d_diagIndex,                                              \
+                                                 cl::Buffer& d_invDiagVals,                                            \
+                                                 cl::Buffer& d_Lvals,                                                  \
+                                                 cl::Buffer& d_Lcols,                                                  \
+                                                 cl::Buffer& d_Lrows,                                                  \
+                                                 cl::Buffer& d_Uvals,                                                  \
+                                                 cl::Buffer& d_Ucols,                                                  \
+                                                 cl::Buffer& d_Urows);
 
-INSTANTIATE_GPU_FUNCTIONS(1);
-INSTANTIATE_GPU_FUNCTIONS(2);
-INSTANTIATE_GPU_FUNCTIONS(3);
-INSTANTIATE_GPU_FUNCTIONS(4);
-INSTANTIATE_GPU_FUNCTIONS(5);
-INSTANTIATE_GPU_FUNCTIONS(6);
+    INSTANTIATE_GPU_FUNCTIONS(1);
+    INSTANTIATE_GPU_FUNCTIONS(2);
+    INSTANTIATE_GPU_FUNCTIONS(3);
+    INSTANTIATE_GPU_FUNCTIONS(4);
+    INSTANTIATE_GPU_FUNCTIONS(5);
+    INSTANTIATE_GPU_FUNCTIONS(6);
 
 #undef INSTANTIATE_GPU_FUNCTIONS
 
@@ -1005,4 +1125,3 @@ INSTANTIATE_GPU_FUNCTIONS(6);
 } // namespace Opm
 
 #endif // CHOW_PATEL
-

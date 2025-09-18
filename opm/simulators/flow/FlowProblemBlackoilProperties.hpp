@@ -33,48 +33,53 @@
 
 #include <opm/models/utils/propertysystem.hh>
 
-#include <opm/simulators/flow/FlowBaseProblemProperties.hpp>
+#include <opm/simulators/flow/BlackoilModel.hpp>
 #include <opm/simulators/flow/FIBlackoilModel.hpp>
+#include <opm/simulators/flow/FlowBaseProblemProperties.hpp>
 #include <opm/simulators/flow/NewTranFluxModule.hpp>
 #include <opm/simulators/flow/OutputBlackoilModule.hpp>
-#include <opm/simulators/flow/BlackoilModel.hpp>
 
 
 #include <tuple>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class FlowProblemBlackoil;
 }
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct FlowBaseProblemBlackoil {
-    using InheritsFrom = std::tuple<FlowBaseProblem>;
-};
+    struct FlowBaseProblemBlackoil {
+        using InheritsFrom = std::tuple<FlowBaseProblem>;
+    };
 
-}
+} // namespace TTag
 
 // Set the problem property
-template<class TypeTag>
-struct NonlinearSystem<TypeTag, TTag::FlowBaseProblemBlackoil>
-{ using type = BlackoilModel<TypeTag>; };
+template <class TypeTag>
+struct NonlinearSystem<TypeTag, TTag::FlowBaseProblemBlackoil> {
+    using type = BlackoilModel<TypeTag>;
+};
 
 
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FlowBaseProblemBlackoil>
-{ using type = FlowProblemBlackoil<TypeTag>; };
+template <class TypeTag>
+struct Problem<TypeTag, TTag::FlowBaseProblemBlackoil> {
+    using type = FlowProblemBlackoil<TypeTag>;
+};
 
-template<class TypeTag>
-struct Model<TypeTag, TTag::FlowBaseProblemBlackoil>
-{ using type = FIBlackOilModel<TypeTag>; };
+template <class TypeTag>
+struct Model<TypeTag, TTag::FlowBaseProblemBlackoil> {
+    using type = FIBlackOilModel<TypeTag>;
+};
 
 // Set the material law for fluid fluxes
-template<class TypeTag>
-struct MaterialLaw<TypeTag, TTag::FlowBaseProblem>
-{
+template <class TypeTag>
+struct MaterialLaw<TypeTag, TTag::FlowBaseProblem> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -91,14 +96,16 @@ public:
 };
 
 // Use the "velocity module" which uses the Eclipse "NEWTRAN" transmissibilities
-template<class TypeTag>
-struct FluxModule<TypeTag, TTag::FlowBaseProblemBlackoil>
-{ using type = NewTranFluxModule<TypeTag>; };
+template <class TypeTag>
+struct FluxModule<TypeTag, TTag::FlowBaseProblemBlackoil> {
+    using type = NewTranFluxModule<TypeTag>;
+};
 
 // Use the dummy gradient calculator in order not to do unnecessary work.
-template<class TypeTag>
-struct GradientCalculator<TypeTag, TTag::FlowBaseProblemBlackoil>
-{ using type = DummyGradientCalculator<TypeTag>; };
+template <class TypeTag>
+struct GradientCalculator<TypeTag, TTag::FlowBaseProblemBlackoil> {
+    using type = DummyGradientCalculator<TypeTag>;
+};
 
 } // namespace Opm::Properties
 

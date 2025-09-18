@@ -162,7 +162,8 @@ public:
         return SolverCategory::sequential;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 
@@ -181,7 +182,7 @@ private:
     //! \brief converts from index in natural ordered structure to index reordered strucutre
     std::vector<std::size_t> natural_to_reorder_;
     //! \brief Boolean value describing whether or not to use multithreaded version of functions
-    bool use_multithreading{false};
+    bool use_multithreading {false};
 
     void serialUpdate()
     {

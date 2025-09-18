@@ -28,20 +28,21 @@
 #ifndef OPM_BLACK_OIL_POLYMER_PARAMS_HPP
 #define OPM_BLACK_OIL_POLYMER_PARAMS_HPP
 
-#include <opm/material/common/Tabulated1DFunction.hpp>
 #include <opm/material/common/IntervalTabulated2DFunction.hpp>
+#include <opm/material/common/Tabulated1DFunction.hpp>
 
 #include <map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
 class EclipseState;
 #endif
 
 //! \brief Struct holding the parameters for the BlackOilPolymerModule class.
-template<class Scalar>
+template <class Scalar>
 struct BlackOilPolymerParams {
     using TabulatedFunction = Tabulated1DFunction<Scalar>;
     using TabulatedTwoDFunction = IntervalTabulated2DFunction<Scalar>;
@@ -49,7 +50,7 @@ struct BlackOilPolymerParams {
     enum AdsorptionBehaviour { Desorption = 1, NoDesorption = 2 };
 
 #if HAVE_ECL_INPUT
-    template<bool enablePolymer, bool enablePolymerMolarWeight>
+    template <bool enablePolymer, bool enablePolymerMolarWeight>
     void initFromState(const EclipseState& eclState);
 #endif
 
@@ -94,26 +95,26 @@ struct BlackOilPolymerParams {
         TabulatedTwoDFunction table_func;
     };
 
-    std::vector<Scalar> plyrockDeadPoreVolume_{};
-    std::vector<Scalar> plyrockResidualResistanceFactor_{};
-    std::vector<Scalar> plyrockRockDensityFactor_{};
-    std::vector<Scalar> plyrockAdsorbtionIndex_{};
-    std::vector<Scalar> plyrockMaxAdsorbtion_{};
-    std::vector<TabulatedFunction> plyadsAdsorbedPolymer_{};
-    std::vector<TabulatedFunction> plyviscViscosityMultiplierTable_{};
-    std::vector<Scalar> plymaxMaxConcentration_{};
-    std::vector<Scalar> plymixparToddLongstaff_{};
-    std::vector<std::vector<Scalar>> plyshlogShearEffectRefMultiplier_{};
-    std::vector<std::vector<Scalar>> plyshlogShearEffectRefLogVelocity_{};
-    std::vector<Scalar> shrate_{};
+    std::vector<Scalar> plyrockDeadPoreVolume_ {};
+    std::vector<Scalar> plyrockResidualResistanceFactor_ {};
+    std::vector<Scalar> plyrockRockDensityFactor_ {};
+    std::vector<Scalar> plyrockAdsorbtionIndex_ {};
+    std::vector<Scalar> plyrockMaxAdsorbtion_ {};
+    std::vector<TabulatedFunction> plyadsAdsorbedPolymer_ {};
+    std::vector<TabulatedFunction> plyviscViscosityMultiplierTable_ {};
+    std::vector<Scalar> plymaxMaxConcentration_ {};
+    std::vector<Scalar> plymixparToddLongstaff_ {};
+    std::vector<std::vector<Scalar>> plyshlogShearEffectRefMultiplier_ {};
+    std::vector<std::vector<Scalar>> plyshlogShearEffectRefLogVelocity_ {};
+    std::vector<Scalar> shrate_ {};
     bool hasShrate_ = false;
     bool hasPlyshlog_ = false;
 
-    std::vector<PlyvmhCoefficients> plyvmhCoefficients_{};
-    std::map<int, TabulatedTwoDFunction> plymwinjTables_{};
-    std::map<int, TabulatedTwoDFunction> skprwatTables_{};
+    std::vector<PlyvmhCoefficients> plyvmhCoefficients_ {};
+    std::map<int, TabulatedTwoDFunction> plymwinjTables_ {};
+    std::map<int, TabulatedTwoDFunction> skprwatTables_ {};
 
-    std::map<int, SkprpolyTable> skprpolyTables_{};
+    std::map<int, SkprpolyTable> skprpolyTables_ {};
 };
 
 } // namespace Opm

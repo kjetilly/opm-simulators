@@ -86,15 +86,16 @@ public:
      * @param prm The property tree containing configuration parameters.
      * @param comm Parallel communicator.
      */
-    // template <typename Prm = std::enable_if_t<std::is_same_v<Comm, Dune::Amg::SequentialInformation>, ::Opm::PropertyTree>>
-    // HyprePreconditioner (const M& A, const Prm& prm)
+    // template <typename Prm = std::enable_if_t<std::is_same_v<Comm, Dune::Amg::SequentialInformation>,
+    // ::Opm::PropertyTree>> HyprePreconditioner (const M& A, const Prm& prm)
     //     : HyprePreconditioner(A, prm, Dune::Amg::SequentialInformation())
     // {
     //     //NB if this is used comm_ can never be used
     // }
 
-    HyprePreconditioner (const M& A, const Opm::PropertyTree prm, const Comm& comm)
-        : A_(A),comm_(comm)
+    HyprePreconditioner(const M& A, const Opm::PropertyTree prm, const Comm& comm)
+        : A_(A)
+        , comm_(comm)
     {
         OPM_TIMEBLOCK(prec_construct);
         int size;
@@ -154,11 +155,36 @@ public:
                 device_arrays_.matrix_buffer_device = hypre_CTAlloc(HYPRE_Real, A_.nonzeroes(), HYPRE_MEMORY_DEVICE);
             }
             // Copy data to device
-            hypre_TMemcpy(device_arrays_.ncols_device, sparsity_pattern_.ncols.data(), HYPRE_Int, par_info_.N_owned, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-            hypre_TMemcpy(device_arrays_.rows_device, sparsity_pattern_.rows.data(), HYPRE_BigInt, par_info_.N_owned, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-            hypre_TMemcpy(device_arrays_.cols_device, sparsity_pattern_.cols.data(), HYPRE_BigInt, sparsity_pattern_.nnz, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-            hypre_TMemcpy(device_arrays_.row_indexes_device, host_arrays_.row_indexes.data(), HYPRE_Int, par_info_.N_owned, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
-            hypre_TMemcpy(device_arrays_.indices_device, host_arrays_.indices.data(), HYPRE_BigInt, par_info_.N_owned, HYPRE_MEMORY_DEVICE, HYPRE_MEMORY_HOST);
+            hypre_TMemcpy(device_arrays_.ncols_device,
+                          sparsity_pattern_.ncols.data(),
+                          HYPRE_Int,
+                          par_info_.N_owned,
+                          HYPRE_MEMORY_DEVICE,
+                          HYPRE_MEMORY_HOST);
+            hypre_TMemcpy(device_arrays_.rows_device,
+                          sparsity_pattern_.rows.data(),
+                          HYPRE_BigInt,
+                          par_info_.N_owned,
+                          HYPRE_MEMORY_DEVICE,
+                          HYPRE_MEMORY_HOST);
+            hypre_TMemcpy(device_arrays_.cols_device,
+                          sparsity_pattern_.cols.data(),
+                          HYPRE_BigInt,
+                          sparsity_pattern_.nnz,
+                          HYPRE_MEMORY_DEVICE,
+                          HYPRE_MEMORY_HOST);
+            hypre_TMemcpy(device_arrays_.row_indexes_device,
+                          host_arrays_.row_indexes.data(),
+                          HYPRE_Int,
+                          par_info_.N_owned,
+                          HYPRE_MEMORY_DEVICE,
+                          HYPRE_MEMORY_HOST);
+            hypre_TMemcpy(device_arrays_.indices_device,
+                          host_arrays_.indices.data(),
+                          HYPRE_BigInt,
+                          par_info_.N_owned,
+                          HYPRE_MEMORY_DEVICE,
+                          HYPRE_MEMORY_HOST);
 #endif
         }
 

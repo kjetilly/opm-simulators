@@ -26,25 +26,26 @@
 
 #if HAVE_ECL_INPUT
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/PvtwsaltTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/PcfactTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/PermfactTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/PvtwsaltTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/SaltSolubilityTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/TableManager.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/SimpleTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/TableManager.hpp>
 #endif
 
 #include <cassert>
 #include <cstddef>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableBrine, bool enableSaltPrecipitation>
-void BlackOilBrineParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enableBrine, bool enableSaltPrecipitation>
+void
+BlackOilBrineParams<Scalar>::initFromState(const EclipseState& eclState)
 {
     // some sanity checks: if brine are enabled, the BRINE keyword must be
     // present, if brine are disabled the keyword must not be present.
@@ -53,8 +54,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Non-trivial brine treatment requested at compile time, but "
                                      "the deck does not contain the BRINE keyword");
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().phases().active(Phase::BRINE)) {
             throw std::runtime_error("Brine treatment disabled at compile time, but the deck "
                                      "contains the BRINE keyword");
@@ -91,7 +91,8 @@ initFromState(const EclipseState& eclState)
         permfactTable_.resize(numSatRegions);
         for (std::size_t i = 0; i < permfactTables.size(); ++i) {
             const PermfactTable& permfactTable = permfactTables.getTable<PermfactTable>(i);
-            permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(), permfactTable.getPermeabilityMultiplierColumn());
+            permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(),
+                                              permfactTable.getPermeabilityMultiplierColumn());
         }
 
         const TableContainer& saltsolTables = tableManager.getSaltsolTables();
@@ -100,7 +101,7 @@ initFromState(const EclipseState& eclState)
             saltdenTable_.resize(numPvtRegions);
             assert(numPvtRegions == saltsolTables.size());
             for (unsigned pvtRegionIdx = 0; pvtRegionIdx < numPvtRegions; ++pvtRegionIdx) {
-                const SaltsolTable& saltsolTable = saltsolTables.getTable<SaltsolTable>(pvtRegionIdx );
+                const SaltsolTable& saltsolTable = saltsolTables.getTable<SaltsolTable>(pvtRegionIdx);
                 saltsolTable_[pvtRegionIdx] = saltsolTable.getSaltsolColumn().front();
                 saltdenTable_[pvtRegionIdx] = saltsolTable.getSaltdenColumn().front();
             }
@@ -111,19 +112,20 @@ initFromState(const EclipseState& eclState)
             pcfactTable_.resize(numSatRegions);
             for (std::size_t i = 0; i < pcfactTables.size(); ++i) {
                 const PcfactTable& pcfactTable = pcfactTables.getTable<PcfactTable>(i);
-                pcfactTable_[i].setXYContainers(pcfactTable.getPorosityChangeColumn(), pcfactTable.getPcMultiplierColumn());
+                pcfactTable_[i].setXYContainers(pcfactTable.getPorosityChangeColumn(),
+                                                pcfactTable.getPcMultiplierColumn());
             }
         }
-   }
+    }
 }
 #endif
 
-#define INSTANTIATE_TYPE(T)                                                                \
-    template struct BlackOilBrineParams<T>;                                                \
-    template void BlackOilBrineParams<T>::initFromState<false,false>(const EclipseState&); \
-    template void BlackOilBrineParams<T>::initFromState<true,false>(const EclipseState&);  \
-    template void BlackOilBrineParams<T>::initFromState<false,true>(const EclipseState&);  \
-    template void BlackOilBrineParams<T>::initFromState<true,true>(const EclipseState&);
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilBrineParams<T>;                                                                            \
+    template void BlackOilBrineParams<T>::initFromState<false, false>(const EclipseState&);                            \
+    template void BlackOilBrineParams<T>::initFromState<true, false>(const EclipseState&);                             \
+    template void BlackOilBrineParams<T>::initFromState<false, true>(const EclipseState&);                             \
+    template void BlackOilBrineParams<T>::initFromState<true, true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)
 

@@ -35,7 +35,8 @@
 
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BaseAquiferModel
@@ -54,14 +55,16 @@ class BaseAquiferModel
 public:
     explicit BaseAquiferModel(Simulator& simulator)
         : simulator_(simulator)
-    {}
+    {
+    }
 
     /*!
      * \brief Called once the problem has been fully initialized and the initial
      *        condition has been applied.
      */
     void initialSolutionApplied()
-    { }
+    {
+    }
 
     /*!
      * \brief Called if aquifers are being initialized from values retrieved
@@ -74,45 +77,43 @@ public:
      */
     void initFromRestart(const data::Aquifers&)
     {
-        throw std::logic_error {
-            "Initialization from restart data not supported "
-            "for base aquifer model"
-        };
+        throw std::logic_error {"Initialization from restart data not supported "
+                                "for base aquifer model"};
     }
 
     /*!
      * \brief This method is called when a new episode (report step) starts.
      */
     void beginEpisode()
-    { }
+    {
+    }
 
     /*!
      * \brief This method is called when a new time step (substep) starts.
      */
     void beginTimeStep()
-    { }
+    {
+    }
 
     /*!
      * \brief This method is called before each Newton-Raphson iteration.
      */
     void beginIteration()
-    { }
+    {
+    }
 
     /*!
      * \brief Add the water which enters or leaves the reservoir due to aquifiers.
      */
     template <class Context>
-    void addToSource(RateVector&,
-                     const Context&,
-                     unsigned,
-                     unsigned) const
-    { }
+    void addToSource(RateVector&, const Context&, unsigned, unsigned) const
+    {
+    }
 
 
-    void addToSource(RateVector&,
-                     unsigned,
-                     unsigned) const
-    { }
+    void addToSource(RateVector&, unsigned, unsigned) const
+    {
+    }
 
 
     /*!
@@ -122,7 +123,8 @@ public:
      * procedures.
      */
     void endIteration()
-    { }
+    {
+    }
 
     /*!
      * \brief This method is called after each successful time step (substep).
@@ -131,14 +133,16 @@ public:
      * algorithm converged.
      */
     void endTimeStep()
-    { }
+    {
+    }
 
     /*!
      * \brief This method is called once an episode (report step) has been finished
      *        successfully.
      */
     void endEpisode()
-    { }
+    {
+    }
 
     /*!
      * \brief Write the internal state of the aquifer model to disk using an ad-hoc file
@@ -146,7 +150,8 @@ public:
      */
     template <class Restarter>
     void serialize(Restarter&)
-    { }
+    {
+    }
 
     /*!
      * \brief Load the internal state of the aquifer model to disk using an ad-hoc file
@@ -154,10 +159,13 @@ public:
      */
     template <class Restarter>
     void deserialize(Restarter&)
-    { }
+    {
+    }
 
     data::Aquifers aquiferData() const
-    { return data::Aquifers{}; }
+    {
+        return data::Aquifers {};
+    }
 
 protected:
     Simulator& simulator_;

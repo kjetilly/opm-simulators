@@ -26,9 +26,10 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class WellContributionsRocsparse : public WellContributions<Scalar>
 {
 private:
@@ -46,17 +47,16 @@ protected:
 
     using MatrixType = typename WellContributions<Scalar>::MatrixType;
 
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, int* colIndices, Scalar* values, unsigned int val_size) override;
 
     Scalar *d_Cnnzs_hip, *d_Dnnzs_hip, *d_Bnnzs_hip;
     unsigned *d_Ccols_hip, *d_Bcols_hip;
-    unsigned *d_val_pointers_hip;
+    unsigned* d_val_pointers_hip;
 
     std::vector<Scalar> h_x;
     std::vector<Scalar> h_y;
 };
 
-} //namespace Opm
+} // namespace Opm
 
 #endif

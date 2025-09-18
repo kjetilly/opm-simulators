@@ -20,15 +20,15 @@
 #ifndef OPM_PARALLELRESTRICTEDADDITIVESCHWARZ_HEADER_INCLUDED
 #define OPM_PARALLELRESTRICTEDADDITIVESCHWARZ_HEADER_INCLUDED
 
-#include <opm/common/utility/platform_dependent/disable_warnings.h>
-#include <dune/istl/preconditioner.hh>
 #include <dune/istl/paamg/smoother.hh>
+#include <dune/istl/preconditioner.hh>
+#include <opm/common/utility/platform_dependent/disable_warnings.h>
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
 namespace Opm
 {
 
-template<class X, class Y, class C, class T>
+template <class X, class Y, class C, class T>
 class ParallelRestrictedOverlappingSchwarz;
 
 } // end namespace Opm
@@ -39,69 +39,55 @@ namespace Dune
 namespace Amg
 {
 
-/// \brief Tells AMG how to construct the Opm::ParallelOverlappingILU0 smoother
-/// \tparam Domain The type of the Vector representing the domain.
-/// \tparam Range The type of the Vector representing the range.
-/// \tparam ParallelInfo The type of the parallel information object
-///         used, e.g. Dune::OwnerOverlapCommunication
-/// \tparam SeqPreconditioner The underlying sequential preconditioner to use.
-template<class Range, class Domain, class ParallelInfo, class SeqPreconditioner>
-struct ConstructionTraits<Opm::ParallelRestrictedOverlappingSchwarz<Range,
-                                                                    Domain,
-                                                                    ParallelInfo,
-                                                                    SeqPreconditioner> >
-{
-    typedef DefaultParallelConstructionArgs<SeqPreconditioner,ParallelInfo> Arguments;
-    typedef ConstructionTraits<SeqPreconditioner> SeqConstructionTraits;
+    /// \brief Tells AMG how to construct the Opm::ParallelOverlappingILU0 smoother
+    /// \tparam Domain The type of the Vector representing the domain.
+    /// \tparam Range The type of the Vector representing the range.
+    /// \tparam ParallelInfo The type of the parallel information object
+    ///         used, e.g. Dune::OwnerOverlapCommunication
+    /// \tparam SeqPreconditioner The underlying sequential preconditioner to use.
+    template <class Range, class Domain, class ParallelInfo, class SeqPreconditioner>
+    struct ConstructionTraits<
+        Opm::ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>> {
+        typedef DefaultParallelConstructionArgs<SeqPreconditioner, ParallelInfo> Arguments;
+        typedef ConstructionTraits<SeqPreconditioner> SeqConstructionTraits;
 
-    /// \brief Construct a parallel restricted overlapping schwarz preconditioner.
-    typedef std::shared_ptr< Opm::ParallelRestrictedOverlappingSchwarz<Range,
-                                                                       Domain,
-                                                                       ParallelInfo,
-                                                                       SeqPreconditioner> > ParallelRestrictedOverlappingSchwarzPointer;
+        /// \brief Construct a parallel restricted overlapping schwarz preconditioner.
+        typedef std::shared_ptr<
+            Opm::ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>>
+            ParallelRestrictedOverlappingSchwarzPointer;
 
-    static inline ParallelRestrictedOverlappingSchwarzPointer
-    construct(Arguments& args)
-    {
-        using PROS =
-            Opm::ParallelRestrictedOverlappingSchwarz<Range,Domain,
-                                                      ParallelInfo,SeqPreconditioner>;
-        return std::make_shared<PROS>(*SeqConstructionTraits::construct(args),
-                                      args.getComm());
-    }
+        static inline ParallelRestrictedOverlappingSchwarzPointer construct(Arguments& args)
+        {
+            using PROS = Opm::ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>;
+            return std::make_shared<PROS>(*SeqConstructionTraits::construct(args), args.getComm());
+        }
 
-    /// \brief Deconstruct and free a parallel restricted overlapping schwarz preconditioner.
-    static inline void deconstruct(Opm::ParallelRestrictedOverlappingSchwarz
-                                   <Range,Domain,ParallelInfo,SeqPreconditioner>* bp)
-    {
-        SeqConstructionTraits
-            ::deconstruct(static_cast<SeqPreconditioner*>(&bp->preconditioner));
-        delete bp;
-    }
+        /// \brief Deconstruct and free a parallel restricted overlapping schwarz preconditioner.
+        static inline void
+        deconstruct(Opm::ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>* bp)
+        {
+            SeqConstructionTraits ::deconstruct(static_cast<SeqPreconditioner*>(&bp->preconditioner));
+            delete bp;
+        }
+    };
 
-};
-
-/// \brief Tells AMG how to use Opm::ParallelOverlappingILU0 smoother
-/// \tparam Domain The type of the Vector representing the domain.
-/// \tparam Range The type of the Vector representing the range.
-/// \tparam ParallelInfo The type of the parallel information object
-///         used, e.g. Dune::OwnerOverlapCommunication
-/// \tparam SeqPreconditioner The underlying sequential preconditioner to use.
-template<class Range, class Domain, class ParallelInfo, class SeqPreconditioner>
-struct SmootherTraits<Opm::ParallelRestrictedOverlappingSchwarz<Range,
-                                                                Domain,
-                                                                ParallelInfo,
-                                                                SeqPreconditioner> >
-{
-    typedef DefaultSmootherArgs<typename SeqPreconditioner::matrix_type::field_type> Arguments;
-
-};
+    /// \brief Tells AMG how to use Opm::ParallelOverlappingILU0 smoother
+    /// \tparam Domain The type of the Vector representing the domain.
+    /// \tparam Range The type of the Vector representing the range.
+    /// \tparam ParallelInfo The type of the parallel information object
+    ///         used, e.g. Dune::OwnerOverlapCommunication
+    /// \tparam SeqPreconditioner The underlying sequential preconditioner to use.
+    template <class Range, class Domain, class ParallelInfo, class SeqPreconditioner>
+    struct SmootherTraits<Opm::ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>> {
+        typedef DefaultSmootherArgs<typename SeqPreconditioner::matrix_type::field_type> Arguments;
+    };
 
 } // end namespace Amg
 
 } // end namespace Dune
 
-namespace Opm{
+namespace Opm
+{
 
 /// \brief Block parallel preconditioner.
 ///
@@ -123,14 +109,12 @@ namespace Opm{
 /// \tparam ParallelInfo The type of the parallel information object
 ///         used, e.g. Dune::OwnerOverlapCommunication
 /// \tparam SeqPreconditioner The underlying sequential preconditioner to use.
-template<class Range, class Domain, class ParallelInfo, class SeqPreconditioner=Dune::Preconditioner<Range,Domain> >
-class ParallelRestrictedOverlappingSchwarz
-    : public Dune::Preconditioner<Range,Domain> {
-    friend class Dune::Amg
-    ::ConstructionTraits<ParallelRestrictedOverlappingSchwarz<Range,
-                                                              Domain,
-                                                              ParallelInfo,
-                                                              SeqPreconditioner> >;
+template <class Range, class Domain, class ParallelInfo, class SeqPreconditioner = Dune::Preconditioner<Range, Domain>>
+class ParallelRestrictedOverlappingSchwarz : public Dune::Preconditioner<Range, Domain>
+{
+    friend class Dune::Amg ::ConstructionTraits<
+        ParallelRestrictedOverlappingSchwarz<Range, Domain, ParallelInfo, SeqPreconditioner>>;
+
 public:
     //! \brief The domain type of the preconditioner.
     typedef Domain domain_type;
@@ -144,7 +128,7 @@ public:
     // define the category
     enum {
         //! \brief The category the precondtioner is part of.
-        category=Dune::SolverCategory::overlapping
+        category = Dune::SolverCategory::overlapping
     };
 
     /*! \brief Constructor.
@@ -154,20 +138,22 @@ public:
       \param c The communication object for syncing overlap and copy
       data points. (E.~g. OwnerOverlapCommunication )
     */
-    ParallelRestrictedOverlappingSchwarz (SeqPreconditioner& p, const communication_type& c)
-        : preconditioner_(p), communication_(c)
-    {   }
+    ParallelRestrictedOverlappingSchwarz(SeqPreconditioner& p, const communication_type& c)
+        : preconditioner_(p)
+        , communication_(c)
+    {
+    }
 
     /*!
       \brief Prepare the preconditioner.
 
       \copydoc Preconditioner::pre(X&,Y&)
     */
-    virtual void pre (Domain& x, Range& b)
+    virtual void pre(Domain& x, Range& b)
     {
         OPM_TIMEBLOCK(pre);
-        communication_.copyOwnerToAll(x,x);     // make dirichlet values consistent
-        preconditioner_.pre(x,b);
+        communication_.copyOwnerToAll(x, x); // make dirichlet values consistent
+        preconditioner_.pre(x, b);
     }
 
     /*!
@@ -175,20 +161,20 @@ public:
 
       \copydoc Preconditioner::apply(X&,const Y&)
     */
-    virtual void apply (Domain& v, const Range& d)
+    virtual void apply(Domain& v, const Range& d)
     {
         apply<true>(v, d);
     }
 
-    template<bool forward>
-    void apply (Domain& v, const Range& d)
+    template <bool forward>
+    void apply(Domain& v, const Range& d)
     {
         OPM_TIMEBLOCK(apply);
         // hack us a mutable d to prevent copying.
         Range& md = const_cast<Range&>(d);
-        communication_.copyOwnerToAll(md,md);
-        preconditioner_.template apply<forward>(v,d);
-        communication_.copyOwnerToAll(v,v);
+        communication_.copyOwnerToAll(md, md);
+        preconditioner_.template apply<forward>(v, d);
+        communication_.copyOwnerToAll(v, v);
         // Make sure that d is the same as at the beginning of apply.
         communication_.project(md);
     }
@@ -198,7 +184,7 @@ public:
 
       \copydoc Preconditioner::post(X&)
     */
-    virtual void post (Range& x)
+    virtual void post(Range& x)
     {
         OPM_TIMEBLOCK(post);
         preconditioner_.post(x);
@@ -213,5 +199,5 @@ private:
 };
 
 
-} // end namespace OPM
+} // namespace Opm
 #endif

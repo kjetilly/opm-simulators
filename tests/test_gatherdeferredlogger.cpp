@@ -25,27 +25,31 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <opm/simulators/utils/gatherDeferredLogger.hpp>
 #include <dune/common/parallel/mpihelper.hh>
+#include <opm/simulators/utils/gatherDeferredLogger.hpp>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/OpmLog/LogBackend.hpp>
 #include <opm/common/OpmLog/CounterLog.hpp>
-#include <opm/common/OpmLog/TimerLog.hpp>
-#include <opm/common/OpmLog/StreamLog.hpp>
+#include <opm/common/OpmLog/LogBackend.hpp>
 #include <opm/common/OpmLog/LogUtil.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
+#include <opm/common/OpmLog/StreamLog.hpp>
+#include <opm/common/OpmLog/TimerLog.hpp>
 
 using namespace Opm;
 
 #if HAVE_MPI
-struct MPIError
-{
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+struct MPIError {
+    MPIError(std::string s, int e)
+        : errorstring(std::move(s))
+        , errorcode(e)
+    {
+    }
     std::string errorstring;
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
     int err_length;
@@ -62,15 +66,17 @@ init_unit_test_func()
     return true;
 }
 
-void initLogger(std::ostringstream& log_stream) {
+void
+initLogger(std::ostringstream& log_stream)
+{
     OpmLog::removeAllBackends();
     std::shared_ptr<CounterLog> counter = std::make_shared<CounterLog>();
-    std::shared_ptr<StreamLog> streamLog = std::make_shared<StreamLog>( log_stream , Log::DefaultMessageTypes);
+    std::shared_ptr<StreamLog> streamLog = std::make_shared<StreamLog>(log_stream, Log::DefaultMessageTypes);
 
-    OpmLog::addBackend("COUNTER" , counter);
-    OpmLog::addBackend("STREAM" , streamLog);
-    BOOST_CHECK_EQUAL( true , OpmLog::hasBackend("COUNTER"));
-    BOOST_CHECK_EQUAL( true , OpmLog::hasBackend("STREAM"));
+    OpmLog::addBackend("COUNTER", counter);
+    OpmLog::addBackend("STREAM", streamLog);
+    BOOST_CHECK_EQUAL(true, OpmLog::hasBackend("COUNTER"));
+    BOOST_CHECK_EQUAL(true, OpmLog::hasBackend("STREAM"));
 
     streamLog->setMessageFormatter(std::make_shared<SimpleMessageFormatter>(true, false));
     streamLog->setMessageLimiter(std::make_shared<MessageLimiter>(2));
@@ -93,7 +99,7 @@ BOOST_AUTO_TEST_CASE(NoMessages)
         global_deferredlogger.logMessages();
 
         auto counter = OpmLog::getBackend<CounterLog>("COUNTER");
-        BOOST_CHECK_EQUAL( 0 , counter->numMessages(Log::MessageType::Info) );
+        BOOST_CHECK_EQUAL(0, counter->numMessages(Log::MessageType::Info));
 
         std::string expected;
         BOOST_CHECK_EQUAL(log_stream.str(), expected);
@@ -125,9 +131,9 @@ BOOST_AUTO_TEST_CASE(VariableNumberOfMessages)
         global_deferredlogger.logMessages();
 
         auto counter = OpmLog::getBackend<CounterLog>("COUNTER");
-        BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Info) );
-        BOOST_CHECK_EQUAL( 1 , counter->numMessages(Log::MessageType::Warning) );
-        BOOST_CHECK_EQUAL( 4 , counter->numMessages(Log::MessageType::Bug) );
+        BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Info));
+        BOOST_CHECK_EQUAL(1, counter->numMessages(Log::MessageType::Warning));
+        BOOST_CHECK_EQUAL(4, counter->numMessages(Log::MessageType::Bug));
 
         const std::string expected = Log::prefixMessage(Log::MessageType::Info, "info from rank 1") + "\n"
             + Log::prefixMessage(Log::MessageType::Warning, "warning from rank 1") + "\n"
@@ -155,17 +161,18 @@ BOOST_AUTO_TEST_CASE(AllHaveOneMessage)
         global_deferredlogger.logMessages();
 
         auto counter = OpmLog::getBackend<CounterLog>("COUNTER");
-        BOOST_CHECK_EQUAL( cc.size() , counter->numMessages(Log::MessageType::Info) );
+        BOOST_CHECK_EQUAL(cc.size(), counter->numMessages(Log::MessageType::Info));
 
         std::string expected;
-        for (int i=0; i<cc.size(); i++) {
-            expected += Log::prefixMessage(Log::MessageType::Info, "info from rank "+std::to_string(i)) + "\n";
+        for (int i = 0; i < cc.size(); i++) {
+            expected += Log::prefixMessage(Log::MessageType::Info, "info from rank " + std::to_string(i)) + "\n";
         }
         BOOST_CHECK_EQUAL(log_stream.str(), expected);
     }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

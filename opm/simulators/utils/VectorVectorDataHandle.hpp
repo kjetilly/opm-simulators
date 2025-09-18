@@ -43,62 +43,61 @@ namespace Opm
 /// class operates on a vector of these.
 /// \tparam GridView the type of the grid view the data associated with
 /// \tparam The type of the vector of vectors.
-template<class GridView, class Vector>
+template <class GridView, class Vector>
 class VectorVectorDataHandle
-  : public Dune::CommDataHandleIF<VectorVectorDataHandle<GridView,Vector>,
-                                  std::decay_t<decltype(std::declval<Vector>()[0][0])>> // NVCC needs declval
+    : public Dune::CommDataHandleIF<VectorVectorDataHandle<GridView, Vector>,
+                                    std::decay_t<decltype(std::declval<Vector>()[0][0])>> // NVCC needs declval
 {
 public:
+    /// \brief the data type we send
+    using DataType = std::decay_t<decltype(std::declval<Vector>()[0][0])>; // NVCC needs declval
 
-  /// \brief the data type we send
-  using DataType = std::decay_t<decltype(std::declval<Vector>()[0][0])>;  // NVCC needs declval
-
-  /// \brief Constructor
-  /// \param data The vector of data vectors
-  /// \param gridView The gridview the data is attached to.
-  VectorVectorDataHandle(Vector& data, const GridView& gridView)
-    : data_(data), gridView_(gridView)
-  {}
-
-  bool contains(int /* dim */, int codim) const
-  {
-    return codim == 0;
-  }
-
-  bool fixedSize(int /* dim */, int /* codim */) const
-  {
-    return true;
-  }
-
-  template<class EntityType>
-  std::size_t size(const EntityType /* entity */) const
-  {
-    return data_.size();
-  }
-
-
-  template<class BufferType, class EntityType>
-  void gather(BufferType& buffer, const EntityType& e) const
-  {
-    for(const auto& vec: data_)
+    /// \brief Constructor
+    /// \param data The vector of data vectors
+    /// \param gridView The gridview the data is attached to.
+    VectorVectorDataHandle(Vector& data, const GridView& gridView)
+        : data_(data)
+        , gridView_(gridView)
     {
-      buffer.write(vec[gridView_.indexSet().index(e)]);
     }
-  }
 
-  template<class BufferType, class EntityType>
-  void scatter(BufferType& buffer, const EntityType& e,
-               [[maybe_unused]] std::size_t n)
-  {
-    assert(n == data_.size());
-    for(auto& vec: data_)
+    bool contains(int /* dim */, int codim) const
     {
-      buffer.read(vec[gridView_.indexSet().index(e)]);
+        return codim == 0;
     }
-  }
+
+    bool fixedSize(int /* dim */, int /* codim */) const
+    {
+        return true;
+    }
+
+    template <class EntityType>
+    std::size_t size(const EntityType /* entity */) const
+    {
+        return data_.size();
+    }
+
+
+    template <class BufferType, class EntityType>
+    void gather(BufferType& buffer, const EntityType& e) const
+    {
+        for (const auto& vec : data_) {
+            buffer.write(vec[gridView_.indexSet().index(e)]);
+        }
+    }
+
+    template <class BufferType, class EntityType>
+    void scatter(BufferType& buffer, const EntityType& e, [[maybe_unused]] std::size_t n)
+    {
+        assert(n == data_.size());
+        for (auto& vec : data_) {
+            buffer.read(vec[gridView_.indexSet().index(e)]);
+        }
+    }
+
 private:
-  Vector& data_;
-  const GridView& gridView_;
+    Vector& data_;
+    const GridView& gridView_;
 };
 
 } // end namespace Opm

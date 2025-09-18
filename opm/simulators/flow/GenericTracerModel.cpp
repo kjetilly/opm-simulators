@@ -32,20 +32,17 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 
-#define INSTANTIATE_TYPE(T)                                                                             \
-    template class GenericTracerModel<Dune::CpGrid,                                                     \
-                                      Dune::GridView<                                                   \
-                                          Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,               \
-                                      Dune::MultipleCodimMultipleGeomTypeMapper<                        \
-                                          Dune::GridView<                                               \
-                                              Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>,          \
-                                      EcfvStencil<T,Dune::GridView<                                     \
-                                                        Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>, \
-                                                  false,false>,                                         \
-                                      BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>,        \
-                                      T>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class GenericTracerModel<                                                                                 \
+        Dune::CpGrid,                                                                                                  \
+        Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,                                                 \
+        Dune::MultipleCodimMultipleGeomTypeMapper<Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>,      \
+        EcfvStencil<T, Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>, false, false>,                   \
+        BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>,                                                     \
+        T>;
 
 INSTANTIATE_TYPE(double)
 
@@ -54,9 +51,7 @@ INSTANTIATE_TYPE(float)
 #endif
 
 #if HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
 
 template class GenericTracerModel<Dune::CpGrid,
                                   GV,

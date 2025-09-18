@@ -28,10 +28,10 @@
 #include <fmt/core.h>
 #include <opm/common/ErrorMacros.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSeqILU0.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/gpu_constants.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/cusparse_wrapper.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/fix_zero_diagonal.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/gpu_constants.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
 #include <type_traits>
@@ -43,7 +43,7 @@
 namespace Opm::gpuistl
 {
 
-    
+
 template <class M, class X, class Y, int l>
 void
 GpuSeqILU0<M, X, Y, l>::pre([[maybe_unused]] X& x, [[maybe_unused]] Y& b)
@@ -318,14 +318,14 @@ GpuSeqILU0<M, X, Y, l>::updateILUConfiguration()
     createILU();
 }
 } // namespace Opm::gpuistl
-#define INSTANTIATE_GPUSEQILU0_DUNE(realtype, blockdim)                                                                  \
-    template class ::Opm::gpuistl::GpuSeqILU0<Dune::BCRSMatrix<Dune::FieldMatrix<realtype, blockdim, blockdim>>,         \
-                                            ::Opm::gpuistl::GpuVector<realtype>,                                         \
-                                            ::Opm::gpuistl::GpuVector<realtype>>;                                        \
-    template class ::Opm::gpuistl::GpuSeqILU0<Dune::BCRSMatrix<Opm::MatrixBlock<realtype, blockdim, blockdim>>,          \
-                                            ::Opm::gpuistl::GpuVector<realtype>,                                         \
-                                            ::Opm::gpuistl::GpuVector<realtype>>
-   
+#define INSTANTIATE_GPUSEQILU0_DUNE(realtype, blockdim)                                                                \
+    template class ::Opm::gpuistl::GpuSeqILU0<Dune::BCRSMatrix<Dune::FieldMatrix<realtype, blockdim, blockdim>>,       \
+                                              ::Opm::gpuistl::GpuVector<realtype>,                                     \
+                                              ::Opm::gpuistl::GpuVector<realtype>>;                                    \
+    template class ::Opm::gpuistl::GpuSeqILU0<Dune::BCRSMatrix<Opm::MatrixBlock<realtype, blockdim, blockdim>>,        \
+                                              ::Opm::gpuistl::GpuVector<realtype>,                                     \
+                                              ::Opm::gpuistl::GpuVector<realtype>>
+
 
 
 INSTANTIATE_GPUSEQILU0_DUNE(double, 1);
@@ -335,8 +335,8 @@ INSTANTIATE_GPUSEQILU0_DUNE(double, 4);
 INSTANTIATE_GPUSEQILU0_DUNE(double, 5);
 INSTANTIATE_GPUSEQILU0_DUNE(double, 6);
 template class ::Opm::gpuistl::GpuSeqILU0<Opm::gpuistl::GpuSparseMatrix<double>,
-    ::Opm::gpuistl::GpuVector<double>,
-    ::Opm::gpuistl::GpuVector<double>>;
+                                          ::Opm::gpuistl::GpuVector<double>,
+                                          ::Opm::gpuistl::GpuVector<double>>;
 
 INSTANTIATE_GPUSEQILU0_DUNE(float, 1);
 INSTANTIATE_GPUSEQILU0_DUNE(float, 2);
@@ -345,5 +345,5 @@ INSTANTIATE_GPUSEQILU0_DUNE(float, 4);
 INSTANTIATE_GPUSEQILU0_DUNE(float, 5);
 INSTANTIATE_GPUSEQILU0_DUNE(float, 6);
 template class ::Opm::gpuistl::GpuSeqILU0<Opm::gpuistl::GpuSparseMatrix<float>,
-    ::Opm::gpuistl::GpuVector<float>,
-    ::Opm::gpuistl::GpuVector<float>>;
+                                          ::Opm::gpuistl::GpuVector<float>,
+                                          ::Opm::gpuistl::GpuVector<float>>;

@@ -25,9 +25,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include <opm/input/eclipse/Deck/Deck.hpp>
+#include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/input/eclipse/Parser/Parser.hpp>
-#include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -38,17 +38,21 @@
 using namespace Opm;
 
 const int dimWorld = 3;
-const int cartDims[3] = {8,15,3};
+const int cartDims[3] = {8, 15, 3};
 
 #if HAVE_MPI
-struct MPIError
-{
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+struct MPIError {
+    MPIError(std::string s, int e)
+        : errorstring(std::move(s))
+        , errorcode(e)
+    {
+    }
     std::string errorstring;
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
     int err_length;
@@ -66,24 +70,28 @@ init_unit_test_func()
 }
 
 // Class extending EclTransmissibility, such that we can access the protected member trans_ to check its contents
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-class TestTransmissibility : public Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+class TestTransmissibility : public Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>
 {
-    using ParentType = Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>;
-    public:
-        TestTransmissibility(const EclipseState& eclState,
-                             const GridView& gridView,
-                             const CartesianIndexMapper& cartMapper,
-                             const Grid& grid,
-                             std::function<std::array<double,dimWorld>(int)> centroids,
-                             bool enableEnergy,
-                             bool enableDiffusivity,
-                             bool enableDispersivity)
-            : ParentType(eclState,gridView,cartMapper,grid,centroids,
-                         enableEnergy,enableDiffusivity,enableDispersivity) {}
-        auto getTransmissibilitymap() {
-            return this->trans_;
-        }
+    using ParentType = Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>;
+
+public:
+    TestTransmissibility(const EclipseState& eclState,
+                         const GridView& gridView,
+                         const CartesianIndexMapper& cartMapper,
+                         const Grid& grid,
+                         std::function<std::array<double, dimWorld>(int)> centroids,
+                         bool enableEnergy,
+                         bool enableDiffusivity,
+                         bool enableDispersivity)
+        : ParentType(
+              eclState, gridView, cartMapper, grid, centroids, enableEnergy, enableDiffusivity, enableDispersivity)
+    {
+    }
+    auto getTransmissibilitymap()
+    {
+        return this->trans_;
+    }
 };
 
 BOOST_AUTO_TEST_CASE(NoNNC)
@@ -92,12 +100,12 @@ BOOST_AUTO_TEST_CASE(NoNNC)
     using GridView = Grid::LeafGridView;
     using ElementMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
-    using Transmissibility = TestTransmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,double>;
+    using Transmissibility = TestTransmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, double>;
 
     Parser parser;
 
     // Deck with 2 NNCs
-    const auto deck = parser.parseString( R"(RUNSPEC
+    const auto deck = parser.parseString(R"(RUNSPEC
                                             NONNC
                                             DIMENS
                                              8 15 3 /
@@ -133,15 +141,10 @@ BOOST_AUTO_TEST_CASE(NoNNC)
     grid.processEclipseFormat(&eclState.getInputGrid(), &eclState, false, false, false);
     const auto& gridView = grid.leafGridView();
 
-    CartesianIndexMapper cartMapper =  Dune::CartesianIndexMapper<Grid>(grid);
+    CartesianIndexMapper cartMapper = Dune::CartesianIndexMapper<Grid>(grid);
 
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
-    Transmissibility eclTransmissibility(eclState,
-                                         gridView,
-                                         cartMapper,
-                                         grid,
-                                         centroids,
-                                         false,false,false);
+    auto centroids = [](int) { return std::array<double, Dune::CpGrid::dimensionworld> {}; };
+    Transmissibility eclTransmissibility(eclState, gridView, cartMapper, grid, centroids, false, false, false);
     // Call update, true indicates that update is called on all processes
     eclTransmissibility.update(true);
 
@@ -149,10 +152,10 @@ BOOST_AUTO_TEST_CASE(NoNNC)
 
     // Check that the transmissibilities of the NNCs that were added manually are
     // not contained in the transmissibility array or 0.0
-    BOOST_CHECK(transmissibilityMap.count(details::isId(0,129)) == 0 ||
-                eclTransmissibility.transmissibility(0,129) == 0.0);
-    BOOST_CHECK(transmissibilityMap.count(details::isId(0,258)) == 0 ||
-                eclTransmissibility.transmissibility(0,258) == 0.0);
+    BOOST_CHECK(transmissibilityMap.count(details::isId(0, 129)) == 0
+                || eclTransmissibility.transmissibility(0, 129) == 0.0);
+    BOOST_CHECK(transmissibilityMap.count(details::isId(0, 258)) == 0
+                || eclTransmissibility.transmissibility(0, 258) == 0.0);
 
     // If there is a non-zero transmissibility in the map, ensure that it is form a neighboring connection
     for (auto&& trans : transmissibilityMap) {
@@ -161,15 +164,14 @@ BOOST_AUTO_TEST_CASE(NoNNC)
             const auto& elements = details::isIdReverse(id);
             int gc1 = std::min(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
             int gc2 = std::max(cartMapper.cartesianIndex(elements.first), cartMapper.cartesianIndex(elements.second));
-            BOOST_CHECK(gc2 - gc1 == 1 ||
-                        gc2 - gc1 == cartDims[0] ||
-                        gc2 - gc1 == cartDims[0]*cartDims[1] ||
-                        gc2 - gc1 == 0);
+            BOOST_CHECK(gc2 - gc1 == 1 || gc2 - gc1 == cartDims[0] || gc2 - gc1 == cartDims[0] * cartDims[1]
+                        || gc2 - gc1 == 0);
         }
     }
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

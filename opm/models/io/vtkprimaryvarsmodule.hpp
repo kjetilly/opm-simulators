@@ -36,14 +36,15 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
  *
  * \brief VTK output module for the fluid composition
  */
-template<class TypeTag>
+template <class TypeTag>
 class VtkPrimaryVarsModule : public BaseOutputModule<TypeTag>
 {
     using ParentType = BaseOutputModule<TypeTag>;
@@ -150,10 +151,10 @@ public:
     }
 
 private:
-    VtkPrimaryVarsParams params_{};
-    EqBuffer primaryVars_{};
-    ScalarBuffer processRank_{};
-    ScalarBuffer dofIndex_{};
+    VtkPrimaryVarsParams params_ {};
+    EqBuffer primaryVars_ {};
+    ScalarBuffer processRank_ {};
+    ScalarBuffer dofIndex_ {};
 };
 
 } // namespace Opm

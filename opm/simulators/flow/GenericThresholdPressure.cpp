@@ -33,16 +33,15 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 
-#define INSTANTIATE_TYPE(T)                                                                     \
-    template class GenericThresholdPressure<Dune::CpGrid,                                       \
-                                            Dune::GridView<                                     \
-                                              Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,   \
-                                            Dune::MultipleCodimMultipleGeomTypeMapper<          \
-                                                Dune::GridView<Dune::DefaultLeafGridViewTraits< \
-                                                    Dune::CpGrid>>>,                            \
-                                            T>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class GenericThresholdPressure<                                                                           \
+        Dune::CpGrid,                                                                                                  \
+        Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,                                                 \
+        Dune::MultipleCodimMultipleGeomTypeMapper<Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>,      \
+        T>;
 
 INSTANTIATE_TYPE(double)
 
@@ -51,19 +50,11 @@ INSTANTIATE_TYPE(float)
 #endif
 
 #if HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
 
-template class GenericThresholdPressure<Dune::CpGrid,
-                                        GV,
-                                        Dune::MultipleCodimMultipleGeomTypeMapper<GV>,
-                                        double>;
+template class GenericThresholdPressure<Dune::CpGrid, GV, Dune::MultipleCodimMultipleGeomTypeMapper<GV>, double>;
 #if FLOW_INSTANTIATE_FLOAT
-template class GenericThresholdPressure<Dune::CpGrid,
-                                        GV,
-                                        Dune::MultipleCodimMultipleGeomTypeMapper<GV>,
-                                        float>;
+template class GenericThresholdPressure<Dune::CpGrid, GV, Dune::MultipleCodimMultipleGeomTypeMapper<GV>, float>;
 #endif
 
 #endif // HAVE_DUNE_FEM

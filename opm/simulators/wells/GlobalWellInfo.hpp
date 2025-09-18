@@ -26,7 +26,8 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class Schedule;
 class Well;
@@ -50,22 +51,22 @@ enum class WellStatus : std::uint8_t;
     under group control.
 */
 
-template<class Scalar>
-class GlobalWellInfo {
+template <class Scalar>
+class GlobalWellInfo
+{
 public:
-
-
     /*
       Will sum the m_in_injecting_group and m_in_producing_group vectors across
       all processes, so that all processes can query for an arbitrary well.
     */
     template <typename Comm>
-    void communicate(const Comm& comm) {
+    void communicate(const Comm& comm)
+    {
         auto size = this->m_in_injecting_group.size();
-        comm.sum( this->m_in_injecting_group.data(), size);
-        comm.sum( this->m_in_producing_group.data(), size);
-        comm.sum( this->m_is_open.data(), size);
-        comm.min( this->m_efficiency_scaling_factors.data(), size);
+        comm.sum(this->m_in_injecting_group.data(), size);
+        comm.sum(this->m_in_producing_group.data(), size);
+        comm.sum(this->m_is_open.data(), size);
+        comm.min(this->m_efficiency_scaling_factors.data(), size);
         is_rank0_ = (comm.rank() == 0);
     }
 
@@ -85,18 +86,17 @@ public:
     bool isRank0() const;
 
 private:
-    std::vector<std::size_t> local_map;    // local_index -> global_index
+    std::vector<std::size_t> local_map; // local_index -> global_index
 
     std::map<std::string, std::size_t> name_map; // string -> global_index
-    std::vector<int> m_in_injecting_group;       // global_index -> int/bool
-    std::vector<int> m_in_producing_group;       // global_index -> int/bool
-    std::vector<int> m_is_open;                  // global_index -> int/bool
+    std::vector<int> m_in_injecting_group; // global_index -> int/bool
+    std::vector<int> m_in_producing_group; // global_index -> int/bool
+    std::vector<int> m_is_open; // global_index -> int/bool
     std::vector<Scalar> m_efficiency_scaling_factors; // global_index --> double
-    bool is_rank0_{true};
+    bool is_rank0_ {true};
 };
 
 
-}
+} // namespace Opm
 
 #endif
-

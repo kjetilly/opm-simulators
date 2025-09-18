@@ -28,20 +28,20 @@
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::SOcr_GO<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::SOcr_GO<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->sogcr_ = endPoints.Sogcr;
 
-    if (! std::isfinite(this->sogcr_)) {
+    if (!std::isfinite(this->sogcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = this->sogcr_ < Scalar{0};
-    const auto high = ! (this->sogcr_ < Scalar{1});
+    const auto low = this->sogcr_ < Scalar {0};
+    const auto high = !(this->sogcr_ < Scalar {1});
 
     if (low || high) {
         this->setViolated();
@@ -52,22 +52,20 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::SOmin_GO<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::SOmin_GO<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->swl_ = endPoints.Swl;
     this->sgu_ = endPoints.Sgu;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->sgu_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->sgu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (this->swl_ + this->sgu_ > Scalar{1}) {
+    if (this->swl_ + this->sgu_ > Scalar {1}) {
         this->setViolated();
     }
 }
@@ -75,24 +73,21 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::MobileOil_GO_SGmin<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::MobileOil_GO_SGmin<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->swl_   = endPoints.Swl;
-    this->sgl_   = endPoints.Sgl;
+    this->swl_ = endPoints.Swl;
+    this->sgl_ = endPoints.Sgl;
     this->sogcr_ = endPoints.Sogcr;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->sogcr_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->sgl_) || !std::isfinite(this->sogcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (! (this->sogcr_ < Scalar{1} - this->swl_ - this->sgl_)) {
+    if (!(this->sogcr_ < Scalar {1} - this->swl_ - this->sgl_)) {
         this->setViolated();
     }
 }
@@ -100,24 +95,21 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::MobileOil_GO_SGcr<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::MobileOil_GO_SGcr<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->swl_   = endPoints.Swl;
-    this->sgcr_  = endPoints.Sgcr;
+    this->swl_ = endPoints.Swl;
+    this->sgcr_ = endPoints.Sgcr;
     this->sogcr_ = endPoints.Sogcr;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->sgcr_) ||
-        ! std::isfinite(this->sogcr_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->sgcr_) || !std::isfinite(this->sogcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (! (this->sogcr_ < Scalar{1} - this->swl_ - this->sgcr_)) {
+    if (!(this->sogcr_ < Scalar {1} - this->swl_ - this->sgcr_)) {
         this->setViolated();
     }
 }
@@ -125,20 +117,20 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::SOcr_OW<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::SOcr_OW<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->sowcr_ = endPoints.Sowcr;
 
-    if (! std::isfinite(this->sowcr_)) {
+    if (!std::isfinite(this->sowcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = this->sowcr_ < Scalar{0};
-    const auto high = ! (this->sowcr_ < Scalar{1});
+    const auto low = this->sowcr_ < Scalar {0};
+    const auto high = !(this->sowcr_ < Scalar {1});
 
     if (low || high) {
         this->setViolated();
@@ -149,22 +141,20 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::SOmin_OW<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::SOmin_OW<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->sgl_ = endPoints.Sgl;
     this->swu_ = endPoints.Swu;
 
-    if (! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->swu_))
-    {
+    if (!std::isfinite(this->sgl_) || !std::isfinite(this->swu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (this->sgl_ + this->swu_ > Scalar{1}) {
+    if (this->sgl_ + this->swu_ > Scalar {1}) {
         this->setViolated();
     }
 }
@@ -172,24 +162,21 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::MobileOil_OW_SWmin<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::MobileOil_OW_SWmin<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->swl_   = endPoints.Swl;
-    this->sgl_   = endPoints.Sgl;
+    this->swl_ = endPoints.Swl;
+    this->sgl_ = endPoints.Sgl;
     this->sowcr_ = endPoints.Sowcr;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->sowcr_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->sgl_) || !std::isfinite(this->sowcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (! (this->sowcr_ < Scalar{1} - this->swl_ - this->sgl_)) {
+    if (!(this->sowcr_ < Scalar {1} - this->swl_ - this->sgl_)) {
         this->setViolated();
     }
 }
@@ -197,24 +184,21 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Oil::MobileOil_OW_SWcr<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Oil::MobileOil_OW_SWcr<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->sgl_   = endPoints.Sgl;
-    this->swcr_  = endPoints.Swcr;
+    this->sgl_ = endPoints.Sgl;
+    this->swcr_ = endPoints.Swcr;
     this->sowcr_ = endPoints.Sowcr;
 
-    if (! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->swcr_) ||
-        ! std::isfinite(this->sowcr_))
-    {
+    if (!std::isfinite(this->sgl_) || !std::isfinite(this->swcr_) || !std::isfinite(this->sowcr_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    if (! (this->sowcr_ < Scalar{1} - this->swcr_ - this->sgl_)) {
+    if (!(this->sowcr_ < Scalar {1} - this->swcr_ - this->sgl_)) {
         this->setViolated();
     }
 }

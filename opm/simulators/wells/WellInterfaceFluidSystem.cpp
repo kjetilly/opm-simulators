@@ -43,60 +43,57 @@
 namespace Opm
 {
 
-template<typename FluidSystem>
-WellInterfaceFluidSystem<FluidSystem>::
-WellInterfaceFluidSystem(const Well& well,
-                         const ParallelWellInfo<Scalar>& parallel_well_info,
-                         const int time_step,
-                         const ModelParameters& param,
-                         const RateConverterType& rate_converter,
-                         const int pvtRegionIdx,
-                         const int num_conservation_quantities,
-                         const int num_phases,
-                         const int index_of_well,
-                         const std::vector<PerforationData<Scalar>>& perf_data)
-    : WellInterfaceGeneric<Scalar, IndexTraits>(well, parallel_well_info, time_step, param,
-                                   pvtRegionIdx, num_conservation_quantities, num_phases,
-                                   index_of_well, FluidSystem::phaseUsage(), perf_data)
+template <typename FluidSystem>
+WellInterfaceFluidSystem<FluidSystem>::WellInterfaceFluidSystem(const Well& well,
+                                                                const ParallelWellInfo<Scalar>& parallel_well_info,
+                                                                const int time_step,
+                                                                const ModelParameters& param,
+                                                                const RateConverterType& rate_converter,
+                                                                const int pvtRegionIdx,
+                                                                const int num_conservation_quantities,
+                                                                const int num_phases,
+                                                                const int index_of_well,
+                                                                const std::vector<PerforationData<Scalar>>& perf_data)
+    : WellInterfaceGeneric<Scalar, IndexTraits>(well,
+                                                parallel_well_info,
+                                                time_step,
+                                                param,
+                                                pvtRegionIdx,
+                                                num_conservation_quantities,
+                                                num_phases,
+                                                index_of_well,
+                                                FluidSystem::phaseUsage(),
+                                                perf_data)
     , rateConverter_(rate_converter)
 {
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 void
-WellInterfaceFluidSystem<FluidSystem>::
-calculateReservoirRates(const bool co2store, SingleWellState<Scalar, IndexTraits>& ws) const
+WellInterfaceFluidSystem<FluidSystem>::calculateReservoirRates(const bool co2store,
+                                                               SingleWellState<Scalar, IndexTraits>& ws) const
 {
     const int np = this->number_of_phases_;
     const auto& pu = this->phaseUsage();
     // Calculate reservoir rates from average pressure and temperature
-    if ( !(co2store || pu.hasEnergy()) || this->wellEcl().isProducer()) {
+    if (!(co2store || pu.hasEnergy()) || this->wellEcl().isProducer()) {
         const int fipreg = 0; // not considering the region for now
-        this->rateConverter_
-            .calcReservoirVoidageRates(fipreg,
-                                    this->pvtRegionIdx_,
-                                    ws.surface_rates,
-                                    ws.reservoir_rates);
+        this->rateConverter_.calcReservoirVoidageRates(
+            fipreg, this->pvtRegionIdx_, ws.surface_rates, ws.reservoir_rates);
 
         // Compute total connection reservoir rate CVPR/CVIR
         auto& perf_data = ws.perf_data;
         const auto num_perf_well = perf_data.size();
         const auto& surf_perf_rates = perf_data.phase_rates;
-        for (auto i = 0*num_perf_well; i < num_perf_well; ++i) {
-            const auto surface_rates_perf = std::vector<Scalar>
-                { surf_perf_rates.begin() + (i + 0)*np ,
-                surf_perf_rates.begin() + (i + 1)*np };
+        for (auto i = 0 * num_perf_well; i < num_perf_well; ++i) {
+            const auto surface_rates_perf
+                = std::vector<Scalar> {surf_perf_rates.begin() + (i + 0) * np, surf_perf_rates.begin() + (i + 1) * np};
 
             std::vector<Scalar> voidage_rates_perf(np, 0.0);
-            this->rateConverter_
-                .calcReservoirVoidageRates(fipreg,
-                                        this->pvtRegionIdx_,
-                                        surface_rates_perf,
-                                        voidage_rates_perf);
+            this->rateConverter_.calcReservoirVoidageRates(
+                fipreg, this->pvtRegionIdx_, surface_rates_perf, voidage_rates_perf);
 
-            perf_data.rates[i] =
-                std::accumulate(voidage_rates_perf.begin(),
-                                voidage_rates_perf.end(), 0.0);
+            perf_data.rates[i] = std::accumulate(voidage_rates_perf.begin(), voidage_rates_perf.end(), 0.0);
         }
         return;
     }
@@ -108,83 +105,79 @@ calculateReservoirRates(const bool co2store, SingleWellState<Scalar, IndexTraits
     Scalar rvMax = 0.0;
     Scalar rswMax = 0.0;
     Scalar rvwMax = 0.0;
-    this->rateConverter_
-        .calcReservoirVoidageRates(this->pvtRegionIdx_,
-                                    ws.bhp,
-                                    rsMax,
-                                    rvMax,
-                                    rswMax,
-                                    rvwMax,
-                                    ws.temperature,
-                                    saltConc,
-                                    ws.surface_rates,
-                                    ws.reservoir_rates);
+    this->rateConverter_.calcReservoirVoidageRates(this->pvtRegionIdx_,
+                                                   ws.bhp,
+                                                   rsMax,
+                                                   rvMax,
+                                                   rswMax,
+                                                   rvwMax,
+                                                   ws.temperature,
+                                                   saltConc,
+                                                   ws.surface_rates,
+                                                   ws.reservoir_rates);
 
 
     // Compute total connection reservoir rate CVIR
     auto& perf_data = ws.perf_data;
     const auto num_perf_well = perf_data.size();
     const auto& surf_perf_rates = perf_data.phase_rates;
-    for (auto i = 0*num_perf_well; i < num_perf_well; ++i) {
-        const auto surface_rates_perf = std::vector<Scalar>
-            { surf_perf_rates.begin() + (i + 0)*np ,
-              surf_perf_rates.begin() + (i + 1)*np };
+    for (auto i = 0 * num_perf_well; i < num_perf_well; ++i) {
+        const auto surface_rates_perf
+            = std::vector<Scalar> {surf_perf_rates.begin() + (i + 0) * np, surf_perf_rates.begin() + (i + 1) * np};
 
         const auto pressure = perf_data.pressure[i];
         // Calculate other per-phase dynamic quantities.
         const auto temperature = ws.temperature; // Assume same  temperature in the well
         std::vector<Scalar> voidage_rates_perf(np, 0.0);
-        this->rateConverter_
-            .calcReservoirVoidageRates(this->pvtRegionIdx_,
-                                       pressure,
-                                       rsMax,
-                                       rvMax,
-                                       rswMax, // Rsw
-                                       rvwMax, // Rvw
-                                       temperature,
-                                       saltConc,
-                                       surface_rates_perf,
-                                       voidage_rates_perf);
+        this->rateConverter_.calcReservoirVoidageRates(this->pvtRegionIdx_,
+                                                       pressure,
+                                                       rsMax,
+                                                       rvMax,
+                                                       rswMax, // Rsw
+                                                       rvwMax, // Rvw
+                                                       temperature,
+                                                       saltConc,
+                                                       surface_rates_perf,
+                                                       voidage_rates_perf);
 
-        perf_data.rates[i] =
-            std::accumulate(voidage_rates_perf.begin(),
-                            voidage_rates_perf.end(), 0.0);
+        perf_data.rates[i] = std::accumulate(voidage_rates_perf.begin(), voidage_rates_perf.end(), 0.0);
     }
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 bool
-WellInterfaceFluidSystem<FluidSystem>::
-checkIndividualConstraints(SingleWellState<Scalar, IndexTraits>& ws,
-                           const SummaryState& summaryState,
-                           DeferredLogger& deferred_logger,
-                           const std::optional<Well::InjectionControls>& inj_controls,
-                           const std::optional<Well::ProductionControls>& prod_controls) const
+WellInterfaceFluidSystem<FluidSystem>::checkIndividualConstraints(
+    SingleWellState<Scalar, IndexTraits>& ws,
+    const SummaryState& summaryState,
+    DeferredLogger& deferred_logger,
+    const std::optional<Well::InjectionControls>& inj_controls,
+    const std::optional<Well::ProductionControls>& prod_controls) const
 {
     auto rRates = [this](const int fipreg,
                          const int pvtRegion,
                          const std::vector<Scalar>& surface_rates,
-                         std::vector<Scalar>& voidage_rates)
-    {
-        return rateConverter_.calcReservoirVoidageRates(fipreg, pvtRegion,
-                                                        surface_rates, voidage_rates);
+                         std::vector<Scalar>& voidage_rates) {
+        return rateConverter_.calcReservoirVoidageRates(fipreg, pvtRegion, surface_rates, voidage_rates);
     };
 
-    return WellConstraints(*this).
-            checkIndividualConstraints(ws, summaryState, rRates,
-                                       this->operability_status_.thp_limit_violated_but_not_switched,
-                                       deferred_logger, inj_controls, prod_controls);
+    return WellConstraints(*this).checkIndividualConstraints(
+        ws,
+        summaryState,
+        rRates,
+        this->operability_status_.thp_limit_violated_but_not_switched,
+        deferred_logger,
+        inj_controls,
+        prod_controls);
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 bool
-WellInterfaceFluidSystem<FluidSystem>::
-checkGroupConstraints(WellState<Scalar, IndexTraits>& well_state,
-                      const GroupState<Scalar>& group_state,
-                      const Schedule& schedule,
-                      const SummaryState& summaryState,
-                      const bool check_guide_rate,
-                      DeferredLogger& deferred_logger) const
+WellInterfaceFluidSystem<FluidSystem>::checkGroupConstraints(WellState<Scalar, IndexTraits>& well_state,
+                                                             const GroupState<Scalar>& group_state,
+                                                             const Schedule& schedule,
+                                                             const SummaryState& summaryState,
+                                                             const bool check_guide_rate,
+                                                             DeferredLogger& deferred_logger) const
 {
     if (!this->wellEcl().isAvailableForGroupControl())
         return false;
@@ -192,58 +185,51 @@ checkGroupConstraints(WellState<Scalar, IndexTraits>& well_state,
     auto rCoeff = [this, &group_state](const RegionId id,
                                        const int region,
                                        const std::optional<std::string>& prod_gname,
-                                       std::vector<Scalar>& coeff)
-    {
+                                       std::vector<Scalar>& coeff) {
         if (prod_gname)
-            this->rateConverter().calcCoeff(id, region,
-                                            group_state.production_rates(*prod_gname), coeff);
+            this->rateConverter().calcCoeff(id, region, group_state.production_rates(*prod_gname), coeff);
         else
             this->rateConverter().calcInjCoeff(id, region, coeff);
     };
 
-    return WellGroupConstraints(*this).checkGroupConstraints(well_state, group_state,
-                                                             schedule, summaryState,
-                                                             rCoeff, check_guide_rate, deferred_logger);
+    return WellGroupConstraints(*this).checkGroupConstraints(
+        well_state, group_state, schedule, summaryState, rCoeff, check_guide_rate, deferred_logger);
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 bool
-WellInterfaceFluidSystem<FluidSystem>::
-checkConstraints(WellState<Scalar, IndexTraits>& well_state,
-                 const GroupState<Scalar>& group_state,
-                 const Schedule& schedule,
-                 const SummaryState& summaryState,
-                 DeferredLogger& deferred_logger) const
+WellInterfaceFluidSystem<FluidSystem>::checkConstraints(WellState<Scalar, IndexTraits>& well_state,
+                                                        const GroupState<Scalar>& group_state,
+                                                        const Schedule& schedule,
+                                                        const SummaryState& summaryState,
+                                                        DeferredLogger& deferred_logger) const
 {
-    const bool ind_broken = checkIndividualConstraints(well_state.well(this->index_of_well_),
-                                                       summaryState, deferred_logger);
+    const bool ind_broken
+        = checkIndividualConstraints(well_state.well(this->index_of_well_), summaryState, deferred_logger);
     if (ind_broken) {
         return true;
     } else {
-        return checkGroupConstraints(well_state, group_state, schedule,
-                                     summaryState, true, deferred_logger);
+        return checkGroupConstraints(well_state, group_state, schedule, summaryState, true, deferred_logger);
     }
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 std::optional<typename FluidSystem::Scalar>
-WellInterfaceFluidSystem<FluidSystem>::
-getGroupInjectionTargetRate(const Group& group,
-                            const WellState<Scalar, IndexTraits>& well_state,
-                            const GroupState<Scalar>& group_state,
-                            const Schedule& schedule,
-                            const SummaryState& summaryState,
-                            const InjectorType& injectorType,
-                            Scalar efficiencyFactor,
-                            DeferredLogger& deferred_logger) const
+WellInterfaceFluidSystem<FluidSystem>::getGroupInjectionTargetRate(const Group& group,
+                                                                   const WellState<Scalar, IndexTraits>& well_state,
+                                                                   const GroupState<Scalar>& group_state,
+                                                                   const Schedule& schedule,
+                                                                   const SummaryState& summaryState,
+                                                                   const InjectorType& injectorType,
+                                                                   Scalar efficiencyFactor,
+                                                                   DeferredLogger& deferred_logger) const
 {
-    auto rCoeff = [this, &group_state](const RegionId id, const int region,
+    auto rCoeff = [this, &group_state](const RegionId id,
+                                       const int region,
                                        const std::optional<std::string>& prod_gname,
-                                       std::vector<Scalar>& coeff)
-    {
+                                       std::vector<Scalar>& coeff) {
         if (prod_gname)
-            this->rateConverter().calcCoeff(id, region,
-                                            group_state.production_rates(*prod_gname), coeff);
+            this->rateConverter().calcCoeff(id, region, group_state.production_rates(*prod_gname), coeff);
         else
             this->rateConverter().calcInjCoeff(id, region, coeff);
     };
@@ -259,59 +245,52 @@ getGroupInjectionTargetRate(const Group& group,
                                                                 deferred_logger);
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 typename FluidSystem::Scalar
-WellInterfaceFluidSystem<FluidSystem>::
-getGroupProductionTargetRate(const Group& group,
-                             const WellState<Scalar, IndexTraits>& well_state,
-                             const GroupState<Scalar>& group_state,
-                             const Schedule& schedule,
-                             const SummaryState& summaryState,
-                             Scalar efficiencyFactor,
-                             DeferredLogger& deferred_logger) const
+WellInterfaceFluidSystem<FluidSystem>::getGroupProductionTargetRate(const Group& group,
+                                                                    const WellState<Scalar, IndexTraits>& well_state,
+                                                                    const GroupState<Scalar>& group_state,
+                                                                    const Schedule& schedule,
+                                                                    const SummaryState& summaryState,
+                                                                    Scalar efficiencyFactor,
+                                                                    DeferredLogger& deferred_logger) const
 {
-    auto rCoeff = [this, &group_state](const RegionId id, const int region,
+    auto rCoeff = [this, &group_state](const RegionId id,
+                                       const int region,
                                        const std::optional<std::string>& prod_gname,
-                                       std::vector<Scalar>& coeff)
-    {
+                                       std::vector<Scalar>& coeff) {
         if (prod_gname)
-            this->rateConverter().calcCoeff(id, region,
-                                            group_state.production_rates(*prod_gname), coeff);
+            this->rateConverter().calcCoeff(id, region, group_state.production_rates(*prod_gname), coeff);
         else
             this->rateConverter().calcInjCoeff(id, region, coeff);
     };
 
-    return WellGroupControls(*this).getGroupProductionTargetRate(group,
-                                                                 well_state,
-                                                                 group_state,
-                                                                 schedule,
-                                                                 summaryState,
-                                                                 rCoeff,
-                                                                 efficiencyFactor,
-                                                                 deferred_logger);
+    return WellGroupControls(*this).getGroupProductionTargetRate(
+        group, well_state, group_state, schedule, summaryState, rCoeff, efficiencyFactor, deferred_logger);
 }
 
-template<typename FluidSystem>
+template <typename FluidSystem>
 bool
-WellInterfaceFluidSystem<FluidSystem>::
-zeroGroupRateTarget(const SummaryState& summary_state,
-                    const Schedule& schedule,
-                    const WellState<Scalar, IndexTraits>& well_state,
-                    const GroupState<Scalar>& group_state,
-                    DeferredLogger& deferred_logger) const
+WellInterfaceFluidSystem<FluidSystem>::zeroGroupRateTarget(const SummaryState& summary_state,
+                                                           const Schedule& schedule,
+                                                           const WellState<Scalar, IndexTraits>& well_state,
+                                                           const GroupState<Scalar>& group_state,
+                                                           DeferredLogger& deferred_logger) const
 {
     const auto& well = this->well_ecl_;
     const auto& group = schedule.getGroup(well.groupName(), this->currentStep());
-    const Scalar efficiencyFactor = well.getEfficiencyFactor() *
-                                    well_state[well.name()].efficiency_scaling_factor;
+    const Scalar efficiencyFactor = well.getEfficiencyFactor() * well_state[well.name()].efficiency_scaling_factor;
     if (this->isInjector()) {
         // Check injector under group control
         const auto& controls = well.injectionControls(summary_state);
-        const std::optional<Scalar> target =
-            this->getGroupInjectionTargetRate(group, well_state,
-                                              group_state, schedule,
-                                              summary_state, controls.injector_type,
-                                              efficiencyFactor, deferred_logger);
+        const std::optional<Scalar> target = this->getGroupInjectionTargetRate(group,
+                                                                               well_state,
+                                                                               group_state,
+                                                                               schedule,
+                                                                               summary_state,
+                                                                               controls.injector_type,
+                                                                               efficiencyFactor,
+                                                                               deferred_logger);
         if (target.has_value()) {
             return target.value() == 0.0;
         } else {
@@ -319,16 +298,13 @@ zeroGroupRateTarget(const SummaryState& summary_state,
         }
     } else {
         // Check producer under group control
-        const Scalar scale =
-            this->getGroupProductionTargetRate(group, well_state,
-                                               group_state, schedule,
-                                               summary_state, efficiencyFactor,
-                                               deferred_logger);
+        const Scalar scale = this->getGroupProductionTargetRate(
+            group, well_state, group_state, schedule, summary_state, efficiencyFactor, deferred_logger);
         return scale == 0.0;
     }
 }
 
-template<class Scalar>
+template <class Scalar>
 using FS = BlackOilFluidSystem<Scalar, BlackOilDefaultFluidSystemIndices>;
 
 template class WellInterfaceFluidSystem<FS<double>>;

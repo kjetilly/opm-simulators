@@ -32,9 +32,10 @@
 #include <opm/simulators/utils/MPISerializer.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
-template<class TypeTag, class Model>
+template <class TypeTag, class Model>
 class WellConnectionAuxiliaryModule : public BaseAuxiliaryModule<TypeTag>
 {
     using Grid = GetPropType<TypeTag, Properties::Grid>;
@@ -42,8 +43,7 @@ class WellConnectionAuxiliaryModule : public BaseAuxiliaryModule<TypeTag>
     using SparseMatrixAdapter = GetPropType<TypeTag, Properties::SparseMatrixAdapter>;
 
 public:
-    using NeighborSet = typename
-        ::Opm::BaseAuxiliaryModule<TypeTag>::NeighborSet;
+    using NeighborSet = typename ::Opm::BaseAuxiliaryModule<TypeTag>::NeighborSet;
 
     using Domain = SubDomain<Grid>;
 
@@ -72,11 +72,10 @@ public:
 #if HAVE_MPI
         // Communicate Map to other processes, since it is only available on rank 0
         Parallel::MpiSerializer ser(lin_comm_);
-        ser.broadcast(Parallel::RootRank{0}, possibleFutureConnections);
+        ser.broadcast(Parallel::RootRank {0}, possibleFutureConnections);
 #endif
         // initialize the additional cell connections introduced by wells.
-        for (const auto& well : schedule_wells)
-        {
+        for (const auto& well : schedule_wells) {
             std::vector<int> wellCells = model_.getCellsForConnections(well);
             // Now add the cells of the possible future connections
             const auto possibleFutureConnectionSetIt = possibleFutureConnections.find(well.name());
@@ -89,14 +88,14 @@ public:
                 }
             }
             for (int cellIdx : wellCells) {
-                neighbors[cellIdx].insert(wellCells.begin(),
-                                          wellCells.end());
+                neighbors[cellIdx].insert(wellCells.begin(), wellCells.end());
             }
         }
     }
 
     void applyInitial() override
-    {}
+    {
+    }
 
     void linearize(SparseMatrixAdapter& jacobian, GlobalEqVector& res) override
     {
@@ -112,9 +111,7 @@ public:
         model_.recoverWellSolutionAndUpdateWellState(deltaX);
     }
 
-    void linearizeDomain(const Domain& domain,
-                         SparseMatrixAdapter& jacobian,
-                         GlobalEqVector& res)
+    void linearizeDomain(const Domain& domain, SparseMatrixAdapter& jacobian, GlobalEqVector& res)
     {
         OPM_TIMEBLOCK(wellLinearizeDomain);
         // Note: no point in trying to do a parallel gathering
@@ -149,10 +146,8 @@ public:
     }
 
 private:
-    template<class WellType>
-    void linearizeSingleWell(SparseMatrixAdapter& jacobian,
-                             GlobalEqVector& res,
-                             const WellType& well)
+    template <class WellType>
+    void linearizeSingleWell(SparseMatrixAdapter& jacobian, GlobalEqVector& res, const WellType& well)
     {
         if (model_.addMatrixContributions()) {
             well->addWellContributions(jacobian);
@@ -162,7 +157,7 @@ private:
         linearize_res_local_.resize(cells.size());
 
         for (size_t i = 0; i < cells.size(); ++i) {
-           linearize_res_local_[i] = res[cells[i]];
+            linearize_res_local_[i] = res[cells[i]];
         }
 
         well->apply(linearize_res_local_);
@@ -173,9 +168,9 @@ private:
     }
 
     Model& model_;
-    GlobalEqVector linearize_res_local_{};
+    GlobalEqVector linearize_res_local_ {};
     Parallel::Communication lin_comm_;
 };
 
-} // end namespace OPM
+} // namespace Opm
 #endif

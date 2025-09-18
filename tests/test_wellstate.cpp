@@ -40,8 +40,8 @@
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellConnections.hpp>
 
-#include <opm/material/fluidsystems/PhaseUsageInfo.hpp>
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
+#include <opm/material/fluidsystems/PhaseUsageInfo.hpp>
 
 #include <opm/simulators/wells/GlobalWellInfo.hpp>
 #include <opm/simulators/wells/ParallelWellInfo.hpp>
@@ -59,8 +59,8 @@
 
 #include <opm/input/eclipse/Deck/Deck.hpp>
 
-#include <opm/input/eclipse/Parser/Parser.hpp>
 #include <opm/input/eclipse/Parser/ParseContext.hpp>
+#include <opm/input/eclipse/Parser/Parser.hpp>
 
 #include <algorithm>
 #include <chrono>
@@ -74,21 +74,20 @@
 
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
-struct Setup
-{
+struct Setup {
     using IndexTraits = Opm::BlackOilDefaultFluidSystemIndices;
 
     Setup(const std::string& filename)
-        : Setup(Opm::Parser{}.parseFile(filename))
-    {}
+        : Setup(Opm::Parser {}.parseFile(filename))
+    {
+    }
 
     Setup(const Opm::Deck& deck)
-        : es   (deck)
-        , pu   ()
-        , grid (es.getInputGrid())
+        : es(deck)
+        , pu()
+        , grid(es.getInputGrid())
         , sched(deck, es, std::make_shared<Opm::Python>())
-        , st   { Opm::TimeService::from_time_t(sched.getStartTime()),
-                 es.runspec().udqParams().undefinedValue() }
+        , st {Opm::TimeService::from_time_t(sched.getStartTime()), es.runspec().udqParams().undefinedValue()}
     {
         pu.initFromState(es);
         initWellPerfData();
@@ -131,9 +130,8 @@ struct Setup
                 } else {
                     if (completion.state() != Opm::Connection::State::SHUT) {
                         OPM_THROW(std::runtime_error,
-                                  "Completion state: " +
-                                  Opm::Connection::State2String(completion.state()) +
-                                  " not handled");
+                                  "Completion state: " + Opm::Connection::State2String(completion.state())
+                                      + " not handled");
                     }
                 }
             }
@@ -142,137 +140,148 @@ struct Setup
     }
 
     Opm::EclipseState es;
-    Opm::PhaseUsageInfo<IndexTraits>   pu;
-    Opm::GridManager  grid;
+    Opm::PhaseUsageInfo<IndexTraits> pu;
+    Opm::GridManager grid;
     std::shared_ptr<Opm::Python> python;
-    Opm::Schedule     sched;
+    Opm::Schedule sched;
     Opm::SummaryState st;
     std::vector<std::vector<Opm::PerforationData<double>>> well_perf_data;
 };
 
-namespace {
-    using IndexTraits = Opm::BlackOilDefaultFluidSystemIndices;
-    using WellState = Opm::WellState<double, IndexTraits>;
-    using PhaseUsage = Opm::PhaseUsageInfo<IndexTraits>;
-    Opm::WellState<double, IndexTraits>
-    buildWellState(const Setup& setup, const std::size_t timeStep,
-                   std::vector<Opm::ParallelWellInfo<double>>& pinfos)
-    {
-        auto state  = WellState{setup.pu};
+namespace
+{
+using IndexTraits = Opm::BlackOilDefaultFluidSystemIndices;
+using WellState = Opm::WellState<double, IndexTraits>;
+using PhaseUsage = Opm::PhaseUsageInfo<IndexTraits>;
+Opm::WellState<double, IndexTraits>
+buildWellState(const Setup& setup, const std::size_t timeStep, std::vector<Opm::ParallelWellInfo<double>>& pinfos)
+{
+    auto state = WellState {setup.pu};
 
-        const auto cpress =
-            std::vector<double>(setup.grid.c_grid()->number_of_cells,
-                                100.0*Opm::unit::barsa);
+    const auto cpress = std::vector<double>(setup.grid.c_grid()->number_of_cells, 100.0 * Opm::unit::barsa);
 
-        const auto& unit_sytem = setup.es.getDeckUnitSystem();
-        const double temp = unit_sytem.to_si(Opm::UnitSystem::measure::temperature, 25);
-        const auto ctemp =
-            std::vector<double>(setup.grid.c_grid()->number_of_cells,
-                                temp);
+    const auto& unit_sytem = setup.es.getDeckUnitSystem();
+    const double temp = unit_sytem.to_si(Opm::UnitSystem::measure::temperature, 25);
+    const auto ctemp = std::vector<double>(setup.grid.c_grid()->number_of_cells, temp);
 
-        auto wells = setup.sched.getWells(timeStep);
-        pinfos.resize(wells.size());
-        std::vector<std::reference_wrapper<Opm::ParallelWellInfo<double>>> ppinfos;
-        auto pw = pinfos.begin();
+    auto wells = setup.sched.getWells(timeStep);
+    pinfos.resize(wells.size());
+    std::vector<std::reference_wrapper<Opm::ParallelWellInfo<double>>> ppinfos;
+    auto pw = pinfos.begin();
 
-        for (const auto& well : wells)
-        {
-            *pw = Opm::ParallelWellInfo<double>{well.name()};
-            ppinfos.push_back(std::ref(*pw));
-            pw->communicateFirstPerforation(true);
-            ++pw;
-        }
-
-        state.init(cpress, ctemp, setup.sched,
-                   wells, ppinfos,
-                   timeStep, nullptr, setup.well_perf_data, setup.st,
-                   false /*enableDistributedWells*/);
-
-        state.initWellStateMSWell(setup.sched.getWells(timeStep),
-                                  nullptr);
-
-        return state;
+    for (const auto& well : wells) {
+        *pw = Opm::ParallelWellInfo<double> {well.name()};
+        ppinfos.push_back(std::ref(*pw));
+        pw->communicateFirstPerforation(true);
+        ++pw;
     }
 
+    state.init(cpress,
+               ctemp,
+               setup.sched,
+               wells,
+               ppinfos,
+               timeStep,
+               nullptr,
+               setup.well_perf_data,
+               setup.st,
+               false /*enableDistributedWells*/);
 
-    void setSegPress(const std::vector<Opm::Well>& wells,
-                     WellState& wstate)
-    {
-        const auto nWell = wells.size();
+    state.initWellStateMSWell(setup.sched.getWells(timeStep), nullptr);
+
+    return state;
+}
 
 
-        for (auto wellID = 0*nWell; wellID < nWell; ++wellID) {
-            const auto& well     = wells[wellID];
-            if (! well.isMultiSegment()) {
-                continue;
+void
+setSegPress(const std::vector<Opm::Well>& wells, WellState& wstate)
+{
+    const auto nWell = wells.size();
+
+
+    for (auto wellID = 0 * nWell; wellID < nWell; ++wellID) {
+        const auto& well = wells[wellID];
+        if (!well.isMultiSegment()) {
+            continue;
+        }
+
+        const auto pressTop = 100.0 * wellID;
+        auto& ws = wstate.well(wellID);
+        auto& segments = ws.segments;
+        segments.pressure[0] = pressTop;
+
+        const auto& segSet = well.getSegments();
+        const auto nSeg = segSet.size();
+
+        for (auto segID = 0 * nSeg + 1; segID < nSeg; ++segID) {
+            // One-based numbering scheme for segments.
+            const auto segNo = segSet[segID].segmentNumber();
+            segments.pressure[segNo - 1] = pressTop + 1.0 * (segNo - 1);
+        }
+    }
+}
+
+
+void
+setSegRates(const std::vector<Opm::Well>& wells, const PhaseUsage& pu, WellState& wstate)
+{
+    const auto wat = pu.phaseIsActive(IndexTraits::waterPhaseIdx);
+    const auto iw = wat ? pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx) : -1;
+
+    const auto oil = pu.phaseIsActive(IndexTraits::oilPhaseIdx);
+    const auto io = oil ? pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx) : -1;
+
+    const auto gas = pu.phaseIsActive(IndexTraits::gasPhaseIdx);
+    const auto ig = gas ? pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx) : -1;
+
+    const auto np = wstate.numPhases();
+
+    const auto nWell = wells.size();
+
+
+    for (auto wellID = 0 * nWell; wellID < nWell; ++wellID) {
+        const auto& well = wells[wellID];
+        if (!well.isMultiSegment()) {
+            continue;
+        }
+
+        const auto rateTop = 1000.0 * wellID;
+        auto& ws = wstate.well(wellID);
+        auto& segments = ws.segments;
+        auto& segRates = segments.rates;
+
+        if (wat) {
+            segRates[iw] = rateTop;
+        }
+        if (oil) {
+            segRates[io] = rateTop;
+        }
+        if (gas) {
+            segRates[ig] = rateTop;
+        }
+
+        const auto& segSet = well.getSegments();
+        const auto nSeg = segSet.size();
+
+        for (auto segID = 0 * nSeg + 1; segID < nSeg; ++segID) {
+            // One-based numbering scheme for segments.
+            const auto segNo = segSet[segID].segmentNumber();
+
+            auto* rates = &segRates[(segNo - 1) * np];
+
+            if (wat) {
+                rates[iw] = rateTop + 100.0 * (segNo - 1);
             }
-
-            const auto  pressTop = 100.0 * wellID;
-            auto& ws = wstate.well(wellID);
-            auto& segments = ws.segments;
-            segments.pressure[0] = pressTop;
-
-            const auto& segSet = well.getSegments();
-            const auto  nSeg   = segSet.size();
-
-            for (auto segID = 0*nSeg + 1; segID < nSeg; ++segID) {
-                // One-based numbering scheme for segments.
-                const auto segNo = segSet[segID].segmentNumber();
-                segments.pressure[segNo - 1] = pressTop + 1.0*(segNo - 1);
+            if (oil) {
+                rates[io] = rateTop + 200.0 * (segNo - 1);
+            }
+            if (gas) {
+                rates[ig] = rateTop + 400.0 * (segNo - 1);
             }
         }
     }
-
-
-  void setSegRates(const std::vector<Opm::Well>& wells,
-                   const PhaseUsage&        pu,
-                   WellState&       wstate)
-    {
-        const auto wat = pu.phaseIsActive(IndexTraits::waterPhaseIdx);
-        const auto iw  = wat ? pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx) : -1;
-
-        const auto oil = pu.phaseIsActive(IndexTraits::oilPhaseIdx);
-        const auto io  = oil ? pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx) : -1;
-
-        const auto gas = pu.phaseIsActive(IndexTraits::gasPhaseIdx);
-        const auto ig  = gas ? pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx) : -1;
-
-        const auto np = wstate.numPhases();
-
-        const auto nWell = wells.size();
-
-
-        for (auto wellID = 0*nWell; wellID < nWell; ++wellID) {
-            const auto& well     = wells[wellID];
-            if (! well.isMultiSegment()) {
-                continue;
-            }
-
-            const auto  rateTop  = 1000.0 * wellID;
-            auto& ws = wstate.well(wellID);
-            auto& segments = ws.segments;
-            auto& segRates = segments.rates;
-
-            if (wat) { segRates[iw] = rateTop; }
-            if (oil) { segRates[io] = rateTop; }
-            if (gas) { segRates[ig] = rateTop; }
-
-            const auto& segSet = well.getSegments();
-            const auto  nSeg   = segSet.size();
-
-            for (auto segID = 0*nSeg + 1; segID < nSeg; ++segID) {
-                // One-based numbering scheme for segments.
-                const auto segNo = segSet[segID].segmentNumber();
-
-                auto* rates = &segRates[(segNo - 1) * np];
-
-                if (wat) { rates[iw] = rateTop + 100.0*(segNo - 1); }
-                if (oil) { rates[io] = rateTop + 200.0*(segNo - 1); }
-                if (gas) { rates[ig] = rateTop + 400.0*(segNo - 1); }
-            }
-        }
-    }
-} // Anonymous
+}
+} // namespace
 
 BOOST_AUTO_TEST_SUITE(Segment)
 
@@ -280,8 +289,8 @@ BOOST_AUTO_TEST_SUITE(Segment)
 
 BOOST_AUTO_TEST_CASE(Linearisation)
 {
-    const Setup setup{ "msw.data" };
-    const auto tstep = std::size_t{0};
+    const Setup setup {"msw.data"};
+    const auto tstep = std::size_t {0};
 
     std::vector<Opm::ParallelWellInfo<double>> pinfos;
     const auto wstate = buildWellState(setup, tstep, pinfos);
@@ -297,8 +306,8 @@ BOOST_AUTO_TEST_CASE(Linearisation)
 
 BOOST_AUTO_TEST_CASE(Pressure)
 {
-    const Setup setup{ "msw.data" };
-    const auto tstep = std::size_t{0};
+    const Setup setup {"msw.data"};
+    const auto tstep = std::size_t {0};
 
     std::vector<Opm::ParallelWellInfo<double>> pinfos;
     auto wstate = buildWellState(setup, tstep, pinfos);
@@ -308,7 +317,7 @@ BOOST_AUTO_TEST_CASE(Pressure)
 
     setSegPress(wells, wstate);
 
-    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int){return false;});
+    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int) { return false; });
 
     {
         const auto expect_nSeg = 6;
@@ -323,21 +332,21 @@ BOOST_AUTO_TEST_CASE(Pressure)
 
             BOOST_CHECK_EQUAL(xseg.segNumber, segID + 1);
             const auto pres_idx = Opm::data::SegmentPressures::Value::Pressure;
-            BOOST_CHECK_CLOSE(xseg.pressures[pres_idx], pressTop + 1.0*segID, 1.0e-10);
+            BOOST_CHECK_CLOSE(xseg.pressures[pres_idx], pressTop + 1.0 * segID, 1.0e-10);
         }
     }
 
     const auto& ws = wstate.well("PROD01");
     const auto& perf_data = ws.perf_data;
-    (void) perf_data;
+    (void)perf_data;
 }
 
 // ---------------------------------------------------------------------
 
 BOOST_AUTO_TEST_CASE(Rates)
 {
-    const Setup setup{ "msw.data" };
-    const auto tstep = std::size_t{0};
+    const Setup setup {"msw.data"};
+    const auto tstep = std::size_t {0};
 
     std::vector<Opm::ParallelWellInfo<double>> pinfos;
     auto wstate = buildWellState(setup, tstep, pinfos);
@@ -347,9 +356,9 @@ BOOST_AUTO_TEST_CASE(Rates)
 
     const auto& pu = setup.pu;
 
-    setSegRates(wells, pu,  wstate);
+    setSegRates(wells, pu, wstate);
 
-    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int){return false;});
+    const auto rpt = wstate.report(setup.grid.c_grid()->global_cell, [](const int) { return false; });
 
     const auto wat = pu.phaseIsActive(IndexTraits::waterPhaseIdx);
     const auto oil = pu.phaseIsActive(IndexTraits::oilPhaseIdx);
@@ -370,14 +379,11 @@ BOOST_AUTO_TEST_CASE(Rates)
 
             BOOST_CHECK_EQUAL(xseg.segNumber, segNum);
 
-            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::wat),
-                              rateTop + 100.0*(segNum - 1), 1.0e-10);
+            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::wat), rateTop + 100.0 * (segNum - 1), 1.0e-10);
 
-            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::oil),
-                              rateTop + 200.0*(segNum - 1), 1.0e-10);
+            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::oil), rateTop + 200.0 * (segNum - 1), 1.0e-10);
 
-            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::gas),
-                              rateTop + 400.0*(segNum - 1), 1.0e-10);
+            BOOST_CHECK_CLOSE(xseg.rates.get(Opm::data::Rates::opt::gas), rateTop + 400.0 * (segNum - 1), 1.0e-10);
         }
     }
 }
@@ -390,7 +396,7 @@ BOOST_AUTO_TEST_CASE(STOP_well)
       This test verifies that the perforation pressures is correctly initialized
       also for wells in the STOP state.
     */
-    const Setup setup{ "wells_manager_data_wellSTOP.data" };
+    const Setup setup {"wells_manager_data_wellSTOP.data"};
 
     std::vector<Opm::ParallelWellInfo<double>> pinfos;
     auto wstate = buildWellState(setup, 0, pinfos);
@@ -405,54 +411,55 @@ BOOST_AUTO_TEST_CASE(STOP_well)
 
 // ---------------------------------------------------------------------
 
-//BOOST_AUTO_TEST_CASE(GlobalWellInfo_TEST) {
-//    const Setup setup{ "msw.data" };
-//    std::vector<Opm::Well> local_wells = { setup.sched.getWell("PROD01", 1) };
-//    Opm::GlobalWellInfo gwi(setup.sched, 1, local_wells);
-//    Opm::WellContainer<Opm::Well::Status> status({{"PROD01", Opm::Well::Status::OPEN}});
+// BOOST_AUTO_TEST_CASE(GlobalWellInfo_TEST) {
+//     const Setup setup{ "msw.data" };
+//     std::vector<Opm::Well> local_wells = { setup.sched.getWell("PROD01", 1) };
+//     Opm::GlobalWellInfo gwi(setup.sched, 1, local_wells);
+//     Opm::WellContainer<Opm::Well::Status> status({{"PROD01", Opm::Well::Status::OPEN}});
 //
-//    BOOST_CHECK(!gwi.in_injecting_group("INJE01"));
-//    BOOST_CHECK(!gwi.in_injecting_group("PROD01"));
-//    BOOST_CHECK(!gwi.in_producing_group("INJE01"));
-//    BOOST_CHECK(!gwi.in_producing_group("PROD01"));
+//     BOOST_CHECK(!gwi.in_injecting_group("INJE01"));
+//     BOOST_CHECK(!gwi.in_injecting_group("PROD01"));
+//     BOOST_CHECK(!gwi.in_producing_group("INJE01"));
+//     BOOST_CHECK(!gwi.in_producing_group("PROD01"));
 //
-//    BOOST_CHECK_EQUAL( gwi.well_name(0), "INJE01");
-//    BOOST_CHECK_EQUAL( gwi.well_name(1), "PROD01");
-//    BOOST_CHECK_EQUAL( gwi.well_index("PROD01"), 1);
+//     BOOST_CHECK_EQUAL( gwi.well_name(0), "INJE01");
+//     BOOST_CHECK_EQUAL( gwi.well_name(1), "PROD01");
+//     BOOST_CHECK_EQUAL( gwi.well_index("PROD01"), 1);
 //
-//    BOOST_CHECK_THROW( gwi.update_group( {}, {}, {} ), std::exception);
+//     BOOST_CHECK_THROW( gwi.update_group( {}, {}, {} ), std::exception);
 //
 //
-//    Opm::WellContainer<Opm::Well::InjectorCMode> inj_cmode({{"PROD01", Opm::Well::InjectorCMode::CMODE_UNDEFINED}});
-//    {
-//        Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::GRUP}});
-//        gwi.update_group(status, inj_cmode, prod_cmode);
-//    }
-//    BOOST_CHECK(!gwi.in_producing_group("INJE01"));
-//    BOOST_CHECK(gwi.in_producing_group("PROD01"));
+//     Opm::WellContainer<Opm::Well::InjectorCMode> inj_cmode({{"PROD01", Opm::Well::InjectorCMode::CMODE_UNDEFINED}});
+//     {
+//         Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::GRUP}});
+//         gwi.update_group(status, inj_cmode, prod_cmode);
+//     }
+//     BOOST_CHECK(!gwi.in_producing_group("INJE01"));
+//     BOOST_CHECK(gwi.in_producing_group("PROD01"));
 //
-//    {
-//        Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode(
-//            {{"PROD01", Opm::Well::ProducerCMode::CMODE_UNDEFINED}});
-//        gwi.update_group(status, inj_cmode, prod_cmode);
-//    }
+//     {
+//         Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode(
+//             {{"PROD01", Opm::Well::ProducerCMode::CMODE_UNDEFINED}});
+//         gwi.update_group(status, inj_cmode, prod_cmode);
+//     }
 //
-//    {
-//        Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::GRUP}});
-//        gwi.update_group(status, inj_cmode, prod_cmode);
-//    }
-//    BOOST_CHECK(!gwi.in_producing_group("INJE01"));
-//    BOOST_CHECK(gwi.in_producing_group("PROD01"));
+//     {
+//         Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::GRUP}});
+//         gwi.update_group(status, inj_cmode, prod_cmode);
+//     }
+//     BOOST_CHECK(!gwi.in_producing_group("INJE01"));
+//     BOOST_CHECK(gwi.in_producing_group("PROD01"));
 //
-//    {
-//        Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::NONE}});
-//        gwi.update_group(status, inj_cmode, prod_cmode);
-//    }
-//    BOOST_CHECK(!gwi.in_producing_group("INJE01"));
-//    BOOST_CHECK(!gwi.in_producing_group("PROD01"));
-//}
+//     {
+//         Opm::WellContainer<Opm::Well::ProducerCMode> prod_cmode({{"PROD01", Opm::Well::ProducerCMode::NONE}});
+//         gwi.update_group(status, inj_cmode, prod_cmode);
+//     }
+//     BOOST_CHECK(!gwi.in_producing_group("INJE01"));
+//     BOOST_CHECK(!gwi.in_producing_group("PROD01"));
+// }
 
-BOOST_AUTO_TEST_CASE(TESTWellContainer) {
+BOOST_AUTO_TEST_CASE(TESTWellContainer)
+{
     Opm::WellContainer<int> wc;
     BOOST_CHECK_EQUAL(wc.size(), 0);
 
@@ -476,11 +483,11 @@ BOOST_AUTO_TEST_CASE(TESTWellContainer) {
 
     const auto& wells = wc.wells();
     std::vector<std::string> expected = {"W1", "W2"};
-    BOOST_CHECK( std::is_permutation( wells.begin(), wells.end(), expected.begin(), expected.end()) );
+    BOOST_CHECK(std::is_permutation(wells.begin(), wells.end(), expected.begin(), expected.end()));
 
     Opm::WellContainer<int> wc2;
     wc2.copy_welldata(wc);
-    BOOST_CHECK_EQUAL(wc2.size() , 0);
+    BOOST_CHECK_EQUAL(wc2.size(), 0);
 
     wc2.add("W1", 100);
     BOOST_CHECK_EQUAL(wc2["W1"], 100);
@@ -532,8 +539,9 @@ BOOST_AUTO_TEST_CASE(TESTWellContainer) {
     BOOST_CHECK(!wx.has_value());
 }
 
-BOOST_AUTO_TEST_CASE(TESTSegmentState) {
-    const Setup setup{ "msw.data" };
+BOOST_AUTO_TEST_CASE(TESTSegmentState)
+{
+    const Setup setup {"msw.data"};
     const auto& well = setup.sched.getWell("PROD01", 0);
     const auto& segments = well.getSegments();
     Opm::SegmentState<double> ss1(3, segments);
@@ -547,8 +555,9 @@ BOOST_AUTO_TEST_CASE(TESTSegmentState) {
     BOOST_CHECK_EQUAL(ss1.pressure_drop(0), 6);
 }
 
-BOOST_AUTO_TEST_CASE(TESTSegmentState2) {
-    const Setup setup{ "msw.data" };
+BOOST_AUTO_TEST_CASE(TESTSegmentState2)
+{
+    const Setup setup {"msw.data"};
     std::vector<Opm::ParallelWellInfo<double>> pinfo;
     const auto wstate = buildWellState(setup, 0, pinfo);
     const auto& well = setup.sched.getWell("PROD01", 0);
@@ -564,20 +573,21 @@ BOOST_AUTO_TEST_CASE(TESTSegmentState2) {
     BOOST_CHECK_EQUAL(segments.pressure_drop(0), 7);
 
 
-    for (std::size_t i=0; i < segments.pressure.size(); i++)
+    for (std::size_t i = 0; i < segments.pressure.size(); i++)
         segments.pressure[i] = (i + 1);
 
     const double bhp = 2.0;
     segments.scale_pressure(bhp);
 
-    for (std::size_t i=0; i < segments.pressure.size(); i++)
-        BOOST_CHECK_EQUAL(segments.pressure[i], 1.+(i+1));
+    for (std::size_t i = 0; i < segments.pressure.size(); i++)
+        BOOST_CHECK_EQUAL(segments.pressure[i], 1. + (i + 1));
 
-    BOOST_CHECK_EQUAL( segments.size(), well.getSegments().size() );
+    BOOST_CHECK_EQUAL(segments.size(), well.getSegments().size());
 }
 
 
-BOOST_AUTO_TEST_CASE(TESTPerfData) {
+BOOST_AUTO_TEST_CASE(TESTPerfData)
+{
     Opm::PerfData pd1(3, 100.0, true, 3);
     Opm::PerfData pd2(3, 100.0, true, 3);
     Opm::PerfData pd3(2, 100.0, true, 3);
@@ -585,37 +595,38 @@ BOOST_AUTO_TEST_CASE(TESTPerfData) {
 
 
     for (std::size_t i = 0; i < 3; i++) {
-        pd1.pressure[i] = i+1;
-        pd2.pressure[i] = 10*(i+1);
+        pd1.pressure[i] = i + 1;
+        pd2.pressure[i] = 10 * (i + 1);
     }
 
     BOOST_CHECK(pd1.try_assign(pd2));
     for (std::size_t i = 0; i < 3; i++) {
-        BOOST_CHECK(pd2.pressure[i] == 10*(i+1));
-        BOOST_CHECK(pd1.pressure[i] == 10*(i+1));
+        BOOST_CHECK(pd2.pressure[i] == 10 * (i + 1));
+        BOOST_CHECK(pd1.pressure[i] == 10 * (i + 1));
     }
 
     BOOST_CHECK(!pd1.try_assign(pd3));
     for (std::size_t i = 0; i < 3; i++) {
-        BOOST_CHECK(pd1.pressure[i] == 10*(i+1));
+        BOOST_CHECK(pd1.pressure[i] == 10 * (i + 1));
     }
 
     BOOST_CHECK(!pd1.try_assign(pd4));
 }
 
 
-BOOST_AUTO_TEST_CASE(TestSingleWellState) {
+BOOST_AUTO_TEST_CASE(TestSingleWellState)
+{
     Opm::ParallelWellInfo<double> pinfo;
-    std::vector<Opm::PerforationData<double>> connections = {{0,1,1,0,0},{1,1,1,0,1},{2,1,1,0,2}};
+    std::vector<Opm::PerforationData<double>> connections = {{0, 1, 1, 0, 0}, {1, 1, 1, 0, 1}, {2, 1, 1, 0, 2}};
     using SingleWellState = Opm::SingleWellState<double, Opm::BlackOilDefaultFluidSystemIndices>;
     using IndexTraits = Opm::BlackOilDefaultFluidSystemIndices;
     using PhaseUsage = Opm::PhaseUsageInfo<IndexTraits>;
 
     PhaseUsage pu;
-    pu.initFromPhases({Opm::Phases{true, true, true}});
+    pu.initFromPhases({Opm::Phases {true, true, true}});
 
-    SingleWellState ws1("W1", pinfo, pu, true,  100.0, connections, 1.0);
-    SingleWellState ws2("W2", pinfo, pu, true,  100.0, connections, 2.0);
+    SingleWellState ws1("W1", pinfo, pu, true, 100.0, connections, 1.0);
+    SingleWellState ws2("W2", pinfo, pu, true, 100.0, connections, 2.0);
     SingleWellState ws3("W3", pinfo, pu, false, 100.0, connections, 3.0);
 
     ws1.bhp = 100;

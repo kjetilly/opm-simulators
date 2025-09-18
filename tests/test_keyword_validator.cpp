@@ -86,8 +86,8 @@ const SupportedKeywordItems<double> test_double_items = {
     },
 };
 
-const SupportedKeywords partiallySupported { test_string_items, test_int_items, test_double_items };
-const SupportedKeywords fullySupported { {}, {}, {} };
+const SupportedKeywords partiallySupported {test_string_items, test_int_items, test_double_items};
+const SupportedKeywords fullySupported {{}, {}, {}};
 
 BOOST_AUTO_TEST_CASE(non_critical_keyword)
 {

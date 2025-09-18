@@ -47,87 +47,108 @@
 
 #include <tuple>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct FlowBaseProblem {
-    using InheritsFrom = std::tuple<CpGridVanguard>;
+    struct FlowBaseProblem {
+        using InheritsFrom = std::tuple<CpGridVanguard>;
+    };
+
+} // namespace TTag
+
+template <class TypeTag, class MyTypeTag>
+struct NonlinearSystem {
+    using type = UndefinedProperty;
 };
-
-}
-
-template<class TypeTag, class MyTypeTag>
-struct NonlinearSystem { using type = UndefinedProperty; };
 
 
 
 // The class which deals with ECL aquifers
-template<class TypeTag, class MyTypeTag>
-struct AquiferModel { using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct AquiferModel {
+    using type = UndefinedProperty;
+};
 
 // Specify whether API tracking should be enabled (replaces PVT regions).
 // TODO: This is not yet implemented
-template<class TypeTag, class MyTypeTag>
-struct EnableApiTracking { using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct EnableApiTracking {
+    using type = UndefinedProperty;
+};
 
 // Enable the additional checks even if compiled in debug mode (i.e., with the NDEBUG
 // macro undefined). Next to a slightly better performance, this also eliminates some
 // print statements in debug mode.
-template<class TypeTag, class MyTypeTag>
-struct EnableDebuggingChecks { using type = Properties::UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct EnableDebuggingChecks {
+    using type = Properties::UndefinedProperty;
+};
 
 // Avoid using ElementContext-based code if possible.
-template<class TypeTag, class MyTypeTag>
-struct AvoidElementContext { using type = Properties::UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct AvoidElementContext {
+    using type = Properties::UndefinedProperty;
+};
 
 // if thermal flux boundaries are enabled an effort is made to preserve the initial
 // thermal gradient specified via the TEMPVD keyword
-template<class TypeTag, class MyTypeTag>
-struct EnableThermalFluxBoundaries { using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct EnableThermalFluxBoundaries {
+    using type = UndefinedProperty;
+};
 
 // The class which deals with wells
-template<class TypeTag, class MyTypeTag>
-struct WellModel { using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct WellModel {
+    using type = UndefinedProperty;
+};
 
 // Tracer might be moved to the blackoil side
 // The class that deals with the tracer
-template<class TypeTag, class MyTypeTag>
-struct TracerModel {  using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct TracerModel {
+    using type = UndefinedProperty;
+};
 
 template <class TypeTag>
-struct TracerModel<TypeTag, TTag::FlowBaseProblem>
-{ using type =  ::Opm::TracerModel<TypeTag>; };
+struct TracerModel<TypeTag, TTag::FlowBaseProblem> {
+    using type = ::Opm::TracerModel<TypeTag>;
+};
 
 // Select the element centered finite volume method as spatial discretization
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::FlowBaseProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::FlowBaseProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
 // use automatic differentiation to linearize the system of PDEs
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::FlowBaseProblem>
-{ using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::FlowBaseProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
-template<class TypeTag>
-struct BaseDiscretizationType<TypeTag, TTag::FlowBaseProblem>
-{ using type = FvBaseDiscretizationNoAdapt<TypeTag>; };
+template <class TypeTag>
+struct BaseDiscretizationType<TypeTag, TTag::FlowBaseProblem> {
+    using type = FvBaseDiscretizationNoAdapt<TypeTag>;
+};
 
-template<class TypeTag>
-struct DiscreteFunction<TypeTag, TTag::FlowBaseProblem>
-{
+template <class TypeTag>
+struct DiscreteFunction<TypeTag, TTag::FlowBaseProblem> {
     using BaseDiscretization = FvBaseDiscretization<TypeTag>;
     using type = typename BaseDiscretization::BlockVectorWrapper;
 };
 
-template<class TypeTag>
-struct GridView<TypeTag, TTag::FlowBaseProblem>
-{ using type = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView; };
+template <class TypeTag>
+struct GridView<TypeTag, TTag::FlowBaseProblem> {
+    using type = typename GetPropType<TypeTag, Properties::Grid>::LeafGridView;
+};
 
 // Set the material law for energy storage in rock
-template<class TypeTag>
-struct SolidEnergyLaw<TypeTag, TTag::FlowBaseProblem>
-{
+template <class TypeTag>
+struct SolidEnergyLaw<TypeTag, TTag::FlowBaseProblem> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -139,9 +160,8 @@ public:
 };
 
 // Set the material law for thermal conduction
-template<class TypeTag>
-struct ThermalConductionLaw<TypeTag, TTag::FlowBaseProblem>
-{
+template <class TypeTag>
+struct ThermalConductionLaw<TypeTag, TTag::FlowBaseProblem> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
@@ -154,9 +174,8 @@ public:
 
 // use a slightly faster stencil class because it does not need the normals and
 // the integration points of intersections
-template<class TypeTag>
-struct Stencil<TypeTag, TTag::FlowBaseProblem>
-{
+template <class TypeTag>
+struct Stencil<TypeTag, TTag::FlowBaseProblem> {
 private:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using GridView = GetPropType<TypeTag, Properties::GridView>;
@@ -169,87 +188,103 @@ public:
 };
 
 // by default use the dummy aquifer "model"
-template<class TypeTag>
+template <class TypeTag>
 struct AquiferModel<TypeTag, TTag::FlowBaseProblem> {
     using type = BaseAquiferModel<TypeTag>;
 };
 
 // Enable diffusion
-template<class TypeTag>
-struct EnableDiffusion<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableDiffusion<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = true;
+};
 
 // Disable dispersion
-template<class TypeTag>
-struct EnableDispersion<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableDispersion<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // Enable Convective Mixing
-template<class TypeTag>
-struct EnableConvectiveMixing<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableConvectiveMixing<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = true;
+};
 
 // disable API tracking
-template<class TypeTag>
-struct EnableApiTracking<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableApiTracking<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // store temperature (but do not conserve energy, as long as EnableEnergy is false)
-template<class TypeTag>
-struct EnableTemperature<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableTemperature<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = true;
+};
 
-template<class TypeTag>
-struct EnableMech<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableMech<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // disable all extensions supported by black oil model. this should not really be
 // necessary but it makes things a bit more explicit
-template<class TypeTag>
-struct EnablePolymer<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnablePolymer<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
-template<class TypeTag>
-struct EnableSolvent<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableSolvent<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableEnergy<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
-template<class TypeTag>
-struct EnableFoam<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableFoam<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
-template<class TypeTag>
-struct EnableExtbo<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableExtbo<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
-template<class TypeTag>
-struct EnableBioeffects<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableBioeffects<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // disable thermal flux boundaries by default
-template<class TypeTag>
-struct EnableThermalFluxBoundaries<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableThermalFluxBoundaries<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // By default, simulators derived from the FlowBaseProblem are production simulators,
 // i.e., experimental features must be explicitly enabled at compile time
-template<class TypeTag>
-struct EnableExperiments<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct EnableExperiments<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 // By default, we enable the debugging checks if we're compiled in debug mode
-template<class TypeTag>
-struct EnableDebuggingChecks<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableDebuggingChecks<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = true;
+};
 
 // Most modules are implemented only in terms of element contexts,
 // so this must default to false.
-template<class TypeTag>
-struct AvoidElementContext<TypeTag, TTag::FlowBaseProblem>
-{ static constexpr bool value = false; };
+template <class TypeTag>
+struct AvoidElementContext<TypeTag, TTag::FlowBaseProblem> {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Properties
 

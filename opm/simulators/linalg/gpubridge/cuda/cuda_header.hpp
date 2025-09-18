@@ -23,19 +23,21 @@
 #include <cuda_runtime.h>
 #include <sstream>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 /// Runtime error checking of CUDA functions
 /// Usage:
 /// cudaMalloc(...);
 /// cudaCheckLastError("Error could not allocate memory");
 ///
-#define cudaCheckLastError(msg)    __cudaCheckError( __FILE__, __LINE__, #msg )
+#define cudaCheckLastError(msg) __cudaCheckError(__FILE__, __LINE__, #msg)
 
-inline void __cudaCheckError(const char *file, const int line, const char *msg){
+inline void
+__cudaCheckError(const char* file, const int line, const char* msg)
+{
     cudaError err = cudaGetLastError();
-    if (cudaSuccess != err){
+    if (cudaSuccess != err) {
         std::ostringstream out;
         out << cudaGetErrorString(err) << "\n";
         out << "GPU error message: " << msg << "\n";

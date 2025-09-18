@@ -17,13 +17,13 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <config.h>
 #include <cmath>
+#include <config.h>
 #include <sstream>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 #include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/openclKernels.hpp>
@@ -33,23 +33,24 @@
 #include <opm/simulators/linalg/gpubridge/GpuResult.hpp>
 
 
-// iff true, the nonzeroes of the matrix are copied row-by-row into a contiguous, pinned memory array, then a single GPU memcpy is done
-// otherwise, the nonzeroes of the matrix are assumed to be in a contiguous array, and a single GPU memcpy is enough
+// iff true, the nonzeroes of the matrix are copied row-by-row into a contiguous, pinned memory array, then a single GPU
+// memcpy is done otherwise, the nonzeroes of the matrix are assumed to be in a contiguous array, and a single GPU
+// memcpy is enough
 #define COPY_ROW_BY_ROW 0
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-openclSolverBackend<Scalar,block_size>::
-openclSolverBackend(int verbosity_,
-                    int maxit_,
-                    Scalar tolerance_,
-                    unsigned int platformID_,
-                    unsigned int deviceID_,
-                    bool opencl_ilu_parallel_,
-                    std::string linsolver)
+template <class Scalar, unsigned int block_size>
+openclSolverBackend<Scalar, block_size>::openclSolverBackend(int verbosity_,
+                                                             int maxit_,
+                                                             Scalar tolerance_,
+                                                             unsigned int platformID_,
+                                                             unsigned int deviceID_,
+                                                             bool opencl_ilu_parallel_,
+                                                             std::string linsolver)
     : Base(verbosity_, maxit_, tolerance_, platformID_, deviceID_)
     , opencl_ilu_parallel(opencl_ilu_parallel_)
 {
@@ -65,8 +66,9 @@ openclSolverBackend(int verbosity_,
         use_cpr = false;
         use_isai = true;
     } else if (linsolver == "cpr_trueimpes") {
-        OPM_THROW(std::logic_error, "Error openclSolver does not support "
-                                    "--linear-solver=cpr_trueimpes");
+        OPM_THROW(std::logic_error,
+                  "Error openclSolver does not support "
+                  "--linear-solver=cpr_trueimpes");
     } else {
         OPM_THROW(std::logic_error, "Error unknown value for argument --linear-solver, " + linsolver);
     }
@@ -125,8 +127,9 @@ openclSolverBackend(int verbosity_,
         platforms[platformID].getDevices(CL_DEVICE_TYPE_ALL, &devices);
 
         if (devices.empty()) {
-            OPM_THROW(std::logic_error, "Error openclSolver is selected but "
-                                        "no OpenCL devices are found");
+            OPM_THROW(std::logic_error,
+                      "Error openclSolver is selected but "
+                      "no OpenCL devices are found");
         }
         out << "Found " << devices.size() << " OpenCL devices" << "\n";
 
@@ -186,7 +189,7 @@ openclSolverBackend(int verbosity_,
         out.str("");
         out.clear();
 
-        if (devices.size() <= deviceID){
+        if (devices.size() <= deviceID) {
             OPM_THROW(std::logic_error, "Error chosen too high OpenCL device ID");
         } else {
             std::string device_info;
@@ -201,8 +204,7 @@ openclSolverBackend(int verbosity_,
         }
 
         // removed all unused devices
-        if (deviceID != 0)
-        {
+        if (deviceID != 0) {
             devices[0] = devices[deviceID];
         }
         devices.resize(1);
@@ -223,12 +225,11 @@ openclSolverBackend(int verbosity_,
     }
 }
 
-template<class Scalar, unsigned int block_size>
-openclSolverBackend<Scalar,block_size>::
-openclSolverBackend(int verbosity_,
-                    int maxit_,
-                    Scalar tolerance_,
-                    bool opencl_ilu_parallel_)
+template <class Scalar, unsigned int block_size>
+openclSolverBackend<Scalar, block_size>::openclSolverBackend(int verbosity_,
+                                                             int maxit_,
+                                                             Scalar tolerance_,
+                                                             bool opencl_ilu_parallel_)
     : Base(verbosity_, maxit_, tolerance_)
     , opencl_ilu_parallel(opencl_ilu_parallel_)
 {
@@ -236,19 +237,18 @@ openclSolverBackend(int verbosity_,
     // cpr = std::make_unique<CPR<block_size> >(verbosity_, opencl_ilu_parallel, /*use_amg=*/false);
 }
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-setOpencl(std::shared_ptr<cl::Context>& context_,
-          std::shared_ptr<cl::CommandQueue>& queue_)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::setOpencl(std::shared_ptr<cl::Context>& context_,
+                                                   std::shared_ptr<cl::CommandQueue>& queue_)
 {
     context = context_;
     queue = queue_;
 }
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
-              GpuResult& res)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::gpu_pbicgstab(WellContributions<Scalar>& wellContribs, GpuResult& res)
 {
     float it;
     Scalar rho, rhop, beta, alpha, omega, tmp1, tmp2;
@@ -258,7 +258,7 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
 
     // set r to the initial residual
     // if initial x guess is not 0, must call applyblockedscaleadd(), not implemented
-    //applyblockedscaleadd(-1.0, mat, x, r);
+    // applyblockedscaleadd(-1.0, mat, x, r);
 
     // set initial values
     events.resize(5);
@@ -333,8 +333,8 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
 
         tmp1 = OpenclKernels<Scalar>::dot(d_rw, d_v, d_tmp, N);
         alpha = rho / tmp1;
-        OpenclKernels<Scalar>::axpy(d_v, -alpha, d_r, N);      // r = r - alpha * v
-        OpenclKernels<Scalar>::axpy(d_pw, alpha, d_x, N);      // x = x + alpha * pw
+        OpenclKernels<Scalar>::axpy(d_v, -alpha, d_r, N); // r = r - alpha * v
+        OpenclKernels<Scalar>::axpy(d_pw, alpha, d_x, N); // x = x + alpha * pw
         norm = OpenclKernels<Scalar>::norm(d_r, d_tmp, N);
         if (verbosity >= 3) {
             queue->finish();
@@ -367,7 +367,7 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
         }
 
         // apply wellContributions
-        if(wellContribs.getNumWells() > 0){
+        if (wellContribs.getNumWells() > 0) {
             static_cast<WellContributionsOCL<Scalar>&>(wellContribs).apply(d_s, d_t);
         }
         if (verbosity >= 3) {
@@ -379,8 +379,8 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
         tmp1 = OpenclKernels<Scalar>::dot(d_t, d_r, d_tmp, N);
         tmp2 = OpenclKernels<Scalar>::dot(d_t, d_t, d_tmp, N);
         omega = tmp1 / tmp2;
-        OpenclKernels<Scalar>::axpy(d_s, omega, d_x, N);     // x = x + omega * s
-        OpenclKernels<Scalar>::axpy(d_t, -omega, d_r, N);    // r = r - omega * t
+        OpenclKernels<Scalar>::axpy(d_s, omega, d_x, N); // x = x + omega * s
+        OpenclKernels<Scalar>::axpy(d_t, -omega, d_r, N); // r = r - omega * t
         norm = OpenclKernels<Scalar>::norm(d_r, d_tmp, N);
         if (verbosity >= 3) {
             queue->finish();
@@ -400,15 +400,14 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
 
     res.iterations = std::min(it, static_cast<float>(maxit));
     res.reduction = norm / norm_0;
-    res.conv_rate  = static_cast<double>(pow(res.reduction, 1.0 / it));
+    res.conv_rate = static_cast<double>(pow(res.reduction, 1.0 / it));
     res.elapsed = t_total.stop();
     res.converged = (it != (maxit + 0.5));
 
     if (verbosity > 0) {
         std::ostringstream out;
-        out << "=== converged: " << res.converged << ", conv_rate: "
-            << res.conv_rate << ", time: " << res.elapsed <<
-            ", time per iteration: " << res.elapsed / it << ", iterations: " << it;
+        out << "=== converged: " << res.converged << ", conv_rate: " << res.conv_rate << ", time: " << res.elapsed
+            << ", time per iteration: " << res.elapsed / it << ", iterations: " << it;
         OpmLog::info(out.str());
     }
     if (verbosity >= 3) {
@@ -422,10 +421,10 @@ gpu_pbicgstab(WellContributions<Scalar>& wellContribs,
     }
 }
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-           std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
+                                                    std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix)
 {
     this->Nb = matrix->Nb;
     this->N = Nb * block_size;
@@ -485,9 +484,9 @@ initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     initialized = true;
 } // end initialize()
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-copy_system_to_gpu()
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::copy_system_to_gpu()
 {
     Timer t;
     events.resize(5);
@@ -496,24 +495,19 @@ copy_system_to_gpu()
     int sum = 0;
     for (int i = 0; i < Nb; ++i) {
         int size_row = mat->rowPointers[i + 1] - mat->rowPointers[i];
-        memcpy(vals_contiguous.data() + sum, mat->nnzValues + sum,
-               size_row * sizeof(Scalar) * block_size * block_size);
+        memcpy(vals_contiguous.data() + sum, mat->nnzValues + sum, size_row * sizeof(Scalar) * block_size * block_size);
         sum += size_row * block_size * block_size;
     }
-    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0,
-                                    sizeof(Scalar) * nnz, vals_contiguous.data(),
-                                    nullptr, &events[0]);
+    err = queue->enqueueWriteBuffer(
+        d_Avals, CL_TRUE, 0, sizeof(Scalar) * nnz, vals_contiguous.data(), nullptr, &events[0]);
 #else
-    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0,
-                                    sizeof(Scalar) * nnz, mat->nnzValues, nullptr, &events[0]);
+    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0, sizeof(Scalar) * nnz, mat->nnzValues, nullptr, &events[0]);
 #endif
 
-    err |= queue->enqueueWriteBuffer(d_Acols, CL_TRUE, 0,
-                                     sizeof(int) * nnzb, mat->colIndices, nullptr, &events[1]);
-    err |= queue->enqueueWriteBuffer(d_Arows, CL_TRUE, 0,
-                                     sizeof(int) * (Nb + 1), mat->rowPointers, nullptr, &events[2]);
-    err |= queue->enqueueWriteBuffer(d_b, CL_TRUE, 0,
-                                     sizeof(Scalar) * N, h_b, nullptr, &events[3]);
+    err |= queue->enqueueWriteBuffer(d_Acols, CL_TRUE, 0, sizeof(int) * nnzb, mat->colIndices, nullptr, &events[1]);
+    err |= queue->enqueueWriteBuffer(
+        d_Arows, CL_TRUE, 0, sizeof(int) * (Nb + 1), mat->rowPointers, nullptr, &events[2]);
+    err |= queue->enqueueWriteBuffer(d_b, CL_TRUE, 0, sizeof(Scalar) * N, h_b, nullptr, &events[3]);
     err |= queue->enqueueFillBuffer(d_x, 0, 0, sizeof(Scalar) * N, nullptr, &events[4]);
 
     cl::WaitForEvents(events);
@@ -531,9 +525,9 @@ copy_system_to_gpu()
 } // end copy_system_to_gpu()
 
 // don't copy rowpointers and colindices, they stay the same
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-update_system_on_gpu()
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::update_system_on_gpu()
 {
     Timer t;
     events.resize(3);
@@ -542,20 +536,16 @@ update_system_on_gpu()
     int sum = 0;
     for (int i = 0; i < Nb; ++i) {
         int size_row = mat->rowPointers[i + 1] - mat->rowPointers[i];
-        memcpy(vals_contiguous.data() + sum, mat->nnzValues + sum,
-               size_row * sizeof(Scalar) * block_size * block_size);
+        memcpy(vals_contiguous.data() + sum, mat->nnzValues + sum, size_row * sizeof(Scalar) * block_size * block_size);
         sum += size_row * block_size * block_size;
     }
-    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0,
-                                    sizeof(Scalar) * nnz, vals_contiguous.data(),
-                                    nullptr, &events[0]);
+    err = queue->enqueueWriteBuffer(
+        d_Avals, CL_TRUE, 0, sizeof(Scalar) * nnz, vals_contiguous.data(), nullptr, &events[0]);
 #else
-    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0,
-                                    sizeof(Scalar) * nnz, mat->nnzValues, nullptr, &events[0]);
+    err = queue->enqueueWriteBuffer(d_Avals, CL_TRUE, 0, sizeof(Scalar) * nnz, mat->nnzValues, nullptr, &events[0]);
 #endif
 
-    err |= queue->enqueueWriteBuffer(d_b, CL_TRUE, 0,
-                                     sizeof(Scalar) * N, h_b, nullptr, &events[1]);
+    err |= queue->enqueueWriteBuffer(d_b, CL_TRUE, 0, sizeof(Scalar) * N, h_b, nullptr, &events[1]);
     err |= queue->enqueueFillBuffer(d_x, 0, 0, sizeof(Scalar) * N, nullptr, &events[2]);
 
     cl::WaitForEvents(events);
@@ -572,9 +562,9 @@ update_system_on_gpu()
     }
 } // end update_system_on_gpu()
 
-template<class Scalar, unsigned int block_size>
-bool openclSolverBackend<Scalar,block_size>::
-analyze_matrix()
+template <class Scalar, unsigned int block_size>
+bool
+openclSolverBackend<Scalar, block_size>::analyze_matrix()
 {
     Timer t;
 
@@ -595,9 +585,9 @@ analyze_matrix()
     return success;
 } // end analyze_matrix()
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-update_system(Scalar* vals, Scalar* b)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::update_system(Scalar* vals, Scalar* b)
 {
     Timer t;
 
@@ -611,9 +601,9 @@ update_system(Scalar* vals, Scalar* b)
     }
 } // end update_system()
 
-template<class Scalar, unsigned int block_size>
-bool openclSolverBackend<Scalar,block_size>::
-create_preconditioner()
+template <class Scalar, unsigned int block_size>
+bool
+openclSolverBackend<Scalar, block_size>::create_preconditioner()
 {
     Timer t;
 
@@ -631,9 +621,9 @@ create_preconditioner()
     return result;
 } // end create_preconditioner()
 
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
 {
     Timer t;
 
@@ -642,8 +632,7 @@ solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
         gpu_pbicgstab(wellContribs, res);
     } catch (const cl::Error& error) {
         std::ostringstream oss;
-        oss << "openclSolverBackend::solve_system error: " << error.what()
-            << "(" << error.err() << ")\n";
+        oss << "openclSolverBackend::solve_system error: " << error.what() << "(" << error.err() << ")\n";
         oss << getErrorString(error.err());
         // rethrow exception
         OPM_THROW(std::logic_error, oss.str());
@@ -661,9 +650,9 @@ solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res)
 
 // copy result to host memory
 // caller must be sure that x is a valid array
-template<class Scalar, unsigned int block_size>
-void openclSolverBackend<Scalar,block_size>::
-get_result(Scalar* x)
+template <class Scalar, unsigned int block_size>
+void
+openclSolverBackend<Scalar, block_size>::get_result(Scalar* x)
 {
     Timer t;
 
@@ -676,13 +665,13 @@ get_result(Scalar* x)
     }
 } // end get_result()
 
-template<class Scalar, unsigned int block_size>
-SolverStatus openclSolverBackend<Scalar,block_size>::
-solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-             Scalar* b,
-             std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-             WellContributions<Scalar>& wellContribs,
-             GpuResult& res)
+template <class Scalar, unsigned int block_size>
+SolverStatus
+openclSolverBackend<Scalar, block_size>::solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
+                                                      Scalar* b,
+                                                      std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
+                                                      WellContributions<Scalar>& wellContribs,
+                                                      GpuResult& res)
 {
     if (initialized == false) {
         initialize(matrix, jacMatrix);
@@ -707,13 +696,13 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     return SolverStatus::GPU_SOLVER_SUCCESS;
 }
 
-#define INSTANTIATE_TYPE(T)                  \
-    template class openclSolverBackend<T,1>; \
-    template class openclSolverBackend<T,2>; \
-    template class openclSolverBackend<T,3>; \
-    template class openclSolverBackend<T,4>; \
-    template class openclSolverBackend<T,5>; \
-    template class openclSolverBackend<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class openclSolverBackend<T, 1>;                                                                          \
+    template class openclSolverBackend<T, 2>;                                                                          \
+    template class openclSolverBackend<T, 3>;                                                                          \
+    template class openclSolverBackend<T, 4>;                                                                          \
+    template class openclSolverBackend<T, 5>;                                                                          \
+    template class openclSolverBackend<T, 6>;
 
 INSTANTIATE_TYPE(double)
 

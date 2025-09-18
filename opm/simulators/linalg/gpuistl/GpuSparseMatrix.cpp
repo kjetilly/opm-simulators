@@ -20,9 +20,9 @@
 
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrixGeneric.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/gpu_constants.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/cusparse_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/cusparse_wrapper.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/gpu_constants.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpusparse_matrix_utilities.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
 
@@ -38,11 +38,11 @@ namespace Opm::gpuistl
 
 template <class T>
 GpuSparseMatrix<T>::GpuSparseMatrix(const T* nonZeroElements,
-                                  const int* rowIndices,
-                                  const int* columnIndices,
-                                  size_t numberOfNonzeroBlocks,
-                                  size_t blockSize,
-                                  size_t numberOfRows)
+                                    const int* rowIndices,
+                                    const int* columnIndices,
+                                    size_t numberOfNonzeroBlocks,
+                                    size_t blockSize,
+                                    size_t numberOfRows)
     : m_nonZeroElements(nonZeroElements, numberOfNonzeroBlocks * blockSize * blockSize)
     , m_columnIndices(columnIndices, numberOfNonzeroBlocks)
     , m_rowIndices(rowIndices, numberOfRows + 1)
@@ -65,25 +65,25 @@ GpuSparseMatrix<T>::GpuSparseMatrix(const T* nonZeroElements,
 
 template <class T>
 GpuSparseMatrix<T>::GpuSparseMatrix(const GpuVector<int>& rowIndices,
-                                  const GpuVector<int>& columnIndices,
-                                  size_t blockSize)
+                                    const GpuVector<int>& columnIndices,
+                                    size_t blockSize)
     : m_nonZeroElements(columnIndices.dim() * blockSize * blockSize)
     , m_columnIndices(columnIndices)
     , m_rowIndices(rowIndices)
     , m_numberOfNonzeroBlocks(detail::to_int(columnIndices.dim()))
-    , m_numberOfRows(detail::to_int(rowIndices.dim()-1))
+    , m_numberOfRows(detail::to_int(rowIndices.dim() - 1))
     , m_blockSize(detail::to_int(blockSize))
     , m_matrixDescription(detail::createMatrixDescription())
     , m_cusparseHandle(detail::CuSparseHandle::getInstance())
 {
     // For blockSize == 1, use GpuSparseMatrixGeneric
     if (blockSize == 1) {
-        m_genericMatrixForBlockSize1 = std::make_unique<GpuSparseMatrixGeneric<T>>(
-            rowIndices, columnIndices, blockSize);
+        m_genericMatrixForBlockSize1
+            = std::make_unique<GpuSparseMatrixGeneric<T>>(rowIndices, columnIndices, blockSize);
     }
 }
 
-template<class T>
+template <class T>
 GpuSparseMatrix<T>::GpuSparseMatrix(const GpuSparseMatrix<T>& other)
     : m_nonZeroElements(other.m_nonZeroElements)
     , m_columnIndices(other.m_columnIndices)
@@ -97,7 +97,7 @@ GpuSparseMatrix<T>::GpuSparseMatrix(const GpuSparseMatrix<T>& other)
     // For blockSize == 1, use GpuSparseMatrixGeneric
     if (other.blockSize() == 1) {
         OPM_ERROR_IF(!other.m_genericMatrixForBlockSize1,
-            "Internal error, other.blockSize() is 1 but other.m_genericMatrixForBlockSize1 has not been set.");
+                     "Internal error, other.blockSize() is 1 but other.m_genericMatrixForBlockSize1 has not been set.");
         m_genericMatrixForBlockSize1 = std::make_unique<GpuSparseMatrixGeneric<T>>(*other.m_genericMatrixForBlockSize1);
     }
 }
@@ -134,11 +134,11 @@ GpuSparseMatrix<T>::fromMatrix(const MatrixType& matrix, bool copyNonZeroElement
     } else {
         auto nonZeroElementData = detail::extractNonzeroValues<T>(matrix);
         return GpuSparseMatrix<T>(nonZeroElementData.data(),
-                                 rowIndices.data(),
-                                 columnIndices.data(),
-                                 numberOfNonzeroBlocks,
-                                 blockSize,
-                                 numberOfRows);
+                                  rowIndices.data(),
+                                  columnIndices.data(),
+                                  numberOfNonzeroBlocks,
+                                  blockSize,
+                                  numberOfRows);
     }
 }
 
@@ -147,8 +147,8 @@ template <class MatrixType>
 void
 GpuSparseMatrix<T>::updateNonzeroValues(const MatrixType& matrix, bool copyNonZeroElementsDirectly)
 {
-    detail::validateMatrixCompatibility(nonzeroes(), blockSize(), N(),
-                                       matrix.nonzeroes(), matrix[0][0].N(), matrix.N());
+    detail::validateMatrixCompatibility(
+        nonzeroes(), blockSize(), N(), matrix.nonzeroes(), matrix[0][0].N(), matrix.N());
 
     // For blockSize == 1, use GpuSparseMatrixGeneric
     if (m_genericMatrixForBlockSize1) {
@@ -171,12 +171,13 @@ template <class T>
 void
 GpuSparseMatrix<T>::updateNonzeroValues(const GpuSparseMatrix<T>& matrix)
 {
-    detail::validateMatrixCompatibility(nonzeroes(), blockSize(), N(),
-                                       matrix.nonzeroes(), matrix.blockSize(), matrix.N());
+    detail::validateMatrixCompatibility(
+        nonzeroes(), blockSize(), N(), matrix.nonzeroes(), matrix.blockSize(), matrix.N());
 
     // For blockSize == 1, use GpuSparseMatrixGeneric
     if (m_genericMatrixForBlockSize1) {
-        OPM_ERROR_IF(!matrix.m_genericMatrixForBlockSize1,
+        OPM_ERROR_IF(
+            !matrix.m_genericMatrixForBlockSize1,
             "Internal error, matrix.blockSize() is 1 but matrix.m_genericMatrixForBlockSize1 has not been set.");
         m_genericMatrixForBlockSize1->updateNonzeroValues(*matrix.m_genericMatrixForBlockSize1);
         return;

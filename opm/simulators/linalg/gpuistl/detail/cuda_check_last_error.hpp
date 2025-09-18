@@ -36,7 +36,8 @@
  * @endcode
  *
  * @note This can be used to debug the code, or simply make sure that no error has occured.
- * @note This is a rather heavy operation, so prefer to use only in Debug mode (see OPM_CUDA_CHECK_DEVICE_SYNCHRONIZE_IF_DEBUG)
+ * @note This is a rather heavy operation, so prefer to use only in Debug mode (see
+ * OPM_CUDA_CHECK_DEVICE_SYNCHRONIZE_IF_DEBUG)
  */
 #define OPM_CUDA_CHECK_DEVICE_SYNCHRONIZE OPM_GPU_SAFE_CALL(cudaDeviceSynchronize())
 
@@ -45,8 +46,8 @@
 #else
 
 /**
- * @brief OPM_CUDA_CHECK_DEVICE_SYNCHRONIZE_IF_DEBUG checks the return type of cudaDeviceSynchronize only if NDEBUG is not defined,
- * and throws an exception if cudaDeviceSynchronize() does not equal cudaSuccess.
+ * @brief OPM_CUDA_CHECK_DEVICE_SYNCHRONIZE_IF_DEBUG checks the return type of cudaDeviceSynchronize only if NDEBUG is
+ * not defined, and throws an exception if cudaDeviceSynchronize() does not equal cudaSuccess.
  *
  * Example usage:
  * @code{.cpp}

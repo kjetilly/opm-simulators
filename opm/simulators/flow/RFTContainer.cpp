@@ -40,11 +40,12 @@
 #include <algorithm>
 #include <tuple>
 
-namespace {
+namespace
+{
 
-template<class Scalar>
-void gatherAndUpdateMap(std::map<std::size_t, Scalar>& local_map,
-                        const Opm::Parallel::Communication& comm)
+template <class Scalar>
+void
+gatherAndUpdateMap(std::map<std::size_t, Scalar>& local_map, const Opm::Parallel::Communication& comm)
 {
     std::vector<std::pair<int, Scalar>> pairs(local_map.begin(), local_map.end());
     std::vector<std::pair<int, Scalar>> all_pairs;
@@ -58,22 +59,22 @@ void gatherAndUpdateMap(std::map<std::size_t, Scalar>& local_map,
         if (auto candidate = local_map.find(key_value.first); candidate != local_map.end()) {
             const Scalar prev_value = candidate->second;
             candidate->second = std::max(prev_value, key_value.second);
-        }
-        else {
+        } else {
             local_map[key_value.first] = key_value.second;
         }
     }
 }
 
-}
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
-template<class FluidSystem>
-void RFTContainer<FluidSystem>::
-addToWells(data::Wells& wellDatas,
-           const std::size_t reportStepNum,
-           const Parallel::Communication& comm)
+template <class FluidSystem>
+void
+RFTContainer<FluidSystem>::addToWells(data::Wells& wellDatas,
+                                      const std::size_t reportStepNum,
+                                      const Parallel::Communication& comm)
 {
     const auto& rft_config = schedule_[reportStepNum].rft_config();
     if (!rft_config.active()) {
@@ -97,8 +98,7 @@ addToWells(data::Wells& wellDatas,
         if (inserted) {
             // New well.  Typically a shut/inactive one.  Allocate
             // data::Connection result objects for this well.
-            const auto& conns = this->schedule_[reportStepNum]
-                .wells(wname).getConnections();
+            const auto& conns = this->schedule_[reportStepNum].wells(wname).getConnections();
 
             auto& xcon = wellDataPos->second.connections;
 
@@ -108,8 +108,7 @@ addToWells(data::Wells& wellDatas,
             }
         }
 
-        auto cond_assign = [](double& dest, unsigned idx, const auto& map)
-        {
+        auto cond_assign = [](double& dest, unsigned idx, const auto& map) {
             auto it = map.find(idx);
             if (it != map.end()) {
                 dest = it->second;
@@ -118,16 +117,12 @@ addToWells(data::Wells& wellDatas,
 
         std::for_each(wellDataPos->second.connections.begin(),
                       wellDataPos->second.connections.end(),
-                      [&cond_assign, this](auto& connectionData)
-                      {
+                      [&cond_assign, this](auto& connectionData) {
                           const auto index = connectionData.index;
-                          cond_assign(connectionData.cell_pressure, index,
-                                      oilConnectionPressures_);
-                          cond_assign(connectionData.cell_saturation_water, index,
-                                      waterConnectionSaturations_);
-                          cond_assign(connectionData.cell_saturation_gas, index,
-                                      gasConnectionSaturations_);
-                       });
+                          cond_assign(connectionData.cell_pressure, index, oilConnectionPressures_);
+                          cond_assign(connectionData.cell_saturation_water, index, waterConnectionSaturations_);
+                          cond_assign(connectionData.cell_saturation_gas, index, gasConnectionSaturations_);
+                      });
     }
 
     oilConnectionPressures_.clear();
@@ -135,9 +130,9 @@ addToWells(data::Wells& wellDatas,
     gasConnectionSaturations_.clear();
 }
 
-template<class FluidSystem>
-void RFTContainer<FluidSystem>::
-allocate(const std::size_t reportStepNum)
+template <class FluidSystem>
+void
+RFTContainer<FluidSystem>::allocate(const std::size_t reportStepNum)
 {
     // Well RFT data
     const auto& rft_config = schedule_[reportStepNum].rft_config();
@@ -153,7 +148,7 @@ allocate(const std::size_t reportStepNum)
 
         const auto& well = schedule_[reportStepNum].wells.get(wname);
 
-        for (const auto& connection: well.getConnections()) {
+        for (const auto& connection : well.getConnections()) {
             const std::size_t index = connection.global_index();
 
             if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
@@ -171,15 +166,14 @@ allocate(const std::size_t reportStepNum)
     }
 }
 
-template<class FluidSystem>
-void RFTContainer<FluidSystem>::
-assign(const unsigned cartesianIndex,
-       const AssignmentFunc& oil,
-       const AssignmentFunc& water,
-       const AssignmentFunc& gas)
+template <class FluidSystem>
+void
+RFTContainer<FluidSystem>::assign(const unsigned cartesianIndex,
+                                  const AssignmentFunc& oil,
+                                  const AssignmentFunc& water,
+                                  const AssignmentFunc& gas)
 {
-    auto cond_assign = [](auto& map, unsigned idx, const auto& func)
-    {
+    auto cond_assign = [](auto& map, unsigned idx, const auto& func) {
         auto it = map.find(idx);
         if (it != map.end()) {
             it->second = func();
@@ -191,10 +185,10 @@ assign(const unsigned cartesianIndex,
     cond_assign(gasConnectionSaturations_, cartesianIndex, gas);
 }
 
-template<class T> using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
+template <class T>
+using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
 
-#define INSTANTIATE_TYPE(T) \
-    template class RFTContainer<FS<T>>;
+#define INSTANTIATE_TYPE(T) template class RFTContainer<FS<T>>;
 
 INSTANTIATE_TYPE(double)
 
@@ -202,19 +196,21 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-#define INSTANTIATE_COMP_THREEPHASE(NUM) \
-    template<class T> using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>; \
+#define INSTANTIATE_COMP_THREEPHASE(NUM)                                                                               \
+    template <class T>                                                                                                 \
+    using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>;                                                       \
     template class RFTContainer<FS##NUM<double>>;
 
-#define INSTANTIATE_COMP_TWOPHASE(NUM) \
-    template<class T> using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>; \
+#define INSTANTIATE_COMP_TWOPHASE(NUM)                                                                                 \
+    template <class T>                                                                                                 \
+    using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>;                                                     \
     template class RFTContainer<GFS##NUM<double>>;
 
-#define INSTANTIATE_COMP(NUM) \
-    INSTANTIATE_COMP_THREEPHASE(NUM) \
+#define INSTANTIATE_COMP(NUM)                                                                                          \
+    INSTANTIATE_COMP_THREEPHASE(NUM)                                                                                   \
     INSTANTIATE_COMP_TWOPHASE(NUM)
 
-INSTANTIATE_COMP_THREEPHASE(0)  // \Note: to register the parameter ForceDisableFluidInPlaceOutput
+INSTANTIATE_COMP_THREEPHASE(0) // \Note: to register the parameter ForceDisableFluidInPlaceOutput
 INSTANTIATE_COMP(2)
 INSTANTIATE_COMP(3)
 INSTANTIATE_COMP(4)

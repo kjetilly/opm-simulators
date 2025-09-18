@@ -26,14 +26,14 @@
 #include <opm/simulators/flow/ActionHandler.hpp>
 
 #include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/utility/TimeService.hpp>
 #include <opm/common/TimingMacros.hpp>
+#include <opm/common/utility/TimeService.hpp>
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 
 #include <opm/input/eclipse/Schedule/Action/ActionContext.hpp>
-#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/ActionX.hpp>
+#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/SimulatorUpdate.hpp>
 #include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
@@ -59,136 +59,121 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-namespace {
-    std::string formatActionDate(const Opm::TimeStampUTC& timePoint,
-                                 const int                reportStep)
-    {
-        auto time_point = std::tm{};
+namespace
+{
+std::string
+formatActionDate(const Opm::TimeStampUTC& timePoint, const int reportStep)
+{
+    auto time_point = std::tm {};
 
-        time_point.tm_year = timePoint.year()  - 1900;
-        time_point.tm_mon  = timePoint.month() -    1;
-        time_point.tm_mday = timePoint.day();
+    time_point.tm_year = timePoint.year() - 1900;
+    time_point.tm_mon = timePoint.month() - 1;
+    time_point.tm_mday = timePoint.day();
 
-        time_point.tm_hour = timePoint.hour();
-        time_point.tm_min  = timePoint.minutes();
-        time_point.tm_sec  = timePoint.seconds();
+    time_point.tm_hour = timePoint.hour();
+    time_point.tm_min = timePoint.minutes();
+    time_point.tm_sec = timePoint.seconds();
 
-        return fmt::format("{:%d-%b-%Y %H:%M:%S} (report interval {} to {})",
-                           time_point, reportStep, reportStep + 1);
-    }
+    return fmt::format("{:%d-%b-%Y %H:%M:%S} (report interval {} to {})", time_point, reportStep, reportStep + 1);
+}
 
-    void logActivePyAction(const std::string& actionName,
-                           const std::string& timeString)
-    {
-        const auto message =
-            fmt::format("Action {} (Python) triggered at {}",
-                        actionName, timeString);
+void
+logActivePyAction(const std::string& actionName, const std::string& timeString)
+{
+    const auto message = fmt::format("Action {} (Python) triggered at {}", actionName, timeString);
 
-        Opm::OpmLog::info("ACTION_TRIGGERED", message);
-    }
+    Opm::OpmLog::info("ACTION_TRIGGERED", message);
+}
 
-    template <typename WellNameRange>
-    void logActiveAction(const std::string&   actionName,
-                         const WellNameRange& matchingWells,
-                         const std::string&   timeString)
-    {
-        const auto wellString = matchingWells.empty()
-            ? std::string{}
-            : fmt::format(" Well{}: {}",
-                          matchingWells.size() != 1 ? "s" : "",
-                          fmt::join(matchingWells, ", "));
+template <typename WellNameRange>
+void
+logActiveAction(const std::string& actionName, const WellNameRange& matchingWells, const std::string& timeString)
+{
+    const auto wellString = matchingWells.empty()
+        ? std::string {}
+        : fmt::format(" Well{}: {}", matchingWells.size() != 1 ? "s" : "", fmt::join(matchingWells, ", "));
 
-        const auto message =
-            fmt::format("Action {} triggered at {}.{}",
-                        actionName, timeString, wellString);
+    const auto message = fmt::format("Action {} triggered at {}.{}", actionName, timeString, wellString);
 
-        Opm::OpmLog::info("ACTION_TRIGGERED", message);
-    }
+    Opm::OpmLog::info("ACTION_TRIGGERED", message);
+}
 
-    void logInactivePyAction(const std::string& actionName,
-                             const std::string& timeString)
-    {
-        const auto message =
-            fmt::format("Action {} (Python) NOT triggered at {}.",
-                        actionName, timeString);
+void
+logInactivePyAction(const std::string& actionName, const std::string& timeString)
+{
+    const auto message = fmt::format("Action {} (Python) NOT triggered at {}.", actionName, timeString);
 
-        Opm::OpmLog::debug("NAMED_ACTION_NOT_TRIGGERED", message);
-    }
+    Opm::OpmLog::debug("NAMED_ACTION_NOT_TRIGGERED", message);
+}
 
-    void logInactiveAction(const std::string& actionName,
-                           const std::string& timeString)
-    {
-        const auto message =
-            fmt::format("Action {} NOT triggered at {}.",
-                        actionName, timeString);
+void
+logInactiveAction(const std::string& actionName, const std::string& timeString)
+{
+    const auto message = fmt::format("Action {} NOT triggered at {}.", actionName, timeString);
 
-        Opm::OpmLog::debug("NAMED_ACTION_NOT_TRIGGERED", message);
-    }
+    Opm::OpmLog::debug("NAMED_ACTION_NOT_TRIGGERED", message);
+}
 
-    void logInactiveActions(const int          numInactive,
-                            const std::string& timeString)
-    {
-        const auto message =
-            fmt::format("{} action{} NOT triggered at {}.",
-                        numInactive,
-                        (numInactive != 1) ? "s" : "",
-                        timeString);
+void
+logInactiveActions(const int numInactive, const std::string& timeString)
+{
+    const auto message
+        = fmt::format("{} action{} NOT triggered at {}.", numInactive, (numInactive != 1) ? "s" : "", timeString);
 
-        Opm::OpmLog::debug("ACTION_NOT_TRIGGERED", message);
-    }
+    Opm::OpmLog::debug("ACTION_NOT_TRIGGERED", message);
+}
 
-    template <typename Scalar, class WellModel>
-    std::unordered_map<std::string, Scalar>
-    fetchWellPI(const WellModel&                             wellModel,
-                const std::vector<std::string>&              wellpi_wells,
-                const Opm::Parallel::Communication           comm)
-    {
-        auto wellpi = std::unordered_map<std::string, Scalar> {};
+template <typename Scalar, class WellModel>
+std::unordered_map<std::string, Scalar>
+fetchWellPI(const WellModel& wellModel,
+            const std::vector<std::string>& wellpi_wells,
+            const Opm::Parallel::Communication comm)
+{
+    auto wellpi = std::unordered_map<std::string, Scalar> {};
 
-        if (wellpi_wells.empty()) {
-            return wellpi;
-        }
-
-        auto wellPI = std::vector<Scalar>(wellpi_wells.size());
-        for (auto i = 0*wellpi_wells.size(); i < wellpi_wells.size(); ++i) {
-            if (wellModel.hasLocalWell(wellpi_wells[i])) {
-                wellPI[i] = wellModel.wellPI(wellpi_wells[i]);
-            }
-        }
-
-        comm.max(wellPI.data(), wellPI.size());
-
-        for (auto i = 0*wellpi_wells.size(); i < wellpi_wells.size(); ++i) {
-            wellpi.emplace(wellpi_wells[i], wellPI[i]);
-        }
-
+    if (wellpi_wells.empty()) {
         return wellpi;
     }
+
+    auto wellPI = std::vector<Scalar>(wellpi_wells.size());
+    for (auto i = 0 * wellpi_wells.size(); i < wellpi_wells.size(); ++i) {
+        if (wellModel.hasLocalWell(wellpi_wells[i])) {
+            wellPI[i] = wellModel.wellPI(wellpi_wells[i]);
+        }
+    }
+
+    comm.max(wellPI.data(), wellPI.size());
+
+    for (auto i = 0 * wellpi_wells.size(); i < wellpi_wells.size(); ++i) {
+        wellpi.emplace(wellpi_wells[i], wellPI[i]);
+    }
+
+    return wellpi;
+}
 } // Anonymous namespace
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-ActionHandler<Scalar, IndexTraits>::
-ActionHandler(EclipseState& ecl_state,
-              Schedule& schedule,
-              Action::State& actionState,
-              SummaryState& summaryState,
-              BlackoilWellModelGeneric<Scalar, IndexTraits>& wellModel,
-              Parallel::Communication comm)
+template <typename Scalar, typename IndexTraits>
+ActionHandler<Scalar, IndexTraits>::ActionHandler(EclipseState& ecl_state,
+                                                  Schedule& schedule,
+                                                  Action::State& actionState,
+                                                  SummaryState& summaryState,
+                                                  BlackoilWellModelGeneric<Scalar, IndexTraits>& wellModel,
+                                                  Parallel::Communication comm)
     : ecl_state_(ecl_state)
     , schedule_(schedule)
     , actionState_(actionState)
     , summaryState_(summaryState)
     , wellModel_(wellModel)
     , comm_(comm)
-{}
+{
+}
 
-template<typename Scalar, typename IndexTraits>
-void ActionHandler<Scalar, IndexTraits>::
-applyActions(const int reportStep,
-             const double sim_time,
-             const TransFunc& transUp)
+template <typename Scalar, typename IndexTraits>
+void
+ActionHandler<Scalar, IndexTraits>::applyActions(const int reportStep, const double sim_time, const TransFunc& transUp)
 {
     OPM_TIMEBLOCK(applyActions);
     const auto& actions = schedule_[reportStep].actions();
@@ -196,10 +181,10 @@ applyActions(const int reportStep,
         return;
     }
 
-    const Action::Context context{ summaryState_, schedule_[reportStep].wlist_manager() };
+    const Action::Context context {summaryState_, schedule_[reportStep].wlist_manager()};
 
-    const auto now = TimeStampUTC{ schedule_.getStartTime() } + std::chrono::duration<double>(sim_time);
-    const auto ts  = formatActionDate(now, reportStep);
+    const auto now = TimeStampUTC {schedule_.getStartTime()} + std::chrono::duration<double>(sim_time);
+    const auto ts = formatActionDate(now, reportStep);
 
 
     SimulatorUpdate sim_update;
@@ -209,16 +194,13 @@ applyActions(const int reportStep,
         // affected by the PyAction, thus we get the production indices for all wells.
         const std::vector<std::string> wellpi_wells = schedule_[reportStep].well_order().names();
         const auto wellpi = fetchWellPI<Scalar>(this->wellModel_, wellpi_wells, this->comm_);
-        auto sim_update_current = schedule_.runPyAction(reportStep, *pyaction, actionState_,
-                                                ecl_state_, summaryState_, wellpi);
+        auto sim_update_current
+            = schedule_.runPyAction(reportStep, *pyaction, actionState_, ecl_state_, summaryState_, wellpi);
 
-        if (const auto pyRes = this->actionState_.python_result(pyaction->name());
-            !pyRes.has_value() || !*pyRes)
-        {
+        if (const auto pyRes = this->actionState_.python_result(pyaction->name()); !pyRes.has_value() || !*pyRes) {
             logInactivePyAction(pyaction->name(), ts);
             continue;
-        }
-        else {
+        } else {
             logActivePyAction(pyaction->name(), ts);
         }
 
@@ -229,7 +211,7 @@ applyActions(const int reportStep,
     const auto simTime = asTimeT(now);
     for (const auto& action : actions.pending(this->actionState_, simTime)) {
         const auto actionResult = action->eval(context);
-        if (! actionResult.conditionSatisfied()) {
+        if (!actionResult.conditionSatisfied()) {
             ++non_triggered;
             logInactiveAction(action->name(), ts);
             continue;
@@ -245,8 +227,7 @@ applyActions(const int reportStep,
         const std::vector<std::string> wellpi_wells = action->wellpi_wells(schedule_.wellMatcher(reportStep), matches);
         const auto wellpi = fetchWellPI<Scalar>(this->wellModel_, wellpi_wells, this->comm_);
 
-        const auto sim_update_current = this->schedule_
-            .applyAction(reportStep, *action, matches, wellpi, true);
+        const auto sim_update_current = this->schedule_.applyAction(reportStep, *action, matches, wellpi, true);
 
         sim_update.append(sim_update_current);
         this->actionState_.add_run(*action, simTime, actionResult);
@@ -267,12 +248,12 @@ applyActions(const int reportStep,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void ActionHandler<Scalar, IndexTraits>::
-applySimulatorUpdate(const int report_step,
-                     const SimulatorUpdate& sim_update,
-                     const TransFunc& updateTrans,
-                     bool& commit_wellstate)
+template <typename Scalar, typename IndexTraits>
+void
+ActionHandler<Scalar, IndexTraits>::applySimulatorUpdate(const int report_step,
+                                                         const SimulatorUpdate& sim_update,
+                                                         const TransFunc& updateTrans,
+                                                         bool& commit_wellstate)
 {
     OPM_TIMEBLOCK(applySimulatorUpdate);
 
@@ -284,25 +265,23 @@ applySimulatorUpdate(const int report_step,
 
     if (sim_update.tran_update) {
         const auto& keywords = schedule_[report_step].geo_keywords();
-        ecl_state_.apply_schedule_keywords( keywords );
-        eclBroadcast(comm_, ecl_state_.getTransMult() );
+        ecl_state_.apply_schedule_keywords(keywords);
+        eclBroadcast(comm_, ecl_state_.getTransMult());
 
         // re-compute transmissibility
         updateTrans(true);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void ActionHandler<Scalar, IndexTraits>::
-evalUDQAssignments(const unsigned episodeIdx,
-                   UDQState& udq_state)
+template <typename Scalar, typename IndexTraits>
+void
+ActionHandler<Scalar, IndexTraits>::evalUDQAssignments(const unsigned episodeIdx, UDQState& udq_state)
 {
-    this->schedule_[episodeIdx].udq()
-        .eval_assign(this->schedule_.wellMatcher(episodeIdx),
-                     this->schedule_[episodeIdx].group_order(),
-                     this->schedule_.segmentMatcherFactory(episodeIdx),
-                     this->summaryState_,
-                     udq_state);
+    this->schedule_[episodeIdx].udq().eval_assign(this->schedule_.wellMatcher(episodeIdx),
+                                                  this->schedule_[episodeIdx].group_order(),
+                                                  this->schedule_.segmentMatcherFactory(episodeIdx),
+                                                  this->summaryState_,
+                                                  udq_state);
 }
 
 template class ActionHandler<double, BlackOilDefaultFluidSystemIndices>;

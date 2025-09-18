@@ -23,12 +23,15 @@
 #include <utility>
 #include <vector>
 
-namespace Opm { namespace util {
-    std::pair<std::vector<int>, int>
-    compressAndCountPartitionIDs(std::vector<int>&& parts0);
+namespace Opm
+{
+namespace util
+{
+    std::pair<std::vector<int>, int> compressAndCountPartitionIDs(std::vector<int>&& parts0);
 
     std::vector<int> compressPartitionIDs(std::vector<int>&& parts0);
     void compressPartitionIDs(std::vector<int>& parts0);
-}} // namespace Opm::util
+} // namespace util
+} // namespace Opm
 
 #endif // OPM_UTIL_COMPRESS_PARTITION_HPP_INCLUDED

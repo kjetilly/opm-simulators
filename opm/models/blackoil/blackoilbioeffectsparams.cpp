@@ -38,15 +38,16 @@
 #include <stdexcept>
 #include <type_traits>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableBioeffects , bool enableMICP>
-void BlackOilBioeffectsParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enableBioeffects, bool enableMICP>
+void
+BlackOilBioeffectsParams<Scalar>::initFromState(const EclipseState& eclState)
 {
-    // some sanity checks: 
+    // some sanity checks:
     // if biofilm is enabled, the BIOFILM keyword must be present,
     // if biofilm is disabled the keyword must not be present,
     // if MICP is enabled, the MICP keyword must be present, and
@@ -57,20 +58,17 @@ initFromState(const EclipseState& eclState)
                 throw std::runtime_error("Non-trivial MICP treatment requested at compile time, but "
                                          "the deck does not contain the MICP keyword");
             }
-        }
-        else {
+        } else {
             if (!eclState.runspec().biof()) {
                 throw std::runtime_error("Non-trivial Biofilm effects requested at compile time, but "
                                          "the deck does not contain the BIOFILM keyword");
             }
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().biof()) {
             throw std::runtime_error("Biofilm effects disabled at compile time, but the deck "
                                      "contains the BIOFILM keyword");
-        }
-        else if (eclState.runspec().micp()) {
+        } else if (eclState.runspec().micp()) {
             throw std::runtime_error("MICP treatment disabled at compile time, but the deck "
                                      "contains the MICP keyword");
         }
@@ -88,8 +86,7 @@ initFromState(const EclipseState& eclState)
     if (biofilmTables.empty()) {
         if constexpr (enableMICP) {
             throw std::runtime_error("MICP requires the BIOFPARA keyword");
-        }
-        else {
+        } else {
             throw std::runtime_error("BIOFILM requires the BIOFPARA keyword");
         }
     }
@@ -133,19 +130,23 @@ initFromState(const EclipseState& eclState)
         bioDiffCoefficient_[pvtRegionIdx].resize(BlackOilBioeffectsParams::numDiffCoef, 0.0);
         if (!diffMICPTables.empty()) {
             const DiffMICPTable& diffMICPTable = diffMICPTables.getTable<DiffMICPTable>(pvtRegionIdx);
-            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::micrDiffIdx] = diffMICPTable.getMicrobialDiffusion().front();
-            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::oxygDiffIdx] = diffMICPTable.getOxygenDiffusion().front();
-            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::ureaDiffIdx] = diffMICPTable.getUreaDiffusion().front();
+            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::micrDiffIdx]
+                = diffMICPTable.getMicrobialDiffusion().front();
+            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::oxygDiffIdx]
+                = diffMICPTable.getOxygenDiffusion().front();
+            bioDiffCoefficient_[pvtRegionIdx][BlackOilBioeffectsParams::ureaDiffIdx]
+                = diffMICPTable.getUreaDiffusion().front();
         }
     }
-    
+
     if constexpr (!enableMICP) {
         const TableContainer& pcfactTables = tableManager.getPcfactTables();
         if (!pcfactTables.empty()) {
             pcfactTable_.resize(numSatRegions);
             for (size_t i = 0; i < pcfactTables.size(); ++i) {
                 const PcfactTable& pcfactTable = pcfactTables.getTable<PcfactTable>(i);
-                pcfactTable_[i].setXYContainers(pcfactTable.getPorosityChangeColumn(), pcfactTable.getPcMultiplierColumn());
+                pcfactTable_[i].setXYContainers(pcfactTable.getPorosityChangeColumn(),
+                                                pcfactTable.getPcMultiplierColumn());
             }
         }
     }
@@ -154,24 +155,24 @@ initFromState(const EclipseState& eclState)
     if (permfactTables.empty()) {
         if constexpr (enableMICP) {
             throw std::runtime_error("MICP requires the PERMFACT keyword");
-        }
-        else {
+        } else {
             throw std::runtime_error("BIOFILM requires the PERMFACT keyword");
         }
     }
     permfactTable_.resize(numSatRegions);
     for (std::size_t i = 0; i < permfactTables.size(); ++i) {
         const PermfactTable& permfactTable = permfactTables.getTable<PermfactTable>(i);
-        permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(), permfactTable.getPermeabilityMultiplierColumn());
+        permfactTable_[i].setXYContainers(permfactTable.getPorosityChangeColumn(),
+                                          permfactTable.getPermeabilityMultiplierColumn());
     }
 }
 #endif
 
-#define INSTANTIATE_TYPE(T)                                                               \
-    template struct BlackOilBioeffectsParams<T>;                                                \
-    template void BlackOilBioeffectsParams<T>::initFromState<false,false>(const EclipseState&); \
-    template void BlackOilBioeffectsParams<T>::initFromState<true,false>(const EclipseState&);  \
-    template void BlackOilBioeffectsParams<T>::initFromState<true,true>(const EclipseState&);
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilBioeffectsParams<T>;                                                                       \
+    template void BlackOilBioeffectsParams<T>::initFromState<false, false>(const EclipseState&);                       \
+    template void BlackOilBioeffectsParams<T>::initFromState<true, false>(const EclipseState&);                        \
+    template void BlackOilBioeffectsParams<T>::initFromState<true, true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)
 

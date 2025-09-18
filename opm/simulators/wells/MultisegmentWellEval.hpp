@@ -33,29 +33,32 @@
 #include <utility>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class ConvergenceReport;
 class Schedule;
 class SummaryState;
 
-template<class FluidSystem, class Indices> class WellInterfaceIndices;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class FluidSystem, class Indices>
+class WellInterfaceIndices;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename FluidSystem, typename Indices>
-class MultisegmentWellEval : public MultisegmentWellGeneric<typename FluidSystem::Scalar,
-                                                            typename FluidSystem::IndexTraitsType>
+template <typename FluidSystem, typename Indices>
+class MultisegmentWellEval
+    : public MultisegmentWellGeneric<typename FluidSystem::Scalar, typename FluidSystem::IndexTraitsType>
 {
 protected:
     using Scalar = typename FluidSystem::Scalar;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
-    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem,Indices>;
+    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem, Indices>;
     static constexpr int numWellEq = PrimaryVariables::numWellEq;
     static constexpr int SPres = PrimaryVariables::SPres;
     static constexpr int WQTotal = PrimaryVariables::WQTotal;
 
     using Equations = MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, Indices::numEq>;
-    using MSWSegments = MultisegmentWellSegments<FluidSystem,Indices>;
+    using MSWSegments = MultisegmentWellSegments<FluidSystem, Indices>;
 
     using BVector = typename Equations::BVector;
     using BVectorWell = typename Equations::BVectorWell;
@@ -69,7 +72,9 @@ protected:
 public:
     //! \brief Returns a const reference to equation system.
     const Equations& linSys() const
-    { return linSys_; }
+    {
+        return linSys_;
+    }
     const ParallelWellInfo<Scalar>& pw_info_;
 
 protected:
@@ -110,12 +115,11 @@ protected:
                                          const Scalar relaxed_inner_tolerance_flow_ms_well,
                                          const Scalar tolerance_pressure_ms_wells,
                                          const Scalar relaxed_inner_tolerance_pressure_ms_well,
-                                         const bool relax_tolerance, 
+                                         const bool relax_tolerance,
                                          const bool well_is_stopped) const;
 
-    std::pair<bool, std::vector<Scalar> >
-    getFiniteWellResiduals(const std::vector<Scalar>& B_avg,
-                           DeferredLogger& deferred_logger) const;
+    std::pair<bool, std::vector<Scalar>> getFiniteWellResiduals(const std::vector<Scalar>& B_avg,
+                                                                DeferredLogger& deferred_logger) const;
 
     Scalar getControlTolerance(const WellState<Scalar, IndexTraits>& well_state,
                                const Scalar tolerance_wells,
@@ -128,16 +132,14 @@ protected:
                                    const Scalar tolerance_pressure_ms_wells,
                                    DeferredLogger& deferred_logger) const;
 
-    void assembleAccelerationPressureLoss(const int seg,
-                                          WellState<Scalar, IndexTraits>& well_state);
+    void assembleAccelerationPressureLoss(const int seg, WellState<Scalar, IndexTraits>& well_state);
 
-    EvalWell pressureDropAutoICD(const int seg,
-                                 const UnitSystem& unit_system) const;
+    EvalWell pressureDropAutoICD(const int seg, const UnitSystem& unit_system) const;
 
     // convert a Eval from reservoir to contain the derivative related to wells
     EvalWell extendEval(const Eval& in) const;
 
-    const WellInterfaceIndices<FluidSystem,Indices>& baseif_;
+    const WellInterfaceIndices<FluidSystem, Indices>& baseif_;
 
     Equations linSys_; //!< The equation system
     PrimaryVariables primary_variables_; //!< The primary variables
@@ -150,6 +152,6 @@ protected:
     std::vector<Scalar> cell_perforation_pressure_diffs_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_MULTISEGMENTWELL_GENERIC_HEADER_INCLUDED

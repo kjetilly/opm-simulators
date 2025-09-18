@@ -27,7 +27,8 @@
 #ifndef OPM_THREAD_MANAGER_HPP
 #define OPM_THREAD_MANAGER_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Simplifies multi-threaded capabilities.
@@ -64,7 +65,9 @@ public:
      * \brief Return the maximum number of threads of the current process.
      */
     static unsigned maxThreads()
-    { return static_cast<unsigned>(numThreads_); }
+    {
+        return static_cast<unsigned>(numThreads_);
+    }
 
     /*!
      * \brief Return the index of the current OpenMP thread

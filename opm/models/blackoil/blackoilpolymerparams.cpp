@@ -38,9 +38,10 @@ copyright holders.
 #include <stdexcept>
 #include <type_traits>
 
-namespace {
+namespace
+{
 
-template<class To, class From>
+template <class To, class From>
 std::vector<std::vector<To>>
 convertVecToVec(const std::vector<std::vector<From>>& input)
 {
@@ -53,15 +54,16 @@ convertVecToVec(const std::vector<std::vector<From>>& input)
     return output;
 }
 
-}
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enablePolymer, bool enablePolymerMolarWeight>
-void BlackOilPolymerParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enablePolymer, bool enablePolymerMolarWeight>
+void
+BlackOilPolymerParams<Scalar>::initFromState(const EclipseState& eclState)
 {
     // some sanity checks: if polymers are enabled, the POLYMER keyword must be
     // present, if polymers are disabled the keyword must not be present.
@@ -70,8 +72,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Non-trivial polymer treatment requested at compile time, but "
                                      "the deck does not contain the POLYMER keyword");
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().phases().active(Phase::POLYMER)) {
             throw std::runtime_error("Polymer treatment disabled at compile time, but the deck "
                                      "contains the POLYMER keyword");
@@ -83,8 +84,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Polymer molecular weight tracking is enabled at compile time, but "
                                      "the deck does not contain the POLYMW keyword");
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().phases().active(Phase::POLYMW)) {
             throw std::runtime_error("Polymer molecular weight tracking is disabled at compile time, but the deck "
                                      "contains the POLYMW keyword");
@@ -105,7 +105,7 @@ initFromState(const EclipseState& eclState)
     unsigned numSatRegions = tableManager.getTabdims().getNumSatTables();
     setNumSatRegions(numSatRegions);
 
-           // initialize the objects which deal with the PLYROCK keyword
+    // initialize the objects which deal with the PLYROCK keyword
     const auto& plyrockTables = tableManager.getPlyrockTables();
     if (!plyrockTables.empty()) {
         assert(numSatRegions == plyrockTables.size());
@@ -118,12 +118,11 @@ initFromState(const EclipseState& eclState)
                        static_cast<AdsorptionBehaviour>(plyrockTable.getAdsorbtionIndexColumn()[0]),
                        plyrockTable.getMaxAdsorbtionColumn()[0]);
         }
-    }
-    else {
+    } else {
         throw std::runtime_error("PLYROCK must be specified in POLYMER runs\n");
     }
 
-           // initialize the objects which deal with the PLYADS keyword
+    // initialize the objects which deal with the PLYADS keyword
     const auto& plyadsTables = tableManager.getPlyadsTables();
     if (!plyadsTables.empty()) {
         assert(numSatRegions == plyadsTables.size());
@@ -134,8 +133,7 @@ initFromState(const EclipseState& eclState)
             const auto& ads = plyadsTable.getAdsorbedPolymerColumn();
             plyadsAdsorbedPolymer_[satRegionIdx].setXYContainers(c, ads);
         }
-    }
-    else {
+    } else {
         throw std::runtime_error("PLYADS must be specified in POLYMER runs\n");
     }
 
@@ -143,15 +141,14 @@ initFromState(const EclipseState& eclState)
     unsigned numPvtRegions = tableManager.getTabdims().getNumPVTTables();
     plyviscViscosityMultiplierTable_.resize(numPvtRegions);
 
-           // initialize the objects which deal with the PLYVISC keyword
+    // initialize the objects which deal with the PLYVISC keyword
     const auto& plyviscTables = tableManager.getPlyviscTables();
     if (!plyviscTables.empty()) {
         // different viscosity model is used for POLYMW
         if constexpr (enablePolymerMolarWeight) {
             OpmLog::warning("PLYVISC should not be used in POLYMW runs, "
                             "it will have no effect. A viscosity model based on PLYVMH is used instead.\n");
-        }
-        else {
+        } else {
             assert(numPvtRegions == plyviscTables.size());
             for (unsigned pvtRegionIdx = 0; pvtRegionIdx < numPvtRegions; ++pvtRegionIdx) {
                 const auto& plyadsTable = plyviscTables.template getTable<PlyviscTable>(pvtRegionIdx);
@@ -161,12 +158,11 @@ initFromState(const EclipseState& eclState)
                 plyviscViscosityMultiplierTable_[pvtRegionIdx].setXYContainers(c, visc);
             }
         }
-    }
-    else if constexpr (!enablePolymerMolarWeight) {
+    } else if constexpr (!enablePolymerMolarWeight) {
         throw std::runtime_error("PLYVISC must be specified in POLYMER runs\n");
     }
 
-           // initialize the objects which deal with the PLYMAX keyword
+    // initialize the objects which deal with the PLYMAX keyword
     const auto& plymaxTables = tableManager.getPlymaxTables();
     const unsigned numMixRegions = plymaxTables.size();
     setNumMixRegions(numMixRegions, enablePolymerMolarWeight);
@@ -175,24 +171,21 @@ initFromState(const EclipseState& eclState)
             const auto& plymaxTable = plymaxTables.template getTable<PlymaxTable>(mixRegionIdx);
             plymaxMaxConcentration_[mixRegionIdx] = plymaxTable.getPolymerConcentrationColumn()[0];
         }
-    }
-    else {
+    } else {
         throw std::runtime_error("PLYMAX must be specified in POLYMER runs\n");
     }
 
     if (!eclState.getTableManager().getPlmixparTable().empty()) {
         if constexpr (enablePolymerMolarWeight) {
             OpmLog::warning("PLMIXPAR should not be used in POLYMW runs, it will have no effect.\n");
-        }
-        else {
+        } else {
             const auto& plmixparTable = eclState.getTableManager().getPlmixparTable();
             // initialize the objects which deal with the PLMIXPAR keyword
             for (unsigned mixRegionIdx = 0; mixRegionIdx < numMixRegions; ++mixRegionIdx) {
                 plymixparToddLongstaff_[mixRegionIdx] = plmixparTable[mixRegionIdx].todd_langstaff;
             }
         }
-    }
-    else if constexpr (!enablePolymerMolarWeight) {
+    } else if constexpr (!enablePolymerMolarWeight) {
         throw std::runtime_error("PLMIXPAR must be specified in POLYMER runs\n");
     }
 
@@ -215,9 +208,10 @@ initFromState(const EclipseState& eclState)
             auto waterVelocity = plyshlogTable.getWaterVelocityColumn().vectorCopy();
             auto shearMultiplier = plyshlogTable.getShearMultiplierColumn().vectorCopy();
 
-                   // do the unit version here for the waterVelocity
+            // do the unit version here for the waterVelocity
             UnitSystem unitSystem = eclState.getDeckUnitSystem();
-            double siFactor = hasShrate_? unitSystem.parse("1/Time").getSIScaling() : unitSystem.parse("Length/Time").getSIScaling();
+            double siFactor = hasShrate_ ? unitSystem.parse("1/Time").getSIScaling()
+                                         : unitSystem.parse("Length/Time").getSIScaling();
             for (std::size_t i = 0; i < waterVelocity.size(); ++i) {
                 waterVelocity[i] *= siFactor;
                 // for plyshlog the input must be stored as logarithms
@@ -225,7 +219,8 @@ initFromState(const EclipseState& eclState)
                 waterVelocity[i] = std::log(waterVelocity[i]);
             }
 
-            Scalar refViscMult = plyviscViscosityMultiplierTable_[pvtRegionIdx].eval(plyshlogRefPolymerConcentration, /*extrapolate=*/true);
+            Scalar refViscMult = plyviscViscosityMultiplierTable_[pvtRegionIdx].eval(plyshlogRefPolymerConcentration,
+                                                                                     /*extrapolate=*/true);
             // convert the table using referece conditions
             for (std::size_t i = 0; i < waterVelocity.size(); ++i) {
                 shearMultiplier[i] *= refViscMult;
@@ -250,12 +245,10 @@ initFromState(const EclipseState& eclState)
         shrate_.resize(numPvtRegions);
         for (unsigned pvtRegionIdx = 0; pvtRegionIdx < numPvtRegions; ++pvtRegionIdx) {
             if (shrateTable.empty()) {
-                shrate_[pvtRegionIdx] = 4.8; //default;
-            }
-            else if (shrateTable.size() == numPvtRegions) {
+                shrate_[pvtRegionIdx] = 4.8; // default;
+            } else if (shrateTable.size() == numPvtRegions) {
                 shrate_[pvtRegionIdx] = shrateTable[pvtRegionIdx].rate;
-            }
-            else {
+            } else {
                 throw std::runtime_error("SHRATE must either have 0 or number of NUMPVT entries\n");
             }
         }
@@ -271,12 +264,11 @@ initFromState(const EclipseState& eclState)
                 plyvmhCoefficients_[regionIdx].gamma = plyvmhTable[regionIdx].gamma;
                 plyvmhCoefficients_[regionIdx].kappa = plyvmhTable[regionIdx].kappa;
             }
-        }
-        else {
+        } else {
             throw std::runtime_error("PLYVMH keyword must be specified in POLYMW rus \n");
         }
 
-               // handling PLYMWINJ keyword
+        // handling PLYMWINJ keyword
         const auto& plymwinjTables = tableManager.getPlymwinjTables();
         for (const auto& table : plymwinjTables) {
             const int tableNumber = table.first;
@@ -296,7 +288,7 @@ initFromState(const EclipseState& eclState)
             }
         }
 
-               // handling SKPRWAT keyword
+        // handling SKPRWAT keyword
         const auto& skprwatTables = tableManager.getSkprwatTables();
         for (const auto& table : skprwatTables) {
             const int tableNumber = table.first;
@@ -316,7 +308,7 @@ initFromState(const EclipseState& eclState)
             }
         }
 
-               // handling SKPRPOLY keyword
+        // handling SKPRPOLY keyword
         const auto& skprpolyTables = tableManager.getSkprpolyTables();
         for (const auto& table : skprpolyTables) {
             const int tableNumber = table.first;
@@ -329,16 +321,11 @@ initFromState(const EclipseState& eclState)
                 const std::vector<Scalar> tp(throughput.begin(), throughput.end());
                 const std::vector<Scalar> wv(watervelocity.begin(), watervelocity.end());
                 const auto sp = convertVecToVec<float>(skinpressure);
-                SkprpolyTable tablefunc {
-                    refPolymerConcentration,
-                    TabulatedTwoDFunction(tp, wv, sp, true, false)
-                };
+                SkprpolyTable tablefunc {refPolymerConcentration, TabulatedTwoDFunction(tp, wv, sp, true, false)};
                 skprpolyTables_[tableNumber] = std::move(tablefunc);
             } else {
-                SkprpolyTable tablefunc {
-                    refPolymerConcentration,
-                    TabulatedTwoDFunction(throughput, watervelocity, skinpressure, true, false)
-                };
+                SkprpolyTable tablefunc {refPolymerConcentration,
+                                         TabulatedTwoDFunction(throughput, watervelocity, skinpressure, true, false)};
                 skprpolyTables_[tableNumber] = std::move(tablefunc);
             }
         }
@@ -346,9 +333,9 @@ initFromState(const EclipseState& eclState)
 }
 #endif // HAVE_ECL_INPUT
 
-template<class Scalar>
-void BlackOilPolymerParams<Scalar>::
-setNumSatRegions(unsigned numRegions)
+template <class Scalar>
+void
+BlackOilPolymerParams<Scalar>::setNumSatRegions(unsigned numRegions)
 {
     plyrockDeadPoreVolume_.resize(numRegions);
     plyrockResidualResistanceFactor_.resize(numRegions);
@@ -358,9 +345,9 @@ setNumSatRegions(unsigned numRegions)
     plyadsAdsorbedPolymer_.resize(numRegions);
 }
 
-template<class Scalar>
-void BlackOilPolymerParams<Scalar>::
-setNumMixRegions(unsigned numRegions, bool enablePolymerMolarWeight)
+template <class Scalar>
+void
+BlackOilPolymerParams<Scalar>::setNumMixRegions(unsigned numRegions, bool enablePolymerMolarWeight)
 {
     plymaxMaxConcentration_.resize(numRegions);
     plymixparToddLongstaff_.resize(numRegions);
@@ -370,14 +357,14 @@ setNumMixRegions(unsigned numRegions, bool enablePolymerMolarWeight)
     }
 }
 
-template<class Scalar>
-void BlackOilPolymerParams<Scalar>::
-setPlyrock(unsigned satRegionIdx,
-           const Scalar& plyrockDeadPoreVolume,
-           const Scalar& plyrockResidualResistanceFactor,
-           const Scalar& plyrockRockDensityFactor,
-           const Scalar& plyrockAdsorbtionIndex,
-           const Scalar& plyrockMaxAdsorbtion)
+template <class Scalar>
+void
+BlackOilPolymerParams<Scalar>::setPlyrock(unsigned satRegionIdx,
+                                          const Scalar& plyrockDeadPoreVolume,
+                                          const Scalar& plyrockResidualResistanceFactor,
+                                          const Scalar& plyrockRockDensityFactor,
+                                          const Scalar& plyrockAdsorbtionIndex,
+                                          const Scalar& plyrockMaxAdsorbtion)
 {
     plyrockDeadPoreVolume_[satRegionIdx] = plyrockDeadPoreVolume;
     plyrockResidualResistanceFactor_[satRegionIdx] = plyrockResidualResistanceFactor;
@@ -386,11 +373,11 @@ setPlyrock(unsigned satRegionIdx,
     plyrockMaxAdsorbtion_[satRegionIdx] = plyrockMaxAdsorbtion;
 }
 
-#define INSTANTIATE_TYPE(T)                                                                  \
-    template struct BlackOilPolymerParams<T>;                                                \
-    template void BlackOilPolymerParams<T>::initFromState<false,false>(const EclipseState&); \
-    template void BlackOilPolymerParams<T>::initFromState<true,false>(const EclipseState&);  \
-    template void BlackOilPolymerParams<T>::initFromState<true,true>(const EclipseState&);
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilPolymerParams<T>;                                                                          \
+    template void BlackOilPolymerParams<T>::initFromState<false, false>(const EclipseState&);                          \
+    template void BlackOilPolymerParams<T>::initFromState<true, false>(const EclipseState&);                           \
+    template void BlackOilPolymerParams<T>::initFromState<true, true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)
 

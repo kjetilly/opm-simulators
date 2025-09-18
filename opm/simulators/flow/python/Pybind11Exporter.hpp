@@ -1,16 +1,17 @@
 #ifndef OPM_PYBIND11_EXPORTER_HEADER_INCLUDED
 #define OPM_PYBIND11_EXPORTER_HEADER_INCLUDED
 
-#include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
+#include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
-//#include <pybind11/embed.h>
+// #include <pybind11/embed.h>
 
 namespace py = pybind11;
 
-namespace Opm::Pybind {
-    void export_PyBlackOilSimulator(py::module& m);
-    void export_PyGasWaterSimulator(py::module& m);
-}
+namespace Opm::Pybind
+{
+void export_PyBlackOilSimulator(py::module& m);
+void export_PyGasWaterSimulator(py::module& m);
+} // namespace Opm::Pybind
 
-#endif //OPM_PYBIND11_EXPORTER_HEADER_INCLUDED
+#endif // OPM_PYBIND11_EXPORTER_HEADER_INCLUDED

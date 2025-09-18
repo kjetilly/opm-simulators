@@ -28,19 +28,19 @@
 #include "config.h"
 
 #include <dune/common/exceptions.hh>
-#include <dune/grid/yaspgrid.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #if HAVE_DUNE_ALUGRID
 #include <dune/alugrid/grid.hh>
 #if HAVE_MPI
-template<int dim, Dune::ALUGridElementType elType>
+template <int dim, Dune::ALUGridElementType elType>
 using AluGrid = Dune::ALUGrid<dim, dim, elType, Dune::nonconforming, Dune::ALUGridMPIComm>;
 #else
-template<int dim, Dune::ALUGridElementType elType>
+template <int dim, Dune::ALUGridElementType elType>
 using AluGrid = Dune::ALUGrid<dim, dim, elType, Dune::nonconforming, Dune::ALUGridNoComm>;
-#endif //HAVE_MPI
+#endif // HAVE_MPI
 #endif
 
 #include <dune/common/version.hh>
@@ -55,17 +55,18 @@ using LocalPosition = QuadratureGeom::LocalPosition;
 using GlobalPosition = QuadratureGeom::GlobalPosition;
 
 // function prototypes
-GlobalPosition::field_type f(const GlobalPosition &pos);
+GlobalPosition::field_type f(const GlobalPosition& pos);
 void testIdenityMapping();
 template <class Grid>
-void writeTetrahedronSubControlVolumes(const Grid &grid);
+void writeTetrahedronSubControlVolumes(const Grid& grid);
 void testTetrahedron();
 template <class Grid>
-void writeCubeSubControlVolumes(const Grid &grid);
+void writeCubeSubControlVolumes(const Grid& grid);
 void testCube();
 void testQuadrature();
 
-GlobalPosition::field_type f(const GlobalPosition &pos)
+GlobalPosition::field_type
+f(const GlobalPosition& pos)
 {
     GlobalPosition::field_type result = 1;
     for (unsigned i = 0; i < GlobalPosition::dimension; ++i)
@@ -73,18 +74,12 @@ GlobalPosition::field_type f(const GlobalPosition &pos)
     return result;
 }
 
-void testIdenityMapping()
+void
+testIdenityMapping()
 {
     QuadratureGeom foo;
 
-    Scalar corners[][3] = { { 0, 0, 0 },
-                            { 1, 0, 0 },
-                            { 0, 1, 0 },
-                            { 1, 1, 0 },
-                            { 0, 0, 1 },
-                            { 1, 0, 1 },
-                            { 0, 1, 1 },
-                            { 1, 1, 1 } };
+    Scalar corners[][3] = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {1, 1, 0}, {0, 0, 1}, {1, 0, 1}, {0, 1, 1}, {1, 1, 1}};
     foo.setCorners(corners, 8);
 
     std::cout << "testing identity mapping...\n";
@@ -109,7 +104,8 @@ void testIdenityMapping()
 }
 
 template <class Grid>
-void writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
+void
+writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
 {
 #if HAVE_DUNE_ALUGRID
     using GridView = typename Grid::LeafGridView;
@@ -119,23 +115,22 @@ void writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
     using GridFactory2 = Dune::GridFactory<Grid2>;
 
     GridFactory2 gf2;
-    const auto &gridView = grid.leafView();
+    const auto& gridView = grid.leafView();
     using Stencil = Opm::VcfvStencil<Scalar, GridView>;
-    using Mapper = typename Stencil :: Mapper;
+    using Mapper = typename Stencil ::Mapper;
 
     Mapper mapper(gridView, Dune::mcmgVertexLayout());
     Stencil stencil(gridView, mapper);
 
     auto eIt = gridView.template begin<0>();
-    const auto &eEndIt = gridView.template end<0>();
+    const auto& eEndIt = gridView.template end<0>();
     for (; eIt != eEndIt; ++eIt) {
         stencil.update(*eIt);
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
-            const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
+            const auto& scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
             for (unsigned i = 0; i < scvLocalGeom.numCorners; ++i) {
-                GlobalPosition pos(
-                    eIt->geometry().global(scvLocalGeom.corner(i)));
+                GlobalPosition pos(eIt->geometry().global(scvLocalGeom.corner(i)));
                 gf2.insertVertex(pos);
             }
         }
@@ -146,7 +141,7 @@ void writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
     for (; eIt != eEndIt; ++eIt) {
         stencil.update(*eIt);
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
-            const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
+            const auto& scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
             std::vector<unsigned> vertexIndices;
             for (unsigned i = 0; i < scvLocalGeom.numCorners; ++i) {
@@ -154,8 +149,7 @@ void writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
                 ++cornerOffset;
             }
 
-            gf2.insertElement(Dune::GeometryType(/*topologyId=*/(1 << dim) - 1, dim),
-                              vertexIndices);
+            gf2.insertElement(Dune::GeometryType(/*topologyId=*/(1 << dim) - 1, dim), vertexIndices);
         }
     }
 
@@ -166,13 +160,14 @@ void writeTetrahedronSubControlVolumes([[maybe_unused]] const Grid& grid)
 #endif // HAVE_DUNE_ALUGRID
 }
 
-void testTetrahedron()
+void
+testTetrahedron()
 {
 #if HAVE_DUNE_ALUGRID
     using Grid = AluGrid<dim, Dune::simplex>;
     using GridFactory = Dune::GridFactory<Grid>;
     GridFactory gf;
-    Scalar corners[][3] = { { 0, 0, 0 }, { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
+    Scalar corners[][3] = {{0, 0, 0}, {1, 0, 0}, {0, 1, 0}, {0, 0, 1}};
 
     for (unsigned i = 0; i < sizeof(corners) / sizeof(corners[0]); ++i) {
         GlobalPosition pos;
@@ -180,7 +175,7 @@ void testTetrahedron()
             pos[j] = corners[i][j];
         gf.insertVertex(pos);
     }
-    std::vector<unsigned int> v = { 0, 1, 2, 3 };
+    std::vector<unsigned int> v = {0, 1, 2, 3};
     // in Dune >= 2.6 topologyIds seem to be opaque integers. WTF!?
     gf.insertElement(Dune::GeometryType(/*topologyId=*/0, dim), v);
     const auto grid = gf.createGrid();
@@ -191,7 +186,8 @@ void testTetrahedron()
 }
 
 template <class Grid>
-void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
+void
+writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
 {
 #if HAVE_DUNE_ALUGRID
     using GridView = typename Grid::LeafGridView;
@@ -201,21 +197,20 @@ void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
     using Stencil = Opm::VcfvStencil<Scalar, GridView>;
 
     GridFactory2 gf2;
-    const auto &gridView = grid.leafView();
+    const auto& gridView = grid.leafView();
 
     using VertexMapper = Dune::MultipleCodimMultipleGeomTypeMapper<GridView>;
     VertexMapper vertexMapper(gridView, Dune::mcmgVertexLayout());
     Stencil stencil(gridView, vertexMapper);
     auto eIt = gridView.template begin<0>();
-    const auto &eEndIt = gridView.template end<0>();
+    const auto& eEndIt = gridView.template end<0>();
     for (; eIt != eEndIt; ++eIt) {
         stencil.update(*eIt);
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
-            const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
+            const auto& scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
             for (unsigned i = 0; i < scvLocalGeom.numCorners; ++i) {
-                GlobalPosition pos(
-                    eIt->geometry().global(scvLocalGeom.corner(i)));
+                GlobalPosition pos(eIt->geometry().global(scvLocalGeom.corner(i)));
                 gf2.insertVertex(pos);
             }
         }
@@ -226,7 +221,7 @@ void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
     for (; eIt != eEndIt; ++eIt) {
         stencil.update(*eIt);
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
-            const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
+            const auto& scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
             std::vector<unsigned int> vertexIndices;
             for (unsigned i = 0; i < scvLocalGeom.numCorners; ++i) {
@@ -234,8 +229,7 @@ void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
                 ++cornerOffset;
             }
 
-            gf2.insertElement(Dune::GeometryType(/*topologyId=*/(1 << dim) - 1, dim),
-                              vertexIndices);
+            gf2.insertElement(Dune::GeometryType(/*topologyId=*/(1 << dim) - 1, dim), vertexIndices);
         }
     }
 
@@ -246,20 +240,23 @@ void writeCubeSubControlVolumes([[maybe_unused]] const Grid& grid)
 #endif // HAVE_DUNE_ALUGRID
 }
 
-void testCube()
+void
+testCube()
 {
 #if HAVE_DUNE_ALUGRID
     using Grid = AluGrid<dim, Dune::cube>;
     using GridFactory = Dune::GridFactory<Grid>;
     GridFactory gf;
-    Scalar corners[][3] = { { 0, 0, 0 },
-                            { 1, 0, 0 },
-                            { 0, 2, 0 },
-                            { 3, 3, 0 },
-                            { 0, 0, 4 },
-                            { 5, 0, 5 },
-                            { 0, 6, 6 },
-                            { 7, 7, 7 }, };
+    Scalar corners[][3] = {
+        {0, 0, 0},
+        {1, 0, 0},
+        {0, 2, 0},
+        {3, 3, 0},
+        {0, 0, 4},
+        {5, 0, 5},
+        {0, 6, 6},
+        {7, 7, 7},
+    };
 
     for (unsigned i = 0; i < sizeof(corners) / sizeof(corners[0]); ++i) {
         GlobalPosition pos;
@@ -267,7 +264,7 @@ void testCube()
             pos[j] = corners[i][j];
         gf.insertVertex(pos);
     }
-    std::vector<unsigned int> v = { 0, 1, 2, 3, 4, 5, 6, 7 };
+    std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5, 6, 7};
     // in Dune >= 2.6 topologyIds seem to be opaque integers. WTF!?
     gf.insertElement(Dune::GeometryType((1 << dim) - 1, dim), v);
     const auto grid = gf.createGrid();
@@ -277,7 +274,8 @@ void testCube()
 #endif // HAVE_DUNE_ALUGRID
 }
 
-void testQuadrature()
+void
+testQuadrature()
 {
     std::cout << "testing SCV quadrature...\n";
 
@@ -298,24 +296,22 @@ void testQuadrature()
     Scalar result = 0;
     // instanciate a stencil
     using Stencil = Opm::VcfvStencil<Scalar, GridView>;
-    using Mapper = typename Stencil :: Mapper;
+    using Mapper = typename Stencil ::Mapper;
 
     Mapper mapper(gridView, Dune::mcmgVertexLayout());
     Stencil stencil(gridView, mapper);
     for (; eIt != eEndIt; ++eIt) {
-        const auto &elemGeom = eIt->geometry();
+        const auto& elemGeom = eIt->geometry();
 
         stencil.update(*eIt);
 
         // loop over all sub-control volumes
         for (unsigned scvIdx = 0; scvIdx < stencil.numDof(); ++scvIdx) {
-            const auto &scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
+            const auto& scvLocalGeom = stencil.subControlVolume(scvIdx).localGeometry();
 
             Dune::GeometryType geomType = scvLocalGeom.type();
             static const unsigned quadratureOrder = 2;
-            const auto &rule
-                = Dune::QuadratureRules<Scalar, dim>::rule(geomType,
-                                                           quadratureOrder);
+            const auto& rule = Dune::QuadratureRules<Scalar, dim>::rule(geomType, quadratureOrder);
 
             // integrate f over the sub-control volume
             for (auto it = rule.begin(); it != rule.end(); ++it) {
@@ -325,19 +321,19 @@ void testQuadrature()
 
                 Scalar fval = f(posGlobal);
                 Scalar weight = it->weight();
-                Scalar detjac = scvLocalGeom.integrationElement(posScvLocal)
-                                * elemGeom.integrationElement(posElemLocal);
+                Scalar detjac
+                    = scvLocalGeom.integrationElement(posScvLocal) * elemGeom.integrationElement(posElemLocal);
 
                 result += fval * weight * detjac;
             }
         }
     }
 
-    std::cout << "result: " << result
-              << " (expected value: " << 1.0 / (1 << dim) << ")\n";
+    std::cout << "result: " << result << " (expected value: " << 1.0 / (1 << dim) << ")\n";
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     // initialize MPI, finalize is done automatically on exit
     Dune::MPIHelper::instance(argc, argv);
@@ -346,8 +342,7 @@ int main(int argc, char **argv)
 // test the quadrature in a tetrahedron. since the CLang compiler
 // prior to version 3.2 generates incorrect code here, we do not
 // do it if the compiler is clang 3.1 or older.
-#if !__clang__ || __clang_major__ > 3                                          \
-    || (__clang_major__ == 3 && __clang_minor__ >= 3)
+#if !__clang__ || __clang_major__ > 3 || (__clang_major__ == 3 && __clang_minor__ >= 3)
     testTetrahedron();
     testCube();
 #endif

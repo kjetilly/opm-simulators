@@ -2,7 +2,7 @@
 // vi: set et ts=4 sw=4 sts=4:
 /*
   Copyright 2023 INRIA
-  
+
   This file is part of the Open Porous Media project (OPM).
 
   OPM is free software: you can redistribute it and/or modify
@@ -30,9 +30,9 @@
 #ifndef OPM_FLOW_PROBLEM_HPP
 #define OPM_FLOW_PROBLEM_HPP
 
-#include <dune/common/version.hh>
-#include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/version.hh>
 
 #include <opm/common/utility/TimeService.hpp>
 
@@ -47,8 +47,8 @@
 #include <opm/material/thermal/EclThermalLawManager.hpp>
 
 #include <opm/models/common/directionalmobility.hh>
-#include <opm/models/utils/pffgridvector.hh>
 #include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/utils/pffgridvector.hh>
 
 #include <opm/output/eclipse/EclipseIO.hpp>
 
@@ -79,7 +79,8 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -88,13 +89,13 @@ namespace Opm {
  *        commercial ECLiPSE simulator.
  */
 template <class TypeTag>
-class FlowProblem : public GetPropType<TypeTag, Properties::BaseProblem>
-                  , public FlowGenericProblem<GetPropType<TypeTag, Properties::GridView>,
+class FlowProblem : public GetPropType<TypeTag, Properties::BaseProblem>,
+                    public FlowGenericProblem<GetPropType<TypeTag, Properties::GridView>,
                                               GetPropType<TypeTag, Properties::FluidSystem>>
 {
 protected:
-    using BaseType = FlowGenericProblem<GetPropType<TypeTag, Properties::GridView>,
-                                        GetPropType<TypeTag, Properties::FluidSystem>>;
+    using BaseType
+        = FlowGenericProblem<GetPropType<TypeTag, Properties::GridView>, GetPropType<TypeTag, Properties::FluidSystem>>;
     using ParentType = GetPropType<TypeTag, Properties::BaseProblem>;
     using Implementation = GetPropType<TypeTag, Properties::Problem>;
 
@@ -170,10 +171,10 @@ protected:
 public:
     using BaseType::briefDescription;
     using BaseType::helpPreamble;
+    using BaseType::porosity;
+    using BaseType::rockCompressibility;
     using BaseType::shouldWriteOutput;
     using BaseType::shouldWriteRestartFile;
-    using BaseType::rockCompressibility;
-    using BaseType::porosity;
 
     /*!
      * \copydoc FvBaseProblem::registerParameters
@@ -194,8 +195,7 @@ public:
      * \param argv Command line parameters
      * \param paramIdx Index of parameter to handle
      */
-    static int handlePositionalParameter(std::function<void(const std::string&,
-                                                            const std::string&)> addKey,
+    static int handlePositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
                                          std::set<std::string>& seenParams,
                                          std::string& errorMsg,
                                          int,
@@ -203,11 +203,7 @@ public:
                                          int paramIdx,
                                          int)
     {
-        return detail::eclPositionalParameter(addKey,
-                                              seenParams,
-                                              errorMsg,
-                                              argv,
-                                              paramIdx);
+        return detail::eclPositionalParameter(addKey, seenParams, errorMsg, argv, paramIdx);
     }
 
     /*!
@@ -215,9 +211,7 @@ public:
      */
     explicit FlowProblem(Simulator& simulator)
         : ParentType(simulator)
-        , BaseType(simulator.vanguard().eclState(),
-                   simulator.vanguard().schedule(),
-                   simulator.vanguard().gridView())
+        , BaseType(simulator.vanguard().eclState(), simulator.vanguard().schedule(), simulator.vanguard().gridView())
         , transmissibilities_(simulator.vanguard().eclState(),
                               simulator.vanguard().gridView(),
                               simulator.vanguard().cartesianIndexMapper(),
@@ -231,11 +225,11 @@ public:
         , pffDofData_(simulator.gridView(), this->elementMapper())
         , tracerModel_(simulator)
     {
-        if (! Parameters::Get<Parameters::CheckSatfuncConsistency>()) {
+        if (!Parameters::Get<Parameters::CheckSatfuncConsistency>()) {
             // User did not enable the "new" saturation function consistency
             // check module.  Run the original checker instead.  This is a
             // temporary measure.
-            RelpermDiagnostics relpermDiagnostics{};
+            RelpermDiagnostics relpermDiagnostics {};
             relpermDiagnostics.diagnosis(simulator.vanguard().eclState(),
                                          simulator.vanguard().levelCartesianIndexMapper());
         }
@@ -244,7 +238,9 @@ public:
     virtual ~FlowProblem() = default;
 
     void prefetch(const Element& elem) const
-    { this->pffDofData_.prefetch(elem); }
+    {
+        this->pffDofData_.prefetch(elem);
+    }
 
     /*!
      * \brief This method restores the complete state of the problem and its sub-objects
@@ -311,13 +307,12 @@ public:
             // implications on e.g., the solution of the simulation.)
             const auto& miniDeck = schedule[episodeIdx].geo_keywords();
             const auto& cc = simulator.vanguard().grid().comm();
-            eclState.apply_schedule_keywords( miniDeck );
-            eclBroadcast(cc, eclState.getTransMult() );
+            eclState.apply_schedule_keywords(miniDeck);
+            eclBroadcast(cc, eclState.getTransMult());
 
             // Re-ordering in case of ALUGrid
-            std::function<unsigned int(unsigned int)> equilGridToGrid = [&simulator](unsigned int i) {
-                  return simulator.vanguard().gridEquilIdxToGridIdx(i);
-            };
+            std::function<unsigned int(unsigned int)> equilGridToGrid
+                = [&simulator](unsigned int i) { return simulator.vanguard().gridEquilIdxToGridIdx(i); };
 
             // re-compute all quantities which may possibly be affected.
             using TransUpdateQuantities = typename Vanguard::TransmissibilityType::TransUpdateQuantities;
@@ -339,7 +334,7 @@ public:
         // set the size of the initial time step of the episode
         Scalar dt = limitNextTimeStepSize_(simulator.episodeLength());
         // negative value of initialTimeStepSize_ indicates no active limit from TSINIT or NEXTSTEP
-        if ( (episodeIdx == 0 || tuningEvent) && this->initialTimeStepSize_ > 0)
+        if ((episodeIdx == 0 || tuningEvent) && this->initialTimeStepSize_ > 0)
             // allow the size of the initial time step to be set via an external parameter
             // if TUNING is enabled, also limit the time step size after a tuning event to TSINIT
             dt = std::min(dt, this->initialTimeStepSize_);
@@ -376,7 +371,6 @@ public:
         wellModel_.beginTimeStep();
         aquiferModel_.beginTimeStep();
         tracerModel_.beginTimeStep();
-
     }
 
     /*!
@@ -426,7 +420,7 @@ public:
 #endif // NDEBUG
 
         auto& simulator = this->simulator();
-        simulator.setTimeStepIndex(simulator.timeStepIndex()+1);
+        simulator.setTimeStepIndex(simulator.timeStepIndex() + 1);
 
         this->wellModel_.endTimeStep();
         this->aquiferModel_.endTimeStep();
@@ -440,7 +434,7 @@ public:
 
             const auto& residual = this->model().linearizer().residual();
 
-            for (unsigned globalDofIdx = 0; globalDofIdx < residual.size(); globalDofIdx ++) {
+            for (unsigned globalDofIdx = 0; globalDofIdx < residual.size(); globalDofIdx++) {
                 int sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(globalDofIdx);
                 this->drift_[sfcdofIdx] = residual[sfcdofIdx] * simulator.timeStepSize();
 
@@ -481,9 +475,7 @@ public:
     {
         OPM_TIMEBLOCK(problemWriteOutput);
 
-        if (Parameters::Get<Parameters::EnableWriteAllSolutions>() ||
-            this->episodeWillBeOver())
-        {
+        if (Parameters::Get<Parameters::EnableWriteAllSolutions>() || this->episodeWillBeOver()) {
             // Create VTK output as needed.
             ParentType::writeOutput(verbose);
         }
@@ -493,9 +485,7 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::intrinsicPermeability
      */
     template <class Context>
-    const DimMatrix& intrinsicPermeability(const Context& context,
-                                           unsigned spaceIdx,
-                                           unsigned timeIdx) const
+    const DimMatrix& intrinsicPermeability(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
     {
         unsigned globalSpaceIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         return transmissibilities_.permeability(globalSpaceIdx);
@@ -508,15 +498,16 @@ public:
      * Its main (only?) usage is the ECL transmissibility calculation code...
      */
     const DimMatrix& intrinsicPermeability(unsigned globalElemIdx) const
-    { return transmissibilities_.permeability(globalElemIdx); }
+    {
+        return transmissibilities_.permeability(globalElemIdx);
+    }
 
     /*!
      * \copydoc EclTransmissiblity::transmissibility
      */
     template <class Context>
-    Scalar transmissibility(const Context& context,
-                            [[maybe_unused]] unsigned fromDofLocalIdx,
-                            unsigned toDofLocalIdx) const
+    Scalar
+    transmissibility(const Context& context, [[maybe_unused]] unsigned fromDofLocalIdx, unsigned toDofLocalIdx) const
     {
         assert(fromDofLocalIdx == 0);
         return pffDofData_.get(context.element(), toDofLocalIdx).transmissibility;
@@ -534,9 +525,7 @@ public:
      * \copydoc EclTransmissiblity::diffusivity
      */
     template <class Context>
-    Scalar diffusivity(const Context& context,
-                       [[maybe_unused]] unsigned fromDofLocalIdx,
-                       unsigned toDofLocalIdx) const
+    Scalar diffusivity(const Context& context, [[maybe_unused]] unsigned fromDofLocalIdx, unsigned toDofLocalIdx) const
     {
         assert(fromDofLocalIdx == 0);
         return *pffDofData_.get(context.element(), toDofLocalIdx).diffusivity;
@@ -545,22 +534,23 @@ public:
     /*!
      * give the transmissibility for a face i.e. pair. should be symmetric?
      */
-    Scalar diffusivity(const unsigned globalCellIn, const unsigned globalCellOut) const{
+    Scalar diffusivity(const unsigned globalCellIn, const unsigned globalCellOut) const
+    {
         return transmissibilities_.diffusivity(globalCellIn, globalCellOut);
     }
 
     /*!
      * give the dispersivity for a face i.e. pair.
      */
-    Scalar dispersivity(const unsigned globalCellIn, const unsigned globalCellOut) const{
+    Scalar dispersivity(const unsigned globalCellIn, const unsigned globalCellOut) const
+    {
         return transmissibilities_.dispersivity(globalCellIn, globalCellOut);
     }
 
     /*!
      * \brief Direct access to a boundary transmissibility.
      */
-    Scalar thermalTransmissibilityBoundary(const unsigned globalSpaceIdx,
-                                    const unsigned boundaryFaceIdx) const
+    Scalar thermalTransmissibilityBoundary(const unsigned globalSpaceIdx, const unsigned boundaryFaceIdx) const
     {
         return transmissibilities_.thermalTransmissibilityBoundary(globalSpaceIdx, boundaryFaceIdx);
     }
@@ -572,8 +562,7 @@ public:
      * \copydoc EclTransmissiblity::transmissibilityBoundary
      */
     template <class Context>
-    Scalar transmissibilityBoundary(const Context& elemCtx,
-                                    unsigned boundaryFaceIdx) const
+    Scalar transmissibilityBoundary(const Context& elemCtx, unsigned boundaryFaceIdx) const
     {
         unsigned elemIdx = elemCtx.globalSpaceIndex(/*dofIdx=*/0, /*timeIdx=*/0);
         return transmissibilities_.transmissibilityBoundary(elemIdx, boundaryFaceIdx);
@@ -582,8 +571,7 @@ public:
     /*!
      * \brief Direct access to a boundary transmissibility.
      */
-    Scalar transmissibilityBoundary(const unsigned globalSpaceIdx,
-                                    const unsigned boundaryFaceIdx) const
+    Scalar transmissibilityBoundary(const unsigned globalSpaceIdx, const unsigned boundaryFaceIdx) const
     {
         return transmissibilities_.transmissibilityBoundary(globalSpaceIdx, boundaryFaceIdx);
     }
@@ -592,19 +580,16 @@ public:
     /*!
      * \copydoc EclTransmissiblity::thermalHalfTransmissibility
      */
-    Scalar thermalHalfTransmissibility(const unsigned globalSpaceIdxIn,
-                                       const unsigned globalSpaceIdxOut) const
+    Scalar thermalHalfTransmissibility(const unsigned globalSpaceIdxIn, const unsigned globalSpaceIdxOut) const
     {
-        return transmissibilities_.thermalHalfTrans(globalSpaceIdxIn,globalSpaceIdxOut);
+        return transmissibilities_.thermalHalfTrans(globalSpaceIdxIn, globalSpaceIdxOut);
     }
 
     /*!
      * \copydoc EclTransmissiblity::thermalHalfTransmissibility
      */
     template <class Context>
-    Scalar thermalHalfTransmissibilityIn(const Context& context,
-                                         unsigned faceIdx,
-                                         unsigned timeIdx) const
+    Scalar thermalHalfTransmissibilityIn(const Context& context, unsigned faceIdx, unsigned timeIdx) const
     {
         const auto& face = context.stencil(timeIdx).interiorFace(faceIdx);
         unsigned toDofLocalIdx = face.exteriorIndex();
@@ -615,9 +600,7 @@ public:
      * \copydoc EclTransmissiblity::thermalHalfTransmissibility
      */
     template <class Context>
-    Scalar thermalHalfTransmissibilityOut(const Context& context,
-                                          unsigned faceIdx,
-                                          unsigned timeIdx) const
+    Scalar thermalHalfTransmissibilityOut(const Context& context, unsigned faceIdx, unsigned timeIdx) const
     {
         const auto& face = context.stencil(timeIdx).interiorFace(faceIdx);
         unsigned toDofLocalIdx = face.exteriorIndex();
@@ -628,8 +611,7 @@ public:
      * \copydoc EclTransmissiblity::thermalHalfTransmissibility
      */
     template <class Context>
-    Scalar thermalHalfTransmissibilityBoundary(const Context& elemCtx,
-                                               unsigned boundaryFaceIdx) const
+    Scalar thermalHalfTransmissibilityBoundary(const Context& elemCtx, unsigned boundaryFaceIdx) const
     {
         unsigned elemIdx = elemCtx.globalSpaceIndex(/*dofIdx=*/0, /*timeIdx=*/0);
         return transmissibilities_.thermalHalfTransBoundary(elemIdx, boundaryFaceIdx);
@@ -639,14 +621,20 @@ public:
      * \brief Return a reference to the object that handles the "raw" transmissibilities.
      */
     const typename Vanguard::TransmissibilityType& eclTransmissibilities() const
-    { return transmissibilities_; }
+    {
+        return transmissibilities_;
+    }
 
 
     const TracerModel& tracerModel() const
-    { return tracerModel_; }
+    {
+        return tracerModel_;
+    }
 
     TracerModel& tracerModel()
-    { return tracerModel_; }
+    {
+        return tracerModel_;
+    }
 
     /*!
      * \copydoc FvBaseMultiPhaseProblem::porosity
@@ -708,15 +696,14 @@ public:
     }
 
     /*!
-    * \copydoc BlackoilProblem::rockReferencePressure
-    */
+     * \copydoc BlackoilProblem::rockReferencePressure
+     */
     Scalar rockReferencePressure(unsigned globalSpaceIdx) const
     {
         const auto& rock_config = this->simulator().vanguard().eclState().getSimulationConfig().rock_config();
         if (rock_config.store()) {
             return asImp_().initialFluidState(globalSpaceIdx).pressure(refPressurePhaseIdx_());
-        }
-        else {
+        } else {
             if (this->rockParams_.empty())
                 return 1e5;
 
@@ -732,8 +719,7 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::materialLawParams
      */
     template <class Context>
-    const MaterialLawParams& materialLawParams(const Context& context,
-                                               unsigned spaceIdx, unsigned timeIdx) const
+    const MaterialLawParams& materialLawParams(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
     {
         unsigned globalSpaceIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         return this->materialLawParams(globalSpaceIdx);
@@ -753,10 +739,7 @@ public:
      * \brief Return the parameters for the energy storage law of the rock
      */
     template <class Context>
-    const SolidEnergyLawParams&
-    solidEnergyLawParams(const Context& context,
-                         unsigned spaceIdx,
-                         unsigned timeIdx) const
+    const SolidEnergyLawParams& solidEnergyLawParams(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
     {
         unsigned globalSpaceIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         return thermalLawManager_->solidEnergyLawParams(globalSpaceIdx);
@@ -766,7 +749,7 @@ public:
      * \copydoc FvBaseMultiPhaseProblem::thermalConductionParams
      */
     template <class Context>
-    const ThermalConductionLawParams &
+    const ThermalConductionLawParams&
     thermalConductionLawParams(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
     {
         unsigned globalSpaceIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
@@ -780,14 +763,15 @@ public:
      * would force all problens use the ECL material laws.
      */
     std::shared_ptr<const EclMaterialLawManager> materialLawManager() const
-    { return materialLawManager_; }
+    {
+        return materialLawManager_;
+    }
 
-    template <class FluidState, class ...Args>
-    void updateRelperms(
-        std::array<Evaluation,numPhases> &mobility,
-        DirectionalMobilityPtr &dirMob,
-        FluidState &fluidState,
-        unsigned globalSpaceIdx) const
+    template <class FluidState, class... Args>
+    void updateRelperms(std::array<Evaluation, numPhases>& mobility,
+                        DirectionalMobilityPtr& dirMob,
+                        FluidState& fluidState,
+                        unsigned globalSpaceIdx) const
     {
         using ContainerT = std::array<Evaluation, numPhases>;
         OPM_TIMEBLOCK_LOCAL(updateRelperms);
@@ -795,20 +779,20 @@ public:
             // calculate relative permeabilities. note that we store the result into the
             // mobility_ class attribute. the division by the phase viscosity happens later.
             const auto& materialParams = materialLawParams(globalSpaceIdx);
-            MaterialLaw::template relativePermeabilities<ContainerT, FluidState, Args...>(mobility, materialParams, fluidState);
+            MaterialLaw::template relativePermeabilities<ContainerT, FluidState, Args...>(
+                mobility, materialParams, fluidState);
             Valgrind::CheckDefined(mobility);
         }
-        if (materialLawManager_->hasDirectionalRelperms()
-               || materialLawManager_->hasDirectionalImbnum())
-        {
+        if (materialLawManager_->hasDirectionalRelperms() || materialLawManager_->hasDirectionalImbnum()) {
             using Dir = FaceDir::DirEnum;
             constexpr int ndim = 3;
             dirMob = std::make_unique<DirectionalMobility<TypeTag>>();
             Dir facedirs[ndim] = {Dir::XPlus, Dir::YPlus, Dir::ZPlus};
-            for (int i = 0; i<ndim; i++) {
+            for (int i = 0; i < ndim; i++) {
                 const auto& materialParams = materialLawParams(globalSpaceIdx, facedirs[i]);
                 auto& mob_array = dirMob->getArray(i);
-                MaterialLaw::template relativePermeabilities<ContainerT, FluidState, Args...>(mob_array, materialParams, fluidState);
+                MaterialLaw::template relativePermeabilities<ContainerT, FluidState, Args...>(
+                    mob_array, materialParams, fluidState);
             }
         }
     }
@@ -817,7 +801,9 @@ public:
      * \copydoc materialLawManager()
      */
     std::shared_ptr<EclMaterialLawManager> materialLawManager()
-    { return materialLawManager_; }
+    {
+        return materialLawManager_;
+    }
 
     using BaseType::pvtRegionIndex;
     /*!
@@ -825,7 +811,9 @@ public:
      */
     template <class Context>
     unsigned pvtRegionIndex(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
-    { return pvtRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx)); }
+    {
+        return pvtRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx));
+    }
 
     using BaseType::satnumRegionIndex;
     /*!
@@ -833,7 +821,9 @@ public:
      */
     template <class Context>
     unsigned satnumRegionIndex(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
-    { return this->satnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx)); }
+    {
+        return this->satnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx));
+    }
 
     using BaseType::miscnumRegionIndex;
     /*!
@@ -841,7 +831,9 @@ public:
      */
     template <class Context>
     unsigned miscnumRegionIndex(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
-    { return this->miscnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx)); }
+    {
+        return this->miscnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx));
+    }
 
     using BaseType::plmixnumRegionIndex;
     /*!
@@ -849,7 +841,9 @@ public:
      */
     template <class Context>
     unsigned plmixnumRegionIndex(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
-    { return this->plmixnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx)); }
+    {
+        return this->plmixnumRegionIndex(context.globalSpaceIndex(spaceIdx, timeIdx));
+    }
 
     // TODO: polymer related might need to go to the blackoil side
     using BaseType::maxPolymerAdsorption;
@@ -858,13 +852,17 @@ public:
      */
     template <class Context>
     Scalar maxPolymerAdsorption(const Context& context, unsigned spaceIdx, unsigned timeIdx) const
-    { return this->maxPolymerAdsorption(context.globalSpaceIndex(spaceIdx, timeIdx)); }
+    {
+        return this->maxPolymerAdsorption(context.globalSpaceIndex(spaceIdx, timeIdx));
+    }
 
     /*!
      * \copydoc FvBaseProblem::name
      */
     std::string name() const
-    { return this->simulator().vanguard().caseName(); }
+    {
+        return this->simulator().vanguard().caseName();
+    }
 
     /*!
      * \copydoc FvBaseMultiPhaseProblem::temperature
@@ -883,18 +881,14 @@ public:
     {
         // use the initial temperature of the DOF if temperature is not a primary
         // variable
-         return asImp_().initialFluidState(globalDofIdx).temperature(/*phaseIdx=*/0);
+        return asImp_().initialFluidState(globalDofIdx).temperature(/*phaseIdx=*/0);
     }
 
-    const SolidEnergyLawParams&
-    solidEnergyLawParams(unsigned globalSpaceIdx,
-                         unsigned /*timeIdx*/) const
+    const SolidEnergyLawParams& solidEnergyLawParams(unsigned globalSpaceIdx, unsigned /*timeIdx*/) const
     {
         return this->thermalLawManager_->solidEnergyLawParams(globalSpaceIdx);
     }
-    const ThermalConductionLawParams &
-    thermalConductionLawParams(unsigned globalSpaceIdx,
-                               unsigned /*timeIdx*/)const
+    const ThermalConductionLawParams& thermalConductionLawParams(unsigned globalSpaceIdx, unsigned /*timeIdx*/) const
     {
         return this->thermalLawManager_->thermalConductionLawParams(globalSpaceIdx);
     }
@@ -939,14 +933,14 @@ public:
     virtual void initialSolutionApplied()
     {
         // Calculate all intensive quantities.
-        this->model().invalidateAndUpdateIntensiveQuantities(/*timeIdx*/0);
+        this->model().invalidateAndUpdateIntensiveQuantities(/*timeIdx*/ 0);
 
         // We also need the intensive quantities for timeIdx == 1
         // corresponding to the start of the current timestep, if we
         // do not use the storage cache, or if we cannot recycle the
         // first iteration storage.
         if (!this->model().enableStorageCache() || !this->recycleFirstIterationStorage()) {
-            this->model().invalidateAndUpdateIntensiveQuantities(/*timeIdx*/1);
+            this->model().invalidateAndUpdateIntensiveQuantities(/*timeIdx*/ 1);
         }
 
         // initialize the wells. Note that this needs to be done after initializing the
@@ -969,18 +963,13 @@ public:
      * For this problem, the source term of all components is 0 everywhere.
      */
     template <class Context>
-    void source(RateVector& rate,
-                const Context& context,
-                unsigned spaceIdx,
-                unsigned timeIdx) const
+    void source(RateVector& rate, const Context& context, unsigned spaceIdx, unsigned timeIdx) const
     {
         const unsigned globalDofIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         source(rate, globalDofIdx, timeIdx);
     }
 
-    void source(RateVector& rate,
-                unsigned globalDofIdx,
-                unsigned timeIdx) const
+    void source(RateVector& rate, unsigned globalDofIdx, unsigned timeIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(eclProblemSource);
         rate = 0.0;
@@ -990,7 +979,7 @@ public:
 
         // convert the source term from the total mass rate of the
         // cell to the one per unit of volume as used by the model.
-        for (unsigned eqIdx = 0; eqIdx < numEq; ++ eqIdx) {
+        for (unsigned eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             rate[eqIdx] /= this->model().dofTotalVolume(globalDofIdx);
 
             Valgrind::CheckDefined(rate[eqIdx]);
@@ -1001,9 +990,7 @@ public:
         addToSourceDense(rate, globalDofIdx, timeIdx);
     }
 
-    virtual void addToSourceDense(RateVector& rate,
-                                  unsigned globalDofIdx,
-                                  unsigned timeIdx) const = 0;
+    virtual void addToSourceDense(RateVector& rate, unsigned globalDofIdx, unsigned timeIdx) const = 0;
 
     /*!
      * \brief Returns a reference to the ECL well manager used by the problem.
@@ -1011,19 +998,29 @@ public:
      * This can be used for inspecting wells outside of the problem.
      */
     const WellModel& wellModel() const
-    { return wellModel_; }
+    {
+        return wellModel_;
+    }
 
     WellModel& wellModel()
-    { return wellModel_; }
+    {
+        return wellModel_;
+    }
 
     const AquiferModel& aquiferModel() const
-    { return aquiferModel_; }
+    {
+        return aquiferModel_;
+    }
 
     AquiferModel& mutableAquiferModel()
-    { return aquiferModel_; }
+    {
+        return aquiferModel_;
+    }
 
     bool nonTrivialBoundaryConditions() const
-    { return nonTrivialBoundaryConditions_; }
+    {
+        return nonTrivialBoundaryConditions_;
+    }
 
     /*!
      * \brief Propose the size of the next time step to the simulator.
@@ -1073,9 +1070,8 @@ public:
         const auto& rock_config = this->simulator().vanguard().eclState().getSimulationConfig().rock_config();
         if (!this->minRefPressure_.empty())
             // The pore space change is irreversible
-            effectivePressure =
-                min(decay<LhsEval>(fs.pressure(refPressurePhaseIdx_())),
-                                   this->minRefPressure_[elementIdx]);
+            effectivePressure
+                = min(decay<LhsEval>(fs.pressure(refPressurePhaseIdx_())), this->minRefPressure_[elementIdx]);
 
         if (!this->overburdenPressure_.empty())
             effectivePressure -= this->overburdenPressure_[elementIdx];
@@ -1105,8 +1101,9 @@ public:
     LhsEval rockCompTransMultiplier(const IntensiveQuantities& intQuants, unsigned elementIdx) const
     {
         const bool implicit = !this->explicitRockCompaction_;
-        return implicit ? this->simulator().problem().template computeRockCompTransMultiplier_<LhsEval>(intQuants, elementIdx)
-                        : this->simulator().problem().getRockCompTransMultVal(elementIdx);
+        return implicit
+            ? this->simulator().problem().template computeRockCompTransMultiplier_<LhsEval>(intQuants, elementIdx)
+            : this->simulator().problem().getRockCompTransMultVal(elementIdx);
     }
 
 
@@ -1117,12 +1114,13 @@ public:
     LhsEval wellTransMultiplier(const IntensiveQuantities& intQuants, unsigned elementIdx) const
     {
         OPM_TIMEBLOCK_LOCAL(wellTransMultiplier);
-        
+
         const bool implicit = !this->explicitRockCompaction_;
-        double trans_mult = implicit ? this->simulator().problem().template computeRockCompTransMultiplier_<double>(intQuants, elementIdx)
-                                     : this->simulator().problem().getRockCompTransMultVal(elementIdx);
+        double trans_mult = implicit
+            ? this->simulator().problem().template computeRockCompTransMultiplier_<double>(intQuants, elementIdx)
+            : this->simulator().problem().getRockCompTransMultVal(elementIdx);
         trans_mult *= this->simulator().problem().template permFactTransMultiplier<double>(intQuants, elementIdx);
-    
+
         return trans_mult;
     }
 
@@ -1130,19 +1128,19 @@ public:
     {
         OPM_TIMEBLOCK_LOCAL(boundaryCondition);
         if (!nonTrivialBoundaryConditions_) {
-            return { BCType::NONE, RateVector(0.0) };
+            return {BCType::NONE, RateVector(0.0)};
         }
         FaceDir::DirEnum dir = FaceDir::FromIntersectionIndex(directionId);
         const auto& schedule = this->simulator().vanguard().schedule();
         if (bcindex_(dir)[globalSpaceIdx] == 0) {
-            return { BCType::NONE, RateVector(0.0) };
+            return {BCType::NONE, RateVector(0.0)};
         }
         if (schedule[this->episodeIndex()].bcprop.size() == 0) {
-            return { BCType::NONE, RateVector(0.0) };
+            return {BCType::NONE, RateVector(0.0)};
         }
         const auto& bc = schedule[this->episodeIndex()].bcprop[bcindex_(dir)[globalSpaceIdx]];
-        if (bc.bctype!=BCType::RATE) {
-            return { bc.bctype, RateVector(0.0) };
+        if (bc.bctype != BCType::RATE) {
+            return {bc.bctype, RateVector(0.0)};
         }
 
         RateVector rate = 0.0;
@@ -1175,12 +1173,12 @@ public:
             throw std::logic_error("you need to specify the component when RATE type is set in BC");
             break;
         }
-        //TODO add support for enthalpy rate
+        // TODO add support for enthalpy rate
         return {bc.bctype, rate};
     }
 
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(static_cast<BaseType&>(*this));
@@ -1193,19 +1191,22 @@ public:
 
 private:
     Implementation& asImp_()
-    { return *static_cast<Implementation *>(this); }
+    {
+        return *static_cast<Implementation*>(this);
+    }
 
     const Implementation& asImp_() const
-    { return *static_cast<const Implementation *>(this); }
+    {
+        return *static_cast<const Implementation*>(this);
+    }
 
 protected:
-    template<class UpdateFunc>
-    void updateProperty_(const std::string& failureMsg,
-                         UpdateFunc func)
+    template <class UpdateFunc>
+    void updateProperty_(const std::string& failureMsg, UpdateFunc func)
     {
         OPM_TIMEBLOCK(updateProperty);
         const auto& model = this->simulator().model();
-        const auto& primaryVars = model.solution(/*timeIdx*/0);
+        const auto& primaryVars = model.solution(/*timeIdx*/ 0);
         const auto& vanguard = this->simulator().vanguard();
         std::size_t numGridDof = primaryVars.size();
         OPM_BEGIN_PARALLEL_TRY_CATCH();
@@ -1213,8 +1214,8 @@ protected:
 #pragma omp parallel for
 #endif
         for (unsigned dofIdx = 0; dofIdx < numGridDof; ++dofIdx) {
-                const auto& iq = *model.cachedIntensiveQuantities(dofIdx, /*timeIdx=*/ 0);
-                func(dofIdx, iq);
+            const auto& iq = *model.cachedIntensiveQuantities(dofIdx, /*timeIdx=*/0);
+            func(dofIdx, iq);
         }
         OPM_END_PARALLEL_TRY_CATCH(failureMsg, vanguard.grid().comm());
     }
@@ -1227,9 +1228,8 @@ protected:
         // we use VAPPARS
         if (this->vapparsActive(episodeIdx)) {
             this->updateProperty_("FlowProblem::updateMaxOilSaturation_() failed:",
-                                  [this](unsigned compressedDofIdx, const IntensiveQuantities& iq)
-                                  {
-                                      this->updateMaxOilSaturation_(compressedDofIdx,iq);
+                                  [this](unsigned compressedDofIdx, const IntensiveQuantities& iq) {
+                                      this->updateMaxOilSaturation_(compressedDofIdx, iq);
                                   });
             return true;
         }
@@ -1243,10 +1243,10 @@ protected:
         const auto& fs = iq.fluidState();
         const Scalar So = decay<Scalar>(fs.saturation(refPressurePhaseIdx_()));
         auto& mos = this->maxOilSaturation_;
-        if(mos[compressedDofIdx] < So){
+        if (mos[compressedDofIdx] < So) {
             mos[compressedDofIdx] = So;
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -1260,10 +1260,9 @@ protected:
 
         this->maxWaterSaturation_[/*timeIdx=*/1] = this->maxWaterSaturation_[/*timeIdx=*/0];
         this->updateProperty_("FlowProblem::updateMaxWaterSaturation_() failed:",
-                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq)
-                              {
-                                  this->updateMaxWaterSaturation_(compressedDofIdx,iq);
-                               });
+                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq) {
+                                  this->updateMaxWaterSaturation_(compressedDofIdx, iq);
+                              });
         return true;
     }
 
@@ -1274,10 +1273,10 @@ protected:
         const auto& fs = iq.fluidState();
         const Scalar Sw = decay<Scalar>(fs.saturation(waterPhaseIdx));
         auto& mow = this->maxWaterSaturation_;
-        if(mow[compressedDofIdx]< Sw){
+        if (mow[compressedDofIdx] < Sw) {
             mow[compressedDofIdx] = Sw;
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -1290,22 +1289,22 @@ protected:
             return false;
 
         this->updateProperty_("FlowProblem::updateMinPressure_() failed:",
-                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq)
-                              {
-                                  this->updateMinPressure_(compressedDofIdx,iq);
+                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq) {
+                                  this->updateMinPressure_(compressedDofIdx, iq);
                               });
         return true;
     }
 
-    bool updateMinPressure_(unsigned compressedDofIdx, const IntensiveQuantities& iq){
+    bool updateMinPressure_(unsigned compressedDofIdx, const IntensiveQuantities& iq)
+    {
         OPM_TIMEBLOCK_LOCAL(updateMinPressure);
         const auto& fs = iq.fluidState();
         const Scalar min_pressure = getValue(fs.pressure(refPressurePhaseIdx_()));
         auto& min_pressures = this->minRefPressure_;
-        if(min_pressures[compressedDofIdx]> min_pressure){
+        if (min_pressures[compressedDofIdx] > min_pressure) {
             min_pressures[compressedDofIdx] = min_pressure;
             return true;
-        }else{
+        } else {
             return false;
         }
     }
@@ -1314,12 +1313,10 @@ protected:
     //
     // For CpGrid with local grid refinement, the field property of a cell on the leaf
     // is inherited from its parent or equivalent (when has no parent) cell on level zero.
-    std::function<std::vector<double>(const FieldPropsManager&, const std::string&)>
-    fieldPropDoubleOnLeafAssigner_()
+    std::function<std::vector<double>(const FieldPropsManager&, const std::string&)> fieldPropDoubleOnLeafAssigner_()
     {
         const auto& lookup = this->lookUpData_;
-        return [&lookup](const FieldPropsManager& fieldPropManager, const std::string& propString)
-        {
+        return [&lookup](const FieldPropsManager& fieldPropManager, const std::string& propString) {
             return lookup.assignFieldPropsDoubleOnLeaf(fieldPropManager, propString);
         };
     }
@@ -1328,13 +1325,13 @@ protected:
     //
     // For CpGrid with local grid refinement, the field property of a cell on the leaf
     // is inherited from its parent or equivalent (when has no parent) cell on level zero.
-    template<typename IntType>
+    template <typename IntType>
     std::function<std::vector<IntType>(const FieldPropsManager&, const std::string&, bool)>
     fieldPropIntTypeOnLeafAssigner_()
     {
         const auto& lookup = this->lookUpData_;
-        return [&lookup](const FieldPropsManager& fieldPropManager, const std::string& propString, bool needsTranslation)
-        {
+        return [&lookup](
+                   const FieldPropsManager& fieldPropManager, const std::string& propString, bool needsTranslation) {
             return lookup.template assignFieldPropsIntOnLeaf<IntType>(fieldPropManager, propString, needsTranslation);
         };
     }
@@ -1367,25 +1364,26 @@ protected:
         // fluid-matrix interactions (saturation functions; relperm/capillary pressure)
         materialLawManager_ = std::make_shared<EclMaterialLawManager>();
         materialLawManager_->initFromState(eclState);
-        materialLawManager_->initParamsForElements(eclState, this->model().numGridDof(),
-                                                   this-> template fieldPropIntTypeOnLeafAssigner_<int>(),
-                                                   this-> lookupIdxOnLevelZeroAssigner_());
+        materialLawManager_->initParamsForElements(eclState,
+                                                   this->model().numGridDof(),
+                                                   this->template fieldPropIntTypeOnLeafAssigner_<int>(),
+                                                   this->lookupIdxOnLevelZeroAssigner_());
         ////////////////////////////////
     }
 
     void readThermalParameters_()
     {
-        if constexpr (enableEnergy)
-        {
+        if constexpr (enableEnergy) {
             const auto& simulator = this->simulator();
             const auto& vanguard = simulator.vanguard();
             const auto& eclState = vanguard.eclState();
 
             // fluid-matrix interactions (saturation functions; relperm/capillary pressure)
             thermalLawManager_ = std::make_shared<EclThermalLawManager>();
-            thermalLawManager_->initParamsForElements(eclState, this->model().numGridDof(),
-                                                      this-> fieldPropDoubleOnLeafAssigner_(),
-                                                      this-> template fieldPropIntTypeOnLeafAssigner_<unsigned int>());
+            thermalLawManager_->initParamsForElements(eclState,
+                                                      this->model().numGridDof(),
+                                                      this->fieldPropDoubleOnLeafAssigner_(),
+                                                      this->template fieldPropIntTypeOnLeafAssigner_<unsigned int>());
         }
     }
 
@@ -1400,7 +1398,7 @@ protected:
         this->referencePorosity_[/*timeIdx=*/0].resize(numDof);
 
         const auto& fp = eclState.fieldProps();
-        const std::vector<double> porvData = this -> fieldPropDoubleOnLeafAssigner_()(fp, "PORV");
+        const std::vector<double> porvData = this->fieldPropDoubleOnLeafAssigner_()(fp, "PORV");
         for (std::size_t dofIdx = 0; dofIdx < numDof; ++dofIdx) {
             int sfcdofIdx = simulator.vanguard().gridEquilIdxToGridIdx(dofIdx);
             Scalar poreVolume = porvData[dofIdx];
@@ -1410,7 +1408,7 @@ protected:
             // be larger than 1.0!
             Scalar dofVolume = simulator.model().dofTotalVolume(sfcdofIdx);
             assert(dofVolume > 0.0);
-            this->referencePorosity_[/*timeIdx=*/0][sfcdofIdx] = poreVolume/dofVolume;
+            this->referencePorosity_[/*timeIdx=*/0][sfcdofIdx] = poreVolume / dofVolume;
         }
     }
 
@@ -1426,16 +1424,19 @@ protected:
         else
             readExplicitInitialCondition_();
 
-        //initialize min/max values
+        // initialize min/max values
         std::size_t numElems = this->model().numGridDof();
         for (std::size_t elemIdx = 0; elemIdx < numElems; ++elemIdx) {
             const auto& fs = asImp_().initialFluidStates()[elemIdx];
             if (!this->maxWaterSaturation_.empty() && waterPhaseIdx > -1)
-                this->maxWaterSaturation_[elemIdx] = std::max(this->maxWaterSaturation_[elemIdx], fs.saturation(waterPhaseIdx));
+                this->maxWaterSaturation_[elemIdx]
+                    = std::max(this->maxWaterSaturation_[elemIdx], fs.saturation(waterPhaseIdx));
             if (!this->maxOilSaturation_.empty() && oilPhaseIdx > -1)
-                this->maxOilSaturation_[elemIdx] = std::max(this->maxOilSaturation_[elemIdx], fs.saturation(oilPhaseIdx));
+                this->maxOilSaturation_[elemIdx]
+                    = std::max(this->maxOilSaturation_[elemIdx], fs.saturation(oilPhaseIdx));
             if (!this->minRefPressure_.empty() && refPressurePhaseIdx_() > -1)
-                this->minRefPressure_[elemIdx] = std::min(this->minRefPressure_[elemIdx], fs.pressure(refPressurePhaseIdx_()));
+                this->minRefPressure_[elemIdx]
+                    = std::min(this->minRefPressure_[elemIdx], fs.pressure(refPressurePhaseIdx_()));
         }
     }
 
@@ -1451,8 +1452,7 @@ protected:
         // we need to update the hysteresis data for _all_ elements (i.e., not just the
         // interior ones) to avoid desynchronization of the processes in the parallel case!
         this->updateProperty_("FlowProblem::updateHysteresis_() failed:",
-                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq)
-                              {
+                              [this](unsigned compressedDofIdx, const IntensiveQuantities& iq) {
                                   materialLawManager_->updateHysteresis(iq.fluidState(), compressedDofIdx);
                               });
         return true;
@@ -1463,7 +1463,7 @@ protected:
     {
         OPM_TIMEBLOCK_LOCAL(updateHysteresis_);
         materialLawManager_->updateHysteresis(iq.fluidState(), compressedDofIdx);
-        //TODO change materials to give a bool
+        // TODO change materials to give a bool
         return true;
     }
 
@@ -1476,8 +1476,7 @@ protected:
     }
 
 protected:
-    struct PffDofData_
-    {
+    struct PffDofData_ {
         ConditionalStorage<enableEnergy, Scalar> thermalHalfTransIn;
         ConditionalStorage<enableEnergy, Scalar> thermalHalfTransOut;
         ConditionalStorage<enableDiffusion, Scalar> diffusivity;
@@ -1488,12 +1487,7 @@ protected:
     // update the prefetch friendly data object
     void updatePffDofData_()
     {
-        const auto& distFn =
-            [this](PffDofData_& dofData,
-                   const Stencil& stencil,
-                   unsigned localDofIdx)
-            -> void
-        {
+        const auto& distFn = [this](PffDofData_& dofData, const Stencil& stencil, unsigned localDofIdx) -> void {
             const auto& elementMapper = this->model().elementMapper();
 
             unsigned globalElemIdx = elementMapper.index(stencil.entity(localDofIdx));
@@ -1502,8 +1496,10 @@ protected:
                 dofData.transmissibility = transmissibilities_.transmissibility(globalCenterElemIdx, globalElemIdx);
 
                 if constexpr (enableEnergy) {
-                    *dofData.thermalHalfTransIn = transmissibilities_.thermalHalfTrans(globalCenterElemIdx, globalElemIdx);
-                    *dofData.thermalHalfTransOut = transmissibilities_.thermalHalfTrans(globalElemIdx, globalCenterElemIdx);
+                    *dofData.thermalHalfTransIn
+                        = transmissibilities_.thermalHalfTrans(globalCenterElemIdx, globalElemIdx);
+                    *dofData.thermalHalfTransOut
+                        = transmissibilities_.thermalHalfTrans(globalElemIdx, globalCenterElemIdx);
                 }
                 if constexpr (enableDiffusion)
                     *dofData.diffusivity = transmissibilities_.diffusivity(globalCenterElemIdx, globalElemIdx);
@@ -1533,14 +1529,11 @@ protected:
                 cartesianToCompressedElemIdx[vanguard.cartesianIndex(elemIdx)] = elemIdx;
 
             bcindex_.resize(numElems, 0);
-            auto loopAndApply = [&cartesianToCompressedElemIdx,
-                                 &vanguard](const auto& bcface,
-                                            auto apply)
-            {
+            auto loopAndApply = [&cartesianToCompressedElemIdx, &vanguard](const auto& bcface, auto apply) {
                 for (int i = bcface.i1; i <= bcface.i2; ++i) {
                     for (int j = bcface.j1; j <= bcface.j2; ++j) {
                         for (int k = bcface.k1; k <= bcface.k2; ++k) {
-                            std::array<int, 3> tmp = {i,j,k};
+                            std::array<int, 3> tmp = {i, j, k};
                             auto elemIdx = cartesianToCompressedElemIdx[vanguard.cartesianIndex(tmp)];
                             if (elemIdx >= 0)
                                 apply(elemIdx);
@@ -1551,9 +1544,7 @@ protected:
             for (const auto& bcface : bcconfig) {
                 std::vector<int>& data = bcindex_(bcface.dir);
                 const int index = bcface.index;
-                    loopAndApply(bcface,
-                                 [&data,index](int elemIdx)
-                                 { data[elemIdx] = index; });
+                loopAndApply(bcface, [&data, index](int elemIdx) { data[elemIdx] = index; });
             }
         }
     }
@@ -1577,27 +1568,25 @@ protected:
 
             dtNext = std::min(dtNext, maxTimeStepSize);
 
-            Scalar remainingEpisodeTime =
-                simulator.episodeStartTime() + simulator.episodeLength()
-                - (simulator.startTime() + simulator.time());
+            Scalar remainingEpisodeTime
+                = simulator.episodeStartTime() + simulator.episodeLength() - (simulator.startTime() + simulator.time());
             assert(remainingEpisodeTime >= 0.0);
 
             // if we would have a small amount of time left over in the current episode, make
             // two equal time steps instead of a big and a small one
-            if (remainingEpisodeTime/2.0 < dtNext && dtNext < remainingEpisodeTime*(1.0 - 1e-5))
+            if (remainingEpisodeTime / 2.0 < dtNext && dtNext < remainingEpisodeTime * (1.0 - 1e-5))
                 // note: limiting to the maximum time step size here is probably not strictly
                 // necessary, but it should not hurt and is more fool-proof
-                dtNext = std::min(maxTimeStepSize, remainingEpisodeTime/2.0);
+                dtNext = std::min(maxTimeStepSize, remainingEpisodeTime / 2.0);
 
             if (simulator.episodeStarts()) {
                 // if a well event occurred, respect the limit for the maximum time step after
                 // that, too
                 const auto& events = simulator.vanguard().schedule()[reportStepIdx].events();
-                bool wellEventOccured =
-                        events.hasEvent(ScheduleEvents::NEW_WELL)
-                        || events.hasEvent(ScheduleEvents::PRODUCTION_UPDATE)
-                        || events.hasEvent(ScheduleEvents::INJECTION_UPDATE)
-                        || events.hasEvent(ScheduleEvents::WELL_STATUS_CHANGE);
+                bool wellEventOccured = events.hasEvent(ScheduleEvents::NEW_WELL)
+                    || events.hasEvent(ScheduleEvents::PRODUCTION_UPDATE)
+                    || events.hasEvent(ScheduleEvents::INJECTION_UPDATE)
+                    || events.hasEvent(ScheduleEvents::WELL_STATUS_CHANGE);
                 if (episodeIdx >= 0 && wellEventOccured && this->maxTimeStepAfterWellEvent_ > 0)
                     dtNext = std::min(dtNext, this->maxTimeStepAfterWellEvent_);
             }
@@ -1606,14 +1595,13 @@ protected:
         return dtNext;
     }
 
-    int refPressurePhaseIdx_() const {
+    int refPressurePhaseIdx_() const
+    {
         if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
             return oilPhaseIdx;
-        }
-        else if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
+        } else if (FluidSystem::phaseIsActive(gasPhaseIdx)) {
             return gasPhaseIdx;
-        }
-        else {
+        } else {
             return waterPhaseIdx;
         }
     }
@@ -1624,7 +1612,7 @@ protected:
         std::size_t numGridDof = this->model().numGridDof();
         this->rockCompTransMultVal_.resize(numGridDof, 1.0);
         for (std::size_t elementIdx = 0; elementIdx < numGridDof; ++elementIdx) {
-            const auto& iq = *model.cachedIntensiveQuantities(elementIdx, /*timeIdx=*/ 0);
+            const auto& iq = *model.cachedIntensiveQuantities(elementIdx, /*timeIdx=*/0);
             Scalar trans_mult = computeRockCompTransMultiplier_<Scalar>(iq, elementIdx);
             this->rockCompTransMultVal_[elementIdx] = trans_mult;
         }
@@ -1651,13 +1639,12 @@ protected:
         const auto& rock_config = this->simulator().vanguard().eclState().getSimulationConfig().rock_config();
         if (!this->minRefPressure_.empty())
             // The pore space change is irreversible
-            effectivePressure =
-                min(decay<LhsEval>(fs.pressure(refPressurePhaseIdx_())),
-                    this->minRefPressure_[elementIdx]);
+            effectivePressure
+                = min(decay<LhsEval>(fs.pressure(refPressurePhaseIdx_())), this->minRefPressure_[elementIdx]);
 
         if (!this->overburdenPressure_.empty())
             effectivePressure -= this->overburdenPressure_[elementIdx];
-        
+
         if (rock_config.store()) {
             effectivePressure -= asImp_().initialFluidState(elementIdx).pressure(refPressurePhaseIdx_());
         }
@@ -1686,10 +1673,9 @@ protected:
     PffGridVector<GridView, Stencil, PffDofData_, DofMapper> pffDofData_;
     TracerModel tracerModel_;
 
-    template<class T>
-    struct BCData
-    {
-        std::array<std::vector<T>,6> data;
+    template <class T>
+    struct BCData {
+        std::array<std::vector<T>, 6> data;
 
         void resize(std::size_t size, T defVal)
         {
@@ -1704,7 +1690,7 @@ protected:
             int idx = 0;
             int div = static_cast<int>(dir);
             while ((div /= 2) >= 1)
-              ++idx;
+                ++idx;
             assert(idx >= 0 && idx <= 5);
             return data[idx];
         }

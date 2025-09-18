@@ -30,19 +30,24 @@ namespace Opm
 {
 
 class DeferredLogger;
-template<class Scalar> class GroupState;
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq> class MultisegmentWellEquations;
-template<class FluidSystem, class Indices> class MultisegmentWellPrimaryVariables;
+template <class Scalar>
+class GroupState;
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+class MultisegmentWellEquations;
+template <class FluidSystem, class Indices>
+class MultisegmentWellPrimaryVariables;
 class Schedule;
 class SummaryState;
-template<class FluidSystem, class Indices> class WellInterfaceIndices;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class FluidSystem, class Indices>
+class WellInterfaceIndices;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class handling assemble of the equation system for MultisegmentWell.
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 class MultisegmentWellAssemble
 {
-    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem,Indices>;
+    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem, Indices>;
     static constexpr int WQTotal = PrimaryVariables::WQTotal;
     static constexpr bool has_wfrac_variable = PrimaryVariables::has_wfrac_variable;
     static constexpr bool has_gfrac_variable = PrimaryVariables::has_gfrac_variable;
@@ -51,16 +56,17 @@ class MultisegmentWellAssemble
     static constexpr int SPres = PrimaryVariables::SPres;
 
 public:
-    static constexpr int numWellEq = Indices::numPhases+1;
+    static constexpr int numWellEq = Indices::numPhases + 1;
     using Scalar = typename FluidSystem::Scalar;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
-    using Equations = MultisegmentWellEquations<Scalar, IndexTraits, numWellEq,Indices::numEq>;
-    using EvalWell = DenseAd::Evaluation<Scalar, numWellEq+Indices::numEq>;
+    using Equations = MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, Indices::numEq>;
+    using EvalWell = DenseAd::Evaluation<Scalar, numWellEq + Indices::numEq>;
 
     //! \brief Constructor initializes reference to well.
-    explicit MultisegmentWellAssemble(const WellInterfaceIndices<FluidSystem,Indices>& well)
+    explicit MultisegmentWellAssemble(const WellInterfaceIndices<FluidSystem, Indices>& well)
         : well_(well)
-    {}
+    {
+    }
 
     //! \brief Assemble control equation.
     void assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
@@ -103,9 +109,7 @@ public:
                             Equations& eqns) const;
 
     //! \brief Assembles a trivial equation.
-    void assembleTrivialEq(const int seg,
-                           const Scalar value,
-                           Equations& eqns) const;
+    void assembleTrivialEq(const int seg, const Scalar value, Equations& eqns) const;
 
     //! \brief Assemble accumulation term.
     void assembleAccumulationTerm(const int seg,
@@ -114,11 +118,8 @@ public:
                                   Equations& eqns1) const;
 
     //! \brief Assemble outflow term.
-    void assembleOutflowTerm(const int seg,
-                        const int seg_upwind,
-                        const int comp_idx,
-                        const EvalWell& segment_rate,
-                        Equations& eqns1) const;
+    void assembleOutflowTerm(
+        const int seg, const int seg_upwind, const int comp_idx, const EvalWell& segment_rate, Equations& eqns1) const;
 
     //! \brief Assemble inflow term.
     void assembleInflowTerm(const int seg,
@@ -136,9 +137,9 @@ public:
                                Equations& eqns) const;
 
 private:
-    const WellInterfaceIndices<FluidSystem,Indices>& well_; //!< Reference to well
+    const WellInterfaceIndices<FluidSystem, Indices>& well_; //!< Reference to well
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_STANDARDWELL_ASSEMBLE_HEADER_INCLUDED

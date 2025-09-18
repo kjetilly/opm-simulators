@@ -27,16 +27,15 @@
 #include <vector>
 
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename Scalar>
 class CompConnectionData
 {
 public:
     CompConnectionData() = default;
-    CompConnectionData(std::size_t num_connection,
-                       std::size_t num_phases,
-                       std::size_t num_components);
+    CompConnectionData(std::size_t num_connection, std::size_t num_phases, std::size_t num_components);
 
     CompConnectionData(const std::vector<PerforationData<Scalar>>& connections,
                        const std::size_t num_phases,
@@ -68,9 +67,9 @@ public:
     std::string name;
     bool producer;
 
-    WellStatus status{WellStatus::OPEN};
-    Scalar bhp{0};
-    Scalar temperature{0};
+    WellStatus status {WellStatus::OPEN};
+    Scalar bhp {0};
+    Scalar temperature {0};
 
     std::vector<Scalar> surface_phase_rates;
     std::vector<Scalar> phase_fractions; // V or L
@@ -78,12 +77,12 @@ public:
     // WZMF
     std::vector<Scalar> total_molar_fractions;
     // WXMF WYMF and WAMF
-    std::vector<std::vector<Scalar> > phase_molar_fractions;
+    std::vector<std::vector<Scalar>> phase_molar_fractions;
 
     CompConnectionData<Scalar> connection_data;
 
-    WellInjectorCMode injection_cmode{WellInjectorCMode::CMODE_UNDEFINED};
-    WellProducerCMode production_cmode{WellProducerCMode::CMODE_UNDEFINED};
+    WellInjectorCMode injection_cmode {WellInjectorCMode::CMODE_UNDEFINED};
+    WellProducerCMode production_cmode {WellProducerCMode::CMODE_UNDEFINED};
 
     // TODO: the function can be reorganized so that we do not need to have initSingleInjector
     // and initSingleProducer, but we split when update the targets

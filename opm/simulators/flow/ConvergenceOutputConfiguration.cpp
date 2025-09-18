@@ -23,8 +23,8 @@
 #include <cstddef>
 #include <regex>
 #include <stdexcept>
-#include <string_view>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -32,85 +32,78 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-namespace {
-    std::vector<std::string> tokenizeOptionValues(std::string_view options)
-    {
-        const auto split = std::regex { R"(\s*,\s*)" };
-        return {
-            std::cregex_token_iterator {
-                options.begin(), options.end(), split, -1
-            },
-            std::cregex_token_iterator {}
-        };
+namespace
+{
+std::vector<std::string>
+tokenizeOptionValues(std::string_view options)
+{
+    const auto split = std::regex {R"(\s*,\s*)"};
+    return {std::cregex_token_iterator {options.begin(), options.end(), split, -1}, std::cregex_token_iterator {}};
+}
+
+void
+reportUnsupportedOptionValuesAndThrow(std::vector<std::string> unsupp, std::string_view optionName)
+{
+    std::sort(unsupp.begin(), unsupp.end());
+    auto u = std::unique(unsupp.begin(), unsupp.end());
+
+    const auto pl = (std::distance(unsupp.begin(), u) != 1) ? "s" : "";
+
+    if (optionName.empty()) {
+        throw std::invalid_argument {fmt::format("Unsupported convergence output "
+                                                 "option value{}: {}\n"
+                                                 "Supported values are \"none\", "
+                                                 "\"steps\", and \"iterations\"",
+                                                 pl,
+                                                 fmt::join(unsupp.begin(), u, ", "))};
     }
 
-    void reportUnsupportedOptionValuesAndThrow(std::vector<std::string> unsupp,
-                                               std::string_view         optionName)
-    {
-        std::sort(unsupp.begin(), unsupp.end());
-        auto u = std::unique(unsupp.begin(), unsupp.end());
+    throw std::invalid_argument {fmt::format("Option {}:\n - Unsupported value{}: {}\n"
+                                             " - Supported values are \"none\", "
+                                             "\"steps\", and \"iterations\"",
+                                             optionName,
+                                             pl,
+                                             fmt::join(unsupp.begin(), u, ", "))};
+}
 
-        const auto pl = (std::distance(unsupp.begin(), u) != 1) ? "s" : "";
+std::vector<Opm::ConvergenceOutputConfiguration::Option>
+getOptions(std::string_view options, std::string_view optionName)
+{
+    using Option = Opm::ConvergenceOutputConfiguration::Option;
 
-        if (optionName.empty()) {
-            throw std::invalid_argument {
-                fmt::format("Unsupported convergence output "
-                            "option value{}: {}\n"
-                            "Supported values are \"none\", "
-                            "\"steps\", and \"iterations\"",
-                            pl, fmt::join(unsupp.begin(), u, ", "))
-            };
+    auto opt = std::vector<Option> {};
+
+    const auto values = std::unordered_map<std::string, Option> {
+        {"none", Option::None},
+        {"step", Option::Steps}, // Alias for 'steps' (plural)
+        {"steps", Option::Steps},
+        {"iteration", Option::Iterations}, // Alias for 'iterations' (plural)
+        {"iterations", Option::Iterations},
+    };
+
+    auto unsupp = std::vector<std::string> {};
+    for (const auto& value : tokenizeOptionValues(options)) {
+        if (auto option = values.find(value); option != values.end()) {
+            opt.push_back(option->second);
+        } else {
+            unsupp.push_back(value);
         }
-
-        throw std::invalid_argument {
-            fmt::format("Option {}:\n - Unsupported value{}: {}\n"
-                        " - Supported values are \"none\", "
-                        "\"steps\", and \"iterations\"",
-                        optionName, pl,
-                        fmt::join(unsupp.begin(), u, ", "))
-        };
     }
 
-    std::vector<Opm::ConvergenceOutputConfiguration::Option>
-    getOptions(std::string_view options, std::string_view optionName)
-    {
-        using Option = Opm::ConvergenceOutputConfiguration::Option;
-
-        auto opt = std::vector<Option>{};
-
-        const auto values = std::unordered_map<std::string, Option> {
-            { "none"      , Option::None       },
-            { "step"      , Option::Steps      }, // Alias for 'steps' (plural)
-            { "steps"     , Option::Steps      },
-            { "iteration" , Option::Iterations }, // Alias for 'iterations' (plural)
-            { "iterations", Option::Iterations },
-        };
-
-        auto unsupp = std::vector<std::string>{};
-        for (const auto& value : tokenizeOptionValues(options)) {
-            if (auto option = values.find(value); option != values.end()) {
-                opt.push_back(option->second);
-            }
-            else {
-                unsupp.push_back(value);
-            }
-        }
-
-        if (! unsupp.empty()) {
-            reportUnsupportedOptionValuesAndThrow(std::move(unsupp), optionName);
-        }
-
-        return opt;
+    if (!unsupp.empty()) {
+        reportUnsupportedOptionValuesAndThrow(std::move(unsupp), optionName);
     }
+
+    return opt;
+}
 } // Anonymous namespace
 
 // ===========================================================================
 // Public Interface Below Separator
 // ===========================================================================
 
-Opm::ConvergenceOutputConfiguration::
-ConvergenceOutputConfiguration(std::string_view options,
-                               std::string_view optionName)
+Opm::ConvergenceOutputConfiguration::ConvergenceOutputConfiguration(std::string_view options,
+                                                                    std::string_view optionName)
 {
     auto is_none = false;
     for (const auto& option : getOptions(options, optionName)) {
@@ -124,6 +117,6 @@ ConvergenceOutputConfiguration(std::string_view options,
 
     if (is_none) {
         // Recall: "none" overrides all other options.
-        this->flag_ = std::byte{0};
+        this->flag_ = std::byte {0};
     }
 }

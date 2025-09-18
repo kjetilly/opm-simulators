@@ -15,7 +15,8 @@
 #include <flow/flow_biofilm.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowBiofilmMainStandalone(argc, argv);
 }

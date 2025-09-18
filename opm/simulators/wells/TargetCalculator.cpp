@@ -20,8 +20,8 @@
 #include <config.h>
 #include <opm/simulators/wells/TargetCalculator.hpp>
 
-#include <opm/material/fluidsystems/PhaseUsageInfo.hpp>
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
+#include <opm/material/fluidsystems/PhaseUsageInfo.hpp>
 
 #include <opm/common/ErrorMacros.hpp>
 #include <opm/material/densead/Evaluation.hpp>
@@ -32,17 +32,17 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace Opm::WGHelpers {
+namespace Opm::WGHelpers
+{
 
-template<typename Scalar, typename IndexTraits>
-TargetCalculator<Scalar, IndexTraits>::
-TargetCalculator(const Group::ProductionCMode cmode,
-                 const PhaseUsageInfo<IndexTraits>& pu,
-                 const std::vector<Scalar>& resv_coeff,
-                 const Scalar group_grat_target_from_sales,
-                 const std::string& group_name,
-                 const GroupState<Scalar>& group_state,
-                 const bool use_gpmaint)
+template <typename Scalar, typename IndexTraits>
+TargetCalculator<Scalar, IndexTraits>::TargetCalculator(const Group::ProductionCMode cmode,
+                                                        const PhaseUsageInfo<IndexTraits>& pu,
+                                                        const std::vector<Scalar>& resv_coeff,
+                                                        const Scalar group_grat_target_from_sales,
+                                                        const std::string& group_name,
+                                                        const GroupState<Scalar>& group_state,
+                                                        const bool use_gpmaint)
     : cmode_(cmode)
     , pu_(pu)
     , resv_coeff_(resv_coeff)
@@ -54,9 +54,10 @@ TargetCalculator(const Group::ProductionCMode cmode,
 {
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 template <typename RateType>
-RateType TargetCalculator<Scalar, IndexTraits>::calcModeRateFromRates(const RateType* rates) const
+RateType
+TargetCalculator<Scalar, IndexTraits>::calcModeRateFromRates(const RateType* rates) const
 {
     switch (cmode_) {
     case Group::ProductionCMode::ORAT: {
@@ -97,16 +98,14 @@ RateType TargetCalculator<Scalar, IndexTraits>::calcModeRateFromRates(const Rate
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-TargetCalculator<Scalar, IndexTraits>::
-groupTarget(const std::optional<Group::ProductionControls>& ctrl,
-            DeferredLogger& deferred_logger) const
+TargetCalculator<Scalar, IndexTraits>::groupTarget(const std::optional<Group::ProductionControls>& ctrl,
+                                                   DeferredLogger& deferred_logger) const
 {
     if (!ctrl && !use_gpmaint_) {
         OPM_DEFLOG_THROW(std::logic_error,
-                         "Production group " + this->group_name_
-                         + "must either have a valid control or use GPMAINT",
+                         "Production group " + this->group_name_ + "must either have a valid control or use GPMAINT",
                          deferred_logger);
     }
     switch (cmode_) {
@@ -114,8 +113,7 @@ groupTarget(const std::optional<Group::ProductionControls>& ctrl,
         return ctrl->oil_target;
     case Group::ProductionCMode::WRAT:
         return ctrl->water_target;
-    case Group::ProductionCMode::GRAT:
-    {
+    case Group::ProductionCMode::GRAT: {
         // gas target may have been adjusted by GCONSALE
         if (group_grat_target_from_sales_ > 0)
             return group_grat_target_from_sales_;
@@ -124,8 +122,7 @@ groupTarget(const std::optional<Group::ProductionControls>& ctrl,
     }
     case Group::ProductionCMode::LRAT:
         return ctrl->liquid_target;
-    case Group::ProductionCMode::RESV:
-    {
+    case Group::ProductionCMode::RESV: {
         if (use_gpmaint_ && this->group_state_.has_gpmaint_target(this->group_name_))
             return this->group_state_.gpmaint_target(this->group_name_);
 
@@ -138,7 +135,7 @@ groupTarget(const std::optional<Group::ProductionControls>& ctrl,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 GuideRateModel::Target
 TargetCalculator<Scalar, IndexTraits>::guideTargetMode() const
 {
@@ -160,17 +157,16 @@ TargetCalculator<Scalar, IndexTraits>::guideTargetMode() const
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-InjectionTargetCalculator<Scalar, IndexTraits>::
-InjectionTargetCalculator(const Group::InjectionCMode& cmode,
-                          const PhaseUsageInfo<IndexTraits>& pu,
-                          const std::vector<Scalar>& resv_coeff,
-                          const std::string& group_name,
-                          const Scalar sales_target,
-                          const GroupState<Scalar>& group_state,
-                          const Phase& injection_phase,
-                          const bool use_gpmaint,
-                          DeferredLogger& deferred_logger)
+template <typename Scalar, typename IndexTraits>
+InjectionTargetCalculator<Scalar, IndexTraits>::InjectionTargetCalculator(const Group::InjectionCMode& cmode,
+                                                                          const PhaseUsageInfo<IndexTraits>& pu,
+                                                                          const std::vector<Scalar>& resv_coeff,
+                                                                          const std::string& group_name,
+                                                                          const Scalar sales_target,
+                                                                          const GroupState<Scalar>& group_state,
+                                                                          const Phase& injection_phase,
+                                                                          const bool use_gpmaint,
+                                                                          DeferredLogger& deferred_logger)
     : cmode_(cmode)
     , pu_(pu)
     , resv_coeff_(resv_coeff)
@@ -181,42 +177,38 @@ InjectionTargetCalculator(const Group::InjectionCMode& cmode,
 
 {
     // initialize to avoid warning
-    pos_ =  pu_.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+    pos_ = pu_.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
     target_ = GuideRateModel::Target::WAT;
 
     switch (injection_phase) {
     case Phase::WATER: {
-        pos_ =  pu_.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+        pos_ = pu_.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
         target_ = GuideRateModel::Target::WAT;
         break;
     }
     case Phase::OIL: {
-        pos_ =  pu_.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+        pos_ = pu_.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
         target_ = GuideRateModel::Target::OIL;
         break;
     }
     case Phase::GAS: {
-        pos_ =  pu_.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
+        pos_ = pu_.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
         target_ = GuideRateModel::Target::GAS;
         break;
     }
     default:
-        OPM_DEFLOG_THROW(std::logic_error,
-                         "Invalid injection phase in InjectionTargetCalculator",
-                         deferred_logger);
+        OPM_DEFLOG_THROW(std::logic_error, "Invalid injection phase in InjectionTargetCalculator", deferred_logger);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-InjectionTargetCalculator<Scalar, IndexTraits>::
-groupTarget(const std::optional<Group::InjectionControls>& ctrl,
-            DeferredLogger& deferred_logger) const
+InjectionTargetCalculator<Scalar, IndexTraits>::groupTarget(const std::optional<Group::InjectionControls>& ctrl,
+                                                            DeferredLogger& deferred_logger) const
 {
     if (!ctrl && !use_gpmaint_) {
         OPM_DEFLOG_THROW(std::logic_error,
-                         "Injection group " + this->group_name_
-                         + "must either have a valid control or use GPMAINT",
+                         "Injection group " + this->group_name_ + "must either have a valid control or use GPMAINT",
                          deferred_logger);
     }
     switch (cmode_) {
@@ -236,8 +228,10 @@ groupTarget(const std::optional<Group::InjectionControls>& ctrl,
     }
     case Group::InjectionCMode::VREP: {
         // We use the injection_reservoir_rates directly instead of the reduction rates here to account for the
-        // possibility that the group in question has both a VREP control and another injection control for a different phase.
-        const std::vector<Scalar>& group_injection_reservoir_rates = this->group_state_.injection_reservoir_rates(this->group_name_);
+        // possibility that the group in question has both a VREP control and another injection control for a different
+        // phase.
+        const std::vector<Scalar>& group_injection_reservoir_rates
+            = this->group_state_.injection_reservoir_rates(this->group_name_);
         Scalar voidage_rate = group_state_.injection_vrep_rate(ctrl->voidage_group) * ctrl->target_void_fraction;
         if (ctrl->phase != Phase::WATER) {
             const int pos = pu_.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
@@ -254,7 +248,7 @@ groupTarget(const std::optional<Group::InjectionControls>& ctrl,
         return voidage_rate / resv_coeff_[pos_];
     }
     case Group::InjectionCMode::SALE: {
-        assert(pos_ == pu_.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx) );
+        assert(pos_ == pu_.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx));
         // Gas injection rate = Total gas production rate + gas import rate - gas consumption rate - sales rate;
         // Gas import and consumption is already included in the REIN rates
         Scalar inj_rate = group_state_.injection_rein_rates(this->group_name_)[pos_];
@@ -262,44 +256,43 @@ groupTarget(const std::optional<Group::InjectionControls>& ctrl,
         return inj_rate;
     }
     default:
-        OPM_DEFLOG_THROW(std::logic_error,
-                         "Invalid Group::InjectionCMode in InjectionTargetCalculator",
-                         deferred_logger);
+        OPM_DEFLOG_THROW(
+            std::logic_error, "Invalid Group::InjectionCMode in InjectionTargetCalculator", deferred_logger);
         return 0.0;
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 GuideRateModel::Target
 InjectionTargetCalculator<Scalar, IndexTraits>::guideTargetMode() const
 {
     return target_;
 }
 
-#define INSTANTIATE_TARGET_CALCULATOR(T,...) \
-    template __VA_ARGS__                     \
-    TargetCalculator<T, BlackOilDefaultFluidSystemIndices>::calcModeRateFromRates(const __VA_ARGS__* rates) const;
+#define INSTANTIATE_TARGET_CALCULATOR(T, ...)                                                                          \
+    template __VA_ARGS__ TargetCalculator<T, BlackOilDefaultFluidSystemIndices>::calcModeRateFromRates(                \
+        const __VA_ARGS__* rates) const;
 
-#define INSTANTIATE_TYPE(T)                                       \
-    template class TargetCalculator<T, BlackOilDefaultFluidSystemIndices>;                           \
-    template class InjectionTargetCalculator<T, BlackOilDefaultFluidSystemIndices>;                  \
-    INSTANTIATE_TARGET_CALCULATOR(T,T)                            \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,3,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,4,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,5,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,6,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,7,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,8,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,9,0>)   \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,10,0>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,4>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,5>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,6>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,7>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,8>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,9>)  \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,10>) \
-    INSTANTIATE_TARGET_CALCULATOR(T,DenseAd::Evaluation<T,-1,11>)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class TargetCalculator<T, BlackOilDefaultFluidSystemIndices>;                                             \
+    template class InjectionTargetCalculator<T, BlackOilDefaultFluidSystemIndices>;                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, T)                                                                                \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 3, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 4, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 5, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 6, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 7, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 8, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 9, 0>)                                                     \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, 10, 0>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 4>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 5>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 6>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 7>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 8>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 9>)                                                    \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 10>)                                                   \
+    INSTANTIATE_TARGET_CALCULATOR(T, DenseAd::Evaluation<T, -1, 11>)
 
 INSTANTIATE_TYPE(double)
 

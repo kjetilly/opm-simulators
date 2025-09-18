@@ -39,115 +39,116 @@
 
 #include <fmt/format.h>
 
-namespace {
+namespace
+{
 
 #if BOOST_VERSION / 100 % 1000 > 48
 
-    std::map<std::string, std::string>
-    jsonConfiguration(const std::string&    conf,
-                      std::string_view   /* paramName */)
-    {
-        if (! std::filesystem::exists(conf)) {
-            OPM_THROW(std::invalid_argument,
-                      fmt::format("JSON file {} does not exist", conf));
-        }
-
-        boost::property_tree::ptree tree;
-        try {
-            boost::property_tree::read_json(conf, tree);
-        }
-        catch (const boost::property_tree::json_parser::json_parser_error& err) {
-            Opm::OpmLog::error(err.what());
-        }
-
-        auto result = std::map<std::string, std::string>{};
-
-        for (const auto& node : tree) {
-            auto value = node.second.get_value_optional<std::string>();
-            if (value) {
-                result.insert_or_assign(node.first, *value);
-            }
-        }
-
-        return result;
+std::map<std::string, std::string>
+jsonConfiguration(const std::string& conf, std::string_view /* paramName */)
+{
+    if (!std::filesystem::exists(conf)) {
+        OPM_THROW(std::invalid_argument, fmt::format("JSON file {} does not exist", conf));
     }
+
+    boost::property_tree::ptree tree;
+    try {
+        boost::property_tree::read_json(conf, tree);
+    } catch (const boost::property_tree::json_parser::json_parser_error& err) {
+        Opm::OpmLog::error(err.what());
+    }
+
+    auto result = std::map<std::string, std::string> {};
+
+    for (const auto& node : tree) {
+        auto value = node.second.get_value_optional<std::string>();
+        if (value) {
+            result.insert_or_assign(node.first, *value);
+        }
+    }
+
+    return result;
+}
 
 #else // ! Boost.PTree has JSON support.
 
-    [[noreturn]] std::map<std::string, std::string>
-    jsonConfiguration(const std::string& conf,
-                      std::string_view   paramName)
-    {
-        OPM_THROW(std::invalid_argument,
-                  fmt::format("{}=file.json ({}) is not supported in "
-                              "current Boost version (1.{}). "
-                              "Need Boost version 1.49 or later.",
-                              paramName, conf, (BOOST_VERSION / 100) % 1000));
-    }
+[[noreturn]] std::map<std::string, std::string>
+jsonConfiguration(const std::string& conf, std::string_view paramName)
+{
+    OPM_THROW(std::invalid_argument,
+              fmt::format("{}=file.json ({}) is not supported in "
+                          "current Boost version (1.{}). "
+                          "Need Boost version 1.49 or later.",
+                          paramName,
+                          conf,
+                          (BOOST_VERSION / 100) % 1000));
+}
 
 #endif // Boost.PTree has JSON support.
 
-    bool isJsonConfiguration(const std::string& conf)
-    {
-        const auto ext = std::string_view { ".json" };
+bool
+isJsonConfiguration(const std::string& conf)
+{
+    const auto ext = std::string_view {".json"};
 
-        return conf.rfind(ext) == conf.size() - ext.size();
-    }
+    return conf.rfind(ext) == conf.size() - ext.size();
+}
 
 } // Anonymous namespace
 
 // ---------------------------------------------------------------------------
 
-namespace {
+namespace
+{
 
-    std::map<std::string, std::string>
-    applyEdgeSizeThreshold(std::map<std::string, std::string>&& params,
-                           const std::optional<double>&         edgeSizeThreshold)
-    {
-        if (edgeSizeThreshold.has_value()) {
-            params.emplace("PHG_EDGE_SIZE_THRESHOLD",
-                           fmt::format("{}", *edgeSizeThreshold));
-        }
-
-        return params;
+std::map<std::string, std::string>
+applyEdgeSizeThreshold(std::map<std::string, std::string>&& params, const std::optional<double>& edgeSizeThreshold)
+{
+    if (edgeSizeThreshold.has_value()) {
+        params.emplace("PHG_EDGE_SIZE_THRESHOLD", fmt::format("{}", *edgeSizeThreshold));
     }
 
-    std::map<std::string, std::string>
-    zoltanGraphParameters(std::string_view graphPackage)
-    {
-        return {
-            { "LB_METHOD", "GRAPH" },
-            { "GRAPH_PACKAGE", graphPackage.data() },
-        };
-    }
+    return params;
+}
 
-    auto zoltanGraphParameters(const std::optional<double>& edgeSizeThreshold)
-    {
-        return applyEdgeSizeThreshold(zoltanGraphParameters("PHG"),
-                                      edgeSizeThreshold);
-    }
+std::map<std::string, std::string>
+zoltanGraphParameters(std::string_view graphPackage)
+{
+    return {
+        {"LB_METHOD", "GRAPH"},
+        {"GRAPH_PACKAGE", graphPackage.data()},
+    };
+}
 
-    auto zoltanScotchParameters()
-    {
-        return zoltanGraphParameters("Scotch");
-    }
+auto
+zoltanGraphParameters(const std::optional<double>& edgeSizeThreshold)
+{
+    return applyEdgeSizeThreshold(zoltanGraphParameters("PHG"), edgeSizeThreshold);
+}
 
-    std::map<std::string, std::string>
-    zoltanHyperGraphParameters(const std::optional<double>& edgeSizeThreshold)
-    {
-        return applyEdgeSizeThreshold({
-            { "LB_METHOD", "HYPERGRAPH" },
-            { "HYPERGRAPH_PACKAGE", "PHG" },
-        }, edgeSizeThreshold);
-    }
+auto
+zoltanScotchParameters()
+{
+    return zoltanGraphParameters("Scotch");
+}
+
+std::map<std::string, std::string>
+zoltanHyperGraphParameters(const std::optional<double>& edgeSizeThreshold)
+{
+    return applyEdgeSizeThreshold(
+        {
+            {"LB_METHOD", "HYPERGRAPH"},
+            {"HYPERGRAPH_PACKAGE", "PHG"},
+        },
+        edgeSizeThreshold);
+}
 
 } // Anonymous namespace
 
 // ===========================================================================
 
 std::map<std::string, std::string>
-Opm::setupZoltanParams(const std::string&           conf,
-                       const std::optional<double>& edgeSizeThreshold)
+Opm::setupZoltanParams(const std::string& conf, const std::optional<double>& edgeSizeThreshold)
 {
     if (conf == "graph") {
         return zoltanGraphParameters(edgeSizeThreshold);
@@ -191,6 +192,7 @@ Opm::setupMetisParams(const std::string& conf)
         OPM_THROW(std::invalid_argument,
                   fmt::format("{} is not a valid setting for --metis-params. "
                               "Please use \"default\" or a JSON file containing "
-                              "the METIS parameters.", conf));
+                              "the METIS parameters.",
+                              conf));
     }
 }

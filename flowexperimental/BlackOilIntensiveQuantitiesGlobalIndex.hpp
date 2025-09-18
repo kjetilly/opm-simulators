@@ -37,19 +37,19 @@
 
 #include <opm/input/eclipse/EclipseState/Grid/FaceDir.hpp>
 
-#include <opm/material/fluidstates/BlackOilFluidState.hpp>
 #include <opm/material/common/Valgrind.hpp>
+#include <opm/material/fluidstates/BlackOilFluidState.hpp>
 
+#include <opm/models/blackoil/blackoilbioeffectsmodules.hh>
+#include <opm/models/blackoil/blackoilbrinemodules.hh>
+#include <opm/models/blackoil/blackoilconvectivemixingmodule.hh>
+#include <opm/models/blackoil/blackoildiffusionmodule.hh>
+#include <opm/models/blackoil/blackoilenergymodules.hh>
+#include <opm/models/blackoil/blackoilextbomodules.hh>
+#include <opm/models/blackoil/blackoilfoammodules.hh>
+#include <opm/models/blackoil/blackoilpolymermodules.hh>
 #include <opm/models/blackoil/blackoilproperties.hh>
 #include <opm/models/blackoil/blackoilsolventmodules.hh>
-#include <opm/models/blackoil/blackoilextbomodules.hh>
-#include <opm/models/blackoil/blackoilpolymermodules.hh>
-#include <opm/models/blackoil/blackoilfoammodules.hh>
-#include <opm/models/blackoil/blackoilbrinemodules.hh>
-#include <opm/models/blackoil/blackoilenergymodules.hh>
-#include <opm/models/blackoil/blackoildiffusionmodule.hh>
-#include <opm/models/blackoil/blackoilbioeffectsmodules.hh>
-#include <opm/models/blackoil/blackoilconvectivemixingmodule.hh>
 #include <opm/models/common/directionalmobility.hh>
 
 #include <opm/utility/CopyablePtr.hpp>
@@ -59,7 +59,8 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilModel
@@ -70,17 +71,18 @@ namespace Opm {
  */
 template <class TypeTag>
 class BlackOilIntensiveQuantitiesGlobalIndex
-    : public GetPropType<TypeTag, Properties::DiscIntensiveQuantities>
-    , public GetPropType<TypeTag, Properties::FluxModule>::FluxIntensiveQuantities
-    , public BlackOilDiffusionIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableDiffusion>()>
-    , public BlackOilSolventIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableSolvent>()>
-    , public BlackOilExtboIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableExtbo>()>
-    , public BlackOilPolymerIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnablePolymer>()>
-    , public BlackOilFoamIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableFoam>()>
-    , public BlackOilBrineIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableBrine>()>
-    , public BlackOilEnergyIntensiveQuantitiesGlobalIndex<TypeTag, getPropValue<TypeTag, Properties::EnableEnergy>()>
-    , public BlackOilBioeffectsIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableBioeffects>()>
-    , public BlackOilConvectiveMixingIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableConvectiveMixing>()>
+    : public GetPropType<TypeTag, Properties::DiscIntensiveQuantities>,
+      public GetPropType<TypeTag, Properties::FluxModule>::FluxIntensiveQuantities,
+      public BlackOilDiffusionIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableDiffusion>()>,
+      public BlackOilSolventIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableSolvent>()>,
+      public BlackOilExtboIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableExtbo>()>,
+      public BlackOilPolymerIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnablePolymer>()>,
+      public BlackOilFoamIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableFoam>()>,
+      public BlackOilBrineIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableBrine>()>,
+      public BlackOilEnergyIntensiveQuantitiesGlobalIndex<TypeTag, getPropValue<TypeTag, Properties::EnableEnergy>()>,
+      public BlackOilBioeffectsIntensiveQuantities<TypeTag, getPropValue<TypeTag, Properties::EnableBioeffects>()>,
+      public BlackOilConvectiveMixingIntensiveQuantities<TypeTag,
+                                                         getPropValue<TypeTag, Properties::EnableConvectiveMixing>()>
 {
     using ParentType = GetPropType<TypeTag, Properties::DiscIntensiveQuantities>;
     using Implementation = GetPropType<TypeTag, Properties::IntensiveQuantities>;
@@ -165,30 +167,25 @@ public:
         const auto& problem = elemCtx.problem();
         const auto& priVars = elemCtx.primaryVars(dofIdx, timeIdx);
         unsigned globalSpaceIdx = elemCtx.globalSpaceIndex(dofIdx, timeIdx);
-        this->update(problem,priVars,globalSpaceIdx,timeIdx);
+        this->update(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void update(const Problem& problem,
-                const PrimaryVariables& priVars,
-                unsigned globalSpaceIdx,
-                unsigned timeIdx)
+    void update(const Problem& problem, const PrimaryVariables& priVars, unsigned globalSpaceIdx, unsigned timeIdx)
     {
 
-        this->extrusionFactor_ = 1.0;// to avoid fixing parent update
+        this->extrusionFactor_ = 1.0; // to avoid fixing parent update
         OPM_TIMEBLOCK_LOCAL(UpdateIntensiveQuantities);
-        Scalar RvMax = FluidSystem::enableVaporizedOil()
-            ? problem.maxOilVaporizationFactor(timeIdx, globalSpaceIdx)
-            : 0.0;
-        Scalar RsMax = FluidSystem::enableDissolvedGas()
-            ? problem.maxGasDissolutionFactor(timeIdx, globalSpaceIdx)
-            : 0.0;
+        Scalar RvMax
+            = FluidSystem::enableVaporizedOil() ? problem.maxOilVaporizationFactor(timeIdx, globalSpaceIdx) : 0.0;
+        Scalar RsMax
+            = FluidSystem::enableDissolvedGas() ? problem.maxGasDissolutionFactor(timeIdx, globalSpaceIdx) : 0.0;
 
         asImp_().updateTemperature_(problem, priVars, globalSpaceIdx, timeIdx);
 
         unsigned pvtRegionIdx = priVars.pvtRegionIndex();
         fluidState_.setPvtRegionIndex(pvtRegionIdx);
 
-        //asImp_().updateSaltConcentration_(elemCtx, dofIdx, timeIdx);
+        // asImp_().updateSaltConcentration_(elemCtx, dofIdx, timeIdx);
 
         // extract the water and the gas saturations for convenience
         Evaluation Sw = 0.0;
@@ -237,7 +234,7 @@ public:
             fluidState_.setSaturation(oilPhaseIdx, So);
         }
 
-        std::array<Evaluation, numPhases> pC{};
+        std::array<Evaluation, numPhases> pC {};
         computeRelpermAndPC(mobility_, pC, problem, fluidState_, globalSpaceIdx);
         // oil is the reference phase for pressure
         if (priVars.primaryVarsMeaningPressure() == PrimaryVariables::PressureMeaning::Pg) {
@@ -258,8 +255,7 @@ public:
 
         Evaluation SoMax = 0.0;
         if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx)) {
-            SoMax = max(fluidState_.saturation(oilPhaseIdx),
-                        problem.maxOilSaturation(globalSpaceIdx));
+            SoMax = max(fluidState_.saturation(oilPhaseIdx), problem.maxOilSaturation(globalSpaceIdx));
         }
 
         // take the meaning of the switching primary variable into account for the gas
@@ -270,14 +266,11 @@ public:
         } else {
             if (FluidSystem::enableDissolvedGas()) { // Add So > 0? i.e. if only water set rs = 0)
                 OPM_TIMEBLOCK_LOCAL(UpdateSaturatedRs);
-                const Evaluation& RsSat = enableExtbo ? asImp_().rs() :
-                    FluidSystem::saturatedDissolutionFactor(fluidState_,
-                                                            oilPhaseIdx,
-                                                            pvtRegionIdx,
-                                                            SoMax);
+                const Evaluation& RsSat = enableExtbo
+                    ? asImp_().rs()
+                    : FluidSystem::saturatedDissolutionFactor(fluidState_, oilPhaseIdx, pvtRegionIdx, SoMax);
                 fluidState_.setRs(min(RsMax, RsSat));
-            }
-            else if constexpr (compositionSwitchEnabled) {
+            } else if constexpr (compositionSwitchEnabled) {
                 fluidState_.setRs(0.0);
             }
         }
@@ -286,17 +279,14 @@ public:
             const auto& Rv = priVars.makeEvaluation(Indices::compositionSwitchIdx, timeIdx);
             fluidState_.setRv(Rv);
         } else {
-            if (FluidSystem::enableVaporizedOil() ) { // Add Sg > 0? i.e. if only water set rv = 0)
+            if (FluidSystem::enableVaporizedOil()) { // Add Sg > 0? i.e. if only water set rv = 0)
                 OPM_TIMEBLOCK_LOCAL(UpdateSaturatedRv);
-                //NB! should save the indexing for later evalustion
-                const Evaluation& RvSat = enableExtbo ? asImp_().rv() :
-                    FluidSystem::saturatedDissolutionFactor(fluidState_,
-                                                            gasPhaseIdx,
-                                                            pvtRegionIdx,
-                                                            SoMax);
+                // NB! should save the indexing for later evalustion
+                const Evaluation& RvSat = enableExtbo
+                    ? asImp_().rv()
+                    : FluidSystem::saturatedDissolutionFactor(fluidState_, gasPhaseIdx, pvtRegionIdx, SoMax);
                 fluidState_.setRv(min(RvMax, RvSat));
-            }
-            else if constexpr (compositionSwitchEnabled) {
+            } else if constexpr (compositionSwitchEnabled) {
                 fluidState_.setRv(0.0);
             }
         }
@@ -306,12 +296,11 @@ public:
                 const auto& Rvw = priVars.makeEvaluation(Indices::waterSwitchIdx, timeIdx);
                 fluidState_.setRvw(Rvw);
             } else {
-                //NB! should save the indexing for later evaluation
+                // NB! should save the indexing for later evaluation
                 if (FluidSystem::enableVaporizedWater()) { // Add Sg > 0? i.e. if only water set rv = 0)
                     OPM_TIMEBLOCK_LOCAL(UpdateSaturatedRv);
-                    const Evaluation& RvwSat = FluidSystem::saturatedVaporizationFactor(fluidState_,
-                                                                                        gasPhaseIdx,
-                                                                                        pvtRegionIdx);
+                    const Evaluation& RvwSat
+                        = FluidSystem::saturatedVaporizationFactor(fluidState_, gasPhaseIdx, pvtRegionIdx);
                     fluidState_.setRvw(RvwSat);
                 }
             }
@@ -339,14 +328,12 @@ public:
             rho = fluidState_.invB(gasPhaseIdx);
             rho *= FluidSystem::referenceDensity(gasPhaseIdx, pvtRegionIdx);
             if (FluidSystem::enableVaporizedOil()) {
-                rho += fluidState_.invB(gasPhaseIdx) *
-                       fluidState_.Rv() *
-                       FluidSystem::referenceDensity(oilPhaseIdx, pvtRegionIdx);
+                rho += fluidState_.invB(gasPhaseIdx) * fluidState_.Rv()
+                    * FluidSystem::referenceDensity(oilPhaseIdx, pvtRegionIdx);
             }
             if (FluidSystem::enableVaporizedWater()) {
-                rho += fluidState_.invB(gasPhaseIdx) *
-                       fluidState_.Rvw() *
-                       FluidSystem::referenceDensity(waterPhaseIdx, pvtRegionIdx);
+                rho += fluidState_.invB(gasPhaseIdx) * fluidState_.Rvw()
+                    * FluidSystem::referenceDensity(waterPhaseIdx, pvtRegionIdx);
             }
             fluidState_.setDensity(gasPhaseIdx, rho);
         }
@@ -356,15 +343,14 @@ public:
             rho = fluidState_.invB(oilPhaseIdx);
             rho *= FluidSystem::referenceDensity(oilPhaseIdx, pvtRegionIdx);
             if (FluidSystem::enableDissolvedGas()) {
-                rho += fluidState_.invB(oilPhaseIdx) *
-                       fluidState_.Rs() *
-                       FluidSystem::referenceDensity(gasPhaseIdx, pvtRegionIdx);
+                rho += fluidState_.invB(oilPhaseIdx) * fluidState_.Rs()
+                    * FluidSystem::referenceDensity(gasPhaseIdx, pvtRegionIdx);
             }
             fluidState_.setDensity(oilPhaseIdx, rho);
         }
 
         // retrieve the porosity from the problem
-        referencePorosity_ = problem.porosity(globalSpaceIdx,timeIdx);
+        referencePorosity_ = problem.porosity(globalSpaceIdx, timeIdx);
         porosity_ = referencePorosity_;
         // the porosity must be modified by the compressibility of the
         // rock...
@@ -374,11 +360,11 @@ public:
             Scalar rockRefPressure = problem.rockReferencePressure(globalSpaceIdx);
             Evaluation x;
             if (FluidSystem::phaseIsActive(oilPhaseIdx)) {
-                x = rockCompressibility*(fluidState_.pressure(oilPhaseIdx) - rockRefPressure);
+                x = rockCompressibility * (fluidState_.pressure(oilPhaseIdx) - rockRefPressure);
             } else if (FluidSystem::phaseIsActive(waterPhaseIdx)) {
-                x = rockCompressibility*(fluidState_.pressure(waterPhaseIdx) - rockRefPressure);
+                x = rockCompressibility * (fluidState_.pressure(waterPhaseIdx) - rockRefPressure);
             } else {
-                x = rockCompressibility*(fluidState_.pressure(gasPhaseIdx) - rockRefPressure);
+                x = rockCompressibility * (fluidState_.pressure(gasPhaseIdx) - rockRefPressure);
             }
             porosity_ *= 1.0 + x + 0.5 * x * x;
         }
@@ -394,7 +380,7 @@ public:
 
 #ifndef NDEBUG
         // some safety checks in debug mode
-        for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx) {
+        for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
             if (!FluidSystem::phaseIsActive(phaseIdx)) {
                 continue;
             }
@@ -414,13 +400,17 @@ public:
      * \copydoc ImmiscibleIntensiveQuantities::fluidState
      */
     const FluidState& fluidState() const
-    { return fluidState_; }
+    {
+        return fluidState_;
+    }
 
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::mobility
      */
     const Evaluation& mobility(unsigned phaseIdx) const
-    { return mobility_[phaseIdx]; }
+    {
+        return mobility_[phaseIdx];
+    }
 
     const Evaluation& mobility(unsigned phaseIdx, FaceDir::DirEnum facedir) const
     {
@@ -441,9 +431,9 @@ public:
         }
     }
 
-    void computeInverseFormationVolumeFactorAndViscosity(FluidState& fluidState,
-                                                         unsigned phaseIdx,
-                                                         unsigned pvtRegionIdx) {
+    void
+    computeInverseFormationVolumeFactorAndViscosity(FluidState& fluidState, unsigned phaseIdx, unsigned pvtRegionIdx)
+    {
         OPM_TIMEBLOCK_LOCAL(UpdateInverseFormationFactorAndViscosity);
         {
             OPM_TIMEBLOCK_LOCAL(UpdateFormationFactor);
@@ -461,11 +451,12 @@ public:
         }
     }
 
-    void computeRelpermAndPC(std::array<Evaluation,numPhases>& mobility,
+    void computeRelpermAndPC(std::array<Evaluation, numPhases>& mobility,
                              std::array<Evaluation, numPhases>& pC,
                              const Problem& problem,
                              const FluidState& fluidState,
-                             unsigned globalSpaceIdx){
+                             unsigned globalSpaceIdx)
+    {
         OPM_TIMEBLOCK_LOCAL(UpdateRelperm);
         const auto& materialParams = problem.materialLawParams(globalSpaceIdx);
         MaterialLaw::capillaryPressures(pC, materialParams, fluidState_);
@@ -476,13 +467,17 @@ public:
      * \copydoc ImmiscibleIntensiveQuantities::porosity
      */
     const Evaluation& porosity() const
-    { return porosity_; }
+    {
+        return porosity_;
+    }
 
     /*!
      * The pressure-dependent transmissibility multiplier due to rock compressibility.
      */
     const Evaluation& rockCompTransMultiplier() const
-    { return rockCompTransMultiplier_; }
+    {
+        return rockCompTransMultiplier_;
+    }
 
     /*!
      * \brief Returns the index of the PVT region used to calculate the thermodynamic
@@ -498,7 +493,9 @@ public:
      * specified, the PVT region index is 0.)
      */
     auto pvtRegionIndex() const -> decltype(std::declval<FluidState>().pvtRegionIndex())
-    { return fluidState_.pvtRegionIndex(); }
+    {
+        return fluidState_.pvtRegionIndex();
+    }
 
     /*!
      * \copydoc ImmiscibleIntensiveQuantities::relativePermeability
@@ -506,7 +503,7 @@ public:
     Evaluation relativePermeability(unsigned phaseIdx) const
     {
         // warning: slow
-        return fluidState_.viscosity(phaseIdx)*mobility(phaseIdx);
+        return fluidState_.viscosity(phaseIdx) * mobility(phaseIdx);
     }
 
     /*!
@@ -516,11 +513,13 @@ public:
      * changes.
      */
     Scalar referencePorosity() const
-    { return referencePorosity_; }
+    {
+        return referencePorosity_;
+    }
 
     const Evaluation& permFactor() const
     {
-        throw std::logic_error("permFactor() is not yet implemented for compositional modeling"); 
+        throw std::logic_error("permFactor() is not yet implemented for compositional modeling");
     }
 
 private:
@@ -533,13 +532,15 @@ private:
     friend BlackOilBioeffectsIntensiveQuantities<TypeTag, enableBioeffects>;
 
     Implementation& asImp_()
-    { return *static_cast<Implementation*>(this); }
+    {
+        return *static_cast<Implementation*>(this);
+    }
 
     FluidState fluidState_;
     Scalar referencePorosity_;
     Evaluation porosity_;
     Evaluation rockCompTransMultiplier_;
-    std::array<Evaluation,numPhases> mobility_;
+    std::array<Evaluation, numPhases> mobility_;
 
     // Instead of writing a custom copy constructor and a custom assignment operator just to handle
     // the dirMob_ unique ptr member variable when copying BlackOilIntensiveQuantites (see for example

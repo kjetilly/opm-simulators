@@ -50,98 +50,104 @@ std::shared_ptr<std::thread> copyThread;
 #include <omp.h>
 #endif // HAVE_OPENMP
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
-template<class Matrix, class Vector>
-GpuSolverInfo<Matrix,Vector>::
-GpuSolverInfo(const std::string& accelerator_mode,
-              const int linear_solver_verbosity,
-              const int maxit,
-              const Scalar tolerance,
-              const int platformID,
-              const int deviceID,
-              const bool opencl_ilu_parallel,
-              const std::string& linsolver)
+template <class Matrix, class Vector>
+GpuSolverInfo<Matrix, Vector>::GpuSolverInfo(const std::string& accelerator_mode,
+                                             const int linear_solver_verbosity,
+                                             const int maxit,
+                                             const Scalar tolerance,
+                                             const int platformID,
+                                             const int deviceID,
+                                             const bool opencl_ilu_parallel,
+                                             const std::string& linsolver)
     : bridge_(std::make_unique<Bridge>(accelerator_mode,
-                                       linear_solver_verbosity, maxit,
-                                       tolerance, platformID, deviceID,
-                                       opencl_ilu_parallel, linsolver))
+                                       linear_solver_verbosity,
+                                       maxit,
+                                       tolerance,
+                                       platformID,
+                                       deviceID,
+                                       opencl_ilu_parallel,
+                                       linsolver))
     , accelerator_mode_(accelerator_mode)
-{}
+{
+}
 
-template<class Matrix, class Vector>
-GpuSolverInfo<Matrix,Vector>::~GpuSolverInfo() = default;
+template <class Matrix, class Vector>
+GpuSolverInfo<Matrix, Vector>::~GpuSolverInfo() = default;
 
-template<class Matrix, class Vector>
-template<class Grid>
-void GpuSolverInfo<Matrix,Vector>::
-prepare(const Grid& grid,
-        const Dune::CartesianIndexMapper<Grid>& cartMapper,
-        const std::vector<Well>& wellsForConn,
-        const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
-        const std::vector<int>& cellPartition,
-        const std::size_t nonzeroes,
-        const bool useWellConn)
+template <class Matrix, class Vector>
+template <class Grid>
+void
+GpuSolverInfo<Matrix, Vector>::prepare(const Grid& grid,
+                                       const Dune::CartesianIndexMapper<Grid>& cartMapper,
+                                       const std::vector<Well>& wellsForConn,
+                                       const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+                                       const std::vector<int>& cellPartition,
+                                       const std::size_t nonzeroes,
+                                       const bool useWellConn)
 {
     if (numJacobiBlocks_ > 1) {
-      detail::setWellConnections(grid, cartMapper, wellsForConn,
-                                 possibleFutureConnections,
-                                 useWellConn,
-                                 wellConnectionsGraph_,
-                                 numJacobiBlocks_);
-      this->blockJacobiAdjacency(grid, cellPartition, nonzeroes);
+        detail::setWellConnections(grid,
+                                   cartMapper,
+                                   wellsForConn,
+                                   possibleFutureConnections,
+                                   useWellConn,
+                                   wellConnectionsGraph_,
+                                   numJacobiBlocks_);
+        this->blockJacobiAdjacency(grid, cellPartition, nonzeroes);
     }
 }
 
-template<class Matrix, class Vector>
-bool GpuSolverInfo<Matrix,Vector>::
-apply(Vector& rhs,
-      const bool useWellConn,
-      [[maybe_unused]] WellContribFunc getContribs,
-      const int rank,
-      Matrix& matrix,
-      Vector& x,
-      Dune::InverseOperatorResult& result)
+template <class Matrix, class Vector>
+bool
+GpuSolverInfo<Matrix, Vector>::apply(Vector& rhs,
+                                     const bool useWellConn,
+                                     [[maybe_unused]] WellContribFunc getContribs,
+                                     const int rank,
+                                     Matrix& matrix,
+                                     Vector& x,
+                                     Dune::InverseOperatorResult& result)
 {
     bool use_gpu = bridge_->getUseGpu();
     if (use_gpu) {
         auto wellContribs = WellContributions<Scalar>::create(accelerator_mode_, useWellConn);
         bridge_->initWellContributions(*wellContribs, x.N() * x[0].N());
 
-         // the WellContributions can only be applied separately with CUDA, OpenCL or rocsparse, not with amgcl or rocalution
+        // the WellContributions can only be applied separately with CUDA, OpenCL or rocsparse, not with amgcl or
+        // rocalution
 #if HAVE_CUDA || HAVE_OPENCL || HAVE_ROCSPARSE
         if (!useWellConn) {
             getContribs(*wellContribs);
         }
 #endif
 
-	bool use_multithreading = true;
+        bool use_multithreading = true;
 #if HAVE_OPENMP
-	// if user  manually sets --threads-per-process=1, do not use multithreading 
+        // if user  manually sets --threads-per-process=1, do not use multithreading
         if (omp_get_max_threads() == 1)
-	    use_multithreading = false;
+            use_multithreading = false;
 #endif // HAVE_OPENMP
 
         if (numJacobiBlocks_ > 1) {
-            if(use_multithreading) {
-	      //NOTE: copyThread can safely write to jacMat because in solve_system both matrix and *blockJacobiForGPUILU0_ diagonal entries
-	      //are checked and potentially overwritten in replaceZeroDiagonal() by mainThread. However, no matter the thread writing sequence,
-	      //the final entry in jacMat is correct.
-//#if HAVE_OPENMP
-              copyThread = std::make_shared<std::thread>([&](){this->copyMatToBlockJac(matrix, *blockJacobiForGPUILU0_);});
-//#endif // HAVE_OPENMP
-	    }
-	    else {
-	      this->copyMatToBlockJac(matrix, *blockJacobiForGPUILU0_);
-	    }
+            if (use_multithreading) {
+                // NOTE: copyThread can safely write to jacMat because in solve_system both matrix and
+                // *blockJacobiForGPUILU0_ diagonal entries are checked and potentially overwritten in
+                // replaceZeroDiagonal() by mainThread. However, no matter the thread writing sequence, the final entry
+                // in jacMat is correct.
+                // #if HAVE_OPENMP
+                copyThread = std::make_shared<std::thread>(
+                    [&]() { this->copyMatToBlockJac(matrix, *blockJacobiForGPUILU0_); });
+                // #endif // HAVE_OPENMP
+            } else {
+                this->copyMatToBlockJac(matrix, *blockJacobiForGPUILU0_);
+            }
 
             // Const_cast needed since the CUDA stuff overwrites values for better matrix condition..
-            bridge_->solve_system(&matrix, blockJacobiForGPUILU0_.get(),
-                                  numJacobiBlocks_, rhs, *wellContribs, result);
-        }
-        else
-          bridge_->solve_system(&matrix, &matrix,
-                                  numJacobiBlocks_, rhs, *wellContribs, result);
+            bridge_->solve_system(&matrix, blockJacobiForGPUILU0_.get(), numJacobiBlocks_, rhs, *wellContribs, result);
+        } else
+            bridge_->solve_system(&matrix, &matrix, numJacobiBlocks_, rhs, *wellContribs, result);
         if (result.converged) {
             // get result vector x from non-Dune backend, iff solve was successful
             bridge_->get_result(x);
@@ -152,7 +158,8 @@ apply(Vector& rhs,
             // in that case the GpuBridge is disabled and flexibleSolver is always used
             // or maybe the GpuSolver did not converge in time, then it will be used next linear solve
             if (rank == 0) {
-                OpmLog::warning(bridge_->getAccleratorName() + " did not converge, now trying Dune to solve current linear system...");
+                OpmLog::warning(bridge_->getAccleratorName()
+                                + " did not converge, now trying Dune to solve current linear system...");
             }
         }
     }
@@ -160,34 +167,33 @@ apply(Vector& rhs,
     return false;
 }
 
-template<class Matrix, class Vector>
-bool GpuSolverInfo<Matrix,Vector>::
-gpuActive()
+template <class Matrix, class Vector>
+bool
+GpuSolverInfo<Matrix, Vector>::gpuActive()
 {
     return bridge_->getUseGpu();
 }
 
-template<class Matrix, class Vector>
-template<class Grid>
-void GpuSolverInfo<Matrix,Vector>::
-blockJacobiAdjacency(const Grid& grid,
-                     const std::vector<int>& cell_part,
-                     std::size_t nonzeroes)
+template <class Matrix, class Vector>
+template <class Grid>
+void
+GpuSolverInfo<Matrix, Vector>::blockJacobiAdjacency(const Grid& grid,
+                                                    const std::vector<int>& cell_part,
+                                                    std::size_t nonzeroes)
 {
     using size_type = typename Matrix::size_type;
     using Iter = typename Matrix::CreateIterator;
     size_type numCells = grid.size(0);
-    blockJacobiForGPUILU0_ = std::make_unique<Matrix>(numCells, numCells,
-                                                      nonzeroes, Matrix::row_wise);
+    blockJacobiForGPUILU0_ = std::make_unique<Matrix>(numCells, numCells, nonzeroes, Matrix::row_wise);
 
     const auto& lid = grid.localIdSet();
     const auto& gridView = grid.leafGridView();
-    auto elemIt = gridView.template begin<0>(); // should never overrun, since blockJacobiForGPUILU0_ is initialized with numCells rows
+    auto elemIt = gridView.template begin<0>(); // should never overrun, since blockJacobiForGPUILU0_ is initialized
+                                                // with numCells rows
 
     // Loop over cells
-    for (Iter row = blockJacobiForGPUILU0_->createbegin();
-              row != blockJacobiForGPUILU0_->createend(); ++elemIt, ++row)
-    {
+    for (Iter row = blockJacobiForGPUILU0_->createbegin(); row != blockJacobiForGPUILU0_->createend();
+         ++elemIt, ++row) {
         const auto& elem = *elemIt;
         size_type idx = lid.id(elem);
         row.insert(idx);
@@ -199,13 +205,11 @@ blockJacobiAdjacency(const Grid& grid,
 
         int locPart = cell_part[idx];
 
-        //Add neighbor if it is on the same part
+        // Add neighbor if it is on the same part
         auto isend = gridView.iend(elem);
-        for (auto is = gridView.ibegin(elem); is!=isend; ++is)
-        {
-            //check if face has neighbor
-            if (is->neighbor())
-            {
+        for (auto is = gridView.ibegin(elem); is != isend; ++is) {
+            // check if face has neighbor
+            if (is->neighbor()) {
                 size_type nid = lid.id(is->outside());
                 int nabPart = cell_part[nid];
                 if (locPart == nabPart) {
@@ -216,9 +220,9 @@ blockJacobiAdjacency(const Grid& grid,
     }
 }
 
-template<class Matrix, class Vector>
-void GpuSolverInfo<Matrix,Vector>::
-copyMatToBlockJac(const Matrix& mat, Matrix& blockJac)
+template <class Matrix, class Vector>
+void
+GpuSolverInfo<Matrix, Vector>::copyMatToBlockJac(const Matrix& mat, Matrix& blockJac)
 {
     auto rbegin = blockJac.begin();
     auto rend = blockJac.end();
@@ -236,45 +240,46 @@ copyMatToBlockJac(const Matrix& mat, Matrix& blockJac)
     }
 }
 
-template<class Scalar, int Dim>
-using BM = Dune::BCRSMatrix<MatrixBlock<Scalar,Dim,Dim>>;
-template<class Scalar, int Dim>
-using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Dim>>;
+template <class Scalar, int Dim>
+using BM = Dune::BCRSMatrix<MatrixBlock<Scalar, Dim, Dim>>;
+template <class Scalar, int Dim>
+using BV = Dune::BlockVector<Dune::FieldVector<Scalar, Dim>>;
 
-#define INSTANTIATE_GRID(T, Dim, Grid)                             \
-    template void GpuSolverInfo<BM<T,Dim>,BV<T,Dim>>::             \
-    prepare(const Grid&,                                           \
-            const Dune::CartesianIndexMapper<Grid>&,               \
-            const std::vector<Well>&,                              \
-            const std::unordered_map<std::string, std::set<int>>&, \
-            const std::vector<int>&,                               \
-            const std::size_t, const bool);
+#define INSTANTIATE_GRID(T, Dim, Grid)                                                                                 \
+    template void GpuSolverInfo<BM<T, Dim>, BV<T, Dim>>::prepare(                                                      \
+        const Grid&,                                                                                                   \
+        const Dune::CartesianIndexMapper<Grid>&,                                                                       \
+        const std::vector<Well>&,                                                                                      \
+        const std::unordered_map<std::string, std::set<int>>&,                                                         \
+        const std::vector<int>&,                                                                                       \
+        const std::size_t,                                                                                             \
+        const bool);
 using PolyHedralGrid3D = Dune::PolyhedralGrid<3, 3>;
 #if HAVE_DUNE_ALUGRID
 #if HAVE_MPI
-    using ALUGrid3CN = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>;
+using ALUGrid3CN = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>;
 #else
-    using ALUGrid3CN = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
-#endif //HAVE_MPI
-#define INSTANTIATE(T,Dim)                              \
-    template struct GpuSolverInfo<BM<T,Dim>,BV<T,Dim>>; \
-    INSTANTIATE_GRID(T,Dim,Dune::CpGrid)                \
-    INSTANTIATE_GRID(T,Dim,ALUGrid3CN)                  \
-    INSTANTIATE_GRID(T,Dim,PolyHedralGrid3D)
+using ALUGrid3CN = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
+#endif // HAVE_MPI
+#define INSTANTIATE(T, Dim)                                                                                            \
+    template struct GpuSolverInfo<BM<T, Dim>, BV<T, Dim>>;                                                             \
+    INSTANTIATE_GRID(T, Dim, Dune::CpGrid)                                                                             \
+    INSTANTIATE_GRID(T, Dim, ALUGrid3CN)                                                                               \
+    INSTANTIATE_GRID(T, Dim, PolyHedralGrid3D)
 #else
-#define INSTANTIATE(T,Dim)                              \
-    template struct GpuSolverInfo<BM<T,Dim>,BV<T,Dim>>; \
-    INSTANTIATE_GRID(T,Dim,Dune::CpGrid)                \
-    INSTANTIATE_GRID(T,Dim,PolyHedralGrid3D)
+#define INSTANTIATE(T, Dim)                                                                                            \
+    template struct GpuSolverInfo<BM<T, Dim>, BV<T, Dim>>;                                                             \
+    INSTANTIATE_GRID(T, Dim, Dune::CpGrid)                                                                             \
+    INSTANTIATE_GRID(T, Dim, PolyHedralGrid3D)
 #endif
 
-#define INSTANTIATE_TYPE(T) \
-    INSTANTIATE(T,1)        \
-    INSTANTIATE(T,2)        \
-    INSTANTIATE(T,3)        \
-    INSTANTIATE(T,4)        \
-    INSTANTIATE(T,5)        \
-    INSTANTIATE(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    INSTANTIATE(T, 1)                                                                                                  \
+    INSTANTIATE(T, 2)                                                                                                  \
+    INSTANTIATE(T, 3)                                                                                                  \
+    INSTANTIATE(T, 4)                                                                                                  \
+    INSTANTIATE(T, 5)                                                                                                  \
+    INSTANTIATE(T, 6)
 
 INSTANTIATE_TYPE(double)
 

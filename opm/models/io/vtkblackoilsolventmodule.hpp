@@ -42,7 +42,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -134,28 +135,23 @@ public:
                 const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
 
                 if (params_.solventSaturationOutput_) {
-                    solventSaturation_[globalDofIdx] =
-                        Toolbox::scalarValue(intQuants.solventSaturation());
+                    solventSaturation_[globalDofIdx] = Toolbox::scalarValue(intQuants.solventSaturation());
                 }
 
                 if (params_.solventRswOutput_) {
-                    solventRsw_[globalDofIdx] =
-                        Toolbox::scalarValue(intQuants.rsSolw());
+                    solventRsw_[globalDofIdx] = Toolbox::scalarValue(intQuants.rsSolw());
                 }
 
                 if (params_.solventDensityOutput_) {
-                    solventDensity_[globalDofIdx] =
-                        Toolbox::scalarValue(intQuants.solventDensity());
+                    solventDensity_[globalDofIdx] = Toolbox::scalarValue(intQuants.solventDensity());
                 }
 
                 if (params_.solventViscosityOutput_) {
-                    solventViscosity_[globalDofIdx] =
-                        Toolbox::scalarValue(intQuants.solventViscosity());
+                    solventViscosity_[globalDofIdx] = Toolbox::scalarValue(intQuants.solventViscosity());
                 }
 
                 if (params_.solventMobilityOutput_) {
-                    solventMobility_[globalDofIdx] =
-                        Toolbox::scalarValue(intQuants.solventMobility());
+                    solventMobility_[globalDofIdx] = Toolbox::scalarValue(intQuants.solventMobility());
                 }
             }
         }
@@ -172,39 +168,34 @@ public:
             }
 
             if (params_.solventSaturationOutput_) {
-                this->commitScalarBuffer_(baseWriter, "saturation_solvent",
-                                          solventSaturation_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "saturation_solvent", solventSaturation_, BufferType::Dof);
             }
 
             if (params_.solventRswOutput_) {
-                this->commitScalarBuffer_(baseWriter, "dissolved_solvent",
-                                          solventRsw_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "dissolved_solvent", solventRsw_, BufferType::Dof);
             }
 
             if (params_.solventDensityOutput_) {
-                this->commitScalarBuffer_(baseWriter, "density_solvent",
-                                          solventDensity_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "density_solvent", solventDensity_, BufferType::Dof);
             }
 
             if (params_.solventViscosityOutput_) {
-                this->commitScalarBuffer_(baseWriter, "viscosity_solvent",
-                                          solventViscosity_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "viscosity_solvent", solventViscosity_, BufferType::Dof);
             }
 
             if (params_.solventMobilityOutput_) {
-                this->commitScalarBuffer_(baseWriter, "mobility_solvent",
-                                          solventMobility_, BufferType::Dof);
+                this->commitScalarBuffer_(baseWriter, "mobility_solvent", solventMobility_, BufferType::Dof);
             }
         }
     }
 
 private:
-    VtkBlackOilSolventParams params_{};
-    ScalarBuffer solventSaturation_{};
-    ScalarBuffer solventRsw_{};
-    ScalarBuffer solventDensity_{};
-    ScalarBuffer solventViscosity_{};
-    ScalarBuffer solventMobility_{};
+    VtkBlackOilSolventParams params_ {};
+    ScalarBuffer solventSaturation_ {};
+    ScalarBuffer solventRsw_ {};
+    ScalarBuffer solventDensity_ {};
+    ScalarBuffer solventViscosity_ {};
+    ScalarBuffer solventMobility_ {};
 };
 
 } // namespace Opm

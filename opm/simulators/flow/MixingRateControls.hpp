@@ -30,19 +30,20 @@
 
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 
-#include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 #include <opm/material/common/MathToolbox.hpp>
+#include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
 #include <limits>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseState;
 
 //! \brief Class handling mixing rate controls for a FlowProblemBlackoil.
-template<class FluidSystem>
-class MixingRateControls 
+template <class FluidSystem>
+class MixingRateControls
 {
 public:
     using Scalar = typename FluidSystem::Scalar;
@@ -60,16 +61,14 @@ public:
     bool drsdtActive(int episodeIdx) const;
     bool drvdtActive(int episodeIdx) const;
     bool drsdtConvective(int episodeIdx) const;
-    
+
     bool drsdtActive(int episodeIdx, std::size_t pvtRegionIdx) const;
     bool drvdtActive(int episodeIdx, std::size_t pvtRegionIdx) const;
     bool drsdtConvective(int episodeIdx, std::size_t pvtRegionIdx) const;
     /*!
      * \brief Returns the dynamic drsdt convective mixing value
      */
-    Scalar drsdtcon(const unsigned elemIdx,
-                    int episodeIdx,
-                    const int pvtRegionIdx) const;
+    Scalar drsdtcon(const unsigned elemIdx, int episodeIdx, const int pvtRegionIdx) const;
 
     /*!
      * \brief Returns the maximum value of the gas dissolution factor at the current time
@@ -89,17 +88,13 @@ public:
                                     const int episodeIdx,
                                     const int pvtRegionIdx) const;
 
-    void updateExplicitQuantities(const int episodeIdx,
-                                  const Scalar timeStepSize);
+    void updateExplicitQuantities(const int episodeIdx, const Scalar timeStepSize);
 
-    void updateLastValues(const unsigned elemIdx,
-                          const Scalar Rs,
-                          const Scalar Rv);
+    void updateLastValues(const unsigned elemIdx, const Scalar Rs, const Scalar Rv);
 
-    void updateMaxValues(const int episodeIdx,
-                         const Scalar timeStepSize);
+    void updateMaxValues(const int episodeIdx, const Scalar timeStepSize);
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(lastRv_);
@@ -110,7 +105,7 @@ public:
         serializer(dRsDtOnlyFreeGas_);
     }
 
-    template<class IntensiveQuantities>
+    template <class IntensiveQuantities>
     void update(unsigned compressedDofIdx,
                 const IntensiveQuantities& iq,
                 const int episodeIdx,
@@ -128,17 +123,16 @@ public:
             // modification and introduction of regimes following Mykkeltvedt et al. Submitted to TIMP 2024
             const auto& fs = iq.fluidState();
 
-            const auto& temperature = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) ?
-                getValue(fs.temperature(FluidSystem::waterPhaseIdx)) :
-                getValue(fs.temperature(FluidSystem::oilPhaseIdx));
-            const auto& pressure = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) ?
-                getValue(fs.pressure(FluidSystem::waterPhaseIdx)) :
-                getValue(fs.pressure(FluidSystem::oilPhaseIdx));
+            const auto& temperature = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx))
+                ? getValue(fs.temperature(FluidSystem::waterPhaseIdx))
+                : getValue(fs.temperature(FluidSystem::oilPhaseIdx));
+            const auto& pressure = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx))
+                ? getValue(fs.pressure(FluidSystem::waterPhaseIdx))
+                : getValue(fs.pressure(FluidSystem::oilPhaseIdx));
             const auto& pressuregas = getValue(fs.pressure(FluidSystem::gasPhaseIdx));
-            const auto& rs = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) ?
-                getValue(fs.Rsw()) :
-                getValue(fs.Rs());
-            
+            const auto& rs
+                = (FluidSystem::phaseIsActive(FluidSystem::waterPhaseIdx)) ? getValue(fs.Rsw()) : getValue(fs.Rs());
+
             const auto& salt = getValue(fs.saltSaturation());
 
             this->updateConvectiveDRsDt_(compressedDofIdx,
@@ -163,14 +157,12 @@ public:
 
             using FluidState = typename std::decay<decltype(fs)>::type;
             constexpr Scalar freeGasMinSaturation_ = 1e-7;
-            if (oilVaporizationControl.getOption(pvtRegionIdx) ||
-                fs.saturation(FluidSystem::gasPhaseIdx) > freeGasMinSaturation_) {
-                lastRs_[compressedDofIdx]
-                    = ((FluidSystem::enableDissolvedGasInWater())) ?
-                    BlackOil::template getRsw_<FluidSystem, FluidState, Scalar>(fs, iq.pvtRegionIndex()) :
-                    BlackOil::template getRs_<FluidSystem, FluidState, Scalar>(fs, iq.pvtRegionIndex());
-            }
-            else
+            if (oilVaporizationControl.getOption(pvtRegionIdx)
+                || fs.saturation(FluidSystem::gasPhaseIdx) > freeGasMinSaturation_) {
+                lastRs_[compressedDofIdx] = ((FluidSystem::enableDissolvedGasInWater()))
+                    ? BlackOil::template getRsw_<FluidSystem, FluidState, Scalar>(fs, iq.pvtRegionIndex())
+                    : BlackOil::template getRs_<FluidSystem, FluidState, Scalar>(fs, iq.pvtRegionIndex());
+            } else
                 lastRs_[compressedDofIdx] = std::numeric_limits<Scalar>::infinity();
         }
 

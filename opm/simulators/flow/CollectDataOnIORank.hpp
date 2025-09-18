@@ -45,11 +45,14 @@
 #include <utility>
 #include <vector>
 
-namespace Dune {
-template<class Grid> class CartesianIndexMapper;
+namespace Dune
+{
+template <class Grid>
+class CartesianIndexMapper;
 }
 
-namespace Opm {
+namespace Opm
+{
 
 template <class Grid, class EquilGrid, class GridView>
 class CollectDataOnIORank
@@ -64,8 +67,7 @@ public:
 
     enum { ioRank = 0 };
 
-    static const bool needsReordering =
-        !std::is_same<Grid, EquilGrid>::value;
+    static const bool needsReordering = !std::is_same<Grid, EquilGrid>::value;
 
     CollectDataOnIORank(const Grid& grid,
                         const EquilGrid* equilGrid,
@@ -75,59 +77,87 @@ public:
                         const std::set<std::string>& fipRegionsInterregFlow = {});
 
     // gather solution to rank 0 for EclipseWriter
-    void collect(const data::Solution&                                localCellData,
+    void collect(const data::Solution& localCellData,
                  const std::map<std::pair<std::string, int>, double>& localBlockData,
-                 std::map<std::pair<std::string, int>, double>&       localExtraBlockData,
-                 const data::Wells&                                   localWellData,
-                 const data::WellBlockAveragePressures&               localWBPData,
-                 const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
-                 const data::Aquifers&                                localAquiferData,
-                 const WellTestState&                                 localWellTestState,
-                 const InterRegFlowMap&                               interRegFlows,
-                 const std::array<FlowsData<double>, 3>&              localFlowsn,
-                 const std::array<FlowsData<double>, 3>&              localFloresn);
+                 std::map<std::pair<std::string, int>, double>& localExtraBlockData,
+                 const data::Wells& localWellData,
+                 const data::WellBlockAveragePressures& localWBPData,
+                 const data::GroupAndNetworkValues& localGroupAndNetworkData,
+                 const data::Aquifers& localAquiferData,
+                 const WellTestState& localWellTestState,
+                 const InterRegFlowMap& interRegFlows,
+                 const std::array<FlowsData<double>, 3>& localFlowsn,
+                 const std::array<FlowsData<double>, 3>& localFloresn);
 
     const std::map<std::pair<std::string, int>, double>& globalBlockData() const
-    { return globalBlockData_; }
+    {
+        return globalBlockData_;
+    }
 
     const data::Solution& globalCellData() const
-    { return globalCellData_; }
+    {
+        return globalCellData_;
+    }
 
     data::Solution& globalCellData()
-    { return globalCellData_; }
+    {
+        return globalCellData_;
+    }
 
     const data::Wells& globalWellData() const
-    { return globalWellData_; }
+    {
+        return globalWellData_;
+    }
 
     const data::WellBlockAveragePressures& globalWBPData() const
-    { return this->globalWBPData_; }
+    {
+        return this->globalWBPData_;
+    }
 
     const data::GroupAndNetworkValues& globalGroupAndNetworkData() const
-    { return globalGroupAndNetworkData_; }
+    {
+        return globalGroupAndNetworkData_;
+    }
 
     const data::Aquifers& globalAquiferData() const
-    { return globalAquiferData_; }
+    {
+        return globalAquiferData_;
+    }
 
     const WellTestState& globalWellTestState() const
-    { return this->globalWellTestState_; }
+    {
+        return this->globalWellTestState_;
+    }
 
     InterRegFlowMap& globalInterRegFlows()
-    { return this->globalInterRegFlows_; }
+    {
+        return this->globalInterRegFlows_;
+    }
 
     const InterRegFlowMap& globalInterRegFlows() const
-    { return this->globalInterRegFlows_; }
+    {
+        return this->globalInterRegFlows_;
+    }
 
     const std::array<FlowsData<double>, 3>& globalFlowsn() const
-    { return globalFlowsn_; }
+    {
+        return globalFlowsn_;
+    }
 
     const std::array<FlowsData<double>, 3>& globalFloresn() const
-    { return globalFloresn_; }
+    {
+        return globalFloresn_;
+    }
 
     bool isIORank() const
-    { return toIORankComm_.rank() == ioRank; }
+    {
+        return toIORankComm_.rank() == ioRank;
+    }
 
     bool isParallel() const
-    { return toIORankComm_.size() > 1; }
+    {
+        return toIORankComm_.size() > 1;
+    }
 
     int localIdxToGlobalIdx(unsigned localIdx) const;
 
@@ -137,13 +167,19 @@ public:
     }
 
     bool doesNeedReordering() const
-    { return needsReordering;}
+    {
+        return needsReordering;
+    }
 
-    std::size_t numCells () const
-    { return globalCartesianIndex_.size(); }
+    std::size_t numCells() const
+    {
+        return globalCartesianIndex_.size();
+    }
 
     const std::vector<int>& globalRanks() const
-    { return globalRanks_; }
+    {
+        return globalRanks_;
+    }
 
     bool isCartIdxOnThisRank(int cartIdx) const;
 

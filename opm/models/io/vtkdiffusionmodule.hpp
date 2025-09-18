@@ -37,10 +37,11 @@
 #include <opm/models/io/vtkdiffusionparams.hpp>
 #include <opm/models/io/vtkmultiwriter.hh>
 
-#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/utils/parametersystem.hpp>
+#include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -127,12 +128,12 @@ public:
                 }
                 for (unsigned compIdx = 0; compIdx < numComponents; ++compIdx) {
                     if (params_.diffusionCoefficientOutput_) {
-                        diffusionCoefficient_[phaseIdx][compIdx][I] =
-                            Toolbox::value(intQuants.diffusionCoefficient(phaseIdx, compIdx));
+                        diffusionCoefficient_[phaseIdx][compIdx][I]
+                            = Toolbox::value(intQuants.diffusionCoefficient(phaseIdx, compIdx));
                     }
                     if (params_.effectiveDiffusionCoefficientOutput_) {
-                        effectiveDiffusionCoefficient_[phaseIdx][compIdx][I] =
-                            Toolbox::value(intQuants.effectiveDiffusionCoefficient(phaseIdx, compIdx));
+                        effectiveDiffusionCoefficient_[phaseIdx][compIdx][I]
+                            = Toolbox::value(intQuants.effectiveDiffusionCoefficient(phaseIdx, compIdx));
                     }
                 }
             }
@@ -152,22 +153,20 @@ public:
             this->commitPhaseBuffer_(baseWriter, "tortuosity", tortuosity_, BufferType::Dof);
         }
         if (params_.diffusionCoefficientOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter, "diffusionCoefficient",
-                                              diffusionCoefficient_, BufferType::Dof);
+            this->commitPhaseComponentBuffer_(
+                baseWriter, "diffusionCoefficient", diffusionCoefficient_, BufferType::Dof);
         }
         if (params_.effectiveDiffusionCoefficientOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter,
-                                              "effectiveDiffusionCoefficient",
-                                              effectiveDiffusionCoefficient_,
-                                              BufferType::Dof);
+            this->commitPhaseComponentBuffer_(
+                baseWriter, "effectiveDiffusionCoefficient", effectiveDiffusionCoefficient_, BufferType::Dof);
         }
     }
 
 private:
-    VtkDiffusionParams params_{};
-    PhaseBuffer tortuosity_{};
-    PhaseComponentBuffer diffusionCoefficient_{};
-    PhaseComponentBuffer effectiveDiffusionCoefficient_{};
+    VtkDiffusionParams params_ {};
+    PhaseBuffer tortuosity_ {};
+    PhaseComponentBuffer diffusionCoefficient_ {};
+    PhaseComponentBuffer effectiveDiffusionCoefficient_ {};
 };
 
 } // namespace Opm

@@ -25,25 +25,27 @@
 #include <opm/simulators/utils/MPIPacker.hpp>
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-namespace Opm::Parallel {
+namespace Opm::Parallel
+{
 
 //! \brief Avoid mistakes in calls to broadcast() by wrapping the root
 //! argument in an explicit type.
-struct RootRank
-{
+struct RootRank {
     int value;
 };
 
 //! \brief Class for serializing and broadcasting data using MPI.
-class MpiSerializer : public Serializer<Mpi::Packer> {
+class MpiSerializer : public Serializer<Mpi::Packer>
+{
 public:
     explicit MpiSerializer(Parallel::Communication comm)
         : Serializer<Mpi::Packer>(m_packer)
         , m_packer(comm)
         , m_comm(comm)
-    {}
+    {
+    }
 
-    template<typename... Args>
+    template <typename... Args>
     void broadcast(RootRank rootrank, Args&&... args)
     {
         if (m_comm.size() == 1)
@@ -78,7 +80,7 @@ public:
     //! \tparam T Type of class to broadcast
     //! \param data Class to broadcast
     //! \param root Process to broadcast from
-    template<class T>
+    template <class T>
     void append(T& data, int root = 0)
     {
         if (m_comm.size() == 1)
@@ -86,29 +88,30 @@ public:
 
         T tmp;
         T& bcast = m_comm.rank() == root ? data : tmp;
-        broadcast(RootRank{root}, bcast);
+        broadcast(RootRank {root}, bcast);
 
         if (m_comm.rank() != root)
             data.append(tmp);
     }
 
 private:
-    void broadcast_chunked(int root) {
+    void broadcast_chunked(int root)
+    {
         const int maxChunkSize = std::numeric_limits<int>::max();
         std::size_t remainingSize = m_packSize;
         std::size_t pos = 0;
         while (remainingSize > maxChunkSize) {
-            m_comm.broadcast(m_buffer.data()+pos, maxChunkSize, root);
+            m_comm.broadcast(m_buffer.data() + pos, maxChunkSize, root);
             pos += maxChunkSize;
             remainingSize -= maxChunkSize;
         }
-        m_comm.broadcast(m_buffer.data()+pos, static_cast<int>(remainingSize), root);
+        m_comm.broadcast(m_buffer.data() + pos, static_cast<int>(remainingSize), root);
     }
 
     const Mpi::Packer m_packer; //!< Packer instance
     Parallel::Communication m_comm; //!< Communicator to use
 };
 
-}
+} // namespace Opm::Parallel
 
 #endif

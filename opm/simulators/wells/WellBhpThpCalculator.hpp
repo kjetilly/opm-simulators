@@ -28,20 +28,27 @@
 #include <optional>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
 class SummaryState;
 class Well;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class for computing BHP limits.
-template<typename Scalar, typename IndexTraits>
-class WellBhpThpCalculator {
+template <typename Scalar, typename IndexTraits>
+class WellBhpThpCalculator
+{
 public:
     //! \brief Constructor sets reference to well.
-    explicit WellBhpThpCalculator(const WellInterfaceGeneric<Scalar, IndexTraits>& well) : well_(well) {}
+    explicit WellBhpThpCalculator(const WellInterfaceGeneric<Scalar, IndexTraits>& well)
+        : well_(well)
+    {
+    }
 
     //! \brief Checks if well has THP constraints.
     bool wellHasTHPConstraints(const SummaryState& summaryState) const;
@@ -61,24 +68,22 @@ public:
                                DeferredLogger& deferred_logger) const;
 
     //! \brief Compute BHP from THP limit for a producer.
-    std::optional<Scalar>
-    computeBhpAtThpLimitProd(const std::function<std::vector<Scalar>(const Scalar)>& frates,
-                             const SummaryState& summary_state,
-                             const Scalar maxPerfPress,
-                             const Scalar rho,
-                             const Scalar alq_value,
-                             const Scalar thp_limit,
-                             DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> computeBhpAtThpLimitProd(const std::function<std::vector<Scalar>(const Scalar)>& frates,
+                                                   const SummaryState& summary_state,
+                                                   const Scalar maxPerfPress,
+                                                   const Scalar rho,
+                                                   const Scalar alq_value,
+                                                   const Scalar thp_limit,
+                                                   DeferredLogger& deferred_logger) const;
 
     //! \brief Compute BHP from THP limit for an injector.
-    std::optional<Scalar>
-    computeBhpAtThpLimitInj(const std::function<std::vector<Scalar>(const Scalar)>& frates,
-                            const SummaryState& summary_state,
-                            const Scalar rho,
-                            const Scalar flo_rel_tol,
-                            const int max_iteration,
-                            const bool throwOnError,
-                            DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> computeBhpAtThpLimitInj(const std::function<std::vector<Scalar>(const Scalar)>& frates,
+                                                  const SummaryState& summary_state,
+                                                  const Scalar rho,
+                                                  const Scalar flo_rel_tol,
+                                                  const int max_iteration,
+                                                  const bool throwOnError,
+                                                  DeferredLogger& deferred_logger) const;
 
     //! \brief Update THP.
     void updateThp(const Scalar rho,
@@ -87,7 +92,7 @@ public:
                    const SummaryState& summary_state,
                    DeferredLogger& deferred_logger) const;
 
-    template<class EvalWell>
+    template <class EvalWell>
     EvalWell calculateBhpFromThp(const WellState<Scalar, IndexTraits>& well_state,
                                  const std::vector<EvalWell>& rates,
                                  const Well& well,
@@ -100,60 +105,56 @@ public:
                                       const SummaryState& summaryState,
                                       const Scalar rho) const;
 
-  bool isStableSolution(const WellState<Scalar, IndexTraits>& well_state,
-                        const Well& well,
-                        const std::vector<Scalar>& rates,
-                        const SummaryState& summaryState) const;   
+    bool isStableSolution(const WellState<Scalar, IndexTraits>& well_state,
+                          const Well& well,
+                          const std::vector<Scalar>& rates,
+                          const SummaryState& summaryState) const;
 
-  std::optional<Scalar>
-  estimateStableBhp (const WellState<Scalar, IndexTraits>& well_state,
-                    const Well& well,
-                    const std::vector<Scalar>& rates,
-                    const Scalar rho,
-                    const SummaryState& summaryState) const;    
+    std::optional<Scalar> estimateStableBhp(const WellState<Scalar, IndexTraits>& well_state,
+                                            const Well& well,
+                                            const std::vector<Scalar>& rates,
+                                            const Scalar rho,
+                                            const SummaryState& summaryState) const;
 
-  std::pair<Scalar, Scalar>
-  getFloIPR(const WellState<Scalar, IndexTraits>& well_state,
-            const Well& well, 
-            const SummaryState& summary_state) const;
+    std::pair<Scalar, Scalar> getFloIPR(const WellState<Scalar, IndexTraits>& well_state,
+                                        const Well& well,
+                                        const SummaryState& summary_state) const;
 
-  //! \brief Find limits using brute-force solver.
-  static bool bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq,
-                                const std::array<Scalar, 2>& range,
-                                Scalar& low, Scalar& high,
-                                std::optional<Scalar>& approximate_solution,
-                                const Scalar& limit,
-                                DeferredLogger& deferred_logger);
+    //! \brief Find limits using brute-force solver.
+    static bool bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq,
+                                           const std::array<Scalar, 2>& range,
+                                           Scalar& low,
+                                           Scalar& high,
+                                           std::optional<Scalar>& approximate_solution,
+                                           const Scalar& limit,
+                                           DeferredLogger& deferred_logger);
 
-  //! \brief Find limits using brute-force solver.
-  static bool bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq,
-                                Scalar& min_thp, Scalar& max_thp);
+    //! \brief Find limits using brute-force solver.
+    static bool
+    bruteForceBracketCommonTHP(const std::function<Scalar(const Scalar)>& eq, Scalar& min_thp, Scalar& max_thp);
 
 private:
     //! \brief Compute BHP from THP limit for an injector - implementation.
-    template<class ErrorPolicy>
-    std::optional<Scalar>
-    computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar)>& frates,
-                                const SummaryState& summary_state,
-                                const Scalar rho,
-                                const Scalar flo_rel_tol,
-                                const int max_iteration,
-                                DeferredLogger& deferred_logger) const;
+    template <class ErrorPolicy>
+    std::optional<Scalar> computeBhpAtThpLimitInjImpl(const std::function<std::vector<Scalar>(const Scalar)>& frates,
+                                                      const SummaryState& summary_state,
+                                                      const Scalar rho,
+                                                      const Scalar flo_rel_tol,
+                                                      const int max_iteration,
+                                                      DeferredLogger& deferred_logger) const;
 
     //! \brief Calculate max BHP.
-    std::optional<Scalar>
-    bhpMax(const std::function<Scalar(const Scalar)>& fflo,
-           const Scalar bhp_limit,
-           const Scalar maxPerfPress,
-           const Scalar vfp_flo_front,
-           DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> bhpMax(const std::function<Scalar(const Scalar)>& fflo,
+                                 const Scalar bhp_limit,
+                                 const Scalar maxPerfPress,
+                                 const Scalar vfp_flo_front,
+                                 DeferredLogger& deferred_logger) const;
 
     //! \brief Common code for finding BHP from THP limit for producers/injectors.
-    std::optional<Scalar>
-    computeBhpAtThpLimit(const std::function<std::vector<Scalar>(const Scalar)>& frates,
-                         const std::function<Scalar(const std::vector<Scalar>)>& fbhp,
-                         const std::array<Scalar, 2>& range,
-                         DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> computeBhpAtThpLimit(const std::function<std::vector<Scalar>(const Scalar)>& frates,
+                                               const std::function<Scalar(const std::vector<Scalar>)>& fbhp,
+                                               const std::array<Scalar, 2>& range,
+                                               DeferredLogger& deferred_logger) const;
 
     //! \brief Get pressure adjustment to the bhp calculated from VFP table
     Scalar getVfpBhpAdjustment(const Scalar bph_tab, const Scalar thp_limit) const;
@@ -161,15 +162,17 @@ private:
     //! \brief Find limits using bisection.
     bool bisectBracket(const std::function<Scalar(const Scalar)>& eq,
                        const std::array<Scalar, 2>& range,
-                       Scalar& low, Scalar& high,
+                       Scalar& low,
+                       Scalar& high,
                        std::optional<Scalar>& approximate_solution,
                        DeferredLogger& deferred_logger) const;
 
- //! \brief Find limits using brute-force solver.
-  static bool bruteForceBracket(const std::function<Scalar(const Scalar)>& eq,
-                                const std::array<Scalar, 2>& range,
-                                Scalar& low, Scalar& high,
-                                DeferredLogger& deferred_logger);
+    //! \brief Find limits using brute-force solver.
+    static bool bruteForceBracket(const std::function<Scalar(const Scalar)>& eq,
+                                  const std::array<Scalar, 2>& range,
+                                  Scalar& low,
+                                  Scalar& high,
+                                  DeferredLogger& deferred_logger);
 
 
     Scalar findThpFromBhpIteratively(const std::function<Scalar(const Scalar, const Scalar)>& thp_func,
@@ -181,6 +184,6 @@ private:
     const WellInterfaceGeneric<Scalar, IndexTraits>& well_; //!< Reference to well interface
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_BHP_THP_CALCULATOR_HEADER_INCLUDED

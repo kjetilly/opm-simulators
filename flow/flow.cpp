@@ -23,7 +23,8 @@
 
 #include <opm/simulators/flow/Main.hpp>
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
     auto ret = mainObject->runDynamic();
@@ -31,4 +32,3 @@ int main(int argc, char** argv)
     mainObject.reset();
     return ret;
 }
-

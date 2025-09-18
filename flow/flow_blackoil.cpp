@@ -18,31 +18,41 @@
 
 #include <flow/flow_blackoil.hpp>
 
-#include <opm/material/common/ResetLocale.hpp>
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
 
-namespace Opm {
-    namespace Properties {
+namespace Opm
+{
+namespace Properties
+{
 
-        template<class TypeTag>
-        struct Linearizer<TypeTag, TTag::FlowProblemTPFA> { using type = TpfaLinearizer<TypeTag>; };
+    template <class TypeTag>
+    struct Linearizer<TypeTag, TTag::FlowProblemTPFA> {
+        using type = TpfaLinearizer<TypeTag>;
+    };
 
-        template<class TypeTag>
-        struct LocalResidual<TypeTag, TTag::FlowProblemTPFA> { using type = BlackOilLocalResidualTPFA<TypeTag>; };
+    template <class TypeTag>
+    struct LocalResidual<TypeTag, TTag::FlowProblemTPFA> {
+        using type = BlackOilLocalResidualTPFA<TypeTag>;
+    };
 
-        template<class TypeTag>
-        struct EnableDiffusion<TypeTag, TTag::FlowProblemTPFA> { static constexpr bool value = false; };
+    template <class TypeTag>
+    struct EnableDiffusion<TypeTag, TTag::FlowProblemTPFA> {
+        static constexpr bool value = false;
+    };
 
-        template<class TypeTag>
-        struct AvoidElementContext<TypeTag, TTag::FlowProblemTPFA> { static constexpr bool value = true; };
+    template <class TypeTag>
+    struct AvoidElementContext<TypeTag, TTag::FlowProblemTPFA> {
+        static constexpr bool value = true;
+    };
 
-    }
-}
+} // namespace Properties
+} // namespace Opm
 
 
 namespace Opm
@@ -54,23 +64,23 @@ flowBlackoilTpfaMainInit(int argc, char** argv, bool outputCout, bool outputFile
     // with incorrect locale settings.
     resetLocale();
 
-    return std::make_unique<FlowMain<Properties::TTag::FlowProblemTPFA>>(
-        argc, argv, outputCout, outputFiles);
+    return std::make_unique<FlowMain<Properties::TTag::FlowProblemTPFA>>(argc, argv, outputCout, outputFiles);
 }
 
 // ----------------- Main program -----------------
-int flowBlackoilTpfaMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowBlackoilTpfaMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowProblemTPFA>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowProblemTPFA> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowBlackoilTpfaMainStandalone(int argc, char** argv)
+int
+flowBlackoilTpfaMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowProblemTPFA;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

@@ -29,8 +29,9 @@
 #include <string_view>
 #include <vector>
 
-namespace Opm {
-    class ConvergenceOutputConfiguration;
+namespace Opm
+{
+class ConvergenceOutputConfiguration;
 } // namespace Opm
 
 /// \file System for outputting additional convergence information, such as
@@ -59,18 +60,17 @@ public:
     ///
     /// Associates non-linear iteration convergence information to single
     /// report and timestep.
-    struct OutputRequest
-    {
+    struct OutputRequest {
         /// Current report step
-        int reportStep{-1};
+        int reportStep {-1};
 
         /// Current timestep within \c reportStep.  Expected to be a small
         /// integer.
-        int currentStep{-1};
+        int currentStep {-1};
 
         /// Convergence metrics for each non-linear ieration in the \c
         /// currentStep.
-        std::vector<ConvergenceReport> reports{};
+        std::vector<ConvergenceReport> reports {};
     };
 
     /// Push sequence of output requests, typically all substeps whether
@@ -90,13 +90,13 @@ public:
 
 private:
     /// Mutex for critical sections protecting 'requests_'.
-    std::mutex mtx_{};
+    std::mutex mtx_ {};
 
     /// Condition variable for threads waiting on changes to 'requests_'.
-    std::condition_variable cv_{};
+    std::condition_variable cv_ {};
 
     /// Pending convergence output requests.
-    std::vector<OutputRequest> requests_{};
+    std::vector<OutputRequest> requests_ {};
 };
 
 /// Encapsulating object for thread processing producer's convergence output
@@ -138,12 +138,12 @@ public:
     ///                            and this output thread.  User must form a
     ///                            valid queue prior to creating the output
     ///                            thread object.
-    explicit ConvergenceOutputThread(std::string_view               outputDir,
-                                     std::string_view               baseName,
-                                     ComponentToPhaseName           getPhaseName,
-                                     ConvertToTimeUnits             convertTime,
+    explicit ConvergenceOutputThread(std::string_view outputDir,
+                                     std::string_view baseName,
+                                     ComponentToPhaseName getPhaseName,
+                                     ConvertToTimeUnits convertTime,
                                      ConvergenceOutputConfiguration config,
-                                     ConvergenceReportQueue&        queue);
+                                     ConvergenceReportQueue& queue);
 
     /// Deleted copy constructor.
     ConvergenceOutputThread(const ConvergenceOutputThread& src) = delete;

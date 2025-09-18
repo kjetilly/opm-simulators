@@ -24,12 +24,12 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Simple container for FLOWS data.
-template<class Scalar>
-struct FlowsData
-{
+template <class Scalar>
+struct FlowsData {
     //! \brief Resize data vectors.
     void resize(const std::size_t size)
     {

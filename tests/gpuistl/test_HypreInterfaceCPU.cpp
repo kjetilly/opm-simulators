@@ -22,8 +22,8 @@
 #define BOOST_TEST_MODULE TestHypreInterfaceCPU
 #define BOOST_TEST_NO_MAIN
 
-#include "../MpiFixture.hpp"
 #include "../HypreTestHelper.hpp"
+#include "../MpiFixture.hpp"
 #include <dune/common/parallel/mpihelper.hh>
 
 #include <boost/test/unit_test.hpp>

@@ -28,44 +28,43 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-GasLiftCommon<Scalar, IndexTraits>::
-GasLiftCommon(WellState<Scalar, IndexTraits>& well_state,
-              const GroupState<Scalar>& group_state,
-              DeferredLogger& deferred_logger,
-              const Parallel::Communication& comm,
-              bool glift_debug)
-    : well_state_{well_state}
-    , group_state_{group_state}
-    , deferred_logger_{deferred_logger}
-    , comm_{comm}
-    , debug{glift_debug}
-{}
+template <typename Scalar, typename IndexTraits>
+GasLiftCommon<Scalar, IndexTraits>::GasLiftCommon(WellState<Scalar, IndexTraits>& well_state,
+                                                  const GroupState<Scalar>& group_state,
+                                                  DeferredLogger& deferred_logger,
+                                                  const Parallel::Communication& comm,
+                                                  bool glift_debug)
+    : well_state_ {well_state}
+    , group_state_ {group_state}
+    , deferred_logger_ {deferred_logger}
+    , comm_ {comm}
+    , debug {glift_debug}
+{
+}
 
 /****************************************
  * Protected methods in alphabetical order
  ****************************************/
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-GasLiftCommon<Scalar, IndexTraits>::
-displayDebugMessageOnRank0_(const std::string& msg) const
+GasLiftCommon<Scalar, IndexTraits>::displayDebugMessageOnRank0_(const std::string& msg) const
 {
     // This output should be identical for all ranks.
 
-    if (!this->debug_output_only_on_rank0 || this->comm_.rank() == 0)  {
+    if (!this->debug_output_only_on_rank0 || this->comm_.rank() == 0) {
         displayDebugMessage_(msg);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-GasLiftCommon<Scalar, IndexTraits>::
-logMessage_(const std::string& prefix,
-            const std::string& msg,
-            MessageType msg_type) const
+GasLiftCommon<Scalar, IndexTraits>::logMessage_(const std::string& prefix,
+                                                const std::string& msg,
+                                                MessageType msg_type) const
 {
     std::string rank;
     if (this->comm_.size() > 1) {
@@ -82,8 +81,7 @@ logMessage_(const std::string& prefix,
     default:
         throw std::runtime_error("This should not happen");
     }
-    const std::string message = fmt::format(
-        "  {} ({}) :{} {}", prefix, type_str, rank, msg);
+    const std::string message = fmt::format("  {} ({}) :{} {}", prefix, type_str, rank, msg);
     switch (msg_type) {
     case MessageType::INFO:
         this->deferred_logger_.debug(message);

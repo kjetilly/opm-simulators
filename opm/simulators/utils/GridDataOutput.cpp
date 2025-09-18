@@ -29,27 +29,25 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif // HAVE_DUNE_FEM
 
-namespace Opm::GridDataOutput {
+namespace Opm::GridDataOutput
+{
 
-template<class T> using DV = DamarisOutput::DamarisVar<T>;
+template <class T>
+using DV = DamarisOutput::DamarisVar<T>;
 
-#define INSTANCE(part, ...) \
-    template class SimMeshDataAccessor<__VA_ARGS__, part>; \
-    template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeGridPoints<DV<double>>(DV<double>&, DV<double>&, DV<double>&) const; \
-    template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeConnectivity<DV<int>>(DV<int>&, ConnectivityVertexOrder) const; \
-    template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeOffsetsCells<DV<int>>(DV<int>&) const; \
-    template long SimMeshDataAccessor<__VA_ARGS__,part>:: \
-        writeCellTypes<DV<char>>(DV<char>&) const;
+#define INSTANCE(part, ...)                                                                                            \
+    template class SimMeshDataAccessor<__VA_ARGS__, part>;                                                             \
+    template long SimMeshDataAccessor<__VA_ARGS__, part>::writeGridPoints<DV<double>>(                                 \
+        DV<double>&, DV<double>&, DV<double>&) const;                                                                  \
+    template long SimMeshDataAccessor<__VA_ARGS__, part>::writeConnectivity<DV<int>>(DV<int>&,                         \
+                                                                                     ConnectivityVertexOrder) const;   \
+    template long SimMeshDataAccessor<__VA_ARGS__, part>::writeOffsetsCells<DV<int>>(DV<int>&) const;                  \
+    template long SimMeshDataAccessor<__VA_ARGS__, part>::writeCellTypes<DV<char>>(DV<char>&) const;
 
 INSTANCE(1, Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>)
 
 #if HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
 INSTANCE(1, GV)
 #endif
 

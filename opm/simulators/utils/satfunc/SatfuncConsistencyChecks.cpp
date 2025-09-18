@@ -47,35 +47,35 @@
 // ===========================================================================
 
 template <typename Scalar>
-Opm::SatfuncConsistencyChecks<Scalar>::
-SatfuncConsistencyChecks(std::string_view  pointName,
-                         const std::size_t numSamplePoints)
-    : pointName_       { pointName }
-    , numSamplePoints_ { numSamplePoints }
-    , formatPointID_   { [](const std::size_t i) { return fmt::format("{}", i); } }
-{}
+Opm::SatfuncConsistencyChecks<Scalar>::SatfuncConsistencyChecks(std::string_view pointName,
+                                                                const std::size_t numSamplePoints)
+    : pointName_ {pointName}
+    , numSamplePoints_ {numSamplePoints}
+    , formatPointID_ {[](const std::size_t i) { return fmt::format("{}", i); }}
+{
+}
 
 template <typename Scalar>
-Opm::SatfuncConsistencyChecks<Scalar>::
-SatfuncConsistencyChecks(SatfuncConsistencyChecks&& rhs)
-    : pointName_        { std::move(rhs.pointName_) }
-    , numSamplePoints_  { rhs.numSamplePoints_ }
-    , formatPointID_    { std::move(rhs.formatPointID_) }
-    , startCheckValues_ { std::move(rhs.startCheckValues_) }
-    , violations_       { std::move(rhs.violations_) }
-    , battery_          { std::move(rhs.battery_) }
-{}
+Opm::SatfuncConsistencyChecks<Scalar>::SatfuncConsistencyChecks(SatfuncConsistencyChecks&& rhs)
+    : pointName_ {std::move(rhs.pointName_)}
+    , numSamplePoints_ {rhs.numSamplePoints_}
+    , formatPointID_ {std::move(rhs.formatPointID_)}
+    , startCheckValues_ {std::move(rhs.startCheckValues_)}
+    , violations_ {std::move(rhs.violations_)}
+    , battery_ {std::move(rhs.battery_)}
+{
+}
 
 template <typename Scalar>
 Opm::SatfuncConsistencyChecks<Scalar>&
 Opm::SatfuncConsistencyChecks<Scalar>::operator=(SatfuncConsistencyChecks&& rhs)
 {
-    this->pointName_        = std::move(rhs.pointName_);
-    this->numSamplePoints_  = rhs.numSamplePoints_;
-    this->formatPointID_    = std::move(rhs.formatPointID_);
+    this->pointName_ = std::move(rhs.pointName_);
+    this->numSamplePoints_ = rhs.numSamplePoints_;
+    this->formatPointID_ = std::move(rhs.formatPointID_);
     this->startCheckValues_ = std::move(rhs.startCheckValues_);
-    this->violations_       = std::move(rhs.violations_);
-    this->battery_          = std::move(rhs.battery_);
+    this->violations_ = std::move(rhs.violations_);
+    this->battery_ = std::move(rhs.battery_);
 
     this->urbg_.reset();
 
@@ -83,7 +83,8 @@ Opm::SatfuncConsistencyChecks<Scalar>::operator=(SatfuncConsistencyChecks&& rhs)
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::resetCheckSet()
+void
+Opm::SatfuncConsistencyChecks<Scalar>::resetCheckSet()
 {
     this->startCheckValues_.clear();
     this->startCheckValues_.push_back(0);
@@ -97,7 +98,8 @@ void Opm::SatfuncConsistencyChecks<Scalar>::resetCheckSet()
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::addCheck(std::unique_ptr<Check> check)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::addCheck(std::unique_ptr<Check> check)
 {
     this->battery_.push_back(std::move(check));
 
@@ -106,11 +108,10 @@ void Opm::SatfuncConsistencyChecks<Scalar>::addCheck(std::unique_ptr<Check> chec
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::finaliseCheckSet()
+void
+Opm::SatfuncConsistencyChecks<Scalar>::finaliseCheckSet()
 {
-    std::partial_sum(this->startCheckValues_.begin(),
-                     this->startCheckValues_.end(),
-                     this->startCheckValues_.begin());
+    std::partial_sum(this->startCheckValues_.begin(), this->startCheckValues_.end(), this->startCheckValues_.begin());
 
     for (auto& violation : this->violations_) {
         this->buildStructure(violation);
@@ -118,16 +119,14 @@ void Opm::SatfuncConsistencyChecks<Scalar>::finaliseCheckSet()
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-checkEndpoints(const std::size_t                      pointID,
-               const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::checkEndpoints(const std::size_t pointID,
+                                                      const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->checkLoop([pointID, &endPoints, this]
-                    (Check* currentCheck, const std::size_t checkIx)
-    {
+    this->checkLoop([pointID, &endPoints, this](Check* currentCheck, const std::size_t checkIx) {
         currentCheck->test(endPoints);
 
-        if (! currentCheck->isViolated()) {
+        if (!currentCheck->isViolated()) {
             // Check holds for this set of end-points.  Nothing to do.
             return;
         }
@@ -137,18 +136,15 @@ checkEndpoints(const std::size_t                      pointID,
         // attention.  Critical violations typically end the run whereas
         // a standard level violation typically generates warnings only.
 
-        const auto level = currentCheck->isCritical()
-            ? ViolationLevel::Critical
-            : ViolationLevel::Standard;
+        const auto level = currentCheck->isCritical() ? ViolationLevel::Critical : ViolationLevel::Standard;
 
         this->processViolation(level, checkIx, pointID);
     });
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-collectFailures(const int                      root,
-                const Parallel::Communication& comm)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::collectFailures(const int root, const Parallel::Communication& comm)
 {
     if (comm.size() == 1) {
         // Not a parallel run.  Violation structure complete without
@@ -162,42 +158,37 @@ collectFailures(const int                      root,
 }
 
 template <typename Scalar>
-bool Opm::SatfuncConsistencyChecks<Scalar>::anyFailedStandardChecks() const
+bool
+Opm::SatfuncConsistencyChecks<Scalar>::anyFailedStandardChecks() const
 {
     return this->anyFailedChecks(ViolationLevel::Standard);
 }
 
 template <typename Scalar>
-bool Opm::SatfuncConsistencyChecks<Scalar>::anyFailedCriticalChecks() const
+bool
+Opm::SatfuncConsistencyChecks<Scalar>::anyFailedCriticalChecks() const
 {
     return this->anyFailedChecks(ViolationLevel::Critical);
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-reportFailures(const ViolationLevel      level,
-               const ReportRecordOutput& emitReportRecord) const
+void
+Opm::SatfuncConsistencyChecks<Scalar>::reportFailures(const ViolationLevel level,
+                                                      const ReportRecordOutput& emitReportRecord) const
 {
-    this->checkLoop([this,
-                     &emitReportRecord,
-                     nValueChar = fmt::formatted_size("{:> 8.6e}", 1.0),
-                     &violation = this->violations_[this->index(level)]]
-                    (const Check* currentCheck, const std::size_t checkIx)
-    {
-        if (violation.count[checkIx] == 0) {
-            return;
-        }
+    this->checkLoop(
+        [this,
+         &emitReportRecord,
+         nValueChar = fmt::formatted_size("{:> 8.6e}", 1.0),
+         &violation = this->violations_[this->index(level)]](const Check* currentCheck, const std::size_t checkIx) {
+            if (violation.count[checkIx] == 0) {
+                return;
+            }
 
-        this->writeReportHeader(currentCheck,
-                                violation.count[checkIx],
-                                emitReportRecord);
+            this->writeReportHeader(currentCheck, violation.count[checkIx], emitReportRecord);
 
-        this->writeTabulatedReportSample(nValueChar,
-                                         currentCheck,
-                                         violation,
-                                         checkIx,
-                                         emitReportRecord);
-    });
+            this->writeTabulatedReportSample(nValueChar, currentCheck, violation, checkIx, emitReportRecord);
+        });
 }
 
 // ===========================================================================
@@ -205,7 +196,8 @@ reportFailures(const ViolationLevel      level,
 // ===========================================================================
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::ViolationSample::clear()
+void
+Opm::SatfuncConsistencyChecks<Scalar>::ViolationSample::clear()
 {
     this->count.clear();
     this->pointID.clear();
@@ -214,19 +206,20 @@ void Opm::SatfuncConsistencyChecks<Scalar>::ViolationSample::clear()
 
 // ---------------------------------------------------------------------------
 
-namespace {
-    bool anyFailedChecks(const std::vector<std::size_t>& count)
-    {
-        return std::any_of(count.begin(), count.end(),
-                           [](const std::size_t n) { return n > 0; });
-    }
+namespace
+{
+bool
+anyFailedChecks(const std::vector<std::size_t>& count)
+{
+    return std::any_of(count.begin(), count.end(), [](const std::size_t n) { return n > 0; });
 }
+} // namespace
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-collectFailures(const int                      root,
-                const Parallel::Communication& comm,
-                ViolationSample&               violation)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::collectFailures(const int root,
+                                                       const Parallel::Communication& comm,
+                                                       ViolationSample& violation)
 {
     // Count total number of violations of each check across all ranks.
     // This should be the final number emitted in reportFailures() on the
@@ -234,7 +227,7 @@ collectFailures(const int                      root,
     auto totalCount = violation.count;
     comm.sum(totalCount.data(), violation.count.size());
 
-    if (! ::anyFailedChecks(totalCount)) {
+    if (!::anyFailedChecks(totalCount)) {
         // No failed checks on any rank for this severity level.
         //
         // No additional work needed, since every rank will have zero
@@ -246,14 +239,11 @@ collectFailures(const int                      root,
     // sampled check values from all ranks.  One set of all-to-one messages
     // for each quantity.  If this stage becomes a bottleneck we must devise
     // a better communication structure that reduces the number of messages.
-    const auto& [rankCount, startRankCount] =
-        gatherv(violation.count, comm, root);
+    const auto& [rankCount, startRankCount] = gatherv(violation.count, comm, root);
 
-    const auto& [rankPointID, startRankPointID] =
-        gatherv(violation.pointID, comm, root);
+    const auto& [rankPointID, startRankPointID] = gatherv(violation.pointID, comm, root);
 
-    const auto& [rankCheckValues, startRankCheckValues] =
-        gatherv(violation.checkValues, comm, root);
+    const auto& [rankCheckValues, startRankCheckValues] = gatherv(violation.checkValues, comm, root);
 
     if (comm.rank() == root) {
         // Re-initialise this violation sample to prepare for incorporating
@@ -262,12 +252,11 @@ collectFailures(const int                      root,
         this->buildStructure(violation);
 
         const auto numRanks = comm.size();
-        for (auto rank = 0*numRanks; rank < numRanks; ++rank) {
-            this->incorporateRankViolations
-                (rankCount.data() + startRankCount[rank],
-                 rankPointID.data() + startRankPointID[rank],
-                 rankCheckValues.data() + startRankCheckValues[rank],
-                 violation);
+        for (auto rank = 0 * numRanks; rank < numRanks; ++rank) {
+            this->incorporateRankViolations(rankCount.data() + startRankCount[rank],
+                                            rankPointID.data() + startRankPointID[rank],
+                                            rankCheckValues.data() + startRankCheckValues[rank],
+                                            violation);
         }
     }
 
@@ -284,37 +273,32 @@ collectFailures(const int                      root,
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-buildStructure(ViolationSample& violation)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::buildStructure(ViolationSample& violation)
 {
     violation.count.assign(this->battery_.size(), 0);
-    violation.pointID.resize(this->battery_.size() * this->numSamplePoints_,
-                             static_cast<std::size_t>(0xdeadc0deUL));
+    violation.pointID.resize(this->battery_.size() * this->numSamplePoints_, static_cast<std::size_t>(0xdeadc0deUL));
     violation.checkValues.resize(this->startCheckValues_.back());
 
     if constexpr (std::numeric_limits<Scalar>::has_quiet_NaN) {
-        std::fill(violation.checkValues.begin(),
-                  violation.checkValues.end(),
-                  std::numeric_limits<Scalar>::quiet_NaN());
+        std::fill(violation.checkValues.begin(), violation.checkValues.end(), std::numeric_limits<Scalar>::quiet_NaN());
     }
 }
 
 template <typename Scalar>
 template <typename PopulateCheckValues>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-processViolation(ViolationSample&      violation,
-                 const std::size_t     checkIx,
-                 const std::size_t     pointID,
-                 PopulateCheckValues&& populateCheckValues)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::processViolation(ViolationSample& violation,
+                                                        const std::size_t checkIx,
+                                                        const std::size_t pointID,
+                                                        PopulateCheckValues&& populateCheckValues)
 {
     const auto nViol = ++violation.count[checkIx];
 
     // Special case handling for number of violations not exceeding number
     // of sample points.  Needed in order to guarantee that the full table
     // is populated before starting the random replacement stage.
-    const auto sampleIx = (nViol <= this->numSamplePoints_)
-        ? (nViol - 1)
-        : this->getSampleIndex(nViol);
+    const auto sampleIx = (nViol <= this->numSamplePoints_) ? (nViol - 1) : this->getSampleIndex(nViol);
 
     if (sampleIx >= this->numSamplePoints_) {
         // Reservoir sampling algorithm
@@ -330,152 +314,135 @@ processViolation(ViolationSample&      violation,
 
     violation.pointID[this->violationPointIDStart(checkIx) + sampleIx] = pointID;
 
-    auto* const checkValues = violation.checkValues.data()
-        + this->violationValueStart(checkIx, sampleIx);
+    auto* const checkValues = violation.checkValues.data() + this->violationValueStart(checkIx, sampleIx);
 
     populateCheckValues(checkValues);
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-processViolation(const ViolationLevel level,
-                 const std::size_t    checkIx,
-                 const std::size_t    pointID)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::processViolation(const ViolationLevel level,
+                                                        const std::size_t checkIx,
+                                                        const std::size_t pointID)
 {
-    this->processViolation(this->violations_[this->index(level)], checkIx, pointID,
-        [this, checkIx](Scalar* const exportedCheckValues)
-    {
-        this->battery_[checkIx]->exportCheckValues(exportedCheckValues);
-    });
+    this->processViolation(
+        this->violations_[this->index(level)], checkIx, pointID, [this, checkIx](Scalar* const exportedCheckValues) {
+            this->battery_[checkIx]->exportCheckValues(exportedCheckValues);
+        });
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-incorporateRankViolations(const std::size_t* const count,
-                          const std::size_t* const pointID,
-                          const Scalar*      const checkValues,
-                          ViolationSample&         violation)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::incorporateRankViolations(const std::size_t* const count,
+                                                                 const std::size_t* const pointID,
+                                                                 const Scalar* const checkValues,
+                                                                 ViolationSample& violation)
 {
-    this->checkLoop([this, count, pointID, checkValues, &violation]
-                    (const Check*      currentCheck,
-                     const std::size_t checkIx)
-    {
+    this->checkLoop([this, count, pointID, checkValues, &violation](const Check* currentCheck,
+                                                                    const std::size_t checkIx) {
         if (count[checkIx] == 0) {
             // No violations of this check on this rank.  Nothing to do.
             return;
         }
 
-        const auto* const srcPointID = pointID
-            + this->violationPointIDStart(checkIx);
+        const auto* const srcPointID = pointID + this->violationPointIDStart(checkIx);
 
         const auto numCheckValues = currentCheck->numExportedCheckValues();
         const auto numSrcSamples = this->numPoints(count[checkIx]);
 
-        for (auto srcSampleIx = 0*numSrcSamples; srcSampleIx < numSrcSamples; ++srcSampleIx) {
-            this->processViolation(violation, checkIx, srcPointID[srcSampleIx],
-                [numCheckValues,
-                 srcCheckValues = checkValues + this->violationValueStart(checkIx, srcSampleIx)]
-                (Scalar* const destCheckValues)
-            {
-                std::copy_n(srcCheckValues, numCheckValues, destCheckValues);
-            });
+        for (auto srcSampleIx = 0 * numSrcSamples; srcSampleIx < numSrcSamples; ++srcSampleIx) {
+            this->processViolation(
+                violation,
+                checkIx,
+                srcPointID[srcSampleIx],
+                [numCheckValues, srcCheckValues = checkValues + this->violationValueStart(checkIx, srcSampleIx)](
+                    Scalar* const destCheckValues) { std::copy_n(srcCheckValues, numCheckValues, destCheckValues); });
         }
     });
 }
 
-namespace {
+namespace
+{
 
-    std::vector<std::string::size_type>
-    computeFieldWidths(const std::vector<std::string>& columnHeaders,
-                       const std::string::size_type    minColWidth)
-    {
-        auto fieldWidths = std::vector<std::size_t>(columnHeaders.size());
+std::vector<std::string::size_type>
+computeFieldWidths(const std::vector<std::string>& columnHeaders, const std::string::size_type minColWidth)
+{
+    auto fieldWidths = std::vector<std::size_t>(columnHeaders.size());
 
-        std::transform(columnHeaders.begin(), columnHeaders.end(),
-                       fieldWidths.begin(),
-                       [minColWidth](const std::string& header)
-                       { return std::max(minColWidth, header.size()); });
+    std::transform(columnHeaders.begin(),
+                   columnHeaders.end(),
+                   fieldWidths.begin(),
+                   [minColWidth](const std::string& header) { return std::max(minColWidth, header.size()); });
 
-        return fieldWidths;
+    return fieldWidths;
+}
+
+std::string
+createTableSeparator(const std::string::size_type fwPointID, const std::vector<std::string::size_type>& fieldWidths)
+{
+    using namespace fmt::literals;
+
+    // Note: "+2" for one blank space on each side of the string value.
+    auto separator = fmt::format("+{name:-<{width}}", "name"_a = "", "width"_a = fwPointID + 2);
+
+    for (const auto& fieldWidth : fieldWidths) {
+        separator += fmt::format("+{name:-<{width}}", "name"_a = "", "width"_a = fieldWidth + 2);
     }
 
-    std::string
-    createTableSeparator(const std::string::size_type               fwPointID,
-                         const std::vector<std::string::size_type>& fieldWidths)
-    {
-        using namespace fmt::literals;
+    separator += '+';
 
-        // Note: "+2" for one blank space on each side of the string value.
-        auto separator = fmt::format("+{name:-<{width}}",
-                                     "name"_a = "",
-                                     "width"_a = fwPointID + 2);
+    return separator;
+}
 
-        for (const auto& fieldWidth : fieldWidths) {
-            separator += fmt::format("+{name:-<{width}}",
-                                     "name"_a = "",
-                                     "width"_a = fieldWidth + 2);
-        }
+template <typename EmitRecord>
+void
+writeTableHeader(const std::string_view::size_type fwPointID,
+                 std::string_view pointName,
+                 const std::vector<std::string::size_type>& fieldWidths,
+                 const std::vector<std::string>& columnHeaders,
+                 EmitRecord&& emitRecord)
+{
+    using namespace fmt::literals;
 
-        separator += '+';
+    auto tableHeader = fmt::format("| {name:<{width}} ", "name"_a = pointName, "width"_a = fwPointID);
 
-        return separator;
+    for (auto colIx = 0 * columnHeaders.size(); colIx < columnHeaders.size(); ++colIx) {
+        tableHeader
+            += fmt::format("| {name:<{width}} ", "name"_a = columnHeaders[colIx], "width"_a = fieldWidths[colIx]);
     }
 
-    template <typename EmitRecord>
-    void writeTableHeader(const std::string_view::size_type          fwPointID,
-                          std::string_view                           pointName,
-                          const std::vector<std::string::size_type>& fieldWidths,
-                          const std::vector<std::string>&            columnHeaders,
-                          EmitRecord&&                               emitRecord)
-    {
-        using namespace fmt::literals;
+    emitRecord(tableHeader + '|');
+}
 
-        auto tableHeader = fmt::format("| {name:<{width}} ",
-                                       "name"_a = pointName,
-                                       "width"_a = fwPointID);
+template <typename Scalar, typename EmitRecord>
+void
+writeTableRecord(const std::string_view::size_type fwPointID,
+                 std::string_view pointID,
+                 const std::vector<std::string::size_type>& fieldWidths,
+                 const Scalar* checkValues,
+                 EmitRecord&& emitRecord)
+{
+    using namespace fmt::literals;
 
-        for (auto colIx = 0*columnHeaders.size(); colIx < columnHeaders.size(); ++colIx) {
-            tableHeader += fmt::format("| {name:<{width}} ",
-                                       "name"_a = columnHeaders[colIx],
-                                       "width"_a = fieldWidths[colIx]);
-        }
+    auto record = fmt::format("| {pointID:<{width}} ", "width"_a = fwPointID, "pointID"_a = pointID);
 
-        emitRecord(tableHeader + '|');
+    for (auto colIx = 0 * fieldWidths.size(); colIx < fieldWidths.size(); ++colIx) {
+        record += fmt::format(
+            "| {checkValue:>{width}.6e} ", "width"_a = fieldWidths[colIx], "checkValue"_a = checkValues[colIx]);
     }
 
-    template <typename Scalar, typename EmitRecord>
-    void writeTableRecord(const std::string_view::size_type          fwPointID,
-                          std::string_view                           pointID,
-                          const std::vector<std::string::size_type>& fieldWidths,
-                          const Scalar*                              checkValues,
-                          EmitRecord&&                               emitRecord)
-    {
-        using namespace fmt::literals;
-
-        auto record = fmt::format("| {pointID:<{width}} ",
-                                  "width"_a = fwPointID,
-                                  "pointID"_a = pointID);
-
-        for (auto colIx = 0*fieldWidths.size(); colIx < fieldWidths.size(); ++colIx) {
-            record += fmt::format("| {checkValue:>{width}.6e} ",
-                                  "width"_a = fieldWidths[colIx],
-                                  "checkValue"_a = checkValues[colIx]);
-        }
-
-        emitRecord(record + '|');
-    }
+    emitRecord(record + '|');
+}
 
 } // Anonymous namespace
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-writeReportHeader(const Check*              currentCheck,
-                  const std::size_t         violationCount,
-                  const ReportRecordOutput& emitReportRecord) const
+void
+Opm::SatfuncConsistencyChecks<Scalar>::writeReportHeader(const Check* currentCheck,
+                                                         const std::size_t violationCount,
+                                                         const ReportRecordOutput& emitReportRecord) const
 {
-    const auto* sampleMsg = (violationCount > this->numSamplePoints_)
-        ? "Sample Violations"
-        : "List of Violations";
+    const auto* sampleMsg = (violationCount > this->numSamplePoints_) ? "Sample Violations" : "List of Violations";
 
     emitReportRecord(fmt::format("Consistency Problem:\n"
                                  "  {}\n"
@@ -484,23 +451,23 @@ writeReportHeader(const Check*              currentCheck,
                                  "{}",
                                  currentCheck->description(),
                                  currentCheck->condition(),
-                                 violationCount, sampleMsg));
+                                 violationCount,
+                                 sampleMsg));
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::
-writeTabulatedReportSample(const std::size_t         nValueChar,
-                           const Check*              currentCheck,
-                           const ViolationSample&    violation,
-                           const std::size_t         checkIx,
-                           const ReportRecordOutput& emitReportRecord) const
+void
+Opm::SatfuncConsistencyChecks<Scalar>::writeTabulatedReportSample(const std::size_t nValueChar,
+                                                                  const Check* currentCheck,
+                                                                  const ViolationSample& violation,
+                                                                  const std::size_t checkIx,
+                                                                  const ReportRecordOutput& emitReportRecord) const
 {
     const auto formattedPointIDs = this->formatPointIDs(violation, checkIx);
-    const auto fieldWidthPointID =
-        std::max(formattedPointIDs.second, this->pointName_.size());
+    const auto fieldWidthPointID = std::max(formattedPointIDs.second, this->pointName_.size());
 
     const auto columnHeaders = this->collectColumnHeaders(currentCheck);
-    const auto fieldWidths   = computeFieldWidths(columnHeaders, nValueChar);
+    const auto fieldWidths = computeFieldWidths(columnHeaders, nValueChar);
 
     const auto separator = createTableSeparator(fieldWidthPointID, fieldWidths);
 
@@ -508,21 +475,16 @@ writeTabulatedReportSample(const std::size_t         nValueChar,
     emitReportRecord(separator);
 
     // Output column headers.
-    writeTableHeader(fieldWidthPointID, this->pointName_,
-                     fieldWidths, columnHeaders,
-                     emitReportRecord);
+    writeTableHeader(fieldWidthPointID, this->pointName_, fieldWidths, columnHeaders, emitReportRecord);
 
     // Output separator to start table value output.
     emitReportRecord(separator);
 
     // Emit sampled check violations in order sorted on the pointID.
     for (const auto& i : this->sortedPointIndices(violation, checkIx)) {
-        const auto* checkValues = violation.checkValues.data()
-            + this->violationValueStart(checkIx, i);
+        const auto* checkValues = violation.checkValues.data() + this->violationValueStart(checkIx, i);
 
-        writeTableRecord(fieldWidthPointID, formattedPointIDs.first[i],
-                         fieldWidths, checkValues,
-                         emitReportRecord);
+        writeTableRecord(fieldWidthPointID, formattedPointIDs.first[i], fieldWidths, checkValues, emitReportRecord);
     }
 
     // Output separator to end table output.
@@ -534,33 +496,21 @@ writeTabulatedReportSample(const std::size_t         nValueChar,
 
 template <typename Scalar>
 std::pair<std::vector<std::string>, std::string::size_type>
-Opm::SatfuncConsistencyChecks<Scalar>::
-formatPointIDs(const ViolationSample& violation,
-               const std::size_t      checkIx) const
+Opm::SatfuncConsistencyChecks<Scalar>::formatPointIDs(const ViolationSample& violation, const std::size_t checkIx) const
 {
-    auto formattedPointIDs = std::pair
-        <std::vector<std::string>,
-         std::string::size_type>
-        {
-            std::piecewise_construct,
-            std::forward_as_tuple(),
-            std::forward_as_tuple(std::string::size_type{0})
-        };
+    auto formattedPointIDs = std::pair<std::vector<std::string>, std::string::size_type> {
+        std::piecewise_construct, std::forward_as_tuple(), std::forward_as_tuple(std::string::size_type {0})};
 
     const auto nPoints = this->numPoints(violation, checkIx);
 
     formattedPointIDs.first.reserve(nPoints);
 
-    const auto* pointIDs = violation.pointID.data()
-        + (checkIx * this->numSamplePoints_);
+    const auto* pointIDs = violation.pointID.data() + (checkIx * this->numSamplePoints_);
 
-    for (auto point = 0*nPoints; point < nPoints; ++point) {
-        formattedPointIDs.first.push_back
-            (this->formatPointID_(pointIDs[point]));
+    for (auto point = 0 * nPoints; point < nPoints; ++point) {
+        formattedPointIDs.first.push_back(this->formatPointID_(pointIDs[point]));
 
-        formattedPointIDs.second =
-            std::max(formattedPointIDs.second,
-                     formattedPointIDs.first.back().size());
+        formattedPointIDs.second = std::max(formattedPointIDs.second, formattedPointIDs.first.back().size());
     }
 
     return formattedPointIDs;
@@ -568,11 +518,9 @@ formatPointIDs(const ViolationSample& violation,
 
 template <typename Scalar>
 std::vector<std::string>
-Opm::SatfuncConsistencyChecks<Scalar>::
-collectColumnHeaders(const Check* currentCheck) const
+Opm::SatfuncConsistencyChecks<Scalar>::collectColumnHeaders(const Check* currentCheck) const
 {
-    auto headers = std::vector<std::string>
-        (currentCheck->numExportedCheckValues());
+    auto headers = std::vector<std::string>(currentCheck->numExportedCheckValues());
 
     currentCheck->columnNames(headers.data());
 
@@ -581,68 +529,59 @@ collectColumnHeaders(const Check* currentCheck) const
 
 template <typename Scalar>
 std::vector<std::size_t>
-Opm::SatfuncConsistencyChecks<Scalar>::
-sortedPointIndices(const ViolationSample& violation,
-                   const std::size_t      checkIx) const
+Opm::SatfuncConsistencyChecks<Scalar>::sortedPointIndices(const ViolationSample& violation,
+                                                          const std::size_t checkIx) const
 {
-    auto sortedIdxs = std::vector<std::size_t>
-        (this->numPoints(violation, checkIx));
+    auto sortedIdxs = std::vector<std::size_t>(this->numPoints(violation, checkIx));
 
-    std::iota(sortedIdxs.begin(), sortedIdxs.end(), std::size_t{0});
+    std::iota(sortedIdxs.begin(), sortedIdxs.end(), std::size_t {0});
 
-    std::sort(sortedIdxs.begin(), sortedIdxs.end(),
-              [pointIDs = violation.pointID.data() + (checkIx * this->numSamplePoints_)]
-              (const std::size_t i1, const std::size_t i2)
-              {
-                  return pointIDs[i1] < pointIDs[i2];
-              });
+    std::sort(sortedIdxs.begin(),
+              sortedIdxs.end(),
+              [pointIDs = violation.pointID.data() + (checkIx * this->numSamplePoints_)](
+                  const std::size_t i1, const std::size_t i2) { return pointIDs[i1] < pointIDs[i2]; });
 
     return sortedIdxs;
 }
 
 template <typename Scalar>
 std::size_t
-Opm::SatfuncConsistencyChecks<Scalar>::
-numPoints(const ViolationSample& violation,
-          const std::size_t      checkIx) const
+Opm::SatfuncConsistencyChecks<Scalar>::numPoints(const ViolationSample& violation, const std::size_t checkIx) const
 {
     return this->numPoints(violation.count[checkIx]);
 }
 
 template <typename Scalar>
 std::size_t
-Opm::SatfuncConsistencyChecks<Scalar>::
-numPoints(const std::size_t violationCount) const
+Opm::SatfuncConsistencyChecks<Scalar>::numPoints(const std::size_t violationCount) const
 {
     return std::min(this->numSamplePoints_, violationCount);
 }
 
 template <typename Scalar>
 std::size_t
-Opm::SatfuncConsistencyChecks<Scalar>::
-getSampleIndex(const std::size_t sampleSize)
+Opm::SatfuncConsistencyChecks<Scalar>::getSampleIndex(const std::size_t sampleSize)
 {
-    assert (sampleSize > 0);
+    assert(sampleSize > 0);
 
     this->ensureRandomBitGeneratorIsInitialised();
 
-    return std::uniform_int_distribution<std::size_t>
-        { 0, sampleSize - 1 }(*this->urbg_);
+    return std::uniform_int_distribution<std::size_t> {0, sampleSize - 1}(*this->urbg_);
 }
 
 template <typename Scalar>
-void Opm::SatfuncConsistencyChecks<Scalar>::ensureRandomBitGeneratorIsInitialised()
+void
+Opm::SatfuncConsistencyChecks<Scalar>::ensureRandomBitGeneratorIsInitialised()
 {
     if (this->urbg_ != nullptr) {
         return;
     }
 
-    const auto k = static_cast<std::size_t>
-        (std::log2(RandomBitGenerator::modulus) / 32) + 1;
+    const auto k = static_cast<std::size_t>(std::log2(RandomBitGenerator::modulus) / 32) + 1;
 
     auto state = std::vector<typename RandomBitGenerator::result_type>(k + 3);
 
-    std::random_device rd{};
+    std::random_device rd {};
     std::generate(state.begin(), state.end(), std::ref(rd));
 
     std::seed_seq seeds(state.begin(), state.end());
@@ -651,48 +590,45 @@ void Opm::SatfuncConsistencyChecks<Scalar>::ensureRandomBitGeneratorIsInitialise
 
 template <typename Scalar>
 std::vector<std::size_t>::size_type
-Opm::SatfuncConsistencyChecks<Scalar>::
-violationPointIDStart(const std::size_t checkIx) const
+Opm::SatfuncConsistencyChecks<Scalar>::violationPointIDStart(const std::size_t checkIx) const
 {
     return checkIx * this->numSamplePoints_;
 }
 
 template <typename Scalar>
 typename std::vector<Scalar>::size_type
-Opm::SatfuncConsistencyChecks<Scalar>::
-violationValueStart(const std::size_t checkIx,
-                    const std::size_t sampleIx) const
+Opm::SatfuncConsistencyChecks<Scalar>::violationValueStart(const std::size_t checkIx, const std::size_t sampleIx) const
 {
-    return this->startCheckValues_[checkIx]
-        + (sampleIx * this->battery_[checkIx]->numExportedCheckValues());
+    return this->startCheckValues_[checkIx] + (sampleIx * this->battery_[checkIx]->numExportedCheckValues());
 }
 
 template <typename Scalar>
 bool
-Opm::SatfuncConsistencyChecks<Scalar>::
-anyFailedChecks(const ViolationLevel level) const
+Opm::SatfuncConsistencyChecks<Scalar>::anyFailedChecks(const ViolationLevel level) const
 {
     return ::anyFailedChecks(this->violations_[this->index(level)].count);
 }
 
 template <typename Scalar>
 template <typename Body>
-void Opm::SatfuncConsistencyChecks<Scalar>::checkLoop(Body&& body)
+void
+Opm::SatfuncConsistencyChecks<Scalar>::checkLoop(Body&& body)
 {
     const auto numChecks = this->battery_.size();
 
-    for (auto checkIx = 0*numChecks; checkIx < numChecks; ++checkIx) {
+    for (auto checkIx = 0 * numChecks; checkIx < numChecks; ++checkIx) {
         body(this->battery_[checkIx].get(), checkIx);
     }
 }
 
 template <typename Scalar>
 template <typename Body>
-void Opm::SatfuncConsistencyChecks<Scalar>::checkLoop(Body&& body) const
+void
+Opm::SatfuncConsistencyChecks<Scalar>::checkLoop(Body&& body) const
 {
     const auto numChecks = this->battery_.size();
 
-    for (auto checkIx = 0*numChecks; checkIx < numChecks; ++checkIx) {
+    for (auto checkIx = 0 * numChecks; checkIx < numChecks; ++checkIx) {
         body(this->battery_[checkIx].get(), checkIx);
     }
 }

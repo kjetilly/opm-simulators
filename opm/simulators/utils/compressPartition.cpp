@@ -23,61 +23,63 @@
 #include <utility>
 #include <vector>
 
-namespace {
+namespace
+{
 
-    template <typename T>
-    std::pair<T, T> valueRange(const std::vector<T>& x)
-    {
-        auto mmPos = std::minmax_element(x.begin(), x.end());
+template <typename T>
+std::pair<T, T>
+valueRange(const std::vector<T>& x)
+{
+    auto mmPos = std::minmax_element(x.begin(), x.end());
 
-        return { *mmPos.first, *mmPos.second };
+    return {*mmPos.first, *mmPos.second};
+}
+
+void
+compressAndCountPartitionIDs(std::vector<int>& partition, int& num_domains)
+{
+    const auto& [low, high] = valueRange(partition);
+
+    auto seen = std::vector<bool>(high - low + 1, false);
+    for (const auto& domain : partition) {
+        seen[domain - low] = domain >= 0;
     }
 
-    void compressAndCountPartitionIDs(std::vector<int>& partition,
-                                      int&              num_domains)
-    {
-        const auto& [low, high] = valueRange(partition);
-
-        auto seen = std::vector<bool>(high - low + 1, false);
-        for (const auto& domain : partition) {
-            seen[domain - low] = domain >= 0;
+    auto compressed = std::vector<int>(seen.size(), -1);
+    for (auto i = 0 * compressed.size(); i < compressed.size(); ++i) {
+        if (seen[i]) {
+            compressed[i] = num_domains++;
         }
-
-        auto compressed = std::vector<int>(seen.size(), -1);
-        for (auto i = 0*compressed.size(); i < compressed.size(); ++i) {
-            if (seen[i]) {
-                compressed[i] = num_domains++;
-            }
-        }
-
-        std::for_each(partition.begin(), partition.end(),
-                      [Low = low, &compressed](auto& domain)
-                      {
-                         if (domain >= 0) {
-                             domain = compressed[domain - Low];
-                         }
-                      });
     }
+
+    std::for_each(partition.begin(), partition.end(), [Low = low, &compressed](auto& domain) {
+        if (domain >= 0) {
+            domain = compressed[domain - Low];
+        }
+    });
+}
 } // Anonymous namespace
 
 std::pair<std::vector<int>, int>
 Opm::util::compressAndCountPartitionIDs(std::vector<int>&& parts0)
 {
-    auto parts = std::pair<std::vector<int>, int> { std::move(parts0), 0 };
+    auto parts = std::pair<std::vector<int>, int> {std::move(parts0), 0};
 
-    if (! parts.first.empty()) {
+    if (!parts.first.empty()) {
         ::compressAndCountPartitionIDs(parts.first, parts.second);
     }
 
     return parts;
 }
 
-std::vector<int> Opm::util::compressPartitionIDs(std::vector<int>&& parts0)
+std::vector<int>
+Opm::util::compressPartitionIDs(std::vector<int>&& parts0)
 {
     return compressAndCountPartitionIDs(std::move(parts0)).first;
 }
 
-void Opm::util::compressPartitionIDs(std::vector<int>& parts0)
+void
+Opm::util::compressPartitionIDs(std::vector<int>& parts0)
 {
     [[maybe_unused]] auto num_domains = 0;
     ::compressAndCountPartitionIDs(parts0, num_domains);

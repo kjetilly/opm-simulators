@@ -26,16 +26,15 @@
 #include <cassert>
 #include <vector>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /* Check is operations on a node in the matrix can be started
  * A node can only be started if all nodes that it depends on during sequential
  * execution have already completed.*/
 
-bool canBeStarted(const int rowIndex,
-                  const int* rowPointers,
-                  const int* colIndices,
-                  const std::vector<bool>& doneRows)
+bool
+canBeStarted(const int rowIndex, const int* rowPointers, const int* colIndices, const std::vector<bool>& doneRows)
 {
     bool canStart = !doneRows[rowIndex];
     if (canStart) {
@@ -61,19 +60,20 @@ bool canBeStarted(const int rowIndex,
  * "Iterative methods for Sparse Linear Systems" by Yousef Saad in section 11.6.3
  */
 
-void findLevelScheduling(const int* CSRColIndices,
-                         const int* CSRRowPointers,
-                         const int* CSCRowIndices,
-                         const int* CSCColPointers,
-                         int Nb,
-                         int* numColors,
-                         int* toOrder,
-                         int* fromOrder,
-                         std::vector<int>& rowsPerColor)
+void
+findLevelScheduling(const int* CSRColIndices,
+                    const int* CSRRowPointers,
+                    const int* CSCRowIndices,
+                    const int* CSCColPointers,
+                    int Nb,
+                    int* numColors,
+                    int* toOrder,
+                    int* fromOrder,
+                    std::vector<int>& rowsPerColor)
 {
     int activeRowIndex = 0, nextActiveRowIndex = 0;
     std::vector<bool> doneRows(Nb, false);
-    std::vector <int> rowsToStart;
+    std::vector<int> rowsToStart;
 
     // since emplace_back() is used to fill, the vector must be empty
     assert(rowsPerColor.empty());
@@ -129,11 +129,8 @@ void findLevelScheduling(const int* CSRColIndices,
 }
 
 // based on the scipy package from python, scipy/sparse/sparsetools/csr.h on github
-void csrPatternToCsc(const int* CSRColIndices,
-                     const int* CSRRowPointers,
-                     int* CSCRowIndices,
-                     int* CSCColPointers,
-                     int Nb)
+void
+csrPatternToCsc(const int* CSRColIndices, const int* CSRRowPointers, int* CSCRowIndices, int* CSCColPointers, int Nb)
 {
     int nnz = CSRRowPointers[Nb];
 

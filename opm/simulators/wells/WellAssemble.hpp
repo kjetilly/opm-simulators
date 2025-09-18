@@ -34,16 +34,20 @@ namespace Opm
 
 class DeferredLogger;
 class Group;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 class Schedule;
 class SummaryState;
-template<typename FluidSystem> class WellInterfaceFluidSystem;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename FluidSystem>
+class WellInterfaceFluidSystem;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 struct WellInjectionControls;
 struct WellProductionControls;
 
-template<typename FluidSystem>
-class WellAssemble {
+template <typename FluidSystem>
+class WellAssemble
+{
     static constexpr int Water = FluidSystem::waterPhaseIdx;
     static constexpr int Oil = FluidSystem::oilPhaseIdx;
     static constexpr int Gas = FluidSystem::gasPhaseIdx;
@@ -53,7 +57,7 @@ class WellAssemble {
 public:
     explicit WellAssemble(const WellInterfaceFluidSystem<FluidSystem>& well);
 
-    template<class EvalWell>
+    template <class EvalWell>
     void assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
                                const GroupState<Scalar>& group_state,
                                const Schedule& schedule,
@@ -65,7 +69,7 @@ public:
                                EvalWell& control_eq,
                                DeferredLogger& deferred_logger) const;
 
-    template<class EvalWell>
+    template <class EvalWell>
     void assembleControlEqInj(const WellState<Scalar, IndexTraits>& well_state,
                               const GroupState<Scalar>& group_state,
                               const Schedule& schedule,
@@ -83,6 +87,6 @@ private:
 
 
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_ASSEMBLE_HEADER_INCLUDED

@@ -48,7 +48,8 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
 /// A model implementation for three-phase black oil.
 ///
@@ -106,7 +107,7 @@ public:
     using Mat = typename SparseMatrixAdapter::IstlMatrix;
     using BVector = Dune::BlockVector<VectorBlockType>;
 
-    using ComponentName = ::Opm::ComponentName<FluidSystem,Indices>;
+    using ComponentName = ::Opm::ComponentName<FluidSystem, Indices>;
 
     // ---------  Public methods  ---------
 
@@ -123,10 +124,14 @@ public:
                   const bool terminal_output);
 
     bool isParallel() const
-    { return grid_.comm().size() > 1; }
+    {
+        return grid_.comm().size() > 1;
+    }
 
     const EclipseState& eclState() const
-    { return simulator_.vanguard().eclState(); }
+    {
+        return simulator_.vanguard().eclState();
+    }
 
     /// Called once before each time step.
     /// \param[in] timer                  simulation timer
@@ -161,19 +166,22 @@ public:
     SimulatorReportSingle afterStep(const SimulatorTimerInterface&);
 
     /// Assemble the residual and Jacobian of the nonlinear system.
-    SimulatorReportSingle assembleReservoir(const SimulatorTimerInterface& /* timer */,
-                                            const int iterationIdx);
+    SimulatorReportSingle assembleReservoir(const SimulatorTimerInterface& /* timer */, const int iterationIdx);
 
     // compute the "relative" change of the solution between time steps
     Scalar relativeChange() const;
 
     /// Number of linear iterations used in last call to solveJacobianSystem().
     int linearIterationsLastSolve() const
-    { return simulator_.model().newtonMethod().linearSolver().iterations (); }
+    {
+        return simulator_.model().newtonMethod().linearSolver().iterations();
+    }
 
     // Obtain reference to linear solver setup time
     double& linearSolveSetupTime()
-    { return linear_solve_setup_time_; }
+    {
+        return linear_solve_setup_time_;
+    }
 
     /// Solve the Jacobian system Jx = r where J is the Jacobian and
     /// r is the residual.
@@ -184,30 +192,30 @@ public:
 
     /// Return true if output to cout is wanted.
     bool terminalOutputEnabled() const
-    { return terminal_output_; }
+    {
+        return terminal_output_;
+    }
 
-    std::tuple<Scalar,Scalar>
-    convergenceReduction(Parallel::Communication comm,
-                         const Scalar pvSumLocal,
-                         const Scalar numAquiferPvSumLocal,
-                         std::vector<Scalar>& R_sum,
-                         std::vector<Scalar>& maxCoeff,
-                         std::vector<Scalar>& B_avg);
+    std::tuple<Scalar, Scalar> convergenceReduction(Parallel::Communication comm,
+                                                    const Scalar pvSumLocal,
+                                                    const Scalar numAquiferPvSumLocal,
+                                                    std::vector<Scalar>& R_sum,
+                                                    std::vector<Scalar>& maxCoeff,
+                                                    std::vector<Scalar>& B_avg);
 
     /// \brief Get reservoir quantities on this process needed for convergence calculations.
     /// \return A pair of the local pore volume of interior cells and the pore volumes
     ///         of the cells associated with a numerical aquifer.
-    std::pair<Scalar,Scalar>
-    localConvergenceData(std::vector<Scalar>& R_sum,
-                         std::vector<Scalar>& maxCoeff,
-                         std::vector<Scalar>& B_avg,
-                         std::vector<int>& maxCoeffCell);
+    std::pair<Scalar, Scalar> localConvergenceData(std::vector<Scalar>& R_sum,
+                                                   std::vector<Scalar>& maxCoeff,
+                                                   std::vector<Scalar>& B_avg,
+                                                   std::vector<int>& maxCoeffCell);
 
     /// \brief Compute pore-volume/cell count split among "converged",
     /// "relaxed converged", "unconverged" cells based on CNV point
     /// measures.
-    std::pair<std::vector<double>, std::vector<int>>
-    characteriseCnvPvSplit(const std::vector<Scalar>& B_avg, const double dt);
+    std::pair<std::vector<double>, std::vector<int>> characteriseCnvPvSplit(const std::vector<Scalar>& B_avg,
+                                                                            const double dt);
 
     /// \brief Compute the number of Newtons required by each cell in order to
     /// satisfy the solution change convergence criteria at the last time step.
@@ -219,13 +227,12 @@ public:
 
     void updateTUNING(const Tuning& tuning);
 
-    ConvergenceReport
-    getReservoirConvergence(const double reportTime,
-                            const double dt,
-                            const int iteration,
-                            const int maxIter,
-                            std::vector<Scalar>& B_avg,
-                            std::vector<Scalar>& residual_norms);
+    ConvergenceReport getReservoirConvergence(const double reportTime,
+                                              const double dt,
+                                              const int iteration,
+                                              const int maxIter,
+                                              std::vector<Scalar>& B_avg,
+                                              std::vector<Scalar>& residual_norms);
 
     /// Compute convergence based on total mass balance (tol_mb) and maximum
     /// residual mass balance (tol_cnv).
@@ -233,35 +240,42 @@ public:
     /// \param[in]   iteration   current iteration number
     /// \param[in]   maxIter     maximum number of iterations
     /// \param[out]  residual_norms   CNV residuals by phase
-    ConvergenceReport
-    getConvergence(const SimulatorTimerInterface& timer,
-                   const int iteration,
-                   const int maxIter,
-                   std::vector<Scalar>& residual_norms);
+    ConvergenceReport getConvergence(const SimulatorTimerInterface& timer,
+                                     const int iteration,
+                                     const int maxIter,
+                                     std::vector<Scalar>& residual_norms);
 
     /// The number of active fluid phases in the model.
     int numPhases() const
-    { return Indices::numPhases; }
+    {
+        return Indices::numPhases;
+    }
 
     /// Wrapper required due to not following generic API
-    template<class T>
-    std::vector<std::vector<Scalar> >
-    computeFluidInPlace(const T&, const std::vector<int>& fipnum) const
-    { return this->computeFluidInPlace(fipnum); }
+    template <class T>
+    std::vector<std::vector<Scalar>> computeFluidInPlace(const T&, const std::vector<int>& fipnum) const
+    {
+        return this->computeFluidInPlace(fipnum);
+    }
 
     /// Should not be called
-    std::vector<std::vector<Scalar> >
-    computeFluidInPlace(const std::vector<int>& /*fipnum*/) const;
+    std::vector<std::vector<Scalar>> computeFluidInPlace(const std::vector<int>& /*fipnum*/) const;
 
     const Simulator& simulator() const
-    { return simulator_; }
+    {
+        return simulator_;
+    }
 
     Simulator& simulator()
-    { return simulator_; }
+    {
+        return simulator_;
+    }
 
     /// return the statistics if the nonlinearIteration() method failed
     const SimulatorReportSingle& failureReport() const
-    { return failureReport_; }
+    {
+        return failureReport_;
+    }
 
     /// return the statistics of local solves accumulated for this rank
     const SimulatorReport& localAccumulatedReports() const;
@@ -273,26 +287,34 @@ public:
     void writeNonlinearIterationsPerCell(const std::filesystem::path& odir) const;
 
     const std::vector<StepReport>& stepReports() const
-    { return convergence_reports_; }
+    {
+        return convergence_reports_;
+    }
 
     void writePartitions(const std::filesystem::path& odir) const;
 
     /// return the StandardWells object
-    BlackoilWellModel<TypeTag>&
-    wellModel()
-    { return well_model_; }
+    BlackoilWellModel<TypeTag>& wellModel()
+    {
+        return well_model_;
+    }
 
-    const BlackoilWellModel<TypeTag>&
-    wellModel() const
-    { return well_model_; }
+    const BlackoilWellModel<TypeTag>& wellModel() const
+    {
+        return well_model_;
+    }
 
     void beginReportStep()
-    { simulator_.problem().beginEpisode(); }
+    {
+        simulator_.problem().beginEpisode();
+    }
 
     void endReportStep()
-    { simulator_.problem().endEpisode(); }
+    {
+        simulator_.problem().endEpisode();
+    }
 
-    template<class FluidState, class Residual>
+    template <class FluidState, class Residual>
     void getMaxCoeff(const unsigned cell_idx,
                      const IntensiveQuantities& intQuants,
                      const FluidState& fs,
@@ -305,15 +327,21 @@ public:
 
     //! \brief Returns const reference to model parameters.
     const ModelParameters& param() const
-    { return param_; }
+    {
+        return param_;
+    }
 
     //! \brief Returns const reference to component names.
     const ComponentName& compNames() const
-    { return compNames_; }
+    {
+        return compNames_;
+    }
 
     //! \brief Returns true if an NLDD solver exists
-    bool hasNlddSolver() const 
-    { return nlddSolver_ != nullptr; }
+    bool hasNlddSolver() const
+    {
+        return nlddSolver_ != nullptr;
+    }
 
 protected:
     // ---------  Data members  ---------
@@ -329,7 +357,7 @@ protected:
     static constexpr bool has_bioeffects_ = getPropValue<TypeTag, Properties::EnableBioeffects>();
     static constexpr bool has_micp_ = Indices::enableMICP;
 
-    ModelParameters                 param_;
+    ModelParameters param_;
     SimulatorReportSingle failureReport_;
 
     // Well Model
@@ -345,16 +373,28 @@ protected:
     BVector dx_old_;
 
     std::vector<StepReport> convergence_reports_;
-    ComponentName compNames_{};
+    ComponentName compNames_ {};
 
     std::unique_ptr<BlackoilModelNldd<TypeTag>> nlddSolver_; //!< Non-linear DD solver
     BlackoilModelConvergenceMonitor<Scalar> conv_monitor_;
 
 private:
-    Scalar dpMaxRel() const { return param_.dp_max_rel_; }
-    Scalar dsMax() const { return param_.ds_max_; }
-    Scalar drMaxRel() const { return param_.dr_max_rel_; }
-    Scalar maxResidualAllowed() const { return param_.max_residual_allowed_; }
+    Scalar dpMaxRel() const
+    {
+        return param_.dp_max_rel_;
+    }
+    Scalar dsMax() const
+    {
+        return param_.ds_max_;
+    }
+    Scalar drMaxRel() const
+    {
+        return param_.dr_max_rel_;
+    }
+    Scalar maxResidualAllowed() const
+    {
+        return param_.max_residual_allowed_;
+    }
     double linear_solve_setup_time_;
     std::vector<bool> wasSwitched_;
 };

@@ -23,30 +23,34 @@
 #include <memory>
 #include <vector>
 
-#include <umfpack.h>
 #include <dune/common/version.hh>
+#include <umfpack.h>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> class MultisegmentWellContribution;
+template <class Scalar>
+class MultisegmentWellContribution;
 
-/// This class serves to eliminate the need to include the WellContributions into the matrix (with --matrix-add-well-contributions=true) for the cusparseSolver or openclSolver.
-/// If the --matrix-add-well-contributions commandline parameter is true, this class should still be used, but be empty.
-/// StandardWell and MultisegmentWell are supported for both cusparseSolver and openclSolver.
-/// A single instance (or pointer) of this class is passed to the GpuSolver.
-/// For StandardWell, this class contains all the data and handles the computation. For MultisegmentWell, the vector 'multisegments' contains all the data. For more information, check the MultisegmentWellContribution class.
+/// This class serves to eliminate the need to include the WellContributions into the matrix (with
+/// --matrix-add-well-contributions=true) for the cusparseSolver or openclSolver. If the --matrix-add-well-contributions
+/// commandline parameter is true, this class should still be used, but be empty. StandardWell and MultisegmentWell are
+/// supported for both cusparseSolver and openclSolver. A single instance (or pointer) of this class is passed to the
+/// GpuSolver. For StandardWell, this class contains all the data and handles the computation. For MultisegmentWell, the
+/// vector 'multisegments' contains all the data. For more information, check the MultisegmentWellContribution class.
 
 /// A StandardWell uses C, D and B and performs y -= (C^T * (D^-1 * (B*x)))
-/// B and C are vectors, disguised as matrices and contain blocks of StandardWell::numEq by StandardWell::numStaticWellEq
-/// D is a block, disguised as matrix, the square block has size StandardWell::numStaticWellEq. D is actually stored as D^-1
-/// B*x and D*B*x are a vector with numStaticWellEq doubles
-/// C*D*B*x is a blocked matrix with a symmetric sparsity pattern, contains square blocks with size numEq. For every columnindex i, j in StandardWell::duneB_, there is a block on (i, j) in C*D*B*x.
+/// B and C are vectors, disguised as matrices and contain blocks of StandardWell::numEq by
+/// StandardWell::numStaticWellEq D is a block, disguised as matrix, the square block has size
+/// StandardWell::numStaticWellEq. D is actually stored as D^-1 B*x and D*B*x are a vector with numStaticWellEq doubles
+/// C*D*B*x is a blocked matrix with a symmetric sparsity pattern, contains square blocks with size numEq. For every
+/// columnindex i, j in StandardWell::duneB_, there is a block on (i, j) in C*D*B*x.
 ///
 /// This class is used in 3 phases:
 /// - get total size of all wellcontributions that must be stored here
 /// - allocate memory
 /// - copy data of wellcontributions
-template<class Scalar>
+template <class Scalar>
 class WellContributions
 {
 public:
@@ -54,29 +58,27 @@ public:
 
     using UMFPackIndex = SuiteSparse_long;
     /// StandardWell has C, D and B matrices that need to be copied
-    enum class MatrixType {
-        C,
-        D,
-        B
-    };
+    enum class MatrixType { C, D, B };
 
 protected:
     bool allocated = false;
 
-    unsigned int N;                          // number of rows (not blockrows) in vectors x and y
-    unsigned int dim;                        // number of columns in blocks in B and C, equal to StandardWell::numEq
-    unsigned int dim_wells;                  // number of rows in blocks in B and C, equal to StandardWell::numStaticWellEq
-    unsigned int num_blocks = 0;             // total number of blocks in all wells
-    unsigned int num_std_wells = 0;          // number of StandardWells in this object
-    unsigned int num_ms_wells = 0;           // number of MultisegmentWells in this object, must equal multisegments.size()
-    unsigned int num_blocks_so_far = 0;      // keep track of where next data is written
-    unsigned int num_std_wells_so_far = 0;   // keep track of where next data is written
-    std::vector<unsigned int> val_pointers;    // val_pointers[wellID] == index of first block for this well in Ccols and Bcols
+    unsigned int N; // number of rows (not blockrows) in vectors x and y
+    unsigned int dim; // number of columns in blocks in B and C, equal to StandardWell::numEq
+    unsigned int dim_wells; // number of rows in blocks in B and C, equal to StandardWell::numStaticWellEq
+    unsigned int num_blocks = 0; // total number of blocks in all wells
+    unsigned int num_std_wells = 0; // number of StandardWells in this object
+    unsigned int num_ms_wells = 0; // number of MultisegmentWells in this object, must equal multisegments.size()
+    unsigned int num_blocks_so_far = 0; // keep track of where next data is written
+    unsigned int num_std_wells_so_far = 0; // keep track of where next data is written
+    std::vector<unsigned int>
+        val_pointers; // val_pointers[wellID] == index of first block for this well in Ccols and Bcols
 
     std::vector<std::unique_ptr<MultisegmentWellContribution<Scalar>>> multisegments;
 
 public:
-    unsigned int getNumWells(){
+    unsigned int getNumWells()
+    {
         return num_std_wells + num_ms_wells;
     }
 
@@ -130,14 +132,19 @@ public:
                                          UMFPackIndex* DcolPointers,
                                          UMFPackIndex* DrowIndices,
                                          std::vector<Scalar>& Cvalues);
+
 protected:
     //! \brief API specific allocation.
-    virtual void APIalloc() {}
+    virtual void APIalloc()
+    {
+    }
 
     /// Api specific upload of matrix.
-    virtual void APIaddMatrix(MatrixType, int*, Scalar*, unsigned int) {}
+    virtual void APIaddMatrix(MatrixType, int*, Scalar*, unsigned int)
+    {
+    }
 };
 
-} //namespace Opm
+} // namespace Opm
 
 #endif

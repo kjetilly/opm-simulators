@@ -40,7 +40,8 @@
 #include <utility>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseIO;
 class EclipseState;
@@ -54,19 +55,24 @@ class UDQState;
 
 } // namespace Opm
 
-namespace Opm { namespace Action {
-class State;
-}} // namespace Opm::Action
+namespace Opm
+{
+namespace Action
+{
+    class State;
+}
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 template <class Grid, class EquilGrid, class GridView, class ElementMapper, class Scalar>
 class EclGenericWriter
 {
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
     using EquilCartesianIndexMapper = Dune::CartesianIndexMapper<EquilGrid>;
-    using CollectDataOnIORankType = CollectDataOnIORank<Grid,EquilGrid,GridView>;
-    using TransmissibilityType = Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>;
+    using CollectDataOnIORankType = CollectDataOnIORank<Grid, EquilGrid, GridView>;
+    using TransmissibilityType = Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>;
 
 public:
     EclGenericWriter(const Schedule& schedule,
@@ -114,40 +120,40 @@ protected:
     const TransmissibilityType& globalTrans() const;
     unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const;
 
-    void doWriteOutput(const int                          reportStepNum,
-                       const std::optional<int>           timeStepNum,
-                       const bool                         isSubStep,
-                       data::Solution&&                   localCellData,
-                       data::Wells&&                      localWellData,
-                       data::GroupAndNetworkValues&&      localGroupAndNetworkData,
-                       data::Aquifers&&                   localAquiferData,
-                       WellTestState&&                    localWTestState,
-                       const Action::State&               actionState,
-                       const UDQState&                    udqState,
-                       const SummaryState&                summaryState,
-                       const std::vector<Scalar>&         thresholdPressure,
-                       Scalar                             curTime,
-                       Scalar                             nextStepSize,
-                       bool                               doublePrecision,
-                       bool                               isFlowsn,
-                       std::array<FlowsData<double>,3>&&  flowsn,
-                       bool                               isFloresn,
+    void doWriteOutput(const int reportStepNum,
+                       const std::optional<int> timeStepNum,
+                       const bool isSubStep,
+                       data::Solution&& localCellData,
+                       data::Wells&& localWellData,
+                       data::GroupAndNetworkValues&& localGroupAndNetworkData,
+                       data::Aquifers&& localAquiferData,
+                       WellTestState&& localWTestState,
+                       const Action::State& actionState,
+                       const UDQState& udqState,
+                       const SummaryState& summaryState,
+                       const std::vector<Scalar>& thresholdPressure,
+                       Scalar curTime,
+                       Scalar nextStepSize,
+                       bool doublePrecision,
+                       bool isFlowsn,
+                       std::array<FlowsData<double>, 3>&& flowsn,
+                       bool isFloresn,
                        std::array<FlowsData<double>, 3>&& floresn);
 
-    void evalSummary(int                                                  reportStepNum,
-                     Scalar                                               curTime,
-                     const data::Wells&                                   localWellData,
-                     const data::WellBlockAveragePressures&               localWBPData,
-                     const data::GroupAndNetworkValues&                   localGroupAndNetworkData,
-                     const std::map<int,data::AquiferData>&               localAquiferData,
+    void evalSummary(int reportStepNum,
+                     Scalar curTime,
+                     const data::Wells& localWellData,
+                     const data::WellBlockAveragePressures& localWBPData,
+                     const data::GroupAndNetworkValues& localGroupAndNetworkData,
+                     const std::map<int, data::AquiferData>& localAquiferData,
                      const std::map<std::pair<std::string, int>, double>& blockData,
-                     const std::map<std::string, double>&                 miscSummaryData,
-                     const std::map<std::string, std::vector<double>>&    regionData,
-                     const Inplace&                                       inplace,
-                     const std::optional<Inplace>&                        initialInPlace,
-                     const InterRegFlowMap&                               interRegFlows,
-                     SummaryState&                                        summaryState,
-                     UDQState&                                            udqState);
+                     const std::map<std::string, double>& miscSummaryData,
+                     const std::map<std::string, std::vector<double>>& regionData,
+                     const Inplace& inplace,
+                     const std::optional<Inplace>& initialInPlace,
+                     const InterRegFlowMap& interRegFlows,
+                     SummaryState& summaryState,
+                     UDQState& udqState);
 
     CollectDataOnIORankType collectOnIORank_;
     const Grid& grid_;
@@ -167,8 +173,10 @@ protected:
     mutable std::unique_ptr<data::Solution> outputTrans_;
 
 private:
-    void computeTrans_(const std::unordered_map<int,int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const;
-    std::vector<NNCdata> exportNncStructure_(const std::unordered_map<int,int>& cartesianToActive, const std::function<unsigned int(unsigned int)>& map) const;
+    void computeTrans_(const std::unordered_map<int, int>& cartesianToActive,
+                       const std::function<unsigned int(unsigned int)>& map) const;
+    std::vector<NNCdata> exportNncStructure_(const std::unordered_map<int, int>& cartesianToActive,
+                                             const std::function<unsigned int(unsigned int)>& map) const;
 };
 
 } // namespace Opm

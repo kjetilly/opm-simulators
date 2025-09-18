@@ -22,18 +22,20 @@
 
 #include <mutex>
 
-#include <opm/simulators/linalg/gpubridge/rocm/rocsparseBILU0.hpp>
-#include <opm/simulators/linalg/gpubridge/Matrix.hpp>
 #include <opm/simulators/linalg/gpubridge/CprCreation.hpp>
+#include <opm/simulators/linalg/gpubridge/Matrix.hpp>
+#include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
+#include <opm/simulators/linalg/gpubridge/rocm/rocsparseBILU0.hpp>
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparseMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparsePreconditioner.hpp>
-#include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
 
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparseSolverBackend.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-template<class Scalar> class BlockedMatrix;
+template <class Scalar>
+class BlockedMatrix;
 
 /// This class implements a Constrained Pressure Residual (CPR) preconditioner
 template <class Scalar, unsigned int block_size>
@@ -49,29 +51,29 @@ class rocsparseCPR : public rocsparsePreconditioner<Scalar, block_size>, public 
 
 private:
     std::vector<RocmMatrix<Scalar>> d_Amatrices, d_Rmatrices; // scalar matrices that represent the AMG hierarchy
-    
+
     std::vector<RocmVector<int>> d_PcolIndices; // prolongation does not need a full matrix, only store colIndices
     std::vector<RocmVector<Scalar>> d_invDiags; // inverse of diagonal of Amatrices
     std::vector<RocmVector<Scalar>> d_t, d_f; // intermediate vectors used during amg cycle
     std::vector<RocmVector<Scalar>> d_u; // intermediate vectors used during amg cycle
-    std::vector<RocmVector<Scalar>> d_rs;      // use before extracting the pressure
+    std::vector<RocmVector<Scalar>> d_rs; // use before extracting the pressure
     std::vector<RocmVector<Scalar>> d_weights; // the quasiimpes weights, used to extract pressure
-    std::unique_ptr<RocmMatrix<Scalar>> d_mat;   // stores blocked matrix
+    std::unique_ptr<RocmMatrix<Scalar>> d_mat; // stores blocked matrix
     std::shared_ptr<BlockedMatrix<Scalar>> h_mat;
 
     std::vector<RocmVector<Scalar>> d_coarse_y, d_coarse_x, d_yinput; // stores the scalar vectors
-    std::once_flag rocm_buffers_allocated;  // only allocate OpenCL Buffers once
+    std::once_flag rocm_buffers_allocated; // only allocate OpenCL Buffers once
 
-    std::unique_ptr<rocsparseBILU0<Scalar, block_size> > bilu0;                    // Blocked ILU0 preconditioner
+    std::unique_ptr<rocsparseBILU0<Scalar, block_size>> bilu0; // Blocked ILU0 preconditioner
 
-    std::vector<std::shared_ptr<rocsparseBILU0<Scalar,1>>> smootherilu0s;
+    std::vector<std::shared_ptr<rocsparseBILU0<Scalar, 1>>> smootherilu0s;
 
     Scalar *d_tmp, *d_yamg, *d_ywell;
     bool createfirsttime;
 
-    #if HIP_VERSION >= 50400000
+#if HIP_VERSION >= 50400000
     rocsparse_mat_info spmv_info;
-    #endif
+#endif
 
     // Initialize and allocate matrices and vectors
     void init_rocm_buffers();
@@ -84,18 +86,12 @@ private:
     void rocm_upload();
 
     // apply pressure correction to vector
-    void apply_amg(const Scalar& y,
-                   Scalar& x,
-                   WellContributions<Scalar>& wellContribs);
+    void apply_amg(const Scalar& y, Scalar& x, WellContributions<Scalar>& wellContribs);
 
     // Apply the AMG preconditioner
-    void amg_cycle_gpu(const int level,
-                       Scalar &y,
-                       Scalar &x,
-                       WellContributions<Scalar>& wellContribs);
-    
-public:
+    void amg_cycle_gpu(const int level, Scalar& y, Scalar& x, WellContributions<Scalar>& wellContribs);
 
+public:
     rocsparseCPR(int verbosity);
 
     /// Initialize GPU and allocate memory
@@ -105,52 +101,46 @@ public:
     /// \param[in] d_Acols Array of matrix column indices
     bool initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
                     std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-                    rocsparse_int *d_Arows,
-                    rocsparse_int *d_Acols) override;
-    
+                    rocsparse_int* d_Arows,
+                    rocsparse_int* d_Acols) override;
+
 
     /// Analysis, extract parallelism if specified
     /// \param[in] mat     matrix A
-    bool analyze_matrix(BlockedMatrix<Scalar> *mat) override;
-    
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
+
     /// Analysis, extract parallelism if specified
     /// \param[in] mat     matrix A
     /// \param[in] jacMat  matrix for preconditioner, analyze this as well
-    bool analyze_matrix(BlockedMatrix<Scalar> *mat,
-                        BlockedMatrix<Scalar> *jacMat) override;
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     /// Create AMG preconditioner and perform ILU decomposition
     /// \param[in] mat     matrix A
-    bool create_preconditioner(BlockedMatrix<Scalar> *mat) override;
-    
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat) override;
+
     /// Create AMG preconditioner and perform ILU decomposition
     /// \param[in] mat     matrix A
     /// \param[in] jacMat  matrix for preconditioner, decompose this one if used
-    bool create_preconditioner(BlockedMatrix<Scalar> *mat,
-                               BlockedMatrix<Scalar> *jacMat) override;
-    
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
+
     /// Apply preconditioner, x = prec(y)
     /// applies blocked ilu0
     /// also applies amg for pressure component
     /// \param[in]  y  Input y vector
     /// \param[out] x  Output x vector
     /// \param wellContribs Well contributions
-    void apply(const Scalar& y,
-               Scalar& x,
-               WellContributions<Scalar>& wellContribs) override;
-    
+    void apply(const Scalar& y, Scalar& x, WellContributions<Scalar>& wellContribs) override;
+
     /// Copy matrix A values to GPU
     /// \param[in]  b Input values
-    void copy_system_to_gpu(Scalar *b) override;
+    void copy_system_to_gpu(Scalar* b) override;
 
     /// Update linear system to GPU
     /// \param[in] vals           Matrix values
     /// \param[in] b              input vector, contains N values
     void update_system_on_gpu(Scalar* vals, Scalar* b) override;
-    
 };
 
-} // namespace Opm
+} // namespace Opm::Accelerator
 
 #endif
-

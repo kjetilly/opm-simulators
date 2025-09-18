@@ -25,10 +25,10 @@
 #include <opm/simulators/flow/DamarisParameters.hpp>
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-#include <map>
-#include <string>
-#include <sstream>
 #include <algorithm>
+#include <map>
+#include <sstream>
+#include <string>
 #include <unordered_set>
 
 /*
@@ -38,44 +38,43 @@
     be changed. We only allow changing FileMode together with output directory
 */
 
-namespace Opm::DamarisOutput {
-    
-/** 
- * Returns true if the file exists. 
- * Tests to see if filename string is empty 
+namespace Opm::DamarisOutput
+{
+
+/**
+ * Returns true if the file exists.
+ * Tests to see if filename string is empty
  * or the "#" character and if so returns false.
- * Tests for file existance on rank 0 and 
+ * Tests for file existance on rank 0 and
  * passes result via MPI to all other ranks.
  */
-bool FileExists(const std::string& filename_in,
-                const Parallel::Communication& comm);
+bool FileExists(const std::string& filename_in, const Parallel::Communication& comm);
 
-struct DamarisSettings
-{
+struct DamarisSettings {
     bool enableDamarisOutputCollective_ = true;
     bool saveToDamarisHDF5_ = true;
-    // if saveMeshToDamarisHDF5 is true, requires enableDamarisOutputCollective to be false 
+    // if saveMeshToDamarisHDF5 is true, requires enableDamarisOutputCollective to be false
     // (until offsets are are added to mesh data for collective writing)
-    bool saveMeshToHDF5_ = false;  
+    bool saveMeshToHDF5_ = false;
     std::string pythonFilename_;
     std::string paraviewPythonFilename_;
 
-    std::string damarisSimName_; // empty and set to "opm-flow-<random-number>" if none provided on command line. Used as prefix to HDF5 filenames
-    std::string shmemName_;      // empty and needs to be unique if multiple simulations are running on the same server/node. Used to name the Damaris shared memory region.
+    std::string damarisSimName_; // empty and set to "opm-flow-<random-number>" if none provided on command line. Used
+                                 // as prefix to HDF5 filenames
+    std::string shmemName_; // empty and needs to be unique if multiple simulations are running on the same server/node.
+                            // Used to name the Damaris shared memory region.
     std::string damarisLogLevel_ = "info";
     std::string damarisDaskFile_ = "";
     // std::string damarisLimitVars_ = "";
-    int nDamarisCores_ = 1;  // this is the number of (Damaris server) cores per node
+    int nDamarisCores_ = 1; // this is the number of (Damaris server) cores per node
     int nDamarisNodes_ = 0;
-    long shmemSizeBytes_ = 536870912;  // 512 MB
-    
-    std::string rand_value_str_ ;  // to be added to sheared memory name to make unique 
+    long shmemSizeBytes_ = 536870912; // 512 MB
 
-    std::map<std::string, std::string>
-    getKeywords(const Parallel::Communication& comm,
-                const std::string& OutputDir);
-                
-    void SetRandString(void);  // sets the value of rand_value_str_
+    std::string rand_value_str_; // to be added to sheared memory name to make unique
+
+    std::map<std::string, std::string> getKeywords(const Parallel::Communication& comm, const std::string& OutputDir);
+
+    void SetRandString(void); // sets the value of rand_value_str_
 };
 
 /**
@@ -88,8 +87,8 @@ struct DamarisSettings
  *
  * N.B. This needs to be called before damaris_init()
  */
-std::map<std::string, std::string>
-getDamarisKeywords(const Parallel::Communication& comm, const std::string& OutputDir);
+std::map<std::string, std::string> getDamarisKeywords(const Parallel::Communication& comm,
+                                                      const std::string& OutputDir);
 
 std::unordered_set<std::string> getSetOfIncludedVariables();
 

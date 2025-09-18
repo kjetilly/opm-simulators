@@ -30,37 +30,52 @@
 
 #include <opm/input/eclipse/Parser/ParserKeywords/E.hpp>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // Enable partial compensation of systematic mass losses via
 // the source term of the next time step
-struct EnableDriftCompensation { static constexpr bool value = false; };
+struct EnableDriftCompensation {
+    static constexpr bool value = false;
+};
 
 // implicit or explicit pressure in rock compaction
-struct ExplicitRockCompaction { static constexpr bool value = false; };
+struct ExplicitRockCompaction {
+    static constexpr bool value = false;
+};
 
 // Whether or not to check saturation function consistency requirements.
-struct CheckSatfuncConsistency { static constexpr bool value = true; };
+struct CheckSatfuncConsistency {
+    static constexpr bool value = true;
+};
 
 // Maximum number of reported failures for each saturation function
 // consistency check.
-struct NumSatfuncConsistencySamplePoints { static constexpr int value = 5; };
+struct NumSatfuncConsistencySamplePoints {
+    static constexpr int value = 5;
+};
 
 // Parameterize equilibration accuracy
-struct NumPressurePointsEquil
-{ static constexpr int value = ParserKeywords::EQLDIMS::DEPTH_NODES_P::defaultValue; };
+struct NumPressurePointsEquil {
+    static constexpr int value = ParserKeywords::EQLDIMS::DEPTH_NODES_P::defaultValue;
+};
 
-struct OutputMode { static constexpr auto value = "all"; };
+struct OutputMode {
+    static constexpr auto value = "all";
+};
 
 // The frequency of writing restart (*.ers) files. This is the number of time steps
 // between writing restart files
-struct RestartWritingInterval { static constexpr int value = 0xffffff; }; // disable
+struct RestartWritingInterval {
+    static constexpr int value = 0xffffff;
+}; // disable
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 void registerFlowProblemParameters();
 
 }

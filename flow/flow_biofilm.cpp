@@ -22,96 +22,105 @@
 #include <flow/flow_biofilm.hpp>
 
 #include <opm/material/common/ResetLocale.hpp>
-#include <opm/models/blackoil/blackoiltwophaseindices.hh>
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
+#include <opm/models/blackoil/blackoiltwophaseindices.hh>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
 
 #include <opm/grid/CpGrid.hpp>
 #include <opm/simulators/flow/Main.hpp>
 #include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
+namespace Opm
+{
 /*!
  * \brief Two-phase (gas+water) flow problem including biofilm effects (one transported
- * quantity: suspended microbes and one solid phase: biofilm). 
+ * quantity: suspended microbes and one solid phase: biofilm).
  */
-namespace Properties {
-namespace TTag {
-struct FlowBiofilmProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-
-template<class TypeTag>
-struct EnableBioeffects<TypeTag, TTag::FlowBiofilmProblem> {
-    static constexpr bool value = true;
-};
-
-template<class TypeTag>
-struct EnableDiffusion<TypeTag, TTag::FlowBiofilmProblem> {
-    static constexpr bool value = true;
-};
-
-template<class TypeTag>
-struct EnableDispersion<TypeTag, TTag::FlowBiofilmProblem> {
-    static constexpr bool value = true;
-};
-
-template<class TypeTag>
-struct EnableDisgasInWater<TypeTag, TTag::FlowBiofilmProblem> {
-    static constexpr bool value = true;
-};
-
-template<class TypeTag>
-struct EnableVapwat<TypeTag, TTag::FlowBiofilmProblem> {
-    static constexpr bool value = true;
-};
-
-template<class TypeTag>
-struct Linearizer<TypeTag, TTag::FlowBiofilmProblem> { using type = TpfaLinearizer<TypeTag>; };
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::FlowBiofilmProblem> { using type = BlackOilLocalResidualTPFA<TypeTag>; };
-
-//! The indices required by the model
-template<class TypeTag>
-struct Indices<TypeTag, TTag::FlowBiofilmProblem>
+namespace Properties
 {
-private:
-    // it is unfortunately not possible to simply use 'TypeTag' here because this leads
-    // to cyclic definitions of some properties. if this happens the compiler error
-    // messages unfortunately are *really* confusing and not really helpful.
-    using BaseTypeTag = TTag::FlowProblem;
-    using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+    namespace TTag
+    {
+        struct FlowBiofilmProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
 
-public:
-    using type = BlackOilTwoPhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
-                                         getPropValue<TypeTag, Properties::EnableExtbo>(),
-                                         getPropValue<TypeTag, Properties::EnablePolymer>(),
-                                         getPropValue<TypeTag, Properties::EnableEnergy>(),
-                                         getPropValue<TypeTag, Properties::EnableFoam>(),
-                                         getPropValue<TypeTag, Properties::EnableBrine>(),
-                                         /*PVOffset=*/0,
-                                         /*disabledCompIdx=*/FluidSystem::oilCompIdx,
-                                         2>; //Two biocomponents (suspended microbes and biofilm)
-};
-}}
+    template <class TypeTag>
+    struct EnableBioeffects<TypeTag, TTag::FlowBiofilmProblem> {
+        static constexpr bool value = true;
+    };
 
-namespace Opm {
+    template <class TypeTag>
+    struct EnableDiffusion<TypeTag, TTag::FlowBiofilmProblem> {
+        static constexpr bool value = true;
+    };
+
+    template <class TypeTag>
+    struct EnableDispersion<TypeTag, TTag::FlowBiofilmProblem> {
+        static constexpr bool value = true;
+    };
+
+    template <class TypeTag>
+    struct EnableDisgasInWater<TypeTag, TTag::FlowBiofilmProblem> {
+        static constexpr bool value = true;
+    };
+
+    template <class TypeTag>
+    struct EnableVapwat<TypeTag, TTag::FlowBiofilmProblem> {
+        static constexpr bool value = true;
+    };
+
+    template <class TypeTag>
+    struct Linearizer<TypeTag, TTag::FlowBiofilmProblem> {
+        using type = TpfaLinearizer<TypeTag>;
+    };
+    template <class TypeTag>
+    struct LocalResidual<TypeTag, TTag::FlowBiofilmProblem> {
+        using type = BlackOilLocalResidualTPFA<TypeTag>;
+    };
+
+    //! The indices required by the model
+    template <class TypeTag>
+    struct Indices<TypeTag, TTag::FlowBiofilmProblem> {
+    private:
+        // it is unfortunately not possible to simply use 'TypeTag' here because this leads
+        // to cyclic definitions of some properties. if this happens the compiler error
+        // messages unfortunately are *really* confusing and not really helpful.
+        using BaseTypeTag = TTag::FlowProblem;
+        using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+
+    public:
+        using type = BlackOilTwoPhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
+                                             getPropValue<TypeTag, Properties::EnableExtbo>(),
+                                             getPropValue<TypeTag, Properties::EnablePolymer>(),
+                                             getPropValue<TypeTag, Properties::EnableEnergy>(),
+                                             getPropValue<TypeTag, Properties::EnableFoam>(),
+                                             getPropValue<TypeTag, Properties::EnableBrine>(),
+                                             /*PVOffset=*/0,
+                                             /*disabledCompIdx=*/FluidSystem::oilCompIdx,
+                                             2>; // Two biocomponents (suspended microbes and biofilm)
+    };
+} // namespace Properties
+} // namespace Opm
+
+namespace Opm
+{
 
 
 // ----------------- Main program -----------------
-int flowBiofilmMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowBiofilmMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowBiofilmProblem>
-        mainfunc {argc, argv, outputCout, outputFiles} ;
+    FlowMain<Properties::TTag::FlowBiofilmProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowBiofilmMainStandalone(int argc, char** argv)
+int
+flowBiofilmMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowBiofilmProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);

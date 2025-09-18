@@ -52,7 +52,7 @@ class GpuSeqILU0 : public Dune::PreconditionerWithUpdate<X, Y>
 {
 public:
     //! \brief The matrix type the preconditioner is for.
-    using matrix_type = typename std::remove_const<M>::type ;
+    using matrix_type = typename std::remove_const<M>::type;
     //! \brief The domain type of the preconditioner.
     using domain_type = X;
     //! \brief The range type of the preconditioner.
@@ -110,7 +110,8 @@ public:
         return false;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 

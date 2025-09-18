@@ -21,15 +21,15 @@
 #include <config.h>
 #include <opm/simulators/wells/WellGroupHelpers.hpp>
 
-#include <opm/input/eclipse/Schedule/Schedule.hpp>
-#include <opm/input/eclipse/Schedule/Group/GConSump.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSale.hpp>
-#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
-#include <opm/input/eclipse/Schedule/Group/GroupSatelliteInjection.hpp>
+#include <opm/input/eclipse/Schedule/Group/GConSump.hpp>
 #include <opm/input/eclipse/Schedule/Group/GPMaint.hpp>
+#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/Schedule/Group/Group.hpp>
+#include <opm/input/eclipse/Schedule/Group/GroupSatelliteInjection.hpp>
 #include <opm/input/eclipse/Schedule/Group/GuideRateConfig.hpp>
 #include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/Well/NameOrder.hpp>
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
 
@@ -39,6 +39,7 @@
 #include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
+#include <opm/common/TimingMacros.hpp>
 #include <opm/simulators/wells/BlackoilWellModelConstraints.hpp>
 #include <opm/simulators/wells/FractionCalculator.hpp>
 #include <opm/simulators/wells/GroupState.hpp>
@@ -46,8 +47,6 @@
 #include <opm/simulators/wells/TargetCalculator.hpp>
 #include <opm/simulators/wells/VFPProdProperties.hpp>
 #include <opm/simulators/wells/WellState.hpp>
-#include <opm/simulators/wells/GroupState.hpp>
-#include <opm/common/TimingMacros.hpp>
 
 #include <algorithm>
 #include <cassert>
@@ -56,119 +55,123 @@
 #include <stack>
 #include <stdexcept>
 
-namespace {
-    template<class Scalar, typename IndexTraits>
-    Opm::GuideRate::RateVector
-    getGuideRateVector(const std::vector<Scalar>& rates, const Opm::PhaseUsageInfo<IndexTraits>& pu)
-    {
-        Scalar oilRate = 0.0;
-        if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
-            oilRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx)];
-        }
-
-        Scalar gasRate = 0.0;
-        if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
-            gasRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx)];
-        }
-
-        Scalar waterRate = 0.0;
-        if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
-            waterRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx)];
-        }
-
-        return {oilRate, gasRate, waterRate};
+namespace
+{
+template <class Scalar, typename IndexTraits>
+Opm::GuideRate::RateVector
+getGuideRateVector(const std::vector<Scalar>& rates, const Opm::PhaseUsageInfo<IndexTraits>& pu)
+{
+    Scalar oilRate = 0.0;
+    if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
+        oilRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx)];
     }
 
-} // namespace Anonymous
+    Scalar gasRate = 0.0;
+    if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
+        gasRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx)];
+    }
 
-namespace Opm {
+    Scalar waterRate = 0.0;
+    if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
+        waterRate = rates[pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx)];
+    }
 
-    template<typename Scalar, typename IndexTraits>
-    Scalar WellGroupHelpers<Scalar, IndexTraits>::
-    sumWellPhaseRates(bool res_rates,
-                      const Opm::Group& group,
-                      const Opm::Schedule& schedule,
-                      const Opm::WellState<Scalar, IndexTraits>& wellState,
-                      const SummaryState& summaryState,
-                      const int reportStepIdx,
-                      const int phasePos,
-                      const bool injector,
-                      const bool network)
-    {
-        // Only obtain satellite rates once (on rank 0)
-        Scalar rate = 0.0;
-        if (wellState.isRank0() && (group.hasSatelliteProduction() || group.hasSatelliteInjection())) {
-            if (injector) {
-                rate = satelliteInjectionRate(schedule[reportStepIdx], group, wellState.phaseUsageInfo(), phasePos, res_rates);
-            } else {
-                const auto rateComp = selectRateComponent(wellState.phaseUsageInfo(), phasePos);
-                if (rateComp.has_value()) {
-                    rate = satelliteProductionRate(summaryState, schedule[reportStepIdx], group, *rateComp, res_rates);
-                }
-            }
-            // Satellite groups have no sub groups/wells so we're done
-            return rate;
-        }
+    return {oilRate, gasRate, waterRate};
+}
 
-        for (const std::string& groupName : group.groups()) {
-            const auto& groupTmp = schedule.getGroup(groupName, reportStepIdx);
-            const auto& gefac = groupTmp.getGroupEfficiencyFactor(network);
-            rate += gefac * sumWellPhaseRates(res_rates, groupTmp, schedule, wellState, summaryState, reportStepIdx, phasePos, injector, network);
-        }
+} // namespace
 
-        for (const std::string& wellName : group.wells()) {
-            const auto well_index = wellState.index(wellName);
-            if (!well_index.has_value())
-                continue;
+namespace Opm
+{
 
-            if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
-            {
-                continue;
-            }
-
-            const auto& wellEcl = schedule.getWell(wellName, reportStepIdx);
-            // only count producers or injectors
-            if ((wellEcl.isProducer() && injector) || (wellEcl.isInjector() && !injector))
-                continue;
-
-            const auto& ws = wellState.well(well_index.value());
-            if (ws.status == Opm::Well::Status::SHUT)
-                continue;
-
-            const Scalar factor = wellEcl.getEfficiencyFactor(network) * wellState[wellEcl.name()].efficiency_scaling_factor;
-            if (res_rates) {
-                const auto& well_rates = ws.reservoir_rates;
-                if (injector)
-                    rate += factor * well_rates[phasePos];
-                else
-                    rate -= factor * well_rates[phasePos];
-            } else {
-                const auto& well_rates = ws.surface_rates;
-                if (injector)
-                    rate += factor * well_rates[phasePos];
-                else
-                    rate -= factor * well_rates[phasePos];
+template <typename Scalar, typename IndexTraits>
+Scalar
+WellGroupHelpers<Scalar, IndexTraits>::sumWellPhaseRates(bool res_rates,
+                                                         const Opm::Group& group,
+                                                         const Opm::Schedule& schedule,
+                                                         const Opm::WellState<Scalar, IndexTraits>& wellState,
+                                                         const SummaryState& summaryState,
+                                                         const int reportStepIdx,
+                                                         const int phasePos,
+                                                         const bool injector,
+                                                         const bool network)
+{
+    // Only obtain satellite rates once (on rank 0)
+    Scalar rate = 0.0;
+    if (wellState.isRank0() && (group.hasSatelliteProduction() || group.hasSatelliteInjection())) {
+        if (injector) {
+            rate = satelliteInjectionRate(
+                schedule[reportStepIdx], group, wellState.phaseUsageInfo(), phasePos, res_rates);
+        } else {
+            const auto rateComp = selectRateComponent(wellState.phaseUsageInfo(), phasePos);
+            if (rateComp.has_value()) {
+                rate = satelliteProductionRate(summaryState, schedule[reportStepIdx], group, *rateComp, res_rates);
             }
         }
+        // Satellite groups have no sub groups/wells so we're done
         return rate;
     }
 
-template<typename Scalar, typename IndexTraits>
-Scalar WellGroupHelpers<Scalar, IndexTraits>::
-satelliteInjectionRate(const ScheduleState& sched,
-                       const Group& group,
-                       const PhaseUsageInfo<IndexTraits>& pu,
-                       const int phase_pos,
-                       bool res_rates)
+    for (const std::string& groupName : group.groups()) {
+        const auto& groupTmp = schedule.getGroup(groupName, reportStepIdx);
+        const auto& gefac = groupTmp.getGroupEfficiencyFactor(network);
+        rate += gefac
+            * sumWellPhaseRates(
+                    res_rates, groupTmp, schedule, wellState, summaryState, reportStepIdx, phasePos, injector, network);
+    }
+
+    for (const std::string& wellName : group.wells()) {
+        const auto well_index = wellState.index(wellName);
+        if (!well_index.has_value())
+            continue;
+
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
+        {
+            continue;
+        }
+
+        const auto& wellEcl = schedule.getWell(wellName, reportStepIdx);
+        // only count producers or injectors
+        if ((wellEcl.isProducer() && injector) || (wellEcl.isInjector() && !injector))
+            continue;
+
+        const auto& ws = wellState.well(well_index.value());
+        if (ws.status == Opm::Well::Status::SHUT)
+            continue;
+
+        const Scalar factor
+            = wellEcl.getEfficiencyFactor(network) * wellState[wellEcl.name()].efficiency_scaling_factor;
+        if (res_rates) {
+            const auto& well_rates = ws.reservoir_rates;
+            if (injector)
+                rate += factor * well_rates[phasePos];
+            else
+                rate -= factor * well_rates[phasePos];
+        } else {
+            const auto& well_rates = ws.surface_rates;
+            if (injector)
+                rate += factor * well_rates[phasePos];
+            else
+                rate -= factor * well_rates[phasePos];
+        }
+    }
+    return rate;
+}
+
+template <typename Scalar, typename IndexTraits>
+Scalar
+WellGroupHelpers<Scalar, IndexTraits>::satelliteInjectionRate(const ScheduleState& sched,
+                                                              const Group& group,
+                                                              const PhaseUsageInfo<IndexTraits>& pu,
+                                                              const int phase_pos,
+                                                              bool res_rates)
 {
     Scalar rate = 0.0;
     if (group.hasSatelliteInjection()) {
         std::optional<Phase> ph;
-        for (const auto& [bo_phase, phase] : std::array {
-            std::pair( IndexTraits::waterPhaseIdx, Phase::WATER),
-            std::pair( IndexTraits::oilPhaseIdx, Phase::OIL),
-            std::pair( IndexTraits::gasPhaseIdx, Phase::GAS) })
-        {
+        for (const auto& [bo_phase, phase] : std::array {std::pair(IndexTraits::waterPhaseIdx, Phase::WATER),
+                                                         std::pair(IndexTraits::oilPhaseIdx, Phase::OIL),
+                                                         std::pair(IndexTraits::gasPhaseIdx, Phase::GAS)}) {
             if (pu.phaseIsActive(bo_phase) && (pu.canonicalToActivePhaseIdx(bo_phase) == phase_pos)) {
                 ph = phase;
             }
@@ -182,7 +185,7 @@ satelliteInjectionRate(const ScheduleState& sched,
                     if (const auto& qs = satrates.surface(); qs.has_value()) {
                         rate = *qs;
                     }
-                // We don't support reservoir rates for satellite injection groups
+                    // We don't support reservoir rates for satellite injection groups
                 }
             }
         }
@@ -191,12 +194,12 @@ satelliteInjectionRate(const ScheduleState& sched,
 }
 
 template <typename Scalar, typename IndexTraits>
-Scalar WellGroupHelpers<Scalar, IndexTraits>::
-satelliteProductionRate(const SummaryState& summaryState,
-                        const ScheduleState& sched,
-                        const Group& group,
-                        const GSatProd::GSatProdGroupProp::Rate rateComp,
-                        bool res_rates)
+Scalar
+WellGroupHelpers<Scalar, IndexTraits>::satelliteProductionRate(const SummaryState& summaryState,
+                                                               const ScheduleState& sched,
+                                                               const Group& group,
+                                                               const GSatProd::GSatProdGroupProp::Rate rateComp,
+                                                               bool res_rates)
 {
     Scalar rate = 0.0;
     if (group.hasSatelliteProduction()) {
@@ -209,19 +212,16 @@ satelliteProductionRate(const SummaryState& summaryState,
     return rate;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::optional<GSatProd::GSatProdGroupProp::Rate>
-WellGroupHelpers<Scalar, IndexTraits>::
-selectRateComponent(const PhaseUsageInfo<IndexTraits>& pu, const int phasePos)
+WellGroupHelpers<Scalar, IndexTraits>::selectRateComponent(const PhaseUsageInfo<IndexTraits>& pu, const int phasePos)
 {
     // TODO: this function can be wrong, phasePos is not used anymore, this function requries checking and refactoring.
     using Rate = GSatProd::GSatProdGroupProp::Rate;
 
-    for (const auto& [phase, rateComp] : std::array {
-        std::pair { IndexTraits::waterPhaseIdx, Rate::Water },
-        std::pair { IndexTraits::oilPhaseIdx, Rate::Oil },
-        std::pair { IndexTraits::gasPhaseIdx, Rate::Gas } })
-    {
+    for (const auto& [phase, rateComp] : std::array {std::pair {IndexTraits::waterPhaseIdx, Rate::Water},
+                                                     std::pair {IndexTraits::oilPhaseIdx, Rate::Oil},
+                                                     std::pair {IndexTraits::gasPhaseIdx, Rate::Gas}}) {
         if (pu.phaseIsActive(phase)) {
             const auto activePhasePos = pu.canonicalToActivePhaseIdx(phase);
             if (activePhasePos == phasePos) {
@@ -233,18 +233,17 @@ selectRateComponent(const PhaseUsageInfo<IndexTraits>& pu, const int phasePos)
     return std::nullopt;
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-setCmodeGroup(const Group& group,
-              const Schedule& schedule,
-              const SummaryState& summaryState,
-              const int reportStepIdx,
-              GroupState<Scalar>& group_state)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::setCmodeGroup(const Group& group,
+                                                     const Schedule& schedule,
+                                                     const SummaryState& summaryState,
+                                                     const int reportStepIdx,
+                                                     GroupState<Scalar>& group_state)
 {
 
     for (const std::string& groupName : group.groups()) {
-        setCmodeGroup(schedule.getGroup(groupName, reportStepIdx),
-                      schedule, summaryState, reportStepIdx, group_state);
+        setCmodeGroup(schedule.getGroup(groupName, reportStepIdx), schedule, summaryState, reportStepIdx, group_state);
     }
 
     // use NONE as default control
@@ -259,8 +258,7 @@ setCmodeGroup(const Group& group,
     }
 
     const auto& events = schedule[reportStepIdx].wellgroup_events();
-    if (group.isInjectionGroup()
-        && events.hasEvent(group.name(), ScheduleEvents::GROUP_INJECTION_UPDATE)) {
+    if (group.isInjectionGroup() && events.hasEvent(group.name(), ScheduleEvents::GROUP_INJECTION_UPDATE)) {
 
         for (Phase phase : all) {
             if (!group.hasInjectionControl(phase))
@@ -271,8 +269,7 @@ setCmodeGroup(const Group& group,
         }
     }
 
-    if (group.isProductionGroup()
-        && events.hasEvent(group.name(), ScheduleEvents::GROUP_PRODUCTION_UPDATE)) {
+    if (group.isProductionGroup() && events.hasEvent(group.name(), ScheduleEvents::GROUP_PRODUCTION_UPDATE)) {
         const auto controls = group.productionControls(summaryState);
         group_state.production_control(group.name(), controls.cmode);
     }
@@ -293,12 +290,12 @@ setCmodeGroup(const Group& group,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-accumulateGroupEfficiencyFactor(const Group& group,
-                                const Schedule& schedule,
-                                const int reportStepIdx,
-                                Scalar& factor)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::accumulateGroupEfficiencyFactor(const Group& group,
+                                                                       const Schedule& schedule,
+                                                                       const int reportStepIdx,
+                                                                       Scalar& factor)
 {
     factor *= group.getGroupEfficiencyFactor();
     if (group.parent() != "FIELD" && !group.parent().empty())
@@ -306,42 +303,39 @@ accumulateGroupEfficiencyFactor(const Group& group,
             schedule.getGroup(group.parent(), reportStepIdx), schedule, reportStepIdx, factor);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-sumWellSurfaceRates(const Group& group,
-                    const Schedule& schedule,
-                    const WellState<Scalar, IndexTraits>& wellState,
-                    const int reportStepIdx,
-                    const int phasePos,
-                    const bool injector,
-                    const SummaryState& summaryState)
+WellGroupHelpers<Scalar, IndexTraits>::sumWellSurfaceRates(const Group& group,
+                                                           const Schedule& schedule,
+                                                           const WellState<Scalar, IndexTraits>& wellState,
+                                                           const int reportStepIdx,
+                                                           const int phasePos,
+                                                           const bool injector,
+                                                           const SummaryState& summaryState)
 {
     return sumWellPhaseRates(false, group, schedule, wellState, summaryState, reportStepIdx, phasePos, injector);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-sumWellResRates(const Group& group,
-                const Schedule& schedule,
-                const WellState<Scalar, IndexTraits>& wellState,
-                const int reportStepIdx,
-                const int phasePos,
-                const bool injector,
-                const SummaryState& summaryState)
+WellGroupHelpers<Scalar, IndexTraits>::sumWellResRates(const Group& group,
+                                                       const Schedule& schedule,
+                                                       const WellState<Scalar, IndexTraits>& wellState,
+                                                       const int reportStepIdx,
+                                                       const int phasePos,
+                                                       const bool injector,
+                                                       const SummaryState& summaryState)
 {
     return sumWellPhaseRates(true, group, schedule, wellState, summaryState, reportStepIdx, phasePos, injector);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-sumSolventRates(const Group& group,
-                const Schedule& schedule,
-                const WellState<Scalar, IndexTraits>& wellState,
-                const int reportStepIdx,
-                const bool injector)
+WellGroupHelpers<Scalar, IndexTraits>::sumSolventRates(const Group& group,
+                                                       const Schedule& schedule,
+                                                       const WellState<Scalar, IndexTraits>& wellState,
+                                                       const int reportStepIdx,
+                                                       const bool injector)
 {
     Scalar rate = 0.0;
     for (const std::string& groupName : group.groups()) {
@@ -355,7 +349,7 @@ sumSolventRates(const Group& group,
         if (!well_index.has_value())
             continue;
 
-        if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
         {
             continue;
         }
@@ -370,8 +364,7 @@ sumSolventRates(const Group& group,
         if (ws.status == Well::Status::SHUT)
             continue;
 
-        const Scalar factor = wellEcl.getEfficiencyFactor() *
-                              wellState[wellEcl.name()].efficiency_scaling_factor;
+        const Scalar factor = wellEcl.getEfficiencyFactor() * wellState[wellEcl.name()].efficiency_scaling_factor;
         if (injector)
             rate += factor * ws.sum_solvent_rates();
         else
@@ -380,17 +373,17 @@ sumSolventRates(const Group& group,
     return rate;
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateGroupTargetReduction(const Group& group,
-                           const Schedule& schedule,
-                           const int reportStepIdx,
-                           const bool isInjector,
-                           const GuideRate& guide_rate,
-                           const WellState<Scalar, IndexTraits>& wellState,
-                           const SummaryState& summaryState,
-                           GroupState<Scalar>& group_state,
-                           std::vector<Scalar>& groupTargetReduction)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateGroupTargetReduction(const Group& group,
+                                                                  const Schedule& schedule,
+                                                                  const int reportStepIdx,
+                                                                  const bool isInjector,
+                                                                  const GuideRate& guide_rate,
+                                                                  const WellState<Scalar, IndexTraits>& wellState,
+                                                                  const SummaryState& summaryState,
+                                                                  GroupState<Scalar>& group_state,
+                                                                  std::vector<Scalar>& groupTargetReduction)
 {
     OPM_TIMEFUNCTION();
     const int np = wellState.numPhases();
@@ -442,14 +435,16 @@ updateGroupTargetReduction(const Group& group,
                     continue;
 
                 const Group::InjectionCMode& currentGroupControl
-                        = group_state.injection_control(subGroup.name(), phase);
+                    = group_state.injection_control(subGroup.name(), phase);
                 const bool individual_control = (currentGroupControl != Group::InjectionCMode::FLD
-                        && currentGroupControl != Group::InjectionCMode::NONE);
-                const int num_group_controlled_wells
-                        = groupControlledWells(schedule, wellState, group_state, reportStepIdx, subGroupName, "", !isInjector, phase);
+                                                 && currentGroupControl != Group::InjectionCMode::NONE);
+                const int num_group_controlled_wells = groupControlledWells(
+                    schedule, wellState, group_state, reportStepIdx, subGroupName, "", !isInjector, phase);
                 if (individual_control || num_group_controlled_wells == 0) {
                     groupTargetReduction[phase_pos]
-                        += subGroupEfficiency * sumWellSurfaceRates(subGroup, schedule, wellState, reportStepIdx, phase_pos, isInjector, summaryState);
+                        += subGroupEfficiency
+                        * sumWellSurfaceRates(
+                               subGroup, schedule, wellState, reportStepIdx, phase_pos, isInjector, summaryState);
                 } else {
                     // Accumulate from this subgroup only if no group guide rate is set for it.
                     if (!guide_rate.has(subGroupName, phase)) {
@@ -461,12 +456,20 @@ updateGroupTargetReduction(const Group& group,
             const Group::ProductionCMode& currentGroupControl = group_state.production_control(subGroupName);
             const bool individual_control = (currentGroupControl != Group::ProductionCMode::FLD
                                              && currentGroupControl != Group::ProductionCMode::NONE);
-            const int num_group_controlled_wells
-                = groupControlledWells(schedule, wellState, group_state, reportStepIdx, subGroupName, "", !isInjector, /*injectionPhaseNotUsed*/Phase::OIL);
+            const int num_group_controlled_wells = groupControlledWells(schedule,
+                                                                        wellState,
+                                                                        group_state,
+                                                                        reportStepIdx,
+                                                                        subGroupName,
+                                                                        "",
+                                                                        !isInjector,
+                                                                        /*injectionPhaseNotUsed*/ Phase::OIL);
             if (individual_control || num_group_controlled_wells == 0) {
                 for (int phase = 0; phase < np; phase++) {
                     groupTargetReduction[phase]
-                        += subGroupEfficiency * sumWellSurfaceRates(subGroup, schedule, wellState, reportStepIdx, phase, isInjector, summaryState);
+                        += subGroupEfficiency
+                        * sumWellSurfaceRates(
+                               subGroup, schedule, wellState, reportStepIdx, phase, isInjector, summaryState);
                 }
             } else {
                 // The subgroup may participate in group control.
@@ -493,7 +496,7 @@ updateGroupTargetReduction(const Group& group,
         if (!well_index.has_value())
             continue;
 
-        if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
         {
             continue;
         }
@@ -502,8 +505,7 @@ updateGroupTargetReduction(const Group& group,
         if (ws.status == Well::Status::SHUT)
             continue;
 
-        const Scalar efficiency = wellTmp.getEfficiencyFactor() *
-                                  wellState[wellTmp.name()].efficiency_scaling_factor;
+        const Scalar efficiency = wellTmp.getEfficiencyFactor() * wellState[wellTmp.name()].efficiency_scaling_factor;
 
         // add contribution from wells not under group control
         if (isInjector) {
@@ -512,11 +514,11 @@ updateGroupTargetReduction(const Group& group,
                     groupTargetReduction[phase] += ws.surface_rates[phase] * efficiency;
                 }
         } else {
-                if ((ws.production_cmode != Well::ProducerCMode::GRUP)){
-                    if (!group.as_choke()) {
-                        for (int phase = 0; phase < np; phase++) {
-                            groupTargetReduction[phase] -= ws.surface_rates[phase] * efficiency;
-                        }
+            if ((ws.production_cmode != Well::ProducerCMode::GRUP)) {
+                if (!group.as_choke()) {
+                    for (int phase = 0; phase < np; phase++) {
+                        groupTargetReduction[phase] -= ws.surface_rates[phase] * efficiency;
+                    }
                 }
             }
         }
@@ -527,15 +529,15 @@ updateGroupTargetReduction(const Group& group,
         group_state.update_production_reduction_rates(group.name(), groupTargetReduction);
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateWellRatesFromGroupTargetScale(const Scalar scale,
-                                    const Group& group,
-                                    const Schedule& schedule,
-                                    const int reportStepIdx,
-                                    bool isInjector,
-                                    const GroupState<Scalar>& group_state,
-                                    WellState<Scalar, IndexTraits>& wellState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateWellRatesFromGroupTargetScale(const Scalar scale,
+                                                                           const Group& group,
+                                                                           const Schedule& schedule,
+                                                                           const int reportStepIdx,
+                                                                           bool isInjector,
+                                                                           const GroupState<Scalar>& group_state,
+                                                                           WellState<Scalar, IndexTraits>& wellState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -543,19 +545,20 @@ updateWellRatesFromGroupTargetScale(const Scalar scale,
         if (isInjector) {
             const Phase all[] = {Phase::WATER, Phase::OIL, Phase::GAS};
             for (Phase phase : all) {
-                const Group::InjectionCMode& currentGroupControl
-                        = group_state.injection_control(groupName, phase);
-                individual_control = individual_control || (currentGroupControl != Group::InjectionCMode::FLD
-                                                 && currentGroupControl != Group::InjectionCMode::NONE);
+                const Group::InjectionCMode& currentGroupControl = group_state.injection_control(groupName, phase);
+                individual_control = individual_control
+                    || (currentGroupControl != Group::InjectionCMode::FLD
+                        && currentGroupControl != Group::InjectionCMode::NONE);
             }
         } else {
             const Group::ProductionCMode& currentGroupControl = group_state.production_control(groupName);
             individual_control = (currentGroupControl != Group::ProductionCMode::FLD
-                                             && currentGroupControl != Group::ProductionCMode::NONE);
+                                  && currentGroupControl != Group::ProductionCMode::NONE);
         }
         if (!individual_control) {
             const Group& groupTmp = schedule.getGroup(groupName, reportStepIdx);
-            updateWellRatesFromGroupTargetScale(scale, groupTmp, schedule, reportStepIdx, isInjector, group_state, wellState);
+            updateWellRatesFromGroupTargetScale(
+                scale, groupTmp, schedule, reportStepIdx, isInjector, group_state, wellState);
         }
     }
 
@@ -573,7 +576,7 @@ updateWellRatesFromGroupTargetScale(const Scalar scale,
         if (!well_index.has_value())
             continue;
 
-        if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
         {
             continue;
         }
@@ -596,18 +599,16 @@ updateWellRatesFromGroupTargetScale(const Scalar scale,
             }
         }
     }
-
-
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateVREPForGroups(const Group& group,
-                    const Schedule& schedule,
-                    const int reportStepIdx,
-                    const WellState<Scalar, IndexTraits>& wellState,
-                    GroupState<Scalar>& group_state,
-                    const SummaryState& summaryState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateVREPForGroups(const Group& group,
+                                                           const Schedule& schedule,
+                                                           const int reportStepIdx,
+                                                           const WellState<Scalar, IndexTraits>& wellState,
+                                                           GroupState<Scalar>& group_state,
+                                                           const SummaryState& summaryState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -629,14 +630,15 @@ updateVREPForGroups(const Group& group,
     group_state.update_injection_vrep_rate(group.name(), resv);
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateReservoirRatesInjectionGroups(const Group& group,
-                                    const Schedule& schedule,
-                                    const int reportStepIdx,
-                                    const WellState<Scalar, IndexTraits>& wellState,
-                                    GroupState<Scalar>& group_state,
-                                    const SummaryState& summaryState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateReservoirRatesInjectionGroups(
+    const Group& group,
+    const Schedule& schedule,
+    const int reportStepIdx,
+    const WellState<Scalar, IndexTraits>& wellState,
+    GroupState<Scalar>& group_state,
+    const SummaryState& summaryState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -658,14 +660,15 @@ updateReservoirRatesInjectionGroups(const Group& group,
     group_state.update_injection_reservoir_rates(group.name(), resv);
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateSurfaceRatesInjectionGroups(const Group& group,
-                                  const Schedule& schedule,
-                                  const int reportStepIdx,
-                                  const WellState<Scalar, IndexTraits>& wellState,
-                                  GroupState<Scalar>& group_state,
-                                  const SummaryState& summaryState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateSurfaceRatesInjectionGroups(
+    const Group& group,
+    const Schedule& schedule,
+    const int reportStepIdx,
+    const WellState<Scalar, IndexTraits>& wellState,
+    GroupState<Scalar>& group_state,
+    const SummaryState& summaryState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -676,24 +679,24 @@ updateSurfaceRatesInjectionGroups(const Group& group,
     std::vector<Scalar> rates(np, 0.0);
     for (int phase = 0; phase < np; ++phase) {
         rates[phase] = sumWellPhaseRates(false,
-                                        group,
-                                        schedule,
-                                        wellState,
-                                        summaryState,
-                                        reportStepIdx,
-                                        phase,
-                                        /*isInjector*/ true);
+                                         group,
+                                         schedule,
+                                         wellState,
+                                         summaryState,
+                                         reportStepIdx,
+                                         phase,
+                                         /*isInjector*/ true);
     }
     group_state.update_injection_surface_rates(group.name(), rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateWellRates(const Group& group,
-                const Schedule& schedule,
-                const int reportStepIdx,
-                const WellState<Scalar, IndexTraits>& wellStateNupcol,
-                WellState<Scalar, IndexTraits>& wellState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateWellRates(const Group& group,
+                                                       const Schedule& schedule,
+                                                       const int reportStepIdx,
+                                                       const WellState<Scalar, IndexTraits>& wellStateNupcol,
+                                                       WellState<Scalar, IndexTraits>& wellState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -720,14 +723,14 @@ updateWellRates(const Group& group,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateGroupProductionRates(const Group& group,
-                           const Schedule& schedule,
-                           const int reportStepIdx,
-                           const WellState<Scalar, IndexTraits>& wellState,
-                           GroupState<Scalar>& group_state,
-                           const SummaryState& summaryState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateGroupProductionRates(const Group& group,
+                                                                  const Schedule& schedule,
+                                                                  const int reportStepIdx,
+                                                                  const WellState<Scalar, IndexTraits>& wellState,
+                                                                  GroupState<Scalar>& group_state,
+                                                                  const SummaryState& summaryState)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -737,18 +740,20 @@ updateGroupProductionRates(const Group& group,
     const int np = wellState.numPhases();
     std::vector<Scalar> rates(np, 0.0);
     for (int phase = 0; phase < np; ++phase) {
-        rates[phase] = sumWellPhaseRates(false, group, schedule, wellState, summaryState, reportStepIdx, phase, /*isInjector*/ false);
+        rates[phase] = sumWellPhaseRates(
+            false, group, schedule, wellState, summaryState, reportStepIdx, phase, /*isInjector*/ false);
     }
     group_state.update_production_rates(group.name(), rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateNetworkLeafNodeProductionRates(const Schedule& schedule,
-                                     const int reportStepIdx,
-                                     const WellState<Scalar, IndexTraits>& wellState,
-                                     GroupState<Scalar>& group_state,
-                                     const SummaryState& summaryState)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateNetworkLeafNodeProductionRates(
+    const Schedule& schedule,
+    const int reportStepIdx,
+    const WellState<Scalar, IndexTraits>& wellState,
+    GroupState<Scalar>& group_state,
+    const SummaryState& summaryState)
 {
     const auto& network = schedule[reportStepIdx].network();
     if (network.active()) {
@@ -759,7 +764,15 @@ updateNetworkLeafNodeProductionRates(const Schedule& schedule,
                 const auto& group = schedule[reportStepIdx].groups.get(group_name);
                 if (group.numWells() > 0) {
                     for (int phase = 0; phase < np; ++phase) {
-                        network_rates[phase] = sumWellPhaseRates(false, group, schedule, wellState, summaryState, reportStepIdx, phase, /*isInjector*/ false, /*network*/ true);
+                        network_rates[phase] = sumWellPhaseRates(false,
+                                                                 group,
+                                                                 schedule,
+                                                                 wellState,
+                                                                 summaryState,
+                                                                 reportStepIdx,
+                                                                 phase,
+                                                                 /*isInjector*/ false,
+                                                                 /*network*/ true);
                     }
                 }
             }
@@ -768,15 +781,15 @@ updateNetworkLeafNodeProductionRates(const Schedule& schedule,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateREINForGroups(const Group& group,
-                    const Schedule& schedule,
-                    const int reportStepIdx,
-                    const SummaryState& st,
-                    const WellState<Scalar, IndexTraits>& wellState,
-                    GroupState<Scalar>& group_state,
-                    bool sum_rank)
+template <typename Scalar, typename IndexTraits>
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateREINForGroups(const Group& group,
+                                                           const Schedule& schedule,
+                                                           const int reportStepIdx,
+                                                           const SummaryState& st,
+                                                           const WellState<Scalar, IndexTraits>& wellState,
+                                                           GroupState<Scalar>& group_state,
+                                                           bool sum_rank)
 {
     OPM_TIMEFUNCTION();
     const int np = wellState.numPhases();
@@ -787,7 +800,8 @@ updateREINForGroups(const Group& group,
 
     std::vector<Scalar> rein(np, 0.0);
     for (int phase = 0; phase < np; ++phase) {
-        rein[phase] = sumWellPhaseRates(false, group, schedule, wellState, st, reportStepIdx, phase, /*isInjector*/ false);
+        rein[phase]
+            = sumWellPhaseRates(false, group, schedule, wellState, st, reportStepIdx, phase, /*isInjector*/ false);
     }
 
     // add import rate and subtract consumption rate for group for gas
@@ -804,16 +818,16 @@ updateREINForGroups(const Group& group,
     group_state.update_injection_rein_rates(group.name(), rein);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 template <class RegionalValues>
-void WellGroupHelpers<Scalar, IndexTraits>::
-updateGpMaintTargetForGroups(const Group& group,
-                             const Schedule& schedule,
-                             const RegionalValues& regional_values,
-                             const int reportStepIdx,
-                             const double dt,
-                             const WellState<Scalar, IndexTraits>& well_state,
-                             GroupState<Scalar>& group_state)
+void
+WellGroupHelpers<Scalar, IndexTraits>::updateGpMaintTargetForGroups(const Group& group,
+                                                                    const Schedule& schedule,
+                                                                    const RegionalValues& regional_values,
+                                                                    const int reportStepIdx,
+                                                                    const double dt,
+                                                                    const WellState<Scalar, IndexTraits>& well_state,
+                                                                    GroupState<Scalar>& group_state)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& groupName : group.groups()) {
@@ -835,63 +849,56 @@ updateGpMaintTargetForGroups(const Group& group,
     bool injection = true;
     Scalar sign = 1.0;
     switch (gpm->flow_target()) {
-        case GPMaint::FlowTarget::RESV_PROD:
-        {
-            current_rate = -group_state.injection_vrep_rate(group.name());
-            injection = false;
-            sign = -1.0;
-            break;
+    case GPMaint::FlowTarget::RESV_PROD: {
+        current_rate = -group_state.injection_vrep_rate(group.name());
+        injection = false;
+        sign = -1.0;
+        break;
+    }
+    case GPMaint::FlowTarget::RESV_OINJ: {
+        if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
+            const auto io = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+            current_rate = group_state.injection_reservoir_rates(group.name())[io];
         }
-        case GPMaint::FlowTarget::RESV_OINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
-                const auto io = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
-                current_rate = group_state.injection_reservoir_rates(group.name())[io];
-            }
-            break;
+        break;
+    }
+    case GPMaint::FlowTarget::RESV_WINJ: {
+        if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
+            const auto iw = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+            current_rate = group_state.injection_reservoir_rates(group.name())[iw];
         }
-        case GPMaint::FlowTarget::RESV_WINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
-                const auto iw = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
-                current_rate = group_state.injection_reservoir_rates(group.name())[iw];
-            }
-            break;
+        break;
+    }
+    case GPMaint::FlowTarget::RESV_GINJ: {
+        if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
+            const auto ig = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
+            current_rate = group_state.injection_reservoir_rates(group.name())[ig];
         }
-        case GPMaint::FlowTarget::RESV_GINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
-                const auto ig = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
-                current_rate = group_state.injection_reservoir_rates(group.name())[ig];
-            }
-            break;
+        break;
+    }
+    case GPMaint::FlowTarget::SURF_OINJ: {
+        if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
+            const auto io = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+            current_rate = group_state.injection_surface_rates(group.name())[io];
         }
-        case GPMaint::FlowTarget::SURF_OINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::oilPhaseIdx)) {
-                const auto io = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
-                current_rate = group_state.injection_surface_rates(group.name())[io];
-            }
-            break;
+        break;
+    }
+    case GPMaint::FlowTarget::SURF_WINJ: {
+        if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
+            const auto iw = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+            current_rate = group_state.injection_surface_rates(group.name())[iw];
         }
-        case GPMaint::FlowTarget::SURF_WINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
-                const auto iw = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
-                current_rate = group_state.injection_surface_rates(group.name())[iw];
-            }
-            break;
+        break;
+    }
+    case GPMaint::FlowTarget::SURF_GINJ: {
+        if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
+            const auto ig = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
+            current_rate = group_state.injection_surface_rates(group.name())[ig];
         }
-        case GPMaint::FlowTarget::SURF_GINJ:
-        {
-            if (pu.phaseIsActive(IndexTraits::gasPhaseIdx)) {
-                const auto ig = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
-                current_rate = group_state.injection_surface_rates(group.name())[ig];
-            }
-            break;
-        }
-        default:
-            throw std::invalid_argument("Invalid Flow target type in GPMAINT");
+        break;
+    }
+    default:
+        throw std::invalid_argument("Invalid Flow target type in GPMAINT");
     }
     auto& gpmaint_state = group_state.gpmaint(group.name());
     // we only activate gpmaint if pressure is lower than the target regional pressure for injectors
@@ -903,19 +910,18 @@ updateGpMaintTargetForGroups(const Group& group,
     } else {
         gpm->resetState(gpmaint_state);
     }
-    group_state.update_gpmaint_target(group.name(), std::max(Scalar{0.0}, sign * rate));
+    group_state.update_gpmaint_target(group.name(), std::max(Scalar {0.0}, sign * rate));
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::map<std::string, Scalar>
-WellGroupHelpers<Scalar, IndexTraits>::
-computeNetworkPressures(const Network::ExtNetwork& network,
-                        const WellStateType& well_state,
-                        const GroupState<Scalar>& group_state,
-                        const VFPProdProperties<Scalar>& vfp_prod_props,
-                        const Schedule& schedule,
-                        const Parallel::Communication& comm,
-                        const int report_time_step)
+WellGroupHelpers<Scalar, IndexTraits>::computeNetworkPressures(const Network::ExtNetwork& network,
+                                                               const WellStateType& well_state,
+                                                               const GroupState<Scalar>& group_state,
+                                                               const VFPProdProperties<Scalar>& vfp_prod_props,
+                                                               const Schedule& schedule,
+                                                               const Parallel::Communication& comm,
+                                                               const int report_time_step)
 {
     // TODO: Only dealing with production networks for now.
     OPM_TIMEFUNCTION();
@@ -934,7 +940,7 @@ computeNetworkPressures(const Network::ExtNetwork& network,
         std::stack<std::string> children;
         std::set<std::string> leaf_nodes;
         std::vector<std::string> root_to_child_nodes;
-        //children.push(network.root().name());
+        // children.push(network.root().name());
         children.push(root.get().name());
         while (!children.empty()) {
             const auto node = children.top();
@@ -968,15 +974,17 @@ computeNetworkPressures(const Network::ExtNetwork& network,
                 Scalar alq = 0.0;
                 for (const std::string& wellname : group.wells()) {
                     const Well& well = schedule.getWell(wellname, report_time_step);
-                    if (well.isInjector() || !well_state.isOpen(wellname)) continue;
-                    const Scalar efficiency = well.getEfficiencyFactor(/*network*/ true) * well_state.getGlobalEfficiencyScalingFactor(wellname);
+                    if (well.isInjector() || !well_state.isOpen(wellname))
+                        continue;
+                    const Scalar efficiency = well.getEfficiencyFactor(/*network*/ true)
+                        * well_state.getGlobalEfficiencyScalingFactor(wellname);
                     const auto& well_index = well_state.index(wellname);
                     if (well_index.has_value() && well_state.wellIsOwned(well_index.value(), wellname)) {
                         alq += well_state.well(wellname).alq_state.get() * efficiency;
                     }
                 }
                 alq = comm.sum(alq);
-                node_inflows[node][IndexTraits::gasPhaseIdx] +=  alq;
+                node_inflows[node][IndexTraits::gasPhaseIdx] += alq;
             }
         }
 
@@ -997,16 +1005,16 @@ computeNetworkPressures(const Network::ExtNetwork& network,
                 if (up.empty()) {
                     up = std::vector<Scalar>(down.size(), 0.0);
                 }
-                assert (up.size() == down.size());
+                assert(up.size() == down.size());
                 for (std::size_t ii = 0; ii < up.size(); ++ii) {
-                    up[ii] += efficiency*down[ii];
+                    up[ii] += efficiency * down[ii];
                 }
             }
         }
 
         // Going the other way (from roots to leafs), calculate the pressure
         // at each node using VFP tables and rates.
-        //std::map<std::string, double> node_pressures;
+        // std::map<std::string, double> node_pressures;
         for (const auto& node : root_to_child_nodes) {
             auto press = network.node(node).terminal_pressure();
             if (press) {
@@ -1022,8 +1030,7 @@ computeNetworkPressures(const Network::ExtNetwork& network,
                     // convention that production rates are negative, so we must
                     // take a copy and flip signs.
                     auto rates = node_inflows[node];
-                    std::transform(rates.begin(), rates.end(), rates.begin(),
-                                   [](const auto r) { return -r; });
+                    std::transform(rates.begin(), rates.end(), rates.begin(), [](const auto r) { return -r; });
                     assert(rates.size() == 3);
                     // NB! ALQ in extended network is never implicitly the gas lift rate (GRAT), i.e., the
                     //     gas lift rates only enters the network pressure calculations through the rates
@@ -1032,29 +1039,30 @@ computeNetworkPressures(const Network::ExtNetwork& network,
                     // @TODO: Standard network
                     Scalar alq = (*upbranch).alq_value().value_or(0.0);
                     node_pressures[node] = vfp_prod_props.bhp(*vfp_table,
-                                                            rates[IndexTraits::waterPhaseIdx],
-                                                            rates[IndexTraits::oilPhaseIdx],
-                                                            rates[IndexTraits::gasPhaseIdx],
-                                                            up_press,
-                                                            alq,
-                                                            0.0, //explicit_wfr
-                                                            0.0, //explicit_gfr
-                                                            false); //use_expvfp we dont support explicit lookup
+                                                              rates[IndexTraits::waterPhaseIdx],
+                                                              rates[IndexTraits::oilPhaseIdx],
+                                                              rates[IndexTraits::gasPhaseIdx],
+                                                              up_press,
+                                                              alq,
+                                                              0.0, // explicit_wfr
+                                                              0.0, // explicit_gfr
+                                                              false); // use_expvfp we dont support explicit lookup
 #define EXTRA_DEBUG_NETWORK 0
 #if EXTRA_DEBUG_NETWORK
                     std::ostringstream oss;
-                    oss << "parent: " << (*upbranch).uptree_node() << "  child: " << node
-                        << "  rates = [ " << rates[0]*86400 << ", " << rates[1]*86400 << ", " << rates[2]*86400 << " ]"
-                        << "  p(parent) = " << up_press/1e5 << "  p(child) = " << node_pressures[node]/1e5 << std::endl;
+                    oss << "parent: " << (*upbranch).uptree_node() << "  child: " << node << "  rates = [ "
+                        << rates[0] * 86400 << ", " << rates[1] * 86400 << ", " << rates[2] * 86400 << " ]"
+                        << "  p(parent) = " << up_press / 1e5 << "  p(child) = " << node_pressures[node] / 1e5
+                        << std::endl;
                     OpmLog::debug(oss.str());
 #endif
                 } else {
                     // Table number specified as 9999 in the deck, no pressure loss.
-                    if (network.node(node).as_choke()){
+                    if (network.node(node).as_choke()) {
                         // Node pressure is set to the group THP.
                         node_pressures[node] = group_state.well_group_thp(node);
                     } else {
-                            node_pressures[node] = up_press;
+                        node_pressures[node] = up_press;
                     }
                 }
             }
@@ -1063,35 +1071,32 @@ computeNetworkPressures(const Network::ExtNetwork& network,
     return node_pressures;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 GuideRate::RateVector
-WellGroupHelpers<Scalar, IndexTraits>::
-getWellRateVector(const WellState<Scalar, IndexTraits>& well_state,
-                  const std::string& name)
+WellGroupHelpers<Scalar, IndexTraits>::getWellRateVector(const WellState<Scalar, IndexTraits>& well_state,
+                                                         const std::string& name)
 {
     return getGuideRateVector<Scalar, IndexTraits>(well_state.currentWellRates(name), well_state.phaseUsageInfo());
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 GuideRate::RateVector
-WellGroupHelpers<Scalar, IndexTraits>::
-getProductionGroupRateVector(const GroupState<Scalar>& group_state,
-                             const PhaseUsageInfo<IndexTraits>& pu,
-                             const std::string& group_name)
+WellGroupHelpers<Scalar, IndexTraits>::getProductionGroupRateVector(const GroupState<Scalar>& group_state,
+                                                                    const PhaseUsageInfo<IndexTraits>& pu,
+                                                                    const std::string& group_name)
 {
     return getGuideRateVector<Scalar, IndexTraits>(group_state.production_rates(group_name), pu);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-getGuideRate(const std::string& name,
-             const Schedule& schedule,
-             const WellState<Scalar, IndexTraits>& wellState,
-             const GroupState<Scalar>& group_state,
-             const int reportStepIdx,
-             const GuideRate* guideRate,
-             const GuideRateModel::Target target)
+WellGroupHelpers<Scalar, IndexTraits>::getGuideRate(const std::string& name,
+                                                    const Schedule& schedule,
+                                                    const WellState<Scalar, IndexTraits>& wellState,
+                                                    const GroupState<Scalar>& group_state,
+                                                    const int reportStepIdx,
+                                                    const GuideRate* guideRate,
+                                                    const GuideRateModel::Target target)
 {
     if (schedule.hasWell(name, reportStepIdx)) {
         if (guideRate->has(name) || guideRate->hasPotentials(name)) {
@@ -1102,7 +1107,8 @@ getGuideRate(const std::string& name,
     }
 
     if (guideRate->has(name)) {
-        return guideRate->get(name, target, getProductionGroupRateVector(group_state, wellState.phaseUsageInfo(), name));
+        return guideRate->get(
+            name, target, getProductionGroupRateVector(group_state, wellState.phaseUsageInfo(), name));
     }
 
     Scalar totalGuideRate = 0.0;
@@ -1110,10 +1116,10 @@ getGuideRate(const std::string& name,
 
     for (const std::string& groupName : group.groups()) {
         const Group::ProductionCMode& currentGroupControl = group_state.production_control(groupName);
-        if (currentGroupControl == Group::ProductionCMode::FLD
-            || currentGroupControl == Group::ProductionCMode::NONE) {
+        if (currentGroupControl == Group::ProductionCMode::FLD || currentGroupControl == Group::ProductionCMode::NONE) {
             // accumulate from sub wells/groups
-            totalGuideRate += getGuideRate(groupName, schedule, wellState, group_state, reportStepIdx, guideRate, target);
+            totalGuideRate
+                += getGuideRate(groupName, schedule, wellState, group_state, reportStepIdx, guideRate, target);
         }
     }
 
@@ -1127,7 +1133,7 @@ getGuideRate(const std::string& name,
         if (!well_index.has_value())
             continue;
 
-        if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
         {
             continue;
         }
@@ -1140,28 +1146,24 @@ getGuideRate(const std::string& name,
         if (!wellState.isProductionGrup(wellName))
             continue;
 
-        totalGuideRate += getGuideRate(wellName, schedule, wellState, group_state,
-                                       reportStepIdx, guideRate, target);
-
+        totalGuideRate += getGuideRate(wellName, schedule, wellState, group_state, reportStepIdx, guideRate, target);
     }
     return totalGuideRate;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-getGuideRateInj(const std::string& name,
-                const Schedule& schedule,
-                const WellState<Scalar, IndexTraits>& wellState,
-                const GroupState<Scalar>& group_state,
-                const int reportStepIdx,
-                const GuideRate* guideRate,
-                const GuideRateModel::Target target,
-                const Phase& injectionPhase)
+WellGroupHelpers<Scalar, IndexTraits>::getGuideRateInj(const std::string& name,
+                                                       const Schedule& schedule,
+                                                       const WellState<Scalar, IndexTraits>& wellState,
+                                                       const GroupState<Scalar>& group_state,
+                                                       const int reportStepIdx,
+                                                       const GuideRate* guideRate,
+                                                       const GuideRateModel::Target target,
+                                                       const Phase& injectionPhase)
 {
     if (schedule.hasWell(name, reportStepIdx)) {
-        return getGuideRate(name, schedule, wellState, group_state,
-                            reportStepIdx, guideRate, target);
+        return getGuideRate(name, schedule, wellState, group_state, reportStepIdx, guideRate, target);
     }
 
     if (guideRate->has(name, injectionPhase)) {
@@ -1172,12 +1174,11 @@ getGuideRateInj(const std::string& name,
     const Group& group = schedule.getGroup(name, reportStepIdx);
 
     for (const std::string& groupName : group.groups()) {
-        const Group::InjectionCMode& currentGroupControl
-            = group_state.injection_control(groupName, injectionPhase);
-        if (currentGroupControl == Group::InjectionCMode::FLD
-            || currentGroupControl == Group::InjectionCMode::NONE) {
+        const Group::InjectionCMode& currentGroupControl = group_state.injection_control(groupName, injectionPhase);
+        if (currentGroupControl == Group::InjectionCMode::FLD || currentGroupControl == Group::InjectionCMode::NONE) {
             // accumulate from sub wells/groups
-            totalGuideRate += getGuideRateInj(groupName, schedule, wellState, group_state, reportStepIdx, guideRate, target, injectionPhase);
+            totalGuideRate += getGuideRateInj(
+                groupName, schedule, wellState, group_state, reportStepIdx, guideRate, target, injectionPhase);
         }
     }
 
@@ -1191,7 +1192,7 @@ getGuideRateInj(const std::string& name,
         if (!well_index.has_value())
             continue;
 
-        if (! wellState.wellIsOwned(well_index.value(), wellName) ) // Only sum once
+        if (!wellState.wellIsOwned(well_index.value(), wellName)) // Only sum once
         {
             continue;
         }
@@ -1209,17 +1210,17 @@ getGuideRateInj(const std::string& name,
     return totalGuideRate;
 }
 
-template<typename Scalar, typename IndexTraits>
-int WellGroupHelpers<Scalar, IndexTraits>::
-updateGroupControlledWells(const Schedule& schedule,
-                           const WellStateType& well_state,
-                           GroupState<Scalar>& group_state,
-                           const SummaryState& summary_state,
-                           const GuideRate* guideRate,
-                           const int report_step,
-                           const std::string& group_name,
-                           const bool is_production_group,
-                           const Phase injection_phase)
+template <typename Scalar, typename IndexTraits>
+int
+WellGroupHelpers<Scalar, IndexTraits>::updateGroupControlledWells(const Schedule& schedule,
+                                                                  const WellStateType& well_state,
+                                                                  GroupState<Scalar>& group_state,
+                                                                  const SummaryState& summary_state,
+                                                                  const GuideRate* guideRate,
+                                                                  const int report_step,
+                                                                  const std::string& group_name,
+                                                                  const bool is_production_group,
+                                                                  const Phase injection_phase)
 {
     OPM_TIMEFUNCTION();
     const Group& group = schedule.getGroup(group_name, report_step);
@@ -1236,10 +1237,25 @@ updateGroupControlledWells(const Schedule& schedule,
         }
 
         if (included) {
-            num_wells
-                += updateGroupControlledWells(schedule, well_state, group_state, summary_state, guideRate, report_step, child_group, is_production_group, injection_phase);
+            num_wells += updateGroupControlledWells(schedule,
+                                                    well_state,
+                                                    group_state,
+                                                    summary_state,
+                                                    guideRate,
+                                                    report_step,
+                                                    child_group,
+                                                    is_production_group,
+                                                    injection_phase);
         } else {
-            updateGroupControlledWells(schedule, well_state, group_state, summary_state, guideRate, report_step, child_group, is_production_group, injection_phase);
+            updateGroupControlledWells(schedule,
+                                       well_state,
+                                       group_state,
+                                       summary_state,
+                                       guideRate,
+                                       report_step,
+                                       child_group,
+                                       is_production_group,
+                                       injection_phase);
         }
     }
     for (const std::string& child_well : group.wells()) {
@@ -1250,15 +1266,14 @@ updateGroupControlledWells(const Schedule& schedule,
         } else if (!is_production_group && !well.isProducer()) {
             const auto& well_controls = well.injectionControls(summary_state);
             auto injectorType = well_controls.injector_type;
-            if (  (injection_phase == Phase::WATER && injectorType == InjectorType::WATER ) ||
-                  (injection_phase == Phase::OIL && injectorType == InjectorType::OIL ) ||
-                  (injection_phase == Phase::GAS && injectorType == InjectorType::GAS ))
-                {
-                    included = included || well_state.isInjectionGrup(child_well);
-                }
+            if ((injection_phase == Phase::WATER && injectorType == InjectorType::WATER)
+                || (injection_phase == Phase::OIL && injectorType == InjectorType::OIL)
+                || (injection_phase == Phase::GAS && injectorType == InjectorType::GAS)) {
+                included = included || well_state.isInjectionGrup(child_well);
+            }
         }
         const auto ctrl1 = group_state.production_control(group.name());
-        if (group.as_choke() && ((ctrl1 == Group::ProductionCMode::FLD) || (ctrl1 == Group::ProductionCMode::NONE))){
+        if (group.as_choke() && ((ctrl1 == Group::ProductionCMode::FLD) || (ctrl1 == Group::ProductionCMode::NONE))) {
             // The auto choke group has not own group control but inherits control from an ancestor group.
             // Number of wells should be calculated as zero when wells of auto choke group do not deliver target.
             // This behaviour is then similar to no-autochoke group with wells not on GRUP control.
@@ -1267,13 +1282,8 @@ updateGroupControlledWells(const Schedule& schedule,
             const auto num_phases = well_state.numPhases();
             std::vector<Scalar> rates(num_phases, 0.0);
             for (int phase_pos = 0; phase_pos < num_phases; ++phase_pos) {
-                 rates[phase_pos] = WellGroupHelpers<Scalar, IndexTraits>::sumWellSurfaceRates(group,
-                                                                                               schedule,
-                                                                                               well_state,
-                                                                                               report_step,
-                                                                                               phase_pos,
-                                                                                               false,
-                                                                                               summary_state);
+                rates[phase_pos] = WellGroupHelpers<Scalar, IndexTraits>::sumWellSurfaceRates(
+                    group, schedule, well_state, report_step, phase_pos, false, summary_state);
             }
 
             // Get the ancestor of the auto choke group that has group control (cmode != FLD, NONE)
@@ -1293,23 +1303,24 @@ updateGroupControlledWells(const Schedule& schedule,
                 std::vector<Scalar> resv_coeff(num_phases, 1.0);
                 WGHelpers::TargetCalculator<Scalar, IndexTraits> tcalc(control_group_cmode,
                                                                        well_state.phaseUsageInfo(),
-                                                resv_coeff,
-                                                gratTargetFromSales,
-                                                group.name(),
-                                                group_state,
-                                                group.has_gpmaint_control(control_group_cmode));
+                                                                       resv_coeff,
+                                                                       gratTargetFromSales,
+                                                                       group.name(),
+                                                                       group_state,
+                                                                       group.has_gpmaint_control(control_group_cmode));
                 auto deferred_logger = Opm::DeferredLogger();
                 const auto& control_group_target = tcalc.groupTarget(ctrl, deferred_logger);
 
-                // Calculates the guide rate of the parent group with control. 
-                // It is allowed that the guide rate of this group is defaulted. The guide rate will be derived from the children groups 
+                // Calculates the guide rate of the parent group with control.
+                // It is allowed that the guide rate of this group is defaulted. The guide rate will be derived from the
+                // children groups
                 const auto& control_group_guide_rate = getGuideRate(control_group_name,
-                                                    schedule,
-                                                    well_state,
-                                                    group_state,
-                                                    report_step,
-                                                    guideRate,
-                                                    tcalc.guideTargetMode());
+                                                                    schedule,
+                                                                    well_state,
+                                                                    group_state,
+                                                                    report_step,
+                                                                    guideRate,
+                                                                    tcalc.guideTargetMode());
 
                 if (control_group_guide_rate > 0) {
                     // Target rate for the auto choke group
@@ -1336,23 +1347,24 @@ updateGroupControlledWells(const Schedule& schedule,
 }
 
 
-template<typename Scalar, typename IndexTraits>
-int WellGroupHelpers<Scalar, IndexTraits>::
-groupControlledWells(const Schedule& schedule,
-                     const WellStateType& well_state,
-                     const GroupState<Scalar>& group_state,
-                     const int report_step,
-                     const std::string& group_name,
-                     const std::string& always_included_child,
-                     const bool is_production_group,
-                     const Phase injection_phase)
+template <typename Scalar, typename IndexTraits>
+int
+WellGroupHelpers<Scalar, IndexTraits>::groupControlledWells(const Schedule& schedule,
+                                                            const WellStateType& well_state,
+                                                            const GroupState<Scalar>& group_state,
+                                                            const int report_step,
+                                                            const std::string& group_name,
+                                                            const std::string& always_included_child,
+                                                            const bool is_production_group,
+                                                            const Phase injection_phase)
 {
-    auto num_wells = is_production_group ? group_state.number_of_wells_under_group_control(group_name)
+    auto num_wells = is_production_group
+        ? group_state.number_of_wells_under_group_control(group_name)
         : group_state.number_of_wells_under_inj_group_control(group_name, injection_phase);
     if (schedule.hasWell(always_included_child, report_step)) {
         const bool isInGroup = isInGroupChainTopBot(always_included_child, group_name, schedule, report_step);
         const bool already_included = is_production_group ? well_state.isProductionGrup(always_included_child)
-            : well_state.isInjectionGrup(always_included_child);
+                                                          : well_state.isInjectionGrup(always_included_child);
         if (!already_included && isInGroup) {
             num_wells++;
         }
@@ -1360,13 +1372,12 @@ groupControlledWells(const Schedule& schedule,
     return num_wells;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::vector<std::string>
-WellGroupHelpers<Scalar, IndexTraits>::
-groupChainTopBot(const std::string& bottom,
-                 const std::string& top,
-                 const Schedule& schedule,
-                 const int report_step)
+WellGroupHelpers<Scalar, IndexTraits>::groupChainTopBot(const std::string& bottom,
+                                                        const std::string& top,
+                                                        const Schedule& schedule,
+                                                        const int report_step)
 {
     // Get initial parent, 'bottom' can be a well or a group.
     std::string parent;
@@ -1391,13 +1402,12 @@ groupChainTopBot(const std::string& bottom,
     return chain;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 bool
-WellGroupHelpers<Scalar, IndexTraits>::
-isInGroupChainTopBot(const std::string& bottom,
-                     const std::string& top,
-                     const Schedule& schedule,
-                     const int report_step)
+WellGroupHelpers<Scalar, IndexTraits>::isInGroupChainTopBot(const std::string& bottom,
+                                                            const std::string& top,
+                                                            const Schedule& schedule,
+                                                            const int report_step)
 {
     // Get initial parent, 'bottom' can be a well or a group.
     std::string parent;
@@ -1418,13 +1428,12 @@ isInGroupChainTopBot(const std::string& bottom,
     return true;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::string
-WellGroupHelpers<Scalar, IndexTraits>::
-control_group(const Group& group,
-              const GroupState<Scalar>& group_state,
-              const int reportStepIdx,
-              const Schedule& schedule)
+WellGroupHelpers<Scalar, IndexTraits>::control_group(const Group& group,
+                                                     const GroupState<Scalar>& group_state,
+                                                     const int reportStepIdx,
+                                                     const Schedule& schedule)
 {
     const Group::ProductionCMode& currentGroupControl = group_state.production_control(group.name());
 
@@ -1432,33 +1441,29 @@ control_group(const Group& group,
         const auto& parent_name = group.control_group();
         if (parent_name) {
             const auto& parent = schedule.getGroup(parent_name.value(), reportStepIdx);
-            return control_group(parent,
-                                group_state,
-                                reportStepIdx,
-                                schedule);
+            return control_group(parent, group_state, reportStepIdx, schedule);
         }
     }
 
     return group.name();
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::pair<bool, Scalar>
-WellGroupHelpers<Scalar, IndexTraits>::
-checkGroupConstraintsProd(const std::string& name,
-                          const std::string& parent,
-                          const Group& group,
-                          const WellState<Scalar, IndexTraits>& wellState,
-                          const GroupState<Scalar>& group_state,
-                          const int reportStepIdx,
-                          const GuideRate* guideRate,
-                          const Scalar* rates,
-                          const Scalar efficiencyFactor,
-                          const Schedule& schedule,
-                          const SummaryState& summaryState,
-                          const std::vector<Scalar>& resv_coeff,
-                          const bool check_guide_rate,
-                          DeferredLogger& deferred_logger)
+WellGroupHelpers<Scalar, IndexTraits>::checkGroupConstraintsProd(const std::string& name,
+                                                                 const std::string& parent,
+                                                                 const Group& group,
+                                                                 const WellState<Scalar, IndexTraits>& wellState,
+                                                                 const GroupState<Scalar>& group_state,
+                                                                 const int reportStepIdx,
+                                                                 const GuideRate* guideRate,
+                                                                 const Scalar* rates,
+                                                                 const Scalar efficiencyFactor,
+                                                                 const Schedule& schedule,
+                                                                 const SummaryState& summaryState,
+                                                                 const std::vector<Scalar>& resv_coeff,
+                                                                 const bool check_guide_rate,
+                                                                 DeferredLogger& deferred_logger)
 {
     // When called for a well ('name' is a well name), 'parent'
     // will be the name of 'group'. But if we recurse, 'name' and
@@ -1512,36 +1517,32 @@ checkGroupConstraintsProd(const std::string& name,
         gratTargetFromSales = group_state.grat_sales_target(group.name());
 
     WGHelpers::TargetCalculator<Scalar, IndexTraits> tcalc(currentGroupControl,
-                                          wellState.phaseUsageInfo(),
-                                      resv_coeff,
-                                      gratTargetFromSales,
-                                      group.name(),
-                                      group_state,
-                                      group.has_gpmaint_control(currentGroupControl));
+                                                           wellState.phaseUsageInfo(),
+                                                           resv_coeff,
+                                                           gratTargetFromSales,
+                                                           group.name(),
+                                                           group_state,
+                                                           group.has_gpmaint_control(currentGroupControl));
 
     WGHelpers::FractionCalculator<Scalar, IndexTraits> fcalc(schedule,
-                                        wellState,
-                                        group_state,
-                                        summaryState,
-                                        reportStepIdx,
-                                        guideRate,
-                                        tcalc.guideTargetMode(),
-                                        true,
-                                        Phase::OIL);
+                                                             wellState,
+                                                             group_state,
+                                                             summaryState,
+                                                             reportStepIdx,
+                                                             guideRate,
+                                                             tcalc.guideTargetMode(),
+                                                             true,
+                                                             Phase::OIL);
 
     auto localFraction = [&](const std::string& child) { return fcalc.localFraction(child, name); };
 
-    auto localReduction = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupTargetReductions =
-            group_state.production_reduction_rates(group_name);
+    auto localReduction = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupTargetReductions = group_state.production_reduction_rates(group_name);
         return tcalc.calcModeRateFromRates(groupTargetReductions);
     };
 
-    auto localCurrentRate = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupSurfaceRates =
-            group_state.production_rates(group_name);
+    auto localCurrentRate = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupSurfaceRates = group_state.production_rates(group_name);
         return tcalc.calcModeRateFromRates(groupSurfaceRates);
     };
 
@@ -1564,9 +1565,9 @@ checkGroupConstraintsProd(const std::string& name,
         for (std::size_t ii = 1; ii < num_ancestors; ++ii) {
             if (guideRate->has(chain[ii])) {
                 const auto& guided_group = chain[ii];
-                const Scalar grefficiency
-                            = schedule.getGroup(guided_group, reportStepIdx).getGroupEfficiencyFactor();
-                const Scalar currentRateFraction = grefficiency * localCurrentRate(guided_group) / (localCurrentRate(chain[ii-1]));
+                const Scalar grefficiency = schedule.getGroup(guided_group, reportStepIdx).getGroupEfficiencyFactor();
+                const Scalar currentRateFraction
+                    = grefficiency * localCurrentRate(guided_group) / (localCurrentRate(chain[ii - 1]));
                 const Scalar guiderateFraction = localFraction(guided_group);
                 // we add a factor here to avoid switching due to numerical instability
                 const Scalar factor = 1.01;
@@ -1578,7 +1579,8 @@ checkGroupConstraintsProd(const std::string& name,
     }
 
     if (schedule.hasWell(name) && wellState.well(name).group_target) { // for wells we already have computed the target
-        const Scalar current_well_rate_available = -tcalc.calcModeRateFromRates(rates); // Switch sign since 'rates' are negative for producers.
+        const Scalar current_well_rate_available
+            = -tcalc.calcModeRateFromRates(rates); // Switch sign since 'rates' are negative for producers.
         const Scalar group_target_rate_available = *wellState.well(name).group_target;
         Scalar scale = 1.0;
         if (current_well_rate_available > 1e-12) {
@@ -1611,11 +1613,11 @@ checkGroupConstraintsProd(const std::string& name,
             // Apply local reductions only at the control level
             // (top) and for levels where we have a specified
             // group guide rate.
-            if (local_reduction_level >= ii ) {
+            if (local_reduction_level >= ii) {
                 target -= localReduction(chain[ii]);
             }
             // Add my reduction back at the level where it is included in the local reduction
-            if (local_reduction_level == ii ) {
+            if (local_reduction_level == ii) {
                 target += current_rate_available * efficiencyFactor;
             }
         }
@@ -1632,27 +1634,26 @@ checkGroupConstraintsProd(const std::string& name,
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-getWellGroupTargetProducer(const std::string& name,
-                           const std::string& parent,
-                           const Group& group,
-                           const WellStateType& wellState,
-                           const GroupState<Scalar>& group_state,
-                           const int reportStepIdx,
-                           const GuideRate* guideRate,
-                           const Scalar* rates,
-                           const Scalar efficiencyFactor,
-                           const Schedule& schedule,
-                           const SummaryState& summaryState,
-                           const std::vector<Scalar>& resv_coeff,
-                           DeferredLogger& deferred_logger)
+WellGroupHelpers<Scalar, IndexTraits>::getWellGroupTargetProducer(const std::string& name,
+                                                                  const std::string& parent,
+                                                                  const Group& group,
+                                                                  const WellStateType& wellState,
+                                                                  const GroupState<Scalar>& group_state,
+                                                                  const int reportStepIdx,
+                                                                  const GuideRate* guideRate,
+                                                                  const Scalar* rates,
+                                                                  const Scalar efficiencyFactor,
+                                                                  const Schedule& schedule,
+                                                                  const SummaryState& summaryState,
+                                                                  const std::vector<Scalar>& resv_coeff,
+                                                                  DeferredLogger& deferred_logger)
 {
-    // This function computes a wells group target. 
+    // This function computes a wells group target.
     // 'parent' will be the name of 'group'. But if we recurse, 'name' and
     // 'parent' will stay fixed while 'group' will be higher up
-    // in the group tree. 
+    // in the group tree.
     // Eficiencyfactor is the well efficiency factor for the first group the well is
     // part of. Later it is the accumulated factor including the group efficiency factor
     // of the child of group.
@@ -1698,27 +1699,27 @@ getWellGroupTargetProducer(const std::string& name,
 
     WGHelpers::TargetCalculator<Scalar, IndexTraits> tcalc(currentGroupControl,
                                                            wellState.phaseUsageInfo(),
-                                      resv_coeff,
-                                      gratTargetFromSales,
-                                      group.name(),
-                                      group_state,
-                                      group.has_gpmaint_control(currentGroupControl));
+                                                           resv_coeff,
+                                                           gratTargetFromSales,
+                                                           group.name(),
+                                                           group_state,
+                                                           group.has_gpmaint_control(currentGroupControl));
 
     WGHelpers::FractionCalculator<Scalar, IndexTraits> fcalc(schedule,
-                                        wellState,
-                                        group_state,
-                                        summaryState,
-                                        reportStepIdx,
-                                        guideRate,
-                                        tcalc.guideTargetMode(),
-                                        true,
-                                        Phase::OIL);
-    auto localFraction = [&](const std::string& child, const std::string& always_incluced_name) { return fcalc.localFraction(child, always_incluced_name); };
+                                                             wellState,
+                                                             group_state,
+                                                             summaryState,
+                                                             reportStepIdx,
+                                                             guideRate,
+                                                             tcalc.guideTargetMode(),
+                                                             true,
+                                                             Phase::OIL);
+    auto localFraction = [&](const std::string& child, const std::string& always_incluced_name) {
+        return fcalc.localFraction(child, always_incluced_name);
+    };
 
-    auto localReduction = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupTargetReductions =
-            group_state.production_reduction_rates(group_name);
+    auto localReduction = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupTargetReductions = group_state.production_reduction_rates(group_name);
         return tcalc.calcModeRateFromRates(groupTargetReductions);
     };
 
@@ -1739,17 +1740,17 @@ getWellGroupTargetProducer(const std::string& name,
     std::size_t local_reduction_level = 0;
     for (std::size_t ii = 1; ii < num_ancestors; ++ii) {
         const int num_gr_ctrl = groupControlledWells(schedule,
-                                                    wellState,
-                                                    group_state,
-                                                    reportStepIdx,
-                                                    chain[ii],
-                                                    "",
-                                                    /*is_producer*/ true,
-                                                    /*injectionPhaseNotUsed*/ Phase::OIL);
+                                                     wellState,
+                                                     group_state,
+                                                     reportStepIdx,
+                                                     chain[ii],
+                                                     "",
+                                                     /*is_producer*/ true,
+                                                     /*injectionPhaseNotUsed*/ Phase::OIL);
         if (guideRate->has(chain[ii]) && num_gr_ctrl > 0) {
             local_reduction_level = ii;
         }
-    }   
+    }
     // Compute portion of target corresponding to current_rate_available
     Scalar target = orig_target;
     for (std::size_t ii = 0; ii < num_ancestors; ++ii) {
@@ -1760,7 +1761,8 @@ getWellGroupTargetProducer(const std::string& name,
             if (local_reduction_level >= ii) {
                 target -= localReduction(chain[ii]);
             }
-            // If we are under individual control we need to add the wells rate back at the level where it is included in the local reduction
+            // If we are under individual control we need to add the wells rate back at the level where it is included
+            // in the local reduction
             if (local_reduction_level == ii && !wellState.isProductionGrup(name)) {
                 target += current_rate_available * efficiencyFactor;
             }
@@ -1772,27 +1774,27 @@ getWellGroupTargetProducer(const std::string& name,
         }
     }
     // Avoid negative target rates comming from too large local reductions.
-    return std::max(Scalar(0.0), target / efficiencyFactor);;
+    return std::max(Scalar(0.0), target / efficiencyFactor);
+    ;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::pair<bool, Scalar>
-WellGroupHelpers<Scalar, IndexTraits>::
-checkGroupConstraintsInj(const std::string& name,
-                         const std::string& parent,
-                         const Group& group,
-                         const WellState<Scalar, IndexTraits>& wellState,
-                         const GroupState<Scalar>& group_state,
-                         const int reportStepIdx,
-                         const GuideRate* guideRate,
-                         const Scalar* rates,
-                         Phase injectionPhase,
-                         const Scalar efficiencyFactor,
-                         const Schedule& schedule,
-                         const SummaryState& summaryState,
-                         const std::vector<Scalar>& resv_coeff,
-                         const bool check_guide_rate,
-                         DeferredLogger& deferred_logger)
+WellGroupHelpers<Scalar, IndexTraits>::checkGroupConstraintsInj(const std::string& name,
+                                                                const std::string& parent,
+                                                                const Group& group,
+                                                                const WellState<Scalar, IndexTraits>& wellState,
+                                                                const GroupState<Scalar>& group_state,
+                                                                const int reportStepIdx,
+                                                                const GuideRate* guideRate,
+                                                                const Scalar* rates,
+                                                                Phase injectionPhase,
+                                                                const Scalar efficiencyFactor,
+                                                                const Schedule& schedule,
+                                                                const SummaryState& summaryState,
+                                                                const std::vector<Scalar>& resv_coeff,
+                                                                const bool check_guide_rate,
+                                                                DeferredLogger& deferred_logger)
 {
     // When called for a well ('name' is a well name), 'parent'
     // will be the name of 'group'. But if we recurse, 'name' and
@@ -1844,16 +1846,16 @@ checkGroupConstraintsInj(const std::string& name,
         const auto& gconsale = schedule[reportStepIdx].gconsale().get(group.name(), summaryState);
         sales_target = gconsale.sales_target;
     }
-    WGHelpers::InjectionTargetCalculator<Scalar, IndexTraits> tcalc(currentGroupControl,
-                                                     wellState.phaseUsageInfo(),
-                                               resv_coeff,
-                                               group.name(),
-                                               sales_target,
-                                               group_state,
-                                               injectionPhase,
-                                               group.has_gpmaint_control(injectionPhase,
-                                                                         currentGroupControl),
-                                               deferred_logger);
+    WGHelpers::InjectionTargetCalculator<Scalar, IndexTraits> tcalc(
+        currentGroupControl,
+        wellState.phaseUsageInfo(),
+        resv_coeff,
+        group.name(),
+        sales_target,
+        group_state,
+        injectionPhase,
+        group.has_gpmaint_control(injectionPhase, currentGroupControl),
+        deferred_logger);
 
     WGHelpers::FractionCalculator fcalc(schedule,
                                         wellState,
@@ -1867,17 +1869,13 @@ checkGroupConstraintsInj(const std::string& name,
 
     auto localFraction = [&](const std::string& child) { return fcalc.localFraction(child, name); };
 
-    auto localReduction = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupTargetReductions =
-            group_state.injection_reduction_rates(group_name);
+    auto localReduction = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupTargetReductions = group_state.injection_reduction_rates(group_name);
         return tcalc.calcModeRateFromRates(groupTargetReductions);
     };
 
-    auto localCurrentRate = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupSurfaceRates =
-            group_state.injection_surface_rates(group_name);
+    auto localCurrentRate = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupSurfaceRates = group_state.injection_surface_rates(group_name);
         return tcalc.calcModeRateFromRates(groupSurfaceRates);
     };
 
@@ -1905,10 +1903,9 @@ checkGroupConstraintsInj(const std::string& name,
         for (std::size_t ii = 1; ii < num_ancestors; ++ii) {
             if (guideRate->has(chain[ii], injectionPhase)) {
                 const auto& guided_group = chain[ii];
-                const Scalar grefficiency
-                            = schedule.getGroup(guided_group, reportStepIdx).getGroupEfficiencyFactor();
-                const Scalar currentRateFraction = grefficiency * localCurrentRate(guided_group) /
-                                                localCurrentRate(chain[ii-1]);
+                const Scalar grefficiency = schedule.getGroup(guided_group, reportStepIdx).getGroupEfficiencyFactor();
+                const Scalar currentRateFraction
+                    = grefficiency * localCurrentRate(guided_group) / localCurrentRate(chain[ii - 1]);
                 const Scalar guiderateFraction = localFraction(guided_group);
                 // we add a factor here to avoid switching due to numerical instability
                 const Scalar factor = 1.01;
@@ -1919,15 +1916,16 @@ checkGroupConstraintsInj(const std::string& name,
         }
     }
 
-    if (schedule.hasWell(name) && wellState.well(name).group_target) {  // for wells we already have computed the target
+    if (schedule.hasWell(name) && wellState.well(name).group_target) { // for wells we already have computed the target
         Scalar scale = 1.0;
         const Scalar group_target_rate_available = *wellState.well(name).group_target;
-        const Scalar current_well_rate_available = tcalc.calcModeRateFromRates(rates); // Switch sign since 'rates' are negative for producers.
+        const Scalar current_well_rate_available
+            = tcalc.calcModeRateFromRates(rates); // Switch sign since 'rates' are negative for producers.
         if (current_well_rate_available > 1e-12) {
             scale = group_target_rate_available / current_well_rate_available;
         }
         return std::make_pair(current_well_rate_available > group_target_rate_available, scale);
-    }    
+    }
 
     std::optional<Group::InjectionControls> ctrl;
     if (!group.has_gpmaint_control(injectionPhase, currentGroupControl))
@@ -1948,12 +1946,12 @@ checkGroupConstraintsInj(const std::string& name,
             // Apply local reductions only at the control level
             // (top) and for levels where we have a specified
             // group guide rate.
-            if (local_reduction_level >= ii ) {
+            if (local_reduction_level >= ii) {
                 target -= localReduction(chain[ii]);
             }
 
             // Add my reduction back at the level where it is included in the local reduction
-            if (local_reduction_level == ii ) {
+            if (local_reduction_level == ii) {
                 target += current_rate_available * efficiencyFactor;
             }
         }
@@ -1969,31 +1967,30 @@ checkGroupConstraintsInj(const std::string& name,
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Scalar
-WellGroupHelpers<Scalar, IndexTraits>::
-getWellGroupTargetInjector(const std::string& name,
-                           const std::string& parent,
-                           const Group& group,
-                           const WellStateType& wellState,
-                           const GroupState<Scalar>& group_state,
-                           const int reportStepIdx,
-                           const GuideRate* guideRate,
-                           const Scalar* rates,
-                           Phase injectionPhase,
-                           const Scalar efficiencyFactor,
-                           const Schedule& schedule,
-                           const SummaryState& summaryState,
-                           const std::vector<Scalar>& resv_coeff,
-                           DeferredLogger& deferred_logger)
+WellGroupHelpers<Scalar, IndexTraits>::getWellGroupTargetInjector(const std::string& name,
+                                                                  const std::string& parent,
+                                                                  const Group& group,
+                                                                  const WellStateType& wellState,
+                                                                  const GroupState<Scalar>& group_state,
+                                                                  const int reportStepIdx,
+                                                                  const GuideRate* guideRate,
+                                                                  const Scalar* rates,
+                                                                  Phase injectionPhase,
+                                                                  const Scalar efficiencyFactor,
+                                                                  const Schedule& schedule,
+                                                                  const SummaryState& summaryState,
+                                                                  const std::vector<Scalar>& resv_coeff,
+                                                                  DeferredLogger& deferred_logger)
 {
-    // This function computes a wells group target. 
+    // This function computes a wells group target.
     // 'parent' will be the name of 'group'. But if we recurse, 'name' and
     // 'parent' will stay fixed while 'group' will be higher up
-    // in the group tree. 
+    // in the group tree.
     // Eficiencyfactor is the well efficiency factor for the first group the well is
     // part of. Later it is the accumulated factor including the group efficiency factor
-    // of the child of group.    
+    // of the child of group.
     auto currentGroupControl = group_state.injection_control(group.name(), injectionPhase);
     if (currentGroupControl == Group::InjectionCMode::FLD || currentGroupControl == Group::InjectionCMode::NONE) {
         // Return if we are not available for parent group.
@@ -2003,19 +2000,19 @@ getWellGroupTargetInjector(const std::string& name,
         // Otherwise: check production share of parent's control.
         const auto& parentGroup = schedule.getGroup(group.parent(), reportStepIdx);
         return getWellGroupTargetInjector(name,
-                                         parent,
-                                         parentGroup,
-                                         wellState,
-                                         group_state,
-                                         reportStepIdx,
-                                         guideRate,
-                                         rates,
-                                         injectionPhase,
-                                         efficiencyFactor * group.getGroupEfficiencyFactor(),
-                                         schedule,
-                                         summaryState,
-                                         resv_coeff,
-                                         deferred_logger);
+                                          parent,
+                                          parentGroup,
+                                          wellState,
+                                          group_state,
+                                          reportStepIdx,
+                                          guideRate,
+                                          rates,
+                                          injectionPhase,
+                                          efficiencyFactor * group.getGroupEfficiencyFactor(),
+                                          schedule,
+                                          summaryState,
+                                          resv_coeff,
+                                          deferred_logger);
     }
 
     // This can be false for FLD-controlled groups, we must therefore
@@ -2031,33 +2028,33 @@ getWellGroupTargetInjector(const std::string& name,
         const auto& gconsale = schedule[reportStepIdx].gconsale().get(group.name(), summaryState);
         sales_target = gconsale.sales_target;
     }
-    WGHelpers::InjectionTargetCalculator<Scalar, IndexTraits> tcalc(currentGroupControl,
-                                                     wellState.phaseUsageInfo(),
-                                               resv_coeff,
-                                               group.name(),
-                                               sales_target,
-                                               group_state,
-                                               injectionPhase,
-                                               group.has_gpmaint_control(injectionPhase,
-                                                                         currentGroupControl),
-                                               deferred_logger);
+    WGHelpers::InjectionTargetCalculator<Scalar, IndexTraits> tcalc(
+        currentGroupControl,
+        wellState.phaseUsageInfo(),
+        resv_coeff,
+        group.name(),
+        sales_target,
+        group_state,
+        injectionPhase,
+        group.has_gpmaint_control(injectionPhase, currentGroupControl),
+        deferred_logger);
 
     WGHelpers::FractionCalculator<Scalar, IndexTraits> fcalc(schedule,
-                                        wellState,
-                                        group_state,
-                                        summaryState,
-                                        reportStepIdx,
-                                        guideRate,
-                                        tcalc.guideTargetMode(),
-                                        false,
-                                        injectionPhase);
+                                                             wellState,
+                                                             group_state,
+                                                             summaryState,
+                                                             reportStepIdx,
+                                                             guideRate,
+                                                             tcalc.guideTargetMode(),
+                                                             false,
+                                                             injectionPhase);
 
-    auto localFraction = [&](const std::string& child, const std::string& always_incluced_name) { return fcalc.localFraction(child, always_incluced_name); };
+    auto localFraction = [&](const std::string& child, const std::string& always_incluced_name) {
+        return fcalc.localFraction(child, always_incluced_name);
+    };
 
-    auto localReduction = [&](const std::string& group_name)
-    {
-        const std::vector<Scalar>& groupTargetReductions =
-            group_state.injection_reduction_rates(group_name);
+    auto localReduction = [&](const std::string& group_name) {
+        const std::vector<Scalar>& groupTargetReductions = group_state.injection_reduction_rates(group_name);
         return tcalc.calcModeRateFromRates(groupTargetReductions);
     };
 
@@ -2079,17 +2076,17 @@ getWellGroupTargetInjector(const std::string& name,
     std::size_t local_reduction_level = 0;
     for (std::size_t ii = 1; ii < num_ancestors; ++ii) {
         const int num_gr_ctrl = groupControlledWells(schedule,
-                                                    wellState,
-                                                    group_state,
-                                                    reportStepIdx,
-                                                    chain[ii],
-                                                    "",
-                                                    /*is_producer*/ false,
-                                                    injectionPhase);
+                                                     wellState,
+                                                     group_state,
+                                                     reportStepIdx,
+                                                     chain[ii],
+                                                     "",
+                                                     /*is_producer*/ false,
+                                                     injectionPhase);
         if (guideRate->has(chain[ii], injectionPhase) && num_gr_ctrl > 0) {
             local_reduction_level = ii;
         }
-    }    
+    }
 
     // Compute portion of target corresponding to current_rate_available
     Scalar target = orig_target;
@@ -2098,11 +2095,12 @@ getWellGroupTargetInjector(const std::string& name,
             // Apply local reductions only at the control level
             // (top) and for levels where we have a specified
             // group guide rate.
-            if (local_reduction_level >= ii ) {
+            if (local_reduction_level >= ii) {
                 target -= localReduction(chain[ii]);
             }
 
-            // If we are under individual control we need to add the wells rate back at the level where it is included in the local reduction
+            // If we are under individual control we need to add the wells rate back at the level where it is included
+            // in the local reduction
             if (local_reduction_level == ii && !wellState.isInjectionGrup(name)) {
                 target += current_rate_available * efficiencyFactor;
             }
@@ -2118,27 +2116,21 @@ getWellGroupTargetInjector(const std::string& name,
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::pair<std::optional<std::string>, Scalar>
-WellGroupHelpers<Scalar, IndexTraits>::
-worstOffendingWell(const Group& group,
-                   const Schedule& schedule,
-                   const int reportStepIdx,
-                   const Group::ProductionCMode& offendedControl,
-                   const Parallel::Communication& comm,
-                   const WellState<Scalar, IndexTraits>& wellState,
-                   DeferredLogger& deferred_logger)
+WellGroupHelpers<Scalar, IndexTraits>::worstOffendingWell(const Group& group,
+                                                          const Schedule& schedule,
+                                                          const int reportStepIdx,
+                                                          const Group::ProductionCMode& offendedControl,
+                                                          const Parallel::Communication& comm,
+                                                          const WellState<Scalar, IndexTraits>& wellState,
+                                                          DeferredLogger& deferred_logger)
 {
     std::pair<std::optional<std::string>, Scalar> offending_well {std::nullopt, 0.0};
     for (const std::string& child_group : group.groups()) {
         const auto& this_group = schedule.getGroup(child_group, reportStepIdx);
-        const auto & offending_well_this = worstOffendingWell(this_group,
-                                                             schedule,
-                                                             reportStepIdx,
-                                                             offendedControl,
-                                                             comm,
-                                                             wellState,
-                                                             deferred_logger);
+        const auto& offending_well_this = worstOffendingWell(
+            this_group, schedule, reportStepIdx, offendedControl, comm, wellState, deferred_logger);
         if (offending_well_this.second > offending_well.second) {
             offending_well = offending_well_this;
         }
@@ -2150,100 +2142,102 @@ worstOffendingWell(const Group& group,
         Scalar violating_rate = 0.0;
         Scalar prefered_rate = 0.0;
         const auto& pu = wellState.phaseUsageInfo();
-        if (well_index.has_value() && wellState.wellIsOwned(well_index.value(), child_well))
-        {
+        if (well_index.has_value() && wellState.wellIsOwned(well_index.value(), child_well)) {
             const auto& ws = wellState.well(child_well);
-            switch (offendedControl){
-                case Group::ProductionCMode::ORAT: {
-                    const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
-                    violating_rate = ws.surface_rates[oil_pos];
-                    break;
+            switch (offendedControl) {
+            case Group::ProductionCMode::ORAT: {
+                const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+                violating_rate = ws.surface_rates[oil_pos];
+                break;
+            }
+            case Group::ProductionCMode::GRAT: {
+                const int gas_pos = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
+                violating_rate = ws.surface_rates[gas_pos];
+                break;
+            }
+            case Group::ProductionCMode::WRAT: {
+                const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+                violating_rate = ws.surface_rates[water_pos];
+                break;
+            }
+            case Group::ProductionCMode::LRAT: {
+                assert(pu.phaseIsActive(IndexTraits::oilPhaseIdx));
+                assert(pu.phaseIsActive(IndexTraits::waterPhaseIdx));
+                const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+                const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+                violating_rate = ws.surface_rates[oil_pos] + ws.surface_rates[water_pos];
+                break;
+            }
+            case Group::ProductionCMode::RESV:
+                for (int p = 0; p < wellState.numPhases(); ++p) {
+                    violating_rate += ws.reservoir_rates[p];
                 }
-                case Group::ProductionCMode::GRAT: {
-                    const int gas_pos = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
-                    violating_rate = ws.surface_rates[gas_pos];
-                    break;
-                }
-                case Group::ProductionCMode::WRAT: {
-                    const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
-                    violating_rate = ws.surface_rates[water_pos];
-                    break;
-                }
-                case Group::ProductionCMode::LRAT: {
-                    assert(pu.phaseIsActive(IndexTraits::oilPhaseIdx));
-                    assert(pu.phaseIsActive(IndexTraits::waterPhaseIdx));
-                    const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
-                    const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
-                    violating_rate = ws.surface_rates[oil_pos] +
-                                     ws.surface_rates[water_pos];
-                    break;
-                }
-                case Group::ProductionCMode::RESV:
-                    for (int p = 0; p < wellState.numPhases(); ++p) {
-                        violating_rate += ws.reservoir_rates[p];
-                    }
-                    break;
-                case Group::ProductionCMode::NONE:
-                    break;
-                case Group::ProductionCMode::FLD:
-                    break;
-                case Group::ProductionCMode::PRBL:
-                    OPM_DEFLOG_THROW(std::runtime_error,
-                                     "Group " + group.name() +
-                                     "GroupProductionCMode PRBL not implemented", deferred_logger);
-                    break;
-                case Group::ProductionCMode::CRAT:
-                    OPM_DEFLOG_THROW(std::runtime_error,
-                                     "Group " + group.name() +
-                                     "GroupProductionCMode CRAT not implemented", deferred_logger);
-                    break;
+                break;
+            case Group::ProductionCMode::NONE:
+                break;
+            case Group::ProductionCMode::FLD:
+                break;
+            case Group::ProductionCMode::PRBL:
+                OPM_DEFLOG_THROW(std::runtime_error,
+                                 "Group " + group.name() + "GroupProductionCMode PRBL not implemented",
+                                 deferred_logger);
+                break;
+            case Group::ProductionCMode::CRAT:
+                OPM_DEFLOG_THROW(std::runtime_error,
+                                 "Group " + group.name() + "GroupProductionCMode CRAT not implemented",
+                                 deferred_logger);
+                break;
             }
             const auto preferred_phase = schedule.getWell(child_well, reportStepIdx).getPreferredPhase();
-             switch (preferred_phase) {
-                case Phase::OIL: {
-                    const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
-                    prefered_rate = ws.surface_rates[oil_pos];
-                    break;
-                }
-                case Phase::GAS: {
-                    const int gas_pos = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
-                    prefered_rate = ws.surface_rates[gas_pos];
-                    break;
-                }
-                case Phase::WATER: {
-                    const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
-                    prefered_rate = ws.surface_rates[water_pos];
-                    break;
-                }
-                default:
-                    // No others supported.
-                    break;
-                }
+            switch (preferred_phase) {
+            case Phase::OIL: {
+                const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
+                prefered_rate = ws.surface_rates[oil_pos];
+                break;
+            }
+            case Phase::GAS: {
+                const int gas_pos = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
+                prefered_rate = ws.surface_rates[gas_pos];
+                break;
+            }
+            case Phase::WATER: {
+                const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
+                prefered_rate = ws.surface_rates[water_pos];
+                break;
+            }
+            default:
+                // No others supported.
+                break;
+            }
         }
         violating_rate = comm.sum(violating_rate);
-        if (violating_rate < 0 ) { // only check producing wells
+        if (violating_rate < 0) { // only check producing wells
             prefered_rate = comm.sum(prefered_rate);
             Scalar fraction = prefered_rate < -1e-16 ? violating_rate / prefered_rate : 1.0;
-            if ( fraction > offending_well.second) {
-                    offending_well = {child_well, fraction};
+            if (fraction > offending_well.second) {
+                offending_well = {child_well, fraction};
             }
         }
     }
     return offending_well;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 template <class AverageRegionalPressureType>
-void WellGroupHelpers<Scalar, IndexTraits>::
-setRegionAveragePressureCalculator(const Group& group,
-                                   const Schedule& schedule,
-                                   const int reportStepIdx,
-                                   const FieldPropsManager& fp,
-                                   std::map<std::string, std::unique_ptr<AverageRegionalPressureType>>& regionalAveragePressureCalculator)
+void
+WellGroupHelpers<Scalar, IndexTraits>::setRegionAveragePressureCalculator(
+    const Group& group,
+    const Schedule& schedule,
+    const int reportStepIdx,
+    const FieldPropsManager& fp,
+    std::map<std::string, std::unique_ptr<AverageRegionalPressureType>>& regionalAveragePressureCalculator)
 {
     for (const std::string& groupName : group.groups()) {
-        setRegionAveragePressureCalculator( schedule.getGroup(groupName, reportStepIdx), schedule,
-                                            reportStepIdx, fp, regionalAveragePressureCalculator);
+        setRegionAveragePressureCalculator(schedule.getGroup(groupName, reportStepIdx),
+                                           schedule,
+                                           reportStepIdx,
+                                           fp,
+                                           regionalAveragePressureCalculator);
     }
     const auto& gpm = group.gpmaint();
     if (!gpm)
@@ -2262,29 +2256,24 @@ setRegionAveragePressureCalculator(const Group& group,
 
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
 
-template<class Scalar>
-using AvgP = RegionAverageCalculator::
-    AverageRegionalPressure<BlackOilFluidSystem<Scalar>,std::vector<int>>;
+template <class Scalar>
+using AvgP = RegionAverageCalculator::AverageRegionalPressure<BlackOilFluidSystem<Scalar>, std::vector<int>>;
 
-template<class Scalar>
+template <class Scalar>
 using AvgPMap = std::map<std::string, std::unique_ptr<AvgP<Scalar>>>;
 
-#define INSTANTIATE_TYPE(T)                                                   \
-template class WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>;                                       \
-template void WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>::                                       \
-updateGpMaintTargetForGroups<AvgPMap<T>>(const Group&,                \
-const Schedule&,             \
-const AvgPMap<T>&,           \
-int,                         \
-double,                      \
-const WellState<T, BlackOilDefaultFluidSystemIndices>&,         \
-GroupState<T>&);             \
-template void WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>::                                       \
-setRegionAveragePressureCalculator<AvgP<T>>(const Group&,             \
-const Schedule&,          \
-const int,                \
-const FieldPropsManager&, \
-AvgPMap<T>&);
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>;                                             \
+    template void WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>::updateGpMaintTargetForGroups<AvgPMap<T>>(    \
+        const Group&,                                                                                                  \
+        const Schedule&,                                                                                               \
+        const AvgPMap<T>&,                                                                                             \
+        int,                                                                                                           \
+        double,                                                                                                        \
+        const WellState<T, BlackOilDefaultFluidSystemIndices>&,                                                        \
+        GroupState<T>&);                                                                                               \
+    template void WellGroupHelpers<T, BlackOilDefaultFluidSystemIndices>::setRegionAveragePressureCalculator<AvgP<T>>( \
+        const Group&, const Schedule&, const int, const FieldPropsManager&, AvgPMap<T>&);
 
 INSTANTIATE_TYPE(double)
 
@@ -2292,4 +2281,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-} // namespace Opm::WellGroupHelpers
+} // namespace Opm

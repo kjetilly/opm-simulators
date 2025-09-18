@@ -20,11 +20,12 @@
 #ifndef OPM_PY_GAS_WATER_SIMULATOR_HEADER_INCLUDED
 #define OPM_PY_GAS_WATER_SIMULATOR_HEADER_INCLUDED
 
-#include <opm/simulators/flow/python/PyBaseSimulator.hpp>
-#include <opm/simulators/flow/TTagFlowProblemGasWater.hpp>
 #include <memory>
+#include <opm/simulators/flow/TTagFlowProblemGasWater.hpp>
+#include <opm/simulators/flow/python/PyBaseSimulator.hpp>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
 class PyGasWaterSimulator : public PyBaseSimulator<Opm::Properties::TTag::FlowGasWaterProblem>
 {
@@ -33,10 +34,10 @@ private:
     using TypeTag = Opm::Properties::TTag::FlowGasWaterProblem;
 
 public:
-    PyGasWaterSimulator(const std::string& deck_filename,
-                        const std::vector<std::string>& args)
+    PyGasWaterSimulator(const std::string& deck_filename, const std::vector<std::string>& args)
         : BaseType(deck_filename, args)
-    {}
+    {
+    }
 
     PyGasWaterSimulator(std::shared_ptr<Opm::Deck> deck,
                         std::shared_ptr<Opm::EclipseState> state,
@@ -44,8 +45,8 @@ public:
                         std::shared_ptr<Opm::SummaryConfig> summary_config,
                         const std::vector<std::string>& args)
         : BaseType(deck, state, schedule, summary_config, args)
-    {}
-
+    {
+    }
 };
 
 } // namespace Opm::Pybind

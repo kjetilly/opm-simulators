@@ -24,13 +24,16 @@
 
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
-template<class Scalar> class GroupState;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class Scalar>
+class GroupState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class GasLiftCommon
 {
 public:
@@ -47,9 +50,7 @@ protected:
 
     virtual void displayDebugMessage_(const std::string& msg) const = 0;
     void displayDebugMessageOnRank0_(const std::string& msg) const;
-    void logMessage_(const std::string& prefix,
-                     const std::string& msg,
-                     MessageType msg_type = MessageType::INFO) const;
+    void logMessage_(const std::string& prefix, const std::string& msg, MessageType msg_type = MessageType::INFO) const;
 
     WellState<Scalar, IndexTraits>& well_state_;
     const GroupState<Scalar>& group_state_;

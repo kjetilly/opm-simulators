@@ -20,21 +20,21 @@
 #ifndef OPM_RUNTIME_PERFORATION_HPP_INCLUDED
 #define OPM_RUNTIME_PERFORATION_HPP_INCLUDED
 
-namespace Opm {
+namespace Opm
+{
 
 /// Simple model of a well connection created at runtime, possibly as a
 /// result of a geo-mechanical fracturing process.
-struct RuntimePerforation
-{
+struct RuntimePerforation {
     /// Active cell index, on current rank, that is dynamically perforated
     /// by a well.
-    int cell{};
+    int cell {};
 
     /// Connection's transmissibility factor.
-    double ctf{};
+    double ctf {};
 
     /// Depth at which the new connection is created.
-    double depth{};
+    double depth {};
 };
 
 } // namespace Opm

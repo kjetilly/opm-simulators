@@ -27,7 +27,8 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 
 /*
@@ -43,11 +44,13 @@ namespace Opm {
 
 
 template <class T>
-class WellContainer {
+class WellContainer
+{
 public:
     WellContainer() = default;
 
-    WellContainer(std::initializer_list<std::pair<std::string,T>> init_list) {
+    WellContainer(std::initializer_list<std::pair<std::string, T>> init_list)
+    {
         for (const auto& [name, value] : init_list)
             this->add(name, value);
     }
@@ -62,15 +65,18 @@ public:
         return result;
     }
 
-    bool empty() const {
+    bool empty() const
+    {
         return this->index_map.empty();
     }
 
-    std::size_t size() const {
+    std::size_t size() const
+    {
         return this->m_data.size();
     }
 
-    T& add(const std::string& name, T&& value) {
+    T& add(const std::string& name, T&& value)
+    {
         if (index_map.count(name) != 0)
             throw std::logic_error("An object with name: " + name + " already exists in container");
 
@@ -79,7 +85,8 @@ public:
         return this->m_data.back();
     }
 
-    T& add(const std::string& name, const T& value) {
+    T& add(const std::string& name, const T& value)
+    {
         if (index_map.count(name) != 0)
             throw std::logic_error("An object with name: " + name + " already exists in container");
 
@@ -88,7 +95,8 @@ public:
         return this->m_data.back();
     }
 
-    bool has(const std::string& name) const {
+    bool has(const std::string& name) const
+    {
         return (index_map.count(name) != 0);
     }
 
@@ -96,7 +104,8 @@ public:
       Will copy the value from other to this - for all wells which are present
       in both containers.
     */
-    void copy_welldata(const WellContainer<T>& other) {
+    void copy_welldata(const WellContainer<T>& other)
+    {
         if (this->index_map == other.index_map)
             this->m_data = other.m_data;
         else {
@@ -109,48 +118,58 @@ public:
       Will copy the value for well @name from other to this. The well @name must
       exist in both containers, otherwise an exception is thrown.
     */
-    void copy_welldata(const WellContainer<T>& other, const std::string& name) {
+    void copy_welldata(const WellContainer<T>& other, const std::string& name)
+    {
         auto this_index = this->index_map.at(name);
         auto other_index = other.index_map.at(name);
         this->m_data[this_index] = other.m_data[other_index];
     }
 
-    T& operator[](std::size_t index) {
+    T& operator[](std::size_t index)
+    {
         return this->m_data.at(index);
     }
 
-    const T& operator[](std::size_t index) const {
+    const T& operator[](std::size_t index) const
+    {
         return this->m_data.at(index);
     }
 
-    T& operator[](const std::string& name) {
+    T& operator[](const std::string& name)
+    {
         auto index = this->index_map.at(name);
         return this->m_data[index];
     }
 
-    const T& operator[](const std::string& name) const {
+    const T& operator[](const std::string& name) const
+    {
         auto index = this->index_map.at(name);
         return this->m_data[index];
     }
 
-    void clear() {
+    void clear()
+    {
         this->m_data.clear();
         this->index_map.clear();
     }
 
-    typename std::vector<T>::const_iterator begin() const {
+    typename std::vector<T>::const_iterator begin() const
+    {
         return this->m_data.begin();
     }
 
-    typename std::vector<T>::const_iterator end() const {
+    typename std::vector<T>::const_iterator end() const
+    {
         return this->m_data.end();
     }
 
-    const std::vector<T>& data() const {
+    const std::vector<T>& data() const
+    {
         return this->m_data;
     }
 
-    std::optional<int> well_index(const std::string& wname) const {
+    std::optional<int> well_index(const std::string& wname) const
+    {
         auto index_iter = this->index_map.find(wname);
         if (index_iter != this->index_map.end())
             return index_iter->second;
@@ -158,7 +177,8 @@ public:
         return std::nullopt;
     }
 
-    const std::string& well_name(std::size_t well_index) const {
+    const std::string& well_name(std::size_t well_index) const
+    {
         for (const auto& [wname, windex] : this->index_map) {
             if (windex == well_index)
                 return wname;
@@ -166,7 +186,8 @@ public:
         throw std::logic_error("No such well");
     }
 
-    std::vector<std::string> wells() const {
+    std::vector<std::string> wells() const
+    {
         std::vector<std::string> wlist;
         for (const auto& [wname, _] : this->index_map) {
             (void)_;
@@ -175,7 +196,7 @@ public:
         return wlist;
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(m_data);
@@ -184,12 +205,12 @@ public:
 
     bool operator==(const WellContainer<T>& rhs) const
     {
-        return this->m_data == rhs.m_data &&
-               this->index_map == rhs.index_map;
+        return this->m_data == rhs.m_data && this->index_map == rhs.index_map;
     }
 
 private:
-    void update_if(std::size_t index, const std::string& name, const WellContainer<T>& other) {
+    void update_if(std::size_t index, const std::string& name, const WellContainer<T>& other)
+    {
         auto other_iter = other.index_map.find(name);
         if (other_iter == other.index_map.end())
             return;
@@ -204,7 +225,7 @@ private:
 };
 
 
-}
+} // namespace Opm
 
 
 #endif

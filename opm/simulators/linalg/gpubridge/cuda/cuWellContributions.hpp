@@ -25,9 +25,10 @@
 #include <cuda_runtime.h>
 
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class WellContributionsCuda : public WellContributions<Scalar>
 {
 public:
@@ -54,8 +55,7 @@ protected:
     /// \param[in] colIndices  columnindices of blocks in C or B, ignored for D
     /// \param[in] values      array of nonzeroes
     /// \param[in] val_size    number of blocks in C or B, ignored for D
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, int* colIndices, Scalar* values, unsigned int val_size) override;
 
     cudaStream_t stream;
 
@@ -67,11 +67,11 @@ protected:
     int* d_Bcols = nullptr;
     Scalar* d_z1 = nullptr;
     Scalar* d_z2 = nullptr;
-    unsigned int *d_val_pointers = nullptr;
+    unsigned int* d_val_pointers = nullptr;
     Scalar* h_x = nullptr;
     Scalar* h_y = nullptr;
 };
 
-} //namespace Opm
+} // namespace Opm
 
 #endif

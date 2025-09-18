@@ -28,9 +28,11 @@
 #include <mpi.h>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
-void Timer::TimeData::measure()
+void
+Timer::TimeData::measure()
 {
     // Note: On Linux -- or rather fully POSIX compliant systems -- using
     // clock_gettime() would be more accurate for the CPU time.
@@ -43,13 +45,15 @@ Timer::Timer()
     halt();
 }
 
-void Timer::start()
+void
+Timer::start()
 {
     isStopped_ = false;
     startTime_.measure();
 }
 
-double Timer::stop()
+double
+Timer::stop()
 {
     if (!isStopped_) {
         TimeData stopTime;
@@ -58,13 +62,10 @@ double Timer::stop()
 
         const auto& t1 = startTime_.realtimeData;
         const auto& t2 = stopTime.realtimeData;
-        std::chrono::duration<double> dt =
-            std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1);
+        std::chrono::duration<double> dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
         realTimeElapsed_ += dt.count();
-        cpuTimeElapsed_ +=
-            static_cast<double>(stopTime.cputimeData
-                                - startTime_.cputimeData)/CLOCKS_PER_SEC;
+        cpuTimeElapsed_ += static_cast<double>(stopTime.cputimeData - startTime_.cputimeData) / CLOCKS_PER_SEC;
     }
 
     isStopped_ = true;
@@ -72,14 +73,16 @@ double Timer::stop()
     return realTimeElapsed_;
 }
 
-void Timer::halt()
+void
+Timer::halt()
 {
     isStopped_ = true;
     cpuTimeElapsed_ = 0.0;
     realTimeElapsed_ = 0.0;
 }
 
-void Timer::reset()
+void
+Timer::reset()
 {
     cpuTimeElapsed_ = 0.0;
     realTimeElapsed_ = 0.0;
@@ -87,7 +90,8 @@ void Timer::reset()
     startTime_.measure();
 }
 
-double Timer::realTimeElapsed() const
+double
+Timer::realTimeElapsed() const
 {
     if (isStopped_)
         return realTimeElapsed_;
@@ -98,13 +102,13 @@ double Timer::realTimeElapsed() const
 
     const auto& t1 = startTime_.realtimeData;
     const auto& t2 = stopTime.realtimeData;
-    std::chrono::duration<double> dt =
-        std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1);
+    std::chrono::duration<double> dt = std::chrono::duration_cast<std::chrono::duration<double>>(t2 - t1);
 
     return realTimeElapsed_ + dt.count();
 }
 
-double Timer::cpuTimeElapsed() const
+double
+Timer::cpuTimeElapsed() const
 {
     if (isStopped_)
         return cpuTimeElapsed_;
@@ -116,10 +120,11 @@ double Timer::cpuTimeElapsed() const
     const auto& t1 = startTime_.cputimeData;
     const auto& t2 = stopTime.cputimeData;
 
-    return cpuTimeElapsed_ + static_cast<double>(t2 - t1)/CLOCKS_PER_SEC;
+    return cpuTimeElapsed_ + static_cast<double>(t2 - t1) / CLOCKS_PER_SEC;
 }
 
-double Timer::globalCpuTimeElapsed() const
+double
+Timer::globalCpuTimeElapsed() const
 {
     double val = cpuTimeElapsed();
     double globalVal = val;
@@ -137,7 +142,8 @@ double Timer::globalCpuTimeElapsed() const
     return globalVal;
 }
 
-Timer& Timer::operator+=(const Timer& other)
+Timer&
+Timer::operator+=(const Timer& other)
 {
     realTimeElapsed_ += other.realTimeElapsed();
     cpuTimeElapsed_ += other.cpuTimeElapsed();

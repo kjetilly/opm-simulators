@@ -28,30 +28,35 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/ncp/ncpmodel.hh>
 #include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/ncp/ncpmodel.hh>
+#include <opm/models/utils/start.hh>
 
 #include "problems/co2injectionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionNcpVcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, NcpModel>; };
+    struct Co2InjectionNcpVcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, NcpModel>;
+    };
 
 } // end namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionNcpVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionNcpVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using VcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionNcpVcfvProblem;
     return Opm::start<VcfvProblemTypeTag>(argc, argv, true);

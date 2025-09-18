@@ -18,16 +18,16 @@
 */
 #ifndef OPM_GPUBUFFER_HEADER_HPP
 #define OPM_GPUBUFFER_HEADER_HPP
+#include <cuda_runtime.h>
 #include <dune/common/fvector.hh>
 #include <dune/istl/bvector.hh>
 #include <exception>
 #include <fmt/core.h>
 #include <opm/common/ErrorMacros.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuView.hpp>
-#include <vector>
+#include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
 #include <string>
-#include <cuda_runtime.h>
+#include <vector>
 
 
 namespace Opm::gpuistl

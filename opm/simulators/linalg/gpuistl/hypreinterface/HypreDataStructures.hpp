@@ -34,7 +34,7 @@ namespace Opm::gpuistl
  * Contains all mappings and metadata to translate between Dune's distributed
  * indexing and HYPRE's global indexing in parallel MPI environments.
  */
- struct ParallelInfo {
+struct ParallelInfo {
     /** @brief Mapping from local Dune indices to local HYPRE indices
      *
      * Size: total local DOFs (owned + ghost)

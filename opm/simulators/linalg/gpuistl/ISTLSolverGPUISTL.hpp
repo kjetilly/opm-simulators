@@ -39,17 +39,17 @@ namespace Opm::gpuistl
 {
 
 /**
-* \brief ISTL solver for GPU using the GPU ISTL backend.
-*
-* This class implements the AbstractISTLSolver interface and provides
-* methods to prepare the solver, set and get residuals, solve the system,
-* and manage communication.
-*
-* \tparam TypeTag The type tag for the properties used in this solver.
-*
-* \note This solver takes CPU matrices and vectors, but uses GPU
-*       matrices and vectors internally for computations.
-*/
+ * \brief ISTL solver for GPU using the GPU ISTL backend.
+ *
+ * This class implements the AbstractISTLSolver interface and provides
+ * methods to prepare the solver, set and get residuals, solve the system,
+ * and manage communication.
+ *
+ * \tparam TypeTag The type tag for the properties used in this solver.
+ *
+ * \note This solver takes CPU matrices and vectors, but uses GPU
+ *       matrices and vectors internally for computations.
+ */
 template <class TypeTag>
 class ISTLSolverGPUISTL : public AbstractISTLSolver<TypeTag>
 {
@@ -105,7 +105,7 @@ public:
 
     /**
      * \copydoc AbstractISTLSolver::eraseMatrix
-     * 
+     *
      * \note This method will not do anything.
      */
     void eraseMatrix() override
@@ -115,7 +115,7 @@ public:
 
     /**
      * \copydoc AbstractISTLSolver::setActiveSolver
-     * 
+     *
      * \note This method will throw an exception if the solver number is not 0,
      *       as only one solver is available for the GPU backend.
      */
@@ -128,7 +128,7 @@ public:
 
     /**
      * \copydoc AbstractISTLSolver::numAvailableSolvers
-     * 
+     *
      * \note This method always returns 1, as only one solver is available for the GPU backend.
      */
     int numAvailableSolvers() const override
@@ -169,7 +169,7 @@ public:
                                                 "Check for errors related to missing nodes.");
     }
 
-    /** 
+    /**
      * \copydoc AbstractISTLSolver::setResidual
      *
      * \note Unused in this implementation.
@@ -197,7 +197,7 @@ public:
 
     /**
      * \copydoc AbstractISTLSolver::setMatrix
-     * 
+     *
      * \note This method does not set the matrix directly, as it should be handled in prepare().
      */
     void setMatrix(const SparseMatrixAdapter&) override
@@ -233,10 +233,8 @@ public:
 
         if (!m_x) {
             m_x = std::make_unique<GpuVector<real_type>>(x);
-            m_pinnedXMemory = std::make_unique<PinnedMemoryHolder<real_type>>(
-                const_cast<real_type*>(&x[0][0]),
-                x.dim()
-            );
+            m_pinnedXMemory
+                = std::make_unique<PinnedMemoryHolder<real_type>>(const_cast<real_type*>(&x[0][0]), x.dim());
         } else {
             // copy from host to device using main stream and asynchronous transfer
             m_x->copyFromHostAsync(x);
@@ -290,9 +288,7 @@ private:
 
             m_matrix.reset(new auto(GPUMatrix::fromMatrix(M)));
             m_pinnedMatrixMemory = std::make_unique<PinnedMemoryHolder<real_type>>(
-                const_cast<real_type*>(&M[0][0][0][0]),
-                M.nonzeroes() * M[0][0].N() * M[0][0].M()
-            );
+                const_cast<real_type*>(&M[0][0][0][0]), M.nonzeroes() * M[0][0].N() * M[0][0].M());
             std::function<GPUVector()> weightsCalculator = {};
             const bool parallel = false;
             m_gpuSolver = std::make_unique<SolverType>(
@@ -307,10 +303,8 @@ private:
     {
         if (!m_rhs) {
             m_rhs = std::make_unique<GPUVector>(b);
-            m_pinnedRhsMemory = std::make_unique<PinnedMemoryHolder<real_type>>(
-                const_cast<real_type*>(&b[0][0]),
-                b.dim()
-            );
+            m_pinnedRhsMemory
+                = std::make_unique<PinnedMemoryHolder<real_type>>(const_cast<real_type*>(&b[0][0]), b.dim());
         } else {
             // copy from host to device using main stream and asynchronous transfer
             m_rhs->copyFromHostAsync(b);

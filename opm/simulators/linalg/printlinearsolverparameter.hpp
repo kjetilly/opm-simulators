@@ -29,7 +29,8 @@ namespace Opm::detail
 /// \brief Write a single property tree in JSON format to the stream
 ///
 /// \note Helper function to write a property tree in JSON format to the log.
-inline void writeJsonToStream(const Opm::PropertyTree& prm, std::ostream& os)
+inline void
+writeJsonToStream(const Opm::PropertyTree& prm, std::ostream& os)
 {
     // Write the property tree in JSON format to the output stream
     prm.write_json(os, true);
@@ -38,7 +39,8 @@ inline void writeJsonToStream(const Opm::PropertyTree& prm, std::ostream& os)
 /// \brief Write a vector of property trees in JSON format to the stream.
 ///
 /// \note Helper function to write a property tree in JSON format to the log.
-inline void writeJsonToStream(const std::vector<Opm::PropertyTree>& prms, std::ostream& os)
+inline void
+writeJsonToStream(const std::vector<Opm::PropertyTree>& prms, std::ostream& os)
 {
     // Write each property tree in the vector in JSON format to the output stream
     for (const auto& p : prms) {
@@ -58,9 +60,7 @@ inline void writeJsonToStream(const std::vector<Opm::PropertyTree>& prms, std::o
 /// \tparam Comm The type of the communication object, which should support `rank()` method.
 template <class VectorOrSingle, class Comm>
 void
-printLinearSolverParameters(const FlowLinearSolverParameters& parameters,
-                            const VectorOrSingle& prm,
-                            const Comm& comm)
+printLinearSolverParameters(const FlowLinearSolverParameters& parameters, const VectorOrSingle& prm, const Comm& comm)
 {
     // Check if we are on the IO rank
     const bool on_io_rank = comm.rank() == 0;

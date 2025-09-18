@@ -18,12 +18,12 @@
 #define OPM_STANDARDPRECONDITIONERS_GPU_MPI_HEADER
 
 
-namespace Opm {
+namespace Opm
+{
 
 
 template <class Operator, class Comm>
-struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is_gpu_operator_v<Operator>>> 
-{
+struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is_gpu_operator_v<Operator>>> {
     static void add()
     {
         // No standard preconditioners for this type of operator.
@@ -31,7 +31,7 @@ struct StandardPreconditioners<Operator, Comm, typename std::enable_if_t<Opm::is
 };
 
 
-}// namespace Opm
+} // namespace Opm
 
 
 #endif // OPM_STANDARDPRECONDITIONERS_GPU_MPI_HEADER

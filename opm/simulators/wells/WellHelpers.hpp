@@ -23,79 +23,77 @@
 #ifndef OPM_WELLHELPERS_HEADER_INCLUDED
 #define OPM_WELLHELPERS_HEADER_INCLUDED
 
-#include <dune/istl/bcrsmatrix.hh>
 #include <dune/common/dynmatrix.hh>
+#include <dune/istl/bcrsmatrix.hh>
 
 #include <cstdint>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> class ParallelWellInfo;
+template <class Scalar>
+class ParallelWellInfo;
 struct WellProductionControls;
 struct WellInjectionControls;
 enum class WellProducerCMode : std::uint16_t;
 enum class WellInjectorCMode : std::uint16_t;
 
-namespace wellhelpers {
-
-/// \brief A wrapper around the B matrix for distributed wells
-///
-/// For standard wells the B matrix, is basically a multiplication
-/// of the equation of the perforated cells followed by a reduction
-/// (summation) of these to the well equations.
-///
-/// This class does that in the functions mv and mmv (from the DUNE
-/// matrix interface.
-///
-/// \tparam Scalar The scalar used for the computation.
-template<typename Scalar>
-class ParallelStandardWellB
+namespace wellhelpers
 {
-public:
-    using Block = Dune::DynamicMatrix<Scalar>;
-    using Matrix = Dune::BCRSMatrix<Block>;
 
-    ParallelStandardWellB(const Matrix& B,
-                          const ParallelWellInfo<Scalar>& parallel_well_info);
+    /// \brief A wrapper around the B matrix for distributed wells
+    ///
+    /// For standard wells the B matrix, is basically a multiplication
+    /// of the equation of the perforated cells followed by a reduction
+    /// (summation) of these to the well equations.
+    ///
+    /// This class does that in the functions mv and mmv (from the DUNE
+    /// matrix interface.
+    ///
+    /// \tparam Scalar The scalar used for the computation.
+    template <typename Scalar>
+    class ParallelStandardWellB
+    {
+    public:
+        using Block = Dune::DynamicMatrix<Scalar>;
+        using Matrix = Dune::BCRSMatrix<Block>;
 
-    //! y = A x
-    template<class X, class Y>
-    void mv (const X& x, Y& y) const;
+        ParallelStandardWellB(const Matrix& B, const ParallelWellInfo<Scalar>& parallel_well_info);
 
-    //! y = A x
-    template<class X, class Y>
-    void mmv (const X& x, Y& y) const;
+        //! y = A x
+        template <class X, class Y>
+        void mv(const X& x, Y& y) const;
 
-private:
-    const Matrix& B_;
-    const ParallelWellInfo<Scalar>& parallel_well_info_;
-};
+        //! y = A x
+        template <class X, class Y>
+        void mmv(const X& x, Y& y) const;
 
-template<class Scalar>
-Scalar computeHydrostaticCorrection(const Scalar well_ref_depth,
-                                    const Scalar vfp_ref_depth,
-                                    const Scalar rho,
-                                    const Scalar gravity);
+    private:
+        const Matrix& B_;
+        const ParallelWellInfo<Scalar>& parallel_well_info_;
+    };
 
-/// \brief Sums entries of the diagonal Matrix for distributed wells
-template<typename MatrixType, typename VectorType, typename Comm>
-void sumDistributedWellEntries(MatrixType& mat,
-                               VectorType& vec,
-                               const Comm& comm);
+    template <class Scalar>
+    Scalar computeHydrostaticCorrection(const Scalar well_ref_depth,
+                                        const Scalar vfp_ref_depth,
+                                        const Scalar rho,
+                                        const Scalar gravity);
+
+    /// \brief Sums entries of the diagonal Matrix for distributed wells
+    template <typename MatrixType, typename VectorType, typename Comm>
+    void sumDistributedWellEntries(MatrixType& mat, VectorType& vec, const Comm& comm);
 
 
-// explicit transpose of a dense matrix due to compilation problems
-// used for calculating quasiimpes well weights
-template <class DenseMatrix>
-DenseMatrix transposeDenseDynMatrix(const DenseMatrix& M);
+    // explicit transpose of a dense matrix due to compilation problems
+    // used for calculating quasiimpes well weights
+    template <class DenseMatrix>
+    DenseMatrix transposeDenseDynMatrix(const DenseMatrix& M);
 
-/// Helper to check whether the well is under zero production rate control
-bool rateControlWithZeroProdTarget(const WellProductionControls& controls,
-                                   WellProducerCMode mode);
+    /// Helper to check whether the well is under zero production rate control
+    bool rateControlWithZeroProdTarget(const WellProductionControls& controls, WellProducerCMode mode);
 
-/// Helper to check whether the well is under zero injection rate control
-bool rateControlWithZeroInjTarget(const WellInjectionControls& controls,
-                                  WellInjectorCMode mode);
+    /// Helper to check whether the well is under zero injection rate control
+    bool rateControlWithZeroInjTarget(const WellInjectionControls& controls, WellInjectorCMode mode);
 
 } // namespace wellhelpers
 } // namespace Opm

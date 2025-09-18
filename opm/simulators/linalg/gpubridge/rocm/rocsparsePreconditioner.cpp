@@ -19,47 +19,45 @@
 
 #include <config.h>
 #include <memory>
-#include <opm/common/TimingMacros.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparseBILU0.hpp>
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparseCPR.hpp>
 #include <opm/simulators/linalg/gpubridge/rocm/rocsparsePreconditioner.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 template <class Scalar, unsigned int block_size>
-std::unique_ptr<rocsparsePreconditioner<Scalar,block_size> > rocsparsePreconditioner<Scalar,block_size>::
-create(PreconditionerType type,
-       int verbosity)
+std::unique_ptr<rocsparsePreconditioner<Scalar, block_size>>
+rocsparsePreconditioner<Scalar, block_size>::create(PreconditionerType type, int verbosity)
 {
-    switch (type ) {
+    switch (type) {
     case PreconditionerType::BILU0:
-        return std::make_unique<Opm::Accelerator::rocsparseBILU0<Scalar, block_size> >(verbosity);
+        return std::make_unique<Opm::Accelerator::rocsparseBILU0<Scalar, block_size>>(verbosity);
     case PreconditionerType::CPR:
-        return std::make_unique<Opm::Accelerator::rocsparseCPR<Scalar, block_size> >(verbosity);
+        return std::make_unique<Opm::Accelerator::rocsparseCPR<Scalar, block_size>>(verbosity);
     default:
-        OPM_THROW(std::logic_error,
-                  "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
+        OPM_THROW(std::logic_error, "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
     }
 }
 
 template <class Scalar, unsigned int block_size>
-void rocsparsePreconditioner<Scalar, block_size>::
-set_matrix_analysis(rocsparse_mat_descr desc_L,
-                    rocsparse_mat_descr desc_U)
+void
+rocsparsePreconditioner<Scalar, block_size>::set_matrix_analysis(rocsparse_mat_descr desc_L, rocsparse_mat_descr desc_U)
 {
     descr_L = desc_L;
     descr_U = desc_U;
 }
 
 template <class Scalar, unsigned int block_size>
-void rocsparsePreconditioner<Scalar, block_size>::
-set_context(rocsparse_handle handle_,
-            rocblas_handle blas_handle_,
-            rocsparse_direction dir_,
-            rocsparse_operation operation_,
-            hipStream_t stream_)
+void
+rocsparsePreconditioner<Scalar, block_size>::set_context(rocsparse_handle handle_,
+                                                         rocblas_handle blas_handle_,
+                                                         rocsparse_direction dir_,
+                                                         rocsparse_operation operation_,
+                                                         hipStream_t stream_)
 {
     this->handle = handle_;
     this->blas_handle = blas_handle_;
@@ -69,21 +67,21 @@ set_context(rocsparse_handle handle_,
 }
 
 template <class Scalar, unsigned int block_size>
-void rocsparsePreconditioner<Scalar, block_size>::
-setJacMat(const BlockedMatrix<Scalar>& jMat)
+void
+rocsparsePreconditioner<Scalar, block_size>::setJacMat(const BlockedMatrix<Scalar>& jMat)
 {
     this->jacMat = std::make_shared<BlockedMatrix<Scalar>>(jMat);
 }
 
 
 
-#define INSTANTIATE_TYPE(T)                      \
-    template class rocsparsePreconditioner<T,1>; \
-    template class rocsparsePreconditioner<T,2>; \
-    template class rocsparsePreconditioner<T,3>; \
-    template class rocsparsePreconditioner<T,4>; \
-    template class rocsparsePreconditioner<T,5>; \
-    template class rocsparsePreconditioner<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class rocsparsePreconditioner<T, 1>;                                                                      \
+    template class rocsparsePreconditioner<T, 2>;                                                                      \
+    template class rocsparsePreconditioner<T, 3>;                                                                      \
+    template class rocsparsePreconditioner<T, 4>;                                                                      \
+    template class rocsparsePreconditioner<T, 5>;                                                                      \
+    template class rocsparsePreconditioner<T, 6>;
 
 INSTANTIATE_TYPE(double)
 
@@ -91,5 +89,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-} //namespace Opm
-
+} // namespace Opm::Accelerator

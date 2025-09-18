@@ -28,37 +28,44 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/pvs/pvsmodel.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/pvs/pvsmodel.hh>
+#include <opm/models/utils/start.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionPvsNiEcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, PvsModel>; };
+    struct Co2InjectionPvsNiEcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, PvsModel>;
+    };
 
 } // end namespace TTag
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableEnergy<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem> {
+    static constexpr bool value = true;
+};
 
 //! Use automatic differentiation to linearize the system of PDEs
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem>
-{ using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionPvsNiEcfvProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionPvsNiEcfvProblem;
     return Opm::start<EcfvProblemTypeTag>(argc, argv, true);

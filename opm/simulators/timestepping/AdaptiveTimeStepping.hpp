@@ -1,5 +1,5 @@
 /*
-*/
+ */
 #ifndef OPM_ADAPTIVE_TIME_STEPPING_HPP
 #define OPM_ADAPTIVE_TIME_STEPPING_HPP
 
@@ -28,52 +28,97 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct SolverContinueOnConvergenceFailure { static constexpr bool value = false; };
-struct SolverMaxRestarts { static constexpr int value = 10; };
-struct SolverVerbosity { static constexpr int value = 1; };
-struct TimeStepVerbosity { static constexpr int value = 1; };
-struct InitialTimeStepInDays { static constexpr double value = 1.0;  };
-struct FullTimeStepInitially { static constexpr bool value = false; };
-struct TimeStepControl { static constexpr auto value = "pid+newtoniteration"; };
-struct TimeStepControlTolerance { static constexpr double value = 1e-1; };
-struct TimeStepControlTargetIterations { static constexpr int value = 30; };
-struct TimeStepControlTargetNewtonIterations { static constexpr int value = 8; };
-struct TimeStepControlDecayRate { static constexpr double value = 0.75; };
-struct TimeStepControlGrowthRate { static constexpr double  value = 1.25; };
-struct TimeStepControlDecayDampingFactor { static constexpr double value = 1.0;  };
-struct TimeStepControlGrowthDampingFactor { static constexpr double value = 3.2; };
-struct TimeStepControlFileName { static constexpr auto value = "timesteps"; };
-struct MinTimeStepBeforeShuttingProblematicWellsInDays { static constexpr double value = 0.01; };
-struct MinTimeStepBasedOnNewtonIterations { static constexpr double value = 0.0; };
-struct TimeStepControlSafetyFactor { static constexpr double value = 0.8; };
-struct TimeStepControlRejectCompletedStep { static constexpr bool value = false; };
-struct TimeStepControlToleranceTestVersion { static constexpr auto value = "standard"; };
-struct TimeStepControlMaxReductionTimeStep { static constexpr double value = 0.1; };
-struct TimeStepControlParameters { static constexpr auto value = "0.125;0.25;0.125;0.75;0.25"; };
+struct SolverContinueOnConvergenceFailure {
+    static constexpr bool value = false;
+};
+struct SolverMaxRestarts {
+    static constexpr int value = 10;
+};
+struct SolverVerbosity {
+    static constexpr int value = 1;
+};
+struct TimeStepVerbosity {
+    static constexpr int value = 1;
+};
+struct InitialTimeStepInDays {
+    static constexpr double value = 1.0;
+};
+struct FullTimeStepInitially {
+    static constexpr bool value = false;
+};
+struct TimeStepControl {
+    static constexpr auto value = "pid+newtoniteration";
+};
+struct TimeStepControlTolerance {
+    static constexpr double value = 1e-1;
+};
+struct TimeStepControlTargetIterations {
+    static constexpr int value = 30;
+};
+struct TimeStepControlTargetNewtonIterations {
+    static constexpr int value = 8;
+};
+struct TimeStepControlDecayRate {
+    static constexpr double value = 0.75;
+};
+struct TimeStepControlGrowthRate {
+    static constexpr double value = 1.25;
+};
+struct TimeStepControlDecayDampingFactor {
+    static constexpr double value = 1.0;
+};
+struct TimeStepControlGrowthDampingFactor {
+    static constexpr double value = 3.2;
+};
+struct TimeStepControlFileName {
+    static constexpr auto value = "timesteps";
+};
+struct MinTimeStepBeforeShuttingProblematicWellsInDays {
+    static constexpr double value = 0.01;
+};
+struct MinTimeStepBasedOnNewtonIterations {
+    static constexpr double value = 0.0;
+};
+struct TimeStepControlSafetyFactor {
+    static constexpr double value = 0.8;
+};
+struct TimeStepControlRejectCompletedStep {
+    static constexpr bool value = false;
+};
+struct TimeStepControlToleranceTestVersion {
+    static constexpr auto value = "standard";
+};
+struct TimeStepControlMaxReductionTimeStep {
+    static constexpr double value = 0.1;
+};
+struct TimeStepControlParameters {
+    static constexpr auto value = "0.125;0.25;0.125;0.75;0.25";
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 struct Tuning;
 class UnitSystem;
 struct StepReport;
 
-namespace detail {
+namespace detail
+{
     void logTimer(const AdaptiveSimulatorTimer& substep_timer);
 
-    std::set<std::string>
-    consistentlyFailingWells(const std::vector<StepReport>& sr,
-                             bool requireRepeatedFailures);
+    std::set<std::string> consistentlyFailingWells(const std::vector<StepReport>& sr, bool requireRepeatedFailures);
     void registerAdaptiveParameters();
 
     std::tuple<TimeStepControlType, std::unique_ptr<TimeStepControlInterface>, bool>
     createController(const UnitSystem& unitSystem);
-}
+} // namespace detail
 
-template<class TypeTag>
+template <class TypeTag>
 class AdaptiveTimeStepping
 {
 public:
@@ -94,10 +139,12 @@ private:
     };
 
     // Forward declaration of SubStepIteration
-    template <class Solver> class SubStepIteration;
+    template <class Solver>
+    class SubStepIteration;
 
     template <class Solver>
-    class SubStepper {
+    class SubStepper
+    {
     public:
         SubStepper(AdaptiveTimeStepping<TypeTag>& adaptive_time_stepping,
                    const SimulatorTimer& simulator_timer,
@@ -132,7 +179,8 @@ private:
     };
 
     template <class Solver>
-    class SubStepIteration {
+    class SubStepIteration
+    {
     public:
         SubStepIteration(SubStepper<Solver>& substepper,
                          AdaptiveSimulatorTimer& substep_timer,
@@ -152,9 +200,7 @@ private:
         double growthFactor_() const;
         bool ignoreConvergenceFailure_() const;
         void maybeReportSubStep_(SimulatorReportSingle substep_report) const;
-        double maybeRestrictTimeStepGrowth_(const double dt,
-                                            double dt_estimate,
-                                            const int restarts) const;
+        double maybeRestrictTimeStepGrowth_(const double dt, double dt_estimate, const int restarts) const;
         void maybeUpdateTuningAndTimeStep_();
         double maxGrowth_() const;
         double minTimeStepBeforeClosingWells_() const;
@@ -215,7 +261,7 @@ public:
     void updateTUNING(double max_next_tstep, const Tuning& tuning);
     void updateNEXTSTEP(double max_next_tstep);
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer);
 
     SimulatorReport& report();
@@ -227,16 +273,15 @@ public:
     static AdaptiveTimeStepping<TypeTag> serializationTestObject3rdOrder();
 
 private:
-    void maybeModifySuggestedTimeStepAtBeginningOfReportStep_(const double original_time_step,
-                                                              const bool is_event);
+    void maybeModifySuggestedTimeStepAtBeginningOfReportStep_(const double original_time_step, const bool is_event);
 
-    template<class Controller>
+    template <class Controller>
     static AdaptiveTimeStepping<TypeTag> serializationTestObject_();
 
-    template<class T, class Serializer>
+    template <class T, class Serializer>
     void allocAndSerialize(Serializer& serializer);
 
-    template<class T>
+    template <class T>
     bool castAndComp(const AdaptiveTimeStepping<TypeTag>& Rhs) const;
 
 protected:
@@ -245,28 +290,28 @@ protected:
     using TimeStepController = std::unique_ptr<TimeStepControlInterface>;
 
     /// type of time step control object
-    TimeStepControlType time_step_control_type_{TimeStepControlType::PIDAndIterationCount};
-    TimeStepController time_step_control_{}; //!< time step control object
-    double restart_factor_{};                //!< factor to multiply time step with when solver fails to converge
-    double growth_factor_{};                 //!< factor to multiply time step when solver recovered from failed convergence
-    double max_growth_{};                    //!< factor that limits the maximum growth of a time step
-    double max_time_step_{};                 //!< maximal allowed time step size in days
-    double min_time_step_{};                 //!< minimal allowed time step size before throwing
-    bool ignore_convergence_failure_{false}; //!< continue instead of stop when minimum time step is reached
-    int solver_restart_max_{};               //!< how many restart of solver are allowed
-    bool solver_verbose_{false};             //!< solver verbosity
-    bool timestep_verbose_{false};           //!< timestep verbosity
-    double suggested_next_timestep_{};       //!< suggested size of next timestep
-    bool full_timestep_initially_{false};    //!< beginning with the size of the time step from data file
-    double timestep_after_event_{};          //!< suggested size of timestep after an event
-    bool use_newton_iteration_{false};       //!< use newton iteration count for adaptive time step control
+    TimeStepControlType time_step_control_type_ {TimeStepControlType::PIDAndIterationCount};
+    TimeStepController time_step_control_ {}; //!< time step control object
+    double restart_factor_ {}; //!< factor to multiply time step with when solver fails to converge
+    double growth_factor_ {}; //!< factor to multiply time step when solver recovered from failed convergence
+    double max_growth_ {}; //!< factor that limits the maximum growth of a time step
+    double max_time_step_ {}; //!< maximal allowed time step size in days
+    double min_time_step_ {}; //!< minimal allowed time step size before throwing
+    bool ignore_convergence_failure_ {false}; //!< continue instead of stop when minimum time step is reached
+    int solver_restart_max_ {}; //!< how many restart of solver are allowed
+    bool solver_verbose_ {false}; //!< solver verbosity
+    bool timestep_verbose_ {false}; //!< timestep verbosity
+    double suggested_next_timestep_ {}; //!< suggested size of next timestep
+    bool full_timestep_initially_ {false}; //!< beginning with the size of the time step from data file
+    double timestep_after_event_ {}; //!< suggested size of timestep after an event
+    bool use_newton_iteration_ {false}; //!< use newton iteration count for adaptive time step control
 
     //! < shut problematic wells when time step size in days are less than this
-    double min_time_step_before_shutting_problematic_wells_{};
+    double min_time_step_before_shutting_problematic_wells_ {};
     // We store a copy of the full simulator run report for output purposes,
     // so it can be updated and passed to the summary writing code every
     // substep (not just every report step).
-    SimulatorReport report_{};
+    SimulatorReport report_ {};
 };
 
 } // namespace Opm

@@ -31,12 +31,15 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Opm::Action {
-    class State;
+namespace Opm::Action
+{
+class State;
 } // namespace Opm::Action
 
-namespace Opm {
-template<typename Scalar, typename IndexTraits> class BlackoilWellModelGeneric;
+namespace Opm
+{
+template <typename Scalar, typename IndexTraits>
+class BlackoilWellModelGeneric;
 class EclipseState;
 class Schedule;
 struct SimulatorUpdate;
@@ -44,10 +47,11 @@ class SummaryState;
 class UDQState;
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Class handling Action support in simulator
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class ActionHandler
 {
 public:
@@ -86,9 +90,7 @@ public:
     /// \param[in] updateTrans Call-back for affecting transmissibility
     /// updates.  Typically invoked if the action triggers a keyword like
     /// MULTZ.
-    void applyActions(int reportStep,
-                      double sim_time,
-                      const TransFunc& updateTrans);
+    void applyActions(int reportStep, double sim_time, const TransFunc& updateTrans);
 
     /// \brief Evaluates UDQ assign statements.
     ///
@@ -96,8 +98,7 @@ public:
     ///
     /// \param[in,out] udq_state Dynamic state of all user-defined
     /// quantities.
-    void evalUDQAssignments(const unsigned episodeIdx,
-                            UDQState& udq_state);
+    void evalUDQAssignments(const unsigned episodeIdx, UDQState& udq_state);
 
     /// Convey dynamic updates triggered by an action block back to the
     /// running simulator.

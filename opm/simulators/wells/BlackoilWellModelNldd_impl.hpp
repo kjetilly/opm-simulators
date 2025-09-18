@@ -31,14 +31,12 @@
 
 #include <algorithm>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-assemble(const int /*iterationIdx*/,
-         const double dt,
-         const Domain& domain)
+BlackoilWellModelNldd<TypeTag>::assemble(const int /*iterationIdx*/, const double dt, const Domain& domain)
 {
     OPM_TIMEBLOCK(assemble);
     // We assume that calculateExplicitQuantities() and
@@ -51,55 +49,45 @@ assemble(const int /*iterationIdx*/,
     this->assembleWellEq(dt, domain, local_deferredLogger);
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-assembleWellEq(const double dt,
-               const Domain& domain,
-               DeferredLogger& deferred_logger)
+BlackoilWellModelNldd<TypeTag>::assembleWellEq(const double dt, const Domain& domain, DeferredLogger& deferred_logger)
 {
     OPM_TIMEBLOCK(assembleWellEq);
     for (const auto& well : wellModel_.localNonshutWells()) {
         if (this->well_domain().at(well->name()) == domain.index) {
-            well->assembleWellEq(wellModel_.simulator(),
-                                 dt,
-                                 wellModel_.wellState(),
-                                 wellModel_.groupState(),
-                                 deferred_logger);
+            well->assembleWellEq(
+                wellModel_.simulator(), dt, wellModel_.wellState(), wellModel_.groupState(), deferred_logger);
         }
     }
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-addWellPressureEquations(PressureMatrix& /*jacobian*/,
-                         const BVector& /*weights*/,
-                         const bool /*use_well_weights*/,
-                         const int /*domainIndex*/) const
+BlackoilWellModelNldd<TypeTag>::addWellPressureEquations(PressureMatrix& /*jacobian*/,
+                                                         const BVector& /*weights*/,
+                                                         const bool /*use_well_weights*/,
+                                                         const int /*domainIndex*/) const
 {
     throw std::logic_error("CPRW is not yet implemented for NLDD subdomains");
-    // To fix this function, rdofs should be the size of the domain, and the nw should be the number of wells in the domain
-    // int nw = this->numLocalWellsEnd(); // should number of wells in the domain
-    // int rdofs = local_num_cells_;  // should be the size of the domain
-    // for ( int i = 0; i < nw; i++ ) {
+    // To fix this function, rdofs should be the size of the domain, and the nw should be the number of wells in the
+    // domain int nw = this->numLocalWellsEnd(); // should number of wells in the domain int rdofs = local_num_cells_;
+    // // should be the size of the domain for ( int i = 0; i < nw; i++ ) {
     //     int wdof = rdofs + i;
     //     jacobian[wdof][wdof] = 1.0;// better scaling ?
     // }
 
     // for ( const auto& well : well_container_ ) {
     //     if (well_domain_.at(well->name()) == domainIndex) {
-               // weights should be the size of the domain
+    // weights should be the size of the domain
     //         well->addWellPressureEquations(jacobian, weights, pressureVarIndex, use_well_weights, this->wellState());
     //     }
     // }
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-recoverWellSolutionAndUpdateWellState(const BVector& x,
-                                      const int domainIdx)
+BlackoilWellModelNldd<TypeTag>::recoverWellSolutionAndUpdateWellState(const BVector& x, const int domainIdx)
 {
     // Note: no point in trying to do a parallel gathering
     // try/catch here, as this function is not called in
@@ -113,10 +101,8 @@ recoverWellSolutionAndUpdateWellState(const BVector& x,
             for (size_t i = 0; i < cells.size(); ++i) {
                 x_local_[i] = x[cells[i]];
             }
-            well->recoverWellSolutionAndUpdateWellState(wellModel_.simulator(),
-                                                        x_local_,
-                                                        wellModel_.wellState(),
-                                                        local_deferredLogger);
+            well->recoverWellSolutionAndUpdateWellState(
+                wellModel_.simulator(), x_local_, wellModel_.wellState(), local_deferredLogger);
         }
     }
     // TODO: avoid losing the logging information that could
@@ -126,12 +112,11 @@ recoverWellSolutionAndUpdateWellState(const BVector& x,
     }
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 ConvergenceReport
-BlackoilWellModelNldd<TypeTag>::
-getWellConvergence(const Domain& domain,
-                   const std::vector<Scalar>& B_avg,
-                   DeferredLogger& local_deferredLogger) const
+BlackoilWellModelNldd<TypeTag>::getWellConvergence(const Domain& domain,
+                                                   const std::vector<Scalar>& B_avg,
+                                                   DeferredLogger& local_deferredLogger) const
 {
     const int iterationIdx = wellModel_.simulator().model().newtonMethod().numIterations();
     const bool relax_tolerance = iterationIdx > wellModel_.numStrictIterations();
@@ -140,16 +125,12 @@ getWellConvergence(const Domain& domain,
     for (const auto& well : wellModel_.localNonshutWells()) {
         if ((this->well_domain().at(well->name()) == domain.index)) {
             if (well->isOperableAndSolvable() || well->wellIsStopped()) {
-                report += well->getWellConvergence(wellModel_.simulator(),
-                                                   wellModel_.wellState(),
-                                                   B_avg,
-                                                   local_deferredLogger,
-                                                   relax_tolerance);
+                report += well->getWellConvergence(
+                    wellModel_.simulator(), wellModel_.wellState(), B_avg, local_deferredLogger, relax_tolerance);
             } else {
                 ConvergenceReport xreport;
                 using CR = ConvergenceReport;
-                xreport.setWellFailed({CR::WellFailure::Type::Unsolvable,
-                                       CR::Severity::Normal, -1, well->name()});
+                xreport.setWellFailed({CR::WellFailure::Type::Unsolvable, CR::Severity::Normal, -1, well->name()});
                 report += xreport;
             }
         }
@@ -159,24 +140,20 @@ getWellConvergence(const Domain& domain,
     if (wellModel_.terminalOutput()) {
         for (const auto& f : report.wellFailures()) {
             if (f.severity() == ConvergenceReport::Severity::NotANumber) {
-                local_deferredLogger.debug("NaN residual found with phase " +
-                                           std::to_string(f.phase()) +
-                                           " for well " + f.wellName());
+                local_deferredLogger.debug("NaN residual found with phase " + std::to_string(f.phase()) + " for well "
+                                           + f.wellName());
             } else if (f.severity() == ConvergenceReport::Severity::TooLarge) {
-                local_deferredLogger.debug("Too large residual found with phase " +
-                                           std::to_string(f.phase()) +
-                                           " for well " + f.wellName());
+                local_deferredLogger.debug("Too large residual found with phase " + std::to_string(f.phase())
+                                           + " for well " + f.wellName());
             }
         }
     }
     return report;
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-updateWellControls(DeferredLogger& deferred_logger,
-                   const Domain& domain)
+BlackoilWellModelNldd<TypeTag>::updateWellControls(DeferredLogger& deferred_logger, const Domain& domain)
 {
     OPM_TIMEBLOCK(updateWellControls);
     if (!wellModel_.wellsActive()) {
@@ -190,25 +167,20 @@ updateWellControls(DeferredLogger& deferred_logger,
     for (const auto& well : wellModel_.localNonshutWells()) {
         if (this->well_domain().at(well->name()) == domain.index) {
             constexpr auto mode = WellInterface<TypeTag>::IndividualOrGroup::Individual;
-            well->updateWellControl(wellModel_.simulator(),
-                                    mode,
-                                    wellModel_.wellState(),
-                                    wellModel_.groupState(),
-                                    deferred_logger);
+            well->updateWellControl(
+                wellModel_.simulator(), mode, wellModel_.wellState(), wellModel_.groupState(), deferred_logger);
         }
     }
 }
 
 template <typename TypeTag>
 void
-BlackoilWellModelNldd<TypeTag>::
-setupDomains(const std::vector<Domain>& domains)
+BlackoilWellModelNldd<TypeTag>::setupDomains(const std::vector<Domain>& domains)
 {
     std::vector<const SubDomainIndices*> genDomains;
-    std::transform(domains.begin(), domains.end(),
-                   std::back_inserter(genDomains),
-                   [](const auto& domain)
-                   { return static_cast<const SubDomainIndices*>(&domain); });
+    std::transform(domains.begin(), domains.end(), std::back_inserter(genDomains), [](const auto& domain) {
+        return static_cast<const SubDomainIndices*>(&domain);
+    });
     this->calcDomains(genDomains);
 }
 

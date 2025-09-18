@@ -27,28 +27,36 @@
  */
 #include "config.h"
 
+#include "problems/powerinjectionproblem.hh"
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include "problems/powerinjectionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct PowerInjectionDarcyAdProblem
-{ using InheritsFrom = std::tuple<PowerInjectionBaseProblem, ImmiscibleTwoPhaseModel>; };
+    struct PowerInjectionDarcyAdProblem {
+        using InheritsFrom = std::tuple<PowerInjectionBaseProblem, ImmiscibleTwoPhaseModel>;
+    };
 
 } // namespace TTag
 
-template<class TypeTag>
-struct FluxModule<TypeTag, TTag::PowerInjectionDarcyAdProblem> { using type = Opm::DarcyFluxModule<TypeTag>; };
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::PowerInjectionDarcyAdProblem> { using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct FluxModule<TypeTag, TTag::PowerInjectionDarcyAdProblem> {
+    using type = Opm::DarcyFluxModule<TypeTag>;
+};
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::PowerInjectionDarcyAdProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::PowerInjectionDarcyAdProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

@@ -28,12 +28,12 @@
 #define RESERVOIR_COUPLING_ENABLED
 #endif
 #ifdef RESERVOIR_COUPLING_ENABLED
-#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
+#include <opm/common/Exceptions.hpp>
 #include <opm/input/eclipse/Schedule/ResCoup/MasterGroup.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/ResCoup/Slaves.hpp>
 #include <opm/simulators/flow/ReservoirCouplingMaster.hpp>
 #include <opm/simulators/flow/ReservoirCouplingSlave.hpp>
-#include <opm/common/Exceptions.hpp>
 #endif
 
 #include <opm/input/eclipse/Units/UnitSystem.hpp>
@@ -67,32 +67,50 @@
 
 #include <fmt/format.h>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct EnableAdaptiveTimeStepping { static constexpr bool value = true; };
-struct OutputExtraConvergenceInfo { static constexpr auto* value = "none"; };
-struct SaveStep { static constexpr auto* value = ""; };
-struct SaveFile { static constexpr auto* value = ""; };
-struct LoadFile { static constexpr auto* value = ""; };
-struct LoadStep { static constexpr int value = -1; };
-struct Slave { static constexpr bool value = false; };
+struct EnableAdaptiveTimeStepping {
+    static constexpr bool value = true;
+};
+struct OutputExtraConvergenceInfo {
+    static constexpr auto* value = "none";
+};
+struct SaveStep {
+    static constexpr auto* value = "";
+};
+struct SaveFile {
+    static constexpr auto* value = "";
+};
+struct LoadFile {
+    static constexpr auto* value = "";
+};
+struct LoadStep {
+    static constexpr int value = -1;
+};
+struct Slave {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
 void registerSimulatorParameters();
 
 }
 
-namespace Opm {
+namespace Opm
+{
 
 /// a simulator for the blackoil model
-template<class TypeTag>
+template <class TypeTag>
 class SimulatorFullyImplicitBlackoil : private SerializableSim
 {
 protected:
     struct MPI_Comm_Deleter;
+
 public:
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
     using Grid = GetPropType<TypeTag, Properties::Grid>;
@@ -134,16 +152,15 @@ public:
             this->terminalOutput_ = Parameters::Get<Parameters::EnableTerminalOutput>();
 
             auto getPhaseName = ConvergenceOutputThread::ComponentToPhaseName {
-                [compNames = typename Model::ComponentName{}](const int compIdx)
-                { return std::string_view { compNames.name(compIdx) }; }
-            };
+                [compNames = typename Model::ComponentName {}](const int compIdx) {
+                    return std::string_view {compNames.name(compIdx)};
+                }};
 
             if (!simulator_.vanguard().eclState().getIOConfig().initOnly()) {
-                this->convergence_output_.
-                    startThread(this->simulator_.vanguard().eclState(),
-                                Parameters::Get<Parameters::OutputExtraConvergenceInfo>(),
-                                R"(OutputExtraConvergenceInfo (--output-extra-convergence-info))",
-                                getPhaseName);
+                this->convergence_output_.startThread(this->simulator_.vanguard().eclState(),
+                                                      Parameters::Get<Parameters::OutputExtraConvergenceInfo>(),
+                                                      R"(OutputExtraConvergenceInfo (--output-extra-convergence-info))",
+                                                      getPhaseName);
             }
         }
     }
@@ -185,7 +202,8 @@ public:
         while (!timer.done()) {
             simulator_.problem().writeReports(timer);
             bool continue_looping = runStep(timer);
-            if (!continue_looping) break;
+            if (!continue_looping)
+                break;
         }
         simulator_.problem().writeReports(timer);
         return finalize();
@@ -206,18 +224,12 @@ public:
             // - They can only occur once in the schedule
             if (slave_count > 0 && master_group_count > 0) {
                 return true;
-            }
-            else if (slave_count > 0 && master_group_count == 0) {
-                throw ReservoirCouplingError(
-                    "Inconsistent reservoir coupling master schedule: "
-                    "Slave count is greater than 0 but master group count is 0"
-                );
-            }
-            else if (slave_count == 0 && master_group_count > 0) {
-                throw ReservoirCouplingError(
-                    "Inconsistent reservoir coupling master schedule: "
-                    "Master group count is greater than 0 but slave count is 0"
-                );
+            } else if (slave_count > 0 && master_group_count == 0) {
+                throw ReservoirCouplingError("Inconsistent reservoir coupling master schedule: "
+                                             "Slave count is greater than 0 but master group count is 0");
+            } else if (slave_count == 0 && master_group_count > 0) {
+                throw ReservoirCouplingError("Inconsistent reservoir coupling master schedule: "
+                                             "Master group count is greater than 0 but slave count is 0");
             }
         }
         return false;
@@ -230,24 +242,16 @@ public:
     {
         auto slave_mode = Parameters::Get<Parameters::Slave>();
         if (slave_mode) {
-            this->reservoirCouplingSlave_ =
-                std::make_unique<ReservoirCouplingSlave>(
-                    FlowGenericVanguard::comm(),
-                    this->schedule(), timer
-                );
+            this->reservoirCouplingSlave_
+                = std::make_unique<ReservoirCouplingSlave>(FlowGenericVanguard::comm(), this->schedule(), timer);
             this->reservoirCouplingSlave_->sendAndReceiveInitialData();
             this->simulator_.setReservoirCouplingSlave(this->reservoirCouplingSlave_.get());
             wellModel_().setReservoirCouplingSlave(this->reservoirCouplingSlave_.get());
-        }
-        else {
+        } else {
             auto master_mode = checkRunningAsReservoirCouplingMaster();
             if (master_mode) {
-                this->reservoirCouplingMaster_ =
-                    std::make_unique<ReservoirCouplingMaster>(
-                        FlowGenericVanguard::comm(),
-                        this->schedule(),
-                        argc, argv
-                    );
+                this->reservoirCouplingMaster_ = std::make_unique<ReservoirCouplingMaster>(
+                    FlowGenericVanguard::comm(), this->schedule(), argc, argv);
                 this->simulator_.setReservoirCouplingMaster(this->reservoirCouplingMaster_.get());
                 wellModel_().setReservoirCouplingMaster(this->reservoirCouplingMaster_.get());
             }
@@ -271,12 +275,11 @@ public:
             const auto& sched_state = schedule()[timer.currentStepNum()];
             auto max_next_tstep = sched_state.max_next_tstep(enableTUNING);
             if (enableTUNING) {
-                adaptiveTimeStepping_ = std::make_unique<TimeStepper>(max_next_tstep,
-                                                                      sched_state.tuning(),
-                                                                      unitSystem, report_, terminalOutput_);
-            }
-            else {
-                adaptiveTimeStepping_ = std::make_unique<TimeStepper>(unitSystem, report_, max_next_tstep, terminalOutput_);
+                adaptiveTimeStepping_ = std::make_unique<TimeStepper>(
+                    max_next_tstep, sched_state.tuning(), unitSystem, report_, terminalOutput_);
+            } else {
+                adaptiveTimeStepping_
+                    = std::make_unique<TimeStepper>(unitSystem, report_, max_next_tstep, terminalOutput_);
             }
             if (isRestart()) {
                 // For restarts the simulator may have gotten some information
@@ -297,7 +300,10 @@ public:
         if (terminalOutput_) {
             const auto msg = fmt::format("Tuning values: "
                                          "MB: {:.2e}, CNV: {:.2e}, NEWTMN: {}, NEWTMX: {}",
-                                         tuning.TRGMBE, tuning.TRGCNV, tuning.NEWTMN, tuning.NEWTMX);
+                                         tuning.TRGMBE,
+                                         tuning.TRGCNV,
+                                         tuning.NEWTMN,
+                                         tuning.NEWTMX);
             OpmLog::debug(msg);
             if (tuning.TRGTTE_has_value) {
                 OpmLog::warning("Tuning item 2-1 (TRGTTE) is not supported.");
@@ -399,10 +405,8 @@ public:
             solver_ = createSolver(wellModel_());
         }
 
-        simulator_.startNextEpisode(
-            simulator_.startTime()
-               + schedule().seconds(timer.currentStepNum()),
-            timer.currentStepLength());
+        simulator_.startNextEpisode(simulator_.startTime() + schedule().seconds(timer.currentStepNum()),
+                                    timer.currentStepLength());
         simulator_.setEpisodeIndex(timer.currentStepNum());
 
         if (serializer_.shouldLoad()) {
@@ -421,10 +425,8 @@ public:
         // \Note: The report steps are met in any case
         // \Note: The sub stepping will require a copy of the state variables
         if (adaptiveTimeStepping_) {
-            auto tuningUpdater = [enableTUNING, this,
-                                  reportStep = timer.currentStepNum()](const double curr_time,
-                                                                       double dt, const int timeStep)
-            {
+            auto tuningUpdater = [enableTUNING, this, reportStep = timer.currentStepNum()](
+                                     const double curr_time, double dt, const int timeStep) {
                 auto& schedule = this->simulator_.vanguard().schedule();
                 auto& events = this->schedule()[reportStep].events();
 
@@ -439,7 +441,8 @@ public:
                     if (enableTUNING) {
                         adaptiveTimeStepping_->updateTUNING(max_next_tstep, tuning);
                         // \Note: Assumes TUNING is only used with adaptive time-stepping
-                        // \Note: Need to update both solver (model) and simulator since solver is re-created each report step.
+                        // \Note: Need to update both solver (model) and simulator since solver is re-created each
+                        // report step.
                         solver_->model().updateTUNING(tuning);
                         this->updateTUNING(tuning);
                         dt = this->adaptiveTimeStepping_->suggestedNextStep();
@@ -456,21 +459,18 @@ public:
                 }
 
                 const auto& wmatcher = schedule.wellMatcher(reportStep);
-                double wcycle_time_step =
-                    wcycle.nextTimeStep(curr_time,
-                                        dt,
-                                        wmatcher,
-                                        this->wellModel_().wellOpenTimes(),
-                                        this->wellModel_().wellCloseTimes(),
-                                        [timeStep,
-                                         &wg_events = this->wellModel_().reportStepStartEvents()]
-                                        (const std::string& name)
-                                        {
-                                            if (timeStep != 0) {
-                                                return false;
-                                            }
-                                            return wg_events.hasEvent(name, ScheduleEvents::REQUEST_OPEN_WELL);
-                                        });
+                double wcycle_time_step = wcycle.nextTimeStep(
+                    curr_time,
+                    dt,
+                    wmatcher,
+                    this->wellModel_().wellOpenTimes(),
+                    this->wellModel_().wellCloseTimes(),
+                    [timeStep, &wg_events = this->wellModel_().reportStepStartEvents()](const std::string& name) {
+                        if (timeStep != 0) {
+                            return false;
+                        }
+                        return wg_events.hasEvent(name, ScheduleEvents::REQUEST_OPEN_WELL);
+                    });
 
                 wcycle_time_step = this->grid().comm().min(wcycle_time_step);
                 if (dt != wcycle_time_step) {
@@ -481,28 +481,26 @@ public:
                 return result;
             };
 
-            tuningUpdater(timer.simulationTimeElapsed(),
-                          this->adaptiveTimeStepping_->suggestedNextStep(), 0);
+            tuningUpdater(timer.simulationTimeElapsed(), this->adaptiveTimeStepping_->suggestedNextStep(), 0);
 
 #ifdef RESERVOIR_COUPLING_ENABLED
             if (this->reservoirCouplingMaster_) {
                 this->reservoirCouplingMaster_->maybeSpawnSlaveProcesses(timer.currentStepNum());
                 this->reservoirCouplingMaster_->maybeActivate(timer.currentStepNum());
-            }
-            else if (this->reservoirCouplingSlave_) {
+            } else if (this->reservoirCouplingSlave_) {
                 this->reservoirCouplingSlave_->maybeActivate(timer.currentStepNum());
             }
 #endif
             const auto& events = schedule()[timer.currentStepNum()].events();
-            bool event = events.hasEvent(ScheduleEvents::NEW_WELL) ||
-                events.hasEvent(ScheduleEvents::INJECTION_TYPE_CHANGED) ||
-                events.hasEvent(ScheduleEvents::WELL_SWITCHED_INJECTOR_PRODUCER) ||
-                events.hasEvent(ScheduleEvents::PRODUCTION_UPDATE) ||
-                events.hasEvent(ScheduleEvents::INJECTION_UPDATE) ||
-                events.hasEvent(ScheduleEvents::WELL_STATUS_CHANGE);
+            bool event = events.hasEvent(ScheduleEvents::NEW_WELL)
+                || events.hasEvent(ScheduleEvents::INJECTION_TYPE_CHANGED)
+                || events.hasEvent(ScheduleEvents::WELL_SWITCHED_INJECTOR_PRODUCER)
+                || events.hasEvent(ScheduleEvents::PRODUCTION_UPDATE)
+                || events.hasEvent(ScheduleEvents::INJECTION_UPDATE)
+                || events.hasEvent(ScheduleEvents::WELL_STATUS_CHANGE);
             auto stepReport = adaptiveTimeStepping_->step(timer, *solver_, event, tuningUpdater);
             report_ += stepReport;
-            //Pass simulation report to eclwriter for summary output
+            // Pass simulation report to eclwriter for summary output
             simulator_.problem().setSimulationReport(report_);
         } else {
             // solve for complete report step
@@ -540,11 +538,12 @@ public:
 
         // Increment timer, remember well state.
         ++timer;
-        
+
         if (terminalOutput_) {
-            std::string msg =
-                "Time step took " + std::to_string(solverTimer_->secsSinceStart()) + " seconds; "
-                "total solver time " + std::to_string(report_.success.solver_time) + " seconds.";
+            std::string msg = "Time step took " + std::to_string(solverTimer_->secsSinceStart())
+                + " seconds; "
+                  "total solver time "
+                + std::to_string(report_.success.solver_time) + " seconds.";
             OpmLog::debug(msg);
         }
 
@@ -573,9 +572,11 @@ public:
     }
 
     const Grid& grid() const
-    { return simulator_.vanguard().grid(); }
+    {
+        return simulator_.vanguard().grid();
+    }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(simulator_);
@@ -584,12 +585,13 @@ public:
     }
 
     const Model& model() const
-    { return solver_->model(); }
+    {
+        return solver_->model();
+    }
 
 protected:
     //! \brief Load simulator state from hdf5 serializer.
-    void loadState([[maybe_unused]] HDF5Serializer& serializer,
-                   [[maybe_unused]] const std::string& groupName) override
+    void loadState([[maybe_unused]] HDF5Serializer& serializer, [[maybe_unused]] const std::string& groupName) override
     {
 #if HAVE_HDF5
         serializer.read(*this, groupName, "simulator_data");
@@ -606,15 +608,11 @@ protected:
     }
 
     //! \brief Returns header data
-    std::array<std::string,5> getHeader() const override
+    std::array<std::string, 5> getHeader() const override
     {
         std::ostringstream str;
         Parameters::printValues(str);
-        return {"OPM Flow",
-                moduleVersion(),
-                compileTimestamp(),
-                simulator_.vanguard().caseName(),
-                str.str()};
+        return {"OPM Flow", moduleVersion(), compileTimestamp(), simulator_.vanguard().caseName(), str.str()};
     }
 
     //! \brief Returns local-to-global cell mapping.
@@ -625,17 +623,12 @@ protected:
 
     std::unique_ptr<Solver> createSolver(WellModel& wellModel)
     {
-        auto model = std::make_unique<Model>(simulator_,
-                                             modelParam_,
-                                             wellModel,
-                                             terminalOutput_);
+        auto model = std::make_unique<Model>(simulator_, modelParam_, wellModel, terminalOutput_);
 
         if (this->modelParam_.write_partitions_) {
             const auto& iocfg = this->eclState().cfg().io();
 
-            const auto odir = iocfg.getOutputDir()
-                / std::filesystem::path { "partition" }
-                / iocfg.getBaseName();
+            const auto odir = iocfg.getOutputDir() / std::filesystem::path {"partition"} / iocfg.getBaseName();
 
             if (this->grid().comm().rank() == 0) {
                 create_directories(odir);
@@ -652,11 +645,15 @@ protected:
     }
 
     const EclipseState& eclState() const
-    { return simulator_.vanguard().eclState(); }
+    {
+        return simulator_.vanguard().eclState();
+    }
 
 
     const Schedule& schedule() const
-    { return simulator_.vanguard().schedule(); }
+    {
+        return simulator_.vanguard().schedule();
+    }
 
     bool isRestart() const
     {
@@ -665,10 +662,14 @@ protected:
     }
 
     WellModel& wellModel_()
-    { return simulator_.problem().wellModel(); }
+    {
+        return simulator_.problem().wellModel();
+    }
 
     const WellModel& wellModel_() const
-    { return simulator_.problem().wellModel(); }
+    {
+        return simulator_.problem().wellModel();
+    }
 
     // Data.
     Simulator& simulator_;
@@ -687,12 +688,12 @@ protected:
     std::unique_ptr<time::StopWatch> totalTimer_;
     std::unique_ptr<TimeStepper> adaptiveTimeStepping_;
 
-    SimulatorConvergenceOutput convergence_output_{};
+    SimulatorConvergenceOutput convergence_output_ {};
 
 #ifdef RESERVOIR_COUPLING_ENABLED
-    bool slaveMode_{false};
-    std::unique_ptr<ReservoirCouplingMaster> reservoirCouplingMaster_{nullptr};
-    std::unique_ptr<ReservoirCouplingSlave> reservoirCouplingSlave_{nullptr};
+    bool slaveMode_ {false};
+    std::unique_ptr<ReservoirCouplingMaster> reservoirCouplingMaster_ {nullptr};
+    std::unique_ptr<ReservoirCouplingSlave> reservoirCouplingSlave_ {nullptr};
 #endif
 
     SimulatorSerializer serializer_;

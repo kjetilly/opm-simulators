@@ -32,16 +32,17 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-void WellConvergence<Scalar, IndexTraits>::
-checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
-                          const Tolerances& tolerances,
-                          const Scalar well_control_residual,
-                          const bool well_is_stopped, 
-                          ConvergenceReport& report,
-                          DeferredLogger& deferred_logger) const
+template <typename Scalar, typename IndexTraits>
+void
+WellConvergence<Scalar, IndexTraits>::checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
+                                                                const Tolerances& tolerances,
+                                                                const Scalar well_control_residual,
+                                                                const bool well_is_stopped,
+                                                                ConvergenceReport& report,
+                                                                DeferredLogger& deferred_logger) const
 {
     Scalar control_tolerance = 0.;
     using CR = ConvergenceReport;
@@ -52,11 +53,9 @@ checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
     if (well_is_stopped) {
         ctrltype = CR::WellFailure::Type::ControlRate;
         control_tolerance = tolerances.rates; // use smaller tolerance for zero control?
-    }
-    else if (well_.isInjector() )
-    {
+    } else if (well_.isInjector()) {
         auto current = ws.injection_cmode;
-        switch(current) {
+        switch (current) {
         case Well::InjectorCMode::THP:
             ctrltype = CR::WellFailure::Type::ControlTHP;
             control_tolerance = tolerances.thp;
@@ -75,15 +74,12 @@ checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
             control_tolerance = tolerances.grup;
             break;
         default:
-            OPM_DEFLOG_THROW(std::runtime_error,
-                             "Unknown well control control types for well " + well_.name(),
-                             deferred_logger);
+            OPM_DEFLOG_THROW(
+                std::runtime_error, "Unknown well control control types for well " + well_.name(), deferred_logger);
         }
-    }
-    else if (well_.isProducer() )
-    {
+    } else if (well_.isProducer()) {
         auto current = ws.production_cmode;
-        switch(current) {
+        switch (current) {
         case Well::ProducerCMode::THP:
             ctrltype = CR::WellFailure::Type::ControlTHP;
             control_tolerance = tolerances.thp;
@@ -106,9 +102,8 @@ checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
             control_tolerance = tolerances.grup;
             break;
         default:
-            OPM_DEFLOG_THROW(std::runtime_error,
-                             "Unknown well control control types for well " + well_.name(),
-                             deferred_logger);
+            OPM_DEFLOG_THROW(
+                std::runtime_error, "Unknown well control control types for well " + well_.name(), deferred_logger);
         }
     }
 
@@ -122,44 +117,44 @@ checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void WellConvergence<Scalar, IndexTraits>::
-checkConvergencePolyMW(const std::vector<Scalar>& res,
-                       const int Bhp,
-                       const Scalar maxResidualAllowed,
-                       ConvergenceReport& report) const
+template <typename Scalar, typename IndexTraits>
+void
+WellConvergence<Scalar, IndexTraits>::checkConvergencePolyMW(const std::vector<Scalar>& res,
+                                                             const int Bhp,
+                                                             const Scalar maxResidualAllowed,
+                                                             ConvergenceReport& report) const
 {
-  if (well_.isInjector()) {
-      //  checking the convergence of the perforation rates
-      const Scalar wat_vel_tol = 1.e-8;
-      const int dummy_component = -1;
-      using CR = ConvergenceReport;
-      const auto wat_vel_failure_type = CR::WellFailure::Type::MassBalance;
-      for (int perf = 0; perf < well_.numLocalPerfs(); ++perf) {
-          const Scalar wat_vel_residual = res[Bhp + 1 + perf];
-          if (std::isnan(wat_vel_residual)) {
-              report.setWellFailed({wat_vel_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});
-          } else if (wat_vel_residual > maxResidualAllowed * 10.) {
-              report.setWellFailed({wat_vel_failure_type, CR::Severity::TooLarge, dummy_component, well_.name()});
-          } else if (wat_vel_residual > wat_vel_tol) {
-              report.setWellFailed({wat_vel_failure_type, CR::Severity::Normal, dummy_component, well_.name()});
-          }
-      }
+    if (well_.isInjector()) {
+        //  checking the convergence of the perforation rates
+        const Scalar wat_vel_tol = 1.e-8;
+        const int dummy_component = -1;
+        using CR = ConvergenceReport;
+        const auto wat_vel_failure_type = CR::WellFailure::Type::MassBalance;
+        for (int perf = 0; perf < well_.numLocalPerfs(); ++perf) {
+            const Scalar wat_vel_residual = res[Bhp + 1 + perf];
+            if (std::isnan(wat_vel_residual)) {
+                report.setWellFailed({wat_vel_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});
+            } else if (wat_vel_residual > maxResidualAllowed * 10.) {
+                report.setWellFailed({wat_vel_failure_type, CR::Severity::TooLarge, dummy_component, well_.name()});
+            } else if (wat_vel_residual > wat_vel_tol) {
+                report.setWellFailed({wat_vel_failure_type, CR::Severity::Normal, dummy_component, well_.name()});
+            }
+        }
 
-      // checking the convergence of the skin pressure
-      const Scalar pskin_tol = 1000.; // 1000 pascal
-      const auto pskin_failure_type = CR::WellFailure::Type::Pressure;
-      for (int perf = 0; perf < well_.numLocalPerfs(); ++perf) {
-          const Scalar pskin_residual = res[Bhp + 1 + perf + well_.numLocalPerfs()];
-          if (std::isnan(pskin_residual)) {
-              report.setWellFailed({pskin_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});
-          } else if (pskin_residual > maxResidualAllowed * 10.) {
-              report.setWellFailed({pskin_failure_type, CR::Severity::TooLarge, dummy_component, well_.name()});
-          } else if (pskin_residual > pskin_tol) {
-              report.setWellFailed({pskin_failure_type, CR::Severity::Normal, dummy_component, well_.name()});
-          }
-      }
-  }
+        // checking the convergence of the skin pressure
+        const Scalar pskin_tol = 1000.; // 1000 pascal
+        const auto pskin_failure_type = CR::WellFailure::Type::Pressure;
+        for (int perf = 0; perf < well_.numLocalPerfs(); ++perf) {
+            const Scalar pskin_residual = res[Bhp + 1 + perf + well_.numLocalPerfs()];
+            if (std::isnan(pskin_residual)) {
+                report.setWellFailed({pskin_failure_type, CR::Severity::NotANumber, dummy_component, well_.name()});
+            } else if (pskin_residual > maxResidualAllowed * 10.) {
+                report.setWellFailed({pskin_failure_type, CR::Severity::TooLarge, dummy_component, well_.name()});
+            } else if (pskin_residual > pskin_tol) {
+                report.setWellFailed({pskin_failure_type, CR::Severity::Normal, dummy_component, well_.name()});
+            }
+        }
+    }
 }
 
 template class WellConvergence<double, BlackOilDefaultFluidSystemIndices>;
@@ -168,4 +163,4 @@ template class WellConvergence<double, BlackOilDefaultFluidSystemIndices>;
 template class WellConvergence<float, BlackOilDefaultFluidSystemIndices>;
 #endif
 
-}
+} // namespace Opm

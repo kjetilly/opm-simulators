@@ -28,11 +28,15 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 
-template<class Scalar>
+template <class Scalar>
 class ExtboContainer
 {
     using ScalarBuffer = std::vector<Scalar>;
@@ -40,22 +44,18 @@ class ExtboContainer
 public:
     void allocate(const unsigned bufferSize);
 
-    void assignMassFractions(const unsigned globalDofIdx,
-                             const Scalar gas,
-                             const Scalar oil,
-                             const Scalar co2);
+    void assignMassFractions(const unsigned globalDofIdx, const Scalar gas, const Scalar oil, const Scalar co2);
 
-    void assignVolumes(const unsigned globalDofIdx,
-                       const Scalar xVolume,
-                       const Scalar yVolume);
+    void assignVolumes(const unsigned globalDofIdx, const Scalar xVolume, const Scalar yVolume);
 
-    void assignZFraction(const unsigned globalDofIdx,
-                         const Scalar zFraction);
+    void assignZFraction(const unsigned globalDofIdx, const Scalar zFraction);
 
     void outputRestart(data::Solution& sol);
 
     bool allocated() const
-    { return allocated_; }
+    {
+        return allocated_;
+    }
 
 private:
     bool allocated_ = false;

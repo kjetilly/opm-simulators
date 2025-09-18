@@ -21,14 +21,14 @@
 #include <cusparse.h>
 #include <iostream>
 #include <memory>
-#include <stdexcept>
-#include <type_traits>
 #include <opm/common/ErrorMacros.hpp>
-#include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrixGeneric.hpp>
+#include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuMatrixDescription.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuSparseHandle.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
+#include <stdexcept>
+#include <type_traits>
 #include <vector>
 
 namespace Opm::gpuistl
@@ -60,17 +60,17 @@ class GpuSparseMatrix
 {
 public:
     using field_type = T;
-    
+
     /**
-    * @brief Maximum block size supported by this implementation.
-    * 
-    * This constant defines an upper bound on the block size to ensure reasonable compilation times.
-    * While this class itself could support larger values, functions that call dispatchOnBlocksize() 
-    * might have limitations. This value can be increased if needed, but will increase compilation time
-    * due to template instantiations.
-    */
+     * @brief Maximum block size supported by this implementation.
+     *
+     * This constant defines an upper bound on the block size to ensure reasonable compilation times.
+     * While this class itself could support larger values, functions that call dispatchOnBlocksize()
+     * might have limitations. This value can be increased if needed, but will increase compilation time
+     * due to template instantiations.
+     */
     static constexpr int max_block_size = 6;
-    
+
     //! Create the sparse matrix specified by the raw data.
     //!
     //! \note Prefer to use the constructor taking a const reference to a matrix instead.
@@ -85,11 +85,11 @@ public:
     //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as int due to
     //!       restrictions in the current version of cusparse. This might change in future versions.
     GpuSparseMatrix(const T* nonZeroElements,
-                   const int* rowIndices,
-                   const int* columnIndices,
-                   size_t numberOfNonzeroBlocks,
-                   size_t blockSize,
-                   size_t numberOfRows);
+                    const int* rowIndices,
+                    const int* columnIndices,
+                    size_t numberOfNonzeroBlocks,
+                    size_t blockSize,
+                    size_t numberOfRows);
 
     //! Create a sparse matrix by copying the sparsity structure of another matrix, not filling in the values
     //!
@@ -101,13 +101,11 @@ public:
     //!
     //! \note We assume numberOfNonzeroBlocks, blockSize and numberOfRows all are representable as int due to
     //!       restrictions in the current version of cusparse. This might change in future versions.
-    GpuSparseMatrix(const GpuVector<int>& rowIndices,
-                   const GpuVector<int>& columnIndices,
-                   size_t blockSize);
+    GpuSparseMatrix(const GpuVector<int>& rowIndices, const GpuVector<int>& columnIndices, size_t blockSize);
 
     GpuSparseMatrix(const GpuSparseMatrix&);
 
-    // We want to have this as non-mutable as possible, that is we do not want 
+    // We want to have this as non-mutable as possible, that is we do not want
     // to deal with changing matrix sizes and sparsity patterns.
     GpuSparseMatrix& operator=(const GpuSparseMatrix&) = delete;
 
@@ -331,17 +329,17 @@ public:
      * @param matrix the matrix to extract the non-zero values from
      * @note This assumes the given matrix has the same sparsity pattern.
      */
-     void updateNonzeroValues(const GpuSparseMatrix<T>& matrix);
+    void updateNonzeroValues(const GpuSparseMatrix<T>& matrix);
 
-     
+
     /**
      * @brief Dispatches a function based on the block size of the matrix.
-     * 
+     *
      * This method allows executing different code paths depending on the block size
      * of the matrix, up to the maximum block size specified by max_block_size.
      *
      * Use this function if you need the block size to be known at compile time.
-     * 
+     *
      * @tparam FunctionType Type of the function to be dispatched
      * @param function The function to be executed based on the block size
      * @return The result of the function execution
@@ -354,11 +352,11 @@ public:
      * });
      * \endcode
      */
-     template<class FunctionType>
-     auto dispatchOnBlocksize(FunctionType function) const
-     {
+    template <class FunctionType>
+    auto dispatchOnBlocksize(FunctionType function) const
+    {
         return dispatchOnBlocksizeImpl<max_block_size>(function);
-     }
+    }
 
 private:
     GpuVector<T> m_nonZeroElements;
@@ -382,7 +380,7 @@ private:
     template <class VectorType>
     void assertSameSize(const VectorType& vector) const;
 
-    template<int blockSizeCompileTime, class FunctionType>
+    template <int blockSizeCompileTime, class FunctionType>
     auto dispatchOnBlocksizeImpl(FunctionType function) const
     {
         if (blockSizeCompileTime == m_blockSize) {

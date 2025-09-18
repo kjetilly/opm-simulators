@@ -31,14 +31,12 @@
 
 template <typename Scalar>
 void
-Opm::Satfunc::PhaseChecks::ScaledSatfuncCheckPoint<Scalar>::
-populateCheckPoint(const int                        cellIdx,
-                   EclEpsScalingPointsInfo<Scalar>& endPoints) const
+Opm::Satfunc::PhaseChecks::ScaledSatfuncCheckPoint<Scalar>::populateCheckPoint(
+    const int cellIdx, EclEpsScalingPointsInfo<Scalar>& endPoints) const
 {
     this->unscaled_.populateCheckPoint(cellIdx, endPoints);
 
-    endPoints.extractScaled(*this->eclipseState_,
-                            *this->epsGridProps_, cellIdx);
+    endPoints.extractScaled(*this->eclipseState_, *this->epsGridProps_, cellIdx);
 }
 
 // ===========================================================================

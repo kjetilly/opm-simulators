@@ -30,13 +30,15 @@
 namespace Opm
 {
 
-template<typename Scalar, typename IndexTraits> class BlackoilWellModelGeneric;
+template <typename Scalar, typename IndexTraits>
+class BlackoilWellModelGeneric;
 class DeferredLogger;
 class Group;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 class WellTestState;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class GroupEconomicLimitsChecker
 {
 public:
@@ -57,18 +59,17 @@ public:
     int numProducersOpenInitially();
     int numProducersOpen();
     void activateEndRun();
-    std::string message_separator(const char sep_char = '*',
-                                  const size_t sep_length = 110) const
-    { return std::string(sep_length, sep_char); }
+    std::string message_separator(const char sep_char = '*', const size_t sep_length = 110) const
+    {
+        return std::string(sep_length, sep_char);
+    }
 
     static constexpr int NUM_PHASES = 3;
 
 private:
     void displayDebugMessage(const std::string& msg) const;
-    void addPrintMessage(const std::string& msg,
-                         const Scalar value,
-                         const Scalar limit,
-                         const UnitSystem::measure measure);
+    void
+    addPrintMessage(const std::string& msg, const Scalar value, const Scalar limit, const UnitSystem::measure measure);
     bool closeWellsRecursive(const Group& group, int level = 0);
     void throwNotImplementedError(const std::string& error) const;
 
@@ -84,12 +85,9 @@ private:
     const Schedule& schedule_;
     GroupEconProductionLimits::GEconGroupProp gecon_props_;
     bool debug_ = true;
-    std::array<Scalar,NUM_PHASES> production_rates_;
-    std::map<int, unsigned> phase_idx_map_ = {
-        {0, IndexTraits::oilPhaseIdx},
-        {1, IndexTraits::gasPhaseIdx},
-        {2, IndexTraits::waterPhaseIdx}
-    };
+    std::array<Scalar, NUM_PHASES> production_rates_;
+    std::map<int, unsigned> phase_idx_map_
+        = {{0, IndexTraits::oilPhaseIdx}, {1, IndexTraits::gasPhaseIdx}, {2, IndexTraits::waterPhaseIdx}};
     std::map<unsigned, int> phase_idx_reverse_map_;
     std::string message_;
 };

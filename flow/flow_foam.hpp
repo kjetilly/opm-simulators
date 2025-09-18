@@ -17,7 +17,8 @@
 #ifndef FLOW_FOAM_HPP
 #define FLOW_FOAM_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowFoamMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowFoamMain(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_foam binary.
 int flowFoamMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_FOAM_HPP

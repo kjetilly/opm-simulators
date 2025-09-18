@@ -45,55 +45,110 @@
 #include <utility>
 #include <vector>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct AllowDistributedWells { static constexpr bool value = false; };
-struct AllowSplittingInactiveWells { static constexpr bool value = true; };
+struct AllowDistributedWells {
+    static constexpr bool value = false;
+};
+struct AllowSplittingInactiveWells {
+    static constexpr bool value = true;
+};
 
-struct EclOutputInterval { static constexpr int value = -1; };
-struct EdgeWeightsMethod  { static constexpr auto value = "transmissibility"; };
-struct EnableDryRun { static constexpr auto value = "auto"; };
-struct EnableEclOutput { static constexpr auto value = true; };
-struct EnableOpmRstFile { static constexpr bool value = false; };
-struct ExternalPartition { static constexpr auto* value = ""; };
+struct EclOutputInterval {
+    static constexpr int value = -1;
+};
+struct EdgeWeightsMethod {
+    static constexpr auto value = "transmissibility";
+};
+struct EnableDryRun {
+    static constexpr auto value = "auto";
+};
+struct EnableEclOutput {
+    static constexpr auto value = true;
+};
+struct EnableOpmRstFile {
+    static constexpr bool value = false;
+};
+struct ExternalPartition {
+    static constexpr auto* value = "";
+};
 
-template<class Scalar>
-struct ImbalanceTol { static constexpr Scalar value = 1.1; };
+template <class Scalar>
+struct ImbalanceTol {
+    static constexpr Scalar value = 1.1;
+};
 
-struct IgnoreKeywords { static constexpr auto value = ""; };
-struct InputSkipMode { static constexpr auto value = "100"; };
-struct MetisParams { static constexpr auto value = "default"; };
+struct IgnoreKeywords {
+    static constexpr auto value = "";
+};
+struct InputSkipMode {
+    static constexpr auto value = "100";
+};
+struct MetisParams {
+    static constexpr auto value = "default";
+};
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
-struct NumJacobiBlocks { static constexpr int value = 0; };
+struct NumJacobiBlocks {
+    static constexpr int value = 0;
+};
 #endif // HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
 
-struct OwnerCellsFirst { static constexpr bool value = true; };
-struct ParsingStrictness { static constexpr auto value = "normal"; };
-struct ActionParsingStrictness { static constexpr auto value = "normal"; };
+struct OwnerCellsFirst {
+    static constexpr bool value = true;
+};
+struct ParsingStrictness {
+    static constexpr auto value = "normal";
+};
+struct ActionParsingStrictness {
+    static constexpr auto value = "normal";
+};
 
 /// 0: simple, 1: Zoltan, 2: METIS, 3: Zoltan with a all cells of a well
 /// represented by one vertex in the graph, see GridEnums.hpp
-struct PartitionMethod { static constexpr auto value = "zoltanwell"; };
-struct AddCorners { static constexpr bool value = false; };
-struct NumOverlap { static constexpr int value = 1; };
-struct EdgeConformal { static constexpr bool value = false; };
+struct PartitionMethod {
+    static constexpr auto value = "zoltanwell";
+};
+struct AddCorners {
+    static constexpr bool value = false;
+};
+struct NumOverlap {
+    static constexpr int value = 1;
+};
+struct EdgeConformal {
+    static constexpr bool value = false;
+};
 
-struct SchedRestart{ static constexpr bool value = false; };
-struct SerialPartitioning{ static constexpr bool value = false; };
+struct SchedRestart {
+    static constexpr bool value = false;
+};
+struct SerialPartitioning {
+    static constexpr bool value = false;
+};
 
-template<class Scalar>
-struct ZoltanImbalanceTol { static constexpr Scalar value = 1.1; };
+template <class Scalar>
+struct ZoltanImbalanceTol {
+    static constexpr Scalar value = 1.1;
+};
 
-struct ZoltanPhgEdgeSizeThreshold { static constexpr auto value = 0.35; };
+struct ZoltanPhgEdgeSizeThreshold {
+    static constexpr auto value = 0.35;
+};
 
-struct ZoltanParams { static constexpr auto value = "graph"; };
+struct ZoltanParams {
+    static constexpr auto value = "graph";
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
-namespace Action { class State; }
+namespace Action
+{
+    class State;
+}
 class Deck;
 class EclipseState;
 struct NumericalAquiferCell;
@@ -105,9 +160,10 @@ class SummaryState;
 class UDQState;
 class WellTestState;
 
-class FlowGenericVanguard {
+class FlowGenericVanguard
+{
 public:
-    using ParallelWellStruct = std::vector<std::pair<std::string,bool>>;
+    using ParallelWellStruct = std::vector<std::pair<std::string, bool>>;
 
     struct SimulationModelParams {
         double setupTime_;
@@ -149,7 +205,9 @@ public:
      * \brief Returns the wall time required to set up the simulator before it was born.
      */
     double setupTime()
-    { return setupTime_; }
+    {
+        return setupTime_;
+    }
 
     /*!
      * \brief Read a deck.
@@ -166,39 +224,53 @@ public:
      * \brief Return a reference to the internalized ECL deck.
      */
     const EclipseState& eclState() const
-    { return *eclState_; }
+    {
+        return *eclState_;
+    }
 
     EclipseState& eclState()
-    { return *eclState_; }
+    {
+        return *eclState_;
+    }
 
     /*!
      * \brief Return a reference to the object that managages the ECL schedule.
      */
     const Schedule& schedule() const
-    { return *eclSchedule_; }
+    {
+        return *eclSchedule_;
+    }
 
     Schedule& schedule()
-    { return *eclSchedule_; }
+    {
+        return *eclSchedule_;
+    }
 
     /*!
      * \brief Return a reference to the object that determines which quantities ought to
      *        be put into the ECL summary output.
      */
     const SummaryConfig& summaryConfig() const
-    { return *eclSummaryConfig_; }
+    {
+        return *eclSummaryConfig_;
+    }
 
     /*!
-    * \brief Returns the summary state
-    *
-    * The summary state is a small container object for
-    * computed, ready to use summary values. The values will typically be used by
-    * the UDQ, WTEST and ACTIONX calculations.
-    */
+     * \brief Returns the summary state
+     *
+     * The summary state is a small container object for
+     * computed, ready to use summary values. The values will typically be used by
+     * the UDQ, WTEST and ACTIONX calculations.
+     */
     SummaryState& summaryState()
-    { return *summaryState_; }
+    {
+        return *summaryState_;
+    }
 
     const SummaryState& summaryState() const
-    { return *summaryState_; }
+    {
+        return *summaryState_;
+    }
 
     /*!
      * \brief Returns the action state
@@ -206,10 +278,14 @@ public:
      * The ActionState keeps track of how many times the various actions have run.
      */
     Action::State& actionState()
-    { return *actionState_; }
+    {
+        return *actionState_;
+    }
 
     const Action::State& actionState() const
-    { return *actionState_; }
+    {
+        return *actionState_;
+    }
 
     /*!
      * \brief Returns the udq state
@@ -217,12 +293,17 @@ public:
      * The UDQState keeps track of the result of UDQ evaluations.
      */
     UDQState& udqState()
-    { return *udqState_; }
+    {
+        return *udqState_;
+    }
 
     const UDQState& udqState() const
-    { return *udqState_; }
+    {
+        return *udqState_;
+    }
 
-    std::unique_ptr<WellTestState> transferWTestState() {
+    std::unique_ptr<WellTestState> transferWTestState()
+    {
         return std::move(this->wtestState_);
     }
 
@@ -234,13 +315,17 @@ public:
      * deck is loaded with the ".DATA" suffix removed.
      */
     const std::string& caseName() const
-    { return caseName_; }
+    {
+        return caseName_;
+    }
 
     /*!
      * \brief Parameter deciding the edge-weight strategy of the load balancer.
      */
     Dune::EdgeWeightMethod edgeWeightsMethod() const
-    { return edgeWeightsMethod_; }
+    {
+        return edgeWeightsMethod_;
+    }
 
     /*!
      * \brief Number of blocks in the Block-Jacobi preconditioner.
@@ -258,30 +343,42 @@ public:
      * \brief Parameter that decide if cells owned by rank are ordered before ghost cells.
      */
     bool ownersFirst() const
-    { return ownersFirst_; }
+    {
+        return ownersFirst_;
+    }
 
     bool edgeConformal() const
-    { return edgeConformal_; }
+    {
+        return edgeConformal_;
+    }
 
 #if HAVE_MPI
     bool addCorners() const
-    { return addCorners_; }
+    {
+        return addCorners_;
+    }
 
     int numOverlap() const
-    { return numOverlap_; }
+    {
+        return numOverlap_;
+    }
 
     /*!
      * \brief Parameter deciding which partition method to use
      */
     Dune::PartitionMethod partitionMethod() const
-    { return partitionMethod_; }
+    {
+        return partitionMethod_;
+    }
 
     /*!
      * \brief Parameter that decides if partitioning for parallel runs
      *        should be performed on a single process only.
      */
     bool serialPartitioning() const
-    { return serialPartitioning_; }
+    {
+        return serialPartitioning_;
+    }
 
     /*!
      * \brief Parameter that sets the imbalance tolarance, depending on the
@@ -309,14 +406,18 @@ public:
      * \brief Whether perforations of a well might be distributed.
      */
     bool enableDistributedWells() const
-    { return enableDistributedWells_; }
+    {
+        return enableDistributedWells_;
+    }
 
     /*!
      * \brief Whether or not to emit result files that are compatible with
      * a commercial reservoir simulator.
      */
     bool enableEclOutput() const
-    { return enableEclOutput_; }
+    {
+        return enableEclOutput_;
+    }
 
     /*!
      * \brief Retrieve collection (a vector of pairs) of well names and
@@ -326,11 +427,15 @@ public:
      * Will only have usable values for CpGrid.
      */
     const ParallelWellStruct& parallelWells() const
-    { return parallelWells_; }
+    {
+        return parallelWells_;
+    }
 
     //! \brief Set global communication.
     static void setCommunication(std::unique_ptr<Opm::Parallel::Communication> comm)
-    { comm_ = std::move(comm); }
+    {
+        comm_ = std::move(comm);
+    }
 
     //! \brief Obtain global communicator.
     static Parallel::Communication& comm()
@@ -341,15 +446,14 @@ public:
 
     // Private to avoid pulling schedule in header.
     // Static state is not serialized, only use for restart.
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer);
 
     // Only compares dynamic state.
     bool operator==(const FlowGenericVanguard& rhs) const;
 
 protected:
-    void updateOutputDir_(std::string outputDir,
-                          bool enableEclCompatFile);
+    void updateOutputDir_(std::string outputDir, bool enableEclCompatFile);
 
     void updateNOSIM_(std::string_view enableDryRun);
 
@@ -359,7 +463,7 @@ protected:
 
     void init();
 
-    template<class Scalar>
+    template <class Scalar>
     static void registerParameters_();
 
     double setupTime_;
@@ -372,7 +476,7 @@ protected:
     Dune::EdgeWeightMethod edgeWeightsMethod_;
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
-    int numJacobiBlocks_{0};
+    int numJacobiBlocks_ {0};
 #endif // HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
 
     bool ownersFirst_;
@@ -393,7 +497,7 @@ protected:
 
     std::string metisParams_;
 
-    std::string externalPartitionFile_{};
+    std::string externalPartitionFile_ {};
 #endif // HAVE_MPI
 
     bool enableDistributedWells_;
