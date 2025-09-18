@@ -17,7 +17,8 @@
 #ifndef FLOW_BRINE_PRECSALT_VAPWAT_HPP
 #define FLOW_BRINE_PRECSALT_VAPWAT_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool out
 //! \brief Main function used in flow_brine binary.
 int flowBrinePrecsaltVapwatMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_BRINE_PRECSALT_VAPWAT_HPP

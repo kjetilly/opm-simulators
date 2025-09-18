@@ -110,7 +110,8 @@ public:
         return false;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return false;
     }
 

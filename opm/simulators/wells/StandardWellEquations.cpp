@@ -30,9 +30,9 @@
 #include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
 #endif
 
+#include <opm/simulators/linalg/SmallDenseMatrixUtils.hpp>
 #include <opm/simulators/linalg/istlsparsematrixadapter.hh>
 #include <opm/simulators/linalg/matrixblock.hh>
-#include <opm/simulators/linalg/SmallDenseMatrixUtils.hpp>
 #include <opm/simulators/wells/WellInterfaceGeneric.hpp>
 
 #include <algorithm>
@@ -42,21 +42,20 @@
 namespace Opm
 {
 
-template<typename Scalar, typename IndexTraits, int numEq>
-StandardWellEquations<Scalar, IndexTraits, numEq>::
-StandardWellEquations(const ParallelWellInfo<Scalar>& parallel_well_info)
+template <typename Scalar, typename IndexTraits, int numEq>
+StandardWellEquations<Scalar, IndexTraits, numEq>::StandardWellEquations(
+    const ParallelWellInfo<Scalar>& parallel_well_info)
     : parallelB_(duneB_, parallel_well_info)
 {
     duneB_.setBuildMode(OffDiagMatWell::row_wise);
-    duneC_.setBuildMode(OffDiagMatWell::row_wise),
-    invDuneD_.setBuildMode(DiagMatWell::row_wise);
+    duneC_.setBuildMode(OffDiagMatWell::row_wise), invDuneD_.setBuildMode(DiagMatWell::row_wise);
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-init(const int numWellEq,
-     const int numPerfs,
-     const std::vector<int>& cells)
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::init(const int numWellEq,
+                                                        const int numPerfs,
+                                                        const std::vector<int>& cells)
 {
     // setup sparsity pattern for the matrices
     //[A C^T    [x    =  [ res
@@ -66,29 +65,26 @@ init(const int numWellEq,
     duneB_.setSize(1, numPerfs, numPerfs);
     duneC_.setSize(1, numPerfs, numPerfs);
 
-    for (auto row = duneD_.createbegin(),
-              end = duneD_.createend(); row != end; ++row) {
+    for (auto row = duneD_.createbegin(), end = duneD_.createend(); row != end; ++row) {
         // Add nonzeros for diagonal
         row.insert(row.index());
     }
-      // the block size is run-time determined now
+    // the block size is run-time determined now
     duneD_[0][0].resize(numWellEq, numWellEq);
 
-    for (auto row = duneB_.createbegin(),
-              end = duneB_.createend(); row != end; ++row) {
-        for (int perf = 0 ; perf < numPerfs; ++perf) {
+    for (auto row = duneB_.createbegin(), end = duneB_.createend(); row != end; ++row) {
+        for (int perf = 0; perf < numPerfs; ++perf) {
             row.insert(perf);
         }
     }
 
-    for (int perf = 0 ; perf < numPerfs; ++perf) {
+    for (int perf = 0; perf < numPerfs; ++perf) {
         // the block size is run-time determined now
         duneB_[0][perf].resize(numWellEq, numEq);
     }
 
-         // make the C^T matrix
-    for (auto row = duneC_.createbegin(),
-              end = duneC_.createend(); row != end; ++row) {
+    // make the C^T matrix
+    for (auto row = duneC_.createbegin(), end = duneC_.createend(); row != end; ++row) {
         for (int perf = 0; perf < numPerfs; ++perf) {
             row.insert(perf);
         }
@@ -117,8 +113,9 @@ init(const int numWellEq,
     cells_ = cells;
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::clear()
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::clear()
 {
     duneB_ = 0.0;
     duneC_ = 0.0;
@@ -126,8 +123,9 @@ void StandardWellEquations<Scalar, IndexTraits, numEq>::clear()
     resWell_ = 0.0;
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::apply(const BVector& x, BVector& Ax) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::apply(const BVector& x, BVector& Ax) const
 {
     assert(Bx_.size() == duneB_.N());
     assert(invDrw_.size() == invDuneD_.N());
@@ -145,8 +143,9 @@ void StandardWellEquations<Scalar, IndexTraits, numEq>::apply(const BVector& x, 
     duneC_.mmtv(invDBx, Ax);
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::apply(BVector& r) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::apply(BVector& r) const
 {
     assert(invDrw_.size() == invDuneD_.N());
 
@@ -156,8 +155,9 @@ void StandardWellEquations<Scalar, IndexTraits, numEq>::apply(BVector& r) const
     duneC_.mmtv(invDrw_, r);
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::invert()
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::invert()
 {
     try {
         invDuneD_ = duneD_; // Not strictly need if not cpr with well contributions is used
@@ -171,21 +171,23 @@ void StandardWellEquations<Scalar, IndexTraits, numEq>::invert()
     }
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::solve(BVectorWell& dx_well) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::solve(BVectorWell& dx_well) const
 {
     invDuneD_.mv(resWell_, dx_well);
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::solve(const BVectorWell& rhs_well, BVectorWell& x_well) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::solve(const BVectorWell& rhs_well, BVectorWell& x_well) const
 {
     invDuneD_.mv(rhs_well, x_well);
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-recoverSolutionWell(const BVector& x, BVectorWell& xw) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::recoverSolutionWell(const BVector& x, BVectorWell& xw) const
 {
     BVectorWell resWell = resWell_;
     // resWell = resWell - B * x
@@ -195,10 +197,10 @@ recoverSolutionWell(const BVector& x, BVectorWell& xw) const
 }
 
 #if COMPILE_GPU_BRIDGE
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-extract(const int numStaticWellEq,
-        WellContributions<Scalar>& wellContribs) const
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::extract(const int numStaticWellEq,
+                                                           WellContributions<Scalar>& wellContribs) const
 {
     std::vector<int> colIndices;
     std::vector<Scalar> nnzValues;
@@ -206,9 +208,7 @@ extract(const int numStaticWellEq,
     nnzValues.reserve(duneB_.nonzeroes() * numStaticWellEq * numEq);
 
     // duneC
-    for (auto colC = duneC_[0].begin(),
-              endC = duneC_[0].end(); colC != endC; ++colC )
-    {
+    for (auto colC = duneC_[0].begin(), endC = duneC_[0].end(); colC != endC; ++colC) {
         colIndices.emplace_back(cells_[colC.index()]);
         for (int i = 0; i < numStaticWellEq; ++i) {
             for (int j = 0; j < numEq; ++j) {
@@ -216,28 +216,24 @@ extract(const int numStaticWellEq,
             }
         }
     }
-    wellContribs.addMatrix(WellContributions<Scalar>::MatrixType::C,
-                           colIndices.data(), nnzValues.data(), duneC_.nonzeroes());
+    wellContribs.addMatrix(
+        WellContributions<Scalar>::MatrixType::C, colIndices.data(), nnzValues.data(), duneC_.nonzeroes());
 
     // invDuneD
     colIndices.clear();
     nnzValues.clear();
     colIndices.emplace_back(0);
-    for (int i = 0; i < numStaticWellEq; ++i)
-    {
+    for (int i = 0; i < numStaticWellEq; ++i) {
         for (int j = 0; j < numStaticWellEq; ++j) {
             nnzValues.emplace_back(invDuneD_[0][0][i][j]);
         }
     }
-    wellContribs.addMatrix(WellContributions<Scalar>::MatrixType::D,
-                           colIndices.data(), nnzValues.data(), 1);
+    wellContribs.addMatrix(WellContributions<Scalar>::MatrixType::D, colIndices.data(), nnzValues.data(), 1);
 
     // duneB
     colIndices.clear();
     nnzValues.clear();
-    for (auto colB = duneB_[0].begin(),
-              endB = duneB_[0].end(); colB != endB; ++colB )
-    {
+    for (auto colB = duneB_[0].begin(), endB = duneB_[0].end(); colB != endB; ++colB) {
         colIndices.emplace_back(cells_[colB.index()]);
         for (int i = 0; i < numStaticWellEq; ++i) {
             for (int j = 0; j < numEq; ++j) {
@@ -245,15 +241,15 @@ extract(const int numStaticWellEq,
             }
         }
     }
-    wellContribs.addMatrix(WellContributions<Scalar>::MatrixType::B,
-                           colIndices.data(), nnzValues.data(), duneB_.nonzeroes());
+    wellContribs.addMatrix(
+        WellContributions<Scalar>::MatrixType::B, colIndices.data(), nnzValues.data(), duneB_.nonzeroes());
 }
 #endif
 
-template<typename Scalar, typename IndexTraits, int numEq>
-template<class SparseMatrixAdapter>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-extract(SparseMatrixAdapter& jacobian) const
+template <typename Scalar, typename IndexTraits, int numEq>
+template <class SparseMatrixAdapter>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::extract(SparseMatrixAdapter& jacobian) const
 {
     // We need to change matrx A as follows
     // A -= C^T D^-1 B
@@ -262,15 +258,11 @@ extract(SparseMatrixAdapter& jacobian) const
     // at (0,j) only if this well has a perforation at cell j.
     typename SparseMatrixAdapter::MatrixBlock tmpMat;
     Dune::DynamicMatrix<Scalar> tmp;
-    for (auto colC = duneC_[0].begin(),
-              endC = duneC_[0].end(); colC != endC; ++colC)
-    {
+    for (auto colC = duneC_[0].begin(), endC = duneC_[0].end(); colC != endC; ++colC) {
         // map the well perforated cell index to global cell index
         const auto row_index = this->cells_[colC.index()];
 
-        for (auto colB = duneB_[0].begin(),
-                  endB = duneB_[0].end(); colB != endB; ++colB)
-        {
+        for (auto colB = duneB_[0].begin(), endB = duneB_[0].end(); colB != endB; ++colB) {
             // map the well perforated cell index to global cell index
             const auto col_index = this->cells_[colB.index()];
             detail::multMatrix(invDuneD_[0][0], (*colB), tmp);
@@ -280,23 +272,24 @@ extract(SparseMatrixAdapter& jacobian) const
     }
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-unsigned int StandardWellEquations<Scalar, IndexTraits, numEq>::
-getNumBlocks() const
+template <typename Scalar, typename IndexTraits, int numEq>
+unsigned int
+StandardWellEquations<Scalar, IndexTraits, numEq>::getNumBlocks() const
 {
     return duneB_.nonzeroes();
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-template<class PressureMatrix>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-extractCPRPressureMatrix(PressureMatrix& jacobian,
-                         const BVector& weights,
-                         const int pressureVarIndex,
-                         const bool use_well_weights,
-                         const WellInterfaceGeneric<Scalar, IndexTraits>& well,
-                         const int bhp_var_index,
-                         const WellState<Scalar, IndexTraits>& well_state) const
+template <typename Scalar, typename IndexTraits, int numEq>
+template <class PressureMatrix>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::extractCPRPressureMatrix(
+    PressureMatrix& jacobian,
+    const BVector& weights,
+    const int pressureVarIndex,
+    const bool use_well_weights,
+    const WellInterfaceGeneric<Scalar, IndexTraits>& well,
+    const int bhp_var_index,
+    const WellState<Scalar, IndexTraits>& well_state) const
 {
     // This adds pressure quation for cpr
     // For use_well_weights=true
@@ -305,22 +298,22 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
     // For use_well_weights = false
     //    weights lambda = \sum_i w /n where ths sum is over weights of all perforation cells
     //    in the case of pressure controlled trivial equations are used and bhp  C=B=0
-    //    then the flow part of the well equations are summed lambda'*B(1:n,pressureVarInd) -> B lambda'*D(1:n,bhpInd) -> D
+    //    then the flow part of the well equations are summed lambda'*B(1:n,pressureVarInd) -> B lambda'*D(1:n,bhpInd)
+    //    -> D
     // For bouth
     //    C -> w'C(:,bhpInd) where w is weights of the perforation cell
 
     // Add the well contributions in cpr
     // use_well_weights is a quasiimpes formulation which is not implemented in multisegment
     int nperf = 0;
-    auto cell_weights = weights[0];// not need for not(use_well_weights)
+    auto cell_weights = weights[0]; // not need for not(use_well_weights)
     cell_weights = 0.0;
     const int number_cells = weights.size();
     const int welldof_ind = number_cells + well.indexOfWell();
     // do not assume anything about pressure controlled with use_well_weights (work fine with the assumtion also)
     if (!well.isPressureControlled(well_state) || use_well_weights) {
         // make coupling for reservoir to well
-        for (auto colC = duneC_[0].begin(),
-                  endC = duneC_[0].end(); colC != endC; ++colC) {
+        for (auto colC = duneC_[0].begin(), endC = duneC_[0].end(); colC != endC; ++colC) {
             // map the well perforated cell index to global cell index
             const auto row_index = cells_[colC.index()];
             const auto& bw = weights[row_index];
@@ -344,22 +337,21 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
         cell_weights = 1.;
     }
 
-    BVectorWell  bweights(1);
+    BVectorWell bweights(1);
     std::size_t blockSz = duneD_[0][0].N();
     bweights[0].resize(blockSz);
     bweights[0] = 0.0;
     Scalar diagElem = 0;
-    if (use_well_weights ) {
+    if (use_well_weights) {
         // calculate weighs and set diagonal element
-        //NB! use this options without treating pressure controlled separated
-        //NB! calculate quasiimpes well weights NB do not work well with trueimpes reservoir weights
+        // NB! use this options without treating pressure controlled separated
+        // NB! calculate quasiimpes well weights NB do not work well with trueimpes reservoir weights
         Scalar abs_max = 0;
         BVectorWell rhs(1);
         rhs[0].resize(blockSz);
         rhs[0][bhp_var_index] = 1.0;
         DiagMatrixBlockWellType inv_diag_block = invDuneD_[0][0];
-        DiagMatrixBlockWellType inv_diag_block_transpose =
-            Opm::wellhelpers::transposeDenseDynMatrix(inv_diag_block);
+        DiagMatrixBlockWellType inv_diag_block_transpose = Opm::wellhelpers::transposeDenseDynMatrix(inv_diag_block);
         for (std::size_t i = 0; i < blockSz; ++i) {
             bweights[0][i] = 0;
             for (std::size_t j = 0; j < blockSz; ++j) {
@@ -375,7 +367,7 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
     } else {
         // set diagonal element
         if (well.isPressureControlled(well_state)) {
-            bweights[0][blockSz-1] = 1.0;
+            bweights[0][blockSz - 1] = 1.0;
             diagElem = 1.0; // better scaling could have used the calculation below if weights were calculated
         } else {
             // The first (blockSz - 1) block weights will scale the
@@ -385,7 +377,7 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
             for (std::size_t i = 0; i < blockSz - 1; ++i) {
                 bweights[0][i] = cell_weights[i];
             }
-            bweights[0][blockSz-1] = 0.0;
+            bweights[0][blockSz - 1] = 0.0;
             diagElem = 0.0;
             const auto& locmat = duneD_[0][0];
             // For some models such as MICP, cell_weights.size() is larger than
@@ -395,55 +387,53 @@ extractCPRPressureMatrix(PressureMatrix& jacobian,
             for (std::size_t i = 0; i < blockSz - 1; ++i) {
                 diagElem += locmat[i][bhp_var_index] * cell_weights[i];
             }
-
         }
     }
     //
     jacobian[welldof_ind][welldof_ind] = diagElem;
     // set the matrix elements for well reservoir coupling
     if (!well.isPressureControlled(well_state) || use_well_weights) {
-        for (auto colB = duneB_[0].begin(),
-                  endB = duneB_[0].end(); colB != endB; ++colB) {
+        for (auto colB = duneB_[0].begin(), endB = duneB_[0].end(); colB != endB; ++colB) {
             // map the well perforated cell index to global cell index
             const auto col_index = cells_[colB.index()];
             const auto& bw = bweights[0];
             Scalar matel = 0;
             for (std::size_t i = 0; i < bw.size(); ++i) {
-                 matel += (*colB)[i][pressureVarIndex] * bw[i];
+                matel += (*colB)[i][pressureVarIndex] * bw[i];
             }
             jacobian[welldof_ind][col_index] = matel;
         }
     }
 }
 
-template<typename Scalar, typename IndexTraits, int numEq>
-void StandardWellEquations<Scalar, IndexTraits, numEq>::
-sumDistributed(Parallel::Communication comm)
+template <typename Scalar, typename IndexTraits, int numEq>
+void
+StandardWellEquations<Scalar, IndexTraits, numEq>::sumDistributed(Parallel::Communication comm)
 {
-  // accumulate resWell_ and duneD_ in parallel to get effects of all perforations (might be distributed)
+    // accumulate resWell_ and duneD_ in parallel to get effects of all perforations (might be distributed)
     wellhelpers::sumDistributedWellEntries(duneD_[0][0], resWell_[0], comm);
 }
 
-#define INSTANTIATE(T,N)                                                              \
-    template class StandardWellEquations<T,BlackOilDefaultFluidSystemIndices,N>;                                        \
-    template void StandardWellEquations<T,BlackOilDefaultFluidSystemIndices,N>::                                        \
-        extract(Linear::IstlSparseMatrixAdapter<MatrixBlock<T,N,N>>&) const;          \
-    template void StandardWellEquations<T,BlackOilDefaultFluidSystemIndices,N>::                                        \
-        extractCPRPressureMatrix(Dune::BCRSMatrix<MatrixBlock<T,1,1>>&,               \
-                                 const typename StandardWellEquations<T,BlackOilDefaultFluidSystemIndices,N>::BVector&, \
-                                 const int,                                           \
-                                 const bool,                                          \
-                                 const WellInterfaceGeneric<T,BlackOilDefaultFluidSystemIndices>&,                      \
-                                 const int,                                           \
-                                 const WellState<T,BlackOilDefaultFluidSystemIndices>&) const;
+#define INSTANTIATE(T, N)                                                                                              \
+    template class StandardWellEquations<T, BlackOilDefaultFluidSystemIndices, N>;                                     \
+    template void StandardWellEquations<T, BlackOilDefaultFluidSystemIndices, N>::extract(                             \
+        Linear::IstlSparseMatrixAdapter<MatrixBlock<T, N, N>>&) const;                                                 \
+    template void StandardWellEquations<T, BlackOilDefaultFluidSystemIndices, N>::extractCPRPressureMatrix(            \
+        Dune::BCRSMatrix<MatrixBlock<T, 1, 1>>&,                                                                       \
+        const typename StandardWellEquations<T, BlackOilDefaultFluidSystemIndices, N>::BVector&,                       \
+        const int,                                                                                                     \
+        const bool,                                                                                                    \
+        const WellInterfaceGeneric<T, BlackOilDefaultFluidSystemIndices>&,                                             \
+        const int,                                                                                                     \
+        const WellState<T, BlackOilDefaultFluidSystemIndices>&) const;
 
-#define INSTANTIATE_TYPE(T) \
-    INSTANTIATE(T,1)        \
-    INSTANTIATE(T,2)        \
-    INSTANTIATE(T,3)        \
-    INSTANTIATE(T,4)        \
-    INSTANTIATE(T,5)        \
-    INSTANTIATE(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    INSTANTIATE(T, 1)                                                                                                  \
+    INSTANTIATE(T, 2)                                                                                                  \
+    INSTANTIATE(T, 3)                                                                                                  \
+    INSTANTIATE(T, 4)                                                                                                  \
+    INSTANTIATE(T, 5)                                                                                                  \
+    INSTANTIATE(T, 6)
 
 INSTANTIATE_TYPE(double)
 
@@ -451,4 +441,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-}
+} // namespace Opm

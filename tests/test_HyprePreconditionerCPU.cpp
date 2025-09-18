@@ -29,8 +29,8 @@
 #include "MpiFixture.hpp"
 
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 
@@ -53,12 +53,14 @@ BOOST_FIXTURE_TEST_CASE(TestHyprePreconditioner_CpuInputCpuBackend, HypreTestFix
     testHyprePreconditioner<Matrix, Vector>(matrix, false);
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

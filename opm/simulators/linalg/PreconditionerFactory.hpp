@@ -28,9 +28,9 @@
 #include <dune/istl/paamg/matrixhierarchy.hh>
 
 #include <cstddef>
+#include <limits>
 #include <map>
 #include <memory>
-#include <limits>
 #include <string>
 
 namespace Opm
@@ -39,8 +39,7 @@ namespace Opm
 class PropertyTree;
 
 template <class Operator, class Comm, class Matrix, class Vector>
-struct AMGHelper
-{
+struct AMGHelper {
     using PrecPtr = std::shared_ptr<Dune::PreconditionerWithUpdate<Vector, Vector>>;
     using CriterionBase
         = Dune::Amg::AggregationCriterion<Dune::Amg::SymmetricDependency<Matrix, Dune::Amg::FirstDiagonal>>;
@@ -49,9 +48,7 @@ struct AMGHelper
     static Criterion criterion(const PropertyTree& prm);
 
     template <class Smoother>
-    static PrecPtr makeAmgPreconditioner(const Operator& op,
-                                         const PropertyTree& prm,
-                                         bool useKamg = false);
+    static PrecPtr makeAmgPreconditioner(const Operator& op, const PropertyTree& prm, bool useKamg = false);
 };
 
 /// This is an object factory for creating preconditioners.  The
@@ -71,10 +68,10 @@ public:
     using PrecPtr = std::shared_ptr<Dune::PreconditionerWithUpdate<Vector, Vector>>;
 
     /// The type of creator functions passed to addCreator().
-    using Creator = std::function<PrecPtr(const Operator&, const PropertyTree&,
-                                          const std::function<Vector()>&, std::size_t)>;
-    using ParCreator = std::function<PrecPtr(const Operator&, const PropertyTree&,
-                                             const std::function<Vector()>&, std::size_t, const Comm&)>;
+    using Creator
+        = std::function<PrecPtr(const Operator&, const PropertyTree&, const std::function<Vector()>&, std::size_t)>;
+    using ParCreator = std::function<PrecPtr(
+        const Operator&, const PropertyTree&, const std::function<Vector()>&, std::size_t, const Comm&)>;
 
     /// Create a new serial preconditioner and return a pointer to it.
     /// \param op    operator to be preconditioned.
@@ -82,7 +79,8 @@ public:
     /// \param weightsCalculator Calculator for weights used in CPR.
     /// \param pressureIndex Index for pressure equation.
     /// \return      (smart) pointer to the created preconditioner.
-    static PrecPtr create(const Operator& op, const PropertyTree& prm,
+    static PrecPtr create(const Operator& op,
+                          const PropertyTree& prm,
                           const std::function<Vector()>& weightsCalculator = {},
                           std::size_t pressureIndex = std::numeric_limits<std::size_t>::max());
 
@@ -93,8 +91,10 @@ public:
     /// \param weightsCalculator Calculator for weights used in CPR.
     /// \param pressureIndex Index for pressure equation.
     /// \return      (smart) pointer to the created preconditioner.
-    static PrecPtr create(const Operator& op, const PropertyTree& prm,
-                          const std::function<Vector()>& weightsCalculator, const Comm& comm,
+    static PrecPtr create(const Operator& op,
+                          const PropertyTree& prm,
+                          const std::function<Vector()>& weightsCalculator,
+                          const Comm& comm,
                           std::size_t pressureIndex = std::numeric_limits<std::size_t>::max());
 
     /// Create a new parallel preconditioner and return a pointer to it.
@@ -103,7 +103,9 @@ public:
     /// \param comm  communication object (typically OwnerOverlapCopyCommunication).
     /// \param pressureIndex Index for pressure equation.
     /// \return      (smart) pointer to the created preconditioner.
-    static PrecPtr create(const Operator& op, const PropertyTree& prm, const Comm& comm,
+    static PrecPtr create(const Operator& op,
+                          const PropertyTree& prm,
+                          const Comm& comm,
                           std::size_t pressureIndex = std::numeric_limits<std::size_t>::max());
 
     /// Add a creator for a serial preconditioner to the PreconditionerFactory.
@@ -138,13 +140,16 @@ private:
     PreconditionerFactory();
 
     // Actually creates the product object.
-    PrecPtr doCreate(const Operator& op, const PropertyTree& prm,
+    PrecPtr doCreate(const Operator& op,
+                     const PropertyTree& prm,
                      const std::function<Vector()> weightsCalculator,
                      std::size_t pressureIndex);
 
-    PrecPtr doCreate(const Operator& op, const PropertyTree& prm,
+    PrecPtr doCreate(const Operator& op,
+                     const PropertyTree& prm,
                      const std::function<Vector()> weightsCalculator,
-                     std::size_t pressureIndex, const Comm& comm);
+                     std::size_t pressureIndex,
+                     const Comm& comm);
 
     // Actually adds the creator.
     void doAddCreator(const std::string& type, Creator c);
@@ -155,9 +160,9 @@ private:
     // This map contains the whole factory, i.e. all the Creators.
     std::map<std::string, Creator> creators_;
     std::map<std::string, ParCreator> parallel_creators_;
-    bool defAdded_= false; //!< True if defaults creators have been added
+    bool defAdded_ = false; //!< True if defaults creators have been added
 };
 
-} // namespace Dune
+} // namespace Opm
 
 #endif // OPM_PRECONDITIONERFACTORY_HEADER

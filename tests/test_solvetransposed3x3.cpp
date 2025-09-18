@@ -31,31 +31,20 @@
 
 #include <dune/istl/bcrsmatrix.hh>
 
-#include <opm/simulators/linalg/gpubridge/opencl/openclCPR.hpp>
 #include <opm/simulators/linalg/gpubridge/Misc.hpp>
+#include <opm/simulators/linalg/gpubridge/opencl/openclCPR.hpp>
 
 BOOST_AUTO_TEST_CASE(testsolvetransposed3x3)
 {
     const unsigned numTests = 3;
     const unsigned blockSize = 3;
 
-    std::vector<std::vector<double> > A = {{4, 2, 1,
-                                            3, 4, 2,
-                                            2, 4, 3},
-                                           {1, 2, 4,
-                                            1, 3, 2,
-                                            2, 4, 2},
-                                           {1, 2, 2,
-                                            1, 3, 5,
-                                            3, 2, 4}};
+    std::vector<std::vector<double>> A
+        = {{4, 2, 1, 3, 4, 2, 2, 4, 3}, {1, 2, 4, 1, 3, 2, 2, 4, 2}, {1, 2, 2, 1, 3, 5, 3, 2, 4}};
 
-    std::vector<std::vector<double> > b = {{0, 1, 0},
-                                           {1, 3, 5},
-                                           {2, 4, 5}};
+    std::vector<std::vector<double>> b = {{0, 1, 0}, {1, 3, 5}, {2, 4, 5}};
 
-    std::vector<std::vector<double> > x_expected = {{-0.5,   1, -0.5},
-                                                    {   1,   1, -0.5},
-                                                    { 1.3, 0.4,  0.1}};
+    std::vector<std::vector<double>> x_expected = {{-0.5, 1, -0.5}, {1, 1, -0.5}, {1.3, 0.4, 0.1}};
 
     for (unsigned testId = 0; testId < numTests; ++testId) {
         std::vector<double> x(blockSize);
@@ -70,9 +59,9 @@ BOOST_AUTO_TEST_CASE(testsolvetransposed3x3)
     using Mat3 = Dune::FieldMatrix<double, 3, 3>;
     using Vec3 = Dune::FieldVector<double, 3>;
     for (unsigned testId = 0; testId < numTests; ++testId) {
-        Mat3 a3 = {{ A[testId][0], A[testId][1], A[testId][2] },
-                   { A[testId][3], A[testId][4], A[testId][5] },
-                   { A[testId][6], A[testId][7], A[testId][8] } };
+        Mat3 a3 = {{A[testId][0], A[testId][1], A[testId][2]},
+                   {A[testId][3], A[testId][4], A[testId][5]},
+                   {A[testId][6], A[testId][7], A[testId][8]}};
         Vec3 y({b[testId][0], b[testId][1], b[testId][2]});
         Mat3 b3 = a3;
 

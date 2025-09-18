@@ -29,30 +29,32 @@
 
 namespace Opm::Pybind
 {
-    template <class TypeTag>
-    class PyMaterialState {
-        using Simulator = GetPropType<TypeTag, Properties::Simulator>;
-        using Problem = GetPropType<TypeTag, Properties::Problem>;
-        using Model = GetPropType<TypeTag, Properties::Model>;
-        using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-        using Indices = GetPropType<TypeTag, Properties::Indices>;
-        using GridView = GetPropType<TypeTag, Properties::GridView>;
+template <class TypeTag>
+class PyMaterialState
+{
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using Problem = GetPropType<TypeTag, Properties::Problem>;
+    using Model = GetPropType<TypeTag, Properties::Model>;
+    using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using Indices = GetPropType<TypeTag, Properties::Indices>;
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
 
-    public:
-        PyMaterialState(Simulator* simulator)
-            : simulator_(simulator)
-        {}
+public:
+    PyMaterialState(Simulator* simulator)
+        : simulator_(simulator)
+    {
+    }
 
-        std::vector<double> getCellVolumes();
-        std::vector<double> getPorosity();
-        void setPorosity(const double* poro, std::size_t size);
+    std::vector<double> getCellVolumes();
+    std::vector<double> getPorosity();
+    void setPorosity(const double* poro, std::size_t size);
 
-    private:
-        Simulator* simulator_;
-    };
+private:
+    Simulator* simulator_;
+};
 
-}
+} // namespace Opm::Pybind
 #include "PyMaterialState_impl.hpp"
 
 #endif // OPM_PY_MATERIAL_STATE_HEADER_INCLUDED

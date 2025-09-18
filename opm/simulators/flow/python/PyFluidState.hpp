@@ -30,10 +30,12 @@
 #include <string>
 #include <vector>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
 template <class TypeTag>
-class PyFluidState {
+class PyFluidState
+{
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
     using Problem = GetPropType<TypeTag, Properties::Problem>;
     using Model = GetPropType<TypeTag, Properties::Model>;
@@ -45,44 +47,46 @@ class PyFluidState {
 
     enum class VariableType {
         // Primary variables: Sw, Sg, po, pg, Rs, Rv
-        Sw, Sg, So, pw, pg, po, Rs, Rv, rho_w, rho_g, rho_o, T
+        Sw,
+        Sg,
+        So,
+        pw,
+        pg,
+        po,
+        Rs,
+        Rv,
+        rho_w,
+        rho_g,
+        rho_o,
+        T
     };
 
 public:
     PyFluidState(Simulator* simulator);
 
-    std::vector<double>
-    getFluidStateVariable(const std::string& name) const;
+    std::vector<double> getFluidStateVariable(const std::string& name) const;
 
-    std::vector<int>
-    getPrimaryVarMeaning(const std::string& variable) const;
+    std::vector<int> getPrimaryVarMeaning(const std::string& variable) const;
 
-    std::map<std::string, int>
-    getPrimaryVarMeaningMap(const std::string& variable) const;
+    std::map<std::string, int> getPrimaryVarMeaningMap(const std::string& variable) const;
 
-    std::vector<double>
-    getPrimaryVariable(const std::string &idx_name) const;
+    std::vector<double> getPrimaryVariable(const std::string& idx_name) const;
 
-    void setPrimaryVariable(const std::string& idx_name,
-                            const double* data,
-                            std::size_t size);
+    void setPrimaryVariable(const std::string& idx_name, const double* data, std::size_t size);
 
 private:
     std::size_t getPrimaryVarIndex_(const std::string& idx_name) const;
 
-    int getVariableMeaning_(PrimaryVariables& primary_vars,
-                            const std::string& variable) const;
+    int getVariableMeaning_(PrimaryVariables& primary_vars, const std::string& variable) const;
 
     VariableType getVariableType_(const std::string& name) const;
 
     template <class FluidState>
-    double getVariableValue_(FluidState& fs,
-                             VariableType var_type,
-                             const std::string& name) const;
+    double getVariableValue_(FluidState& fs, VariableType var_type, const std::string& name) const;
 
     void variableNotFoundError_(const std::string& name) const;
 
-    Simulator* simulator_{nullptr};
+    Simulator* simulator_ {nullptr};
 };
 
 } // namespace Opm::Pybind

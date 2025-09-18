@@ -23,8 +23,8 @@
 
 #include <opm/common/utility/Serializer.hpp>
 
-#include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
+#include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/Schedule/SummaryState.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQState.hpp>
 
@@ -59,93 +59,114 @@
 
 #include <algorithm>
 
-namespace Opm::Properties {
-    namespace TTag {
+namespace Opm::Properties
+{
+namespace TTag
+{
     struct TestRestartTypeTag {
-            using InheritsFrom = std::tuple<TestTypeTag>;
-        };
-    }
-
-    template<>
-    struct LinearSolverBackend<TTag::TestRestartTypeTag, TTag::FlowIstlSolverParams> {
-        using type = ISTLSolver<TTag::TestRestartTypeTag>;
+        using InheritsFrom = std::tuple<TestTypeTag>;
     };
-}
+} // namespace TTag
 
-template<class T>
-std::tuple<T,int,int> PackUnpack(T& in)
+template <>
+struct LinearSolverBackend<TTag::TestRestartTypeTag, TTag::FlowIstlSolverParams> {
+    using type = ISTLSolver<TTag::TestRestartTypeTag>;
+};
+} // namespace Opm::Properties
+
+template <class T>
+std::tuple<T, int, int>
+PackUnpack(T& in)
 {
     Opm::Serialization::MemPacker packer;
     Opm::Serializer ser(packer);
     ser.pack(in);
     const size_t pos1 = ser.position();
-    T out{};
+    T out {};
     ser.unpack(out);
     const size_t pos2 = ser.position();
 
     return std::make_tuple(std::move(out), pos1, pos2);
 }
 
-#define TEST_FOR_TYPE_NAMED_OBJ(TYPE, NAME, OBJ) \
-BOOST_AUTO_TEST_CASE(NAME) \
-{ \
-    auto val1 = Opm::TYPE::OBJ(); \
-    auto val2 = PackUnpack(val1); \
-    BOOST_CHECK_MESSAGE(std::get<1>(val2) == std::get<2>(val2), "Packed size differ from unpack size for " #TYPE); \
-    BOOST_CHECK_MESSAGE(val1 == std::get<0>(val2), "Deserialized " #TYPE " differ"); \
+#define TEST_FOR_TYPE_NAMED_OBJ(TYPE, NAME, OBJ)                                                                       \
+    BOOST_AUTO_TEST_CASE(NAME)                                                                                         \
+    {                                                                                                                  \
+        auto val1 = Opm::TYPE::OBJ();                                                                                  \
+        auto val2 = PackUnpack(val1);                                                                                  \
+        BOOST_CHECK_MESSAGE(std::get<1>(val2) == std::get<2>(val2), "Packed size differ from unpack size for " #TYPE); \
+        BOOST_CHECK_MESSAGE(val1 == std::get<0>(val2), "Deserialized " #TYPE " differ");                               \
+    }
+
+#define TEST_FOR_TYPE_NAMED(TYPE, NAME) TEST_FOR_TYPE_NAMED_OBJ(TYPE, NAME, serializationTestObject)
+
+#define TEST_FOR_TYPE(TYPE) TEST_FOR_TYPE_NAMED(TYPE, TYPE)
+
+namespace Opm
+{
+using ALQS = ALQState<double>;
 }
-
-#define TEST_FOR_TYPE_NAMED(TYPE, NAME) \
-    TEST_FOR_TYPE_NAMED_OBJ(TYPE, NAME, serializationTestObject)
-
-#define TEST_FOR_TYPE(TYPE) \
-    TEST_FOR_TYPE_NAMED(TYPE, TYPE)
-
-namespace Opm { using ALQS = ALQState<double>; }
 TEST_FOR_TYPE_NAMED(ALQS, ALQState)
-namespace Opm { using GroupS = GroupState<double>; }
+namespace Opm
+{
+using GroupS = GroupState<double>;
+}
 TEST_FOR_TYPE_NAMED(GroupS, GroupState)
 TEST_FOR_TYPE(HardcodedTimeStepControl)
 TEST_FOR_TYPE(Inplace)
-namespace Opm { using PerfD = PerfData<double>; }
+namespace Opm
+{
+using PerfD = PerfData<double>;
+}
 TEST_FOR_TYPE_NAMED(PerfD, PerfData)
 TEST_FOR_TYPE(PIDAndIterationCountTimeStepControl)
 TEST_FOR_TYPE(PIDTimeStepControl)
-namespace Opm { using SegmState = SegmentState<double>; }
+namespace Opm
+{
+using SegmState = SegmentState<double>;
+}
 TEST_FOR_TYPE_NAMED(SegmState, SegmentState)
 TEST_FOR_TYPE(SimpleIterationCountTimeStepControl)
 TEST_FOR_TYPE(SimulatorReport)
 TEST_FOR_TYPE(SimulatorReportSingle)
 TEST_FOR_TYPE(SimulatorTimer)
 
-namespace Opm { using ATS = AdaptiveTimeStepping<Properties::TTag::TestTypeTag>; }
+namespace Opm
+{
+using ATS = AdaptiveTimeStepping<Properties::TTag::TestTypeTag>;
+}
 TEST_FOR_TYPE_NAMED_OBJ(ATS, AdaptiveTimeSteppingHardcoded, serializationTestObjectHardcoded)
 TEST_FOR_TYPE_NAMED_OBJ(ATS, AdaptiveTimeSteppingPID, serializationTestObjectPID)
 TEST_FOR_TYPE_NAMED_OBJ(ATS, AdaptiveTimeSteppingPIDIt, serializationTestObjectPIDIt)
 TEST_FOR_TYPE_NAMED_OBJ(ATS, AdaptiveTimeSteppingSimple, serializationTestObjectSimple)
 TEST_FOR_TYPE_NAMED_OBJ(ATS, AdaptiveTimeStepping3rdOrder, serializationTestObject3rdOrder)
 
-namespace Opm { using BPV = BlackOilPrimaryVariables<Properties::TTag::TestTypeTag>; }
+namespace Opm
+{
+using BPV = BlackOilPrimaryVariables<Properties::TTag::TestTypeTag>;
+}
 TEST_FOR_TYPE_NAMED(BPV, BlackoilPrimaryVariables)
 
-namespace Opm {
-    struct DummyMaterial {
-        struct Params {
-            struct Traits {
-                using Scalar = double;
-            };
+namespace Opm
+{
+struct DummyMaterial {
+    struct Params {
+        struct Traits {
+            using Scalar = double;
         };
     };
+};
 
-    using HystParam = EclHysteresisTwoPhaseLawParams<DummyMaterial>;
-}
+using HystParam = EclHysteresisTwoPhaseLawParams<DummyMaterial>;
+} // namespace Opm
 
 TEST_FOR_TYPE_NAMED(HystParam, EclHysteresisTwoPhaseLawParams)
 
-namespace Opm {
-    using Disc = Opm::FvBaseDiscretization<Opm::Properties::TTag::TestTypeTag>;
-    using BVec = typename Disc::BlockVectorWrapper;
-}
+namespace Opm
+{
+using Disc = Opm::FvBaseDiscretization<Opm::Properties::TTag::TestTypeTag>;
+using BVec = typename Disc::BlockVectorWrapper;
+} // namespace Opm
 TEST_FOR_TYPE_NAMED(BVec, BlockVectorWrapper)
 
 BOOST_AUTO_TEST_CASE(SingleWellState)
@@ -158,7 +179,7 @@ BOOST_AUTO_TEST_CASE(SingleWellState)
     Opm::Serializer ser(packer);
     ser.pack(data_out);
     const size_t pos1 = ser.position();
-    decltype(data_out) data_in("", dummy, PhaseUsage{}, false, 0.0, {}, 0.0);
+    decltype(data_out) data_in("", dummy, PhaseUsage {}, false, 0.0, {}, 0.0);
     ser.unpack(data_in);
     const size_t pos2 = ser.position();
     BOOST_CHECK_MESSAGE(pos1 == pos2, "Packed size differ from unpack size for SingleWellState");
@@ -205,7 +226,7 @@ BOOST_AUTO_TEST_CASE(WGState)
     Opm::Serializer ser(packer);
     ser.pack(data_out);
     const size_t pos1 = ser.position();
-    decltype(data_out) data_in(PhaseUsage{});
+    decltype(data_out) data_in(PhaseUsage {});
     data_in.well_state = Opm::WellState<double, IndexTraits>(dummy);
     ser.unpack(data_in);
     const size_t pos2 = ser.position();
@@ -297,7 +318,8 @@ BOOST_AUTO_TEST_CASE(FlowGenericProblemFem)
 }
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 using IndexTraits = Opm::BlackOilDefaultFluidSystemIndices;
 using PhaseUsage = Opm::PhaseUsageInfo<IndexTraits>;
 class BlackoilWellModelGenericTest : public BlackoilWellModelGeneric<double, IndexTraits>
@@ -310,8 +332,7 @@ public:
                                  const PhaseUsage& phase_usage,
                                  const Parallel::Communication& comm,
                                  bool deserialize)
-        : BlackoilWellModelGeneric<double, IndexTraits>(schedule, gaslift, summaryState,
-                                           eclState, phase_usage, comm)
+        : BlackoilWellModelGeneric<double, IndexTraits>(schedule, gaslift, summaryState, eclState, phase_usage, comm)
     {
         if (deserialize) {
             active_wgstate_.well_state = WellState<double, IndexTraits>(dummy);
@@ -322,7 +343,7 @@ public:
 
     void setSerializationTestData()
     {
-        initial_step_ =  true;
+        initial_step_ = true;
         report_step_starts_ = true;
         last_run_wellpi_ = 1;
         local_shut_wells_ = {2, 3};
@@ -333,36 +354,42 @@ public:
         last_valid_wgstate_ = WGState<double, IndexTraits>::serializationTestObject(dummy);
         nupcol_wgstate_ = WGState<double, IndexTraits>::serializationTestObject(dummy);
         switched_prod_groups_ = {{"test4", {Group::ProductionCMode::NONE, Group::ProductionCMode::ORAT}}};
-        const auto controls = {Group::InjectionCMode::NONE, Group::InjectionCMode::RATE, Group::InjectionCMode::RATE };
-        switched_inj_groups_ = {{"test4", {controls, {}, controls} }};
+        const auto controls = {Group::InjectionCMode::NONE, Group::InjectionCMode::RATE, Group::InjectionCMode::RATE};
+        switched_inj_groups_ = {{"test4", {controls, {}, controls}}};
         closed_offending_wells_ = {{"test4", {"test5", "test6"}}};
     }
 
     void calcResvCoeff(const int, const int, const std::vector<double>&, std::vector<double>&) override
-    {}
+    {
+    }
 
     void calcInjResvCoeff(const int, const int, std::vector<double>&) override
-    {}
+    {
+    }
 
     void computePotentials(const std::size_t,
                            const WellState<double, IndexTraits>&,
                            std::string&,
                            ExceptionType::ExcEnum&,
                            DeferredLogger&) override
-    {}
+    {
+    }
 
     void createWellContainer(const int) override
-    {}
+    {
+    }
 
     void initWellContainer(const int) override
-    {}
+    {
+    }
 
-    void calculateProductivityIndexValuesShutWells(const int,
-                                                   DeferredLogger&) override
-    {}
+    void calculateProductivityIndexValuesShutWells(const int, DeferredLogger&) override
+    {
+    }
 
     void calculateProductivityIndexValues(DeferredLogger&) override
-    {}
+    {
+    }
 
 
     int compressedIndexForInterior(int) const override
@@ -384,54 +411,54 @@ public:
     }
 };
 
-}
+} // namespace Opm
 
 BOOST_AUTO_TEST_CASE(BlackoilWellModelGeneric)
 {
-    Opm::Schedule schedule{};
-    Opm::SummaryState summaryState{};
-    Opm::EclipseState eclState{};
-    Opm::PhaseUsage phase_usage{};
-    Opm::Parallel::Communication comm{};
+    Opm::Schedule schedule {};
+    Opm::SummaryState summaryState {};
+    Opm::EclipseState eclState {};
+    Opm::PhaseUsage phase_usage {};
+    Opm::Parallel::Communication comm {};
     Opm::BlackoilWellModelGasLiftGenericTest gaslift;
-    Opm::BlackoilWellModelGenericTest data_out(schedule, gaslift, summaryState,
-                                               eclState, phase_usage, comm, false);
+    Opm::BlackoilWellModelGenericTest data_out(schedule, gaslift, summaryState, eclState, phase_usage, comm, false);
     data_out.setSerializationTestData();
     Opm::Serialization::MemPacker packer;
     Opm::Serializer ser(packer);
     ser.pack(data_out);
     const size_t pos1 = ser.position();
-    Opm::BlackoilWellModelGenericTest data_in(schedule, gaslift, summaryState,
-                                              eclState, phase_usage, comm, true);
+    Opm::BlackoilWellModelGenericTest data_in(schedule, gaslift, summaryState, eclState, phase_usage, comm, true);
     ser.unpack(data_in);
     const size_t pos2 = ser.position();
     BOOST_CHECK_MESSAGE(pos1 == pos2, "Packed size differ from unpack size for BlackoilWellModelGeneric");
     BOOST_CHECK_MESSAGE(data_out == data_in, "Deserialized BlackoilWellModelGeneric differ");
 }
 
-template<class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
-class GenericTracerModelTest : public Opm::GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>
+template <class Grid, class GridView, class DofMapper, class Stencil, class FluidSystem, class Scalar>
+class GenericTracerModelTest : public Opm::GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>
 {
-    using Base = Opm::GenericTracerModel<Grid,GridView,DofMapper,Stencil,FluidSystem,Scalar>;
+    using Base = Opm::GenericTracerModel<Grid, GridView, DofMapper, Stencil, FluidSystem, Scalar>;
+
 public:
     GenericTracerModelTest(const GridView& gridView,
-                              const Opm::EclipseState& eclState,
-                              const Dune::CartesianIndexMapper<Grid>& cartMapper,
-                              const DofMapper& dofMapper,
-                              const std::function<std::array<double,Grid::dimensionworld>(int)> centroids) :
-        Base(gridView, eclState, cartMapper, dofMapper, centroids)
-    {}
+                           const Opm::EclipseState& eclState,
+                           const Dune::CartesianIndexMapper<Grid>& cartMapper,
+                           const DofMapper& dofMapper,
+                           const std::function<std::array<double, Grid::dimensionworld>(int)> centroids)
+        : Base(gridView, eclState, cartMapper, dofMapper, centroids)
+    {
+    }
 
     static GenericTracerModelTest
     serializationTestObject(const GridView& gridView,
                             const Opm::EclipseState& eclState,
                             const Dune::CartesianIndexMapper<Grid>& cartMapper,
                             const DofMapper& dofMapper,
-                            const std::function<std::array<double,Grid::dimensionworld>(int)> centroids)
+                            const std::function<std::array<double, Grid::dimensionworld>(int)> centroids)
     {
         GenericTracerModelTest result(gridView, eclState, cartMapper, dofMapper, centroids);
         result.tracerConcentration_ = {{{1.0, 2.0}}, {{3.0, 4.0}}, {{5.0, 6.0}}};
-        result.wellTracerRate_.emplace(1, std::vector{Opm::WellTracerRate<double>{"foo", 4.0}});
+        result.wellTracerRate_.emplace(1, std::vector {Opm::WellTracerRate<double> {"foo", 4.0}});
 
         return result;
     }
@@ -458,17 +485,17 @@ BOOST_AUTO_TEST_CASE(FlowGenericTracerModel)
     Dune::CpGrid grid;
     Opm::EclipseState eclState;
     Dune::CartesianIndexMapper<Dune::CpGrid> mapper(grid);
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
+    auto centroids = [](int) { return std::array<double, Dune::CpGrid::dimensionworld> {}; };
     using GridView = Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>;
     auto gridView = grid.leafGridView();
     Dune::MultipleCodimMultipleGeomTypeMapper<GridView> dofMapper(gridView, Dune::mcmgElementLayout());
-    auto data_out = GenericTracerModelTest<Dune::CpGrid,
-                                           GridView,
-                                           Dune::MultipleCodimMultipleGeomTypeMapper<GridView>,
-                                           Opm::EcfvStencil<double, GridView, false, false>,
-                                           Opm::BlackOilFluidSystem<double, Opm::BlackOilDefaultFluidSystemIndices>,
-                                           double>
-        ::serializationTestObject(gridView, eclState, mapper, dofMapper, centroids);
+    auto data_out
+        = GenericTracerModelTest<Dune::CpGrid,
+                                 GridView,
+                                 Dune::MultipleCodimMultipleGeomTypeMapper<GridView>,
+                                 Opm::EcfvStencil<double, GridView, false, false>,
+                                 Opm::BlackOilFluidSystem<double, Opm::BlackOilDefaultFluidSystemIndices>,
+                                 double>::serializationTestObject(gridView, eclState, mapper, dofMapper, centroids);
     Opm::Serialization::MemPacker packer;
     Opm::Serializer ser(packer);
     ser.pack(data_out);
@@ -486,19 +513,19 @@ BOOST_AUTO_TEST_CASE(FlowGenericTracerModelFem)
     Dune::CpGrid grid;
     Opm::EclipseState eclState;
     Dune::CartesianIndexMapper<Dune::CpGrid> mapper(grid);
-    auto centroids = [](int) { return std::array<double,Dune::CpGrid::dimensionworld>{}; };
+    auto centroids = [](int) { return std::array<double, Dune::CpGrid::dimensionworld> {}; };
     using GridPart = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, Dune::PartitionIteratorType(4), false>;
     using GridView = GridPart::GridViewType;
     auto gridPart = GridPart(grid);
     auto gridView = gridPart.gridView();
     Dune::MultipleCodimMultipleGeomTypeMapper<GridView> dofMapper(gridView, Dune::mcmgElementLayout());
-    auto data_out = GenericTracerModelTest<Dune::CpGrid,
-                                           GridView,
-                                           Dune::MultipleCodimMultipleGeomTypeMapper<GridView>,
-                                           Opm::EcfvStencil<double, GridView, false, false>,
-                                           Opm::BlackOilFluidSystem<double, Opm::BlackOilDefaultFluidSystemIndices>,
-                                           double>
-        ::serializationTestObject(gridView, eclState, mapper, dofMapper, centroids);
+    auto data_out
+        = GenericTracerModelTest<Dune::CpGrid,
+                                 GridView,
+                                 Dune::MultipleCodimMultipleGeomTypeMapper<GridView>,
+                                 Opm::EcfvStencil<double, GridView, false, false>,
+                                 Opm::BlackOilFluidSystem<double, Opm::BlackOilDefaultFluidSystemIndices>,
+                                 double>::serializationTestObject(gridView, eclState, mapper, dofMapper, centroids);
     Opm::Serialization::MemPacker packer;
     Opm::Serializer ser(packer);
     ser.pack(data_out);
@@ -511,27 +538,28 @@ BOOST_AUTO_TEST_CASE(FlowGenericTracerModelFem)
 }
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 
-class TBatchExport : public TracerModel<Properties::TTag::TestTypeTag> {
+class TBatchExport : public TracerModel<Properties::TTag::TestTypeTag>
+{
 public:
     using TBatch = TracerBatch<double>;
 };
 
-}
+} // namespace Opm
 
 TEST_FOR_TYPE_NAMED(TBatchExport::TBatch, TracerBatch)
 
-namespace {
+namespace
+{
 
 struct AquiferFixture {
-    AquiferFixture() {
+    AquiferFixture()
+    {
         using namespace Opm;
         using TT = Properties::TTag::TestRestartTypeTag;
-        const char* argv[] = {
-            "test_RestartSerialization",
-            "--ecl-deck-file-name=GLIFT1.DATA"
-        };
+        const char* argv[] = {"test_RestartSerialization", "--ecl-deck-file-name=GLIFT1.DATA"};
         // Since this parameter is registered in opm/models/nonlinear/newtonmethodparams.cpp but not accessed here
         Parameters::Register<Parameters::NewtonMaxIterations>("The maximum number of Newton iterations per time step");
         Opm::ThreadManager::registerParameters();
@@ -543,28 +571,28 @@ struct AquiferFixture {
     }
 };
 
-}
+} // namespace
 
 BOOST_GLOBAL_FIXTURE(AquiferFixture);
 
-#define TEST_FOR_AQUIFER(TYPE) \
-BOOST_AUTO_TEST_CASE(TYPE) \
-{ \
-    using TT = Opm::Properties::TTag::TestRestartTypeTag; \
-    Opm::FlowGenericVanguard::readDeck("GLIFT1.DATA"); \
-    using Simulator = Opm::GetPropType<TT, Opm::Properties::Simulator>; \
-    Simulator sim; \
-    auto data_out = Opm::TYPE<TT>::serializationTestObject(sim); \
-    Opm::Serialization::MemPacker packer; \
-    Opm::Serializer ser(packer); \
-    ser.pack(data_out); \
-    const size_t pos1 = ser.position(); \
-    decltype(data_out) data_in({}, sim, {}); \
-    ser.unpack(data_in); \
-    const size_t pos2 = ser.position(); \
-    BOOST_CHECK_MESSAGE(pos1 == pos2, "Packed size differ from unpack size for " #TYPE); \
-    BOOST_CHECK_MESSAGE(data_out == data_in, "Deserialized " #TYPE " differ"); \
-}
+#define TEST_FOR_AQUIFER(TYPE)                                                                                         \
+    BOOST_AUTO_TEST_CASE(TYPE)                                                                                         \
+    {                                                                                                                  \
+        using TT = Opm::Properties::TTag::TestRestartTypeTag;                                                          \
+        Opm::FlowGenericVanguard::readDeck("GLIFT1.DATA");                                                             \
+        using Simulator = Opm::GetPropType<TT, Opm::Properties::Simulator>;                                            \
+        Simulator sim;                                                                                                 \
+        auto data_out = Opm::TYPE<TT>::serializationTestObject(sim);                                                   \
+        Opm::Serialization::MemPacker packer;                                                                          \
+        Opm::Serializer ser(packer);                                                                                   \
+        ser.pack(data_out);                                                                                            \
+        const size_t pos1 = ser.position();                                                                            \
+        decltype(data_out) data_in({}, sim, {});                                                                       \
+        ser.unpack(data_in);                                                                                           \
+        const size_t pos2 = ser.position();                                                                            \
+        BOOST_CHECK_MESSAGE(pos1 == pos2, "Packed size differ from unpack size for " #TYPE);                           \
+        BOOST_CHECK_MESSAGE(data_out == data_in, "Deserialized " #TYPE " differ");                                     \
+    }
 
 TEST_FOR_AQUIFER(AquiferCarterTracy)
 TEST_FOR_AQUIFER(AquiferFetkovich)
@@ -605,17 +633,19 @@ BOOST_AUTO_TEST_CASE(AquiferConstantFlux)
     BOOST_CHECK_MESSAGE(data_out == data_in, "Deserialized AquiferConstantFlux differ");
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     // MPI setup.
     int argcDummy = 1;
-    const char *tmp[] = {"test_RestartSerialization"};
-    char **argvDummy = const_cast<char**>(tmp);
+    const char* tmp[] = {"test_RestartSerialization"};
+    char** argvDummy = const_cast<char**>(tmp);
 #if HAVE_DUNE_FEM
     Dune::Fem::MPIManager::initialize(argcDummy, argvDummy);
 #else

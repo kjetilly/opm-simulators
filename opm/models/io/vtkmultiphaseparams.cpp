@@ -26,37 +26,35 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkMultiPhaseParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteExtrusionFactor>
-        ("Include the extrusion factor of the degrees of freedom into the VTK output files");
-    Parameters::Register<Parameters::VtkWritePressures>
-        ("Include the phase pressures in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteDensities>
-        ("Include the phase densities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteSaturations>
-        ("Include the phase saturations in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteMobilities>
-        ("Include the phase mobilities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteRelativePermeabilities>
-        ("Include the phase relative permeabilities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteViscosities>
-        ("Include component phase viscosities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteAverageMolarMasses>
-        ("Include the average phase mass in the VTK output files");
-    Parameters::Register<Parameters::VtkWritePorosity>
-        ("Include the porosity in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteIntrinsicPermeabilities>
-        ("Include the intrinsic permeability in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFilterVelocities>
-        ("Include in the filter velocities of the phases the VTK output files");
-    Parameters::Register<Parameters::VtkWritePotentialGradients>
-        ("Include the phase pressure potential gradients in the VTK output files");
+
+void
+VtkMultiPhaseParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteExtrusionFactor>(
+        "Include the extrusion factor of the degrees of freedom into the VTK output files");
+    Parameters::Register<Parameters::VtkWritePressures>("Include the phase pressures in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteDensities>("Include the phase densities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteSaturations>("Include the phase saturations in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteMobilities>("Include the phase mobilities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteRelativePermeabilities>(
+        "Include the phase relative permeabilities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteViscosities>(
+        "Include component phase viscosities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteAverageMolarMasses>(
+        "Include the average phase mass in the VTK output files");
+    Parameters::Register<Parameters::VtkWritePorosity>("Include the porosity in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteIntrinsicPermeabilities>(
+        "Include the intrinsic permeability in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFilterVelocities>(
+        "Include in the filter velocities of the phases the VTK output files");
+    Parameters::Register<Parameters::VtkWritePotentialGradients>(
+        "Include the phase pressure potential gradients in the VTK output files");
 }
 
-void VtkMultiPhaseParams::read()
+void
+VtkMultiPhaseParams::read()
 {
     extrusionFactorOutput_ = Parameters::Get<Parameters::VtkWriteExtrusionFactor>();
     pressureOutput_ = Parameters::Get<Parameters::VtkWritePressures>();

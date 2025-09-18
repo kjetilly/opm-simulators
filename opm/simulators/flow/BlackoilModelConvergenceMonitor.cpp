@@ -27,33 +27,32 @@
 #include <cmath>
 #include <limits>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-BlackoilModelConvergenceMonitor<Scalar>::
-BlackoilModelConvergenceMonitor(const MonitorParams& param)
+template <class Scalar>
+BlackoilModelConvergenceMonitor<Scalar>::BlackoilModelConvergenceMonitor(const MonitorParams& param)
     : param_(param)
     , prev_distance_(std::numeric_limits<double>::infinity())
     , prev_above_tolerance_(0)
 {
 }
 
-template<class Scalar>
-void BlackoilModelConvergenceMonitor<Scalar>::
-checkPenaltyCard(ConvergenceReport& report, int iteration)
+template <class Scalar>
+void
+BlackoilModelConvergenceMonitor<Scalar>::checkPenaltyCard(ConvergenceReport& report, int iteration)
 {
     const auto& current_metrics = report.reservoirConvergence();
     auto distances = std::vector<double>(current_metrics.size(), 0.0);
     int current_above_tolerance = 0;
 
     for (size_t i = 0; i < current_metrics.size(); ++i) {
-        distances[i] = std::max(std::log10(current_metrics[i].value() /
-                                           current_metrics[i].tolerance()), 0.0);
-            // Count number of metrics above tolerance
-            if (current_metrics[i].value() > current_metrics[i].tolerance()) {
-                current_above_tolerance++;
-            }
+        distances[i] = std::max(std::log10(current_metrics[i].value() / current_metrics[i].tolerance()), 0.0);
+        // Count number of metrics above tolerance
+        if (current_metrics[i].value() > current_metrics[i].tolerance()) {
+            current_above_tolerance++;
         }
+    }
 
     // use L1 norm of the distances vector
     double current_distance = std::accumulate(distances.begin(), distances.end(), 0.0);
@@ -79,16 +78,15 @@ checkPenaltyCard(ConvergenceReport& report, int iteration)
     total_penaltyCard_ += report.getPenaltyCard();
 
     if (param_.enabled_ && (total_penaltyCard_.total() > param_.cutoff_)) {
-        report.setReservoirFailed(
-            {ConvergenceReport::ReservoirFailure::Type::ConvergenceMonitorFailure,
-             ConvergenceReport::Severity::ConvergenceMonitorFailure,
-             -1}); // -1 indicates it's not specific to any component
+        report.setReservoirFailed({ConvergenceReport::ReservoirFailure::Type::ConvergenceMonitorFailure,
+                                   ConvergenceReport::Severity::ConvergenceMonitorFailure,
+                                   -1}); // -1 indicates it's not specific to any component
     }
 }
 
-template<class Scalar>
-void BlackoilModelConvergenceMonitor<Scalar>::
-reset()
+template <class Scalar>
+void
+BlackoilModelConvergenceMonitor<Scalar>::reset()
 {
     total_penaltyCard_.reset();
     prev_above_tolerance_ = 0;

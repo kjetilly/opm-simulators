@@ -30,7 +30,8 @@
 
 #include <hip/hip_version.h>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class implements a Blocked ILU0 preconditioner
 /// The decomposition is done on GPU, using exact decomposition, or ChowPatel decomposition
@@ -47,21 +48,19 @@ class rocsparseBILU0 : public rocsparsePreconditioner<Scalar, block_size>
     using Base::verbosity;
 
 private:
-   
     rocsparse_mat_descr descr_M, descr_L, descr_U;
     rocsparse_mat_info ilu_info;
 #if HIP_VERSION >= 50400000
     rocsparse_mat_info spmv_info;
 #endif
 
-    rocsparse_int *d_Mrows, *d_Mcols; 
+    rocsparse_int *d_Mrows, *d_Mcols;
     Scalar *d_Mvals, *d_t;
-    void *d_buffer; // buffer space, used by rocsparse ilu0 analysis
+    void* d_buffer; // buffer space, used by rocsparse ilu0 analysis
 
-    std::size_t d_bufferSize_M=0, d_bufferSize_L=0, d_bufferSize_U=0, d_bufferSize=0;
+    std::size_t d_bufferSize_M = 0, d_bufferSize_L = 0, d_bufferSize_U = 0, d_bufferSize = 0;
 
 public:
-
     rocsparseBILU0(int verbosity_);
     ~rocsparseBILU0();
 
@@ -72,31 +71,29 @@ public:
     /// \param[in] d_Acols Array of column indices
     bool initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
                     std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-                    rocsparse_int *d_Arows,
-                    rocsparse_int *d_Acols) override;
+                    rocsparse_int* d_Arows,
+                    rocsparse_int* d_Acols) override;
 
     /// Analysis, extract parallelism if specified
     bool analyze_matrix();
 
     /// Analysis, extract parallelism if specified
     /// \param[in] mat     matrix A
-    bool analyze_matrix(BlockedMatrix<Scalar> *mat) override;
-    
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
+
     /// Analysis, extract parallelism if specified
     /// \param[in] mat     matrix A
     /// \param[in] jacMat  matrix for preconditioner, analyze this as well
-    bool analyze_matrix(BlockedMatrix<Scalar> *mat,
-                        BlockedMatrix<Scalar> *jacMat) override;
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     /// ILU decomposition
     /// \param[in] mat     matrix A to decompose
-    bool create_preconditioner(BlockedMatrix<Scalar> *mat) override;
-    
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat) override;
+
     /// ILU decomposition
     /// \param[in] mat     matrix A
     /// \param[in] jacMat  matrix for preconditioner, decompose this one if used
-    bool create_preconditioner(BlockedMatrix<Scalar> *mat,
-                               BlockedMatrix<Scalar> *jacMat) override;
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     /// Apply preconditioner, x = prec(y)
     /// via Lz = y
@@ -104,27 +101,23 @@ public:
     /// \param[in]  y  Input y vector
     /// \param[out] x  Output x vector
     /// \param wellContribs Well contributions
-    void apply(const Scalar& y,
-               Scalar& x,
-               WellContributions<Scalar>& wellContribs) override;
+    void apply(const Scalar& y, Scalar& x, WellContributions<Scalar>& wellContribs) override;
 
     /// Copy matrix A values to GPU
     /// \param[in]  mVals  Input values
-    void copy_system_to_gpu(Scalar *mVals) override;
+    void copy_system_to_gpu(Scalar* mVals) override;
 
     /// Copy matrix A values to GPU
     /// \param[in]  mVals  Input values
     /// \param[in]  mRows Array of matrix row indices
     /// \param[in]  mCols Array of matrix column indices
     /// \param[in]  reuse True to reuse old matrix
-    void copy_values_to_gpu(Scalar *mVals, int *mRows, int *mCols, bool reuse);
-    
+    void copy_values_to_gpu(Scalar* mVals, int* mRows, int* mCols, bool reuse);
+
     /// Update GPU values after a new assembly is done
     /// \param[in] b     New b vector
     void update_system_on_gpu(Scalar*, Scalar* b) override;
-
 };
-} // namespace Opm
+} // namespace Opm::Accelerator
 
 #endif
-

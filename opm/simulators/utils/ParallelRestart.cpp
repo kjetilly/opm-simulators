@@ -16,8 +16,8 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include <config.h>
 #include "ParallelRestart.hpp"
+#include <config.h>
 
 #if HAVE_MPI
 #include <mpi.h>
@@ -27,53 +27,54 @@
 #include <opm/simulators/utils/MPISerializer.hpp>
 #endif
 
-#include <opm/output/eclipse/EclipseIO.hpp>
 #include <opm/input/eclipse/EclipseState/Util/OrderedMap.hpp>
-#include <opm/output/eclipse/RestartValue.hpp>
 #include <opm/input/eclipse/Schedule/SummaryState.hpp>
+#include <opm/output/eclipse/EclipseIO.hpp>
+#include <opm/output/eclipse/RestartValue.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-RestartValue loadParallelRestart(const EclipseIO* eclIO,
-                                 Action::State& actionState,
-                                 SummaryState& summaryState,
-                                 const std::vector<Opm::RestartKey>& solutionKeys,
-                                 const std::vector<Opm::RestartKey>& extraKeys,
-                                 [[maybe_unused]] Parallel::Communication comm)
+RestartValue
+loadParallelRestart(const EclipseIO* eclIO,
+                    Action::State& actionState,
+                    SummaryState& summaryState,
+                    const std::vector<Opm::RestartKey>& solutionKeys,
+                    const std::vector<Opm::RestartKey>& extraKeys,
+                    [[maybe_unused]] Parallel::Communication comm)
 {
 #if HAVE_MPI
-    RestartValue restartValues{};
+    RestartValue restartValues {};
 
-    if (eclIO)
-    {
+    if (eclIO) {
         assert(comm.rank() == 0);
         restartValues = eclIO->loadRestart(actionState, summaryState, solutionKeys, extraKeys);
     }
 
     Parallel::MpiSerializer ser(comm);
-    ser.broadcast(Parallel::RootRank{0}, restartValues, summaryState);
+    ser.broadcast(Parallel::RootRank {0}, restartValues, summaryState);
     return restartValues;
 #else
     return eclIO->loadRestart(actionState, summaryState, solutionKeys, extraKeys);
 #endif
 }
 
-data::Solution loadParallelRestartSolution(const EclipseIO* eclIO,
-                                           const std::vector<Opm::RestartKey>& solutionKeys,
-                                           [[maybe_unused]] Parallel::Communication comm,
-                                           const int step)
+data::Solution
+loadParallelRestartSolution(const EclipseIO* eclIO,
+                            const std::vector<Opm::RestartKey>& solutionKeys,
+                            [[maybe_unused]] Parallel::Communication comm,
+                            const int step)
 {
 #if HAVE_MPI
-    data::Solution sol{};
+    data::Solution sol {};
 
-    if (eclIO)
-    {
+    if (eclIO) {
         assert(comm.rank() == 0);
         sol = eclIO->loadRestartSolution(solutionKeys, step);
     }
 
     Parallel::MpiSerializer ser(comm);
-    ser.broadcast(Parallel::RootRank{0}, sol);
+    ser.broadcast(Parallel::RootRank {0}, sol);
     return sol;
 #else
     return eclIO->loadRestartSolution(solutionKeys, step);

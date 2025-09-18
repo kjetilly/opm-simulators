@@ -27,22 +27,22 @@
 
 #include <cstddef>
 #include <stdexcept>
-#include <string_view>
 #include <string>
+#include <string_view>
 
 BOOST_AUTO_TEST_SUITE(Common_Operations)
 
 BOOST_AUTO_TEST_CASE(None)
 {
-    const auto config = Opm::ConvergenceOutputConfiguration{"none"};
-    BOOST_CHECK_MESSAGE(! config.any(),
+    const auto config = Opm::ConvergenceOutputConfiguration {"none"};
+    BOOST_CHECK_MESSAGE(!config.any(),
                         "Configuration object with option value "
                         "\"none\" must NOT activate output");
 }
 
 BOOST_AUTO_TEST_CASE(Steps)
 {
-    const auto config = Opm::ConvergenceOutputConfiguration{"steps"};
+    const auto config = Opm::ConvergenceOutputConfiguration {"steps"};
     BOOST_CHECK_MESSAGE(config.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(Steps)
 
 BOOST_AUTO_TEST_CASE(Steps_Alias)
 {
-    const auto config = Opm::ConvergenceOutputConfiguration{"step"};
+    const auto config = Opm::ConvergenceOutputConfiguration {"step"};
     BOOST_CHECK_MESSAGE(config.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(Steps_Alias)
 
 BOOST_AUTO_TEST_CASE(Iterations)
 {
-    const auto config = Opm::ConvergenceOutputConfiguration{"iterations"};
+    const auto config = Opm::ConvergenceOutputConfiguration {"iterations"};
     BOOST_CHECK_MESSAGE(config.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(Iterations)
 
 BOOST_AUTO_TEST_CASE(Iterations_Alias)
 {
-    const auto config = Opm::ConvergenceOutputConfiguration{"iteration"};
+    const auto config = Opm::ConvergenceOutputConfiguration {"iteration"};
     BOOST_CHECK_MESSAGE(config.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(Iterations_Alias)
 
 BOOST_AUTO_TEST_CASE(Combinations)
 {
-    const auto steps_iter = Opm::ConvergenceOutputConfiguration{"steps,iterations"};
+    const auto steps_iter = Opm::ConvergenceOutputConfiguration {"steps,iterations"};
     BOOST_CHECK_MESSAGE(steps_iter.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -97,7 +97,7 @@ BOOST_AUTO_TEST_CASE(Combinations)
                         "Configuration object with \"iterations\" "
                         "option value must activate Steps option");
 
-    const auto iter_steps = Opm::ConvergenceOutputConfiguration{"iterations,steps"};
+    const auto iter_steps = Opm::ConvergenceOutputConfiguration {"iterations,steps"};
     BOOST_CHECK_MESSAGE(iter_steps.any(),
                         "Configuration object with supported "
                         "option value must activate option");
@@ -108,18 +108,18 @@ BOOST_AUTO_TEST_CASE(Combinations)
                         "Configuration object with \"iterations\" "
                         "option value must activate Steps option");
 
-    const auto none_iter_steps = Opm::ConvergenceOutputConfiguration{"none,iterations,steps"};
-    BOOST_CHECK_MESSAGE(! none_iter_steps.any(),
+    const auto none_iter_steps = Opm::ConvergenceOutputConfiguration {"none,iterations,steps"};
+    BOOST_CHECK_MESSAGE(!none_iter_steps.any(),
                         "Configuration object with any option "
                         "value \"none\" must NOT activate output");
 
-    const auto iter_none_steps = Opm::ConvergenceOutputConfiguration{"iterations,none,steps"};
-    BOOST_CHECK_MESSAGE(! iter_none_steps.any(),
+    const auto iter_none_steps = Opm::ConvergenceOutputConfiguration {"iterations,none,steps"};
+    BOOST_CHECK_MESSAGE(!iter_none_steps.any(),
                         "Configuration object with any option "
                         "value \"none\" must NOT activate output");
 
-    const auto steps_iter_none = Opm::ConvergenceOutputConfiguration{"steps,iterations,   none"};
-    BOOST_CHECK_MESSAGE(! steps_iter_none.any(),
+    const auto steps_iter_none = Opm::ConvergenceOutputConfiguration {"steps,iterations,   none"};
+    BOOST_CHECK_MESSAGE(!steps_iter_none.any(),
                         "Configuration object with any option "
                         "value \"none\" must NOT activate output");
 }
@@ -132,32 +132,23 @@ BOOST_AUTO_TEST_SUITE(Failed_Construction)
 
 BOOST_AUTO_TEST_CASE(Misprint)
 {
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"nonce"},
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"nonce"}, std::invalid_argument);
 
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration("nonce", "X"),
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration("nonce", "X"), std::invalid_argument);
 
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"stepS"},
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"stepS"}, std::invalid_argument);
 
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"steps, iter"},
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"steps, iter"}, std::invalid_argument);
 
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"steps, iterations, non"},
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"steps, iterations, non"}, std::invalid_argument);
 }
 
 BOOST_AUTO_TEST_CASE(Unknown)
 {
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"Hello"},
-                      std::invalid_argument);
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"meow"},
-                      std::invalid_argument);
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{""},
-                      std::invalid_argument);
-    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration{"xyz,zy;;;"},
-                      std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"Hello"}, std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"meow"}, std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {""}, std::invalid_argument);
+    BOOST_CHECK_THROW(Opm::ConvergenceOutputConfiguration {"xyz,zy;;;"}, std::invalid_argument);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

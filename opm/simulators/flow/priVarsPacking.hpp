@@ -22,36 +22,40 @@
 
 #include <cstddef>
 
-namespace Opm {
+namespace Opm
+{
 
-    namespace PVUtil {
-        constexpr int fbits = 4;
+namespace PVUtil
+{
+    constexpr int fbits = 4;
 
-        template <class PV>
-        std::size_t pack(const PV& privar) {
-            std::size_t m1 = static_cast<std::size_t>(privar.primaryVarsMeaningWater());
-            std::size_t m2 = static_cast<std::size_t>(privar.primaryVarsMeaningPressure());
-            std::size_t m3 = static_cast<std::size_t>(privar.primaryVarsMeaningGas());
-            std::size_t m4 = static_cast<std::size_t>(privar.primaryVarsMeaningBrine());
-            std::size_t m5 = static_cast<std::size_t>(privar.primaryVarsMeaningSolvent());
-            return m1 + (m2 << fbits*1) + (m3 << fbits*2) + (m4 << fbits*3) + (m5 << fbits*4);
-        }
+    template <class PV>
+    std::size_t pack(const PV& privar)
+    {
+        std::size_t m1 = static_cast<std::size_t>(privar.primaryVarsMeaningWater());
+        std::size_t m2 = static_cast<std::size_t>(privar.primaryVarsMeaningPressure());
+        std::size_t m3 = static_cast<std::size_t>(privar.primaryVarsMeaningGas());
+        std::size_t m4 = static_cast<std::size_t>(privar.primaryVarsMeaningBrine());
+        std::size_t m5 = static_cast<std::size_t>(privar.primaryVarsMeaningSolvent());
+        return m1 + (m2 << fbits * 1) + (m3 << fbits * 2) + (m4 << fbits * 3) + (m5 << fbits * 4);
+    }
 
-        template <class PV>
-        void unPack(PV& privar, const std::size_t meanings) {
-            const std::size_t filter = ((1 << fbits) - 1);
-            std::size_t m1 = (meanings >> fbits*0) & filter;
-            std::size_t m2 = (meanings >> fbits*1) & filter;
-            std::size_t m3 = (meanings >> fbits*2) & filter;
-            std::size_t m4 = (meanings >> fbits*3) & filter;
-            std::size_t m5 = (meanings >> fbits*4) & filter;
-            privar.setPrimaryVarsMeaningWater(typename PV::WaterMeaning(m1));
-            privar.setPrimaryVarsMeaningPressure(typename PV::PressureMeaning(m2));
-            privar.setPrimaryVarsMeaningGas(typename PV::GasMeaning(m3));
-            privar.setPrimaryVarsMeaningBrine(typename PV::BrineMeaning(m4));
-            privar.setPrimaryVarsMeaningSolvent(typename PV::SolventMeaning(m5));
-        }
-    } // namespace PVMeanings
+    template <class PV>
+    void unPack(PV& privar, const std::size_t meanings)
+    {
+        const std::size_t filter = ((1 << fbits) - 1);
+        std::size_t m1 = (meanings >> fbits * 0) & filter;
+        std::size_t m2 = (meanings >> fbits * 1) & filter;
+        std::size_t m3 = (meanings >> fbits * 2) & filter;
+        std::size_t m4 = (meanings >> fbits * 3) & filter;
+        std::size_t m5 = (meanings >> fbits * 4) & filter;
+        privar.setPrimaryVarsMeaningWater(typename PV::WaterMeaning(m1));
+        privar.setPrimaryVarsMeaningPressure(typename PV::PressureMeaning(m2));
+        privar.setPrimaryVarsMeaningGas(typename PV::GasMeaning(m3));
+        privar.setPrimaryVarsMeaningBrine(typename PV::BrineMeaning(m4));
+        privar.setPrimaryVarsMeaningSolvent(typename PV::SolventMeaning(m5));
+    }
+} // namespace PVUtil
 } // namespace Opm
 
 #endif // OPM_PRIVARSPACKING_HEADER_INCLUDED

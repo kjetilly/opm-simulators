@@ -26,21 +26,24 @@
 #include <cstddef>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-ALQState<Scalar> ALQState<Scalar>::serializationTestObject()
+template <class Scalar>
+ALQState<Scalar>
+ALQState<Scalar>::serializationTestObject()
 {
     ALQState result;
     result.current_alq_ = {1.0};
     result.default_alq_ = {2.0};
-    result.alq_increase_count_= {4};
-    result.alq_decrease_count_= {5};
+    result.alq_increase_count_ = {4};
+    result.alq_decrease_count_ = {5};
     return result;
 }
 
-template<class Scalar>
-Scalar ALQState<Scalar>::get() const
+template <class Scalar>
+Scalar
+ALQState<Scalar>::get() const
 {
     if (this->current_alq_)
         return *this->current_alq_;
@@ -48,8 +51,9 @@ Scalar ALQState<Scalar>::get() const
     return this->default_alq_;
 }
 
-template<class Scalar>
-void ALQState<Scalar>::update_default(Scalar value)
+template <class Scalar>
+void
+ALQState<Scalar>::update_default(Scalar value)
 {
     if (default_alq_ != value) {
         this->default_alq_ = value;
@@ -57,20 +61,23 @@ void ALQState<Scalar>::update_default(Scalar value)
     }
 }
 
-template<class Scalar>
-void ALQState<Scalar>::set(Scalar value)
+template <class Scalar>
+void
+ALQState<Scalar>::set(Scalar value)
 {
     this->current_alq_ = value;
 }
 
-template<class Scalar>
-bool ALQState<Scalar>::oscillation() const
+template <class Scalar>
+bool
+ALQState<Scalar>::oscillation() const
 {
     return this->alq_increase_count_ > 0 && this->alq_decrease_count_ >= 1;
 }
 
-template<class Scalar>
-void ALQState<Scalar>::update_count(bool increase)
+template <class Scalar>
+void
+ALQState<Scalar>::update_count(bool increase)
 {
     if (increase)
         this->alq_increase_count_ += 1;
@@ -78,32 +85,34 @@ void ALQState<Scalar>::update_count(bool increase)
         this->alq_decrease_count_ += 1;
 }
 
-template<class Scalar>
-void ALQState<Scalar>::reset_count()
+template <class Scalar>
+void
+ALQState<Scalar>::reset_count()
 {
     this->alq_decrease_count_ = 0;
     this->alq_increase_count_ = 0;
 }
 
-template<class Scalar>
-int ALQState<Scalar>::get_increment_count() const
+template <class Scalar>
+int
+ALQState<Scalar>::get_increment_count() const
 {
     return this->alq_increase_count_;
 }
 
-template<class Scalar>
-int ALQState<Scalar>::get_decrement_count() const
+template <class Scalar>
+int
+ALQState<Scalar>::get_decrement_count() const
 {
     return this->alq_decrease_count_;
 }
 
-template<class Scalar>
-bool ALQState<Scalar>::operator==(const ALQState& rhs) const
+template <class Scalar>
+bool
+ALQState<Scalar>::operator==(const ALQState& rhs) const
 {
-    return this->current_alq_ == rhs.current_alq_ &&
-           this->default_alq_ == rhs.default_alq_ &&
-           this->alq_increase_count_ == rhs.alq_increase_count_ &&
-           this->alq_decrease_count_ == rhs.alq_decrease_count_;
+    return this->current_alq_ == rhs.current_alq_ && this->default_alq_ == rhs.default_alq_
+        && this->alq_increase_count_ == rhs.alq_increase_count_ && this->alq_decrease_count_ == rhs.alq_decrease_count_;
 }
 
 template class ALQState<double>;
@@ -112,4 +121,4 @@ template class ALQState<double>;
 template class ALQState<float>;
 #endif
 
-}
+} // namespace Opm

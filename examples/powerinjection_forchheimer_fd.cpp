@@ -27,28 +27,36 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 #include "problems/powerinjectionproblem.hh"
+#include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/models/utils/start.hh>
+#include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct PowerInjectionForchheimerFdProblem
-{ using InheritsFrom = std::tuple<PowerInjectionBaseProblem, ImmiscibleTwoPhaseModel>; };
+    struct PowerInjectionForchheimerFdProblem {
+        using InheritsFrom = std::tuple<PowerInjectionBaseProblem, ImmiscibleTwoPhaseModel>;
+    };
 
 } // namespace TTag
 
-template<class TypeTag>
-struct FluxModule<TypeTag, TTag::PowerInjectionForchheimerFdProblem> { using type = Opm::ForchheimerFluxModule<TypeTag>; };
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::PowerInjectionForchheimerFdProblem> { using type = TTag::FiniteDifferenceLocalLinearizer; };
+template <class TypeTag>
+struct FluxModule<TypeTag, TTag::PowerInjectionForchheimerFdProblem> {
+    using type = Opm::ForchheimerFluxModule<TypeTag>;
+};
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::PowerInjectionForchheimerFdProblem> {
+    using type = TTag::FiniteDifferenceLocalLinearizer;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::PowerInjectionForchheimerFdProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

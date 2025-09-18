@@ -21,7 +21,8 @@
 
 #include <memory>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasWaterMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -29,10 +30,11 @@ int flowGasWaterMain(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_gaswater binary.
 int flowGasWaterMainStandalone(int argc, char** argv);
 
-template<class TypeTag> class FlowMain;
+template <class TypeTag>
+class FlowMain;
 
 std::unique_ptr<FlowMain<Properties::TTag::FlowGasWaterProblem>>
 flowGasWaterMainInit(int argc, char** argv, bool outputCout, bool outputFiles);
-}
+} // namespace Opm
 
 #endif // FLOW_GASWATER_HPP

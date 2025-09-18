@@ -76,7 +76,8 @@ public:
     {
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 
@@ -107,21 +108,21 @@ struct GeneralPreconditionerMaker {
 /// @tparam ...Args - All arguments needed to construct the preconditioner of choice
 template <class OriginalPreconditioner, class... Args>
 struct PreconditionerMaker : public GeneralPreconditionerMaker<OriginalPreconditioner> {
-    using GenericPreconditioner = Preconditioner<typename OriginalPreconditioner::domain_type, typename OriginalPreconditioner::range_type>;
-    
+    using GenericPreconditioner
+        = Preconditioner<typename OriginalPreconditioner::domain_type, typename OriginalPreconditioner::range_type>;
+
     explicit PreconditionerMaker(Args&&... args)
         : args_(args...)
     {
     }
 
-    std::unique_ptr<GenericPreconditioner>
-    make() override
+    std::unique_ptr<GenericPreconditioner> make() override
     {
-        // return std::unique_ptr<GenericPreconditioner> {new auto(std::make_from_tuple<OriginalPreconditioner>(args_))};
+        // return std::unique_ptr<GenericPreconditioner> {new
+        // auto(std::make_from_tuple<OriginalPreconditioner>(args_))};
         return std::apply(
-            [](auto&&... args) {
-                return std::make_unique<OriginalPreconditioner>(std::forward<Args>(args)...);
-            }, args_);
+            [](auto&&... args) { return std::make_unique<OriginalPreconditioner>(std::forward<Args>(args)...); },
+            args_);
     }
 
     std::tuple<Args...> args_;
@@ -134,9 +135,10 @@ class RebuildOnUpdatePreconditioner : public PreconditionerWithUpdate<typename O
                                                                       typename OriginalPreconditioner::range_type>
 {
 public:
-    template<class... Args>
+    template <class... Args>
     explicit RebuildOnUpdatePreconditioner(Args... args)
-        : preconditioner_maker_(std::make_unique<PreconditionerMaker<OriginalPreconditioner, Args...>>(std::forward<Args>(args)...))
+        : preconditioner_maker_(
+              std::make_unique<PreconditionerMaker<OriginalPreconditioner, Args...>>(std::forward<Args>(args)...))
     {
         update();
     }
@@ -177,7 +179,8 @@ public:
 
 private:
     using AbstractMakerType = GeneralPreconditionerMaker<OriginalPreconditioner>;
-    using GenericPreconditioner = Preconditioner<typename OriginalPreconditioner::domain_type, typename OriginalPreconditioner::range_type>;
+    using GenericPreconditioner
+        = Preconditioner<typename OriginalPreconditioner::domain_type, typename OriginalPreconditioner::range_type>;
 
     std::unique_ptr<AbstractMakerType> preconditioner_maker_;
     std::unique_ptr<GenericPreconditioner> orig_precond_;
@@ -192,8 +195,7 @@ template <class OriginalPreconditioner, class... Args>
 auto
 getRebuildOnUpdateWrapper(Args... args)
 {
-    return std::make_shared<RebuildOnUpdatePreconditioner<OriginalPreconditioner>>(
-        std::forward<Args>(args)...);
+    return std::make_shared<RebuildOnUpdatePreconditioner<OriginalPreconditioner>>(std::forward<Args>(args)...);
 }
 
 } // namespace Dune

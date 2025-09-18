@@ -58,7 +58,8 @@ public:
      */
     explicit GpuView() = default;
 
-    //TODO: we probably dont need anything like this or is it useful to have views also be able to handle things on CPU?
+    // TODO: we probably dont need anything like this or is it useful to have views also be able to handle things on
+    // CPU?
     /// @brief constructor based on std::vectors, this will make a view on the CPU
     /// @param data std vector to pr
     GpuView(std::vector<T>& data);
@@ -68,11 +69,12 @@ public:
      *
      * @param idx The index of the element
      */
-    __host__ __device__ T& operator[](size_t idx){
+    __host__ __device__ T& operator[](size_t idx)
+    {
 #ifndef NDEBUG
         assertInRange(idx);
 #endif
-    return m_dataPtr[idx];
+        return m_dataPtr[idx];
     }
 
     /**
@@ -80,11 +82,12 @@ public:
      *
      * @param idx The index of the element
      */
-    __host__ __device__ T operator[](size_t idx) const {
+    __host__ __device__ T operator[](size_t idx) const
+    {
 #ifndef NDEBUG
         assertInRange(idx);
 #endif
-    return m_dataPtr[idx];
+        return m_dataPtr[idx];
     }
 
 
@@ -98,7 +101,8 @@ public:
      * @param dataOnHost data on host/CPU
      */
     GpuView(T* dataOnHost, size_t numberOfElements)
-        : m_dataPtr(dataOnHost), m_numberOfElements(numberOfElements)
+        : m_dataPtr(dataOnHost)
+        , m_numberOfElements(numberOfElements)
     {
     }
 
@@ -110,14 +114,16 @@ public:
     /**
      * @return the raw pointer to the GPU data
      */
-    __host__ __device__ T* data(){
+    __host__ __device__ T* data()
+    {
         return m_dataPtr;
     }
 
     /**
      * @return the raw pointer to the GPU data
      */
-    __host__ __device__ const T* data() const{
+    __host__ __device__ const T* data() const
+    {
         return m_dataPtr;
     }
 
@@ -140,7 +146,7 @@ public:
 #ifndef NDEBUG
         assertHasElements();
 #endif
-        return m_dataPtr[m_numberOfElements-1];
+        return m_dataPtr[m_numberOfElements - 1];
     }
 
     /**
@@ -162,7 +168,7 @@ public:
 #ifndef NDEBUG
         assertHasElements();
 #endif
-        return m_dataPtr[m_numberOfElements-1];
+        return m_dataPtr[m_numberOfElements - 1];
     }
 
     /**
@@ -205,7 +211,8 @@ public:
      * @brief size returns the size (number of T elements) in the vector
      * @return number of elements
      */
-    __host__ __device__ size_t size() const{
+    __host__ __device__ size_t size() const
+    {
         return m_numberOfElements;
     }
 
@@ -215,7 +222,8 @@ public:
      */
     std::vector<T> asStdVector() const;
     /// @brief Iterator class to make GpuViews more similar to std containers
-    class iterator {
+    class iterator
+    {
     public:
         // Iterator typedefs
         using iterator_category = std::forward_iterator_tag;
@@ -227,17 +235,22 @@ public:
         /// @brief Create iterator from a pointer
         /// @param ptr provided pointer that will become an iterator
         /// @return // the created iterator object
-        __host__ __device__ iterator(T* ptr) : m_ptr(ptr) {}
+        __host__ __device__ iterator(T* ptr)
+            : m_ptr(ptr)
+        {
+        }
 
         /// @brief Dereference operator
         /// @return retrieve what the iterator points at
-        __host__ __device__ reference operator*() const {
+        __host__ __device__ reference operator*() const
+        {
             return *m_ptr;
         }
 
         /// @brief Pre-increment operator
         /// @return return the pointer after it is incremented
-        __host__ __device__ iterator& operator++() {
+        __host__ __device__ iterator& operator++()
+        {
             ++m_ptr;
             return *this;
         }
@@ -245,7 +258,8 @@ public:
         /// @brief Post-increment operator
         /// @param no parameter, int is placeholder for c++ implementation to differentiate from pre-increment
         /// @return Iterator before it is incremented
-        __host__ __device__ iterator operator++(int) {
+        __host__ __device__ iterator operator++(int)
+        {
             iterator tmp = *this;
             ++m_ptr;
             return tmp;
@@ -253,7 +267,8 @@ public:
 
         /// @brief Pre-decrement operator
         /// @return return the pointer after it is decremented
-        __host__ __device__ iterator& operator--() {
+        __host__ __device__ iterator& operator--()
+        {
             --m_ptr;
             return *this;
         }
@@ -261,7 +276,8 @@ public:
         /// @brief Post-decrement operator
         /// @param no parameter, int is placeholder for c++ implementation to differentiate from pre-decrement
         /// @return Iterator before it is decremented
-        __host__ __device__ iterator operator--(int) {
+        __host__ __device__ iterator operator--(int)
+        {
             iterator tmp = *this;
             --m_ptr;
             return tmp;
@@ -269,48 +285,55 @@ public:
 
         /// @brief Inequality comparison operator
         /// @return boolean value that is true if the pointers contains different addresses
-        __host__ __device__ bool operator!=(const iterator& other) const {
+        __host__ __device__ bool operator!=(const iterator& other) const
+        {
             return !(m_ptr == other.m_ptr);
         }
 
         /// @brief Inequality comparison operator
         /// @return boolean value that is true if the pointers contains the same address
-        __host__ __device__ bool operator==(const iterator& other) const {
+        __host__ __device__ bool operator==(const iterator& other) const
+        {
             return m_ptr == other.m_ptr;
         }
 
         /// @brief subtraction operator
         /// @param other iterator to subtract
         /// @return diffptr that represents difference between the iterators
-        __host__ __device__ difference_type operator-(const iterator& other) const {
+        __host__ __device__ difference_type operator-(const iterator& other) const
+        {
             return std::distance(other.m_ptr, m_ptr);
         }
 
         /// @brief Subtraction of given number of elements from iterator
         /// @param n the number of elements to step backwards
         /// @return An iterator pointing to a location n steps behind
-        __host__ __device__ iterator operator-(difference_type n) const {
-            return iterator(m_ptr-n);
+        __host__ __device__ iterator operator-(difference_type n) const
+        {
+            return iterator(m_ptr - n);
         }
 
         /// @brief Addition operator with diffptr
         /// @param n diffptr to add
         /// @return new iterator with diffptr added
-        __host__ __device__ iterator operator+(difference_type n) const {
+        __host__ __device__ iterator operator+(difference_type n) const
+        {
             return iterator(m_ptr + n);
         }
 
         /// @brief Less than comparison
         /// @param other iterator
         /// @return true if this objects iterator is less than the other iterator
-        __host__ __device__ bool operator<(const iterator& other) const {
+        __host__ __device__ bool operator<(const iterator& other) const
+        {
             return m_ptr < other.m_ptr;
         }
 
         /// @brief Greater than comparison
         /// @param other iterator
         /// @return true if this objects iterator is greater than than the other iterator
-        __host__ __device__ bool operator>(const iterator& other) const {
+        __host__ __device__ bool operator>(const iterator& other) const
+        {
             return m_ptr > other.m_ptr;
         }
 
@@ -323,7 +346,8 @@ public:
      * @brief Get an iterator pointing to the first element of the buffer
      * @param iterator to traverse the buffer
      */
-    __host__ __device__ iterator begin(){
+    __host__ __device__ iterator begin()
+    {
         return iterator(m_dataPtr);
     }
 
@@ -331,7 +355,8 @@ public:
      * @brief Get a const iterator pointing to the first element of the buffer
      * @param iterator to traverse the buffer
      */
-    __host__ __device__ iterator begin() const {
+    __host__ __device__ iterator begin() const
+    {
         return iterator(m_dataPtr);
     }
 
@@ -339,7 +364,8 @@ public:
      * @brief Get an iterator pointing to the address after the last element of the buffer
      * @param iterator pointing to the first value after the end of the buffer
      */
-    __host__ __device__ iterator end(){
+    __host__ __device__ iterator end()
+    {
         return iterator(m_dataPtr + m_numberOfElements);
     }
 
@@ -347,7 +373,8 @@ public:
      * @brief Get a const iterator pointing to the address after the last element of the buffer
      * @param iterator pointing to the first value after the end of the buffer
      */
-    __host__ __device__ iterator end() const {
+    __host__ __device__ iterator end() const
+    {
         return iterator(m_dataPtr + m_numberOfElements);
     }
 
@@ -371,7 +398,7 @@ private:
 #else
         if (size != m_numberOfElements) {
             OPM_THROW(std::invalid_argument,
-                    fmt::format("Given view has {}, while this View has {}.", size, m_numberOfElements));
+                      fmt::format("Given view has {}, while this View has {}.", size, m_numberOfElements));
         }
 #endif
     }
@@ -397,8 +424,7 @@ private:
         assert(idx < m_numberOfElements && "The index provided was not in the range [0, buffersize-1]");
 #else
         if (idx >= m_numberOfElements) {
-            OPM_THROW(std::invalid_argument,
-                    fmt::format("The index provided was not in the range [0, buffersize-1]"));
+            OPM_THROW(std::invalid_argument, fmt::format("The index provided was not in the range [0, buffersize-1]"));
         }
 #endif
     }

@@ -27,23 +27,32 @@
 #ifndef OPM_VTK_BLACK_OIL_ENERGY_PARAMS_HPP
 #define OPM_VTK_BLACK_OIL_ENERGY_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteRockInternalEnergy { static constexpr bool value = true; };
-struct VtkWriteTotalThermalConductivity { static constexpr bool value = true; };
-struct VtkWriteFluidInternalEnergies { static constexpr bool value = true; };
-struct VtkWriteFluidEnthalpies { static constexpr bool value = true; };
+struct VtkWriteRockInternalEnergy {
+    static constexpr bool value = true;
+};
+struct VtkWriteTotalThermalConductivity {
+    static constexpr bool value = true;
+};
+struct VtkWriteFluidInternalEnergies {
+    static constexpr bool value = true;
+};
+struct VtkWriteFluidEnthalpies {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkBlackoilEnergyOutputModule.
  */
-struct VtkBlackoilEnergyParams
-{
+struct VtkBlackoilEnergyParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

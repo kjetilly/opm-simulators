@@ -29,67 +29,64 @@
 
 namespace Opm
 {
-    //! \brief Solver approach for NLDD.
-    enum class DomainSolveApproach {
-        Jacobi,
-        GaussSeidel
-    };
+//! \brief Solver approach for NLDD.
+enum class DomainSolveApproach { Jacobi, GaussSeidel };
 
-    //! \brief Measure to use for domain ordering.
-    enum class DomainOrderingMeasure {
-        AveragePressure,
-        MaxPressure,
-        Residual
-    };
+//! \brief Measure to use for domain ordering.
+enum class DomainOrderingMeasure { AveragePressure, MaxPressure, Residual };
 
-    inline DomainOrderingMeasure domainOrderingMeasureFromString(const std::string_view measure)
-    {
-        if (measure == "residual") {
-            return DomainOrderingMeasure::Residual;
-        } else if (measure == "maxpressure") {
-            return DomainOrderingMeasure::MaxPressure;
-        } else if (measure == "averagepressure") {
-            return DomainOrderingMeasure::AveragePressure;
-        } else {
-            throw std::runtime_error(fmt::format("Invalid domain ordering '{}' specified", measure));
-        }
+inline DomainOrderingMeasure
+domainOrderingMeasureFromString(const std::string_view measure)
+{
+    if (measure == "residual") {
+        return DomainOrderingMeasure::Residual;
+    } else if (measure == "maxpressure") {
+        return DomainOrderingMeasure::MaxPressure;
+    } else if (measure == "averagepressure") {
+        return DomainOrderingMeasure::AveragePressure;
+    } else {
+        throw std::runtime_error(fmt::format("Invalid domain ordering '{}' specified", measure));
     }
+}
 
-    /// Representing a part of a grid, in a way suitable for performing
-    /// local solves.
-    struct SubDomainIndices
+/// Representing a part of a grid, in a way suitable for performing
+/// local solves.
+struct SubDomainIndices {
+    // The index of a subdomain is arbitrary, but can be used by the
+    // solvers to keep track of well locations etc.
+    int index;
+    // The set of cells that make up a SubDomain, stored as cell indices
+    // in the local numbering of the current MPI rank.
+    std::vector<int> cells;
+    // Flag for each cell of the current MPI rank, true if the cell is part
+    // of the subdomain. If empty, assumed to be all true. Not required for
+    // all nonlinear solver algorithms.
+    std::vector<bool> interior;
+    // Flag indicating if this domain should be skipped during solves
+    bool skip;
+    // Enables subdomain solves and linearization using the generic linearization
+    // approach (i.e. FvBaseLinearizer as opposed to TpfaLinearizer).
+    SubDomainIndices(const int i, std::vector<int>&& c, std::vector<bool>&& in, bool s)
+        : index(i)
+        , cells(std::move(c))
+        , interior(std::move(in))
+        , skip(s)
     {
-        // The index of a subdomain is arbitrary, but can be used by the
-        // solvers to keep track of well locations etc.
-        int index;
-        // The set of cells that make up a SubDomain, stored as cell indices
-        // in the local numbering of the current MPI rank.
-        std::vector<int> cells;
-        // Flag for each cell of the current MPI rank, true if the cell is part
-        // of the subdomain. If empty, assumed to be all true. Not required for
-        // all nonlinear solver algorithms.
-        std::vector<bool> interior;
-        // Flag indicating if this domain should be skipped during solves
-        bool skip;
-        // Enables subdomain solves and linearization using the generic linearization
-        // approach (i.e. FvBaseLinearizer as opposed to TpfaLinearizer).
-        SubDomainIndices(const int i, std::vector<int>&& c, std::vector<bool>&& in, bool s)
-            : index(i), cells(std::move(c)), interior(std::move(in)), skip(s)
-        {}
-    };
+    }
+};
 
-    /// Representing a part of a grid, in a way suitable for performing
-    /// local solves.
-    template <class Grid>
-    struct SubDomain : public SubDomainIndices
+/// Representing a part of a grid, in a way suitable for performing
+/// local solves.
+template <class Grid>
+struct SubDomain : public SubDomainIndices {
+    Dune::SubGridPart<Grid> view;
+    // Constructor that moves from its argument.
+    SubDomain(const int i, std::vector<int>&& c, std::vector<bool>&& in, Dune::SubGridPart<Grid>&& v, bool s)
+        : SubDomainIndices(i, std::move(c), std::move(in), s)
+        , view(std::move(v))
     {
-        Dune::SubGridPart<Grid> view;
-        // Constructor that moves from its argument.
-        SubDomain(const int i, std::vector<int>&& c, std::vector<bool>&& in, Dune::SubGridPart<Grid>&& v, bool s)
-            : SubDomainIndices(i, std::move(c), std::move(in), s)
-            , view(std::move(v))
-        {}
-    };
+    }
+};
 
 } // namespace Opm
 

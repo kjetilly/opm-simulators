@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(TestThrows)
     // A HIP equivalent of cudaErrorAdressOfConstant does not exist.
     errorCodes = {{cudaErrorAlreadyAcquired}};
 #else
-     errorCodes = {{cudaErrorAddressOfConstant, cudaErrorAlreadyAcquired}};
+    errorCodes = {{cudaErrorAddressOfConstant, cudaErrorAlreadyAcquired}};
 #endif
     for (auto code : errorCodes) {
         BOOST_CHECK_THROW(OPM_GPU_SAFE_CALL(code), std::exception);

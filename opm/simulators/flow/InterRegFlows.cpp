@@ -28,42 +28,33 @@
 #include <algorithm>
 #include <stdexcept>
 
-Opm::InterRegFlowMapSingleFIP::
-InterRegFlowMapSingleFIP(const std::vector<int>& region)
+Opm::InterRegFlowMapSingleFIP::InterRegFlowMapSingleFIP(const std::vector<int>& region)
     : region_(region.size(), 0)
 {
-    if (! region.empty()) {
-        this->maxLocalRegionID_= this->maxGlobalRegionID_ =
-            *std::max_element(region.begin(), region.end());
+    if (!region.empty()) {
+        this->maxLocalRegionID_ = this->maxGlobalRegionID_ = *std::max_element(region.begin(), region.end());
     }
 
-    std::transform(region.begin(), region.end(),
-                   this->region_.begin(),
-                   [](const int regID) { return regID - 1; });
+    std::transform(region.begin(), region.end(), this->region_.begin(), [](const int regID) { return regID - 1; });
 }
 
 void
-Opm::InterRegFlowMapSingleFIP::
-addConnection(const Cell& source,
-              const Cell& destination,
-              const data::InterRegFlowMap::FlowRates& rates)
+Opm::InterRegFlowMapSingleFIP::addConnection(const Cell& source,
+                                             const Cell& destination,
+                                             const data::InterRegFlowMap::FlowRates& rates)
 {
     if (this->isReadFromStream_) {
-        throw std::logic_error {
-            "Cannot add new connection to deserialised object"
-        };
+        throw std::logic_error {"Cannot add new connection to deserialised object"};
     }
 
-    if (! source.isInterior ||
-        (source.cartesianIndex > destination.cartesianIndex))
-    {
+    if (!source.isInterior || (source.cartesianIndex > destination.cartesianIndex)) {
         // Connection handled in different call.  Don't double-count
         // contributions.
         return;
     }
 
-    const auto r1 = this->region_[ source.activeIndex ];
-    const auto r2 = this->region_[ destination.activeIndex ];
+    const auto r1 = this->region_[source.activeIndex];
+    const auto r2 = this->region_[destination.activeIndex];
 
     if (r1 == r2) {
         // Connection is internal to a region.  Nothing to do.
@@ -75,12 +66,14 @@ addConnection(const Cell& source,
     this->iregFlow_.addConnection(r1, r2, rates);
 }
 
-void Opm::InterRegFlowMapSingleFIP::compress()
+void
+Opm::InterRegFlowMapSingleFIP::compress()
 {
     this->iregFlow_.compress(this->maxGlobalRegionID_);
 }
 
-void Opm::InterRegFlowMapSingleFIP::clear()
+void
+Opm::InterRegFlowMapSingleFIP::clear()
 {
     this->iregFlow_.clear();
     this->isReadFromStream_ = false;
@@ -92,14 +85,14 @@ Opm::InterRegFlowMapSingleFIP::getInterRegFlows() const
     return this->iregFlow_;
 }
 
-std::size_t Opm::InterRegFlowMapSingleFIP::getLocalMaxRegionID() const
+std::size_t
+Opm::InterRegFlowMapSingleFIP::getLocalMaxRegionID() const
 {
     return this->maxLocalRegionID_;
 }
 
 bool
-Opm::InterRegFlowMapSingleFIP::
-assignGlobalMaxRegionID(const std::size_t regID)
+Opm::InterRegFlowMapSingleFIP::assignGlobalMaxRegionID(const std::size_t regID)
 {
     if (regID < this->maxLocalRegionID_) {
         return false;
@@ -121,18 +114,17 @@ assignGlobalMaxRegionID(const std::size_t regID)
 Opm::InterRegFlowMap
 Opm::InterRegFlowMap::createMapFromNames(std::vector<std::string> names)
 {
-    auto map = InterRegFlowMap{};
+    auto map = InterRegFlowMap {};
 
     map.names_ = std::move(names);
-    map.regionMaps_.resize(map.names_.size(), InterRegFlowMapSingleFIP{});
+    map.regionMaps_.resize(map.names_.size(), InterRegFlowMapSingleFIP {});
 
     return map;
 }
 
-Opm::InterRegFlowMap::
-InterRegFlowMap(const std::size_t                numCells,
-                const std::vector<SingleRegion>& regions,
-                const std::size_t                declaredMaxRegID)
+Opm::InterRegFlowMap::InterRegFlowMap(const std::size_t numCells,
+                                      const std::vector<SingleRegion>& regions,
+                                      const std::size_t declaredMaxRegID)
 {
     this->regionMaps_.reserve(regions.size());
     this->names_.reserve(regions.size());
@@ -144,7 +136,7 @@ InterRegFlowMap(const std::size_t                numCells,
         this->names_.push_back(region.name);
     }
 
-    if (declaredMaxRegID > std::size_t{0}) {
+    if (declaredMaxRegID > std::size_t {0}) {
         for (auto& regionMap : this->regionMaps_) {
             regionMap.assignGlobalMaxRegionID(declaredMaxRegID);
         }
@@ -152,24 +144,25 @@ InterRegFlowMap(const std::size_t                numCells,
 }
 
 void
-Opm::InterRegFlowMap::
-addConnection(const Cell& source,
-              const Cell& destination,
-              const data::InterRegFlowMap::FlowRates& rates)
+Opm::InterRegFlowMap::addConnection(const Cell& source,
+                                    const Cell& destination,
+                                    const data::InterRegFlowMap::FlowRates& rates)
 {
     for (auto& regionMap : this->regionMaps_) {
         regionMap.addConnection(source, destination, rates);
     }
 }
 
-void Opm::InterRegFlowMap::compress()
+void
+Opm::InterRegFlowMap::compress()
 {
     for (auto& regionMap : this->regionMaps_) {
         regionMap.compress();
     }
 }
 
-void Opm::InterRegFlowMap::clear()
+void
+Opm::InterRegFlowMap::clear()
 {
     for (auto& regionMap : this->regionMaps_) {
         regionMap.clear();
@@ -187,14 +180,13 @@ Opm::InterRegFlowMap::names() const
 std::vector<Opm::data::InterRegFlowMap>
 Opm::InterRegFlowMap::getInterRegFlows() const
 {
-    auto maps = std::vector<data::InterRegFlowMap>{};
+    auto maps = std::vector<data::InterRegFlowMap> {};
     maps.reserve(this->regionMaps_.size());
 
     std::transform(this->regionMaps_.begin(),
                    this->regionMaps_.end(),
                    std::back_inserter(maps),
-                   [](const auto& regionMap)
-                   { return regionMap.getInterRegFlows(); });
+                   [](const auto& regionMap) { return regionMap.getInterRegFlows(); });
 
     return maps;
 }
@@ -202,21 +194,19 @@ Opm::InterRegFlowMap::getInterRegFlows() const
 std::vector<std::size_t>
 Opm::InterRegFlowMap::getLocalMaxRegionID() const
 {
-    auto maxLocalRegionID = std::vector<std::size_t>{};
+    auto maxLocalRegionID = std::vector<std::size_t> {};
     maxLocalRegionID.reserve(this->regionMaps_.size());
 
     std::transform(this->regionMaps_.begin(),
                    this->regionMaps_.end(),
                    std::back_inserter(maxLocalRegionID),
-                   [](const auto& regionMap)
-                   { return regionMap.getLocalMaxRegionID(); });
+                   [](const auto& regionMap) { return regionMap.getLocalMaxRegionID(); });
 
     return maxLocalRegionID;
 }
 
 bool
-Opm::InterRegFlowMap::
-assignGlobalMaxRegionID(const std::vector<std::size_t>& regID)
+Opm::InterRegFlowMap::assignGlobalMaxRegionID(const std::vector<std::size_t>& regID)
 {
     if (regID.size() != this->regionMaps_.size()) {
         return false;
@@ -225,9 +215,8 @@ assignGlobalMaxRegionID(const std::vector<std::size_t>& regID)
     auto assignmentOK = true;
 
     const auto numReg = regID.size();
-    for (auto region = 0*numReg; region < numReg; ++region) {
-        const auto ok = this->regionMaps_[region]
-            .assignGlobalMaxRegionID(regID[region]);
+    for (auto region = 0 * numReg; region < numReg; ++region) {
+        const auto ok = this->regionMaps_[region].assignGlobalMaxRegionID(regID[region]);
 
         assignmentOK = assignmentOK && ok;
     }
@@ -235,7 +224,8 @@ assignGlobalMaxRegionID(const std::vector<std::size_t>& regID)
     return assignmentOK;
 }
 
-bool Opm::InterRegFlowMap::readIsConsistent() const
+bool
+Opm::InterRegFlowMap::readIsConsistent() const
 {
     return this->readIsConsistent_;
 }

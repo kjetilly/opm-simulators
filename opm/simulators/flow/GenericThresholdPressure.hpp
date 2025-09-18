@@ -28,23 +28,27 @@
 #ifndef OPM_GENERIC_THRESHOLD_PRESSURE_HPP
 #define OPM_GENERIC_THRESHOLD_PRESSURE_HPP
 
-#include <opm/grid/common/CartesianIndexMapper.hpp>
 #include <opm/grid/LookUpData.hh>
+#include <opm/grid/common/CartesianIndexMapper.hpp>
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseState;
-template<typename Grid, typename GridView> class LookUpData;
-template<typename Grid, typename GridView> class LookUpCartesianData;
+template <typename Grid, typename GridView>
+class LookUpData;
+template <typename Grid, typename GridView>
+class LookUpCartesianData;
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
-class GenericThresholdPressure {
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+class GenericThresholdPressure
+{
 public:
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
-    using LookUpData = Opm::LookUpData<Grid,GridView>;
-    using LookUpCartesianData = Opm::LookUpCartesianData<Grid,GridView>;
+    using LookUpData = Opm::LookUpData<Grid, GridView>;
+    using LookUpCartesianData = Opm::LookUpCartesianData<Grid, GridView>;
 
     GenericThresholdPressure(const CartesianIndexMapper& cartMapper,
                              const GridView& gridView,
@@ -67,7 +71,9 @@ public:
      * This is used for the restart capability.
      */
     const std::vector<Scalar>& data() const
-    { return thpres_; }
+    {
+        return thpres_;
+    }
 
     /*!
      * \brief Set the threshold pressures from a raw array
@@ -109,7 +115,7 @@ protected:
     const EclipseState& eclState_;
     std::vector<Scalar> thpresDefault_;
     std::vector<Scalar> thpres_;
-    unsigned numEquilRegions_{};
+    unsigned numEquilRegions_ {};
     std::vector<unsigned short> elemEquilRegion_;
 
     // threshold pressure accross faults. EXPERIMENTAL!

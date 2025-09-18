@@ -21,61 +21,52 @@
 #include <cassert>
 #include <cstddef>
 
-namespace Opm {
-namespace detail {
-
-template<class Scalar>
-Scalar
-pressureAverage(const Scalar pressurePvHydrocarbon,
-                const Scalar pvHydrocarbon,
-                const Scalar pressurePv,
-                const Scalar pv,
-                const bool hydrocarbon)
+namespace Opm
 {
-    if (hydrocarbon && (pvHydrocarbon > 1e-10))
-        return pressurePvHydrocarbon / pvHydrocarbon;
-
-    return (pressurePv == 0) ? 0 : pressurePv / pv;
-}
-
-template<class Scalar>
-std::vector<Scalar>
-pressureAverage(const std::vector<Scalar>& pressurePvHydrocarbon,
-                const std::vector<Scalar>& pvHydrocarbon,
-                const std::vector<Scalar>& pressurePv,
-                const std::vector<Scalar>& pv,
-                const bool hydrocarbon)
+namespace detail
 {
-    const std::size_t size = pressurePvHydrocarbon.size();
-    assert(pvHydrocarbon.size() == size);
-    assert(pressurePv.size() == size);
-    assert(pv.size() == size);
 
-    std::vector<Scalar> fraction(size, 0.0);
-    for (std::size_t i = 0; i < size; ++i) {
-        fraction[i] = pressureAverage(pressurePvHydrocarbon[i],
-                                      pvHydrocarbon[i],
-                                      pressurePv[i],
-                                      pv[i],
-                                      hydrocarbon);
+    template <class Scalar>
+    Scalar pressureAverage(const Scalar pressurePvHydrocarbon,
+                           const Scalar pvHydrocarbon,
+                           const Scalar pressurePv,
+                           const Scalar pv,
+                           const bool hydrocarbon)
+    {
+        if (hydrocarbon && (pvHydrocarbon > 1e-10))
+            return pressurePvHydrocarbon / pvHydrocarbon;
+
+        return (pressurePv == 0) ? 0 : pressurePv / pv;
     }
 
-    return fraction;
-}
+    template <class Scalar>
+    std::vector<Scalar> pressureAverage(const std::vector<Scalar>& pressurePvHydrocarbon,
+                                        const std::vector<Scalar>& pvHydrocarbon,
+                                        const std::vector<Scalar>& pressurePv,
+                                        const std::vector<Scalar>& pv,
+                                        const bool hydrocarbon)
+    {
+        const std::size_t size = pressurePvHydrocarbon.size();
+        assert(pvHydrocarbon.size() == size);
+        assert(pressurePv.size() == size);
+        assert(pv.size() == size);
 
-template double
-pressureAverage<double>(const double,
-                        const double,
-                        const double,
-                        const double,
-                        const bool);
+        std::vector<Scalar> fraction(size, 0.0);
+        for (std::size_t i = 0; i < size; ++i) {
+            fraction[i]
+                = pressureAverage(pressurePvHydrocarbon[i], pvHydrocarbon[i], pressurePv[i], pv[i], hydrocarbon);
+        }
 
-template std::vector<double>
-pressureAverage<double>(const std::vector<double>&,
-                        const std::vector<double>&,
-                        const std::vector<double>&,
-                        const std::vector<double>&,
-                        const bool);
+        return fraction;
+    }
+
+    template double pressureAverage<double>(const double, const double, const double, const double, const bool);
+
+    template std::vector<double> pressureAverage<double>(const std::vector<double>&,
+                                                         const std::vector<double>&,
+                                                         const std::vector<double>&,
+                                                         const std::vector<double>&,
+                                                         const bool);
 
 } // namespace detail
 } // namespace Opm

@@ -25,12 +25,14 @@
 #include <opm/simulators/linalg/gpuistl/PreconditionerCPUMatrixToGPUMatrix.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
 
 template <class Operator>
-struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typename std::enable_if_t<!Opm::is_gpu_operator_v<Operator>>> 
-{
+struct StandardPreconditioners<Operator,
+                               Dune::Amg::SequentialInformation,
+                               typename std::enable_if_t<!Opm::is_gpu_operator_v<Operator>>> {
     static void add()
     {
         using namespace Dune;
@@ -42,8 +44,7 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
         using P = PropertyTree;
         F::addCreator("ilu0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
-            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(
-                op.getmat(), 0, w, MILU_VARIANT::ILU);
+            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(op.getmat(), 0, w, MILU_VARIANT::ILU);
         });
         F::addCreator("duneilu", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
@@ -54,14 +55,12 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
         F::addCreator("paroverilu0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
             const int n = prm.get<int>("ilulevel", 0);
-            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(
-                op.getmat(), n, w, MILU_VARIANT::ILU);
+            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(op.getmat(), n, w, MILU_VARIANT::ILU);
         });
         F::addCreator("ilun", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const int n = prm.get<int>("ilulevel", 0);
             const double w = prm.get<double>("relaxation", 1.0);
-            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(
-                op.getmat(), n, w, MILU_VARIANT::ILU);
+            return std::make_shared<ParallelOverlappingILU0<M, V, V, C>>(op.getmat(), n, w, MILU_VARIANT::ILU);
         });
         F::addCreator("dilu", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             DUNE_UNUSED_PARAMETER(prm);
@@ -147,7 +146,7 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
                 }
             });
             F::addCreator("famg", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
-                if  constexpr (std::is_same_v<typename V::field_type, float>) {
+                if constexpr (std::is_same_v<typename V::field_type, float>) {
                     OPM_THROW(std::logic_error, "famg requires UMFPack which is not available for floats");
                     return nullptr;
                 } else {
@@ -172,10 +171,11 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
 
 #if HAVE_HYPRE
             // Only add Hypre for scalar matrices
-            if constexpr (M::block_type::rows == 1 && M::block_type::cols == 1 &&
-                          std::is_same_v<HYPRE_Real, typename V::field_type>) {
-              F::addCreator("hypre", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
-                return std::make_shared<Hypre::HyprePreconditioner<M, V, V, Dune::Amg::SequentialInformation>>(op.getmat(), prm, Dune::Amg::SequentialInformation());
+            if constexpr (M::block_type::rows == 1 && M::block_type::cols == 1
+                          && std::is_same_v<HYPRE_Real, typename V::field_type>) {
+                F::addCreator("hypre", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
+                    return std::make_shared<Hypre::HyprePreconditioner<M, V, V, Dune::Amg::SequentialInformation>>(
+                        op.getmat(), prm, Dune::Amg::SequentialInformation());
                 });
             }
 #endif
@@ -232,8 +232,8 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
         F::addCreator("gpuilu0", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
-            using GpuILU0 = typename gpuistl::
-                GpuSeqILU0<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
+            using GpuILU0 =
+                typename gpuistl::GpuSeqILU0<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
             return std::make_shared<gpuistl::PreconditionerAdapter<V, V, GpuILU0>>(
                 std::make_shared<GpuILU0>(op.getmat(), w));
         });
@@ -244,8 +244,8 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
             using VTo = Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
             using matrix_type_to =
                 typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
-            using GpuILU0 = typename gpuistl::
-                GpuSeqILU0<matrix_type_to, gpuistl::GpuVector<float>, gpuistl::GpuVector<float>>;
+            using GpuILU0 =
+                typename gpuistl::GpuSeqILU0<matrix_type_to, gpuistl::GpuVector<float>, gpuistl::GpuVector<float>>;
             using Adapter = typename gpuistl::PreconditionerAdapter<VTo, VTo, GpuILU0>;
             using Converter = typename gpuistl::PreconditionerConvertFieldTypeAdapter<Adapter, M, V, V>;
             auto converted = std::make_shared<Converter>(op.getmat());
@@ -257,72 +257,93 @@ struct StandardPreconditioners<Operator, Dune::Amg::SequentialInformation, typen
         F::addCreator("gpujac", [](const O& op, const P& prm, const std::function<V()>&, std::size_t) {
             const double w = prm.get<double>("relaxation", 1.0);
             using field_type = typename V::field_type;
-            using GPUJac =
-                typename gpuistl::GpuJac<gpuistl::GpuSparseMatrix<field_type>,
-                    gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
-            
-            using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>, 
-                gpuistl::GpuVector<field_type>, GPUJac, M>;
+            using GPUJac = typename gpuistl::GpuJac<gpuistl::GpuSparseMatrix<field_type>,
+                                                    gpuistl::GpuVector<field_type>,
+                                                    gpuistl::GpuVector<field_type>>;
+
+            using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>,
+                                                                                 gpuistl::GpuVector<field_type>,
+                                                                                 GPUJac,
+                                                                                 M>;
             return std::make_shared<gpuistl::PreconditionerAdapter<V, V, MatrixOwner>>(
                 std::make_shared<MatrixOwner>(op.getmat(), w));
         });
 
-        F::addCreator("opmgpuilu0", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
-            const bool split_matrix = prm.get<bool>("split_matrix", true);
-            const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
-            const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
+        F::addCreator(
+            "opmgpuilu0", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
+                const bool split_matrix = prm.get<bool>("split_matrix", true);
+                const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
+                const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
 
-            using field_type = typename V::field_type;
-            using GPUILU0 = typename gpuistl::OpmGpuILU0<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
-            using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>, 
-                gpuistl::GpuVector<field_type>, GPUILU0, M>;
-            return std::make_shared<gpuistl::PreconditionerAdapter<V, V, MatrixOwner>>(
-                // Note: op.getmat() is passed twice, because the ILU0 needs both the CPU and GPU matrix. 
-                // The first argument will be converted to a GPU matrix, and the second one is used as a CPU matrix.
-                std::make_shared<MatrixOwner>(op.getmat(), op.getmat(), split_matrix, tune_gpu_kernels, mixed_precision_scheme));
-        });
+                using field_type = typename V::field_type;
+                using GPUILU0 =
+                    typename gpuistl::OpmGpuILU0<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
+                using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>,
+                                                                                     gpuistl::GpuVector<field_type>,
+                                                                                     GPUILU0,
+                                                                                     M>;
+                return std::make_shared<gpuistl::PreconditionerAdapter<V, V, MatrixOwner>>(
+                    // Note: op.getmat() is passed twice, because the ILU0 needs both the CPU and GPU matrix.
+                    // The first argument will be converted to a GPU matrix, and the second one is used as a CPU matrix.
+                    std::make_shared<MatrixOwner>(
+                        op.getmat(), op.getmat(), split_matrix, tune_gpu_kernels, mixed_precision_scheme));
+            });
 
 
-        F::addCreator("gpudilu", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
-            const bool split_matrix = prm.get<bool>("split_matrix", true);
-            const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
-            const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
-            const bool reorder = prm.get<bool>("reorder", true);
-            using field_type = typename V::field_type;
-            using GPUDILU = typename gpuistl::GpuDILU<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
-            using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>, 
-                gpuistl::GpuVector<field_type>, GPUDILU, M>;
-            return std::make_shared<gpuistl::PreconditionerAdapter<V, V, MatrixOwner>>(
-                // Note: op.getmat() is passed twice, because the DILU needs both the CPU and GPU matrix. 
-                // The first argument will be converted to a GPU matrix, and the second one is used as a CPU matrix.
-                std::make_shared<MatrixOwner>(op.getmat(), op.getmat(), split_matrix, tune_gpu_kernels, mixed_precision_scheme, reorder));
-        });
+        F::addCreator(
+            "gpudilu", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
+                const bool split_matrix = prm.get<bool>("split_matrix", true);
+                const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
+                const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
+                const bool reorder = prm.get<bool>("reorder", true);
+                using field_type = typename V::field_type;
+                using GPUDILU =
+                    typename gpuistl::GpuDILU<M, gpuistl::GpuVector<field_type>, gpuistl::GpuVector<field_type>>;
+                using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<field_type>,
+                                                                                     gpuistl::GpuVector<field_type>,
+                                                                                     GPUDILU,
+                                                                                     M>;
+                return std::make_shared<gpuistl::PreconditionerAdapter<V, V, MatrixOwner>>(
+                    // Note: op.getmat() is passed twice, because the DILU needs both the CPU and GPU matrix.
+                    // The first argument will be converted to a GPU matrix, and the second one is used as a CPU matrix.
+                    std::make_shared<MatrixOwner>(
+                        op.getmat(), op.getmat(), split_matrix, tune_gpu_kernels, mixed_precision_scheme, reorder));
+            });
 
-        F::addCreator("gpudilufloat", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
-            const bool split_matrix = prm.get<bool>("split_matrix", true);
-            const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
-            const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
-            const bool reorder = prm.get<bool>("reorder", true);
+        F::addCreator(
+            "gpudilufloat", [](const O& op, [[maybe_unused]] const P& prm, const std::function<V()>&, std::size_t) {
+                const bool split_matrix = prm.get<bool>("split_matrix", true);
+                const bool tune_gpu_kernels = prm.get<bool>("tune_gpu_kernels", true);
+                const int mixed_precision_scheme = prm.get<int>("mixed_precision_scheme", 0);
+                const bool reorder = prm.get<bool>("reorder", true);
 
-            using block_type = typename V::block_type;
-            using VTo = Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
-            using matrix_type_to = typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
-            using GpuDILU = typename gpuistl::GpuDILU<matrix_type_to, gpuistl::GpuVector<float>, gpuistl::GpuVector<float>>;
-            using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<float>, 
-                gpuistl::GpuVector<float>, GpuDILU, matrix_type_to>;
-            using Adapter = typename gpuistl::PreconditionerAdapter<VTo, VTo, MatrixOwner>;
-            using Converter = typename gpuistl::PreconditionerConvertFieldTypeAdapter<Adapter, M, V, V>;
+                using block_type = typename V::block_type;
+                using VTo = Dune::BlockVector<Dune::FieldVector<float, block_type::dimension>>;
+                using matrix_type_to =
+                    typename Dune::BCRSMatrix<Dune::FieldMatrix<float, block_type::dimension, block_type::dimension>>;
+                using GpuDILU =
+                    typename gpuistl::GpuDILU<matrix_type_to, gpuistl::GpuVector<float>, gpuistl::GpuVector<float>>;
+                using MatrixOwner = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<gpuistl::GpuVector<float>,
+                                                                                     gpuistl::GpuVector<float>,
+                                                                                     GpuDILU,
+                                                                                     matrix_type_to>;
+                using Adapter = typename gpuistl::PreconditionerAdapter<VTo, VTo, MatrixOwner>;
+                using Converter = typename gpuistl::PreconditionerConvertFieldTypeAdapter<Adapter, M, V, V>;
 
-           
-            auto converted = std::make_shared<Converter>(op.getmat());
-            // Note: converted->getConvertedMatrix() is passed twice, because the DILU needs both the CPU and GPU matrix. 
-            // The first argument will be converted to a GPU matrix, and the second one is used as a CPU matrix.
-            auto adapted = std::make_shared<Adapter>(std::make_shared<MatrixOwner>(
-                converted->getConvertedMatrix(), converted->getConvertedMatrix(),
-                split_matrix, tune_gpu_kernels, mixed_precision_scheme, reorder));
-            converted->setUnderlyingPreconditioner(adapted);
-            return converted;
-        });
+
+                auto converted = std::make_shared<Converter>(op.getmat());
+                // Note: converted->getConvertedMatrix() is passed twice, because the DILU needs both the CPU and GPU
+                // matrix. The first argument will be converted to a GPU matrix, and the second one is used as a CPU
+                // matrix.
+                auto adapted = std::make_shared<Adapter>(std::make_shared<MatrixOwner>(converted->getConvertedMatrix(),
+                                                                                       converted->getConvertedMatrix(),
+                                                                                       split_matrix,
+                                                                                       tune_gpu_kernels,
+                                                                                       mixed_precision_scheme,
+                                                                                       reorder));
+                converted->setUnderlyingPreconditioner(adapted);
+                return converted;
+            });
 #endif // HAVE_CUDA
     }
 };

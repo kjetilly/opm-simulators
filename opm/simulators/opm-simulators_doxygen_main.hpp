@@ -17,8 +17,8 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#ifndef OPM_OPM-SIMULATORS_DOXYGEN_MAIN_HEADER_INCLUDED
-#define OPM_OPM-SIMULATORS_DOXYGEN_MAIN_HEADER_INCLUDED
+#ifndef OPM_OPM - SIMULATORS_DOXYGEN_MAIN_HEADER_INCLUDED
+#define OPM_OPM -SIMULATORS_DOXYGEN_MAIN_HEADER_INCLUDED
 
 
 /** \mainpage Documentation for the opm-simulators library.

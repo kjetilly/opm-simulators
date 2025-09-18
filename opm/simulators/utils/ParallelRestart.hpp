@@ -23,17 +23,21 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseIO;
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 class SummaryState;
 class RestartKey;
 class RestartValue;
 
 namespace Action
 {
-class State;
+    class State;
 }
 
 RestartValue loadParallelRestart(const EclipseIO* eclIO,

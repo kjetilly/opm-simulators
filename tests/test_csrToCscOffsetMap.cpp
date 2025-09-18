@@ -11,7 +11,8 @@
 
 #include <opm/simulators/linalg/gpubridge/opencl/openclBISAI.hpp>
 
-BOOST_AUTO_TEST_CASE(testcsrtocscoffsetmap){
+BOOST_AUTO_TEST_CASE(testcsrtocscoffsetmap)
+{
 
     using Matrix = Dune::BCRSMatrix<double>;
 
@@ -55,7 +56,7 @@ BOOST_AUTO_TEST_CASE(testcsrtocscoffsetmap){
 
     map = Opm::Accelerator::buildCsrToCscOffsetMap(rowPointers, colIndices);
 
-    for (unsigned int i = 0; i < colIndices.size(); i++){
+    for (unsigned int i = 0; i < colIndices.size(); i++) {
         BOOST_CHECK_EQUAL(nnzValues[i], nnzValues_transposed[map[i]]);
     }
 }

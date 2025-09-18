@@ -29,24 +29,29 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
 class GasLiftOpt;
-template<class Scalar> class GasLiftWellState;
+template <class Scalar>
+class GasLiftWellState;
 class Group;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 class Schedule;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class GasLiftStage2 : public GasLiftCommon<Scalar, IndexTraits>
 {
     using GasLiftSingleWell = GasLiftSingleWellGeneric<Scalar, IndexTraits>;
-    using GLiftOptWells = std::map<std::string,std::unique_ptr<GasLiftSingleWell>>;
-    using GLiftProdWells = std::map<std::string,const WellInterfaceGeneric<Scalar, IndexTraits>*>;
-    using GLiftWellStateMap = std::map<std::string,std::unique_ptr<GasLiftWellState<Scalar>>>;
+    using GLiftOptWells = std::map<std::string, std::unique_ptr<GasLiftSingleWell>>;
+    using GLiftProdWells = std::map<std::string, const WellInterfaceGeneric<Scalar, IndexTraits>*>;
+    using GLiftWellStateMap = std::map<std::string, std::unique_ptr<GasLiftWellState<Scalar>>>;
     using GradPair = std::pair<std::string, Scalar>;
     using GradPairItr = typename std::vector<GradPair>::iterator;
     using GradInfo = typename GasLiftSingleWellGeneric<Scalar, IndexTraits>::GradInfo;
@@ -70,18 +75,14 @@ public:
     void runOptimize();
 
 protected:
-    void addOrRemoveALQincrement_(GradMap& grad_map,
-                                  const std::string& well_name,
-                                  bool add);
+    void addOrRemoveALQincrement_(GradMap& grad_map, const std::string& well_name, bool add);
 
     std::optional<GradInfo> calcIncOrDecGrad_(const std::string name,
                                               const GasLiftSingleWell& gs_well,
                                               const std::string& gr_name_dont_limit,
                                               bool increase);
 
-    bool checkRateAlreadyLimited_(const std::string& well_name,
-                                  GasLiftWellState<Scalar>& state,
-                                  bool increase);
+    bool checkRateAlreadyLimited_(const std::string& well_name, GasLiftWellState<Scalar>& state, bool increase);
 
     GradInfo deleteDecGradItem_(const std::string& name);
     GradInfo deleteIncGradItem_(const std::string& name);
@@ -89,22 +90,18 @@ protected:
 
     void displayDebugMessage_(const std::string& msg) const override;
     void displayDebugMessage2B_(const std::string& msg);
-    void displayDebugMessage_(const std::string& msg,
-                              const std::string& group_name);
-    void displayWarning_(const std::string& msg,
-                         const std::string& group_name);
+    void displayDebugMessage_(const std::string& msg, const std::string& group_name);
+    void displayWarning_(const std::string& msg, const std::string& group_name);
     void displayWarning_(const std::string& msg);
 
-    std::tuple<Scalar, Scalar, Scalar, Scalar>
-    getCurrentGroupRates_(const Group& group);
+    std::tuple<Scalar, Scalar, Scalar, Scalar> getCurrentGroupRates_(const Group& group);
 
     std::optional<Scalar> getGroupMaxALQ_(const Group& group);
     std::optional<Scalar> getGroupMaxTotalGas_(const Group& group);
 
     std::vector<GasLiftSingleWell*> getGroupGliftWells_(const Group& group);
 
-    void getGroupGliftWellsRecursive_(const Group& group,
-                                      std::vector<GasLiftSingleWell*>& wells);
+    void getGroupGliftWellsRecursive_(const Group& group, std::vector<GasLiftSingleWell*>& wells);
 
     void optimizeGroup_(const Group& group);
     void optimizeGroupsRecursive_(const Group& group);
@@ -120,20 +117,16 @@ protected:
                           std::vector<GradPair>& inc_grads,
                           std::vector<GradPair>& dec_grads);
 
-    void removeSurplusALQ_(const Group& group,
-                           std::vector<GradPair>& dec_grads);
+    void removeSurplusALQ_(const Group& group, std::vector<GradPair>& dec_grads);
 
     void saveGrad_(GradMap& map, const std::string& name, GradInfo& grad);
     void saveDecGrad_(const std::string& name, GradInfo& grad);
     void saveIncGrad_(const std::string& name, GradInfo& grad);
     void sortGradients_(std::vector<GradPair>& grads);
 
-    std::optional<GradInfo> updateGrad_(const std::string& name,
-                                        GradInfo& grad, bool increase);
+    std::optional<GradInfo> updateGrad_(const std::string& name, GradInfo& grad, bool increase);
 
-    void updateGradVector_(const std::string& name,
-                           std::vector<GradPair>& grads,
-                           Scalar grad);
+    void updateGradVector_(const std::string& name, std::vector<GradPair>& grads, Scalar grad);
 
     void mpiSyncGlobalGradVector_(std::vector<GradPair>& grads_global) const;
     void mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
@@ -155,15 +148,15 @@ protected:
     GradMap inc_grads_;
     GradMap dec_grads_;
     int max_iterations_ = 1000;
-    //int time_step_idx_;
+    // int time_step_idx_;
 
-    struct OptimizeState
-    {
+    struct OptimizeState {
         OptimizeState(GasLiftStage2& parent_, const Group& group_)
-            : parent{parent_}
-            , group{group_}
-            , it{0}
-        {}
+            : parent {parent_}
+            , group {group_}
+            , it {0}
+        {
+        }
 
         GasLiftStage2& parent;
         const Group& group;
@@ -182,25 +175,22 @@ protected:
 
         void debugShowIterationInfo();
 
-        std::pair<std::optional<GradPairItr>,std::optional<GradPairItr>>
-        getEcoGradients(std::vector<GradPair>& inc_grads,
-                        std::vector<GradPair>& dec_grads);
+        std::pair<std::optional<GradPairItr>, std::optional<GradPairItr>>
+        getEcoGradients(std::vector<GradPair>& inc_grads, std::vector<GradPair>& dec_grads);
 
         void recalculateGradients(std::vector<GradPair>& inc_grads,
                                   std::vector<GradPair>& dec_grads,
                                   GradPairItr& min_dec_grad_itr,
-                                  GradPairItr &max_inc_grad_itr);
+                                  GradPairItr& max_inc_grad_itr);
 
-        void redistributeALQ( GradPairItr& min_dec_grad,
-                             GradPairItr& max_inc_grad);
+        void redistributeALQ(GradPairItr& min_dec_grad, GradPairItr& max_inc_grad);
 
     private:
         void displayDebugMessage_(const std::string& msg);
         void displayWarning_(const std::string& msg);
     };
 
-    struct SurplusState
-    {
+    struct SurplusState {
         SurplusState(GasLiftStage2& parent_,
                      const Group& group_,
                      const WellState<Scalar, IndexTraits>& well_state_,
@@ -215,25 +205,26 @@ protected:
                      Scalar liquid_target_,
                      std::optional<Scalar> max_glift_,
                      std::optional<Scalar> max_total_gas_)
-            : parent{parent_}
-            , group{group_}
+            : parent {parent_}
+            , group {group_}
             , well_state(well_state_)
-            , oil_rate{oil_rate_}
-            , gas_rate{gas_rate_}
-            , water_rate{water_rate_}
-            , alq{alq_}
-            , min_eco_grad{min_eco_grad_}
-            , oil_target{oil_target_}
-            , gas_target{gas_target_}
+            , oil_rate {oil_rate_}
+            , gas_rate {gas_rate_}
+            , water_rate {water_rate_}
+            , alq {alq_}
+            , min_eco_grad {min_eco_grad_}
+            , oil_target {oil_target_}
+            , gas_target {gas_target_}
             , water_target(water_target_)
-            , liquid_target{liquid_target_}
-            , max_glift{max_glift_}
-            , max_total_gas{max_total_gas_}
-            , it{0}
-        {}
+            , liquid_target {liquid_target_}
+            , max_glift {max_glift_}
+            , max_total_gas {max_total_gas_}
+            , it {0}
+        {
+        }
 
-        GasLiftStage2 &parent;
-        const Group &group;
+        GasLiftStage2& parent;
+        const Group& group;
         const WellState<Scalar, IndexTraits>& well_state;
         Scalar oil_rate;
         Scalar gas_rate;
@@ -248,9 +239,7 @@ protected:
         std::optional<Scalar> max_total_gas;
         int it;
 
-        void addOrRemoveALQincrement(GradMap &grad_map,
-                                     const std::string& well_name,
-                                     bool add);
+        void addOrRemoveALQincrement(GradMap& grad_map, const std::string& well_name, bool add);
 
         bool checkALQlimit();
         bool checkEcoGradient(const std::string& well_name, Scalar eco_grad);

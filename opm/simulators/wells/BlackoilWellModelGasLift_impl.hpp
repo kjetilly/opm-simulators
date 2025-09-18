@@ -28,29 +28,29 @@
 #include <opm/simulators/wells/BlackoilWellModelGasLift.hpp>
 #endif
 #include <opm/common/TimingMacros.hpp>
-#include <opm/simulators/wells/GasLiftSingleWell.hpp>
 #include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
+#include <opm/simulators/wells/GasLiftSingleWell.hpp>
 
 #if HAVE_MPI
 #include <opm/simulators/utils/MPISerializer.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename TypeTag>
+template <typename TypeTag>
 bool
-BlackoilWellModelGasLift<TypeTag>::
-maybeDoGasLiftOptimize(const Simulator& simulator,
-                       const std::vector<WellInterfacePtr>& well_container,
-                       const std::map<std::string, Scalar>& node_pressures,
-                       const bool updatePotentials,
-                       WellStateType& wellState,
-                       GroupState<Scalar>& groupState,
-                       DeferredLogger& deferred_logger)
+BlackoilWellModelGasLift<TypeTag>::maybeDoGasLiftOptimize(const Simulator& simulator,
+                                                          const std::vector<WellInterfacePtr>& well_container,
+                                                          const std::map<std::string, Scalar>& node_pressures,
+                                                          const bool updatePotentials,
+                                                          WellStateType& wellState,
+                                                          GroupState<Scalar>& groupState,
+                                                          DeferredLogger& deferred_logger)
 {
     OPM_TIMEFUNCTION();
     const auto& glo = simulator.vanguard().schedule().glo(simulator.episodeIndex());
-    if(!glo.active()) {
+    if (!glo.active()) {
         return false;
     }
     bool do_glift_optimization = false;
@@ -61,9 +61,7 @@ maybeDoGasLiftOptimize(const Simulator& simulator,
     // If all_newton is true we still want to optimize several times pr timestep
     // i.e. we also optimize if check simulation_time == last_glift_opt_time_
     // that is when the last_glift_opt_time is already updated with the current time step
-    if (simulation_time == this->last_glift_opt_time_  ||
-        simulation_time >= (this->last_glift_opt_time_ + min_wait))
-    {
+    if (simulation_time == this->last_glift_opt_time_ || simulation_time >= (this->last_glift_opt_time_ + min_wait)) {
         do_glift_optimization = true;
         this->last_glift_opt_time_ = simulation_time;
     }
@@ -86,18 +84,16 @@ maybeDoGasLiftOptimize(const Simulator& simulator,
         //  them to the GasLiftGroupInfo constructor.
         GLiftEclWells ecl_well_map;
         initGliftEclWellMap(well_container, ecl_well_map);
-        GasLiftGroupInfo group_info {
-            ecl_well_map,
-            simulator.vanguard().schedule(),
-            simulator.vanguard().summaryState(),
-            simulator.episodeIndex(),
-            simulator.model().newtonMethod().numIterations(),
-            deferred_logger,
-            wellState,
-            groupState,
-            simulator.vanguard().grid().comm(),
-            this->glift_debug
-        };
+        GasLiftGroupInfo group_info {ecl_well_map,
+                                     simulator.vanguard().schedule(),
+                                     simulator.vanguard().summaryState(),
+                                     simulator.episodeIndex(),
+                                     simulator.model().newtonMethod().numIterations(),
+                                     deferred_logger,
+                                     wellState,
+                                     groupState,
+                                     simulator.vanguard().grid().comm(),
+                                     this->glift_debug};
         group_info.initialize();
 
         gasLiftOptimizationStage1(simulator,
@@ -125,13 +121,10 @@ maybeDoGasLiftOptimize(const Simulator& simulator,
         if constexpr (glift_debug) {
             std::vector<WellInterfaceGeneric<Scalar, IndexTraits>*> wc;
             wc.reserve(well_container.size());
-            std::transform(well_container.begin(), well_container.end(),
-                           std::back_inserter(wc),
-                           [](const auto& w)
-                           { return static_cast<WellInterfaceGeneric<Scalar, IndexTraits>*>(w.get()); });
-            this->gliftDebugShowALQ(wc,
-                                    wellState,
-                                    deferred_logger);
+            std::transform(well_container.begin(), well_container.end(), std::back_inserter(wc), [](const auto& w) {
+                return static_cast<WellInterfaceGeneric<Scalar, IndexTraits>*>(w.get());
+            });
+            this->gliftDebugShowALQ(wc, wellState, deferred_logger);
         }
         num_wells_changed = glift_wells.size();
     }
@@ -139,18 +132,17 @@ maybeDoGasLiftOptimize(const Simulator& simulator,
     return num_wells_changed > 0;
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelGasLift<TypeTag>::
-gasLiftOptimizationStage1(const Simulator& simulator,
-                          const std::vector<WellInterfacePtr>& well_container,
-                          WellStateType& wellState,
-                          GroupState<Scalar>& groupState,
-                          GLiftProdWells& prod_wells,
-                          GLiftOptWells &glift_wells,
-                          GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
-                          GLiftWellStateMap& state_map,
-                          DeferredLogger& deferred_logger)
+BlackoilWellModelGasLift<TypeTag>::gasLiftOptimizationStage1(const Simulator& simulator,
+                                                             const std::vector<WellInterfacePtr>& well_container,
+                                                             WellStateType& wellState,
+                                                             GroupState<Scalar>& groupState,
+                                                             GLiftProdWells& prod_wells,
+                                                             GLiftOptWells& glift_wells,
+                                                             GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
+                                                             GLiftWellStateMap& state_map,
+                                                             DeferredLogger& deferred_logger)
 {
     OPM_TIMEFUNCTION();
     auto comm = simulator.vanguard().grid().comm();
@@ -180,10 +172,10 @@ gasLiftOptimizationStage1(const Simulator& simulator,
     //    processes could take ownership of all the wells.  Then there
     //    would be no need for synchronization here..
     //
-    for (int i = 0; i< num_procs; i++) {
-        int num_rates_to_sync = 0;  // communication variable
+    for (int i = 0; i < num_procs; i++) {
+        int num_rates_to_sync = 0; // communication variable
         GLiftSyncGroups groups_to_sync;
-        if (comm.rank() ==  i) {
+        if (comm.rank() == i) {
             // Run stage1: Optimize single wells while also checking group limits
             for (const auto& well : well_container) {
                 // NOTE: Only the wells in "group_info" needs to be optimized
@@ -203,7 +195,7 @@ gasLiftOptimizationStage1(const Simulator& simulator,
             num_rates_to_sync = groups_to_sync.size();
         }
         {
-            OPM_TIMEBLOCK(WaitForGasLiftSyncGroups);  
+            OPM_TIMEBLOCK(WaitForGasLiftSyncGroups);
             num_rates_to_sync = comm.sum(num_rates_to_sync);
         }
         if (num_rates_to_sync > 0) {
@@ -236,8 +228,12 @@ gasLiftOptimizationStage1(const Simulator& simulator,
             }
 #if HAVE_MPI
             Parallel::MpiSerializer ser(comm);
-            ser.broadcast(Parallel::RootRank{i}, group_indexes, group_oil_rates,
-                          group_gas_rates, group_water_rates, group_alq_rates);
+            ser.broadcast(Parallel::RootRank {i},
+                          group_indexes,
+                          group_oil_rates,
+                          group_gas_rates,
+                          group_water_rates,
+                          group_alq_rates);
 #endif
             if (comm.rank() != i) {
                 for (int j = 0; j < num_rates_to_sync; ++j) {
@@ -265,19 +261,19 @@ gasLiftOptimizationStage1(const Simulator& simulator,
 // NOTE: this method cannot be const since it passes this->wellState()
 //   (see below) to the GasLiftSingleWell constructor which accepts WellState
 //   as a non-const reference..
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelGasLift<TypeTag>::
-gasLiftOptimizationStage1SingleWell(WellInterface<TypeTag>* well,
-                                    const Simulator& simulator,
-                                    WellStateType& wellState,
-                                    GroupState<Scalar>& groupState,
-                                    GLiftProdWells& prod_wells,
-                                    GLiftOptWells& glift_wells,
-                                    GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
-                                    GLiftWellStateMap& state_map,
-                                    GLiftSyncGroups& sync_groups,
-                                    DeferredLogger& deferred_logger)
+BlackoilWellModelGasLift<TypeTag>::gasLiftOptimizationStage1SingleWell(
+    WellInterface<TypeTag>* well,
+    const Simulator& simulator,
+    WellStateType& wellState,
+    GroupState<Scalar>& groupState,
+    GLiftProdWells& prod_wells,
+    GLiftOptWells& glift_wells,
+    GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
+    GLiftWellStateMap& state_map,
+    GLiftSyncGroups& sync_groups,
+    DeferredLogger& deferred_logger)
 {
     OPM_TIMEFUNCTION();
     const auto& summary_state = simulator.vanguard().summaryState();
@@ -300,25 +296,23 @@ gasLiftOptimizationStage1SingleWell(WellInterface<TypeTag>* well,
     prod_wells.insert({well->name(), well});
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelGasLift<TypeTag>::
-initGliftEclWellMap(const std::vector<WellInterfacePtr>& well_container,
-                    GLiftEclWells& ecl_well_map)
+BlackoilWellModelGasLift<TypeTag>::initGliftEclWellMap(const std::vector<WellInterfacePtr>& well_container,
+                                                       GLiftEclWells& ecl_well_map)
 {
     for (const auto& well : well_container) {
         ecl_well_map.try_emplace(well->name(), &well->wellEcl(), well->indexOfWell());
     }
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-BlackoilWellModelGasLift<TypeTag>::
-updateWellPotentials(const Simulator& simulator,
-                     const std::vector<WellInterfacePtr>& well_container,
-                     const std::map<std::string, Scalar>& node_pressures,
-                     WellStateType& wellState,
-                     DeferredLogger& deferred_logger)
+BlackoilWellModelGasLift<TypeTag>::updateWellPotentials(const Simulator& simulator,
+                                                        const std::vector<WellInterfacePtr>& well_container,
+                                                        const std::map<std::string, Scalar>& node_pressures,
+                                                        WellStateType& wellState,
+                                                        DeferredLogger& deferred_logger)
 {
     auto well_state_copy = wellState;
     const int np = wellState.numPhases();
@@ -338,7 +332,7 @@ updateWellPotentials(const Simulator& simulator,
                 auto& ws = wellState.well(well->indexOfWell());
                 for (int p = 0; p < np; ++p) {
                     // make sure the potentials are positive
-                    ws.well_potentials[p] = std::max(Scalar{0.0}, potentials[p]);
+                    ws.well_potentials[p] = std::max(Scalar {0.0}, potentials[p]);
                 }
             }
             // catch all possible exception and store type and message.
@@ -350,7 +344,8 @@ updateWellPotentials(const Simulator& simulator,
         }
     }
     if (exc_type != ExceptionType::NONE) {
-        const std::string msg = "Updating well potentials after network balancing failed. Continue with current potentials";
+        const std::string msg
+            = "Updating well potentials after network balancing failed. Continue with current potentials";
         deferred_logger.warning("WELL_POT_SOLVE_AFTER_NETWORK_FAILED", msg + exc_msg);
     }
 }

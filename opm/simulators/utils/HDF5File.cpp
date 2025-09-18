@@ -31,28 +31,31 @@
 #include <filesystem>
 #include <stdexcept>
 
-namespace {
-
-bool groupExists(hid_t parent, const std::string& path)
+namespace
 {
-  // turn off errors to avoid cout spew
-  H5E_BEGIN_TRY {
+
+bool
+groupExists(hid_t parent, const std::string& path)
+{
+    // turn off errors to avoid cout spew
+    H5E_BEGIN_TRY
+    {
 #if H5_VERS_MINOR > 8
-      return H5Lexists(parent, path.c_str(), H5P_DEFAULT) == 1;
+        return H5Lexists(parent, path.c_str(), H5P_DEFAULT) == 1;
 #else
-      return H5Gget_objinfo(static_cast<hid_t>(parent), path.c_str(), 0, nullptr) == 0;
+        return H5Gget_objinfo(static_cast<hid_t>(parent), path.c_str(), 0, nullptr) == 0;
 #endif
-  } H5E_END_TRY;
-  return false;
+    }
+    H5E_END_TRY;
+    return false;
 }
 
-}
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
-HDF5File::HDF5File(const std::string& fileName,
-                   OpenMode mode,
-                   Parallel::Communication comm)
+HDF5File::HDF5File(const std::string& fileName, OpenMode mode, Parallel::Communication comm)
     : comm_(comm)
 {
     bool exists = std::filesystem::exists(fileName);
@@ -67,21 +70,15 @@ HDF5File::HDF5File(const std::string& fileName,
 #endif
     }
 
-    if (mode == OpenMode::OVERWRITE ||
-        (mode == OpenMode::APPEND && !exists)) {
-        m_file = H5Fcreate(fileName.c_str(),
-                           H5F_ACC_TRUNC,
-                           H5P_DEFAULT, acc_tpl);
+    if (mode == OpenMode::OVERWRITE || (mode == OpenMode::APPEND && !exists)) {
+        m_file = H5Fcreate(fileName.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, acc_tpl);
     } else {
-        m_file = H5Fopen(fileName.c_str(),
-                         mode == OpenMode::READ ? H5F_ACC_RDONLY : H5F_ACC_RDWR,
-                         acc_tpl);
+        m_file = H5Fopen(fileName.c_str(), mode == OpenMode::READ ? H5F_ACC_RDONLY : H5F_ACC_RDWR, acc_tpl);
     }
     if (m_file == H5I_INVALID_HID) {
-        throw std::runtime_error(std::string("HDF5File: Failed to ") +
-                                 ( mode == OpenMode::OVERWRITE ||
-                                  (mode == OpenMode::APPEND && !exists) ? "create" : "open") +
-                                  fileName);
+        throw std::runtime_error(
+            std::string("HDF5File: Failed to ")
+            + (mode == OpenMode::OVERWRITE || (mode == OpenMode::APPEND && !exists) ? "create" : "open") + fileName);
     }
 
     if (comm_.size() > 1) {
@@ -96,10 +93,11 @@ HDF5File::~HDF5File()
     }
 }
 
-void HDF5File::write(const std::string& group,
-                     const std::string& dset,
-                     const std::vector<char>& buffer,
-                     DataSetMode mode) const
+void
+HDF5File::write(const std::string& group,
+                const std::string& dset,
+                const std::vector<char>& buffer,
+                DataSetMode mode) const
 {
     hid_t grp = H5I_INVALID_HID;
     std::string realGroup = group;
@@ -151,10 +149,8 @@ void HDF5File::write(const std::string& group,
     OPM_END_PARALLEL_TRY_CATCH("HDF5File: Error writing data: ", comm_);
 }
 
-void HDF5File::read(const std::string& group,
-                    const std::string& dset,
-                    std::vector<char>& buffer,
-                    DataSetMode mode) const
+void
+HDF5File::read(const std::string& group, const std::string& dset, std::vector<char>& buffer, DataSetMode mode) const
 {
     std::string realSet = group + '/' + dset;
     if (mode == DataSetMode::PROCESS_SPLIT) {
@@ -172,11 +168,11 @@ void HDF5File::read(const std::string& group,
     H5Dclose(dataset_id);
 }
 
-std::vector<std::string> HDF5File::list(const std::string& group) const
+std::vector<std::string>
+HDF5File::list(const std::string& group) const
 {
     // Lambda function pushing the group entries to a vector
-    auto&& list_group = [] (hid_t, const char* name, const H5L_info_t*, void* data) -> herr_t
-    {
+    auto&& list_group = [](hid_t, const char* name, const H5L_info_t*, void* data) -> herr_t {
         auto& list = *static_cast<std::vector<std::string>*>(data);
         list.push_back(name);
         return 0;
@@ -184,18 +180,16 @@ std::vector<std::string> HDF5File::list(const std::string& group) const
 
     hsize_t idx = 0;
     std::vector<std::string> result;
-    if (H5Literate_by_name(m_file, group.c_str(),
-                           H5_INDEX_NAME, H5_ITER_INC,
-                           &idx, list_group, &result, H5P_DEFAULT) < 0) {
+    if (H5Literate_by_name(m_file, group.c_str(), H5_INDEX_NAME, H5_ITER_INC, &idx, list_group, &result, H5P_DEFAULT)
+        < 0) {
         throw std::runtime_error("Failure while listing group '" + group + "'");
     }
 
     return result;
 }
 
-void HDF5File::writeSplit(hid_t grp,
-                          const std::vector<char>& buffer,
-                          const std::string& dset) const
+void
+HDF5File::writeSplit(hid_t grp, const std::vector<char>& buffer, const std::string& dset) const
 {
     std::vector<hsize_t> proc_sizes(comm_.size());
     hid_t dxpl = H5P_DEFAULT;
@@ -215,17 +209,15 @@ void HDF5File::writeSplit(hid_t grp,
     for (int i = 0; i < comm_.size(); ++i) {
         hid_t space = H5Screate_simple(1, &proc_sizes[i], nullptr);
         hid_t dcpl = this->getCompression(proc_sizes[i]);
-        hid_t dataset_id = H5Dcreate2(grp,
-                                      std::to_string(i).c_str(),
-                                      H5T_NATIVE_CHAR, space,
-                                      H5P_DEFAULT, dcpl, H5P_DEFAULT);
+        hid_t dataset_id
+            = H5Dcreate2(grp, std::to_string(i).c_str(), H5T_NATIVE_CHAR, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
         if (dataset_id == H5I_INVALID_HID) {
             H5Sclose(space);
             if (dcpl != H5P_DEFAULT) {
                 H5Pclose(dcpl);
             }
-            throw std::runtime_error("Trying to write already existing dataset '" +
-                                     dset + '/' + std::to_string(i) + "'");
+            throw std::runtime_error("Trying to write already existing dataset '" + dset + '/' + std::to_string(i)
+                                     + "'");
         }
 
         writeDset(i, dataset_id, dxpl, proc_sizes[i], buffer.data());
@@ -240,10 +232,11 @@ void HDF5File::writeSplit(hid_t grp,
     }
 }
 
-void HDF5File::writeRootOnly(hid_t grp,
-                             const std::vector<char>& buffer,
-                             const std::string& group,
-                             const std::string& dset) const
+void
+HDF5File::writeRootOnly(hid_t grp,
+                        const std::vector<char>& buffer,
+                        const std::string& group,
+                        const std::string& dset) const
 {
     hsize_t size = buffer.size();
     comm_.broadcast(&size, 1, 0);
@@ -258,15 +251,11 @@ void HDF5File::writeRootOnly(hid_t grp,
         assert(false); // should be unreachable
 #endif
     }
-    hid_t dataset_id = H5Dcreate2(grp,
-                                  dset.c_str(),
-                                  H5T_NATIVE_CHAR, space,
-                                  H5P_DEFAULT, dcpl, H5P_DEFAULT);
+    hid_t dataset_id = H5Dcreate2(grp, dset.c_str(), H5T_NATIVE_CHAR, space, H5P_DEFAULT, dcpl, H5P_DEFAULT);
     if (dataset_id == H5I_INVALID_HID) {
         H5Sclose(space);
         H5Pclose(dcpl);
-        throw std::runtime_error("Trying to write already existing dataset '" +
-                                 group + '/' + dset + "'");
+        throw std::runtime_error("Trying to write already existing dataset '" + group + '/' + dset + "'");
     }
 
     writeDset(0, dataset_id, dxpl, size, buffer.data());
@@ -277,7 +266,8 @@ void HDF5File::writeRootOnly(hid_t grp,
     }
 }
 
-hid_t HDF5File::getCompression([[maybe_unused]] hsize_t size) const
+hid_t
+HDF5File::getCompression([[maybe_unused]] hsize_t size) const
 {
     hid_t dcpl = H5P_DEFAULT;
 #if H5_VERS_MINOR > 8
@@ -290,8 +280,8 @@ hid_t HDF5File::getCompression([[maybe_unused]] hsize_t size) const
     return dcpl;
 }
 
-void HDF5File::writeDset(int rank, hid_t dataset_id,
-                         hid_t dxpl, hsize_t size, const void* data) const
+void
+HDF5File::writeDset(int rank, hid_t dataset_id, hid_t dxpl, hsize_t size, const void* data) const
 {
     hid_t filespace = H5Dget_space(dataset_id);
     hsize_t stride = 1;
@@ -304,4 +294,4 @@ void HDF5File::writeDset(int rank, hid_t dataset_id,
     H5Sclose(filespace);
 }
 
-}
+} // namespace Opm

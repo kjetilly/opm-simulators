@@ -28,71 +28,69 @@
 
 namespace Opm
 {
-    /** This class implements a deferred logger:
-     * 1) messages can be pushed back to a vector
-     * 2) a call to logMessages adds the messages to OpmLog backends
-     * */
+/** This class implements a deferred logger:
+ * 1) messages can be pushed back to a vector
+ * 2) a call to logMessages adds the messages to OpmLog backends
+ * */
 
 namespace ExceptionType
 {
 
 
-/*
-  If an exception has been raised on more than processor simultaneously the
-  highest number type will be thrown in the subsequent global rethrow.
-*/
+    /*
+      If an exception has been raised on more than processor simultaneously the
+      highest number type will be thrown in the subsequent global rethrow.
+    */
 
-enum ExcEnum {
-    NONE = 0,
-    RUNTIME_ERROR = 1,
-    INVALID_ARGUMENT = 2,
-    LOGIC_ERROR = 3,
-    DEFAULT = 4,   // will throw std::logic_error()
-    NUMERICAL_ISSUE = 5
-};
-}
-
-
-    class DeferredLogger
-    {
-    public:
-
-        struct Message
-        {
-            int64_t flag;
-            std::string tag;
-            std::string text;
-        };
-
-        void info(const std::string& tag, const std::string& message);
-        void warning(const std::string& tag, const std::string& message);
-        void error(const std::string& tag, const std::string& message);
-        void problem(const std::string& tag, const std::string& message);
-        void bug(const std::string& tag, const std::string& message);
-        void debug(const std::string& tag, const std::string& message);
-        void note(const std::string& tag, const std::string& message);
-
-        void info(const std::string& message);
-        void warning(const std::string& message);
-        void error(const std::string& message);
-        void problem(const std::string& message);
-        void bug(const std::string& message);
-        void debug(const std::string& message);
-        void debug(const std::string& message, const int verbosity_level);
-        void note(const std::string& message);
-
-        /// Log all messages to the OpmLog backends,
-        /// and clear the message container.
-        void logMessages();
-
-        /// Clear the message container without logging them.
-        void clearMessages();
-
-    private:
-        std::vector<Message> messages_;
-        friend DeferredLogger gatherDeferredLogger(const DeferredLogger& local_deferredlogger,
-                                                   Parallel::Communication mpi_communicator);
+    enum ExcEnum {
+        NONE = 0,
+        RUNTIME_ERROR = 1,
+        INVALID_ARGUMENT = 2,
+        LOGIC_ERROR = 3,
+        DEFAULT = 4, // will throw std::logic_error()
+        NUMERICAL_ISSUE = 5
     };
+} // namespace ExceptionType
+
+
+class DeferredLogger
+{
+public:
+    struct Message {
+        int64_t flag;
+        std::string tag;
+        std::string text;
+    };
+
+    void info(const std::string& tag, const std::string& message);
+    void warning(const std::string& tag, const std::string& message);
+    void error(const std::string& tag, const std::string& message);
+    void problem(const std::string& tag, const std::string& message);
+    void bug(const std::string& tag, const std::string& message);
+    void debug(const std::string& tag, const std::string& message);
+    void note(const std::string& tag, const std::string& message);
+
+    void info(const std::string& message);
+    void warning(const std::string& message);
+    void error(const std::string& message);
+    void problem(const std::string& message);
+    void bug(const std::string& message);
+    void debug(const std::string& message);
+    void debug(const std::string& message, const int verbosity_level);
+    void note(const std::string& message);
+
+    /// Log all messages to the OpmLog backends,
+    /// and clear the message container.
+    void logMessages();
+
+    /// Clear the message container without logging them.
+    void clearMessages();
+
+private:
+    std::vector<Message> messages_;
+    friend DeferredLogger gatherDeferredLogger(const DeferredLogger& local_deferredlogger,
+                                               Parallel::Communication mpi_communicator);
+};
 
 } // namespace Opm
 

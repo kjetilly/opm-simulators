@@ -23,8 +23,8 @@
 #include <opm/simulators/linalg/PressureTransferPolicy.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
 
-#include <dune/istl/solver.hh>
 #include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/solver.hh>
 
 namespace Dune
 {
@@ -53,8 +53,7 @@ namespace Amg
          * The operator will use one step of AMG to approximately solve
          * the coarse level system.
          */
-        struct PressureInverseOperator : public Dune::InverseOperator<X, X>
-        {
+        struct PressureInverseOperator : public Dune::InverseOperator<X, X> {
 #if HAVE_MPI
             template <typename GlobalIndex, typename LocalIndex>
             PressureInverseOperator(Operator& op,
@@ -65,20 +64,23 @@ namespace Amg
                 assert(op.category() == Dune::SolverCategory::overlapping);
                 // Assuming that we do not use Cpr as Pressure solver and use hard
                 // coded pressure index that might be wrong but should be unused.
-                linsolver_ = std::make_unique<Solver>(op, comm, prm, std::function<X()>(),
+                linsolver_ = std::make_unique<Solver>(op,
+                                                      comm,
+                                                      prm,
+                                                      std::function<X()>(),
                                                       /* pressureIndex = */ 1);
             }
 #endif // HAVE_MPI
 
-            PressureInverseOperator(Operator& op,
-                                    const Opm::PropertyTree& prm,
-                                    const SequentialInformation&)
+            PressureInverseOperator(Operator& op, const Opm::PropertyTree& prm, const SequentialInformation&)
                 : linsolver_()
             {
                 assert(op.category() != Dune::SolverCategory::overlapping);
                 // Assuming that we do not use Cpr as Pressure solver and use hard
                 // coded pressure index that might be wrong but should be unused.
-                linsolver_ = std::make_unique<Solver>(op, prm, std::function<X()>(),
+                linsolver_ = std::make_unique<Solver>(op,
+                                                      prm,
+                                                      std::function<X()>(),
                                                       /* pressureIndex = */ 1);
             }
 

@@ -34,34 +34,46 @@
 #include <opm/models/blackoil/blackoilnewtonmethod.hpp>
 #include <opm/models/utils/signum.hh>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // the tolerated amount of "incorrect" amount of oil per time step for the complete
 // reservoir. this is scaled by the pore volume of the reservoir, i.e., larger reservoirs
 // will tolerate larger residuals.
-template<class Scalar>
-struct EclNewtonSumTolerance { static constexpr Scalar value = 1e-5; };
+template <class Scalar>
+struct EclNewtonSumTolerance {
+    static constexpr Scalar value = 1e-5;
+};
 
 // make all Newton iterations strict, i.e., the volumetric Newton tolerance must be
 // always be upheld in the majority of the spatial domain. In this context, "majority"
 // means 1 - EclNewtonRelaxedVolumeFraction.
-struct EclNewtonStrictIterations { static constexpr int value = 100; };
+struct EclNewtonStrictIterations {
+    static constexpr int value = 100;
+};
 
 // set fraction of the pore volume where the volumetric residual may be violated during
 // strict Newton iterations
-template<class Scalar>
-struct EclNewtonRelaxedVolumeFraction { static constexpr Scalar value = 0.05; };
+template <class Scalar>
+struct EclNewtonRelaxedVolumeFraction {
+    static constexpr Scalar value = 0.05;
+};
 
-template<class Scalar>
-struct EclNewtonSumToleranceExponent { static constexpr Scalar value = 1.0 / 3.0; };
+template <class Scalar>
+struct EclNewtonSumToleranceExponent {
+    static constexpr Scalar value = 1.0 / 3.0;
+};
 
 // the maximum volumetric error of a cell in the relaxed region
-template<class Scalar>
-struct EclNewtonRelaxedTolerance { static constexpr Scalar value = NewtonTolerance<Scalar>::value * 1e6; };
+template <class Scalar>
+struct EclNewtonRelaxedTolerance {
+    static constexpr Scalar value = NewtonTolerance<Scalar>::value * 1e6;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief A newton solver.
@@ -94,7 +106,8 @@ class FlowExpNewtonMethod : public BlackOilNewtonMethod<TypeTag>
     friend ParentType;
 
 public:
-    explicit FlowExpNewtonMethod(Simulator& simulator) : ParentType(simulator)
+    explicit FlowExpNewtonMethod(Simulator& simulator)
+        : ParentType(simulator)
     {
         errorPvFraction_ = 1.0;
         relaxedMaxPvFraction_ = Parameters::Get<Parameters::EclNewtonRelaxedVolumeFraction<Scalar>>();
@@ -112,21 +125,20 @@ public:
     {
         ParentType::registerParameters();
 
-        Parameters::Register<Parameters::EclNewtonSumTolerance<Scalar>>
-                ("The maximum error tolerated by the Newton "
-                 "method for considering a solution to be converged");
-        Parameters::Register<Parameters::EclNewtonStrictIterations>
-                 ("The number of Newton iterations where the "
-                  "volumetric error is considered.");
-        Parameters::Register<Parameters::EclNewtonRelaxedVolumeFraction<Scalar>>
-                  ("The fraction of the pore volume of the reservoir "
-                   "where the volumetric error may be violated during strict Newton iterations.");
-        Parameters::Register<Parameters::EclNewtonSumToleranceExponent<Scalar>>
-                  ("The the exponent used to scale the sum tolerance by "
-                   "the total pore volume of the reservoir.");
-        Parameters::Register<Parameters::EclNewtonRelaxedTolerance<Scalar>>
-                   ("The maximum error which the volumetric residual "
-                     "may exhibit if it is in a 'relaxed' region during a strict iteration.");
+        Parameters::Register<Parameters::EclNewtonSumTolerance<Scalar>>(
+            "The maximum error tolerated by the Newton "
+            "method for considering a solution to be converged");
+        Parameters::Register<Parameters::EclNewtonStrictIterations>("The number of Newton iterations where the "
+                                                                    "volumetric error is considered.");
+        Parameters::Register<Parameters::EclNewtonRelaxedVolumeFraction<Scalar>>(
+            "The fraction of the pore volume of the reservoir "
+            "where the volumetric error may be violated during strict Newton iterations.");
+        Parameters::Register<Parameters::EclNewtonSumToleranceExponent<Scalar>>(
+            "The the exponent used to scale the sum tolerance by "
+            "the total pore volume of the reservoir.");
+        Parameters::Register<Parameters::EclNewtonRelaxedTolerance<Scalar>>(
+            "The maximum error which the volumetric residual "
+            "may exhibit if it is in a 'relaxed' region during a strict iteration.");
     }
 
     /*!
@@ -136,16 +148,15 @@ public:
     bool converged() const
     {
         if (errorPvFraction_ < relaxedMaxPvFraction_) {
-            return (this->error_ < relaxedTolerance_ && errorSum_ < sumTolerance_) ;
+            return (this->error_ < relaxedTolerance_ && errorSum_ < sumTolerance_);
         } else if (this->numIterations() > numStrictIterations_) {
-            return (this->error_ < relaxedTolerance_ && errorSum_ < sumTolerance_) ;
+            return (this->error_ < relaxedTolerance_ && errorSum_ < sumTolerance_);
         }
 
         return this->error_ <= this->tolerance() && errorSum_ <= sumTolerance_;
     }
 
-    void preSolve_(const SolutionVector&,
-                   const GlobalEqVector& currentResidual)
+    void preSolve_(const SolutionVector&, const GlobalEqVector& currentResidual)
     {
         const auto& constraintsMap = this->model().linearizer().constraintsMap();
         this->lastError_ = this->error_;
@@ -161,8 +172,7 @@ public:
         const Scalar dt = this->simulator_.timeStepSize();
         for (unsigned dofIdx = 0; dofIdx < currentResidual.size(); ++dofIdx) {
             // do not consider auxiliary DOFs for the error
-            if (dofIdx >= this->model().numGridDof()
-                || this->model().dofTotalVolume(dofIdx) <= 0.0) {
+            if (dofIdx >= this->model().numGridDof() || this->model().dofTotalVolume(dofIdx) <= 0.0) {
                 continue;
             }
 
@@ -178,8 +188,8 @@ public:
             }
 
             const auto& r = currentResidual[dofIdx];
-            Scalar pvValue =   this->simulator_.problem().referencePorosity(dofIdx, /*timeIdx=*/0) *
-                               this->model().dofTotalVolume(dofIdx);
+            Scalar pvValue = this->simulator_.problem().referencePorosity(dofIdx, /*timeIdx=*/0)
+                * this->model().dofTotalVolume(dofIdx);
             sumPv += pvValue;
             bool cnvViolated = false;
 
@@ -229,17 +239,16 @@ public:
         // exponent is 1/3, i.e., cubic root.
         Scalar x = Parameters::Get<Parameters::EclNewtonSumTolerance<Scalar>>();
         Scalar y = Parameters::Get<Parameters::EclNewtonSumToleranceExponent<Scalar>>();
-        sumTolerance_ = x*std::pow(sumPv, y);
+        sumTolerance_ = x * std::pow(sumPv, y);
 
-        this->endIterMsg() << " (max: " << this->params_.tolerance_
-                           << ", violated for " << errorPvFraction_ * 100
-                           << "% of the pore volume), aggegate error: "
-                           << errorSum_ << " (max: " << sumTolerance_ << ")";
+        this->endIterMsg() << " (max: " << this->params_.tolerance_ << ", violated for " << errorPvFraction_ * 100
+                           << "% of the pore volume), aggegate error: " << errorSum_ << " (max: " << sumTolerance_
+                           << ")";
 
         // make sure that the error never grows beyond the maximum
         // allowed one
         if (this->error_ > newtonMaxError) {
-            throw NumericalProblem("Newton: Error "+std::to_string(double(this->error_))
+            throw NumericalProblem("Newton: Error " + std::to_string(double(this->error_))
                                    + " is larger than maximum allowed error of "
                                    + std::to_string(double(newtonMaxError)));
         }
@@ -247,19 +256,17 @@ public:
         // make sure that the error never grows beyond the maximum
         // allowed one
         if (errorSum_ > newtonMaxError) {
-            throw NumericalProblem("Newton: Sum of the error "+std::to_string(double(errorSum_))
+            throw NumericalProblem("Newton: Sum of the error " + std::to_string(double(errorSum_))
                                    + " is larger than maximum allowed error of "
                                    + std::to_string(double(newtonMaxError)));
         }
     }
 
-    void endIteration_(SolutionVector& nextSolution,
-                       const SolutionVector& currentSolution)
+    void endIteration_(SolutionVector& nextSolution, const SolutionVector& currentSolution)
     {
         ParentType::endIteration_(nextSolution, currentSolution);
-        OpmLog::debug( "Newton iteration " + std::to_string(this->numIterations_) + ""
-                  + " error: " + std::to_string(double(this->error_))
-                  + this->endIterMsg().str());
+        OpmLog::debug("Newton iteration " + std::to_string(this->numIterations_) + ""
+                      + " error: " + std::to_string(double(this->error_)) + this->endIterMsg().str());
         this->endIterMsg().str("");
     }
 

@@ -30,9 +30,8 @@
 class PriVarMeaning
 {
 public:
-
     enum class WaterMeaning {
-        Sw,  // water saturation
+        Sw, // water saturation
         Rvw, // vaporized water
         Rsw, // dissolved gas in water
         Disabled, // The primary variable is not used
@@ -63,29 +62,49 @@ public:
     };
 
     WaterMeaning primaryVarsMeaningWater() const
-    { return primaryVarsMeaningWater_; }
+    {
+        return primaryVarsMeaningWater_;
+    }
     void setPrimaryVarsMeaningWater(WaterMeaning newMeaning)
-    { primaryVarsMeaningWater_ = newMeaning; }
+    {
+        primaryVarsMeaningWater_ = newMeaning;
+    }
 
     PressureMeaning primaryVarsMeaningPressure() const
-    { return primaryVarsMeaningPressure_; }
+    {
+        return primaryVarsMeaningPressure_;
+    }
     void setPrimaryVarsMeaningPressure(PressureMeaning newMeaning)
-    { primaryVarsMeaningPressure_ = newMeaning; }
+    {
+        primaryVarsMeaningPressure_ = newMeaning;
+    }
 
     GasMeaning primaryVarsMeaningGas() const
-    { return primaryVarsMeaningGas_; }
+    {
+        return primaryVarsMeaningGas_;
+    }
     void setPrimaryVarsMeaningGas(GasMeaning newMeaning)
-    { primaryVarsMeaningGas_ = newMeaning; }
+    {
+        primaryVarsMeaningGas_ = newMeaning;
+    }
 
     BrineMeaning primaryVarsMeaningBrine() const
-    { return primaryVarsMeaningBrine_; }
+    {
+        return primaryVarsMeaningBrine_;
+    }
     void setPrimaryVarsMeaningBrine(BrineMeaning newMeaning)
-    { primaryVarsMeaningBrine_ = newMeaning; }
+    {
+        primaryVarsMeaningBrine_ = newMeaning;
+    }
 
     SolventMeaning primaryVarsMeaningSolvent() const
-    { return primaryVarsMeaningSolvent_; }
+    {
+        return primaryVarsMeaningSolvent_;
+    }
     void setPrimaryVarsMeaningSolvent(SolventMeaning newMeaning)
-    { primaryVarsMeaningSolvent_ = newMeaning; }
+    {
+        primaryVarsMeaningSolvent_ = newMeaning;
+    }
 
     bool operator==(const PriVarMeaning& other) const
     {
@@ -95,6 +114,7 @@ public:
             && primaryVarsMeaningBrine_ == other.primaryVarsMeaningBrine_
             && primaryVarsMeaningSolvent_ == other.primaryVarsMeaningSolvent_;
     }
+
 private:
     WaterMeaning primaryVarsMeaningWater_ = WaterMeaning::Disabled;
     PressureMeaning primaryVarsMeaningPressure_ = PressureMeaning::Pw;

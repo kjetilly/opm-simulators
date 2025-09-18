@@ -24,7 +24,8 @@
 #include <optional>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Form collection of Zoltan partitioning parameters from named configuration
 ///
@@ -48,9 +49,8 @@ namespace Opm {
 /// use the built-in default value.
 ///
 /// \return Collection of Zoltan partitioning parameters.
-std::map<std::string, std::string>
-setupZoltanParams(const std::string&           conf,
-                  const std::optional<double>& edgeSizeThreshold = {});
+std::map<std::string, std::string> setupZoltanParams(const std::string& conf,
+                                                     const std::optional<double>& edgeSizeThreshold = {});
 
 /// Form collection of METIS partitioning parameters from named configuration
 ///
@@ -60,8 +60,7 @@ setupZoltanParams(const std::string&           conf,
 /// partitioning parameters.
 ///
 /// \return Collection of METIS partitioning parameters.
-std::map<std::string, std::string>
-setupMetisParams(const std::string& conf);
+std::map<std::string, std::string> setupMetisParams(const std::string& conf);
 
 } // namespace Opm
 

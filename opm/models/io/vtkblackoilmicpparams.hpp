@@ -27,24 +27,35 @@
 #ifndef OPM_VTK_BLACK_OIL_MICP_PARAMS_HPP
 #define OPM_VTK_BLACK_OIL_MICP_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteMicrobialConcentration { static constexpr bool value = true; };
-struct VtkWriteOxygenConcentration { static constexpr bool value = true; };
-struct VtkWriteUreaConcentration { static constexpr bool value = true; };
-struct VtkWriteBiofilmConcentration { static constexpr bool value = true; };
-struct VtkWriteCalciteConcentration { static constexpr bool value = true; };
+struct VtkWriteMicrobialConcentration {
+    static constexpr bool value = true;
+};
+struct VtkWriteOxygenConcentration {
+    static constexpr bool value = true;
+};
+struct VtkWriteUreaConcentration {
+    static constexpr bool value = true;
+};
+struct VtkWriteBiofilmConcentration {
+    static constexpr bool value = true;
+};
+struct VtkWriteCalciteConcentration {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkBlackoilMICPModule.
  */
-struct VtkBlackoilMICPParams
-{
+struct VtkBlackoilMICPParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

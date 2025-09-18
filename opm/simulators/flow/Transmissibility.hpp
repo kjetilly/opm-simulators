@@ -28,21 +28,22 @@
 #ifndef OPM_TRANSMISSIBILITY_HPP
 #define OPM_TRANSMISSIBILITY_HPP
 
-#include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
 
-#include <opm/grid/common/CartesianIndexMapper.hpp>
 #include <opm/grid/LookUpData.hh>
+#include <opm/grid/common/CartesianIndexMapper.hpp>
 
 
 #include <array>
+#include <cstdint>
 #include <functional>
 #include <map>
-#include <cstdint>
 #include <unordered_map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class KeywordLocation;
 class EclipseState;
@@ -50,12 +51,13 @@ struct NNCdata;
 class TransMult;
 
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-class Transmissibility {
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+class Transmissibility
+{
     // Grid and world dimension
     enum { dimWorld = GridView::dimensionworld };
-public:
 
+public:
     using DimMatrix = Dune::FieldMatrix<Scalar, dimWorld, dimWorld>;
     using DimVector = Dune::FieldVector<Scalar, dimWorld>;
 
@@ -63,7 +65,7 @@ public:
                      const GridView& gridView,
                      const CartesianIndexMapper& cartMapper,
                      const Grid& grid,
-                     std::function<std::array<double,dimWorld>(int)> centroids,
+                     std::function<std::array<double, dimWorld>(int)> centroids,
                      bool enableEnergy,
                      bool enableDiffusivity,
                      bool enableDispersivity);
@@ -72,7 +74,9 @@ public:
      * \brief Return the permeability for an element.
      */
     const DimMatrix& permeability(unsigned elemIdx) const
-    { return permeability_[elemIdx]; }
+    {
+        return permeability_[elemIdx];
+    }
 
     /*!
      * \brief Return the transmissibility for the intersection between two elements.
@@ -155,16 +159,17 @@ public:
      *   regional multipliers to explicit NNCs.
      */
     enum class TransUpdateQuantities { Trans, All };
-    void update(bool global, TransUpdateQuantities update_quantities = TransUpdateQuantities::All,
-                const std::function<unsigned int(unsigned int)>& map = {}, bool applyNncMultRegT = false);
+    void update(bool global,
+                TransUpdateQuantities update_quantities = TransUpdateQuantities::All,
+                const std::function<unsigned int(unsigned int)>& map = {},
+                bool applyNncMultRegT = false);
 
 protected:
     void updateFromEclState_(bool global);
 
     void removeNonCartesianTransmissibilities_(bool removeAll);
 
-    struct FaceInfo
-    {
+    struct FaceInfo {
         DimVector faceCenter;
         int faceIdx;
         unsigned elemIdx;
@@ -188,15 +193,14 @@ protected:
     ///
     /// \param is_tran Whether TRAN{XYZ} will be modified. If entry is false the array will be empty
     /// \returns an array of vector (TRANX, TRANY, TRANZ}
-    std::array<std::vector<double>,3>
-    createTransmissibilityArrays_(const std::array<bool,3>& is_tran);
+    std::array<std::vector<double>, 3> createTransmissibilityArrays_(const std::array<bool, 3>& is_tran);
 
     /// \brief overwrites calculated transmissibilities
     ///
     /// \param is_tran Whether TRAN{XYZ} have been modified.
     /// \param trans Arrays with modified transmissibilities TRAN{XYZ}
-    void resetTransmissibilityFromArrays_(const std::array<bool,3>& is_tran,
-                                          const std::array<std::vector<double>,3>& trans);
+    void resetTransmissibilityFromArrays_(const std::array<bool, 3>& is_tran,
+                                          const std::array<std::vector<double>, 3>& trans);
 
     template <class Intersection>
     void computeFaceProperties(const Intersection& intersection,
@@ -224,24 +228,25 @@ protected:
      *                              cells) as the element at the cartesian index.
      * \return Nothing.
      */
-    void applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed);
+    void applyNncToGridTrans_(const std::unordered_map<std::size_t, int>& cartesianToCompressed);
 
     /// \brief Applies the previous calculate transmissibilities to the NNCs created via PINCH
     ///
     /// \param cartesianToCompressed Vector containing the compressed index (or -1 for inactive
     ///                              cells) as the element at the cartesian index.
-    void applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed);
+    void applyPinchNncToGridTrans_(const std::unordered_map<std::size_t, int>& cartesianToCompressed);
 
     /// \brief Multiplies the grid transmissibilities according to EDITNNC.
-    void applyEditNncToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyEditNncToGridTrans_(const std::unordered_map<std::size_t, int>& globalToLocal);
 
     /// \brief Resets the grid transmissibilities according to EDITNNCR.
-    void applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyEditNncrToGridTrans_(const std::unordered_map<std::size_t, int>& globalToLocal);
 
-    void applyNncMultreg_(const std::unordered_map<std::size_t,int>& globalToLocal);
+    void applyNncMultreg_(const std::unordered_map<std::size_t, int>& globalToLocal);
 
-    void applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& globalToLocal,
-                                        const std::string& keyword, const std::vector<NNCdata>& nncs,
+    void applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t, int>& globalToLocal,
+                                        const std::string& keyword,
+                                        const std::vector<NNCdata>& nncs,
                                         const std::function<KeywordLocation(const NNCdata&)>& getLocation,
                                         const std::function<void(Scalar&, const Scalar&)>& apply);
 
@@ -258,21 +263,13 @@ protected:
                                     const DimVector& distance,
                                     const DimMatrix& perm);
 
-    static Scalar computeHalfDiffusivity_(const DimVector& areaNormal,
-                                          const DimVector& distance,
-                                          const Scalar poro);
+    static Scalar computeHalfDiffusivity_(const DimVector& areaNormal, const DimVector& distance, const Scalar poro);
 
-    DimVector distanceVector_(const DimVector& faceCenter,
-                              const unsigned& cellIdx) const;
+    DimVector distanceVector_(const DimVector& faceCenter, const unsigned& cellIdx) const;
 
-    void applyMultipliers_(Scalar& trans,
-                           unsigned faceIdx,
-                           unsigned cartElemIdx,
-                           const TransMult& transMult) const;
+    void applyMultipliers_(Scalar& trans, unsigned faceIdx, unsigned cartElemIdx, const TransMult& transMult) const;
 
-    static void applyNtg_(Scalar& trans,
-                          const FaceInfo& face,
-                          const std::vector<double>& ntg);
+    static void applyNtg_(Scalar& trans, const FaceInfo& face, const std::vector<double>& ntg);
 
     std::vector<DimMatrix> permeability_;
     std::vector<Scalar> porosity_;
@@ -282,8 +279,8 @@ protected:
     const GridView& gridView_;
     const CartesianIndexMapper& cartMapper_;
     const Grid& grid_;
-    std::function<std::array<double,dimWorld>(int)> centroids_;
-    std::vector<std::array<double,dimWorld>> centroids_cache_;
+    std::function<std::array<double, dimWorld>(int)> centroids_;
+    std::vector<std::array<double, dimWorld>> centroids_cache_;
     Scalar transmissibilityThreshold_;
     std::map<std::pair<unsigned, unsigned>, Scalar> transBoundary_;
     std::map<std::pair<unsigned, unsigned>, Scalar> thermalHalfTransBoundary_;
@@ -291,19 +288,21 @@ protected:
     bool enableDiffusivity_;
     bool enableDispersivity_;
     bool warnEditNNC_ = true;
-    std::unordered_map<std::uint64_t, Scalar> thermalHalfTrans_; //NB this is based on direction map size is ca 2*trans_ (diffusivity_)
+    std::unordered_map<std::uint64_t, Scalar>
+        thermalHalfTrans_; // NB this is based on direction map size is ca 2*trans_ (diffusivity_)
     std::unordered_map<std::uint64_t, Scalar> diffusivity_;
     std::unordered_map<std::uint64_t, Scalar> dispersivity_;
 
-    const LookUpData<Grid,GridView> lookUpData_;
-    const LookUpCartesianData<Grid,GridView> lookUpCartesianData_;
+    const LookUpData<Grid, GridView> lookUpData_;
+    const LookUpCartesianData<Grid, GridView> lookUpCartesianData_;
 };
 
-namespace details {
+namespace details
+{
     std::uint64_t isId(std::uint32_t elemIdx1, std::uint32_t elemIdx2);
     std::pair<std::uint32_t, std::uint32_t> isIdReverse(const std::uint64_t& id);
     std::uint64_t directionalIsId(std::uint32_t elemIdx1, std::uint32_t elemIdx2);
-}
+} // namespace details
 
 } // namespace Opm
 

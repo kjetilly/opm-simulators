@@ -24,8 +24,8 @@
 // if yes, we might want to rename it
 // TODO: we also the informaton regarding the components
 // #include <opm/simulators/utils/BlackoilPhases.hpp>
-#include <opm/simulators/wells/WellContainer.hpp>
 #include <opm/simulators/wells/PerforationData.hpp>
+#include <opm/simulators/wells/WellContainer.hpp>
 
 #include <opm/output/data/Wells.hpp>
 
@@ -33,7 +33,8 @@
 #include <flowexperimental/comp/wells/SingleCompWellState.hpp>
 
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename FluidSystem>
 class CompWellState
@@ -49,7 +50,7 @@ public:
               const std::vector<Scalar>& cell_pressures,
               const Scalar cell_temperature,
               const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-              const std::vector<std::vector<CompConnectionData> >& well_connection_data,
+              const std::vector<std::vector<CompConnectionData>>& well_connection_data,
               const SummaryState& sumary_state,
               const CompWellState* prev_well_state = nullptr);
 
@@ -68,14 +69,14 @@ private:
                    const std::vector<Scalar>& cell_pressures,
                    const Scalar temperature,
                    const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-                   const std::vector<std::vector<CompConnectionData> >& well_connection_data,
+                   const std::vector<std::vector<CompConnectionData>>& well_connection_data,
                    const SummaryState& summary_state);
 
     void initSingleWell(const Well& well,
                         const std::vector<Scalar>& cell_pressures,
                         const Scalar tempearture,
                         const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-                        const std::vector<CompConnectionData >& conn_data,
+                        const std::vector<CompConnectionData>& conn_data,
                         const SummaryState& summary_state);
 
     void initSingleInjector(const Well& well,

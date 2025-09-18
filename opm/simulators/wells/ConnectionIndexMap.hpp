@@ -26,7 +26,8 @@
 #include <cstddef>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Connection index mappings
 class ConnectionIndexMap
@@ -50,17 +51,13 @@ public:
     ///
     /// \param[in] connIsOpen Whether or not the connection is
     ///   open/flowing.
-    void addActiveConnection(const int  connIdx,
-                             const bool connIsOpen)
+    void addActiveConnection(const int connIdx, const bool connIsOpen)
     {
-        this->local_[connIdx] =
-            static_cast<int>(this->global_.size());
+        this->local_[connIdx] = static_cast<int>(this->global_.size());
 
         this->global_.push_back(connIdx);
 
-        const auto open_conn_idx = connIsOpen
-            ? this->num_open_conns_++
-            : -1;
+        const auto open_conn_idx = connIsOpen ? this->num_open_conns_++ : -1;
 
         this->open_.push_back(open_conn_idx);
     }
@@ -101,17 +98,17 @@ private:
     /// Local connection IDs/indices of every existing well connection.
     /// Negative value (-1) for connections that don't intersect the
     /// current rank.
-    std::vector<int> local_{};
+    std::vector<int> local_ {};
 
     /// Global connection index of each on-rank reservoir connection.
     /// Reverse/transpose mapping of \c local_.
-    std::vector<int> global_{};
+    std::vector<int> global_ {};
 
     /// Open connection index of each on-rank reservoir connection.
-    std::vector<int> open_{};
+    std::vector<int> open_ {};
 
     /// Number of open connections on this rank.
-    int num_open_conns_{0};
+    int num_open_conns_ {0};
 };
 
 } // namespace Opm

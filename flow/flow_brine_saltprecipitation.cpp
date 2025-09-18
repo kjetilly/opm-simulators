@@ -18,44 +18,50 @@
 
 #include <flow/flow_brine_saltprecipitation.hpp>
 
-#include <opm/material/common/ResetLocale.hpp>
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowBrineSaltPrecipitationProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnableBrine<TypeTag, TTag::FlowBrineSaltPrecipitationProblem> {
-    static constexpr bool value = true;
-};
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowBrineSaltPrecipitationProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnableBrine<TypeTag, TTag::FlowBrineSaltPrecipitationProblem> {
+        static constexpr bool value = true;
+    };
 
-template<class TypeTag>
-struct EnableSaltPrecipitation<TypeTag, TTag::FlowBrineSaltPrecipitationProblem> {
-    static constexpr bool value = true;
-};
-}}
+    template <class TypeTag>
+    struct EnableSaltPrecipitation<TypeTag, TTag::FlowBrineSaltPrecipitationProblem> {
+        static constexpr bool value = true;
+    };
+} // namespace Properties
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowBrineSaltPrecipitationMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowBrineSaltPrecipitationProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowBrineSaltPrecipitationProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowBrineSaltPrecipitationMainStandalone(int argc, char** argv)
+int
+flowBrineSaltPrecipitationMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowBrineSaltPrecipitationProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -65,4 +71,4 @@ int flowBrineSaltPrecipitationMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

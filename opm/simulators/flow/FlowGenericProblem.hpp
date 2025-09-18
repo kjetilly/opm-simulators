@@ -28,8 +28,8 @@
 #ifndef OPM_FLOW_GENERIC_PROBLEM_HPP
 #define OPM_FLOW_GENERIC_PROBLEM_HPP
 
-#include <opm/material/common/UniformXTabulated2DFunction.hpp>
 #include <opm/material/common/Tabulated1DFunction.hpp>
+#include <opm/material/common/UniformXTabulated2DFunction.hpp>
 
 #include <opm/simulators/flow/SolutionContainers.hpp>
 
@@ -39,16 +39,19 @@
 #include <string>
 #include <vector>
 
-namespace Dune {
+namespace Dune
+{
 class ParameterTree;
 }
 
-namespace Opm {
+namespace Opm
+{
 
 class Deck;
 class EclipseState;
 class Schedule;
-template<typename Grid, typename GridView> class LookUpData;
+template <typename Grid, typename GridView>
+class LookUpData;
 
 /*!
  * \ingroup BlackOilSimulator
@@ -56,7 +59,7 @@ template<typename Grid, typename GridView> class LookUpData;
  * \brief This problem simulates an input file given in the data format used by the
  *        commercial ECLiPSE simulator.
  */
-template<class GridView, class FluidSystem>
+template <class GridView, class FluidSystem>
 class FlowGenericProblem
 {
 public:
@@ -69,20 +72,16 @@ public:
         Scalar compressibility;
     };
 
-    FlowGenericProblem(const EclipseState& eclState,
-                       const Schedule& schedule,
-                       const GridView& gridView);
+    FlowGenericProblem(const EclipseState& eclState, const Schedule& schedule, const GridView& gridView);
 
 
-    static FlowGenericProblem serializationTestObject(const EclipseState& eclState,
-                                                      const Schedule& schedule,
-                                                      const GridView& gridView);
+    static FlowGenericProblem
+    serializationTestObject(const EclipseState& eclState, const Schedule& schedule, const GridView& gridView);
 
     /*!
      * \copydoc FvBaseProblem::helpPreamble
      */
-    static std::string helpPreamble(int,
-                                    const char **argv);
+    static std::string helpPreamble(int, const char** argv);
 
     /*!
      * \copydoc FvBaseProblem::briefDescription
@@ -95,7 +94,9 @@ public:
      * This string appears in the usage message.
      */
     static void setBriefDescription(const std::string& msg)
-    { briefDescription_ = msg; }
+    {
+        briefDescription_ = msg;
+    }
 
     /*!
      * \brief Returns an element's historic maximum water phase saturation that was
@@ -135,7 +136,9 @@ public:
      * degrees of freedom into the interface.
      */
     Scalar referencePorosity(unsigned elementIdx, unsigned timeIdx) const
-    { return referencePorosity_[timeIdx][elementIdx]; }
+    {
+        return referencePorosity_[timeIdx][elementIdx];
+    }
 
 
     /*!
@@ -153,7 +156,9 @@ public:
      *
      */
     void setPorosity(Scalar poro, unsigned elementIdx, unsigned timeIdx = 0)
-    { referencePorosity_[timeIdx][elementIdx] = poro; }
+    {
+        referencePorosity_[timeIdx][elementIdx] = poro;
+    }
 
     /*!
      * \brief Returns the initial solvent saturation for a given a cell index
@@ -171,8 +176,8 @@ public:
     Scalar polymerConcentration(unsigned elemIdx) const;
 
     /*!
-    * \brief Returns the polymer molecule weight for a given cell index
-    */
+     * \brief Returns the polymer molecule weight for a given cell index
+     */
     // TODO: remove this function if not called
     Scalar polymerMolecularWeight(const unsigned elemIdx) const;
 
@@ -206,8 +211,8 @@ public:
      */
     unsigned pvtRegionIndex(unsigned elemIdx) const;
 
-//    const std::vector<int>& pvtRegionArray() const
-//    { return pvtnum_; }
+    //    const std::vector<int>& pvtRegionArray() const
+    //    { return pvtnum_; }
 
     /*!
      * \brief Returns the index the relevant saturation function region given a cell index
@@ -251,11 +256,13 @@ public:
     bool vapparsActive(int episodeIdx) const;
 
     int numPressurePointsEquil() const
-    { return numPressurePointsEquil_; }
+    {
+        return numPressurePointsEquil_;
+    }
 
     bool operator==(const FlowGenericProblem& rhs) const;
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(maxOilSaturation_);
@@ -275,7 +282,9 @@ protected:
      * \brief Always returns true. The ecl output writer takes care of the rest
      */
     bool shouldWriteOutput() const
-    { return true; }
+    {
+        return true;
+    }
 
     /*!
      * \brief Returns true if an eWoms restart file should be written to disk.
@@ -284,10 +293,11 @@ protected:
      * using the ECL format.
      */
     bool shouldWriteRestartFile() const
-    { return false; }
+    {
+        return false;
+    }
 
-    bool beginEpisode_(bool enableExperiments,
-                       int episodeIdx);
+    bool beginEpisode_(bool enableExperiments, int episodeIdx);
     void beginTimeStep_(bool enableExperiments,
                         int episodeIdx,
                         int timeStepIndex,
@@ -297,14 +307,11 @@ protected:
                         Scalar endTime);
 
     void readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
-                             std::function<std::array<int,3>(const unsigned)> ijkIndex);
+                             std::function<std::array<int, 3>(const unsigned)> ijkIndex);
     void readRockCompactionParameters_();
 
-    void readBlackoilExtentionsInitialConditions_(std::size_t numDof,
-                                                  bool enableSolvent,
-                                                  bool enablePolymer,
-                                                  bool enablePolymerMolarWeight,
-                                                  bool enableMICP);
+    void readBlackoilExtentionsInitialConditions_(
+        std::size_t numDof, bool enableSolvent, bool enablePolymer, bool enablePolymerMolarWeight, bool enableMICP);
 
     void updatePvtnum_();
     void updateSatnum_();
@@ -344,7 +351,7 @@ protected:
     bool enableTuning_;
     Scalar initialTimeStepSize_;
     Scalar maxTimeStepAfterWellEvent_;
-    
+
     // equilibration parameters
     int numPressurePointsEquil_;
 
@@ -352,8 +359,8 @@ protected:
     bool explicitRockCompaction_;
 
     // To lookup origin cell indices
-    using Grid = std::remove_cv_t< typename std::remove_reference<decltype(gridView_.grid())>::type>;
-    using LookUpData = Opm::LookUpData<Grid,GridView>;
+    using Grid = std::remove_cv_t<typename std::remove_reference<decltype(gridView_.grid())>::type>;
+    using LookUpData = Opm::LookUpData<Grid, GridView>;
     const LookUpData lookUpData_;
 
     // \brief Function to assign the origin cell index on level zero, for a cell on the leaf grid view.
@@ -362,11 +369,11 @@ protected:
     // is inherited from its parent or equivalent (when has no parent) cell on level zero.
     std::function<unsigned(unsigned)> lookupIdxOnLevelZeroAssigner_()
     {
-        return [this](unsigned elemIdx) { return lookUpData_.template getFieldPropIdx<Grid>(elemIdx);};
+        return [this](unsigned elemIdx) { return lookUpData_.template getFieldPropIdx<Grid>(elemIdx); };
     }
 
 private:
-    template<class T>
+    template <class T>
     void updateNum(const std::string& name, std::vector<T>& numbers, std::size_t num_regions);
 };
 

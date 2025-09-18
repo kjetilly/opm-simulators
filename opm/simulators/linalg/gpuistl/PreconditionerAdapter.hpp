@@ -122,7 +122,8 @@ public:
         return m_underlyingPreconditioner;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return m_underlyingPreconditioner->hasPerfectUpdate();
     }
 

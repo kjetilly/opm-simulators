@@ -20,33 +20,39 @@
 #ifndef OPM_SIMULATOR_TEST_MPIFIXTURE_HPP
 #define OPM_SIMULATOR_TEST_MPIFIXTURE_HPP
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <boost/test/unit_test.hpp>
+#include <dune/common/parallel/mpihelper.hh>
 
-class MPIError {
+class MPIError
+{
 public:
-  /** @brief Constructor. */
-  MPIError(std::string s, int e) : errorstring(s), errorcode(e){}
-  /** @brief The error string. */
-  std::string errorstring;
-  /** @brief The mpi error code. */
-  int errorcode;
+    /** @brief Constructor. */
+    MPIError(std::string s, int e)
+        : errorstring(s)
+        , errorcode(e)
+    {
+    }
+    /** @brief The error string. */
+    std::string errorstring;
+    /** @brief The mpi error code. */
+    int errorcode;
 };
 
 #ifdef HAVE_MPI
-void MPI_err_handler(MPI_Comm *, int *err_code, ...){
-  char *err_string=new char[MPI_MAX_ERROR_STRING];
-  int err_length;
-  MPI_Error_string(*err_code, err_string, &err_length);
-  std::string s(err_string, err_length);
-  std::cerr << "An MPI Error ocurred:"<<std::endl<<s<<std::endl;
-  delete[] err_string;
-  throw MPIError(s, *err_code);
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
+{
+    char* err_string = new char[MPI_MAX_ERROR_STRING];
+    int err_length;
+    MPI_Error_string(*err_code, err_string, &err_length);
+    std::string s(err_string, err_length);
+    std::cerr << "An MPI Error ocurred:" << std::endl << s << std::endl;
+    delete[] err_string;
+    throw MPIError(s, *err_code);
 }
 #endif
 
-struct MPIFixture
-{
+struct MPIFixture {
     MPIFixture()
     {
 #if HAVE_MPI

@@ -32,9 +32,10 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class TypeTag>
+template <class TypeTag>
 std::unique_ptr<FlowMain<TypeTag>>
 flowMainInit(int argc, char** argv, bool outputCout, bool outputFiles)
 {
@@ -46,7 +47,7 @@ flowMainInit(int argc, char** argv, bool outputCout, bool outputFiles)
 }
 
 // Adds a python-only initialization method
-template<class TypeTag>
+template <class TypeTag>
 class PyMain : public Main
 {
 public:
@@ -70,7 +71,7 @@ public:
         argv_python_[0] = argv_[0];
         argv_python_[1] = argv_[1];
         for (std::size_t i = 0; i < args.size(); ++i) {
-            argv_python_[i+2] = const_cast<char*>(args[i].c_str());
+            argv_python_[i + 2] = const_cast<char*>(args[i].c_str());
         }
 
         // Finally set the main class' argv pointer to the combined
@@ -99,7 +100,7 @@ public:
     }
 
 private:
-    std::vector<char*> argv_python_{};
+    std::vector<char*> argv_python_ {};
 };
 
 } // namespace Opm

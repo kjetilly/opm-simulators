@@ -38,7 +38,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -153,31 +154,27 @@ public:
         }
 
         if (params_.solidInternalEnergyOutput_) {
-            this->commitScalarBuffer_(baseWriter, "internalEnergySolid",
-                                      solidInternalEnergy_, BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "internalEnergySolid", solidInternalEnergy_, BufferType::Dof);
         }
         if (params_.thermalConductivityOutput_) {
-            this->commitScalarBuffer_(baseWriter, "thermalConductivity",
-                                      thermalConductivity_, BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "thermalConductivity", thermalConductivity_, BufferType::Dof);
         }
 
         if (params_.enthalpyOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "enthalpy_%s",
-                                     enthalpy_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "enthalpy_%s", enthalpy_, BufferType::Dof);
         }
         if (params_.internalEnergyOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "internalEnergy_%s",
-                                     internalEnergy_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "internalEnergy_%s", internalEnergy_, BufferType::Dof);
         }
     }
 
 private:
-    VtkEnergyParams params_{};
-    PhaseBuffer enthalpy_{};
-    PhaseBuffer internalEnergy_{};
+    VtkEnergyParams params_ {};
+    PhaseBuffer enthalpy_ {};
+    PhaseBuffer internalEnergy_ {};
 
-    ScalarBuffer thermalConductivity_{};
-    ScalarBuffer solidInternalEnergy_{};
+    ScalarBuffer thermalConductivity_ {};
+    ScalarBuffer solidInternalEnergy_ {};
 };
 
 } // namespace Opm

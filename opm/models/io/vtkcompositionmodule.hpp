@@ -38,7 +38,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -149,8 +150,8 @@ public:
                     }
 
                     if (params_.fugacityCoeffOutput_) {
-                        fugacityCoeff_[phaseIdx][compIdx][I] =
-                            Toolbox::value(fs.fugacityCoefficient(phaseIdx, compIdx));
+                        fugacityCoeff_[phaseIdx][compIdx][I]
+                            = Toolbox::value(fs.fugacityCoefficient(phaseIdx, compIdx));
                     }
                 }
             }
@@ -161,10 +162,8 @@ public:
                     Scalar totalMass = 0;
                     for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
                         totalMass += Toolbox::value(fs.density(phaseIdx)) * Toolbox::value(fs.saturation(phaseIdx));
-                        compMass +=
-                            Toolbox::value(fs.density(phaseIdx)) *
-                            Toolbox::value(fs.saturation(phaseIdx)) *
-                            Toolbox::value(fs.massFraction(phaseIdx, compIdx));
+                        compMass += Toolbox::value(fs.density(phaseIdx)) * Toolbox::value(fs.saturation(phaseIdx))
+                            * Toolbox::value(fs.massFraction(phaseIdx, compIdx));
                     }
                     totalMassFrac_[compIdx][I] = compMass / totalMass;
                 }
@@ -172,13 +171,10 @@ public:
                     Scalar compMoles = 0;
                     Scalar totalMoles = 0;
                     for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                        totalMoles +=
-                            Toolbox::value(fs.molarDensity(phaseIdx)) *
-                            Toolbox::value(fs.saturation(phaseIdx));
-                        compMoles +=
-                            Toolbox::value(fs.molarDensity(phaseIdx)) *
-                            Toolbox::value(fs.saturation(phaseIdx)) *
-                            Toolbox::value(fs.moleFraction(phaseIdx, compIdx));
+                        totalMoles
+                            += Toolbox::value(fs.molarDensity(phaseIdx)) * Toolbox::value(fs.saturation(phaseIdx));
+                        compMoles += Toolbox::value(fs.molarDensity(phaseIdx)) * Toolbox::value(fs.saturation(phaseIdx))
+                            * Toolbox::value(fs.moleFraction(phaseIdx, compIdx));
                     }
                     totalMoleFrac_[compIdx][I] = compMoles / totalMoles;
                 }
@@ -199,46 +195,39 @@ public:
         }
 
         if (params_.moleFracOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter, "moleFrac_%s^%s",
-                                              moleFrac_, BufferType::Dof);
+            this->commitPhaseComponentBuffer_(baseWriter, "moleFrac_%s^%s", moleFrac_, BufferType::Dof);
         }
         if (params_.massFracOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter, "massFrac_%s^%s",
-                                              massFrac_, BufferType::Dof);
+            this->commitPhaseComponentBuffer_(baseWriter, "massFrac_%s^%s", massFrac_, BufferType::Dof);
         }
         if (params_.molarityOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter, "molarity_%s^%s",
-                                              molarity_, BufferType::Dof);
+            this->commitPhaseComponentBuffer_(baseWriter, "molarity_%s^%s", molarity_, BufferType::Dof);
         }
         if (params_.totalMassFracOutput_) {
-            this->commitComponentBuffer_(baseWriter, "totalMassFrac^%s",
-                                         totalMassFrac_, BufferType::Dof);
+            this->commitComponentBuffer_(baseWriter, "totalMassFrac^%s", totalMassFrac_, BufferType::Dof);
         }
         if (params_.totalMoleFracOutput_) {
-            this->commitComponentBuffer_(baseWriter, "totalMoleFrac^%s",
-                                         totalMoleFrac_, BufferType::Dof);
+            this->commitComponentBuffer_(baseWriter, "totalMoleFrac^%s", totalMoleFrac_, BufferType::Dof);
         }
 
         if (params_.fugacityOutput_) {
-            this->commitComponentBuffer_(baseWriter, "fugacity^%s",
-                                         fugacity_, BufferType::Dof);
+            this->commitComponentBuffer_(baseWriter, "fugacity^%s", fugacity_, BufferType::Dof);
         }
         if (params_.fugacityCoeffOutput_) {
-            this->commitPhaseComponentBuffer_(baseWriter, "fugacityCoeff_%s^%s",
-                                              fugacityCoeff_, BufferType::Dof);
+            this->commitPhaseComponentBuffer_(baseWriter, "fugacityCoeff_%s^%s", fugacityCoeff_, BufferType::Dof);
         }
     }
 
 private:
-    VtkCompositionParams params_{};
-    PhaseComponentBuffer moleFrac_{};
-    PhaseComponentBuffer massFrac_{};
-    PhaseComponentBuffer molarity_{};
-    ComponentBuffer totalMassFrac_{};
-    ComponentBuffer totalMoleFrac_{};
+    VtkCompositionParams params_ {};
+    PhaseComponentBuffer moleFrac_ {};
+    PhaseComponentBuffer massFrac_ {};
+    PhaseComponentBuffer molarity_ {};
+    ComponentBuffer totalMassFrac_ {};
+    ComponentBuffer totalMoleFrac_ {};
 
-    ComponentBuffer fugacity_{};
-    PhaseComponentBuffer fugacityCoeff_{};
+    ComponentBuffer fugacity_ {};
+    PhaseComponentBuffer fugacityCoeff_ {};
 };
 
 } // namespace Opm

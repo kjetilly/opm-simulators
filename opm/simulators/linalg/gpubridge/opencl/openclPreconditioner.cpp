@@ -19,8 +19,8 @@
 
 #include <config.h>
 
-#include <opm/common/TimingMacros.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/common/TimingMacros.hpp>
 
 #include <opm/simulators/linalg/gpubridge/opencl/openclBILU0.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/openclBISAI.hpp>
@@ -30,44 +30,41 @@
 #include <memory>
 #include <string>
 
-namespace Opm::Accelerator {
-
-template<class Scalar, unsigned int block_size>
-std::unique_ptr<openclPreconditioner<Scalar,block_size>>
-openclPreconditioner<Scalar,block_size>::
-create(PreconditionerType type,
-       int verbosity,
-       bool opencl_ilu_parallel)
+namespace Opm::Accelerator
 {
-    switch (type ) {
+
+template <class Scalar, unsigned int block_size>
+std::unique_ptr<openclPreconditioner<Scalar, block_size>>
+openclPreconditioner<Scalar, block_size>::create(PreconditionerType type, int verbosity, bool opencl_ilu_parallel)
+{
+    switch (type) {
     case PreconditionerType::BILU0:
-        return std::make_unique<openclBILU0<Scalar,block_size>>(opencl_ilu_parallel, verbosity);
+        return std::make_unique<openclBILU0<Scalar, block_size>>(opencl_ilu_parallel, verbosity);
     case PreconditionerType::CPR:
-        return std::make_unique<openclCPR<Scalar,block_size>>(opencl_ilu_parallel, verbosity);
+        return std::make_unique<openclCPR<Scalar, block_size>>(opencl_ilu_parallel, verbosity);
     case PreconditionerType::BISAI:
-        return std::make_unique<openclBISAI<Scalar,block_size>>(opencl_ilu_parallel, verbosity);
+        return std::make_unique<openclBISAI<Scalar, block_size>>(opencl_ilu_parallel, verbosity);
     }
 
-    OPM_THROW(std::logic_error,
-              "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
+    OPM_THROW(std::logic_error, "Invalid preconditioner type " + std::to_string(static_cast<int>(type)));
 }
 
-template<class Scalar, unsigned int block_size>
-void openclPreconditioner<Scalar,block_size>::
-setOpencl(std::shared_ptr<cl::Context>& context_,
-          std::shared_ptr<cl::CommandQueue>& queue_)
+template <class Scalar, unsigned int block_size>
+void
+openclPreconditioner<Scalar, block_size>::setOpencl(std::shared_ptr<cl::Context>& context_,
+                                                    std::shared_ptr<cl::CommandQueue>& queue_)
 {
     context = context_;
     queue = queue_;
 }
 
-#define INSTANTIATE_TYPE(T)                   \
-    template class openclPreconditioner<T,1>; \
-    template class openclPreconditioner<T,2>; \
-    template class openclPreconditioner<T,3>; \
-    template class openclPreconditioner<T,4>; \
-    template class openclPreconditioner<T,5>; \
-    template class openclPreconditioner<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class openclPreconditioner<T, 1>;                                                                         \
+    template class openclPreconditioner<T, 2>;                                                                         \
+    template class openclPreconditioner<T, 3>;                                                                         \
+    template class openclPreconditioner<T, 4>;                                                                         \
+    template class openclPreconditioner<T, 5>;                                                                         \
+    template class openclPreconditioner<T, 6>;
 
 INSTANTIATE_TYPE(double)
 

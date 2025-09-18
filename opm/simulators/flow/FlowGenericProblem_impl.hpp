@@ -53,13 +53,13 @@
 #include <iostream>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class GridView, class FluidSystem>
-FlowGenericProblem<GridView,FluidSystem>::
-FlowGenericProblem(const EclipseState& eclState,
-                   const Schedule& schedule,
-                   const GridView& gridView)
+template <class GridView, class FluidSystem>
+FlowGenericProblem<GridView, FluidSystem>::FlowGenericProblem(const EclipseState& eclState,
+                                                              const Schedule& schedule,
+                                                              const GridView& gridView)
     : eclState_(eclState)
     , schedule_(schedule)
     , gridView_(gridView)
@@ -71,8 +71,8 @@ FlowGenericProblem(const EclipseState& eclState,
     enableTuning_ = Parameters::Get<Parameters::EnableTuning>();
     enableDriftCompensation_ = Parameters::Get<Parameters::EnableDriftCompensation>();
     initialTimeStepSize_ = Parameters::Get<Parameters::InitialTimeStepSize<Scalar>>();
-    maxTimeStepAfterWellEvent_ = unit::convert::from
-        (Parameters::Get<Parameters::TimeStepAfterEventInDays<Scalar>>(), unit::day);
+    maxTimeStepAfterWellEvent_
+        = unit::convert::from(Parameters::Get<Parameters::TimeStepAfterEventInDays<Scalar>>(), unit::day);
 
     // The value N for this parameter is defined in the following order of precedence:
     //
@@ -88,12 +88,11 @@ FlowGenericProblem(const EclipseState& eclState,
     explicitRockCompaction_ = Parameters::Get<Parameters::ExplicitRockCompaction>();
 }
 
-template<class GridView, class FluidSystem>
-FlowGenericProblem<GridView,FluidSystem>
-FlowGenericProblem<GridView,FluidSystem>::
-serializationTestObject(const EclipseState& eclState,
-                        const Schedule& schedule,
-                        const GridView& gridView)
+template <class GridView, class FluidSystem>
+FlowGenericProblem<GridView, FluidSystem>
+FlowGenericProblem<GridView, FluidSystem>::serializationTestObject(const EclipseState& eclState,
+                                                                   const Schedule& schedule,
+                                                                   const GridView& gridView)
 {
     FlowGenericProblem result(eclState, schedule, gridView);
     result.maxOilSaturation_ = {1.0, 2.0};
@@ -108,33 +107,28 @@ serializationTestObject(const EclipseState& eclState,
     return result;
 }
 
-template<class GridView, class FluidSystem>
+template <class GridView, class FluidSystem>
 std::string
-FlowGenericProblem<GridView,FluidSystem>::
-helpPreamble(int,
-             const char **argv)
+FlowGenericProblem<GridView, FluidSystem>::helpPreamble(int, const char** argv)
 {
     std::string desc = FlowGenericProblem::briefDescription();
     if (!desc.empty())
         desc = desc + "\n";
 
-    return
-        "Usage: "+std::string(argv[0]) + " [OPTIONS] [ECL_DECK_FILENAME]\n"
-        + desc;
+    return "Usage: " + std::string(argv[0]) + " [OPTIONS] [ECL_DECK_FILENAME]\n" + desc;
 }
 
-template<class GridView, class FluidSystem>
+template <class GridView, class FluidSystem>
 std::string
-FlowGenericProblem<GridView,FluidSystem>::
-briefDescription()
+FlowGenericProblem<GridView, FluidSystem>::briefDescription()
 {
     return briefDescription_;
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
-                    std::function<std::array<int,3>(const unsigned)> ijkIndex)
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::readRockParameters_(
+    const std::vector<Scalar>& cellCenterDepths, std::function<std::array<int, 3>(const unsigned)> ijkIndex)
 {
     const auto& rock_config = eclState_.getSimulationConfig().rock_config();
 
@@ -142,12 +136,9 @@ readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
     {
         const auto& comp = rock_config.comp();
         rockParams_.clear();
-        std::transform(comp.begin(), comp.end(), std::back_inserter(rockParams_),
-                       [](const auto& c)
-                       {
-                            return RockParams{static_cast<Scalar>(c.pref),
-                                              static_cast<Scalar>(c.compressibility)};
-                       });
+        std::transform(comp.begin(), comp.end(), std::back_inserter(rockParams_), [](const auto& c) {
+            return RockParams {static_cast<Scalar>(c.pref), static_cast<Scalar>(c.compressibility)};
+        });
     }
 
     // Warn that ROCK and ROCKOPTS item 2 = STORE is used together
@@ -161,66 +152,63 @@ readRockParameters_(const std::vector<Scalar>& cellCenterDepths,
     unsigned numElem = gridView_.size(0);
     if (eclState_.fieldProps().has_int(rock_config.rocknum_property())) {
         // Auxiliary function to check rockTableIdx_ values belong to the right range. Otherwise, throws.
-        std::function<void(int, int)> valueCheck = [&ijkIndex,&rock_config,this](int fieldPropValue, int coarseElemIdx)
-        {
-            auto fmtError = [fieldPropValue, coarseElemIdx,&ijkIndex,&rock_config](const char* type, std::size_t size)
-            {
-                return fmt::format("{} table index {} for elem {} read from {}"
-                                   " is out of bounds for number of tables {}",
-                                   type,  fieldPropValue,
-                                   ijkIndex(coarseElemIdx),
-                                   rock_config.rocknum_property(), size);
-            };
-            if (!rockCompPoroMult_.empty() &&
-                fieldPropValue > static_cast<int>(rockCompPoroMult_.size())) {
-                throw std::runtime_error(fmtError("Rock compaction",
-                                                  rockCompPoroMult_.size()));
-            }
-            if (!rockCompPoroMultWc_.empty() &&
-                fieldPropValue > static_cast<int>(rockCompPoroMultWc_.size())) {
-                throw std::runtime_error(fmtError("Rock water compaction",
-                                                  rockCompPoroMultWc_.size()));
-            }
-        };
+        std::function<void(int, int)> valueCheck
+            = [&ijkIndex, &rock_config, this](int fieldPropValue, int coarseElemIdx) {
+                  auto fmtError
+                      = [fieldPropValue, coarseElemIdx, &ijkIndex, &rock_config](const char* type, std::size_t size) {
+                            return fmt::format("{} table index {} for elem {} read from {}"
+                                               " is out of bounds for number of tables {}",
+                                               type,
+                                               fieldPropValue,
+                                               ijkIndex(coarseElemIdx),
+                                               rock_config.rocknum_property(),
+                                               size);
+                        };
+                  if (!rockCompPoroMult_.empty() && fieldPropValue > static_cast<int>(rockCompPoroMult_.size())) {
+                      throw std::runtime_error(fmtError("Rock compaction", rockCompPoroMult_.size()));
+                  }
+                  if (!rockCompPoroMultWc_.empty() && fieldPropValue > static_cast<int>(rockCompPoroMultWc_.size())) {
+                      throw std::runtime_error(fmtError("Rock water compaction", rockCompPoroMultWc_.size()));
+                  }
+              };
 
-        rockTableIdx_ = this->lookUpData_.template assignFieldPropsIntOnLeaf<short unsigned int>(eclState_.fieldProps(),
-                                                                                                 rock_config.rocknum_property(),
-                                                                                                 true /*needsTranslation*/,
-                                                                                                 valueCheck);
+        rockTableIdx_ = this->lookUpData_.template assignFieldPropsIntOnLeaf<short unsigned int>(
+            eclState_.fieldProps(), rock_config.rocknum_property(), true /*needsTranslation*/, valueCheck);
     }
 
     // Store overburden pressure pr element
     const auto& overburdTables = eclState_.getTableManager().getOverburdTables();
     if (!overburdTables.empty() && !rock_config.store()) {
-        overburdenPressure_.resize(numElem,0.0);
+        overburdenPressure_.resize(numElem, 0.0);
         std::size_t numRocktabTables = rock_config.num_rock_tables();
 
         if (overburdTables.size() != numRocktabTables)
-            throw std::runtime_error(std::to_string(numRocktabTables) +" OVERBURD tables is expected, but " + std::to_string(overburdTables.size()) +" is provided");
+            throw std::runtime_error(std::to_string(numRocktabTables) + " OVERBURD tables is expected, but "
+                                     + std::to_string(overburdTables.size()) + " is provided");
 
         std::vector<Tabulated1DFunction<Scalar>> overburdenTables(numRocktabTables);
         for (std::size_t regionIdx = 0; regionIdx < numRocktabTables; ++regionIdx) {
-            const OverburdTable& overburdTable =  overburdTables.template getTable<OverburdTable>(regionIdx);
-            overburdenTables[regionIdx].setXYContainers(overburdTable.getDepthColumn(),overburdTable.getOverburdenPressureColumn());
+            const OverburdTable& overburdTable = overburdTables.template getTable<OverburdTable>(regionIdx);
+            overburdenTables[regionIdx].setXYContainers(overburdTable.getDepthColumn(),
+                                                        overburdTable.getOverburdenPressureColumn());
         }
 
-        for (std::size_t elemIdx = 0; elemIdx < numElem; ++ elemIdx) {
+        for (std::size_t elemIdx = 0; elemIdx < numElem; ++elemIdx) {
             unsigned tableIdx = 0;
             if (!rockTableIdx_.empty()) {
                 tableIdx = rockTableIdx_[elemIdx];
             }
-            overburdenPressure_[elemIdx] =
-                overburdenTables[tableIdx].eval(cellCenterDepths[elemIdx], /*extrapolation=*/true);
+            overburdenPressure_[elemIdx]
+                = overburdenTables[tableIdx].eval(cellCenterDepths[elemIdx], /*extrapolation=*/true);
         }
-    }
-    else if (!overburdTables.empty() && rock_config.store()) {
+    } else if (!overburdTables.empty() && rock_config.store()) {
         OpmLog::warning("ROCKOPTS item 2 set to STORE, OVERBURD ignored!");
-    } 
+    }
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-readRockCompactionParameters_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::readRockCompactionParameters_()
 {
     const auto& rock_config = eclState_.getSimulationConfig().rock_config();
 
@@ -247,7 +235,8 @@ readRockCompactionParameters_()
         const auto& rocktabTables = eclState_.getTableManager().getRocktabTables();
         if (rocktabTables.size() != numRocktabTables)
             throw std::runtime_error("ROCKCOMP is activated." + std::to_string(numRocktabTables)
-                                     +" ROCKTAB tables is expected, but " + std::to_string(rocktabTables.size()) +" is provided");
+                                     + " ROCKTAB tables is expected, but " + std::to_string(rocktabTables.size())
+                                     + " is provided");
 
         rockCompPoroMult_.resize(numRocktabTables);
         rockCompTransMult_.resize(numRocktabTables);
@@ -266,16 +255,19 @@ readRockCompactionParameters_()
         maxWaterSaturation_.resize(numElem, 0.0);
 
         if (rock2dTables.size() != numRocktabTables)
-            throw std::runtime_error("Water compation option is selected in ROCKCOMP." + std::to_string(numRocktabTables)
-                                     +" ROCK2D tables is expected, but " + std::to_string(rock2dTables.size()) +" is provided");
+            throw std::runtime_error("Water compation option is selected in ROCKCOMP."
+                                     + std::to_string(numRocktabTables) + " ROCK2D tables is expected, but "
+                                     + std::to_string(rock2dTables.size()) + " is provided");
 
         if (rockwnodTables.size() != numRocktabTables)
-            throw std::runtime_error("Water compation option is selected in ROCKCOMP." + std::to_string(numRocktabTables)
-                                     +" ROCKWNOD tables is expected, but " + std::to_string(rockwnodTables.size()) +" is provided");
-        //TODO check size match
-        rockCompPoroMultWc_.resize(numRocktabTables, TabulatedTwoDFunction(TabulatedTwoDFunction::InterpolationPolicy::Vertical));
+            throw std::runtime_error("Water compation option is selected in ROCKCOMP."
+                                     + std::to_string(numRocktabTables) + " ROCKWNOD tables is expected, but "
+                                     + std::to_string(rockwnodTables.size()) + " is provided");
+        // TODO check size match
+        rockCompPoroMultWc_.resize(numRocktabTables,
+                                   TabulatedTwoDFunction(TabulatedTwoDFunction::InterpolationPolicy::Vertical));
         for (std::size_t regionIdx = 0; regionIdx < numRocktabTables; ++regionIdx) {
-            const RockwnodTable& rockwnodTable =  rockwnodTables.template getTable<RockwnodTable>(regionIdx);
+            const RockwnodTable& rockwnodTable = rockwnodTables.template getTable<RockwnodTable>(regionIdx);
             const auto& rock2dTable = rock2dTables[regionIdx];
 
             if (rockwnodTable.getSaturationColumn().size() != rock2dTable.sizeMultValues())
@@ -284,16 +276,16 @@ readRockCompactionParameters_()
             for (std::size_t xIdx = 0; xIdx < rock2dTable.size(); ++xIdx) {
                 rockCompPoroMultWc_[regionIdx].appendXPos(rock2dTable.getPressureValue(xIdx));
                 for (std::size_t yIdx = 0; yIdx < rockwnodTable.getSaturationColumn().size(); ++yIdx)
-                    rockCompPoroMultWc_[regionIdx].appendSamplePoint(xIdx,
-                                                                       rockwnodTable.getSaturationColumn()[yIdx],
-                                                                       rock2dTable.getPvmultValue(xIdx, yIdx));
+                    rockCompPoroMultWc_[regionIdx].appendSamplePoint(
+                        xIdx, rockwnodTable.getSaturationColumn()[yIdx], rock2dTable.getPvmultValue(xIdx, yIdx));
             }
         }
 
         if (!rock2dtrTables.empty()) {
-            rockCompTransMultWc_.resize(numRocktabTables, TabulatedTwoDFunction(TabulatedTwoDFunction::InterpolationPolicy::Vertical));
+            rockCompTransMultWc_.resize(numRocktabTables,
+                                        TabulatedTwoDFunction(TabulatedTwoDFunction::InterpolationPolicy::Vertical));
             for (std::size_t regionIdx = 0; regionIdx < numRocktabTables; ++regionIdx) {
-                const RockwnodTable& rockwnodTable =  rockwnodTables.template getTable<RockwnodTable>(regionIdx);
+                const RockwnodTable& rockwnodTable = rockwnodTables.template getTable<RockwnodTable>(regionIdx);
                 const auto& rock2dtrTable = rock2dtrTables[regionIdx];
 
                 if (rockwnodTable.getSaturationColumn().size() != rock2dtrTable.sizeMultValues())
@@ -303,18 +295,17 @@ readRockCompactionParameters_()
                     rockCompTransMultWc_[regionIdx].appendXPos(rock2dtrTable.getPressureValue(xIdx));
                     for (std::size_t yIdx = 0; yIdx < rockwnodTable.getSaturationColumn().size(); ++yIdx)
                         rockCompTransMultWc_[regionIdx].appendSamplePoint(xIdx,
-                                                                                 rockwnodTable.getSaturationColumn()[yIdx],
-                                                                                 rock2dtrTable.getTransMultValue(xIdx, yIdx));
+                                                                          rockwnodTable.getSaturationColumn()[yIdx],
+                                                                          rock2dtrTable.getTransMultValue(xIdx, yIdx));
                 }
             }
         }
     }
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-rockCompressibility(unsigned globalSpaceIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::rockCompressibility(unsigned globalSpaceIdx) const
 {
     if (this->rockParams_.empty())
         return 0.0;
@@ -326,18 +317,16 @@ rockCompressibility(unsigned globalSpaceIdx) const
     return this->rockParams_[tableIdx].compressibility;
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-porosity(unsigned globalSpaceIdx, unsigned timeIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::porosity(unsigned globalSpaceIdx, unsigned timeIdx) const
 {
     return this->referencePorosity_[timeIdx][globalSpaceIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-rockFraction(unsigned elementIdx, unsigned timeIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::rockFraction(unsigned elementIdx, unsigned timeIdx) const
 {
     // the reference porosity is defined as the accumulated pore volume divided by the
     // geometric volume of the element. Note that it can
@@ -347,95 +336,91 @@ rockFraction(unsigned elementIdx, unsigned timeIdx) const
     return referencePorosity(elementIdx, timeIdx) / porosity * (1 - porosity);
 }
 
-template<class GridView, class FluidSystem>
-template<class T>
-void FlowGenericProblem<GridView,FluidSystem>::
-updateNum(const std::string& name, std::vector<T>& numbers, std::size_t num_regions)
+template <class GridView, class FluidSystem>
+template <class T>
+void
+FlowGenericProblem<GridView, FluidSystem>::updateNum(const std::string& name,
+                                                     std::vector<T>& numbers,
+                                                     std::size_t num_regions)
 {
     if (!eclState_.fieldProps().has_int(name))
         return;
 
-    std::function<void(T, int)> valueCheck = [num_regions,name](T fieldPropValue, [[maybe_unused]] int fieldPropIdx) {
-        if ( fieldPropValue > (int)num_regions) {
-            throw std::runtime_error("Values larger than maximum number of regions "
-                                     + std::to_string(num_regions) + " provided in " + name);
+    std::function<void(T, int)> valueCheck = [num_regions, name](T fieldPropValue, [[maybe_unused]] int fieldPropIdx) {
+        if (fieldPropValue > (int)num_regions) {
+            throw std::runtime_error("Values larger than maximum number of regions " + std::to_string(num_regions)
+                                     + " provided in " + name);
         }
-        if ( fieldPropValue <= 0) {
+        if (fieldPropValue <= 0) {
             throw std::runtime_error("zero or negative values provided for region array: " + name);
         }
     };
 
-    numbers = this->lookUpData_.template assignFieldPropsIntOnLeaf<T>(eclState_.fieldProps(), name,
-                                                                      true /*needsTranslation*/, valueCheck);
+    numbers = this->lookUpData_.template assignFieldPropsIntOnLeaf<T>(
+        eclState_.fieldProps(), name, true /*needsTranslation*/, valueCheck);
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-updatePvtnum_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::updatePvtnum_()
 {
     const auto num_regions = eclState_.getTableManager().getTabdims().getNumPVTTables();
     updateNum("PVTNUM", pvtnum_, num_regions);
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-updateSatnum_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::updateSatnum_()
 {
     const auto num_regions = eclState_.getTableManager().getTabdims().getNumSatTables();
     updateNum("SATNUM", satnum_, num_regions);
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-updateMiscnum_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::updateMiscnum_()
 {
     const auto num_regions = 1; // we only support single region
     updateNum("MISCNUM", miscnum_, num_regions);
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-updatePlmixnum_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::updatePlmixnum_()
 {
     const auto num_regions = 1; // we only support single region
     updateNum("PLMIXNUM", plmixnum_, num_regions);
 }
 
-template<class GridView, class FluidSystem>
-bool FlowGenericProblem<GridView,FluidSystem>::
-vapparsActive(int episodeIdx) const
+template <class GridView, class FluidSystem>
+bool
+FlowGenericProblem<GridView, FluidSystem>::vapparsActive(int episodeIdx) const
 {
     const auto& oilVaporizationControl = schedule_[episodeIdx].oilvap();
     return (oilVaporizationControl.getType() == OilVaporizationProperties::OilVaporization::VAPPARS);
 }
 
-template<class GridView, class FluidSystem>
-bool FlowGenericProblem<GridView,FluidSystem>::
-beginEpisode_(bool enableExperiments,
-              int episodeIdx)
+template <class GridView, class FluidSystem>
+bool
+FlowGenericProblem<GridView, FluidSystem>::beginEpisode_(bool enableExperiments, int episodeIdx)
 {
     if (enableExperiments && gridView_.comm().rank() == 0 && episodeIdx >= 0) {
         // print some useful information in experimental mode. (the production
         // simulator does this externally.)
         std::ostringstream ss;
         boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%d-%b-%Y");
-        boost::posix_time::ptime curDateTime =
-            boost::posix_time::from_time_t(schedule_.simTime(episodeIdx));
+        boost::posix_time::ptime curDateTime = boost::posix_time::from_time_t(schedule_.simTime(episodeIdx));
         ss.imbue(std::locale(std::locale::classic(), facet));
-        ss << "Report step " << episodeIdx + 1
-                  << "/" << schedule_.size() - 1
-                  << " at day " << schedule_.seconds(episodeIdx)/(24*3600)
-                  << "/" << schedule_.seconds(schedule_.size() - 1)/(24*3600)
-                  << ", date = " << curDateTime.date()
-                  << "\n ";
+        ss << "Report step " << episodeIdx + 1 << "/" << schedule_.size() - 1 << " at day "
+           << schedule_.seconds(episodeIdx) / (24 * 3600) << "/"
+           << schedule_.seconds(schedule_.size() - 1) / (24 * 3600) << ", date = " << curDateTime.date() << "\n ";
         OpmLog::info(ss.str());
     }
 
     const auto& events = schedule_[episodeIdx].events();
 
     // react to TUNING changes
-    if (episodeIdx > 0 && enableTuning_ && events.hasEvent(ScheduleEvents::TUNING_CHANGE))
-    {
+    if (episodeIdx > 0 && enableTuning_ && events.hasEvent(ScheduleEvents::TUNING_CHANGE)) {
         const auto& sched_state = schedule_[episodeIdx];
         const auto& tuning = sched_state.tuning();
         initialTimeStepSize_ = sched_state.max_next_tstep(enableTuning_);
@@ -446,51 +431,46 @@ beginEpisode_(bool enableExperiments,
     return false;
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-beginTimeStep_(bool enableExperiments,
-               int episodeIdx,
-               int timeStepIndex,
-               Scalar startTime,
-               Scalar time,
-               Scalar timeStepSize,
-               Scalar endTime)
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::beginTimeStep_(bool enableExperiments,
+                                                          int episodeIdx,
+                                                          int timeStepIndex,
+                                                          Scalar startTime,
+                                                          Scalar time,
+                                                          Scalar timeStepSize,
+                                                          Scalar endTime)
 {
     if (enableExperiments && gridView_.comm().rank() == 0 && episodeIdx >= 0) {
         std::ostringstream ss;
         boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%d-%b-%Y");
-        boost::posix_time::ptime date = boost::posix_time::from_time_t(startTime) + boost::posix_time::milliseconds(static_cast<long long>(time / prefix::milli));
+        boost::posix_time::ptime date = boost::posix_time::from_time_t(startTime)
+            + boost::posix_time::milliseconds(static_cast<long long>(time / prefix::milli));
         ss.imbue(std::locale(std::locale::classic(), facet));
-        ss <<"\nTime step " << timeStepIndex << ", stepsize "
-               << unit::convert::to(timeStepSize, unit::day) << " days,"
-               << " at day " << (double)unit::convert::to(time, unit::day)
-               << "/" << (double)unit::convert::to(endTime, unit::day)
-               << ", date = " << date;
+        ss << "\nTime step " << timeStepIndex << ", stepsize " << unit::convert::to(timeStepSize, unit::day) << " days,"
+           << " at day " << (double)unit::convert::to(time, unit::day) << "/"
+           << (double)unit::convert::to(endTime, unit::day) << ", date = " << date;
         OpmLog::info(ss.str());
     }
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-initFluidSystem_()
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::initFluidSystem_()
 {
     FluidSystem::initFromState(eclState_, schedule_);
 }
 
-template<class GridView, class FluidSystem>
-void FlowGenericProblem<GridView,FluidSystem>::
-readBlackoilExtentionsInitialConditions_(std::size_t numDof,
-                                         bool enableSolvent,
-                                         bool enablePolymer,
-                                         bool enablePolymerMolarWeight,
-                                         bool enableMICP)
+template <class GridView, class FluidSystem>
+void
+FlowGenericProblem<GridView, FluidSystem>::readBlackoilExtentionsInitialConditions_(
+    std::size_t numDof, bool enableSolvent, bool enablePolymer, bool enablePolymerMolarWeight, bool enableMICP)
 {
-    auto getArray = [](const std::vector<double>& input)
-    {
-        if constexpr (std::is_same_v<Scalar,double>) {
+    auto getArray = [](const std::vector<double>& input) {
+        if constexpr (std::is_same_v<Scalar, double>) {
             return input;
         } else {
-            return std::vector<Scalar>{input.begin(), input.end()};
+            return std::vector<Scalar> {input.begin(), input.end()};
         }
     };
 
@@ -549,10 +529,9 @@ readBlackoilExtentionsInitialConditions_(std::size_t numDof,
     }
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-maxWaterSaturation(unsigned globalDofIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::maxWaterSaturation(unsigned globalDofIdx) const
 {
     if (maxWaterSaturation_.empty())
         return 0.0;
@@ -560,10 +539,9 @@ maxWaterSaturation(unsigned globalDofIdx) const
     return maxWaterSaturation_[globalDofIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-minOilPressure(unsigned globalDofIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::minOilPressure(unsigned globalDofIdx) const
 {
     if (minRefPressure_.empty())
         return 0.0;
@@ -571,10 +549,9 @@ minOilPressure(unsigned globalDofIdx) const
     return minRefPressure_[globalDofIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-overburdenPressure(unsigned elementIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::overburdenPressure(unsigned elementIdx) const
 {
     if (overburdenPressure_.empty())
         return 0.0;
@@ -582,10 +559,9 @@ overburdenPressure(unsigned elementIdx) const
     return overburdenPressure_[elementIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-solventSaturation(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::solventSaturation(unsigned elemIdx) const
 {
     if (solventSaturation_.empty())
         return 0;
@@ -593,10 +569,9 @@ solventSaturation(unsigned elemIdx) const
     return solventSaturation_[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-solventRsw(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::solventRsw(unsigned elemIdx) const
 {
     if (solventRsw_.empty())
         return 0;
@@ -606,10 +581,9 @@ solventRsw(unsigned elemIdx) const
 
 
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-polymerConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::polymerConcentration(unsigned elemIdx) const
 {
     if (polymer_.concentration.empty()) {
         return 0;
@@ -618,10 +592,9 @@ polymerConcentration(unsigned elemIdx) const
     return polymer_.concentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-polymerMolecularWeight(const unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::polymerMolecularWeight(const unsigned elemIdx) const
 {
     if (polymer_.moleWeight.empty()) {
         return 0.0;
@@ -630,10 +603,9 @@ polymerMolecularWeight(const unsigned elemIdx) const
     return polymer_.moleWeight[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-microbialConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::microbialConcentration(unsigned elemIdx) const
 {
     if (micp_.microbialConcentration.empty()) {
         return 0;
@@ -642,10 +614,9 @@ microbialConcentration(unsigned elemIdx) const
     return micp_.microbialConcentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-oxygenConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::oxygenConcentration(unsigned elemIdx) const
 {
     if (micp_.oxygenConcentration.empty()) {
         return 0;
@@ -654,10 +625,9 @@ oxygenConcentration(unsigned elemIdx) const
     return micp_.oxygenConcentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-ureaConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::ureaConcentration(unsigned elemIdx) const
 {
     if (micp_.ureaConcentration.empty()) {
         return 0;
@@ -666,10 +636,9 @@ ureaConcentration(unsigned elemIdx) const
     return micp_.ureaConcentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-biofilmConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::biofilmConcentration(unsigned elemIdx) const
 {
     if (micp_.biofilmConcentration.empty()) {
         return 0;
@@ -678,10 +647,9 @@ biofilmConcentration(unsigned elemIdx) const
     return micp_.biofilmConcentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-calciteConcentration(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::calciteConcentration(unsigned elemIdx) const
 {
     if (micp_.calciteConcentration.empty()) {
         return 0;
@@ -690,9 +658,9 @@ calciteConcentration(unsigned elemIdx) const
     return micp_.calciteConcentration[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-unsigned FlowGenericProblem<GridView,FluidSystem>::
-pvtRegionIndex(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+unsigned
+FlowGenericProblem<GridView, FluidSystem>::pvtRegionIndex(unsigned elemIdx) const
 {
     if (pvtnum_.empty())
         return 0;
@@ -700,9 +668,9 @@ pvtRegionIndex(unsigned elemIdx) const
     return pvtnum_[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-unsigned FlowGenericProblem<GridView,FluidSystem>::
-satnumRegionIndex(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+unsigned
+FlowGenericProblem<GridView, FluidSystem>::satnumRegionIndex(unsigned elemIdx) const
 {
     if (satnum_.empty())
         return 0;
@@ -710,9 +678,9 @@ satnumRegionIndex(unsigned elemIdx) const
     return satnum_[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-unsigned FlowGenericProblem<GridView,FluidSystem>::
-miscnumRegionIndex(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+unsigned
+FlowGenericProblem<GridView, FluidSystem>::miscnumRegionIndex(unsigned elemIdx) const
 {
     if (miscnum_.empty())
         return 0;
@@ -720,9 +688,9 @@ miscnumRegionIndex(unsigned elemIdx) const
     return miscnum_[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-unsigned FlowGenericProblem<GridView,FluidSystem>::
-plmixnumRegionIndex(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+unsigned
+FlowGenericProblem<GridView, FluidSystem>::plmixnumRegionIndex(unsigned elemIdx) const
 {
     if (plmixnum_.empty())
         return 0;
@@ -730,10 +698,9 @@ plmixnumRegionIndex(unsigned elemIdx) const
     return plmixnum_[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-typename FlowGenericProblem<GridView,FluidSystem>::Scalar
-FlowGenericProblem<GridView,FluidSystem>::
-maxPolymerAdsorption(unsigned elemIdx) const
+template <class GridView, class FluidSystem>
+typename FlowGenericProblem<GridView, FluidSystem>::Scalar
+FlowGenericProblem<GridView, FluidSystem>::maxPolymerAdsorption(unsigned elemIdx) const
 {
     if (polymer_.maxAdsorption.empty()) {
         return 0;
@@ -742,17 +709,13 @@ maxPolymerAdsorption(unsigned elemIdx) const
     return polymer_.maxAdsorption[elemIdx];
 }
 
-template<class GridView, class FluidSystem>
-bool FlowGenericProblem<GridView,FluidSystem>::
-operator==(const FlowGenericProblem& rhs) const
+template <class GridView, class FluidSystem>
+bool
+FlowGenericProblem<GridView, FluidSystem>::operator==(const FlowGenericProblem& rhs) const
 {
-    return this->maxWaterSaturation_ == rhs.maxWaterSaturation_ &&
-           this->minRefPressure_ == rhs.minRefPressure_ &&
-           this->overburdenPressure_ == rhs.overburdenPressure_ &&
-           this->solventSaturation_ == rhs.solventSaturation_ &&
-           this->solventRsw_ == rhs.solventRsw_ &&
-           this->polymer_ == rhs.polymer_ &&
-           this->micp_ == rhs.micp_;
+    return this->maxWaterSaturation_ == rhs.maxWaterSaturation_ && this->minRefPressure_ == rhs.minRefPressure_
+        && this->overburdenPressure_ == rhs.overburdenPressure_ && this->solventSaturation_ == rhs.solventSaturation_
+        && this->solventRsw_ == rhs.solventRsw_ && this->polymer_ == rhs.polymer_ && this->micp_ == rhs.micp_;
 }
 
 } // namespace Opm

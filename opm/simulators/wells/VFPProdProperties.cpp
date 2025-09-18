@@ -20,8 +20,8 @@
 #include "config.h"
 #include <opm/simulators/wells/VFPProdProperties.hpp>
 
-#include <opm/material/densead/Math.hpp>
 #include <opm/material/densead/Evaluation.hpp>
+#include <opm/material/densead/Math.hpp>
 
 #include <opm/input/eclipse/Schedule/VFPProdTable.hpp>
 
@@ -29,19 +29,20 @@
 
 #include <cstddef>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-Scalar VFPProdProperties<Scalar>::
-thp(const int    table_id,
-    const Scalar aqua,
-    const Scalar liquid,
-    const Scalar vapour,
-    const Scalar bhp_arg,
-    const Scalar alq,
-    const Scalar explicit_wfr,
-    const Scalar explicit_gfr,
-    const bool   use_expvfp) const
+template <class Scalar>
+Scalar
+VFPProdProperties<Scalar>::thp(const int table_id,
+                               const Scalar aqua,
+                               const Scalar liquid,
+                               const Scalar vapour,
+                               const Scalar bhp_arg,
+                               const Scalar alq,
+                               const Scalar explicit_wfr,
+                               const Scalar explicit_gfr,
+                               const bool use_expvfp) const
 {
     const VFPProdTable& table = detail::getTable(m_tables, table_id);
 
@@ -62,9 +63,9 @@ thp(const int    table_id,
      * expensive, but let us assome that nthp is small.
      */
     auto flo_i = VFPHelpers<Scalar>::findInterpData(-flo, table.getFloAxis());
-    auto wfr_i = VFPHelpers<Scalar>::findInterpData( wfr, table.getWFRAxis());
-    auto gfr_i = VFPHelpers<Scalar>::findInterpData( gfr, table.getGFRAxis());
-    auto alq_i = VFPHelpers<Scalar>::findInterpData( alq, table.getALQAxis());
+    auto wfr_i = VFPHelpers<Scalar>::findInterpData(wfr, table.getWFRAxis());
+    auto gfr_i = VFPHelpers<Scalar>::findInterpData(gfr, table.getGFRAxis());
+    auto alq_i = VFPHelpers<Scalar>::findInterpData(alq, table.getALQAxis());
     std::vector<Scalar> bhp_array(nthp);
     for (int i = 0; i < nthp; ++i) {
         auto thp_i = VFPHelpers<Scalar>::findInterpData(thp_array[i], thp_array);
@@ -74,56 +75,55 @@ thp(const int    table_id,
     return VFPHelpers<Scalar>::findTHP(bhp_array, thp_array, bhp_arg, /*find_largest*/ true);
 }
 
-template<class Scalar>
-Scalar VFPProdProperties<Scalar>::
-bhp(const int     table_id,
-     const Scalar aqua,
-     const Scalar liquid,
-     const Scalar vapour,
-     const Scalar thp_arg,
-     const Scalar alq,
-     const Scalar explicit_wfr,
-     const Scalar explicit_gfr,
-     const bool   use_expvfp) const
+template <class Scalar>
+Scalar
+VFPProdProperties<Scalar>::bhp(const int table_id,
+                               const Scalar aqua,
+                               const Scalar liquid,
+                               const Scalar vapour,
+                               const Scalar thp_arg,
+                               const Scalar alq,
+                               const Scalar explicit_wfr,
+                               const Scalar explicit_gfr,
+                               const bool use_expvfp) const
 {
     const VFPProdTable& table = detail::getTable(m_tables, table_id);
 
-    detail::VFPEvaluation retval = VFPHelpers<Scalar>::bhp(table, aqua, liquid, vapour,
-                                                           thp_arg, alq, explicit_wfr,
-                                                           explicit_gfr, use_expvfp);
+    detail::VFPEvaluation retval
+        = VFPHelpers<Scalar>::bhp(table, aqua, liquid, vapour, thp_arg, alq, explicit_wfr, explicit_gfr, use_expvfp);
     return retval.value;
 }
 
-template<class Scalar>
+template <class Scalar>
 const VFPProdTable&
 VFPProdProperties<Scalar>::getTable(const int table_id) const
 {
     return detail::getTable(m_tables, table_id);
 }
 
-template<class Scalar>
-bool VFPProdProperties<Scalar>::hasTable(const int table_id) const
+template <class Scalar>
+bool
+VFPProdProperties<Scalar>::hasTable(const int table_id) const
 {
     return detail::hasTable(m_tables, table_id);
 }
 
-template<class Scalar>
+template <class Scalar>
 std::vector<Scalar>
-VFPProdProperties<Scalar>::
-bhpwithflo(const std::vector<Scalar>& flos,
-           const int table_id,
-           const Scalar wfr,
-           const Scalar gfr,
-           const Scalar thp,
-           const Scalar alq,
-           const Scalar dp) const
+VFPProdProperties<Scalar>::bhpwithflo(const std::vector<Scalar>& flos,
+                                      const int table_id,
+                                      const Scalar wfr,
+                                      const Scalar gfr,
+                                      const Scalar thp,
+                                      const Scalar alq,
+                                      const Scalar dp) const
 {
     // Get the table
     const VFPProdTable& table = detail::getTable(m_tables, table_id);
-    const auto thp_i = VFPHelpers<Scalar>::findInterpData( thp, table.getTHPAxis()); // assume constant
-    const auto wfr_i = VFPHelpers<Scalar>::findInterpData( wfr, table.getWFRAxis());
-    const auto gfr_i = VFPHelpers<Scalar>::findInterpData( gfr, table.getGFRAxis());
-    const auto alq_i = VFPHelpers<Scalar>::findInterpData( alq, table.getALQAxis()); //assume constant
+    const auto thp_i = VFPHelpers<Scalar>::findInterpData(thp, table.getTHPAxis()); // assume constant
+    const auto wfr_i = VFPHelpers<Scalar>::findInterpData(wfr, table.getWFRAxis());
+    const auto gfr_i = VFPHelpers<Scalar>::findInterpData(gfr, table.getGFRAxis());
+    const auto alq_i = VFPHelpers<Scalar>::findInterpData(alq, table.getALQAxis()); // assume constant
 
     std::vector<Scalar> bhps(flos.size(), 0.);
     for (std::size_t i = 0; i < flos.size(); ++i) {
@@ -138,13 +138,10 @@ bhpwithflo(const std::vector<Scalar>& flos,
     return bhps;
 }
 
-template<class Scalar>
-Scalar VFPProdProperties<Scalar>::
-minimumBHP(const int table_id,
-           const Scalar thp,
-           const Scalar wfr,
-           const Scalar gfr,
-           const Scalar alq) const
+template <class Scalar>
+Scalar
+VFPProdProperties<Scalar>::minimumBHP(
+    const int table_id, const Scalar thp, const Scalar wfr, const Scalar gfr, const Scalar alq) const
 {
     // Get the table
     const VFPProdTable& table = detail::getTable(m_tables, table_id);
@@ -153,30 +150,31 @@ minimumBHP(const int table_id,
     return retval.second;
 }
 
-template<class Scalar>
-void VFPProdProperties<Scalar>::addTable(const VFPProdTable& new_table)
+template <class Scalar>
+void
+VFPProdProperties<Scalar>::addTable(const VFPProdTable& new_table)
 {
-    this->m_tables.emplace( new_table.getTableNum(), new_table );
+    this->m_tables.emplace(new_table.getTableNum(), new_table);
 }
 
-template<class Scalar>
+template <class Scalar>
 template <class EvalWell>
-EvalWell VFPProdProperties<Scalar>::
-bhp(const int       table_id,
-    const EvalWell& aqua,
-    const EvalWell& liquid,
-    const EvalWell& vapour,
-    const Scalar    thp,
-    const Scalar    alq,
-    const Scalar    explicit_wfr,
-    const Scalar    explicit_gfr,
-    const bool      use_expvfp) const
+EvalWell
+VFPProdProperties<Scalar>::bhp(const int table_id,
+                               const EvalWell& aqua,
+                               const EvalWell& liquid,
+                               const EvalWell& vapour,
+                               const Scalar thp,
+                               const Scalar alq,
+                               const Scalar explicit_wfr,
+                               const Scalar explicit_gfr,
+                               const bool use_expvfp) const
 {
-    //Get the table
+    // Get the table
     const VFPProdTable& table = detail::getTable(m_tables, table_id);
     EvalWell bhp = 0.0 * aqua;
 
-    //Find interpolation variables
+    // Find interpolation variables
     EvalWell flo = detail::getFlo(table, aqua, liquid, vapour);
     EvalWell wfr = detail::getWFR(table, aqua, liquid, vapour);
     EvalWell gfr = detail::getGFR(table, aqua, liquid, vapour);
@@ -185,52 +183,50 @@ bhp(const int       table_id,
         gfr = explicit_gfr;
     }
 
-    //First, find the values to interpolate between
-    //Value of FLO is negative in OPM for producers, but positive in VFP table
+    // First, find the values to interpolate between
+    // Value of FLO is negative in OPM for producers, but positive in VFP table
     auto flo_i = VFPHelpers<Scalar>::findInterpData(-flo.value(), table.getFloAxis());
-    auto thp_i = VFPHelpers<Scalar>::findInterpData( thp, table.getTHPAxis()); // assume constant
-    auto wfr_i = VFPHelpers<Scalar>::findInterpData( wfr.value(), table.getWFRAxis());
-    auto gfr_i = VFPHelpers<Scalar>::findInterpData( gfr.value(), table.getGFRAxis());
-    auto alq_i = VFPHelpers<Scalar>::findInterpData( alq, table.getALQAxis()); //assume constant
+    auto thp_i = VFPHelpers<Scalar>::findInterpData(thp, table.getTHPAxis()); // assume constant
+    auto wfr_i = VFPHelpers<Scalar>::findInterpData(wfr.value(), table.getWFRAxis());
+    auto gfr_i = VFPHelpers<Scalar>::findInterpData(gfr.value(), table.getGFRAxis());
+    auto alq_i = VFPHelpers<Scalar>::findInterpData(alq, table.getALQAxis()); // assume constant
 
-    detail::VFPEvaluation bhp_val = VFPHelpers<Scalar>::interpolate(table, flo_i, thp_i, wfr_i,
-                                                                    gfr_i, alq_i);
+    detail::VFPEvaluation bhp_val = VFPHelpers<Scalar>::interpolate(table, flo_i, thp_i, wfr_i, gfr_i, alq_i);
 
-    bhp = (bhp_val.dwfr * wfr) + (bhp_val.dgfr * gfr) - (std::max(Scalar{0.0}, bhp_val.dflo) * flo);
+    bhp = (bhp_val.dwfr * wfr) + (bhp_val.dgfr * gfr) - (std::max(Scalar {0.0}, bhp_val.dflo) * flo);
     bhp.setValue(bhp_val.value);
     return bhp;
 }
 
-#define INSTANTIATE(T,...)                        \
-    template __VA_ARGS__                          \
-    VFPProdProperties<T>::bhp(const int,          \
-                              const __VA_ARGS__&, \
-                              const __VA_ARGS__&, \
-                              const __VA_ARGS__&, \
-                              const T ,           \
-                              const T ,           \
-                              const T ,           \
-                              const T ,           \
-                              const bool) const;
+#define INSTANTIATE(T, ...)                                                                                            \
+    template __VA_ARGS__ VFPProdProperties<T>::bhp(const int,                                                          \
+                                                   const __VA_ARGS__&,                                                 \
+                                                   const __VA_ARGS__&,                                                 \
+                                                   const __VA_ARGS__&,                                                 \
+                                                   const T,                                                            \
+                                                   const T,                                                            \
+                                                   const T,                                                            \
+                                                   const T,                                                            \
+                                                   const bool) const;
 
-#define INSTANTIATE_TYPE(T)                        \
-    template class VFPProdProperties<T>;           \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 4u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 5u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 6u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 7u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 8u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 9u>)  \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 10u>) \
-    INSTANTIATE(T,DenseAd::Evaluation<T, -1, 11u>) \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 3, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 4, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 5, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 6, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 7, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 8, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 9, 0u>)   \
-    INSTANTIATE(T,DenseAd::Evaluation<T, 10, 0u>)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class VFPProdProperties<T>;                                                                               \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 4u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 5u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 6u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 7u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 8u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 9u>)                                                                     \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 10u>)                                                                    \
+    INSTANTIATE(T, DenseAd::Evaluation<T, -1, 11u>)                                                                    \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 3, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 4, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 5, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 6, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 7, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 8, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 9, 0u>)                                                                      \
+    INSTANTIATE(T, DenseAd::Evaluation<T, 10, 0u>)
 
 INSTANTIATE_TYPE(double)
 
@@ -238,4 +234,4 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-}
+} // namespace Opm

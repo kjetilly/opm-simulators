@@ -24,10 +24,10 @@
 #include <fmt/core.h>
 #include <opm/common/ErrorMacros.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/CuBlasHandle.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_constants.hpp>
-#include <vector>
+#include <opm/simulators/linalg/gpuistl/detail/safe_conversion.hpp>
 #include <string>
+#include <vector>
 
 
 namespace Opm::gpuistl
@@ -114,7 +114,7 @@ public:
      *
      * @param bvector the vector to copy from
      */
-    template<int BlockDimension>
+    template <int BlockDimension>
     explicit GpuVector(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector)
         : GpuVector(bvector.dim())
     {
@@ -200,7 +200,8 @@ public:
      * @note This assumes that the size of this vector is equal to the dim of the input vector.
      */
     template <int BlockDimension>
-    void copyFromHostAsync(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector, cudaStream_t stream = detail::DEFAULT_STREAM)
+    void copyFromHostAsync(const Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector,
+                           cudaStream_t stream = detail::DEFAULT_STREAM)
     {
         // TODO: [perf] vector.dim() can be replaced by bvector.N() * BlockDimension
         if (detail::to_size_t(m_numberOfElements) != bvector.dim()) {
@@ -247,7 +248,8 @@ public:
      * @note This assumes that the size of this vector is equal to the dim of the input vector.
      */
     template <int BlockDimension>
-    void copyToHostAsync(Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector, cudaStream_t stream = detail::DEFAULT_STREAM) const
+    void copyToHostAsync(Dune::BlockVector<Dune::FieldVector<T, BlockDimension>>& bvector,
+                         cudaStream_t stream = detail::DEFAULT_STREAM) const
     {
         // TODO: [perf] vector.dim() can be replaced by bvector.N() * BlockDimension
         if (detail::to_size_t(m_numberOfElements) != bvector.dim()) {
@@ -494,10 +496,10 @@ public:
     {
         std::vector<T> v = asStdVector();
         std::string res = "";
-        for (T element : v){
+        for (T element : v) {
             res += std::to_string(element) + " ";
         }
-        res += std::to_string(v[v.size()-1]);
+        res += std::to_string(v[v.size() - 1]);
         return res;
     }
 

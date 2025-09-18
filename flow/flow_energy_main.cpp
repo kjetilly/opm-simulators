@@ -18,7 +18,8 @@
 #include <flow/flow_energy.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowEnergyMainStandalone(argc, argv);
 }

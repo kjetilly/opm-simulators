@@ -27,24 +27,28 @@
  */
 #include "config.h"
 
+#include "problems/groundwaterproblem.hh"
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include "problems/groundwaterproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct GroundWaterProblem
-{ using InheritsFrom = std::tuple<GroundWaterBaseProblem, ImmiscibleSinglePhaseModel>; };
+    struct GroundWaterProblem {
+        using InheritsFrom = std::tuple<GroundWaterBaseProblem, ImmiscibleSinglePhaseModel>;
+    };
 
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::GroundWaterProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

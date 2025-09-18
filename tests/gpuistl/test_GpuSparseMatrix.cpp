@@ -109,8 +109,9 @@ BOOST_AUTO_TEST_CASE(TestConstruction1D)
 }
 
 // Template function to run the random sparsity matrix test with a given block size
-template<std::size_t dim>
-void runRandomSparsityMatrixTest()
+template <std::size_t dim>
+void
+runRandomSparsityMatrixTest()
 {
     std::srand(0);
     double nonzeroPercent = 0.2;

@@ -28,41 +28,45 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/ncp/ncpmodel.hh>
 #include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/ncp/ncpmodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/reservoirproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct ReservoirNcpVcfvProblem
-{ using InheritsFrom = std::tuple<ReservoirBaseProblem, NcpModel>; };
+    struct ReservoirNcpVcfvProblem {
+        using InheritsFrom = std::tuple<ReservoirBaseProblem, NcpModel>;
+    };
 
 } // end namespace TTag
 
 // Select the vertex centered finite volume method as spatial discretization
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::ReservoirNcpVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::ReservoirNcpVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
 // reduce the base epsilon for the finite difference method to 10^-11. for some reason
 // the simulator converges better with this. (TODO: use automatic differentiation?)
-template<class TypeTag>
-struct BaseEpsilon<TypeTag, TTag::ReservoirNcpVcfvProblem>
-{
+template <class TypeTag>
+struct BaseEpsilon<TypeTag, TTag::ReservoirNcpVcfvProblem> {
     using type = GetPropType<TypeTag, Scalar>;
     static constexpr type value = 1e-11;
 };
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::ReservoirNcpVcfvProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

@@ -30,7 +30,8 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 PropertyTree::PropertyTree()
     : tree_(std::make_unique<boost::property_tree::ptree>())
@@ -55,25 +56,29 @@ PropertyTree::PropertyTree(const boost::property_tree::ptree& tree)
 
 PropertyTree::~PropertyTree() = default;
 
-template<class T>
-T PropertyTree::get(const std::string& key) const
+template <class T>
+T
+PropertyTree::get(const std::string& key) const
 {
     return tree_->get<T>(key);
 }
 
-template<class T>
-T PropertyTree::get(const std::string& key, const T& defValue) const
+template <class T>
+T
+PropertyTree::get(const std::string& key, const T& defValue) const
 {
     return tree_->get<T>(key, defValue);
 }
 
-template<class T>
-void PropertyTree::put(const std::string& key, const T& value)
+template <class T>
+void
+PropertyTree::put(const std::string& key, const T& value)
 {
-    tree_->put(key,value);
+    tree_->put(key, value);
 }
 
-void PropertyTree::write_json(std::ostream &os, bool pretty) const
+void
+PropertyTree::write_json(std::ostream& os, bool pretty) const
 {
     boost::property_tree::write_json(os, *tree_, pretty);
 }
@@ -81,45 +86,45 @@ void PropertyTree::write_json(std::ostream &os, bool pretty) const
 PropertyTree
 PropertyTree::get_child(const std::string& key) const
 {
-  auto pt = tree_->get_child(key);
+    auto pt = tree_->get_child(key);
 
-  return PropertyTree(pt);
+    return PropertyTree(pt);
 }
 
 std::optional<PropertyTree>
 PropertyTree::get_child_optional(const std::string& key) const
 {
-  auto pt = tree_->get_child_optional(key);
-  if (!pt)
-      return std::nullopt;
+    auto pt = tree_->get_child_optional(key);
+    if (!pt)
+        return std::nullopt;
 
-  return PropertyTree(pt.get());
+    return PropertyTree(pt.get());
 }
 
 template <typename T>
 std::optional<std::vector<T>>
 PropertyTree::get_child_items_as_vector(const std::string& child) const
 {
-    auto items = std::optional<std::vector<T>>{};
+    auto items = std::optional<std::vector<T>> {};
 
     auto subTree = this->tree_->get_child_optional(child);
-    if (! subTree) {
+    if (!subTree) {
         return items;
     }
 
     items.emplace();
-    std::transform(subTree->begin(), subTree->end(),
-                   std::back_inserter(*items),
-                   [](const auto& childItem)
-                   { return childItem.second.template get_value<T>(); });
+    std::transform(subTree->begin(), subTree->end(), std::back_inserter(*items), [](const auto& childItem) {
+        return childItem.second.template get_value<T>();
+    });
 
     return items;
 }
 
-PropertyTree& PropertyTree::operator=(const PropertyTree& tree)
+PropertyTree&
+PropertyTree::operator=(const PropertyTree& tree)
 {
-  tree_ = std::make_unique<boost::property_tree::ptree>(*tree.tree_);
-  return *this;
+    tree_ = std::make_unique<boost::property_tree::ptree>(*tree.tree_);
+    return *this;
 }
 
 template void PropertyTree::put(const std::string& key, const std::string& value);
@@ -143,9 +148,7 @@ template int PropertyTree::get(const std::string& key, const int& defValue) cons
 template std::size_t PropertyTree::get(const std::string& key, const std::size_t& defValue) const;
 template bool PropertyTree::get(const std::string& key, const bool& defValue) const;
 
-template std::optional<std::vector<int>>
-PropertyTree::get_child_items_as_vector(const std::string& child) const;
-template std::optional<std::vector<double>>
-PropertyTree::get_child_items_as_vector(const std::string& child) const;
+template std::optional<std::vector<int>> PropertyTree::get_child_items_as_vector(const std::string& child) const;
+template std::optional<std::vector<double>> PropertyTree::get_child_items_as_vector(const std::string& child) const;
 
 } // namespace Opm

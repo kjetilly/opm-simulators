@@ -41,7 +41,7 @@ namespace Opm
 // must be broken, accomplished by forward-declaration here.
 template <class Operator, class Comm = Dune::Amg::SequentialInformation>
 class PreconditionerFactory;
-}
+} // namespace Opm
 
 namespace Dune
 {
@@ -52,19 +52,19 @@ template <class Operator>
 class FlexibleSolver;
 
 template <typename T, typename A, int i>
-std::ostream& operator<<(std::ostream& out,
-                         const BlockVector< FieldVector< T, i >, A >&  vector)
+std::ostream&
+operator<<(std::ostream& out, const BlockVector<FieldVector<T, i>, A>& vector)
 {
-   Dune::writeMatrixMarket(vector, out);
-   return out;
+    Dune::writeMatrixMarket(vector, out);
+    return out;
 }
 
-    template <typename T, typename A, int i>
-    std::istream& operator>>(std::istream& input,
-                             BlockVector< FieldVector< T, i >, A >&  vector)
+template <typename T, typename A, int i>
+std::istream&
+operator>>(std::istream& input, BlockVector<FieldVector<T, i>, A>& vector)
 {
-   Dune::readMatrixMarket(vector, input);
-   return input;
+    Dune::readMatrixMarket(vector, input);
+    return input;
 }
 
 /// A version of the two-level preconditioner that is:
@@ -82,19 +82,22 @@ public:
     using PrecFactory = Opm::PreconditionerFactory<OperatorType, Communication>;
     using AbstractOperatorType = Dune::AssembledLinearOperator<MatrixType, VectorType, VectorType>;
 
-    OwningTwoLevelPreconditioner(const OperatorType& linearoperator, const Opm::PropertyTree& prm,
+    OwningTwoLevelPreconditioner(const OperatorType& linearoperator,
+                                 const Opm::PropertyTree& prm,
                                  const std::function<VectorType()> weightsCalculator,
                                  std::size_t pressureIndex)
         : linear_operator_(linearoperator)
         , finesmoother_(PrecFactory::create(linearoperator,
-                                            prm.get_child_optional("finesmoother") ?
-                                            prm.get_child("finesmoother") : Opm::PropertyTree(),
-                                            std::function<VectorType()>(), pressureIndex))
+                                            prm.get_child_optional("finesmoother") ? prm.get_child("finesmoother")
+                                                                                   : Opm::PropertyTree(),
+                                            std::function<VectorType()>(),
+                                            pressureIndex))
         , comm_(nullptr)
         , weightsCalculator_(weightsCalculator)
         , weights_(weightsCalculator())
         , levelTransferPolicy_(dummy_comm_, weights_, prm, pressureIndex)
-        , coarseSolverPolicy_(prm.get_child_optional("coarsesolver") ? prm.get_child("coarsesolver") : Opm::PropertyTree())
+        , coarseSolverPolicy_(prm.get_child_optional("coarsesolver") ? prm.get_child("coarsesolver")
+                                                                     : Opm::PropertyTree())
         , twolevel_method_(linearoperator,
                            finesmoother_,
                            levelTransferPolicy_,
@@ -107,27 +110,30 @@ public:
             std::string filename = prm.get<std::string>("weights_filename", "impes_weights.txt");
             std::ofstream outfile(filename);
             if (!outfile) {
-                OPM_THROW(std::ofstream::failure,
-                          "Could not write weights to file " + filename + ".");
+                OPM_THROW(std::ofstream::failure, "Could not write weights to file " + filename + ".");
             }
             Dune::writeMatrixMarket(weights_, outfile);
         }
     }
 
-    OwningTwoLevelPreconditioner(const OperatorType& linearoperator, const Opm::PropertyTree& prm,
+    OwningTwoLevelPreconditioner(const OperatorType& linearoperator,
+                                 const Opm::PropertyTree& prm,
                                  const std::function<VectorType()> weightsCalculator,
-                                 std::size_t pressureIndex, const Communication& comm)
+                                 std::size_t pressureIndex,
+                                 const Communication& comm)
         : linear_operator_(linearoperator)
         , finesmoother_(PrecFactory::create(linearoperator,
-                                            prm.get_child_optional("finesmoother") ?
-                                            prm.get_child("finesmoother"): Opm::PropertyTree(),
+                                            prm.get_child_optional("finesmoother") ? prm.get_child("finesmoother")
+                                                                                   : Opm::PropertyTree(),
                                             std::function<VectorType()>(),
-                                            comm, pressureIndex))
+                                            comm,
+                                            pressureIndex))
         , comm_(&comm)
         , weightsCalculator_(weightsCalculator)
         , weights_(weightsCalculator())
         , levelTransferPolicy_(*comm_, weights_, prm, pressureIndex)
-        , coarseSolverPolicy_(prm.get_child_optional("coarsesolver") ? prm.get_child("coarsesolver") : Opm::PropertyTree())
+        , coarseSolverPolicy_(prm.get_child_optional("coarsesolver") ? prm.get_child("coarsesolver")
+                                                                     : Opm::PropertyTree())
         , twolevel_method_(linearoperator,
                            finesmoother_,
                            levelTransferPolicy_,
@@ -140,8 +146,7 @@ public:
             auto filename = prm.get<std::string>("weights_filename", "impes_weights.txt");
             std::ofstream outfile(filename);
             if (!outfile) {
-                OPM_THROW(std::ofstream::failure,
-                          "Could not write weights to file " + filename + ".");
+                OPM_THROW(std::ofstream::failure, "Could not write weights to file " + filename + ".");
             }
             Dune::writeMatrixMarket(weights_, outfile);
         }
@@ -173,17 +178,17 @@ public:
         return linear_operator_.category();
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return twolevel_method_.hasPerfectUpdate();
     }
 
 private:
     using CoarseOperator = typename LevelTransferPolicy::CoarseOperator;
-    using CoarseSolverPolicy = Dune::Amg::PressureSolverPolicy<CoarseOperator,
-                                                               FlexibleSolver<CoarseOperator>,
-                                                               LevelTransferPolicy>;
-    using TwoLevelMethod
-        = Dune::Amg::TwoLevelMethodCpr<OperatorType, CoarseSolverPolicy, Dune::PreconditionerWithUpdate<VectorType, VectorType>>;
+    using CoarseSolverPolicy
+        = Dune::Amg::PressureSolverPolicy<CoarseOperator, FlexibleSolver<CoarseOperator>, LevelTransferPolicy>;
+    using TwoLevelMethod = Dune::Amg::
+        TwoLevelMethodCpr<OperatorType, CoarseSolverPolicy, Dune::PreconditionerWithUpdate<VectorType, VectorType>>;
 
     // Handling parallel vs serial instantiation of preconditioner factory.
     template <class Comm>

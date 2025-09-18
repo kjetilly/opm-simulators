@@ -27,26 +27,41 @@
 #ifndef OPM_VTK_DISCRETE_FRACTURE_PARAMS_HPP
 #define OPM_VTK_DISCRETE_FRACTURE_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteFractureSaturations { static constexpr bool value = true; };
-struct VtkWriteFractureMobilities { static constexpr bool value = false; };
-struct VtkWriteFractureRelativePermeabilities { static constexpr bool value = true; };
-struct VtkWriteFracturePorosity { static constexpr bool value = true; };
-struct VtkWriteFractureIntrinsicPermeabilities { static constexpr bool value = false; };
-struct VtkWriteFractureFilterVelocities { static constexpr bool value = false; };
-struct VtkWriteFractureVolumeFraction { static constexpr bool value = true; };
+struct VtkWriteFractureSaturations {
+    static constexpr bool value = true;
+};
+struct VtkWriteFractureMobilities {
+    static constexpr bool value = false;
+};
+struct VtkWriteFractureRelativePermeabilities {
+    static constexpr bool value = true;
+};
+struct VtkWriteFracturePorosity {
+    static constexpr bool value = true;
+};
+struct VtkWriteFractureIntrinsicPermeabilities {
+    static constexpr bool value = false;
+};
+struct VtkWriteFractureFilterVelocities {
+    static constexpr bool value = false;
+};
+struct VtkWriteFractureVolumeFraction {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkDiscreteFractureModule.
  */
-struct VtkDiscreteFractureParams
-{
+struct VtkDiscreteFractureParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

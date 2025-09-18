@@ -30,7 +30,8 @@
 
 #include <chrono>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Common
@@ -44,8 +45,7 @@ namespace Opm {
  */
 class Timer
 {
-    struct TimeData
-    {
+    struct TimeData {
         std::chrono::high_resolution_clock::time_point realtimeData;
         std::clock_t cputimeData;
 
@@ -90,7 +90,9 @@ public:
      * Its main purpose is to make the API of the class a superset of Dune::Timer
      */
     double elapsed() const
-    { return realTimeElapsed(); }
+    {
+        return realTimeElapsed();
+    }
 
     /*!
      * \brief Return the CPU time [s] used by all threads of the local process for the

@@ -38,7 +38,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -46,7 +47,7 @@ namespace Opm {
  * \brief VTK output module for the temperature in which assume
  *        thermal equilibrium
  */
-template<class TypeTag>
+template <class TypeTag>
 class VtkTemperatureModule : public BaseOutputModule<TypeTag>
 {
     using ParentType = BaseOutputModule<TypeTag>;
@@ -121,14 +122,13 @@ public:
         }
 
         if (params_.temperatureOutput_) {
-            this->commitScalarBuffer_(baseWriter, "temperature", temperature_,
-                                      ParentType::BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "temperature", temperature_, ParentType::BufferType::Dof);
         }
     }
 
 private:
-    VtkTemperatureParams params_{};
-    ScalarBuffer temperature_{};
+    VtkTemperatureParams params_ {};
+    ScalarBuffer temperature_ {};
 };
 
 } // namespace Opm

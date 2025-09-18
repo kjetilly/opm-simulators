@@ -27,21 +27,28 @@
 #ifndef OPM_VTK_PRIMARY_VARS_PARAMS_HPP
 #define OPM_VTK_PRIMARY_VARS_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct VtkWritePrimaryVars { static constexpr bool value = false; };
-struct VtkWriteProcessRank { static constexpr bool value = false; };
-struct VtkWriteDofIndex { static constexpr bool value = false; };
+struct VtkWritePrimaryVars {
+    static constexpr bool value = false;
+};
+struct VtkWriteProcessRank {
+    static constexpr bool value = false;
+};
+struct VtkWriteDofIndex {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkPrimaryPhaseModule.
  */
-struct VtkPrimaryVarsParams
-{
+struct VtkPrimaryVarsParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

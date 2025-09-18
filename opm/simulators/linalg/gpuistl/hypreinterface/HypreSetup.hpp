@@ -51,9 +51,8 @@ namespace Opm::gpuistl::HypreInterface
 
 // GPU-specific helper functions
 template <typename T>
-SparsityPattern setupSparsityPatternFromGpuMatrix(const GpuSparseMatrix<T>& gpu_matrix,
-                                                  const ParallelInfo& par_info,
-                                                  bool owner_first);
+SparsityPattern
+setupSparsityPatternFromGpuMatrix(const GpuSparseMatrix<T>& gpu_matrix, const ParallelInfo& par_info, bool owner_first);
 
 template <typename T>
 std::vector<HYPRE_Int> computeRowIndexesWithMappingGpu(const GpuSparseMatrix<T>& gpu_matrix,
@@ -371,12 +370,13 @@ setupHypreParallelInfoParallel(const CommType& comm, const MatrixType& matrix)
 
     // Handle edge case: ensure index set covers all matrix rows
     if (!(matrix.N() == comm.indexSet().size())) {
-          // in OPM this will likely not be trigged
-          // ensure no holes in index sett
-          const_cast<CommType&>(comm).buildGlobalLookup(matrix.N()); // need?
-          Dune::Amg::MatrixGraph<MatrixType> graph(const_cast<MatrixType&>(matrix)); // do not know why not const ref is sufficient
-          Dune::fillIndexSetHoles(graph, const_cast<CommType&>(comm));
-          assert(matrix.N() == comm.indexSet().size());
+        // in OPM this will likely not be trigged
+        // ensure no holes in index sett
+        const_cast<CommType&>(comm).buildGlobalLookup(matrix.N()); // need?
+        Dune::Amg::MatrixGraph<MatrixType> graph(
+            const_cast<MatrixType&>(matrix)); // do not know why not const ref is sufficient
+        Dune::fillIndexSetHoles(graph, const_cast<CommType&>(comm));
+        assert(matrix.N() == comm.indexSet().size());
     }
 
     // STEP 1: Ownership Detection
@@ -397,8 +397,8 @@ setupHypreParallelInfoParallel(const CommType& comm, const MatrixType& matrix)
     // Create compact [0..N_owned-1] local HYPRE indexing for owned DOFs
     // Simultaneously detect if owned DOFs appear before all ghost DOFs
     bool owner_first = true;
-    bool visited_ghost = false;  // Have we seen any ghost DOF yet?
-    std::size_t count = 0;      // Counter for owned DOFs
+    bool visited_ghost = false; // Have we seen any ghost DOF yet?
+    std::size_t count = 0; // Counter for owned DOFs
 
     for (std::size_t i = 0; i < info.local_dune_to_local_hypre.size(); ++i) {
         if (info.local_dune_to_local_hypre[i] < 0) {
@@ -426,9 +426,8 @@ setupHypreParallelInfoParallel(const CommType& comm, const MatrixType& matrix)
     collective_comm.allgather(&info.N_owned, 1, dof_counts_per_process.data());
 
     // Calculate this process's global offset (sum of DOFs in processes with lower rank)
-    info.dof_offset = std::accumulate(dof_counts_per_process.begin(),
-                                      dof_counts_per_process.begin() + collective_comm.rank(),
-                                      0);
+    info.dof_offset
+        = std::accumulate(dof_counts_per_process.begin(), dof_counts_per_process.begin() + collective_comm.rank(), 0);
 
     // STEP 4: Create Global Indices for Owned DOFs
     // Convert local HYPRE indices to global HYPRE indices by adding offset
@@ -549,9 +548,7 @@ setupSparsityPatternFromCpuMatrix(const MatrixType& matrix, const ParallelInfo& 
  */
 template <typename T>
 SparsityPattern
-setupSparsityPatternFromGpuMatrix(const GpuSparseMatrix<T>& gpu_matrix,
-                                  const ParallelInfo& par_info,
-                                  bool owner_first)
+setupSparsityPatternFromGpuMatrix(const GpuSparseMatrix<T>& gpu_matrix, const ParallelInfo& par_info, bool owner_first)
 {
     SparsityPattern pattern;
 
@@ -661,7 +658,8 @@ computeRowIndexes(const MatrixType& matrix,
  * @brief Compute row indexes for CPU matrix with ownership mapping
  *
  * Creates row_indexes that point directly into the FULL matrix data, enabling using the original
-  * matrix data without any data copying. This is necessary for some cases where ghost rows can come before all owned rows.
+ * matrix data without any data copying. This is necessary for some cases where ghost rows can come before all owned
+ * rows.
  *
  * Example with local_dune_to_local_hypre = [-1, 0, -1, 1]:
  *   Original matrix data (with gaps for ghost rows):

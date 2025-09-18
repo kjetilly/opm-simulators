@@ -18,7 +18,8 @@
 #include <flow/flow_gaswater_brine.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowGasWaterBrineMainStandalone(argc, argv);
 }

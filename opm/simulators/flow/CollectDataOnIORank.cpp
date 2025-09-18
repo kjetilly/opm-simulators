@@ -32,19 +32,16 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif // HAVE_DUNE_FEM
 
-namespace Opm {
+namespace Opm
+{
 
 template class CollectDataOnIORank<Dune::CpGrid,
                                    Dune::CpGrid,
                                    Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>;
 
 #if HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
-template class CollectDataOnIORank<Dune::CpGrid,
-                                   Dune::CpGrid,
-                                   GV>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
+template class CollectDataOnIORank<Dune::CpGrid, Dune::CpGrid, GV>;
 #endif // HAVE_DUNE_FEM
 
 } // end namespace Opm

@@ -20,11 +20,13 @@
 #ifndef OPM_PARALLELCOMMUNICATION_HEADER_INCLUDED
 #define OPM_PARALLELCOMMUNICATION_HEADER_INCLUDED
 
-#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
+#include <dune/common/version.hh>
 
-namespace Opm {
-namespace Parallel {
+namespace Opm
+{
+namespace Parallel
+{
 
     using MPIComm = typename Dune::MPIHelper::MPICommunicator;
     using Communication = Dune::Communication<MPIComm>;

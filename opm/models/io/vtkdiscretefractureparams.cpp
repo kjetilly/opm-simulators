@@ -26,29 +26,30 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkDiscreteFractureParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteFractureSaturations>
-        ("Include the phase saturations in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFractureMobilities>
-        ("Include the phase mobilities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFractureRelativePermeabilities>
-        ("Include the phase relative permeabilities in the "
-         "VTK output files");
-    Parameters::Register<Parameters::VtkWriteFracturePorosity>
-        ("Include the porosity in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFractureIntrinsicPermeabilities>
-        ("Include the intrinsic permeability in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFractureFilterVelocities>
-        ("Include in the filter velocities of the phases in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFractureVolumeFraction>
-        ("Add the fraction of the total volume which is "
-         "occupied by fractures in the VTK output");
+
+void
+VtkDiscreteFractureParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteFractureSaturations>(
+        "Include the phase saturations in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFractureMobilities>(
+        "Include the phase mobilities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFractureRelativePermeabilities>(
+        "Include the phase relative permeabilities in the "
+        "VTK output files");
+    Parameters::Register<Parameters::VtkWriteFracturePorosity>("Include the porosity in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFractureIntrinsicPermeabilities>(
+        "Include the intrinsic permeability in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFractureFilterVelocities>(
+        "Include in the filter velocities of the phases in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFractureVolumeFraction>("Add the fraction of the total volume which is "
+                                                                     "occupied by fractures in the VTK output");
 }
 
-void VtkDiscreteFractureParams::read()
+void
+VtkDiscreteFractureParams::read()
 {
     saturationOutput_ = Parameters::Get<Parameters::VtkWriteFractureSaturations>();
     mobilityOutput_ = Parameters::Get<Parameters::VtkWriteFractureMobilities>();

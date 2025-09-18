@@ -26,84 +26,93 @@
     This file organizes a growing amount of different mixed precision options for the preconditioners.
 */
 
-namespace Opm::gpuistl {
-    // Mixed precision schemes used for storing the matrix in GPU memory
-    enum class MatrixStorageMPScheme {
-        DOUBLE_DIAG_DOUBLE_OFFDIAG = 0, // full precision should be default
-        FLOAT_DIAG_FLOAT_OFFDIAG = 1,
-        DOUBLE_DIAG_FLOAT_OFFDIAG = 2
-    };
+namespace Opm::gpuistl
+{
+// Mixed precision schemes used for storing the matrix in GPU memory
+enum class MatrixStorageMPScheme {
+    DOUBLE_DIAG_DOUBLE_OFFDIAG = 0, // full precision should be default
+    FLOAT_DIAG_FLOAT_OFFDIAG = 1,
+    DOUBLE_DIAG_FLOAT_OFFDIAG = 2
+};
 
-    namespace detail {
-        bool isValidMatrixStorageMPScheme(int scheme);
-    }
-
-    inline MatrixStorageMPScheme makeMatrixStorageMPScheme(int scheme) {
-        if (!detail::isValidMatrixStorageMPScheme(scheme)) {
-            OPM_THROW(std::invalid_argument,
-                      fmt::format("Invalid matrix storage mixed precision scheme chosen: {}.\n"
-                                  "Valid Schemes:\n"
-                                  "\t0: DOUBLE_DIAG_DOUBLE_OFFDIAG\n"
-                                  "\t1: FLOAT_DIAG_FLOAT_OFFDIAG\n"
-                                  "\t2: DOUBLE_DIAG_FLOAT_OFFDIAG",
-                                  scheme));
-        }
-        return static_cast<MatrixStorageMPScheme>(scheme);
-    }
-
-    namespace detail {
-
-        __host__ __device__ constexpr bool storeDiagonalAsFloat(MatrixStorageMPScheme scheme) {
-            switch (scheme) {
-                case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
-                    return false;
-                case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
-                    return false;
-                default:
-                    return false;
-            }
-        }
-
-        __host__ __device__ constexpr bool storeOffDiagonalAsFloat(MatrixStorageMPScheme scheme) {
-            switch (scheme) {
-                case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
-                    return false;
-                case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        // returns true if we use anything else that the the default double precision for everything
-        __host__ __device__ constexpr bool usingMixedPrecision(MatrixStorageMPScheme scheme) {
-            switch (scheme) {
-                case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
-                    return false;
-                case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        inline bool isValidMatrixStorageMPScheme(int scheme) {
-            switch (static_cast<MatrixStorageMPScheme>(scheme)) {
-                case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
-                case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
-                case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-    }
+namespace detail
+{
+    bool isValidMatrixStorageMPScheme(int scheme);
 }
+
+inline MatrixStorageMPScheme
+makeMatrixStorageMPScheme(int scheme)
+{
+    if (!detail::isValidMatrixStorageMPScheme(scheme)) {
+        OPM_THROW(std::invalid_argument,
+                  fmt::format("Invalid matrix storage mixed precision scheme chosen: {}.\n"
+                              "Valid Schemes:\n"
+                              "\t0: DOUBLE_DIAG_DOUBLE_OFFDIAG\n"
+                              "\t1: FLOAT_DIAG_FLOAT_OFFDIAG\n"
+                              "\t2: DOUBLE_DIAG_FLOAT_OFFDIAG",
+                              scheme));
+    }
+    return static_cast<MatrixStorageMPScheme>(scheme);
+}
+
+namespace detail
+{
+
+    __host__ __device__ constexpr bool storeDiagonalAsFloat(MatrixStorageMPScheme scheme)
+    {
+        switch (scheme) {
+        case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
+            return false;
+        case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
+            return true;
+        case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
+            return false;
+        default:
+            return false;
+        }
+    }
+
+    __host__ __device__ constexpr bool storeOffDiagonalAsFloat(MatrixStorageMPScheme scheme)
+    {
+        switch (scheme) {
+        case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
+            return false;
+        case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
+            return true;
+        case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    // returns true if we use anything else that the the default double precision for everything
+    __host__ __device__ constexpr bool usingMixedPrecision(MatrixStorageMPScheme scheme)
+    {
+        switch (scheme) {
+        case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
+            return false;
+        case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
+            return true;
+        case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    inline bool isValidMatrixStorageMPScheme(int scheme)
+    {
+        switch (static_cast<MatrixStorageMPScheme>(scheme)) {
+        case MatrixStorageMPScheme::DOUBLE_DIAG_DOUBLE_OFFDIAG:
+        case MatrixStorageMPScheme::FLOAT_DIAG_FLOAT_OFFDIAG:
+        case MatrixStorageMPScheme::DOUBLE_DIAG_FLOAT_OFFDIAG:
+            return true;
+        default:
+            return false;
+        }
+    }
+} // namespace detail
+} // namespace Opm::gpuistl
 
 #endif // OPM_GPUISTL_KERNEL_ENUMS_HPP

@@ -25,78 +25,78 @@
 
 #include <fmt/format.h>
 
-namespace {
-    void validateBRINE(const Opm::DeckKeyword& keyword,
-                       std::vector<Opm::KeywordValidation::ValidationError>& errors)
-    {
-        if (keyword.empty()) {
-            return;
-        }
-
-        errors.emplace_back(Opm::KeywordValidation::ValidationError {
-            false,
-            keyword.location(),
-            0,  // not relevant
-            0,  // not relevant
-            std::nullopt,
-            std::string{"The BRINE keyword does not accept any salt name arguments"}}
-        );
+namespace
+{
+void
+validateBRINE(const Opm::DeckKeyword& keyword, std::vector<Opm::KeywordValidation::ValidationError>& errors)
+{
+    if (keyword.empty()) {
+        return;
     }
 
-    // Special case since we support the parsing of the items, which can be UDAs.
-    void validateGSATPROD(const Opm::DeckKeyword& keyword,
-                          std::vector<Opm::KeywordValidation::ValidationError>& errors)
-    {
-        if (keyword.empty()) {
-            return;
-        }
-
-        using Kw = Opm::ParserKeywords::GSATPROD;
-
-        const auto& record = keyword.getRecord(0);
-
-        const auto& resv = record.getItem<Kw::RES_FLUID_VOL_PRODUCTION_RATE>().get<Opm::UDAValue>(0);
-        if (resv.is_defined()) {
-            const auto& resv_val = resv.is<double>() ? fmt::format("{}", resv.get<double>()) : resv.get<std::string>();
-            errors.emplace_back(Opm::KeywordValidation::ValidationError {
-                true,
-                keyword.location(),
-                0,  // not relevant
-                5,
-                resv_val,
-                std::string{"Reservoir volume rate is not supported and should be defaulted (1*)"}}
-            );
-        }
-
-        const auto& gaslift = record.getItem<Kw::LIFT_GAS_SUPPLY_RATE>().get<Opm::UDAValue>(0);
-        if (gaslift.is_defined()) {
-            const auto& gaslift_val = gaslift.is<double>() ? fmt::format("{}", gaslift.get<double>()) : gaslift.get<std::string>();
-            errors.emplace_back(Opm::KeywordValidation::ValidationError {
-                true,
-                keyword.location(),
-                0,  // not relevant
-                6,
-                gaslift_val,
-                std::string{"Gaslift rate is not supported and should be defaulted (1*)"}}
-            );
-        }
-
-        const auto& calrate = record.getItem<Kw::MEAN_CALORIFIC_VALUE>().get<Opm::UDAValue>(0);
-        if (calrate.is_defined()) {
-            const auto& calrate_val = calrate.is<double>() ? fmt::format("{}", calrate.get<double>()) : calrate.get<std::string>();
-            errors.emplace_back(Opm::KeywordValidation::ValidationError {
-                true,
-                keyword.location(),
-                0,  // not relevant
-                7,
-                calrate_val,
-                std::string{"Calorific rate is not used and should be defaulted (1*)"}}
-            );
-        }
-    }
+    errors.emplace_back(Opm::KeywordValidation::ValidationError {
+        false,
+        keyword.location(),
+        0, // not relevant
+        0, // not relevant
+        std::nullopt,
+        std::string {"The BRINE keyword does not accept any salt name arguments"}});
 }
 
-namespace Opm::KeywordValidation {
+// Special case since we support the parsing of the items, which can be UDAs.
+void
+validateGSATPROD(const Opm::DeckKeyword& keyword, std::vector<Opm::KeywordValidation::ValidationError>& errors)
+{
+    if (keyword.empty()) {
+        return;
+    }
+
+    using Kw = Opm::ParserKeywords::GSATPROD;
+
+    const auto& record = keyword.getRecord(0);
+
+    const auto& resv = record.getItem<Kw::RES_FLUID_VOL_PRODUCTION_RATE>().get<Opm::UDAValue>(0);
+    if (resv.is_defined()) {
+        const auto& resv_val = resv.is<double>() ? fmt::format("{}", resv.get<double>()) : resv.get<std::string>();
+        errors.emplace_back(Opm::KeywordValidation::ValidationError {
+            true,
+            keyword.location(),
+            0, // not relevant
+            5,
+            resv_val,
+            std::string {"Reservoir volume rate is not supported and should be defaulted (1*)"}});
+    }
+
+    const auto& gaslift = record.getItem<Kw::LIFT_GAS_SUPPLY_RATE>().get<Opm::UDAValue>(0);
+    if (gaslift.is_defined()) {
+        const auto& gaslift_val
+            = gaslift.is<double>() ? fmt::format("{}", gaslift.get<double>()) : gaslift.get<std::string>();
+        errors.emplace_back(Opm::KeywordValidation::ValidationError {
+            true,
+            keyword.location(),
+            0, // not relevant
+            6,
+            gaslift_val,
+            std::string {"Gaslift rate is not supported and should be defaulted (1*)"}});
+    }
+
+    const auto& calrate = record.getItem<Kw::MEAN_CALORIFIC_VALUE>().get<Opm::UDAValue>(0);
+    if (calrate.is_defined()) {
+        const auto& calrate_val
+            = calrate.is<double>() ? fmt::format("{}", calrate.get<double>()) : calrate.get<std::string>();
+        errors.emplace_back(Opm::KeywordValidation::ValidationError {
+            true,
+            keyword.location(),
+            0, // not relevant
+            7,
+            calrate_val,
+            std::string {"Calorific rate is not used and should be defaulted (1*)"}});
+    }
+}
+} // namespace
+
+namespace Opm::KeywordValidation
+{
 
 std::unordered_map<std::string, ValidationFunction>
 specialValidation()
@@ -104,4 +104,4 @@ specialValidation()
     return {{"BRINE", validateBRINE}, {"GSATPROD", validateGSATPROD}};
 }
 
-}
+} // namespace Opm::KeywordValidation

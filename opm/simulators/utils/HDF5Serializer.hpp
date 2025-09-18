@@ -31,17 +31,18 @@
 #include <limits>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Class for (de-)serializing using HDF5.
-class HDF5Serializer : public Serializer<Serialization::MemPacker> {
+class HDF5Serializer : public Serializer<Serialization::MemPacker>
+{
 public:
-    HDF5Serializer(const std::string& fileName,
-                   HDF5File::OpenMode mode,
-                   Parallel::Communication comm)
+    HDF5Serializer(const std::string& fileName, HDF5File::OpenMode mode, Parallel::Communication comm)
         : Serializer<Serialization::MemPacker>(m_packer_priv)
         , m_h5file(fileName, mode, comm)
-    {}
+    {
+    }
 
     //! \brief Serialize and write data to restart file.
     //! \tparam T Type of class to write
@@ -49,7 +50,7 @@ public:
     //! \param group Group to write dataset to
     //! \param dset Data set to write
     //! \param mode Mode for dataset
-    template<class T>
+    template <class T>
     void write(T& data,
                const std::string& group,
                const std::string& dset,
@@ -85,7 +86,7 @@ public:
     //! \param group Group to read dataset from
     //! \param dset Data set to read
     //! \param mode Mode for dataset
-    template<class T>
+    template <class T>
     void read(T& data,
               const std::string& group,
               const std::string& dset,
@@ -102,10 +103,10 @@ public:
     std::vector<int> reportSteps() const;
 
 private:
-    const Serialization::MemPacker m_packer_priv{}; //!< Packer instance
+    const Serialization::MemPacker m_packer_priv {}; //!< Packer instance
     HDF5File m_h5file; //!< HDF5 backend for the serializer
 };
 
-}
+} // namespace Opm
 
 #endif // HDF5_SERIALIZER_HPP

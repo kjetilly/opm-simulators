@@ -34,9 +34,10 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class BlackoilWellModelNlddGeneric
 {
 public:
@@ -44,15 +45,20 @@ public:
     void setPrimaryVarsDomain(const int domainIdx, const std::vector<Scalar>& vars);
 
     const SparseTable<int>& well_local_cells() const
-    { return well_local_cells_; }
+    {
+        return well_local_cells_;
+    }
 
     const std::map<std::string, int>& well_domain() const
-    { return well_domain_; }
+    {
+        return well_domain_;
+    }
 
 protected:
     BlackoilWellModelNlddGeneric(BlackoilWellModelGeneric<Scalar, IndexTraits>& model)
         : genWellModel_(model)
-    {}
+    {
+    }
 
     void calcDomains(const std::vector<const SubDomainIndices*>& domains);
 
@@ -66,17 +72,17 @@ private:
     BlackoilWellModelGeneric<Scalar, IndexTraits>& genWellModel_;
 
     // Keep track of the domain of each well
-    std::map<std::string, int> well_domain_{};
+    std::map<std::string, int> well_domain_ {};
 
     // Store the local index of the wells perforated cells in the domain
-    SparseTable<int> well_local_cells_{};
+    SparseTable<int> well_local_cells_ {};
 };
 
 /// Class for handling the blackoil well model in a NLDD solver.
-template<typename TypeTag>
-class BlackoilWellModelNldd :
-    public BlackoilWellModelNlddGeneric<GetPropType<TypeTag, Properties::Scalar>,
-                                        typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
+template <typename TypeTag>
+class BlackoilWellModelNldd
+    : public BlackoilWellModelNlddGeneric<GetPropType<TypeTag, Properties::Scalar>,
+                                          typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
 {
 public:
     // ---------      Types      ---------
@@ -93,7 +99,8 @@ public:
     BlackoilWellModelNldd(BlackoilWellModel<TypeTag>& model)
         : BlackoilWellModelNlddGeneric<Scalar, IndexTraits>(model)
         , wellModel_(model)
-    {}
+    {
+    }
 
     void addWellPressureEquations(PressureMatrix& jacobian,
                                   const BVector& weights,
@@ -102,12 +109,9 @@ public:
 
     // prototype for assemble function for ASPIN solveLocal()
     // will try to merge back to assemble() when done prototyping
-    void assemble(const int iterationIdx,
-                  const double dt,
-                  const Domain& domain);
+    void assemble(const int iterationIdx, const double dt, const Domain& domain);
 
-    void updateWellControls(DeferredLogger& deferred_logger,
-                            const Domain& domain);
+    void updateWellControls(DeferredLogger& deferred_logger, const Domain& domain);
 
     void setupDomains(const std::vector<Domain>& domains);
 
@@ -118,34 +122,30 @@ public:
 
     // using the solution x to recover the solution xw for wells and applying
     // xw to update Well State
-    void recoverWellSolutionAndUpdateWellState(const BVector& x,
-                                               const int domainIdx);
+    void recoverWellSolutionAndUpdateWellState(const BVector& x, const int domainIdx);
 
     // Get number of wells on this rank
-    int numLocalWells() const 
+    int numLocalWells() const
     {
-        return wellModel_.numLocalWells(); 
+        return wellModel_.numLocalWells();
     }
 
     // Get number of wells on this rank
-    int numLocalWellsEnd() const 
+    int numLocalWellsEnd() const
     {
-        return wellModel_.numLocalWellsEnd(); 
+        return wellModel_.numLocalWellsEnd();
     }
 
 private:
     BlackoilWellModel<TypeTag>& wellModel_;
 
-    void assembleWellEq(const double dt,
-                        const Domain& domain,
-                        DeferredLogger& deferred_logger);
+    void assembleWellEq(const double dt, const Domain& domain, DeferredLogger& deferred_logger);
 
     // These members are used to avoid reallocation in specific functions
     // instead of using local variables.
     // Their state is not relevant between function calls, so they can
     // (and must) be mutable, as the functions using them are const.
     mutable BVector x_local_;
-
 };
 
 } // namespace Opm

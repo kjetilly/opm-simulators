@@ -18,7 +18,8 @@
 #include <flow/flow_extbo.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowExtboMainStandalone(argc, argv);
 }

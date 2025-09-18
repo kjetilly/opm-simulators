@@ -38,7 +38,8 @@
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -49,7 +50,7 @@ namespace Opm {
  * L, liquid fraction in the two-phase system
  */
 template <class TypeTag>
-class VtkPTFlashModule: public BaseOutputModule<TypeTag>
+class VtkPTFlashModule : public BaseOutputModule<TypeTag>
 {
     using ParentType = BaseOutputModule<TypeTag>;
 
@@ -141,14 +142,14 @@ public:
             this->commitComponentBuffer_(baseWriter, "K^%s", K_, BufferType::Dof);
         }
         if (params_.LOutput_) {
-            this->commitScalarBuffer_(baseWriter, "L", L_,  BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "L", L_, BufferType::Dof);
         }
     }
 
 private:
-    VtkPtFlashParams params_{};
-    ComponentBuffer K_{};
-    ScalarBuffer L_{};
+    VtkPtFlashParams params_ {};
+    ComponentBuffer K_ {};
+    ScalarBuffer L_ {};
 };
 
 } // namespace Opm

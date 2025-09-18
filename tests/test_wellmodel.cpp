@@ -23,8 +23,8 @@
 
 #define BOOST_TEST_MODULE WellModelTest
 
-#include <opm/common/utility/platform_dependent/disable_warnings.h>
 #include <boost/test/unit_test.hpp>
+#include <opm/common/utility/platform_dependent/disable_warnings.h>
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
@@ -40,19 +40,19 @@
 
 #include <opm/grid/GridManager.hpp>
 
-#include <opm/input/eclipse/Units/Units.hpp>
 #include <opm/common/utility/TimeService.hpp>
+#include <opm/input/eclipse/Units/Units.hpp>
 
-#include <opm/material/fluidmatrixinteractions/EclMaterialLawManager.hpp>
 #include <opm/grid/GridHelpers.hpp>
-#include <opm/simulators/flow/FlowMain.hpp>
+#include <opm/material/fluidmatrixinteractions/EclMaterialLawManager.hpp>
 #include <opm/simulators/flow/BlackoilModel.hpp>
+#include <opm/simulators/flow/FlowMain.hpp>
 #include <opm/simulators/flow/FlowProblemBlackoil.hpp>
 
 #include <opm/models/utils/start.hh>
 
-#include <opm/simulators/wells/StandardWell.hpp>
 #include <opm/simulators/wells/BlackoilWellModel.hpp>
+#include <opm/simulators/wells/StandardWell.hpp>
 
 #include <opm/input/eclipse/Deck/Deck.hpp>
 #include <opm/input/eclipse/Parser/Parser.hpp>
@@ -75,18 +75,17 @@ struct SetupTest {
 
     SetupTest()
     {
-        const auto deck = Opm::Parser{}.parseFile("TESTWELLMODEL.DATA");
+        const auto deck = Opm::Parser {}.parseFile("TESTWELLMODEL.DATA");
         this->ecl_state = std::make_unique<const Opm::EclipseState>(deck);
 
         const Opm::TableManager table(deck);
         const Opm::Runspec runspec(deck);
 
-        this->schedule = std::make_unique<const Opm::Schedule>
-            (deck, *this->ecl_state, std::make_shared<Opm::Python>());
+        this->schedule = std::make_unique<const Opm::Schedule>(deck, *this->ecl_state, std::make_shared<Opm::Python>());
 
-        this->summaryState = std::make_unique<Opm::SummaryState>
-            (Opm::TimeService::from_time_t(schedule->getStartTime()),
-             this->ecl_state->runspec().udqParams().undefinedValue());
+        this->summaryState
+            = std::make_unique<Opm::SummaryState>(Opm::TimeService::from_time_t(schedule->getStartTime()),
+                                                  this->ecl_state->runspec().udqParams().undefinedValue());
 
         current_timestep = 0;
     };
@@ -103,8 +102,8 @@ struct GlobalFixture {
     GlobalFixture()
     {
         int argcDummy = 1;
-        const char *tmp[] = {"test_wellmodel"};
-        char **argvDummy = const_cast<char**>(tmp);
+        const char* tmp[] = {"test_wellmodel"};
+        char** argvDummy = const_cast<char**>(tmp);
 
         // MPI setup.
 #if HAVE_DUNE_FEM
@@ -113,44 +112,46 @@ struct GlobalFixture {
         Dune::MPIHelper::instance(argcDummy, argvDummy);
 #endif
 
-        Opm::FlowMain<Opm::Properties::TTag::FlowProblem>::setupParameters_(argcDummy, argvDummy, Dune::MPIHelper::getCommunication());
+        Opm::FlowMain<Opm::Properties::TTag::FlowProblem>::setupParameters_(
+            argcDummy, argvDummy, Dune::MPIHelper::getCommunication());
     }
 };
 
 BOOST_GLOBAL_FIXTURE(GlobalFixture);
 
-BOOST_AUTO_TEST_CASE(TestStandardWellInput) {
+BOOST_AUTO_TEST_CASE(TestStandardWellInput)
+{
     const SetupTest setup_test;
     const auto& wells_ecl = setup_test.schedule->getWells(setup_test.current_timestep);
-    BOOST_CHECK_EQUAL( wells_ecl.size(), 2);
+    BOOST_CHECK_EQUAL(wells_ecl.size(), 2);
     const Opm::Well& well = wells_ecl[1];
     const Opm::BlackoilModelParameters<double> param;
 
     // For the conversion between the surface volume rate and resrevoir voidage rate
     typedef Opm::BlackOilFluidSystem<double> FluidSystem;
-    using RateConverterType = Opm::RateConverter::
-        SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
+    using RateConverterType = Opm::RateConverter::SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
     // Compute reservoir volumes for RESV controls.
     std::unique_ptr<RateConverterType> rateConverter;
     // Compute reservoir volumes for RESV controls.
-    rateConverter.reset(new RateConverterType (std::vector<int>(10, 0)));
+    rateConverter.reset(new RateConverterType(std::vector<int>(10, 0)));
 
     Opm::PerforationData<double> dummy;
     std::vector<Opm::PerforationData<double>> pdata(well.getConnections().size(), dummy);
-    for (auto c = 0*pdata.size(); c < pdata.size(); ++c) {
+    for (auto c = 0 * pdata.size(); c < pdata.size(); ++c) {
         pdata[c].ecl_index = c;
     }
 
-    Opm::ParallelWellInfo<double> pinfo{well.name()};
+    Opm::ParallelWellInfo<double> pinfo {well.name()};
 
-    BOOST_CHECK_THROW( StandardWell( well, pinfo, -1, param, *rateConverter, 0, 3, 3, 0, pdata), std::invalid_argument);
+    BOOST_CHECK_THROW(StandardWell(well, pinfo, -1, param, *rateConverter, 0, 3, 3, 0, pdata), std::invalid_argument);
 }
 
-BOOST_AUTO_TEST_CASE(TestBehavoir) {
+BOOST_AUTO_TEST_CASE(TestBehavoir)
+{
     const SetupTest setup_test;
     const auto& wells_ecl = setup_test.schedule->getWells(setup_test.current_timestep);
     const int current_timestep = setup_test.current_timestep;
-    std::vector<std::unique_ptr<const StandardWell> >  wells;
+    std::vector<std::unique_ptr<const StandardWell>> wells;
 
     {
         const int nw = wells_ecl.size();
@@ -159,22 +160,22 @@ BOOST_AUTO_TEST_CASE(TestBehavoir) {
         for (int w = 0; w < nw; ++w) {
             // For the conversion between the surface volume rate and resrevoir voidage rate
             using FluidSystem = Opm::BlackOilFluidSystem<double>;
-            using RateConverterType = Opm::RateConverter::
-                SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
+            using RateConverterType = Opm::RateConverter::SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
             // Compute reservoir volumes for RESV controls.
             // TODO: not sure why for this class the initlizer list does not work
             // otherwise we should make a meaningful const PhaseUsage here.
             std::unique_ptr<RateConverterType> rateConverter;
             // Compute reservoir volumes for RESV controls.
-            rateConverter.reset(new RateConverterType (std::vector<int>(10, 0)));
+            rateConverter.reset(new RateConverterType(std::vector<int>(10, 0)));
             Opm::PerforationData<double> dummy;
             std::vector<Opm::PerforationData<double>> pdata(wells_ecl[w].getConnections().size(), dummy);
-            for (auto c = 0*pdata.size(); c < pdata.size(); ++c) {
+            for (auto c = 0 * pdata.size(); c < pdata.size(); ++c) {
                 pdata[c].ecl_index = c;
             }
 
-            Opm::ParallelWellInfo<double> pinfo{wells_ecl[w].name()};
-            wells.emplace_back(new StandardWell(wells_ecl[w], pinfo, current_timestep, param, *rateConverter, 0, 3, 3, w, pdata) );
+            Opm::ParallelWellInfo<double> pinfo {wells_ecl[w].name()};
+            wells.emplace_back(
+                new StandardWell(wells_ecl[w], pinfo, current_timestep, param, *rateConverter, 0, 3, 3, w, pdata));
         }
     }
 
@@ -184,7 +185,7 @@ BOOST_AUTO_TEST_CASE(TestBehavoir) {
         BOOST_CHECK_EQUAL(well->name(), "PROD1");
         BOOST_CHECK(well->isProducer());
         BOOST_CHECK(StandardWell::Indices::numEq == 3);
-        BOOST_CHECK(well->numStaticWellEq== 4);
+        BOOST_CHECK(well->numStaticWellEq == 4);
     }
 
     // second well, it is the injection well from the deck
@@ -193,6 +194,6 @@ BOOST_AUTO_TEST_CASE(TestBehavoir) {
         BOOST_CHECK_EQUAL(well->name(), "INJE1");
         BOOST_CHECK(well->isInjector());
         BOOST_CHECK(StandardWell::Indices::numEq == 3);
-        BOOST_CHECK(well->numStaticWellEq== 4);      
+        BOOST_CHECK(well->numStaticWellEq == 4);
     }
 }

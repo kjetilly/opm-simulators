@@ -125,21 +125,29 @@ namespace Details
     bool matrixEqual(const Matrix& m1, const Matrix& m2)
     {
         // Compare size and nonzeroes.
-        if (m1.N() != m2.N()) return false;
-        if (m1.M() != m2.M()) return false;
-        if (m1.nonzeroes() != m2.nonzeroes()) return false;
+        if (m1.N() != m2.N())
+            return false;
+        if (m1.M() != m2.M())
+            return false;
+        if (m1.nonzeroes() != m2.nonzeroes())
+            return false;
 
         auto row1 = m1.begin();
         auto row2 = m2.begin();
         for (; row1 != m1.end(); ++row1, ++row2) {
-            if (row2 == m2.end()) return false;
-            if (row1.index() != row2.index()) return false;
+            if (row2 == m2.end())
+                return false;
+            if (row1.index() != row2.index())
+                return false;
             auto col1 = row1->begin();
             auto col2 = row2->begin();
             for (; col1 != row1->end(); ++col1, ++col2) {
-                if (col2 == row2->end()) return false;
-                if (col1.index() != col2.index()) return false;
-                if (*col1 != *col2) return false;
+                if (col2 == row2->end())
+                    return false;
+                if (col1.index() != col2.index())
+                    return false;
+                if (*col1 != *col2)
+                    return false;
             }
         }
         return true;

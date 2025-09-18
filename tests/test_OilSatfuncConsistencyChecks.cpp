@@ -28,7 +28,7 @@
 //
 // when compiling with "-Wundef".
 #define HAVE_MPI 0
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 #include <boost/test/unit_test.hpp>
 
@@ -54,19 +54,19 @@ BOOST_AUTO_TEST_SUITE(Sogcr)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::SOcr_GO<float>{};
+    auto check = Checks::SOcr_GO<float> {};
 
-    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t{1});
+    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t {1});
 
     {
-        auto column = std::string{};
+        auto column = std::string {};
         check.columnNames(&column);
 
         BOOST_CHECK_EQUAL(column, "SOGCR");
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sogcr = 0.3f; // >= 0 && < 1
 
         check.test(endPoints);
@@ -79,18 +79,18 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(value, 0.3f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sogcr = std::numeric_limits<float>::quiet_NaN();
 
-        auto check = Checks::SOcr_GO<float>{};
+        auto check = Checks::SOcr_GO<float> {};
         check.test(endPoints);
 
         auto value = -0.1f;
@@ -103,10 +103,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sogcr = std::numeric_limits<float>::infinity();
 
-        auto check = Checks::SOcr_GO<float>{};
+        auto check = Checks::SOcr_GO<float> {};
         check.test(endPoints);
 
         auto value = -0.1f;
@@ -120,8 +120,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Negative)
 {
-    auto check = Checks::SOcr_GO<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_GO<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sogcr = -0.01; // < 0
 
     check.test(endPoints);
@@ -139,8 +139,8 @@ BOOST_AUTO_TEST_CASE(Negative)
 
 BOOST_AUTO_TEST_CASE(Is_One)
 {
-    auto check = Checks::SOcr_GO<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_GO<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sogcr = 1.0; // >= 1
 
     check.test(endPoints);
@@ -158,8 +158,8 @@ BOOST_AUTO_TEST_CASE(Is_One)
 
 BOOST_AUTO_TEST_CASE(Exceeds_One)
 {
-    auto check = Checks::SOcr_GO<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_GO<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sogcr = 1.2; // >= 1
 
     check.test(endPoints);
@@ -183,9 +183,9 @@ BOOST_AUTO_TEST_SUITE(So_min)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::SOmin_GO<double>{};
+    auto check = Checks::SOmin_GO<double> {};
 
-    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t{3});
+    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t {3});
 
     {
         auto columns = std::vector<std::string>(3);
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Swl = 0.09;
         endPoints.Sgu = 0.9;
 
@@ -209,23 +209,23 @@ BOOST_AUTO_TEST_CASE(All_Good)
         check.exportCheckValues(values.data());
 
         BOOST_CHECK_CLOSE(values[0], 0.09, 1.0e-8);
-        BOOST_CHECK_CLOSE(values[1], 0.9 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[1], 0.9, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 0.99, 1.0e-8);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Sgu = 0.75f;
 
-        auto check = Checks::SOmin_GO<float>{};
+        auto check = Checks::SOmin_GO<float> {};
         check.test(endPoints);
 
         {
@@ -233,7 +233,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Swl + Sgu value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -248,7 +248,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(3);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgu value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Swl + Sgu value must be NaN");
 
@@ -276,11 +276,11 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::infinity();
         endPoints.Sgu = 0.75f;
 
-        auto check = Checks::SOmin_GO<float>{};
+        auto check = Checks::SOmin_GO<float> {};
         check.test(endPoints);
 
         {
@@ -288,7 +288,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Swl + Sgu value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(3);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgu value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Swl + Sgu value must be Inf");
 
@@ -331,10 +331,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Swl_TooLarge)
 {
-    auto check = Checks::SOmin_GO<double>{};
+    auto check = Checks::SOmin_GO<double> {};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Swl = 0.15;
         endPoints.Sgu = 0.9;
 
@@ -346,20 +346,20 @@ BOOST_AUTO_TEST_CASE(Swl_TooLarge)
         check.exportCheckValues(values.data());
 
         BOOST_CHECK_CLOSE(values[0], 0.15, 1.0e-8);
-        BOOST_CHECK_CLOSE(values[1], 0.9 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[1], 0.9, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 1.05, 1.0e-8);
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sgu_TooLarge)
 {
-    auto check = Checks::SOmin_GO<double>{};
+    auto check = Checks::SOmin_GO<double> {};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Swl = 0.1;
         endPoints.Sgu = 0.95;
 
@@ -370,13 +370,13 @@ BOOST_AUTO_TEST_CASE(Sgu_TooLarge)
         auto values = std::vector<double>(3);
         check.exportCheckValues(values.data());
 
-        BOOST_CHECK_CLOSE(values[0], 0.1 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[0], 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(values[1], 0.95, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 1.05, 1.0e-8);
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // So_min
@@ -387,9 +387,9 @@ BOOST_AUTO_TEST_SUITE(Mobile_Oil_Sgmin)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::MobileOil_GO_SGmin<float>{};
+    auto check = Checks::MobileOil_GO_SGmin<float> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExported);
 
@@ -404,9 +404,9 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
-        endPoints.Swl   = 0.15f;
-        endPoints.Sgl   = 0.01f;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
+        endPoints.Swl = 0.15f;
+        endPoints.Sgl = 0.01f;
         endPoints.Sogcr = 0.15f;
 
         check.test(endPoints);
@@ -422,22 +422,22 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[3], 1.0f - 0.15f - 0.01, 1.0e-5f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Sgl = 0.01f;
         endPoints.Sogcr = 0.32f;
 
-        auto check = Checks::MobileOil_GO_SGmin<float>{};
+        auto check = Checks::MobileOil_GO_SGmin<float> {};
         check.test(endPoints);
 
         {
@@ -445,8 +445,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -462,9 +462,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -480,10 +480,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sogcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -500,7 +500,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -517,7 +517,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sogcr value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
@@ -546,14 +546,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::infinity();
         endPoints.Sgl = 0.01f;
         endPoints.Sogcr = 0.32f;
 
-        auto check = Checks::MobileOil_GO_SGmin<float>{};
+        auto check = Checks::MobileOil_GO_SGmin<float> {};
         check.test(endPoints);
 
         {
@@ -561,8 +561,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -578,9 +578,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -596,10 +596,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sogcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -616,7 +616,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -633,7 +633,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sogcr value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
@@ -663,14 +663,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Swl_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGmin<double>{};
+    auto check = Checks::MobileOil_GO_SGmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.70;
-        endPoints.Sgl   = 0.01;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.70;
+        endPoints.Sgl = 0.01;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -687,19 +687,19 @@ BOOST_AUTO_TEST_CASE(Swl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGmin<double>{};
+    auto check = Checks::MobileOil_GO_SGmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgl   = 0.05;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgl = 0.05;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -716,19 +716,19 @@ BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sogcr_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGmin<double>{};
+    auto check = Checks::MobileOil_GO_SGmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgl   = 0.04;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgl = 0.04;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -745,7 +745,7 @@ BOOST_AUTO_TEST_CASE(Sogcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Mobile_Oil_Sgmin
@@ -756,9 +756,9 @@ BOOST_AUTO_TEST_SUITE(Mobile_Oil_Sgcr)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::MobileOil_GO_SGcr<float>{};
+    auto check = Checks::MobileOil_GO_SGcr<float> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExported);
 
@@ -773,9 +773,9 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
-        endPoints.Swl   = 0.15f;
-        endPoints.Sgcr  = 0.01f;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
+        endPoints.Swl = 0.15f;
+        endPoints.Sgcr = 0.01f;
         endPoints.Sogcr = 0.15f;
 
         check.test(endPoints);
@@ -791,22 +791,22 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[3], 1.0f - 0.15f - 0.01, 1.0e-5f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Sgcr = 0.01f;
         endPoints.Sogcr = 0.32f;
 
-        auto check = Checks::MobileOil_GO_SGcr<float>{};
+        auto check = Checks::MobileOil_GO_SGcr<float> {};
         check.test(endPoints);
 
         {
@@ -814,8 +814,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -831,9 +831,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -849,10 +849,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sogcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -869,7 +869,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -886,7 +886,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sogcr value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgcr value must be NaN");
 
@@ -915,14 +915,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::infinity();
         endPoints.Sgcr = 0.01f;
         endPoints.Sogcr = 0.32f;
 
-        auto check = Checks::MobileOil_GO_SGcr<float>{};
+        auto check = Checks::MobileOil_GO_SGcr<float> {};
         check.test(endPoints);
 
         {
@@ -930,8 +930,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -947,9 +947,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -965,10 +965,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sogcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -985,7 +985,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1002,7 +1002,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sogcr value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgcr value must be Inf");
 
@@ -1032,14 +1032,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Swl_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGcr<double>{};
+    auto check = Checks::MobileOil_GO_SGcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.70;
-        endPoints.Sgcr  = 0.01;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.70;
+        endPoints.Sgcr = 0.01;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -1056,19 +1056,19 @@ BOOST_AUTO_TEST_CASE(Swl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sgcr_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGcr<double>{};
+    auto check = Checks::MobileOil_GO_SGcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgcr  = 0.05;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgcr = 0.05;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -1085,19 +1085,19 @@ BOOST_AUTO_TEST_CASE(Sgcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sogcr_TooLarge)
 {
-    auto check = Checks::MobileOil_GO_SGcr<double>{};
+    auto check = Checks::MobileOil_GO_SGcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgcr  = 0.04;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgcr = 0.04;
         endPoints.Sogcr = 0.32;
 
         check.test(endPoints);
@@ -1114,7 +1114,7 @@ BOOST_AUTO_TEST_CASE(Sogcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Mobile_Oil_Sgcr
@@ -1133,19 +1133,19 @@ BOOST_AUTO_TEST_SUITE(Sowcr)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::SOcr_OW<float>{};
+    auto check = Checks::SOcr_OW<float> {};
 
-    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t{1});
+    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t {1});
 
     {
-        auto column = std::string{};
+        auto column = std::string {};
         check.columnNames(&column);
 
         BOOST_CHECK_EQUAL(column, "SOWCR");
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sowcr = 0.3f; // >= 0 && < 1
 
         check.test(endPoints);
@@ -1158,18 +1158,18 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(value, 0.3f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sowcr = std::numeric_limits<float>::quiet_NaN();
 
-        auto check = Checks::SOcr_OW<float>{};
+        auto check = Checks::SOcr_OW<float> {};
         check.test(endPoints);
 
         auto value = -0.1f;
@@ -1182,10 +1182,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sowcr = std::numeric_limits<float>::infinity();
 
-        auto check = Checks::SOcr_OW<float>{};
+        auto check = Checks::SOcr_OW<float> {};
         check.test(endPoints);
 
         auto value = -0.1f;
@@ -1199,8 +1199,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Negative)
 {
-    auto check = Checks::SOcr_OW<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_OW<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sowcr = -0.01; // < 0
 
     check.test(endPoints);
@@ -1218,8 +1218,8 @@ BOOST_AUTO_TEST_CASE(Negative)
 
 BOOST_AUTO_TEST_CASE(Is_One)
 {
-    auto check = Checks::SOcr_OW<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_OW<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sowcr = 1.0; // >= 1
 
     check.test(endPoints);
@@ -1237,8 +1237,8 @@ BOOST_AUTO_TEST_CASE(Is_One)
 
 BOOST_AUTO_TEST_CASE(Exceeds_One)
 {
-    auto check = Checks::SOcr_OW<double>{};
-    auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+    auto check = Checks::SOcr_OW<double> {};
+    auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
     endPoints.Sowcr = 1.2; // >= 1
 
     check.test(endPoints);
@@ -1262,9 +1262,9 @@ BOOST_AUTO_TEST_SUITE(So_min)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::SOmin_OW<double>{};
+    auto check = Checks::SOmin_OW<double> {};
 
-    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t{3});
+    BOOST_CHECK_EQUAL(check.numExportedCheckValues(), std::size_t {3});
 
     {
         auto columns = std::vector<std::string>(3);
@@ -1276,7 +1276,7 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Sgl = 0.09;
         endPoints.Swu = 0.9;
 
@@ -1288,23 +1288,23 @@ BOOST_AUTO_TEST_CASE(All_Good)
         check.exportCheckValues(values.data());
 
         BOOST_CHECK_CLOSE(values[0], 0.09, 1.0e-8);
-        BOOST_CHECK_CLOSE(values[1], 0.9 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[1], 0.9, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 0.99, 1.0e-8);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Swu = 0.75f;
 
-        auto check = Checks::SOmin_OW<float>{};
+        auto check = Checks::SOmin_OW<float> {};
         check.test(endPoints);
 
         {
@@ -1312,7 +1312,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sgl + Swu value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1327,7 +1327,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(3);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Swu value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sgl + Swu value must be NaN");
 
@@ -1355,11 +1355,11 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::infinity();
         endPoints.Swu = 0.75f;
 
-        auto check = Checks::SOmin_OW<float>{};
+        auto check = Checks::SOmin_OW<float> {};
         check.test(endPoints);
 
         {
@@ -1367,7 +1367,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sgl + Swu value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1382,7 +1382,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(3);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.75f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.75f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Swu value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sgl + Swu value must be Inf");
 
@@ -1410,10 +1410,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
 {
-    auto check = Checks::SOmin_OW<double>{};
+    auto check = Checks::SOmin_OW<double> {};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Sgl = 0.15;
         endPoints.Swu = 0.9;
 
@@ -1425,20 +1425,20 @@ BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
         check.exportCheckValues(values.data());
 
         BOOST_CHECK_CLOSE(values[0], 0.15, 1.0e-8);
-        BOOST_CHECK_CLOSE(values[1], 0.9 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[1], 0.9, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 1.05, 1.0e-8);
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Swu_TooLarge)
 {
-    auto check = Checks::SOmin_OW<double>{};
+    auto check = Checks::SOmin_OW<double> {};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
         endPoints.Sgl = 0.1;
         endPoints.Swu = 0.95;
 
@@ -1449,13 +1449,13 @@ BOOST_AUTO_TEST_CASE(Swu_TooLarge)
         auto values = std::vector<double>(3);
         check.exportCheckValues(values.data());
 
-        BOOST_CHECK_CLOSE(values[0], 0.1 , 1.0e-8);
+        BOOST_CHECK_CLOSE(values[0], 0.1, 1.0e-8);
         BOOST_CHECK_CLOSE(values[1], 0.95, 1.0e-8);
         BOOST_CHECK_CLOSE(values[2], 1.05, 1.0e-8);
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -1466,9 +1466,9 @@ BOOST_AUTO_TEST_SUITE(Mobile_Oil_Swmin)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::MobileOil_OW_SWmin<float>{};
+    auto check = Checks::MobileOil_OW_SWmin<float> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExported);
 
@@ -1483,9 +1483,9 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
-        endPoints.Swl   = 0.15f;
-        endPoints.Sgl   = 0.01f;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
+        endPoints.Swl = 0.15f;
+        endPoints.Sgl = 0.01f;
         endPoints.Sowcr = 0.15f;
 
         check.test(endPoints);
@@ -1501,22 +1501,22 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[3], 1.0f - 0.15f - 0.01, 1.0e-5f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Sgl = 0.01f;
         endPoints.Sowcr = 0.32f;
 
-        auto check = Checks::MobileOil_OW_SWmin<float>{};
+        auto check = Checks::MobileOil_OW_SWmin<float> {};
         check.test(endPoints);
 
         {
@@ -1524,8 +1524,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1541,9 +1541,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1559,10 +1559,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sowcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -1579,7 +1579,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1596,7 +1596,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Swl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sowcr value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Swl - Sgl value must be NaN");
 
@@ -1625,14 +1625,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::infinity();
         endPoints.Sgl = 0.01f;
         endPoints.Sowcr = 0.32f;
 
-        auto check = Checks::MobileOil_OW_SWmin<float>{};
+        auto check = Checks::MobileOil_OW_SWmin<float> {};
         check.test(endPoints);
 
         {
@@ -1640,8 +1640,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1657,9 +1657,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1675,10 +1675,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sowcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -1695,7 +1695,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1712,7 +1712,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Swl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sowcr value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Swl - Sgl value must be Inf");
 
@@ -1742,14 +1742,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Swl_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWmin<double>{};
+    auto check = Checks::MobileOil_OW_SWmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.70;
-        endPoints.Sgl   = 0.01;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.70;
+        endPoints.Sgl = 0.01;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -1766,19 +1766,19 @@ BOOST_AUTO_TEST_CASE(Swl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWmin<double>{};
+    auto check = Checks::MobileOil_OW_SWmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgl   = 0.05;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgl = 0.05;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -1795,19 +1795,19 @@ BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sowcr_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWmin<double>{};
+    auto check = Checks::MobileOil_OW_SWmin<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Swl   = 0.65;
-        endPoints.Sgl   = 0.04;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Swl = 0.65;
+        endPoints.Sgl = 0.04;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -1824,7 +1824,7 @@ BOOST_AUTO_TEST_CASE(Sowcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Mobile_Oil_Swmin
@@ -1835,9 +1835,9 @@ BOOST_AUTO_TEST_SUITE(Mobile_Oil_Swcr)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::MobileOil_OW_SWcr<float>{};
+    auto check = Checks::MobileOil_OW_SWcr<float> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExported);
 
@@ -1852,9 +1852,9 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
-        endPoints.Sgl   = 0.15f;
-        endPoints.Swcr  = 0.01f;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
+        endPoints.Sgl = 0.15f;
+        endPoints.Swcr = 0.01f;
         endPoints.Sowcr = 0.15f;
 
         check.test(endPoints);
@@ -1870,22 +1870,22 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[3], 1.0f - 0.15f - 0.01, 1.0e-5f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Swcr = 0.01f;
         endPoints.Sowcr = 0.32f;
 
-        auto check = Checks::MobileOil_OW_SWcr<float>{};
+        auto check = Checks::MobileOil_OW_SWcr<float> {};
         check.test(endPoints);
 
         {
@@ -1893,8 +1893,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Sgl - Swcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1910,9 +1910,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Swcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Sgl - Swcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1928,10 +1928,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sowcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -1948,7 +1948,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Sgl value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[1]), "Swcr value must be NaN");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Sgl - Swcr value must be NaN");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -1965,7 +1965,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isnan(values[0]), "Sgl value must be NaN");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isnan(values[2]), "Sowcr value must be NaN");
             BOOST_CHECK_MESSAGE(std::isnan(values[3]), "1 - Sgl - Swcr value must be NaN");
 
@@ -1994,14 +1994,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        const auto expectNumExported = std::size_t{4};
+        const auto expectNumExported = std::size_t {4};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::infinity();
         endPoints.Swcr = 0.01f;
         endPoints.Sowcr = 0.32f;
 
-        auto check = Checks::MobileOil_OW_SWcr<float>{};
+        auto check = Checks::MobileOil_OW_SWcr<float> {};
         check.test(endPoints);
 
         {
@@ -2009,8 +2009,8 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Sgl - Swcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -2026,9 +2026,9 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Swcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Sgl - Swcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -2044,10 +2044,10 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             auto values = std::vector<float>(expectNumExported);
             check.exportCheckValues(values.data());
 
-            BOOST_CHECK_CLOSE  (values[0], 0.6f, 1.0e-6f);
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[0], 0.6f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sowcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
+            BOOST_CHECK_CLOSE(values[3], 1.0f - 0.6f - 0.01f, 1.0e-6);
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
             BOOST_CHECK_MESSAGE(check.isCritical(), "Check must be violated at critical level");
@@ -2064,7 +2064,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Sgl value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[1]), "Swcr value must be Inf");
-            BOOST_CHECK_CLOSE  (values[2], 0.32f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[2], 0.32f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Sgl - Swcr value must be Inf");
 
             BOOST_CHECK_MESSAGE(check.isViolated(), "Check must be violated");
@@ -2081,7 +2081,7 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
             check.exportCheckValues(values.data());
 
             BOOST_CHECK_MESSAGE(std::isinf(values[0]), "Sgl value must be Inf");
-            BOOST_CHECK_CLOSE  (values[1], 0.01f, 1.0e-6f);
+            BOOST_CHECK_CLOSE(values[1], 0.01f, 1.0e-6f);
             BOOST_CHECK_MESSAGE(std::isinf(values[2]), "Sowcr value must be Inf");
             BOOST_CHECK_MESSAGE(std::isinf(values[3]), "1 - Sgl - Swcr value must be Inf");
 
@@ -2111,14 +2111,14 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWcr<double>{};
+    auto check = Checks::MobileOil_OW_SWcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Sgl   = 0.70;
-        endPoints.Swcr  = 0.01;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Sgl = 0.70;
+        endPoints.Swcr = 0.01;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -2135,19 +2135,19 @@ BOOST_AUTO_TEST_CASE(Sgl_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Swcr_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWcr<double>{};
+    auto check = Checks::MobileOil_OW_SWcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Sgl   = 0.65;
-        endPoints.Swcr  = 0.05;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Sgl = 0.65;
+        endPoints.Swcr = 0.05;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -2164,19 +2164,19 @@ BOOST_AUTO_TEST_CASE(Swcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Sowcr_TooLarge)
 {
-    auto check = Checks::MobileOil_OW_SWcr<double>{};
+    auto check = Checks::MobileOil_OW_SWcr<double> {};
 
-    const auto expectNumExported = std::size_t{4};
+    const auto expectNumExported = std::size_t {4};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<double>{};
-        endPoints.Sgl   = 0.65;
-        endPoints.Swcr  = 0.04;
+        auto endPoints = Opm::EclEpsScalingPointsInfo<double> {};
+        endPoints.Sgl = 0.65;
+        endPoints.Swcr = 0.04;
         endPoints.Sowcr = 0.32;
 
         check.test(endPoints);
@@ -2193,7 +2193,7 @@ BOOST_AUTO_TEST_CASE(Sowcr_TooLarge)
     }
 
     BOOST_CHECK_MESSAGE(check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Mobile_Oil_Swcr

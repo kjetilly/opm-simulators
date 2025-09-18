@@ -27,6 +27,7 @@
 
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 
+#include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
 #include <opm/simulators/utils/DeferredLoggingErrorHelpers.hpp>
 #include <opm/simulators/wells/GroupState.hpp>
 #include <opm/simulators/wells/RateConverter.hpp>
@@ -35,7 +36,6 @@
 #include <opm/simulators/wells/WellHelpers.hpp>
 #include <opm/simulators/wells/WellInterfaceFluidSystem.hpp>
 #include <opm/simulators/wells/WellState.hpp>
-#include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
 
 #include <cassert>
 #include <stdexcept>
@@ -43,30 +43,29 @@
 namespace Opm
 {
 
-template<typename FluidSystem>
-WellAssemble<FluidSystem>::
-WellAssemble(const WellInterfaceFluidSystem<FluidSystem>& well)
+template <typename FluidSystem>
+WellAssemble<FluidSystem>::WellAssemble(const WellInterfaceFluidSystem<FluidSystem>& well)
     : well_(well)
-{}
+{
+}
 
-template<typename FluidSystem>
-template<class EvalWell>
+template <typename FluidSystem>
+template <class EvalWell>
 void
-WellAssemble<FluidSystem>::
-assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
-                      const GroupState<Scalar>& group_state,
-                      const Schedule& schedule,
-                      const SummaryState& summaryState,
-                      const Well::ProductionControls& controls,
-                      const EvalWell& bhp,
-                      const std::vector<EvalWell>& rates, // Always 3 canonical rates.
-                      const std::function<EvalWell()>& bhp_from_thp,
-                      EvalWell& control_eq,
-                      DeferredLogger& deferred_logger) const
+WellAssemble<FluidSystem>::assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
+                                                 const GroupState<Scalar>& group_state,
+                                                 const Schedule& schedule,
+                                                 const SummaryState& summaryState,
+                                                 const Well::ProductionControls& controls,
+                                                 const EvalWell& bhp,
+                                                 const std::vector<EvalWell>& rates, // Always 3 canonical rates.
+                                                 const std::function<EvalWell()>& bhp_from_thp,
+                                                 EvalWell& control_eq,
+                                                 DeferredLogger& deferred_logger) const
 {
     const auto current = well_state.well(well_.indexOfWell()).production_cmode;
-    const Scalar efficiencyFactor = well_.wellEcl().getEfficiencyFactor() *
-                                    well_state[well_.name()].efficiency_scaling_factor;
+    const Scalar efficiencyFactor
+        = well_.wellEcl().getEfficiencyFactor() * well_state[well_.name()].efficiency_scaling_factor;
 
     switch (current) {
     case Well::ProducerCMode::ORAT: {
@@ -95,15 +94,14 @@ assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
         break;
     }
     case Well::ProducerCMode::CRAT: {
-        OPM_DEFLOG_THROW(std::runtime_error,
-                         "CRAT control not supported, well " + well_.name(),
-                         deferred_logger);
+        OPM_DEFLOG_THROW(std::runtime_error, "CRAT control not supported, well " + well_.name(), deferred_logger);
     }
     case Well::ProducerCMode::RESV: {
         auto total_rate = rates[0]; // To get the correct type only.
         total_rate = 0.0;
         std::vector<Scalar> convert_coeff(well_.numPhases(), 1.0);
-        well_.rateConverter().calcCoeff(/*fipreg*/ 0, well_.pvtRegionIdx(), well_state.well(well_.indexOfWell()).surface_rates, convert_coeff);
+        well_.rateConverter().calcCoeff(
+            /*fipreg*/ 0, well_.pvtRegionIdx(), well_state.well(well_.indexOfWell()).surface_rates, convert_coeff);
         for (int phase = 0; phase < 3; ++phase) {
             if (FluidSystem::phaseIsActive(phase)) {
                 const int pos = FluidSystem::canonicalToActivePhaseIdx(phase);
@@ -158,23 +156,22 @@ assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
                 active_rates[phase_pos] = rates[canonical_phase];
             }
         }
-        auto rCoeff = [this, &group_state](const RegionId id, const int region,
+        auto rCoeff = [this, &group_state](const RegionId id,
+                                           const int region,
                                            const std::optional<std::string>& prod_gname,
-                                           std::vector<Scalar>& coeff)
-        {
+                                           std::vector<Scalar>& coeff) {
             if (prod_gname)
                 well_.rateConverter().calcCoeff(id, region, group_state.production_rates(*prod_gname), coeff);
             else
                 well_.rateConverter().calcCoeff(id, region, coeff);
-
         };
 
-        WellGroupControls(well_).getGroupProductionControl(group, 
+        WellGroupControls(well_).getGroupProductionControl(group,
                                                            well_state,
                                                            group_state,
                                                            schedule,
                                                            summaryState,
-                                                           bhp, 
+                                                           bhp,
                                                            active_rates,
                                                            rCoeff,
                                                            efficiencyFactor,
@@ -183,37 +180,34 @@ assembleControlEqProd(const WellState<Scalar, IndexTraits>& well_state,
         break;
     }
     case Well::ProducerCMode::CMODE_UNDEFINED: {
-        OPM_DEFLOG_THROW(std::runtime_error,
-                         "Well control must be specified for well " + well_.name(),
-                         deferred_logger);
+        OPM_DEFLOG_THROW(
+            std::runtime_error, "Well control must be specified for well " + well_.name(), deferred_logger);
     }
     case Well::ProducerCMode::NONE: {
-        OPM_DEFLOG_THROW(std::runtime_error,
-                         "Well control must be specified for well " + well_.name(),
-                         deferred_logger);
+        OPM_DEFLOG_THROW(
+            std::runtime_error, "Well control must be specified for well " + well_.name(), deferred_logger);
     }
     }
 }
 
-template<typename FluidSystem>
-template<class EvalWell>
+template <typename FluidSystem>
+template <class EvalWell>
 void
-WellAssemble<FluidSystem>::
-assembleControlEqInj(const WellState<Scalar, IndexTraits>& well_state,
-                     const GroupState<Scalar>& group_state,
-                     const Schedule& schedule,
-                     const SummaryState& summaryState,
-                     const Well::InjectionControls& controls,
-                     const EvalWell& bhp,
-                     const EvalWell& injection_rate,
-                     const std::function<EvalWell()>& bhp_from_thp,
-                     EvalWell& control_eq,
-                     DeferredLogger& deferred_logger) const
+WellAssemble<FluidSystem>::assembleControlEqInj(const WellState<Scalar, IndexTraits>& well_state,
+                                                const GroupState<Scalar>& group_state,
+                                                const Schedule& schedule,
+                                                const SummaryState& summaryState,
+                                                const Well::InjectionControls& controls,
+                                                const EvalWell& bhp,
+                                                const EvalWell& injection_rate,
+                                                const std::function<EvalWell()>& bhp_from_thp,
+                                                EvalWell& control_eq,
+                                                DeferredLogger& deferred_logger) const
 {
     auto current = well_state.well(well_.indexOfWell()).injection_cmode;
     const InjectorType injectorType = controls.injector_type;
-    const Scalar efficiencyFactor = well_.wellEcl().getEfficiencyFactor() *
-                                    well_state[well_.name()].efficiency_scaling_factor;
+    const Scalar efficiencyFactor
+        = well_.wellEcl().getEfficiencyFactor() * well_state[well_.name()].efficiency_scaling_factor;
 
     switch (current) {
     case Well::InjectorCMode::RATE: {
@@ -260,13 +254,12 @@ assembleControlEqInj(const WellState<Scalar, IndexTraits>& well_state,
     case Well::InjectorCMode::GRUP: {
         assert(well_.wellEcl().isAvailableForGroupControl());
         const auto& group = schedule.getGroup(well_.wellEcl().groupName(), well_.currentStep());
-        auto rCoeff = [this, &group_state](const RegionId id, const int region,
+        auto rCoeff = [this, &group_state](const RegionId id,
+                                           const int region,
                                            const std::optional<std::string>& prod_gname,
-                                           std::vector<Scalar>& coeff)
-        {
-            if(prod_gname) {
-                well_.rateConverter().calcCoeff(id, region,
-                                                group_state.production_rates(*prod_gname), coeff);
+                                           std::vector<Scalar>& coeff) {
+            if (prod_gname) {
+                well_.rateConverter().calcCoeff(id, region, group_state.production_rates(*prod_gname), coeff);
             } else {
                 well_.rateConverter().calcInjCoeff(id, region, coeff);
             }
@@ -286,55 +279,56 @@ assembleControlEqInj(const WellState<Scalar, IndexTraits>& well_state,
         break;
     }
     case Well::InjectorCMode::CMODE_UNDEFINED: {
-        OPM_DEFLOG_THROW(std::runtime_error, "Well control must be specified for well " + well_.name(), deferred_logger);
+        OPM_DEFLOG_THROW(
+            std::runtime_error, "Well control must be specified for well " + well_.name(), deferred_logger);
     }
     }
 }
 
-#define INSTANTIATE_METHODS(A,...)                                        \
-template void WellAssemble<A>::                                           \
-assembleControlEqProd<__VA_ARGS__>(const WellState<typename A::Scalar, BlackOilDefaultFluidSystemIndices>&,  \
-                                   const GroupState<typename A::Scalar>&, \
-                                   const Schedule&,                       \
-                                   const SummaryState&,                   \
-                                   const Well::ProductionControls&,       \
-                                   const __VA_ARGS__&,                    \
-                                   const std::vector<__VA_ARGS__>&,       \
-                                   const std::function<__VA_ARGS__()>&,   \
-                                   __VA_ARGS__&,                          \
-                                   DeferredLogger&) const;                \
-template void WellAssemble<A>::                                           \
-assembleControlEqInj<__VA_ARGS__>(const WellState<typename A::Scalar, BlackOilDefaultFluidSystemIndices>&,   \
-                                  const GroupState<typename A::Scalar>&,  \
-                                  const Schedule&,                        \
-                                  const SummaryState&,                    \
-                                  const Well::InjectionControls&,         \
-                                  const __VA_ARGS__&,                     \
-                                  const __VA_ARGS__&,                     \
-                                  const std::function<__VA_ARGS__()>&,    \
-                                  __VA_ARGS__&,                           \
-                                  DeferredLogger&) const;
+#define INSTANTIATE_METHODS(A, ...)                                                                                    \
+    template void WellAssemble<A>::assembleControlEqProd<__VA_ARGS__>(                                                 \
+        const WellState<typename A::Scalar, BlackOilDefaultFluidSystemIndices>&,                                       \
+        const GroupState<typename A::Scalar>&,                                                                         \
+        const Schedule&,                                                                                               \
+        const SummaryState&,                                                                                           \
+        const Well::ProductionControls&,                                                                               \
+        const __VA_ARGS__&,                                                                                            \
+        const std::vector<__VA_ARGS__>&,                                                                               \
+        const std::function<__VA_ARGS__()>&,                                                                           \
+        __VA_ARGS__&,                                                                                                  \
+        DeferredLogger&) const;                                                                                        \
+    template void WellAssemble<A>::assembleControlEqInj<__VA_ARGS__>(                                                  \
+        const WellState<typename A::Scalar, BlackOilDefaultFluidSystemIndices>&,                                       \
+        const GroupState<typename A::Scalar>&,                                                                         \
+        const Schedule&,                                                                                               \
+        const SummaryState&,                                                                                           \
+        const Well::InjectionControls&,                                                                                \
+        const __VA_ARGS__&,                                                                                            \
+        const __VA_ARGS__&,                                                                                            \
+        const std::function<__VA_ARGS__()>&,                                                                           \
+        __VA_ARGS__&,                                                                                                  \
+        DeferredLogger&) const;
 
-template<class Scalar>
+template <class Scalar>
 using FS = BlackOilFluidSystem<Scalar, BlackOilDefaultFluidSystemIndices>;
 
-#define INSTANTIATE_TYPE(T)                                   \
-    template class WellAssemble<FS<T>>;                       \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,3,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,4,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,5,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,6,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,7,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,8,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,9,0u>)   \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,4u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,5u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,6u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,7u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,8u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,9u>)  \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,10u>) \
-    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T,-1,11u>)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class WellAssemble<FS<T>>;                                                                                \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 3, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 4, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 5, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 6, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 7, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 8, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, 9, 0u>)                                                          \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 4u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 5u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 6u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 7u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 8u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 9u>)                                                         \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 10u>)                                                        \
+    INSTANTIATE_METHODS(FS<T>, DenseAd::Evaluation<T, -1, 11u>)
 
 INSTANTIATE_TYPE(double)
 

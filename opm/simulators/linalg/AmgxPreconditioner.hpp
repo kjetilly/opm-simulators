@@ -72,20 +72,44 @@ struct AmgxConfig {
         max_iters = prm.get<int>("max_iters", max_iters);
     }
 
-    std::string toString() const {
+    std::string toString() const
+    {
         return "config_version=2, "
-               "determinism_flag=" + std::to_string(determinism_flag) + ", "
-               "print_grid_stats=" + std::to_string(print_grid_stats) + ", "
-               "print_solve_stats=" + std::to_string(print_solve_stats) + ", "
-               "solver=" + solver + ", "
-               "algorithm=" + algorithm + ", "
-               "interpolator=" + interpolator + ", "
-               "selector=" + selector + ", "
-               "smoother=" + smoother + ", "
-               "presweeps=" + std::to_string(presweeps) + ", "
-               "postsweeps=" + std::to_string(postsweeps) + ", "
-               "strength_threshold=" + std::to_string(strength_threshold) + ", "
-               "max_iters=" + std::to_string(max_iters);
+               "determinism_flag="
+            + std::to_string(determinism_flag)
+            + ", "
+              "print_grid_stats="
+            + std::to_string(print_grid_stats)
+            + ", "
+              "print_solve_stats="
+            + std::to_string(print_solve_stats)
+            + ", "
+              "solver="
+            + solver
+            + ", "
+              "algorithm="
+            + algorithm
+            + ", "
+              "interpolator="
+            + interpolator
+            + ", "
+              "selector="
+            + selector
+            + ", "
+              "smoother="
+            + smoother
+            + ", "
+              "presweeps="
+            + std::to_string(presweeps)
+            + ", "
+              "postsweeps="
+            + std::to_string(postsweeps)
+            + ", "
+              "strength_threshold="
+            + std::to_string(strength_threshold)
+            + ", "
+              "max_iters="
+            + std::to_string(max_iters);
     }
 };
 

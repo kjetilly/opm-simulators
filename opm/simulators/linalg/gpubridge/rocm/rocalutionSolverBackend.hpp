@@ -24,44 +24,50 @@
 #include <opm/simulators/linalg/gpubridge/GpuSolver.hpp>
 #include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
 
-namespace rocalution {
-template<class Matrix, class Vector, class Scalar> class BiCGStab;
-template<class Matrix, class Vector, class Scalar> class ILU;
-template<class Scalar> class LocalMatrix;
-template<class Scalar> class LocalVector;
-}
+namespace rocalution
+{
+template <class Matrix, class Vector, class Scalar>
+class BiCGStab;
+template <class Matrix, class Vector, class Scalar>
+class ILU;
+template <class Scalar>
+class LocalMatrix;
+template <class Scalar>
+class LocalVector;
+} // namespace rocalution
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class implements a rocalution based linear solver solver on GPU
 /// It uses ilu0-bicgstab
-template<class Scalar, unsigned int block_size>
-class rocalutionSolverBackend : public GpuSolver<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class rocalutionSolverBackend : public GpuSolver<Scalar, block_size>
 {
-    using Base = GpuSolver<Scalar,block_size>;
+    using Base = GpuSolver<Scalar, block_size>;
 
+    using Base::deviceID;
+    using Base::initialized;
+    using Base::maxit;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
     using Base::platformID;
-    using Base::deviceID;
-    using Base::maxit;
     using Base::tolerance;
-    using Base::initialized;
+    using Base::verbosity;
 
 private:
     std::vector<Scalar> h_x; // store solution vector on host
-    int *tmp_rowpointers;    // store matrix on host, this pointer is given to and freed by rocalution
-    int *tmp_colindices;     // store matrix on host, this pointer is given to and freed by rocalution
-    Scalar* tmp_nnzvalues;   // store matrix on host, this pointer is given to and freed by rocalution
+    int* tmp_rowpointers; // store matrix on host, this pointer is given to and freed by rocalution
+    int* tmp_colindices; // store matrix on host, this pointer is given to and freed by rocalution
+    Scalar* tmp_nnzvalues; // store matrix on host, this pointer is given to and freed by rocalution
 
     using Mat = rocalution::LocalMatrix<Scalar>;
     using Vec = rocalution::LocalVector<Scalar>;
 
-    std::unique_ptr<rocalution::ILU<Mat,Vec,Scalar>> roc_prec;
-    std::unique_ptr<rocalution::BiCGStab<Mat,Vec,Scalar>> roc_solver;
+    std::unique_ptr<rocalution::ILU<Mat, Vec, Scalar>> roc_prec;
+    std::unique_ptr<rocalution::BiCGStab<Mat, Vec, Scalar>> roc_solver;
 
     /// Initialize sizes and allocate memory
     /// \param[in] matrix     matrix A
@@ -78,8 +84,7 @@ public:
     /// \param[in] linear_solver_verbosity    verbosity of rocalutionSolver
     /// \param[in] maxit                      maximum number of iterations for rocalutionSolver
     /// \param[in] tolerance                  required relative tolerance for rocalutionSolver
-    rocalutionSolverBackend(int linear_solver_verbosity,
-                            int maxit, Scalar tolerance);
+    rocalutionSolverBackend(int linear_solver_verbosity, int maxit, Scalar tolerance);
 
     /// Destroy a rocalutionSolver, and free memory
     ~rocalutionSolverBackend();
@@ -100,11 +105,9 @@ public:
     /// Get result after linear solve, and peform postprocessing if necessary
     /// \param[inout] x          resulting x vector, caller must guarantee that x points to a valid array
     void get_result(Scalar* x) override;
-    
+
 }; // end class rocalutionSolverBackend
 
 } // namespace Opm::Accelerator
 
 #endif
-
-

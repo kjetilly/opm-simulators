@@ -27,19 +27,22 @@
 #ifndef OPM_VTK_PHASE_PRESENCE_PARAMS_HPP
 #define OPM_VTK_PHASE_PRESENCE_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct VtkWritePhasePresence { static constexpr bool value = false; };
+struct VtkWritePhasePresence {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkPhasePresenceModule.
  */
-struct VtkPhasePresenceParams
-{
+struct VtkPhasePresenceParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

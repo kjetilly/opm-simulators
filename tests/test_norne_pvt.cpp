@@ -21,9 +21,9 @@
 
 #define BOOST_TEST_MODULE NORNE_PVT_TESTS
 
-#include <opm/common/utility/platform_dependent/disable_warnings.h>
 #include <boost/test/unit_test.hpp>
 #include <boost/version.hpp>
+#include <opm/common/utility/platform_dependent/disable_warnings.h>
 #if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 71
 #include <boost/test/floating_point_comparison.hpp>
 #else
@@ -31,16 +31,16 @@
 #endif
 #include <opm/common/utility/platform_dependent/reenable_warnings.h>
 
-#include <opm/input/eclipse/Python/Python.hpp>
-#include <opm/input/eclipse/Units/Units.hpp>
-#include <opm/input/eclipse/Parser/InputErrorAction.hpp>
-#include <opm/input/eclipse/Parser/Parser.hpp>
-#include <opm/input/eclipse/Parser/ParseContext.hpp>
-#include <opm/input/eclipse/Parser/ErrorGuard.hpp>
 #include <opm/input/eclipse/Deck/Deck.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
-#include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/TableManager.hpp>
+#include <opm/input/eclipse/Parser/ErrorGuard.hpp>
+#include <opm/input/eclipse/Parser/InputErrorAction.hpp>
+#include <opm/input/eclipse/Parser/ParseContext.hpp>
+#include <opm/input/eclipse/Parser/Parser.hpp>
+#include <opm/input/eclipse/Python/Python.hpp>
+#include <opm/input/eclipse/Schedule/Schedule.hpp>
+#include <opm/input/eclipse/Units/Units.hpp>
 
 #include <opm/material/fluidsystems/blackoilpvt/LiveOilPvt.hpp>
 
@@ -70,7 +70,8 @@ using namespace Opm;
 #define TEST_OR_PRINT BOOST_CHECK_CLOSE
 // #define TEST_OR_PRINT(val, expected, tolerance) printVal(val);
 
-inline void printVal(const double val)
+inline void
+printVal(const double val)
 {
     std::cout.precision(16);
     std::cout << val << '\n';
@@ -85,24 +86,10 @@ verify_norne_oil_pvt_region1(const Opm::EclipseState& eclState,
     Opm::LiveOilPvt<double> oilPvt;
     oilPvt.initFromState(eclState, schedule);
 
-    std::vector<double> rs = {33, 33,
-                              43, 43,
-                              53, 53,
-                              61, 61,
-                              70, 70,
-                              80, 80,
-                              100, 100 ,
-                              100};
+    std::vector<double> rs = {33, 33, 43, 43, 53, 53, 61, 61, 70, 70, 80, 80, 100, 100, 100};
 
 
-    std::vector<double> P = {114, 148,
-                             134, 168,
-                             154, 188,
-                             174, 208,
-                             194, 228,
-                             214, 248,
-                             234, 268,
-                             270 };
+    std::vector<double> P = {114, 148, 134, 168, 154, 188, 174, 208, 194, 228, 214, 248, 234, 268, 270};
 
     std::vector<double> mu_expected(P.size());
     std::vector<double> b_expected(P.size());
@@ -112,12 +99,11 @@ verify_norne_oil_pvt_region1(const Opm::EclipseState& eclState,
 
     {
         // convert the pressures to SI units (bar to Pascal)
-        std::transform(P.begin(), P.end(), P.begin(),
-                       [](const auto value) { return value * Metric::Pressure; });
+        std::transform(P.begin(), P.end(), P.begin(), [](const auto value) { return value * Metric::Pressure; });
 
         // convert the gas dissolution factors to SI units
-        std::transform(rs.begin(), rs.end(), rs.begin(),
-                       [](const auto value) { return value * Metric::GasDissolutionFactor; });
+        std::transform(
+            rs.begin(), rs.end(), rs.begin(), [](const auto value) { return value * Metric::GasDissolutionFactor; });
 
         for (unsigned i = 0; i < P.size(); ++i) {
             double mu;
@@ -126,14 +112,13 @@ verify_norne_oil_pvt_region1(const Opm::EclipseState& eclState,
             if (rs[i] >= RsSat) {
                 mu = oilPvt.saturatedViscosity(/*tableIndex=*/0, /*T=*/273.15, P[i]);
                 b = oilPvt.saturatedInverseFormationVolumeFactor(/*tableIndex=*/0, /*T=*/273.15, P[i]);
-            }
-            else {
+            } else {
                 mu = oilPvt.viscosity(/*tableIndex=*/0, /*T=*/273.15, P[i], rs[i]);
                 b = oilPvt.inverseFormationVolumeFactor(/*tableIndex=*/0, /*T=*/273.15, P[i], rs[i]);
             }
 
-            TEST_OR_PRINT( mu , mu_expected[i], 1e-5 );
-            TEST_OR_PRINT( b , b_expected[i], 1e-5 );
+            TEST_OR_PRINT(mu, mu_expected[i], 1e-5);
+            TEST_OR_PRINT(b, b_expected[i], 1e-5);
         }
     }
 }
@@ -147,63 +132,15 @@ verify_norne_oil_pvt_region2(const Opm::EclipseState& eclState,
     Opm::LiveOilPvt<double> oilPvt;
     oilPvt.initFromState(eclState, schedule);
 
-    std::vector<double> rs = {21 , 21,
-                              30 , 30,
-                              38 , 38,
-                              48 , 48,
-                              55 , 55,
-                              65 , 65,
-                              75 , 75,
-                              85 , 85,
-                              95 , 95,
-                              105 , 105,
-                              115 , 115,
-                              125 , 125,
-                              135 , 135,
-                              145 , 145,
-                              155 , 155,
-                              165 , 165,
-                              175 , 175,
-                              185 , 185,
-                              195 , 195,
-                              205 , 205,
-                              215 , 215,
-                              225 , 225,
-                              234 , 234,
-                              240 , 240,
-                              252 , 252,
-                              262 , 262,
-                              272 , 272,
-                              280 , 280,
-                              410, 410, 410};
+    std::vector<double> rs
+        = {21,  21,  30,  30,  38,  38,  48,  48,  55,  55,  65,  65,  75,  75,  85,  85,  95,  95,  105, 105,
+           115, 115, 125, 125, 135, 135, 145, 145, 155, 155, 165, 165, 175, 175, 185, 185, 195, 195, 205, 205,
+           215, 215, 225, 225, 234, 234, 240, 240, 252, 252, 262, 262, 272, 272, 280, 280, 410, 410, 410};
 
 
-    std::vector<double> P = {70,  110,
-                             95,  145,
-                             115, 165,
-                             135, 185,
-                             155, 205,
-                             195, 245,
-                             215, 265,
-                             235, 285,
-                             255, 305,
-                             275, 325,
-                             293, 343,
-                             310, 360,
-                             326, 376,
-                             342, 392,
-                             357, 407,
-                             371, 420,
-                             385, 435,
-                             399, 450,
-                             420, 480,
-                             437, 487,
-                             449, 499,
-                             460, 510,
-                             471, 521,
-                             482, 532,
-                             503, 553,
-                             650, 680, 710};
+    std::vector<double> P = {70,  110, 95,  145, 115, 165, 135, 185, 155, 205, 195, 245, 215, 265, 235, 285, 255, 305,
+                             275, 325, 293, 343, 310, 360, 326, 376, 342, 392, 357, 407, 371, 420, 385, 435, 399, 450,
+                             420, 480, 437, 487, 449, 499, 460, 510, 471, 521, 482, 532, 503, 553, 650, 680, 710};
 
     std::vector<double> mu_expected(P.size());
     std::vector<double> b_expected(P.size());
@@ -213,12 +150,11 @@ verify_norne_oil_pvt_region2(const Opm::EclipseState& eclState,
 
 
     // convert the pressures to SI units (bar to Pascal)
-    std::transform(P.begin(), P.end(), P.begin(),
-                   [](const auto value) { return value * Metric::Pressure; });
+    std::transform(P.begin(), P.end(), P.begin(), [](const auto value) { return value * Metric::Pressure; });
 
     // convert the gas dissolution factors to SI units
-    std::transform(rs.begin(), rs.end(), rs.begin(),
-                   [](const auto value) { return value * Metric::GasDissolutionFactor; });
+    std::transform(
+        rs.begin(), rs.end(), rs.begin(), [](const auto value) { return value * Metric::GasDissolutionFactor; });
 
     for (unsigned i = 0; i < P.size(); ++i) {
         double mu;
@@ -227,19 +163,19 @@ verify_norne_oil_pvt_region2(const Opm::EclipseState& eclState,
         if (rs[i] >= RsSat) {
             mu = oilPvt.saturatedViscosity(/*tableIndex=*/1, /*T=*/273.15, P[i]);
             b = oilPvt.saturatedInverseFormationVolumeFactor(/*tableIndex=*/1, /*T=*/273.15, P[i]);
-        }
-        else {
+        } else {
             mu = oilPvt.viscosity(/*tableIndex=*/1, /*T=*/273.15, P[i], rs[i]);
             b = oilPvt.inverseFormationVolumeFactor(/*tableIndex=*/1, /*T=*/273.15, P[i], rs[i]);
         }
 
-        TEST_OR_PRINT( mu , mu_expected[i], 1e-5 );
-        TEST_OR_PRINT( b , b_expected[i], 1e-5 );
+        TEST_OR_PRINT(mu, mu_expected[i], 1e-5);
+        TEST_OR_PRINT(b, b_expected[i], 1e-5);
     }
 }
 
-BOOST_AUTO_TEST_CASE( Test_Norne_PVT) {
-    Opm::ParseContext parseContext({{ ParseContext::PARSE_RANDOM_SLASH , InputErrorAction::IGNORE }});
+BOOST_AUTO_TEST_CASE(Test_Norne_PVT)
+{
+    Opm::ParseContext parseContext({{ParseContext::PARSE_RANDOM_SLASH, InputErrorAction::IGNORE}});
     Opm::ErrorGuard errorGuard;
     Opm::Parser parser;
     auto python = std::make_shared<Opm::Python>();

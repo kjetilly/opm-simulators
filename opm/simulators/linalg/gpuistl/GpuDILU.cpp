@@ -87,8 +87,8 @@ GpuDILU<M, X, Y, l>::GpuDILU(const typename GpuDILU<M, X, Y, l>::GPUMatrix& gpuM
         if (m_splitMatrix) {
             m_gpuMatrixReorderedDiag = std::make_unique<GpuVector<field_type>>(blocksize_ * blocksize_ * cpuMatrix.N());
             std::tie(m_gpuMatrixReorderedLower, m_gpuMatrixReorderedUpper)
-                = detail::extractLowerAndUpperMatrices<M, field_type, GpuSparseMatrix<field_type>>(cpuMatrix,
-                                                                                                m_reorderedToNatural);
+                = detail::extractLowerAndUpperMatrices<M, field_type, GpuSparseMatrix<field_type>>(
+                    cpuMatrix, m_reorderedToNatural);
         } else {
             m_gpuMatrixReordered = detail::createReorderedMatrix<M, field_type, GpuSparseMatrix<field_type>>(
                 cpuMatrix, m_reorderedToNatural);
@@ -114,10 +114,10 @@ GpuDILU<M, X, Y, l>::GpuDILU(const typename GpuDILU<M, X, Y, l>::GPUMatrix& gpuM
     if (m_reorder) {
         if (!m_splitMatrix) {
             detail::computeDiagIndices<field_type>(m_gpuMatrixReordered->getRowIndices().data(),
-                                                m_gpuMatrixReordered->getColumnIndices().data(),
-                                                m_gpuReorderToNatural.data(),
-                                                m_gpuMatrix.N(),
-                                                m_diagIdxs.data());
+                                                   m_gpuMatrixReordered->getColumnIndices().data(),
+                                                   m_gpuReorderToNatural.data(),
+                                                   m_gpuMatrix.N(),
+                                                   m_diagIdxs.data());
         }
         reorderAndSplitMatrix(m_moveThreadBlockSize);
     } else {

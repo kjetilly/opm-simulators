@@ -23,8 +23,8 @@
 
 #include <stdexcept>
 
-#include <opm/simulators/wells/GroupState.hpp>
 #include <opm/json/JsonObject.hpp>
+#include <opm/simulators/wells/GroupState.hpp>
 
 
 #define BOOST_TEST_MODULE GroupStateTest
@@ -32,28 +32,31 @@
 
 using namespace Opm;
 
-class TestCommunicator {
+class TestCommunicator
+{
 public:
-    void sum(const double *, std::size_t) const {}
+    void sum(const double*, std::size_t) const
+    {
+    }
 };
 
 
 
 BOOST_AUTO_TEST_CASE(GroupStateCreate)
 {
-    std::size_t num_phases{3};
+    std::size_t num_phases {3};
     GroupState<double> gs(num_phases);
 
     BOOST_CHECK(!gs.has_production_rates("AGROUP"));
-    BOOST_CHECK_THROW( gs.update_production_rates("AGROUP", {0}), std::exception);
+    BOOST_CHECK_THROW(gs.update_production_rates("AGROUP", {0}), std::exception);
 
-    std::vector<double> rates{0,1,2};
+    std::vector<double> rates {0, 1, 2};
     gs.update_production_rates("AGROUP", rates);
     BOOST_CHECK(gs.has_production_rates("AGROUP"));
 
-    BOOST_CHECK_THROW( gs.production_rates("NO_SUCH_GROUP"), std::exception );
+    BOOST_CHECK_THROW(gs.production_rates("NO_SUCH_GROUP"), std::exception);
     auto r2 = gs.production_rates("AGROUP");
-    BOOST_CHECK( r2 == rates );
+    BOOST_CHECK(r2 == rates);
 
     gs.update_injection_rein_rates("CGROUP", rates);
 
@@ -73,5 +76,3 @@ BOOST_AUTO_TEST_CASE(GroupStateCreate)
     gs.communicate_rates(comm);
     BOOST_CHECK(gs2 == gs);
 }
-
-

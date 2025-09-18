@@ -28,12 +28,17 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
-template<class Scalar> struct MICPSolutionContainer;
+namespace data
+{
+    class Solution;
+}
+template <class Scalar>
+struct MICPSolutionContainer;
 
-template<class Scalar>
+template <class Scalar>
 class MICPContainer
 {
     using ScalarBuffer = std::vector<Scalar>;
@@ -42,22 +47,22 @@ public:
     void allocate(const unsigned bufferSize);
 
     void assign(const unsigned globalDofIdx,
-                 const Scalar microbialConcentration,
-                 const Scalar oxygenConcentration,
-                 const Scalar ureaConcentration,
-                 const Scalar biofilmConcentration,
-                 const Scalar calciteConcentration);
+                const Scalar microbialConcentration,
+                const Scalar oxygenConcentration,
+                const Scalar ureaConcentration,
+                const Scalar biofilmConcentration,
+                const Scalar calciteConcentration);
 
     MICPSolutionContainer<Scalar> getSolution() const;
 
     void outputRestart(data::Solution& sol);
 
-    void readRestart(const unsigned globalDofIdx,
-                     const unsigned elemIdx,
-                     const data::Solution& sol);
+    void readRestart(const unsigned globalDofIdx, const unsigned elemIdx, const data::Solution& sol);
 
     bool allocated() const
-    { return allocated_; }
+    {
+        return allocated_;
+    }
 
 private:
     bool allocated_ = false;

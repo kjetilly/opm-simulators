@@ -50,41 +50,45 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class FlowAluGridVanguard;
 
 } // namespace Opm
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
-struct AluGridVanguard {
-    using InheritsFrom = std::tuple<FlowBaseVanguard>;
-};
-}
+namespace TTag
+{
+    struct AluGridVanguard {
+        using InheritsFrom = std::tuple<FlowBaseVanguard>;
+    };
+} // namespace TTag
 
 // declare the properties
-template<class TypeTag>
+template <class TypeTag>
 struct Vanguard<TypeTag, TTag::AluGridVanguard> {
     using type = Opm::FlowAluGridVanguard<TypeTag>;
 };
-template<class TypeTag>
+template <class TypeTag>
 struct Grid<TypeTag, TTag::AluGridVanguard> {
 #if HAVE_MPI
-    using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>; 
-#else    
+    using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridMPIComm>;
+#else
     using type = Dune::ALUGrid<3, 3, Dune::cube, Dune::nonconforming, Dune::ALUGridNoComm>;
-#endif //HAVE_MPI     
+#endif // HAVE_MPI
 };
-template<class TypeTag>
+template <class TypeTag>
 struct EquilGrid<TypeTag, TTag::AluGridVanguard> {
     using type = Dune::CpGrid;
 };
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -106,7 +110,7 @@ class AluGridVanguard : public FlowBaseVanguard<TypeTag>
 public:
     using Grid = GetPropType<TypeTag, Properties::Grid>;
     using EquilGrid = GetPropType<TypeTag, Properties::EquilGrid>;
-    using GridView = GetPropType<TypeTag, Properties::GridView>;        
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
     using CartesianIndexMapper = Dune::CartesianIndexMapper<Grid>;
     using LevelCartesianIndexMapper = Opm::LevelCartesianIndexMapper<Grid>;
     using EquilCartesianIndexMapper = Dune::CartesianIndexMapper<EquilGrid>;
@@ -119,21 +123,25 @@ public:
     explicit AluGridVanguard(Simulator& simulator)
         : FlowBaseVanguard<TypeTag>(simulator)
     {
-      this->mpiRank = FlowGenericVanguard::comm().rank();
-      this->callImplementationInit();
+        this->mpiRank = FlowGenericVanguard::comm().rank();
+        this->callImplementationInit();
     }
 
     /*!
      * \brief Return a reference to the simulation grid.
      */
     Grid& grid()
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Return a reference to the simulation grid.
      */
     const Grid& grid() const
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Returns a refefence to the grid which should be used by the EQUIL
@@ -145,7 +153,9 @@ public:
      * same as the grid which is used for the actual simulation.
      */
     const EquilGrid& equilGrid() const
-    { return *equilGrid_; }
+    {
+        return *equilGrid_;
+    }
 
     /*!
      * \brief Indicates that the initial condition has been computed and the memory used
@@ -175,52 +185,46 @@ public:
         grid().loadBalance(*dataHandle);
 
         // communicate non-interior cells values
-        grid().communicate(*dataHandle,
-                           Dune::InteriorBorder_All_Interface,
-                           Dune::ForwardCommunication );
+        grid().communicate(*dataHandle, Dune::InteriorBorder_All_Interface, Dune::ForwardCommunication);
 
-       if (grid().size(0))
-       {
-           globalTrans_ = std::make_unique<TransmissibilityType>(this->eclState(),
-                                                                 this->gridView(),
-                                                                 this->cartesianIndexMapper(),
-                                                                 this->grid(),
-                                                                 this->cellCentroids(),
-                                                                 getPropValue<TypeTag,
-                                                                 Properties::EnableEnergy>(),
-                                                                 getPropValue<TypeTag,
-                                                                 Properties::EnableDiffusion>(),
-                                                                 getPropValue<TypeTag,
-                                                                 Properties::EnableDispersion>());
+        if (grid().size(0)) {
+            globalTrans_
+                = std::make_unique<TransmissibilityType>(this->eclState(),
+                                                         this->gridView(),
+                                                         this->cartesianIndexMapper(),
+                                                         this->grid(),
+                                                         this->cellCentroids(),
+                                                         getPropValue<TypeTag, Properties::EnableEnergy>(),
+                                                         getPropValue<TypeTag, Properties::EnableDiffusion>(),
+                                                         getPropValue<TypeTag, Properties::EnableDispersion>());
             // Re-ordering  for ALUGrid
-            globalTrans_->update(false, TransmissibilityType::TransUpdateQuantities::Trans,
-                                 [&](unsigned int i) { return gridEquilIdxToGridIdx(i);});
+            globalTrans_->update(false, TransmissibilityType::TransUpdateQuantities::Trans, [&](unsigned int i) {
+                return gridEquilIdxToGridIdx(i);
+            });
         }
-
     }
 
     void addLgrs()
     {
-    // do nothing: AluGrid with LGRs not supported yet!
+        // do nothing: AluGrid with LGRs not supported yet!
     }
 
-    template<class DataHandle>
+    template <class DataHandle>
     void scatterData(DataHandle& /*handle*/) const
     {
-    // not existing for this type of grid yet
+        // not existing for this type of grid yet
     }
 
-    template<class DataHandle>
+    template <class DataHandle>
     void gatherData(DataHandle& /*handle*/) const
     {
-    // not existing for this type of grid yet
+        // not existing for this type of grid yet
     }
 
-    template<class DataHandle, class InterfaceType, class CommunicationDirection>
-    void communicate (DataHandle& /*data*/, InterfaceType /*iftype*/,
-                      CommunicationDirection /*dir*/) const
+    template <class DataHandle, class InterfaceType, class CommunicationDirection>
+    void communicate(DataHandle& /*data*/, InterfaceType /*iftype*/, CommunicationDirection /*dir*/) const
     {
-    // not existing for this type of grid yet
+        // not existing for this type of grid yet
     }
 
     /*!
@@ -238,7 +242,9 @@ public:
      *        to the corresponding element index of the logically Cartesian index.
      */
     const CartesianIndexMapper& cartesianIndexMapper() const
-    { return *cartesianIndexMapper_; }
+    {
+        return *cartesianIndexMapper_;
+    }
 
     /*!
      * \brief Returns the object which maps a global element index of the simulation grid
@@ -246,13 +252,17 @@ public:
      *        No refinement is supported for AluGrid so it coincides with CartesianIndexMapper.
      */
     const LevelCartesianIndexMapper levelCartesianIndexMapper() const
-    { return LevelCartesianIndexMapper(*cartesianIndexMapper_); }
+    {
+        return LevelCartesianIndexMapper(*cartesianIndexMapper_);
+    }
 
     /*!
      * \brief Returns mapper from compressed to cartesian indices for the EQUIL grid
      */
     const EquilCartesianIndexMapper& equilCartesianIndexMapper() const
-    { return *equilCartesianIndexMapper_; }
+    {
+        return *equilCartesianIndexMapper_;
+    }
 
     /*!
      * \brief Get function to query cell centroids for a distributed grid.
@@ -261,15 +271,14 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,dimensionworld>(int)>
-    cellCentroids() const
+    std::function<std::array<double, dimensionworld>(int)> cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), false);
     }
 
     const TransmissibilityType& globalTransmissibility() const
     {
-        assert( globalTrans_ != nullptr );
+        assert(globalTrans_ != nullptr);
         return *globalTrans_;
     }
 
@@ -279,16 +288,18 @@ public:
     }
 
     std::vector<int> cellPartition() const
-    {      
+    {
         // not required for this type of grid yet
         return {};
     }
-    
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
+
+    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const
+    {
         return equilGridToGrid_[elemIndex];
     }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const
+    {
         return ordering_[elemIndex];
     }
 
@@ -321,12 +332,11 @@ protected:
         this->equilGrid_ = std::make_unique<Dune::CpGrid>();
 #endif
         // Note: removed_cells is guaranteed to be empty on ranks other than 0.
-        auto removed_cells =
-            this->equilGrid_->processEclipseFormat(input_grid,
-                                                   &this->eclState(),
-                                                   /*isPeriodic=*/false,
-                                                   /*flipNormals=*/false,
-                                                   /*clipZ=*/false);
+        auto removed_cells = this->equilGrid_->processEclipseFormat(input_grid,
+                                                                    &this->eclState(),
+                                                                    /*isPeriodic=*/false,
+                                                                    /*flipNormals=*/false,
+                                                                    /*clipZ=*/false);
 
         cartesianCellId_ = this->equilGrid_->globalCell();
 
@@ -341,7 +351,8 @@ protected:
 
         factory_ = std::make_unique<Factory>();
         grid_ = factory_->convert(*equilGrid_, cartesianCellId_, ordering_);
-        OpmLog::warning("Space Filling Curve (SFC) ordering is enabled: see flow_blackoil_alugrid for more informations on disabling/enabling SFC reordering");
+        OpmLog::warning("Space Filling Curve (SFC) ordering is enabled: see flow_blackoil_alugrid for more "
+                        "informations on disabling/enabling SFC reordering");
         equilGridToGrid_.resize(ordering_.size());
         for (std::size_t index = 0; index < ordering_.size(); ++index) {
             equilGridToGrid_[ordering_[index]] = index;
@@ -364,7 +375,7 @@ protected:
     std::vector<int> cartesianCellId_;
     std::vector<unsigned int> ordering_;
     std::vector<unsigned int> equilGridToGrid_;
-    std::array<int,dimension> cartesianDimension_;
+    std::array<int, dimension> cartesianDimension_;
     std::unique_ptr<CartesianIndexMapper> cartesianIndexMapper_;
     std::unique_ptr<EquilCartesianIndexMapper> equilCartesianIndexMapper_;
     std::unique_ptr<Factory> factory_;

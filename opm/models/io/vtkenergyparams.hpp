@@ -27,23 +27,32 @@
 #ifndef OPM_VTK_ENERGY_PARAMS_HPP
 #define OPM_VTK_ENERGY_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteSolidInternalEnergy { static constexpr bool value = false; };
-struct VtkWriteThermalConductivity { static constexpr bool value = false; };
-struct VtkWriteInternalEnergies { static constexpr bool value = false; };
-struct VtkWriteEnthalpies { static constexpr bool value = false; };
+struct VtkWriteSolidInternalEnergy {
+    static constexpr bool value = false;
+};
+struct VtkWriteThermalConductivity {
+    static constexpr bool value = false;
+};
+struct VtkWriteInternalEnergies {
+    static constexpr bool value = false;
+};
+struct VtkWriteEnthalpies {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkEnergyModule.
  */
-struct VtkEnergyParams
-{
+struct VtkEnergyParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

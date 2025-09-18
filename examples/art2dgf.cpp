@@ -21,44 +21,41 @@
   copyright holders.
 */
 
-#include <dune/common/version.hh>
-#include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
+#include <dune/common/version.hh>
 
 #include <algorithm>
 #include <fstream>
-#include <stdexcept>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
-namespace Ewoms {
+namespace Ewoms
+{
 /*!
  * \brief Reads in mesh files in the ART format.
  *
  * This file format is used to specify grids with fractures.
  */
 
- struct Art2DGF
- {
+struct Art2DGF {
     /*!
      * \brief Create the Grid
      */
-    static void convert( const std::string& artFileName,
-                         std::ostream& dgfFile,
-                         const unsigned precision = 16 )
+    static void convert(const std::string& artFileName, std::ostream& dgfFile, const unsigned precision = 16)
     {
         using Scalar = double;
-        using GlobalPosition = Dune::FieldVector< Scalar, 2 >;
+        using GlobalPosition = Dune::FieldVector<Scalar, 2>;
         enum ParseMode { Vertex, Edge, Element, Finished };
-        std::vector< std::pair<GlobalPosition, unsigned> > vertexPos;
-        std::vector<std::pair<unsigned, unsigned> > edges;
-        std::vector<std::pair<unsigned, unsigned> > fractureEdges;
-        std::vector<std::vector<unsigned> > elements;
+        std::vector<std::pair<GlobalPosition, unsigned>> vertexPos;
+        std::vector<std::pair<unsigned, unsigned>> edges;
+        std::vector<std::pair<unsigned, unsigned>> fractureEdges;
+        std::vector<std::vector<unsigned>> elements;
         std::ifstream inStream(artFileName);
         if (!inStream.is_open()) {
-            throw std::runtime_error("File '"+artFileName
-                                     +"' does not exist or is not readable");
+            throw std::runtime_error("File '" + artFileName + "' does not exist or is not readable");
         }
         std::string curLine;
         ParseMode curParseMode = Vertex;
@@ -73,16 +70,13 @@ namespace Ewoms {
 
             // remove leading whitespace
             unsigned numLeadingSpaces = 0;
-            while (curLine.size() > numLeadingSpaces
-                   && std::isspace(curLine[numLeadingSpaces]))
+            while (curLine.size() > numLeadingSpaces && std::isspace(curLine[numLeadingSpaces]))
                 ++numLeadingSpaces;
-            curLine = curLine.substr(numLeadingSpaces,
-                                     curLine.size() - numLeadingSpaces);
+            curLine = curLine.substr(numLeadingSpaces, curLine.size() - numLeadingSpaces);
 
             // remove trailing whitespace
             unsigned numTrailingSpaces = 0;
-            while (curLine.size() > numTrailingSpaces
-                   && std::isspace(curLine[curLine.size() - numTrailingSpaces]))
+            while (curLine.size() > numTrailingSpaces && std::isspace(curLine[curLine.size() - numTrailingSpaces]))
                 ++numTrailingSpaces;
             curLine.erase(numTrailingSpaces);
 
@@ -108,9 +102,8 @@ namespace Ewoms {
                 // coordinate. the last number is the Z coordinate
                 // which we ignore (so far)
                 iss >> coord[0] >> coord[1];
-                vertexPos.push_back( std::make_pair( coord, 0 ) );
-            }
-            else if (curParseMode == Edge) {
+                vertexPos.push_back(std::make_pair(coord, 0));
+            } else if (curParseMode == Edge) {
                 // read an edge and update the fracture mapper
 
                 // read the data attached to the edge
@@ -141,11 +134,10 @@ namespace Ewoms {
                 // add the edge to the fracture mapper if it is a fracture
                 if (dataVal < 0) {
                     fractureEdges.push_back(edge);
-                    vertexPos[ edge.first  ].second = 1;
-                    vertexPos[ edge.second ].second = 1;
+                    vertexPos[edge.first].second = 1;
+                    vertexPos[edge.second].second = 1;
                 }
-            }
-            else if (curParseMode == Element) {
+            } else if (curParseMode == Element) {
                 // skip the data attached to an element
                 std::istringstream iss(curLine);
                 int dataVal;
@@ -206,9 +198,8 @@ namespace Ewoms {
                 if (mat.determinant() < 0)
                     std::swap(vertIndices[2], vertIndices[1]);
 
-                elements.push_back( vertIndices );
-            }
-            else if (curParseMode == Finished) {
+                elements.push_back(vertIndices);
+            } else if (curParseMode == Finished) {
                 assert(curLine.size() == 0);
             }
         }
@@ -218,23 +209,21 @@ namespace Ewoms {
         dgfFile << "GridParameter" << std::endl
                 << "overlap 1" << std::endl
                 << "closure green" << std::endl
-                << "#" << std::endl << std::endl;
+                << "#" << std::endl
+                << std::endl;
 
         dgfFile << "Vertex" << std::endl;
         const bool hasFractures = fractureEdges.size() > 0;
-        if( hasFractures )
-        {
+        if (hasFractures) {
             dgfFile << "parameters 1" << std::endl;
         }
         dgfFile << std::scientific;
-        dgfFile.precision( precision );
+        dgfFile.precision(precision);
         const size_t vxSize = vertexPos.size();
-        for( size_t i=0; i<vxSize; ++i)
-        {
-            dgfFile << vertexPos[ i ].first;
-            if( hasFractures )
-            {
-                dgfFile << " " << vertexPos[ i ].second;
+        for (size_t i = 0; i < vxSize; ++i) {
+            dgfFile << vertexPos[i].first;
+            if (hasFractures) {
+                dgfFile << " " << vertexPos[i].second;
             }
             dgfFile << std::endl;
         }
@@ -243,11 +232,10 @@ namespace Ewoms {
 
         dgfFile << "Simplex" << std::endl;
         const size_t elSize = elements.size();
-        for( size_t i=0; i<elSize; ++i )
-        {
-            const size_t elVx = elements[ i ].size();
-            for( size_t j=0; j<elVx; ++j )
-                dgfFile << elements[ i ][ j ] << " ";
+        for (size_t i = 0; i < elSize; ++i) {
+            const size_t elVx = elements[i].size();
+            for (size_t j = 0; j < elVx; ++j)
+                dgfFile << elements[i][j] << " ";
             dgfFile << std::endl;
         }
 
@@ -257,11 +245,12 @@ namespace Ewoms {
         dgfFile << "#" << std::endl << std::endl;
         dgfFile << "#" << std::endl;
     }
- };
+};
 
 } // namespace Ewoms
 
-int main( int argc, char** argv )
+int
+main(int argc, char** argv)
 {
     if (argc != 2) {
         std::cout << "Converts a grid file from the ART file format to DGF (Dune grid format)\n"
@@ -272,13 +261,13 @@ int main( int argc, char** argv )
         return 1;
     }
 
-    std::string filename( argv[ 1 ] );
-    std::string dgfname( filename );
+    std::string filename(argv[1]);
+    std::string dgfname(filename);
     dgfname += ".dgf";
 
     std::cout << "Converting ART file \"" << filename << "\" to DGF file \"" << dgfname << "\"\n";
-    std::ofstream dgfFile( dgfname );
-    Ewoms::Art2DGF::convert( filename, dgfFile );
+    std::ofstream dgfFile(dgfname);
+    Ewoms::Art2DGF::convert(filename, dgfFile);
 
     return 0;
 }

@@ -28,31 +28,31 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Class handling simple output to HDF5.
-class HDF5File {
+class HDF5File
+{
 public:
     //! \brief Enumeration of file opening modes.
     enum class OpenMode {
-        APPEND,    //!< Append to an existing file (creates new if not)
+        APPEND, //!< Append to an existing file (creates new if not)
         OVERWRITE, //!< Overwrite and write to an existing file
-        READ       //!< Open existing file for reading
+        READ //!< Open existing file for reading
     };
 
     //! \brief Enumeration of dataset modes.
     enum class DataSetMode {
-        ROOT_ONLY,     //!< A single dataset created at the root process
-        PROCESS_SPLIT  //!< One separate data set for each parallel process
+        ROOT_ONLY, //!< A single dataset created at the root process
+        PROCESS_SPLIT //!< One separate data set for each parallel process
     };
 
     //! \brief Opens HDF5 file for I/O.
     //! \param fileName Name of file to open
     //! \param mode Open mode for file
     //! \param comm Parallel communicator
-    HDF5File(const std::string& fileName,
-             OpenMode mode,
-             Parallel::Communication comm);
+    HDF5File(const std::string& fileName, OpenMode mode, Parallel::Communication comm);
 
     //! \brief Destructor clears up any opened files.
     ~HDF5File();
@@ -88,18 +88,14 @@ private:
     //! \param grp Handle for group to store dataset in
     //! \param buffer Data to write
     //! \param dset Name of dataset
-    void writeSplit(hid_t grp,
-                    const std::vector<char>& buffer,
-                    const std::string& dset) const;
+    void writeSplit(hid_t grp, const std::vector<char>& buffer, const std::string& dset) const;
 
     //! \brief Write data from root process only.
     //! \param grp Handle for group to store dataset in
     //! \param buffer Data to write
     //! \param dset Name of dataset
-    void writeRootOnly(hid_t grp,
-                       const std::vector<char>& buffer,
-                       const std::string& group,
-                       const std::string& dset) const;
+    void
+    writeRootOnly(hid_t grp, const std::vector<char>& buffer, const std::string& group, const std::string& dset) const;
 
     //! \brief Return a dataset creation properly list with compression settings.
     //! \param size Size of dataset
@@ -111,12 +107,11 @@ private:
     //! \param dxpl Dataset transfer property list
     //! \param size Size of dataset
     //! \param data Data to write
-    void writeDset(int rank, hid_t dataset_id,
-                   hid_t dxpl, hsize_t size, const void* data) const;
+    void writeDset(int rank, hid_t dataset_id, hid_t dxpl, hsize_t size, const void* data) const;
     hid_t m_file = H5I_INVALID_HID; //!< File handle
     Parallel::Communication comm_;
 };
 
-}
+} // namespace Opm
 
 #endif

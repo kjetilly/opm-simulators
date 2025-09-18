@@ -61,9 +61,11 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace details {
+namespace details
+{
 
     constexpr unsigned elemIdxShift = 32; // bits
 
@@ -90,64 +92,69 @@ namespace details {
     {
         return (std::uint64_t(elemIdx1) << elemIdxShift) + elemIdx2;
     }
-}
+} // namespace details
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-Transmissibility(const EclipseState& eclState,
-                 const GridView& gridView,
-                 const CartesianIndexMapper& cartMapper,
-                 const Grid& grid,
-                 std::function<std::array<double,dimWorld>(int)> centroids,
-                 bool enableEnergy,
-                 bool enableDiffusivity,
-                 bool enableDispersivity)
-      : eclState_(eclState)
-      , gridView_(gridView)
-      , cartMapper_(cartMapper)
-      , grid_(grid)
-      , centroids_(centroids)
-      , enableEnergy_(enableEnergy)
-      , enableDiffusivity_(enableDiffusivity)
-      , enableDispersivity_(enableDispersivity)
-      , lookUpData_(gridView)
-      , lookUpCartesianData_(gridView, cartMapper)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::Transmissibility(
+    const EclipseState& eclState,
+    const GridView& gridView,
+    const CartesianIndexMapper& cartMapper,
+    const Grid& grid,
+    std::function<std::array<double, dimWorld>(int)> centroids,
+    bool enableEnergy,
+    bool enableDiffusivity,
+    bool enableDispersivity)
+    : eclState_(eclState)
+    , gridView_(gridView)
+    , cartMapper_(cartMapper)
+    , grid_(grid)
+    , centroids_(centroids)
+    , enableEnergy_(enableEnergy)
+    , enableDiffusivity_(enableDiffusivity)
+    , enableDispersivity_(enableDispersivity)
+    , lookUpData_(gridView)
+    , lookUpCartesianData_(gridView, cartMapper)
 {
     const UnitSystem& unitSystem = eclState_.getDeckUnitSystem();
-    transmissibilityThreshold_  = unitSystem.parse("Transmissibility").getSIScaling() * 1e-6;
+    transmissibilityThreshold_ = unitSystem.parse("Transmissibility").getSIScaling() * 1e-6;
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-transmissibility(unsigned elemIdx1, unsigned elemIdx2) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::transmissibility(unsigned elemIdx1,
+                                                                                                unsigned elemIdx2) const
 {
     return trans_.at(details::isId(elemIdx1, elemIdx2));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-transmissibilityBoundary(unsigned elemIdx, unsigned boundaryFaceIdx) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::transmissibilityBoundary(
+    unsigned elemIdx, unsigned boundaryFaceIdx) const
 {
     return transBoundary_.at(std::make_pair(elemIdx, boundaryFaceIdx));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-thermalHalfTrans(unsigned insideElemIdx, unsigned outsideElemIdx) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::thermalHalfTrans(
+    unsigned insideElemIdx, unsigned outsideElemIdx) const
 {
     return thermalHalfTrans_.at(details::directionalIsId(insideElemIdx, outsideElemIdx));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-thermalHalfTransBoundary(unsigned insideElemIdx, unsigned boundaryFaceIdx) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::thermalHalfTransBoundary(
+    unsigned insideElemIdx, unsigned boundaryFaceIdx) const
 {
     return thermalHalfTransBoundary_.at(std::make_pair(insideElemIdx, boundaryFaceIdx));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-diffusivity(unsigned elemIdx1, unsigned elemIdx2) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::diffusivity(unsigned elemIdx1,
+                                                                                           unsigned elemIdx2) const
 {
     if (diffusivity_.empty())
         return 0.0;
@@ -155,9 +162,10 @@ diffusivity(unsigned elemIdx1, unsigned elemIdx2) const
     return diffusivity_.at(details::isId(elemIdx1, elemIdx2));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-Scalar Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-dispersivity(unsigned elemIdx1, unsigned elemIdx2) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+Scalar
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::dispersivity(unsigned elemIdx1,
+                                                                                            unsigned elemIdx2) const
 {
     if (dispersivity_.empty())
         return 0.0;
@@ -165,10 +173,13 @@ dispersivity(unsigned elemIdx1, unsigned elemIdx2) const
     return dispersivity_.at(details::isId(elemIdx1, elemIdx2));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-update(bool global, const TransUpdateQuantities update_quantities,
-       const std::function<unsigned int(unsigned int)>& map, const bool applyNncMultregT)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::update(
+    bool global,
+    const TransUpdateQuantities update_quantities,
+    const std::function<unsigned int(unsigned int)>& map,
+    const bool applyNncMultregT)
 {
     // whether only update the permeability related transmissibility
     const bool onlyTrans = (update_quantities == TransUpdateQuantities::Trans);
@@ -187,8 +198,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
 
     if (map) {
         extractPermeability_(map);
-    }
-    else {
+    } else {
         extractPermeability_();
     }
 
@@ -200,7 +210,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
     // is a conforming Cartesian grid).
     trans_.clear();
     if (num_threads == 1) {
-        trans_.reserve(numElements*3*1.05);
+        trans_.reserve(numElements * 3 * 1.05);
     }
 
     transBoundary_.clear();
@@ -209,7 +219,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
     if (enableEnergy_ && !onlyTrans) {
         thermalHalfTrans_.clear();
         if (num_threads == 1) {
-            thermalHalfTrans_.reserve(numElements*6*1.05);
+            thermalHalfTrans_.reserve(numElements * 6 * 1.05);
         }
 
         thermalHalfTransBoundary_.clear();
@@ -219,7 +229,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
     if (updateDiffusivity && !onlyTrans) {
         diffusivity_.clear();
         if (num_threads == 1) {
-            diffusivity_.reserve(numElements*3*1.05);
+            diffusivity_.reserve(numElements * 3 * 1.05);
         }
         extractPorosity_();
     }
@@ -228,7 +238,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
     if (updateDispersivity && !onlyTrans) {
         dispersivity_.clear();
         if (num_threads == 1) {
-            dispersivity_.reserve(numElements*3*1.05);
+            dispersivity_.reserve(numElements * 3 * 1.05);
         }
         extractDispersion_();
     }
@@ -262,15 +272,11 @@ update(bool global, const TransUpdateQuantities update_quantities,
         centroids_cache_[elemIdx] = centroids_(elemIdx);
     }
 
-    auto harmonicMean = [](const Scalar x1, const Scalar x2)
-    {
-        return (std::abs(x1) < 1e-30 || std::abs(x2) < 1e-30)
-            ? 0.0
-            : 1.0 / (1.0 / x1 + 1.0 / x2);
+    auto harmonicMean = [](const Scalar x1, const Scalar x2) {
+        return (std::abs(x1) < 1e-30 || std::abs(x2) < 1e-30) ? 0.0 : 1.0 / (1.0 / x1 + 1.0 / x2);
     };
 
-    auto faceIdToDir = [](int insideFaceIdx)
-    {
+    auto faceIdToDir = [](int insideFaceIdx) {
         switch (insideFaceIdx) {
         case 0:
         case 1:
@@ -287,28 +293,18 @@ update(bool global, const TransUpdateQuantities update_quantities,
         }
     };
 
-    auto halfDiff = [](const DimVector& faceAreaNormal,
-                       const unsigned,
-                       const DimVector& distVector,
-                       const Scalar prop)
-    {
-        return computeHalfDiffusivity_(faceAreaNormal,
-                                       distVector,
-                                       prop);
-    };
+    auto halfDiff
+        = [](const DimVector& faceAreaNormal, const unsigned, const DimVector& distVector, const Scalar prop) {
+              return computeHalfDiffusivity_(faceAreaNormal, distVector, prop);
+          };
 
-    ThreadSafeMapBuilder transBoundary(transBoundary_, num_threads,
-                                       MapBuilderInsertionMode::Insert_Or_Assign);
-    ThreadSafeMapBuilder transMap(trans_, num_threads,
-                                  MapBuilderInsertionMode::Insert_Or_Assign);
-    ThreadSafeMapBuilder thermalHalfTransBoundary(thermalHalfTransBoundary_, num_threads,
-                                                  MapBuilderInsertionMode::Insert_Or_Assign);
-    ThreadSafeMapBuilder thermalHalfTrans(thermalHalfTrans_, num_threads,
-                                          MapBuilderInsertionMode::Insert_Or_Assign);
-    ThreadSafeMapBuilder diffusivity(diffusivity_, num_threads,
-                                     MapBuilderInsertionMode::Insert_Or_Assign);
-    ThreadSafeMapBuilder dispersivity(dispersivity_, num_threads,
-                                      MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder transBoundary(transBoundary_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder transMap(trans_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder thermalHalfTransBoundary(
+        thermalHalfTransBoundary_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder thermalHalfTrans(thermalHalfTrans_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder diffusivity(diffusivity_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
+    ThreadSafeMapBuilder dispersivity(dispersivity_, num_threads, MapBuilderInsertionMode::Insert_Or_Assign);
 
 #ifdef _OPENMP
 #pragma omp parallel for
@@ -322,35 +318,27 @@ update(bool global, const TransUpdateQuantities update_quantities,
             inside.elemIdx = elemMapper.index(elem);
             // Get the Cartesian index of the origin cells (parent or equivalent cell on level zero),
             // for CpGrid with LGRs. For general grids and no LGRs, get the usual Cartesian Index.
-            inside.cartElemIdx = this->lookUpCartesianData_.
-                template getFieldPropCartesianIdx<Grid>(inside.elemIdx);
+            inside.cartElemIdx = this->lookUpCartesianData_.template getFieldPropCartesianIdx<Grid>(inside.elemIdx);
 
-            auto computeHalf = [this, &faceAreaNormal, &inside, &outside]
-                               (const auto& halfComputer,
-                                const auto& prop1, const auto& prop2) -> std::array<Scalar,2>
-            {
+            auto computeHalf = [this, &faceAreaNormal, &inside, &outside](const auto& halfComputer,
+                                                                          const auto& prop1,
+                                                                          const auto& prop2) -> std::array<Scalar, 2> {
                 return {
-                    halfComputer(faceAreaNormal,
-                                 inside.faceIdx,
-                                 distanceVector_(inside.faceCenter, inside.elemIdx),
-                                 prop1),
-                    halfComputer(faceAreaNormal,
-                                 outside.faceIdx,
-                                 distanceVector_(outside.faceCenter, outside.elemIdx),
-                                 prop2)
-                };
+                    halfComputer(
+                        faceAreaNormal, inside.faceIdx, distanceVector_(inside.faceCenter, inside.elemIdx), prop1),
+                    halfComputer(
+                        faceAreaNormal, outside.faceIdx, distanceVector_(outside.faceCenter, outside.elemIdx), prop2)};
             };
 
-            auto computeHalfMean = [&inside, &outside, &computeHalf, &ntg, &harmonicMean]
-                                   (const auto& halfComputer, const auto& prop)
-            {
-                auto onesided = computeHalf(halfComputer, prop[inside.elemIdx], prop[outside.elemIdx]);
-                applyNtg_(onesided[0], inside, ntg);
-                applyNtg_(onesided[1], outside, ntg);
+            auto computeHalfMean
+                = [&inside, &outside, &computeHalf, &ntg, &harmonicMean](const auto& halfComputer, const auto& prop) {
+                      auto onesided = computeHalf(halfComputer, prop[inside.elemIdx], prop[outside.elemIdx]);
+                      applyNtg_(onesided[0], inside, ntg);
+                      applyNtg_(onesided[1], outside, ntg);
 
-                //TODO Add support for multipliers
-                return harmonicMean(onesided[0], onesided[1]);
-            };
+                      // TODO Add support for multipliers
+                      return harmonicMean(onesided[0], onesided[1]);
+                  };
 
             unsigned boundaryIsIdx = 0;
             for (const auto& intersection : intersections(gridView_, elem)) {
@@ -363,11 +351,10 @@ update(bool global, const TransUpdateQuantities update_quantities,
                     faceAreaNormal = intersection.centerUnitOuterNormal();
                     faceAreaNormal *= geometry.volume();
 
-                    Scalar transBoundaryIs =
-                        computeHalfTrans_(faceAreaNormal,
-                                          intersection.indexInInside(),
-                                          distanceVector_(inside.faceCenter, inside.elemIdx),
-                                          permeability_[inside.elemIdx]);
+                    Scalar transBoundaryIs = computeHalfTrans_(faceAreaNormal,
+                                                               intersection.indexInInside(),
+                                                               distanceVector_(inside.faceCenter, inside.elemIdx),
+                                                               permeability_[inside.elemIdx]);
 
                     // normally there would be two half-transmissibilities that would be
                     // averaged. on the grid boundary there only is the half
@@ -378,12 +365,10 @@ update(bool global, const TransUpdateQuantities update_quantities,
                     // for boundary intersections we also need to compute the thermal
                     // half transmissibilities
                     if (enableEnergy_ && !onlyTrans) {
-                        Scalar transBoundaryEnergyIs =
-                            computeHalfDiffusivity_(faceAreaNormal,
-                                                    distanceVector_(inside.faceCenter, inside.elemIdx),
-                                                    1.0);
+                        Scalar transBoundaryEnergyIs = computeHalfDiffusivity_(
+                            faceAreaNormal, distanceVector_(inside.faceCenter, inside.elemIdx), 1.0);
                         thermalHalfTransBoundary.insert_or_assign(std::make_pair(inside.elemIdx, boundaryIsIdx),
-                                                                   transBoundaryEnergyIs);
+                                                                  transBoundaryEnergyIs);
                     }
 
                     ++boundaryIsIdx;
@@ -402,22 +387,23 @@ update(bool global, const TransUpdateQuantities update_quantities,
 
                 // Get the Cartesian index of the origin cells (parent or equivalent cell on level zero),
                 // for CpGrid with LGRs. For general grids and no LGRs, get the usual Cartesian Index.
-                outside.cartElemIdx =  this->lookUpCartesianData_.
-                    template getFieldPropCartesianIdx<Grid>(outside.elemIdx);
+                outside.cartElemIdx
+                    = this->lookUpCartesianData_.template getFieldPropCartesianIdx<Grid>(outside.elemIdx);
 
                 // we only need to calculate a face's transmissibility
                 // once...
-                // In a parallel run inside.cartElemIdx > outside.cartElemIdx does not imply inside.elemIdx > outside.elemIdx for
-                // ghost cells and we need to use the cartesian index as this will be used when applying Z multipliers
-                // To cover the case where both cells are part of an LGR and as a consequence might have
-                // the same cartesian index, we tie their Cartesian indices and the ones on the leaf grid view.
+                // In a parallel run inside.cartElemIdx > outside.cartElemIdx does not imply inside.elemIdx >
+                // outside.elemIdx for ghost cells and we need to use the cartesian index as this will be used when
+                // applying Z multipliers To cover the case where both cells are part of an LGR and as a consequence
+                // might have the same cartesian index, we tie their Cartesian indices and the ones on the leaf grid
+                // view.
                 if (std::tie(inside.cartElemIdx, inside.elemIdx) > std::tie(outside.cartElemIdx, outside.elemIdx)) {
                     continue;
                 }
 
                 // local indices of the faces of the inside and
                 // outside elements which contain the intersection
-                inside.faceIdx  = intersection.indexInInside();
+                inside.faceIdx = intersection.indexInInside();
                 outside.faceIdx = intersection.indexInOutside();
 
                 if (inside.faceIdx == -1) {
@@ -426,8 +412,10 @@ update(bool global, const TransUpdateQuantities update_quantities,
                     assert(outside.faceIdx == -1);
                     transMap.insert_or_assign(details::isId(inside.elemIdx, outside.elemIdx), 0.0);
                     if (enableEnergy_ && !onlyTrans) {
-                        thermalHalfTrans.insert_or_assign(details::directionalIsId(inside.elemIdx, outside.elemIdx), 0.0);
-                        thermalHalfTrans.insert_or_assign(details::directionalIsId(outside.elemIdx, inside.elemIdx), 0.0);
+                        thermalHalfTrans.insert_or_assign(details::directionalIsId(inside.elemIdx, outside.elemIdx),
+                                                          0.0);
+                        thermalHalfTrans.insert_or_assign(details::directionalIsId(outside.elemIdx, inside.elemIdx),
+                                                          0.0);
                     }
 
                     if (updateDiffusivity && !onlyTrans) {
@@ -440,11 +428,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
                 }
 
                 typename std::is_same<Grid, Dune::CpGrid>::type isCpGrid;
-                computeFaceProperties(intersection,
-                                      inside,
-                                      outside,
-                                      faceAreaNormal,
-                                      isCpGrid);
+                computeFaceProperties(intersection, inside, outside, faceAreaNormal, isCpGrid);
 
                 Scalar trans = computeHalfMean(computeHalfTrans_, permeability_);
 
@@ -452,7 +436,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
                 // for the inside ...
                 if (!pinchActive) {
                     if (inside.faceIdx > 3) { // top or bottom
-                         auto find_layer = [&cartDims](std::size_t cell) {
+                        auto find_layer = [&cartDims](std::size_t cell) {
                             cell /= cartDims[0];
                             auto k = cell / cartDims[1];
                             return k;
@@ -462,7 +446,7 @@ update(bool global, const TransUpdateQuantities update_quantities,
                         // When a grid is a CpGrid with LGRs, insideCartElemIdx coincides with outsideCartElemIdx
                         // for cells on the leaf with the same parent cell on level zero.
                         assert((kup != kdown) || (inside.cartElemIdx == outside.cartElemIdx));
-                        if (std::abs(kup -kdown) > 1) {
+                        if (std::abs(kup - kdown) > 1) {
                             trans = 0.0;
                         }
                     }
@@ -473,17 +457,15 @@ update(bool global, const TransUpdateQuantities update_quantities,
                     // to false if  PINCH(4) == ALL holds
                     // In contrast to the name this will also apply
                     applyAllZMultipliers_(trans, inside, outside, transMult, cartDims);
-                }
-                else {
+                } else {
                     applyMultipliers_(trans, inside.faceIdx, inside.cartElemIdx, transMult);
                     // ... and outside elements
                     applyMultipliers_(trans, outside.faceIdx, outside.cartElemIdx, transMult);
                 }
 
                 // apply the region multipliers (cf. the MULTREGT keyword)
-                trans *= transMult.getRegionMultiplier(inside.cartElemIdx,
-                                                       outside.cartElemIdx,
-                                                       faceIdToDir(inside.faceIdx));
+                trans *= transMult.getRegionMultiplier(
+                    inside.cartElemIdx, outside.cartElemIdx, faceIdToDir(inside.faceIdx));
 
                 transMap.insert_or_assign(details::isId(inside.elemIdx, outside.elemIdx), trans);
 
@@ -547,12 +529,12 @@ update(bool global, const TransUpdateQuantities update_quantities,
     this->updateFromEclState_(global);
 
     // Create mapping from global to local index
-    std::unordered_map<std::size_t,int> globalToLocal;
+    std::unordered_map<std::size_t, int> globalToLocal;
 
     // Loop over all elements (global grid) and store Cartesian index
     for (const auto& elem : elements(grid_.leafGridView())) {
         int elemIdx = elemMapper.index(elem);
-        int cartElemIdx =  cartMapper_.cartesianIndex(elemIdx);
+        int cartElemIdx = cartMapper_.cartesianIndex(elemIdx);
         globalToLocal[cartElemIdx] = elemIdx;
     }
 
@@ -577,9 +559,9 @@ update(bool global, const TransUpdateQuantities update_quantities,
     this->removeNonCartesianTransmissibilities_(disableNNC);
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-extractPermeability_()
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::extractPermeability_()
 {
     unsigned numElem = gridView_.size(/*codim=*/0);
     permeability_.resize(numElem);
@@ -590,21 +572,21 @@ extractPermeability_()
     // over several processes.)
     const auto& fp = eclState_.fieldProps();
     if (fp.has_double("PERMX")) {
-        const std::vector<double>& permxData = this-> lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMX");
+        const std::vector<double>& permxData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMX");
 
         std::vector<double> permyData;
         if (fp.has_double("PERMY"))
-            permyData = this-> lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PERMY");
+            permyData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMY");
         else
             permyData = permxData;
 
         std::vector<double> permzData;
         if (fp.has_double("PERMZ"))
-            permzData = this-> lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PERMZ");
+            permzData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMZ");
         else
             permzData = permxData;
 
-        for (std::size_t dofIdx = 0; dofIdx < numElem; ++ dofIdx) {
+        for (std::size_t dofIdx = 0; dofIdx < numElem; ++dofIdx) {
             permeability_[dofIdx] = 0.0;
             permeability_[dofIdx][0][0] = permxData[dofIdx];
             permeability_[dofIdx][1][1] = permyData[dofIdx];
@@ -613,15 +595,15 @@ extractPermeability_()
 
         // for now we don't care about non-diagonal entries
 
-    }
-    else
+    } else
         throw std::logic_error("Can't read the intrinsic permeability from the ecl state. "
                                "(The PERM{X,Y,Z} keywords are missing)");
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-extractPermeability_(const std::function<unsigned int(unsigned int)>& map)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::extractPermeability_(
+    const std::function<unsigned int(unsigned int)>& map)
 {
     unsigned numElem = gridView_.size(/*codim=*/0);
     permeability_.resize(numElem);
@@ -632,26 +614,23 @@ extractPermeability_(const std::function<unsigned int(unsigned int)>& map)
     // over several processes.)
     const auto& fp = eclState_.fieldProps();
     if (fp.has_double("PERMX")) {
-        const std::vector<double>& permxData =
-            this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PERMX");
+        const std::vector<double>& permxData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMX");
 
         std::vector<double> permyData;
-        if (fp.has_double("PERMY")){
-            permyData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PERMY");
-        }
-        else {
+        if (fp.has_double("PERMY")) {
+            permyData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMY");
+        } else {
             permyData = permxData;
         }
 
         std::vector<double> permzData;
         if (fp.has_double("PERMZ")) {
-            permzData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PERMZ");
-        }
-        else {
+            permzData = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PERMZ");
+        } else {
             permzData = permxData;
         }
 
-        for (std::size_t dofIdx = 0; dofIdx < numElem; ++ dofIdx) {
+        for (std::size_t dofIdx = 0; dofIdx < numElem; ++dofIdx) {
             permeability_[dofIdx] = 0.0;
             std::size_t inputDofIdx = map(dofIdx);
             permeability_[dofIdx][0][0] = permxData[inputDofIdx];
@@ -660,16 +639,15 @@ extractPermeability_(const std::function<unsigned int(unsigned int)>& map)
         }
 
         // for now we don't care about non-diagonal entries
-    }
-    else {
+    } else {
         throw std::logic_error("Can't read the intrinsic permeability from the ecl state. "
                                "(The PERM{X,Y,Z} keywords are missing)");
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-extractPorosity_()
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::extractPorosity_()
 {
     // read the intrinsic porosity from the eclState. Note that all arrays
     // provided by eclState are one-per-cell of "uncompressed" grid, whereas the
@@ -677,47 +655,46 @@ extractPorosity_()
     // over several processes.)
     const auto& fp = eclState_.fieldProps();
     if (fp.has_double("PORO")) {
-        if constexpr (std::is_same_v<Scalar,double>) {
-            porosity_ = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PORO");
-        }
-        else {
-            const auto por = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"PORO");
+        if constexpr (std::is_same_v<Scalar, double>) {
+            porosity_ = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PORO");
+        } else {
+            const auto por = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "PORO");
             porosity_.resize(por.size());
             std::copy(por.begin(), por.end(), porosity_.begin());
         }
-    }
-    else {
+    } else {
         throw std::logic_error("Can't read the porosity from the ecl state. "
                                "(The PORO keywords are missing)");
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-extractDispersion_()
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::extractDispersion_()
 {
     if (!enableDispersivity_) {
         throw std::runtime_error("Dispersion disabled at compile time, but the deck "
                                  "contains the DISPERC keyword.");
     }
     const auto& fp = eclState_.fieldProps();
-    if constexpr (std::is_same_v<Scalar,double>) {
-        dispersion_ = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"DISPERC");
-    }
-    else {
-        const auto disp = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp,"DISPERC");
+    if constexpr (std::is_same_v<Scalar, double>) {
+        dispersion_ = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "DISPERC");
+    } else {
+        const auto disp = this->lookUpData_.assignFieldPropsDoubleOnLeaf(fp, "DISPERC");
         dispersion_.resize(disp.size());
         std::copy(disp.begin(), disp.end(), dispersion_.begin());
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-removeNonCartesianTransmissibilities_(bool removeAll)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::removeNonCartesianTransmissibilities_(
+    bool removeAll)
 {
     const auto& cartDims = cartMapper_.cartesianDimensions();
-    for (auto&& trans: trans_) {
-        //either remove all NNC transmissibilities or those less than the threshold (by default 1e-6 in the deck's unit system)
+    for (auto&& trans : trans_) {
+        // either remove all NNC transmissibilities or those less than the threshold (by default 1e-6 in the deck's unit
+        // system)
         if (removeAll || trans.second < transmissibilityThreshold_) {
             const auto& id = trans.first;
             const auto& elements = details::isIdReverse(id);
@@ -727,7 +704,8 @@ removeNonCartesianTransmissibilities_(bool removeAll)
             // only adjust the NNCs
             // When LGRs, all neighbors in the LGR are cartesian neighbours on the level grid representing the LGR.
             // When elements on the leaf grid view have the same parent cell, gc1 and gc2 coincide.
-            if (gc2 - gc1 == 1 || gc2 - gc1 == cartDims[0] || gc2 - gc1 == cartDims[0]*cartDims[1] || gc2 - gc1 == 0) {
+            if (gc2 - gc1 == 1 || gc2 - gc1 == cartDims[0] || gc2 - gc1 == cartDims[0] * cartDims[1]
+                || gc2 - gc1 == 0) {
                 continue;
             }
 
@@ -736,60 +714,56 @@ removeNonCartesianTransmissibilities_(bool removeAll)
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper, Scalar>::
-applyAllZMultipliers_(Scalar& trans,
-                      const FaceInfo& inside,
-                      const FaceInfo& outside,
-                      const TransMult& transMult,
-                      const std::array<int, dimWorld>& cartDims)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyAllZMultipliers_(
+    Scalar& trans,
+    const FaceInfo& inside,
+    const FaceInfo& outside,
+    const TransMult& transMult,
+    const std::array<int, dimWorld>& cartDims)
 {
     if (grid_.maxLevel() > 0) {
         OPM_THROW(std::invalid_argument, "MULTZ not support with LGRS, yet.");
     }
     if (inside.faceIdx > 3) { // top or or bottom
         assert(inside.faceIdx == 5); // as insideCartElemIdx < outsideCartElemIdx holds for the Z column
-        // For CpGrid with LGRs, insideCartElemIdx == outsideCartElemIdx when cells on the leaf have the same parent cell on level zero.
+        // For CpGrid with LGRs, insideCartElemIdx == outsideCartElemIdx when cells on the leaf have the same parent
+        // cell on level zero.
         assert(outside.cartElemIdx >= inside.cartElemIdx);
         unsigned lastCartElemIdx;
         if (outside.cartElemIdx == inside.cartElemIdx) {
             lastCartElemIdx = outside.cartElemIdx;
-        }
-        else {
-            lastCartElemIdx = outside.cartElemIdx - cartDims[0]*cartDims[1];
+        } else {
+            lastCartElemIdx = outside.cartElemIdx - cartDims[0] * cartDims[1];
         }
         // Last multiplier using (Z+)*(Z-)
-        Scalar mult = transMult.getMultiplier(lastCartElemIdx , FaceDir::ZPlus) *
-            transMult.getMultiplier(outside.cartElemIdx , FaceDir::ZMinus);
+        Scalar mult = transMult.getMultiplier(lastCartElemIdx, FaceDir::ZPlus)
+            * transMult.getMultiplier(outside.cartElemIdx, FaceDir::ZMinus);
 
         // pick the smallest multiplier using (Z+)*(Z-) while looking down
         // the pillar until reaching the other end of the connection
         for (auto cartElemIdx = inside.cartElemIdx; cartElemIdx < lastCartElemIdx;) {
             auto multiplier = transMult.getMultiplier(cartElemIdx, FaceDir::ZPlus);
-            cartElemIdx += cartDims[0]*cartDims[1];
+            cartElemIdx += cartDims[0] * cartDims[1];
             multiplier *= transMult.getMultiplier(cartElemIdx, FaceDir::ZMinus);
             mult = std::min(mult, static_cast<Scalar>(multiplier));
         }
 
         trans *= mult;
-    }
-    else {
+    } else {
         applyMultipliers_(trans, inside.faceIdx, inside.cartElemIdx, transMult);
         applyMultipliers_(trans, outside.faceIdx, outside.cartElemIdx, transMult);
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-updateFromEclState_(bool global)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::updateFromEclState_(bool global)
 {
-    const FieldPropsManager* fp =
-        (global) ? &(eclState_.fieldProps()) :
-        &(eclState_.globalFieldProps());
+    const FieldPropsManager* fp = (global) ? &(eclState_.fieldProps()) : &(eclState_.globalFieldProps());
 
-    std::array<bool,3> is_tran {fp->tran_active("TRANX"),
-                                fp->tran_active("TRANY"),
-                                fp->tran_active("TRANZ")};
+    std::array<bool, 3> is_tran {fp->tran_active("TRANX"), fp->tran_active("TRANY"), fp->tran_active("TRANZ")};
 
     if (!(is_tran[0] || is_tran[1] || is_tran[2])) {
         // Skip unneeded expensive traversals
@@ -797,14 +771,15 @@ updateFromEclState_(bool global)
     }
 
     std::array<std::string, 3> keywords {"TRANX", "TRANY", "TRANZ"};
-    std::array<std::vector<double>,3> trans = createTransmissibilityArrays_(is_tran);
+    std::array<std::vector<double>, 3> trans = createTransmissibilityArrays_(is_tran);
     auto key = keywords.begin();
     auto perform = is_tran.begin();
 
     for (auto it = trans.begin(); it != trans.end(); ++it, ++key, ++perform) {
         if (*perform) {
             if (grid_.maxLevel() > 0) {
-                OPM_THROW(std::invalid_argument, "Calculations on TRANX/TRANY/TRANZ arrays are not support with LGRS, yet.");
+                OPM_THROW(std::invalid_argument,
+                          "Calculations on TRANX/TRANY/TRANZ arrays are not support with LGRS, yet.");
             }
             fp->apply_tran(*key, *it);
         }
@@ -813,20 +788,18 @@ updateFromEclState_(bool global)
     resetTransmissibilityFromArrays_(is_tran, trans);
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-std::array<std::vector<double>,3>
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-createTransmissibilityArrays_(const std::array<bool,3>& is_tran)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+std::array<std::vector<double>, 3>
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::createTransmissibilityArrays_(
+    const std::array<bool, 3>& is_tran)
 {
     const auto& cartDims = cartMapper_.cartesianDimensions();
     ElementMapper elemMapper(gridView_, Dune::mcmgElementLayout());
 
     auto numElem = gridView_.size(/*codim=*/0);
-    std::array<std::vector<double>,3> trans = {
-          std::vector<double>(is_tran[0] ? numElem : 0, 0),
-          std::vector<double>(is_tran[1] ? numElem : 0, 0),
-          std::vector<double>(is_tran[2] ? numElem : 0, 0)
-    };
+    std::array<std::vector<double>, 3> trans = {std::vector<double>(is_tran[0] ? numElem : 0, 0),
+                                                std::vector<double>(is_tran[1] ? numElem : 0, 0),
+                                                std::vector<double>(is_tran[2] ? numElem : 0, 0)};
 
     // compute the transmissibilities for all intersections
     for (const auto& elem : elements(gridView_)) {
@@ -865,25 +838,22 @@ createTransmissibilityArrays_(const std::array<bool,3>& is_tran)
             // have the same parent cell on level zero, then gc2 - gc1 == 0. In that case,
             // 'intersection.indexInSIde()' needed to be checked to determine the direction, i.e.
             // add in the if/else-if  'gc2 == gc1 && intersection.indexInInside() == ... '
-            if ((gc2 - gc1 == 1 || (gc2 == gc1 && (intersection.indexInInside() == 0 || intersection.indexInInside() == 1)))
-                && cartDims[0] > 1)
-            {
+            if ((gc2 - gc1 == 1
+                 || (gc2 == gc1 && (intersection.indexInInside() == 0 || intersection.indexInInside() == 1)))
+                && cartDims[0] > 1) {
                 if (is_tran[0]) {
                     // set simulator internal transmissibilities to values from inputTranx
-                     trans[0][c1] = trans_[isID];
+                    trans[0][c1] = trans_[isID];
                 }
-            }
-            else if ((gc2 - gc1 == cartDims[0] || (gc2 == gc1 && (intersection.indexInInside() == 2 || intersection.indexInInside() == 3)))
-                     && cartDims[1] > 1)
-            {
+            } else if ((gc2 - gc1 == cartDims[0]
+                        || (gc2 == gc1 && (intersection.indexInInside() == 2 || intersection.indexInInside() == 3)))
+                       && cartDims[1] > 1) {
                 if (is_tran[1]) {
                     // set simulator internal transmissibilities to values from inputTrany
-                     trans[1][c1] = trans_[isID];
+                    trans[1][c1] = trans_[isID];
                 }
-            }
-            else if (gc2 - gc1 == cartDims[0]*cartDims[1] ||
-                     (gc2 == gc1 && (intersection.indexInInside() == 4 || intersection.indexInInside() == 5)))
-            {
+            } else if (gc2 - gc1 == cartDims[0] * cartDims[1]
+                       || (gc2 == gc1 && (intersection.indexInInside() == 4 || intersection.indexInInside() == 5))) {
                 if (is_tran[2]) {
                     // set simulator internal transmissibilities to values from inputTranz
                     trans[2][c1] = trans_[isID];
@@ -896,10 +866,10 @@ createTransmissibilityArrays_(const std::array<bool,3>& is_tran)
     return trans;
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-resetTransmissibilityFromArrays_(const std::array<bool,3>& is_tran,
-                                 const std::array<std::vector<double>,3>& trans)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::resetTransmissibilityFromArrays_(
+    const std::array<bool, 3>& is_tran, const std::array<std::vector<double>, 3>& trans)
 {
     const auto& cartDims = cartMapper_.cartesianDimensions();
     ElementMapper elemMapper(gridView_, Dune::mcmgElementLayout());
@@ -940,25 +910,22 @@ resetTransmissibilityFromArrays_(const std::array<bool,3>& is_tran,
             // have the same parent cell on level zero, then gc2 - gc1 == 0. In that case,
             // 'intersection.indexInSIde()' needed to be checked to determine the direction, i.e.
             // add in the if/else-if  'gc2 == gc1 && intersection.indexInInside() == ... '
-            if ((gc2 - gc1 == 1  || (gc2 == gc1 && (intersection.indexInInside() == 0 || intersection.indexInInside() == 1)))
-                 && cartDims[0] > 1)
-            {
+            if ((gc2 - gc1 == 1
+                 || (gc2 == gc1 && (intersection.indexInInside() == 0 || intersection.indexInInside() == 1)))
+                && cartDims[0] > 1) {
                 if (is_tran[0]) {
                     // set simulator internal transmissibilities to values from inputTranx
                     trans_[isID] = trans[0][c1];
                 }
-            }
-            else if ((gc2 - gc1 == cartDims[0] || (gc2 == gc1 && (intersection.indexInInside() == 2|| intersection.indexInInside() == 3)))
-                     && cartDims[1] > 1)
-            {
+            } else if ((gc2 - gc1 == cartDims[0]
+                        || (gc2 == gc1 && (intersection.indexInInside() == 2 || intersection.indexInInside() == 3)))
+                       && cartDims[1] > 1) {
                 if (is_tran[1]) {
                     // set simulator internal transmissibilities to values from inputTrany
                     trans_[isID] = trans[1][c1];
                 }
-            }
-            else if (gc2 - gc1 == cartDims[0]*cartDims[1] ||
-                     (gc2 == gc1 && (intersection.indexInInside() == 4 || intersection.indexInInside() == 5)))
-            {
+            } else if (gc2 - gc1 == cartDims[0] * cartDims[1]
+                       || (gc2 == gc1 && (intersection.indexInInside() == 4 || intersection.indexInInside() == 5))) {
                 if (is_tran[2]) {
                     // set simulator internal transmissibilities to values from inputTranz
                     trans_[isID] = trans[2][c1];
@@ -970,14 +937,15 @@ resetTransmissibilityFromArrays_(const std::array<bool,3>& is_tran,
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-template<class Intersection>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-computeFaceProperties(const Intersection& intersection,
-                      FaceInfo& inside,
-                      FaceInfo& outside,
-                      DimVector& faceAreaNormal,
-                      /*isCpGrid=*/std::false_type) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Intersection>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::computeFaceProperties(
+    const Intersection& intersection,
+    FaceInfo& inside,
+    FaceInfo& outside,
+    DimVector& faceAreaNormal,
+    /*isCpGrid=*/std::false_type) const
 {
     // default implementation for DUNE grids
     const auto& geometry = intersection.geometry();
@@ -987,14 +955,15 @@ computeFaceProperties(const Intersection& intersection,
     faceAreaNormal *= geometry.volume();
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-template<class Intersection>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-computeFaceProperties(const Intersection& intersection,
-                      FaceInfo& inside,
-                      FaceInfo& outside,
-                      DimVector& faceAreaNormal,
-                      /*isCpGrid=*/std::true_type) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Intersection>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::computeFaceProperties(
+    const Intersection& intersection,
+    FaceInfo& inside,
+    FaceInfo& outside,
+    DimVector& faceAreaNormal,
+    /*isCpGrid=*/std::true_type) const
 {
     int faceIdx = intersection.id();
 
@@ -1002,8 +971,7 @@ computeFaceProperties(const Intersection& intersection,
         inside.faceCenter = grid_.faceCenterEcl(inside.elemIdx, inside.faceIdx, intersection);
         outside.faceCenter = grid_.faceCenterEcl(outside.elemIdx, outside.faceIdx, intersection);
         faceAreaNormal = grid_.faceAreaNormalEcl(faceIdx);
-    }
-    else {
+    } else {
         if ((intersection.inside().level() != intersection.outside().level())) {
             // For CpGrid with LGRs, intersection laying on the boundary of an LGR, having two neighboring cells:
             // one coarse neighboring cell and one refined neighboring cell, we get the corresponding parent
@@ -1011,17 +979,16 @@ computeFaceProperties(const Intersection& intersection,
             // neighboring cell.
 
             // Get parent intersection and its geometry
-            const auto& parentIntersection =
-                grid_.getParentIntersectionFromLgrBoundaryFace(intersection);
+            const auto& parentIntersection = grid_.getParentIntersectionFromLgrBoundaryFace(intersection);
             const auto& parentIntersectionGeometry = parentIntersection.geometry();
 
             // For the coarse neighboring cell, take the center of the parent intersection.
             // For the refined neighboring cell, take the 'usual' center.
-            inside.faceCenter =  (intersection.inside().level() == 0)
+            inside.faceCenter = (intersection.inside().level() == 0)
                 ? parentIntersectionGeometry.center()
                 : grid_.faceCenterEcl(inside.elemIdx, inside.faceIdx, intersection);
             outside.faceCenter = (intersection.outside().level() == 0)
-                ?  parentIntersectionGeometry.center()
+                ? parentIntersectionGeometry.center()
                 : grid_.faceCenterEcl(outside.elemIdx, outside.faceIdx, intersection);
 
             // For some computations, it seems to be benefitial to replace the actual area of the refined face, by
@@ -1032,29 +999,27 @@ computeFaceProperties(const Intersection& intersection,
             /// Alternatively, the actual area of the refined face can be computed as follows:
             faceAreaNormal = intersection.centerUnitOuterNormal();
             faceAreaNormal *= intersection.geometry().volume();
-        }
-        else {
+        } else {
             assert(intersection.inside().level() == intersection.outside().level());
 
             inside.faceCenter = grid_.faceCenterEcl(inside.elemIdx, inside.faceIdx, intersection);
             outside.faceCenter = grid_.faceCenterEcl(outside.elemIdx, outside.faceIdx, intersection);
 
             // When the CpGrid has LGRs, we compute the face area normal differently.
-            if (intersection.inside().level() > 0) {  // remove intersection.inside().level() > 0
+            if (intersection.inside().level() > 0) { // remove intersection.inside().level() > 0
                 faceAreaNormal = intersection.centerUnitOuterNormal();
                 faceAreaNormal *= intersection.geometry().volume();
-            }
-            else {
+            } else {
                 faceAreaNormal = grid_.faceAreaNormalEcl(faceIdx);
             }
         }
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyPinchNncToGridTrans_(
+    const std::unordered_map<std::size_t, int>& cartesianToCompressed)
 {
     // First scale NNCs with EDITNNC.
     const auto& nnc_input = eclState_.getPinchNNC();
@@ -1064,8 +1029,8 @@ applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianTo
         auto c2 = nncEntry.cell2;
         auto lowIt = cartesianToCompressed.find(c1);
         auto highIt = cartesianToCompressed.find(c2);
-        int low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
-        int high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
+        int low = (lowIt == cartesianToCompressed.end()) ? -1 : lowIt->second;
+        int high = (highIt == cartesianToCompressed.end()) ? -1 : highIt->second;
 
         if (low > high) {
             std::swap(low, high);
@@ -1088,16 +1053,16 @@ applyPinchNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianTo
             if (candidate != trans_.end()) {
                 // the correctly calculated transmissibility is stored in
                 // the NNC. Overwrite previous value with it.
-               candidate->second = nncEntry.trans;
+                candidate->second = nncEntry.trans;
             }
         }
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyNncToGridTrans_(
+    const std::unordered_map<std::size_t, int>& cartesianToCompressed)
 {
     // First scale NNCs with EDITNNC.
     const auto& nnc_input = eclState_.getInputNNC().input();
@@ -1107,8 +1072,8 @@ applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompr
         auto c2 = nncEntry.cell2;
         auto lowIt = cartesianToCompressed.find(c1);
         auto highIt = cartesianToCompressed.find(c2);
-        int low = (lowIt == cartesianToCompressed.end())? -1 : lowIt->second;
-        int high = (highIt == cartesianToCompressed.end())? -1 : highIt->second;
+        int low = (lowIt == cartesianToCompressed.end()) ? -1 : lowIt->second;
+        int high = (highIt == cartesianToCompressed.end()) ? -1 : highIt->second;
 
         if (low > high) {
             std::swap(low, high);
@@ -1122,8 +1087,8 @@ applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompr
         if (low == -1 || high == -1) {
             // Discard the NNC if it is between active cell and inactive cell
             std::ostringstream sstr;
-            sstr << "NNC between active and inactive cells ("
-                 << low << " -> " << high << ") with globalcell is (" << c1 << "->" << c2 <<")";
+            sstr << "NNC between active and inactive cells (" << low << " -> " << high << ") with globalcell is (" << c1
+                 << "->" << c2 << ")";
             OpmLog::warning(sstr.str());
             continue;
         }
@@ -1162,61 +1127,69 @@ applyNncToGridTrans_(const std::unordered_map<std::size_t,int>& cartesianToCompr
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyEditNncToGridTrans_(
+    const std::unordered_map<std::size_t, int>& globalToLocal)
 {
     const auto& input = eclState_.getInputNNC();
-    applyEditNncToGridTransHelper_(globalToLocal, "EDITNNC",
-                                   input.edit(),
-                                   [&input](const NNCdata& nnc){
-                                       return input.edit_location(nnc);},
-                                   // Multiply transmissibility with EDITNNC value
-                                   [](Scalar& trans, const Scalar& rhs){ trans *= rhs;});
+    applyEditNncToGridTransHelper_(
+        globalToLocal,
+        "EDITNNC",
+        input.edit(),
+        [&input](const NNCdata& nnc) { return input.edit_location(nnc); },
+        // Multiply transmissibility with EDITNNC value
+        [](Scalar& trans, const Scalar& rhs) { trans *= rhs; });
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncrToGridTrans_(const std::unordered_map<std::size_t,int>& globalToLocal)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyEditNncrToGridTrans_(
+    const std::unordered_map<std::size_t, int>& globalToLocal)
 {
     const auto& input = eclState_.getInputNNC();
-    applyEditNncToGridTransHelper_(globalToLocal, "EDITNNCR",
-                                   input.editr(),
-                                   [&input](const NNCdata& nnc){
-                                       return input.editr_location(nnc);},
-                                   // Replace Transmissibility with EDITNNCR value
-                                   [](Scalar& trans, const Scalar& rhs){ trans = rhs;});
+    applyEditNncToGridTransHelper_(
+        globalToLocal,
+        "EDITNNCR",
+        input.editr(),
+        [&input](const NNCdata& nnc) { return input.editr_location(nnc); },
+        // Replace Transmissibility with EDITNNCR value
+        [](Scalar& trans, const Scalar& rhs) { trans = rhs; });
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& globalToLocal,
-                               const std::string& keyword,
-                               const std::vector<NNCdata>& nncs,
-                               const std::function<KeywordLocation(const NNCdata&)>& getLocation,
-                               const std::function<void(Scalar&, const Scalar&)>& apply)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyEditNncToGridTransHelper_(
+    const std::unordered_map<std::size_t, int>& globalToLocal,
+    const std::string& keyword,
+    const std::vector<NNCdata>& nncs,
+    const std::function<KeywordLocation(const NNCdata&)>& getLocation,
+    const std::function<void(Scalar&, const Scalar&)>& apply)
 {
     if (nncs.empty()) {
         return;
     }
     const auto& cartDims = cartMapper_.cartesianDimensions();
 
-    auto format_ijk = [&cartDims](std::size_t cell) -> std::string
-    {
-        auto i = cell % cartDims[0]; cell /= cartDims[0];
+    auto format_ijk = [&cartDims](std::size_t cell) -> std::string {
+        auto i = cell % cartDims[0];
+        cell /= cartDims[0];
         auto j = cell % cartDims[1];
         auto k = cell / cartDims[1];
 
-        return fmt::format("({},{},{})", i + 1,j + 1,k + 1);
+        return fmt::format("({},{},{})", i + 1, j + 1, k + 1);
     };
 
-    auto print_warning = [&format_ijk, &getLocation, &keyword] (const NNCdata& nnc)
-    {
-        const auto& location = getLocation( nnc );
-        auto warning =  fmt::format("Problem with {} keyword\n"
-                                    "In {} line {} \n"
-                                    "No NNC defined for connection {} -> {}", keyword, location.filename,
-                                    location.lineno, format_ijk(nnc.cell1), format_ijk(nnc.cell2));
+    auto print_warning = [&format_ijk, &getLocation, &keyword](const NNCdata& nnc) {
+        const auto& location = getLocation(nnc);
+        auto warning = fmt::format("Problem with {} keyword\n"
+                                   "In {} line {} \n"
+                                   "No NNC defined for connection {} -> {}",
+                                   keyword,
+                                   location.filename,
+                                   location.lineno,
+                                   format_ijk(nnc.cell1),
+                                   format_ijk(nnc.cell2));
         OpmLog::warning(keyword, warning);
     };
 
@@ -1253,8 +1226,7 @@ applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& global
             print_warning(*nnc);
             ++nnc;
             warning_count++;
-        }
-        else {
+        } else {
             // NNC exists
             while (nnc != end && c1 == nnc->cell1 && c2 == nnc->cell2) {
                 apply(candidate->second, nnc->trans);
@@ -1265,21 +1237,22 @@ applyEditNncToGridTransHelper_(const std::unordered_map<std::size_t,int>& global
 
     if (warning_count > 0) {
         auto warning = fmt::format("Problems with {} keyword\n"
-                                   "A total of {} connections not defined in grid", keyword, warning_count);
+                                   "A total of {} connections not defined in grid",
+                                   keyword,
+                                   warning_count);
         OpmLog::warning(warning);
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 void
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyNncMultreg_(const std::unordered_map<std::size_t,int>& cartesianToCompressed)
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyNncMultreg_(
+    const std::unordered_map<std::size_t, int>& cartesianToCompressed)
 {
     const auto& inputNNC = this->eclState_.getInputNNC();
     const auto& transMult = this->eclState_.getTransMult();
 
-    auto compressedIdx = [&cartesianToCompressed](const std::size_t globIdx)
-    {
+    auto compressedIdx = [&cartesianToCompressed](const std::size_t globIdx) {
         auto ixPos = cartesianToCompressed.find(globIdx);
         return (ixPos == cartesianToCompressed.end()) ? -1 : ixPos->second;
     };
@@ -1319,13 +1292,13 @@ applyNncMultreg_(const std::unordered_map<std::size_t,int>& cartesianToCompresse
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 Scalar
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-computeHalfTrans_(const DimVector& areaNormal,
-                  int faceIdx, // in the reference element that contains the intersection
-                  const DimVector& distance,
-                  const DimMatrix& perm)
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::computeHalfTrans_(
+    const DimVector& areaNormal,
+    int faceIdx, // in the reference element that contains the intersection
+    const DimVector& distance,
+    const DimMatrix& perm)
 {
     assert(faceIdx >= 0);
     unsigned dimIdx = faceIdx / 2;
@@ -1337,12 +1310,10 @@ computeHalfTrans_(const DimVector& areaNormal,
     return halfTrans;
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
 Scalar
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-computeHalfDiffusivity_(const DimVector& areaNormal,
-                        const DimVector& distance,
-                        const Scalar poro)
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::computeHalfDiffusivity_(
+    const DimVector& areaNormal, const DimVector& distance, const Scalar poro)
 {
     Scalar halfDiff = poro;
     halfDiff *= std::abs(Dune::dot(areaNormal, distance));
@@ -1351,14 +1322,12 @@ computeHalfDiffusivity_(const DimVector& areaNormal,
     return halfDiff;
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-typename Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::DimVector
-Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-distanceVector_(const DimVector& faceCenter,
-                const unsigned& cellIdx) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+typename Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::DimVector
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::distanceVector_(
+    const DimVector& faceCenter, const unsigned& cellIdx) const
 {
-    const auto& cellCenter = centroids_cache_.empty() ? centroids_(cellIdx)
-                                                      : centroids_cache_[cellIdx];
+    const auto& cellCenter = centroids_cache_.empty() ? centroids_(cellIdx) : centroids_cache_[cellIdx];
     DimVector x = faceCenter;
     for (unsigned dimIdx = 0; dimIdx < dimWorld; ++dimIdx) {
         x[dimIdx] -= cellCenter[dimIdx];
@@ -1367,25 +1336,22 @@ distanceVector_(const DimVector& faceCenter,
     return x;
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyMultipliers_(Scalar& trans,
-                  unsigned faceIdx,
-                  unsigned cartElemIdx,
-                  const TransMult& transMult) const
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyMultipliers_(
+    Scalar& trans, unsigned faceIdx, unsigned cartElemIdx, const TransMult& transMult) const
 {
     // apply multiplier for the transmissibility of the face. (the
     // face index is the index of the reference-element face which
     // contains the intersection of interest.)
-    trans *= transMult.getMultiplier(cartElemIdx,
-                                     FaceDir::FromIntersectionIndex(faceIdx));
+    trans *= transMult.getMultiplier(cartElemIdx, FaceDir::FromIntersectionIndex(faceIdx));
 }
 
-template<class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
-void Transmissibility<Grid,GridView,ElementMapper,CartesianIndexMapper,Scalar>::
-applyNtg_(Scalar& trans,
-          const FaceInfo& face,
-          const std::vector<double>& ntg)
+template <class Grid, class GridView, class ElementMapper, class CartesianIndexMapper, class Scalar>
+void
+Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>::applyNtg_(Scalar& trans,
+                                                                                         const FaceInfo& face,
+                                                                                         const std::vector<double>& ntg)
 {
     // apply multiplier for the transmissibility of the face. (the
     // face index is the index of the reference-element face which

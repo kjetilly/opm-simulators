@@ -20,15 +20,17 @@
 #ifndef OPM_FINDOVERLAPROWSANDCOLUMNS_HEADER_INCLUDED
 #define OPM_FINDOVERLAPROWSANDCOLUMNS_HEADER_INCLUDED
 
-#include <opm/grid/common/WellConnections.hpp>
 #include <opm/grid/common/CartesianIndexMapper.hpp>
+#include <opm/grid/common/WellConnections.hpp>
 
 #include <cstddef>
 #include <utility>
 #include <vector>
 
-namespace Dune {
-template<class Grid> class CartesianIndexMapper;
+namespace Dune
+{
+template <class Grid>
+class CartesianIndexMapper;
 }
 
 namespace Opm
@@ -45,32 +47,34 @@ namespace detail
     /// \param wells List of wells contained in grid.
     /// \param useWellConn Boolean that is true when UseWellContribusion is true
     /// \param wellGraph Cell IDs of well cells stored in a graph.
-    template<class Grid, class CartMapper, class W>
-    void setWellConnections(const Grid& grid, const CartMapper& cartMapper, const W& wells, const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections, bool useWellConn, std::vector<std::set<int>>& wellGraph, int numJacobiBlocks)
+    template <class Grid, class CartMapper, class W>
+    void setWellConnections(const Grid& grid,
+                            const CartMapper& cartMapper,
+                            const W& wells,
+                            const std::unordered_map<std::string, std::set<int>>& possibleFutureConnections,
+                            bool useWellConn,
+                            std::vector<std::set<int>>& wellGraph,
+                            int numJacobiBlocks)
     {
-        if ( grid.comm().size() > 1 || numJacobiBlocks > 1)
-        {
+        if (grid.comm().size() > 1 || numJacobiBlocks > 1) {
             const int numCells = cartMapper.compressedSize(); // grid.numCells()
             wellGraph.resize(numCells);
 
             if (useWellConn) {
                 const auto& cpgdim = cartMapper.cartesianDimensions();
 
-                std::vector<int> cart(cpgdim[0]*cpgdim[1]*cpgdim[2], -1);
+                std::vector<int> cart(cpgdim[0] * cpgdim[1] * cpgdim[2], -1);
 
-                for( int i=0; i < numCells; ++i )
-                    cart[ cartMapper.cartesianIndex( i ) ] = i;
+                for (int i = 0; i < numCells; ++i)
+                    cart[cartMapper.cartesianIndex(i)] = i;
 
                 Dune::cpgrid::WellConnections well_indices;
                 well_indices.init(wells, possibleFutureConnections, cpgdim, cart);
 
-                for (auto& well : well_indices)
-                {
-                    for (auto perf = well.begin(); perf != well.end(); ++perf)
-                    {
+                for (auto& well : well_indices) {
+                    for (auto perf = well.begin(); perf != well.end(); ++perf) {
                         auto perf2 = perf;
-                        for (++perf2; perf2 != well.end(); ++perf2)
-                        {
+                        for (++perf2; perf2 != well.end(); ++perf2) {
                             wellGraph[*perf].insert(*perf2);
                             wellGraph[*perf2].insert(*perf);
                         }
@@ -88,23 +92,22 @@ namespace detail
     /// \param grid The grid where we look for overlap cells.
     /// \param overlapRows List where overlap rows are stored.
     /// \param interiorRows List where overlap rows are stored.
-    template<class Grid, class Mapper>
-    void findOverlapAndInterior(const Grid& grid, const Mapper& mapper, std::vector<int>& overlapRows,
+    template <class Grid, class Mapper>
+    void findOverlapAndInterior(const Grid& grid,
+                                const Mapper& mapper,
+                                std::vector<int>& overlapRows,
                                 std::vector<int>& interiorRows)
     {
-        //only relevant in parallel case.
-        if ( grid.comm().size() > 1)
-        {
-            //Numbering of cells
+        // only relevant in parallel case.
+        if (grid.comm().size() > 1) {
+            // Numbering of cells
             const auto& gridView = grid.leafGridView();
-            //loop over cells in mesh
-            for (const auto& elem : elements(gridView))
-            {
+            // loop over cells in mesh
+            for (const auto& elem : elements(gridView)) {
                 int lcell = mapper.index(elem);
 
-                if (elem.partitionType() != Dune::InteriorEntity)
-                {
-                    //add row to list
+                if (elem.partitionType() != Dune::InteriorEntity) {
+                    // add row to list
                     overlapRows.push_back(lcell);
                 } else {
                     interiorRows.push_back(lcell);
@@ -122,7 +125,7 @@ namespace detail
     std::size_t numMatrixRowsToUseInSolver(const Grid& grid, bool ownerFirst)
     {
         std::size_t numInterior = 0;
-        if (!ownerFirst || grid.comm().size()==1)
+        if (!ownerFirst || grid.comm().size() == 1)
             return grid.leafGridView().size(0);
         const auto& gridView = grid.leafGridView();
 

@@ -17,7 +17,8 @@
 #ifndef FLOW_BRINE_HPP
 #define FLOW_BRINE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowBrineMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowBrineMain(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_brine binary.
 int flowBrineMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_EBOS_HPP

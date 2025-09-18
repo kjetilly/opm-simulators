@@ -28,25 +28,29 @@
 #include "config.h"
 
 #include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
 #include <opm/models/pvs/pvsmodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/outflowproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct OutflowProblem
-{ using InheritsFrom = std::tuple<OutflowBaseProblem, PvsModel>; };
+    struct OutflowProblem {
+        using InheritsFrom = std::tuple<OutflowBaseProblem, PvsModel>;
+    };
 
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::OutflowProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

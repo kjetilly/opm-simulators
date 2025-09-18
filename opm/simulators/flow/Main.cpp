@@ -46,15 +46,18 @@
 
 #include <iostream>
 // NOTE: There is no C++ header replacement for these C posix headers (as of C++17)
-#include <fcntl.h>  // for open()
+#include <fcntl.h> // for open()
 #include <unistd.h> // for dup2(), close()
 
 #include <iostream>
 
-namespace Opm {
+namespace Opm
+{
 
 Main::Main(int argc, char** argv, bool ownMPI)
-    : argc_(argc), argv_(argv), ownMPI_(ownMPI)
+    : argc_(argc)
+    , argv_(argv)
+    , ownMPI_(ownMPI)
 {
 #if HAVE_MPI
     maybeSaveReservoirCouplingSlaveLogFilename_();
@@ -65,8 +68,8 @@ Main::Main(int argc, char** argv, bool ownMPI)
 }
 
 Main::Main(const std::string& filename, bool mpi_init, bool mpi_finalize)
-    : mpi_init_{mpi_init}
-    , mpi_finalize_{mpi_finalize}
+    : mpi_init_ {mpi_init}
+    , mpi_finalize_ {mpi_finalize}
 {
     setArgvArgc_(filename);
     initMPI();
@@ -78,11 +81,11 @@ Main::Main(const std::string& filename,
            std::shared_ptr<SummaryConfig> summaryConfig,
            bool mpi_init,
            bool mpi_finalize)
-    : eclipseState_{std::move(eclipseState)}
-    , schedule_{std::move(schedule)}
-    , summaryConfig_{std::move(summaryConfig)}
-    , mpi_init_{mpi_init}
-    , mpi_finalize_{mpi_finalize}
+    : eclipseState_ {std::move(eclipseState)}
+    , schedule_ {std::move(schedule)}
+    , summaryConfig_ {std::move(summaryConfig)}
+    , mpi_init_ {mpi_init}
+    , mpi_finalize_ {mpi_finalize}
 {
     setArgvArgc_(filename);
     initMPI();
@@ -143,7 +146,8 @@ Main::~Main()
 }
 
 #if HAVE_MPI
-void Main::maybeSaveReservoirCouplingSlaveLogFilename_()
+void
+Main::maybeSaveReservoirCouplingSlaveLogFilename_()
 {
     // If first command line argument is "--slave-log-file=<filename>",
     // then redirect stdout and stderr to the specified file.
@@ -155,7 +159,7 @@ void Main::maybeSaveReservoirCouplingSlaveLogFilename_()
             // to the same file.
             this->reservoirCouplingSlaveOutputFilename_ = arg.substr(17);
             this->argc_ -= 1;
-            char *program_name = this->argv_[0];
+            char* program_name = this->argv_[0];
             this->argv_ += 1;
             // We assume the "argv" array pointers remain valid (not freed) for the lifetime
             //   of this program, so the following assignment is safe.
@@ -167,10 +171,12 @@ void Main::maybeSaveReservoirCouplingSlaveLogFilename_()
 }
 #endif
 #if HAVE_MPI
-void Main::maybeRedirectReservoirCouplingSlaveOutput_() {
+void
+Main::maybeRedirectReservoirCouplingSlaveOutput_()
+{
     if (!this->reservoirCouplingSlaveOutputFilename_.empty()) {
-        std::string filename = this->reservoirCouplingSlaveOutputFilename_
-                     + "." + std::to_string(FlowGenericVanguard::comm().rank()) + ".log";
+        std::string filename = this->reservoirCouplingSlaveOutputFilename_ + "."
+            + std::to_string(FlowGenericVanguard::comm().rank()) + ".log";
         int fd = open(filename.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
         if (fd == -1) {
             std::string error_msg = "Slave: Failed to open stdout+stderr file" + filename;
@@ -189,23 +195,25 @@ void Main::maybeRedirectReservoirCouplingSlaveOutput_() {
 }
 #endif
 
-void Main::setArgvArgc_(const std::string& filename)
+void
+Main::setArgvArgc_(const std::string& filename)
 {
     this->deckFilename_ = filename;
     this->flowProgName_ = "flow";
 
     this->argc_ = 2;
-    this->saveArgs_[0] = const_cast<char *>(this->flowProgName_.c_str());
-    this->saveArgs_[1] = const_cast<char *>(this->deckFilename_.c_str());
+    this->saveArgs_[0] = const_cast<char*>(this->flowProgName_.c_str());
+    this->saveArgs_[1] = const_cast<char*>(this->deckFilename_.c_str());
 
     // Note: argv[argc] must exist and be nullptr
-    assert ((sizeof this->saveArgs_) > (this->argc_ * sizeof this->saveArgs_[0]));
+    assert((sizeof this->saveArgs_) > (this->argc_ * sizeof this->saveArgs_[0]));
     this->saveArgs_[this->argc_] = nullptr;
 
     this->argv_ = this->saveArgs_;
 }
 
-void Main::initMPI()
+void
+Main::initMPI()
 {
 #if HAVE_DUNE_FEM
     // The instance() method already checks if MPI has been initialized so we may
@@ -252,14 +260,10 @@ void Main::initMPI()
 #endif
 }
 
-void Main::handleVersionCmdLine_(int argc, char** argv,
-                                 std::string_view moduleVersionName)
+void
+Main::handleVersionCmdLine_(int argc, char** argv, std::string_view moduleVersionName)
 {
-    auto pos = std::find_if(argv, argv + argc,
-        [](const char* arg)
-    {
-        return std::strcmp(arg, "--version") == 0;
-    });
+    auto pos = std::find_if(argv, argv + argc, [](const char* arg) { return std::strcmp(arg, "--version") == 0; });
 
     if (pos != argv + argc) {
         std::cout << "flow " << moduleVersionName << std::endl;
@@ -267,41 +271,44 @@ void Main::handleVersionCmdLine_(int argc, char** argv,
     }
 }
 
-void Main::handleTestSplitCommunicatorCmdLine_()
+void
+Main::handleTestSplitCommunicatorCmdLine_()
 {
     if (argc_ >= 2 && std::strcmp(argv_[1], "--test-split-communicator=true") == 0) {
         test_split_comm_ = true;
-        --argc_;             // We have one less argument.
+        --argc_; // We have one less argument.
         argv_[1] = argv_[0]; // What used to be the first proper argument now becomes the command argument.
-        ++argv_;             // Pretend this is what it always was.
+        ++argv_; // Pretend this is what it always was.
     }
 }
 
-void Main::readDeck(const std::string& deckFilename,
-                    const std::string& outputDir,
-                    const std::string& outputMode,
-                    const bool init_from_restart_file,
-                    const bool allRanksDbgPrtLog,
-                    const std::string& parsingStrictness,
-                    const std::string& actionParsingStrictness,
-                    const std::string& inputSkipMode,
-                    const bool keepKeywords,
-                    const std::size_t numThreads,
-                    const int output_param,
-                    const bool slaveMode,
-                    const std::string& parameters,
-                    std::string_view moduleVersion,
-                    std::string_view compileTimestamp)
+void
+Main::readDeck(const std::string& deckFilename,
+               const std::string& outputDir,
+               const std::string& outputMode,
+               const bool init_from_restart_file,
+               const bool allRanksDbgPrtLog,
+               const std::string& parsingStrictness,
+               const std::string& actionParsingStrictness,
+               const std::string& inputSkipMode,
+               const bool keepKeywords,
+               const std::size_t numThreads,
+               const int output_param,
+               const bool slaveMode,
+               const std::string& parameters,
+               std::string_view moduleVersion,
+               std::string_view compileTimestamp)
 {
     auto omode = setupLogging(FlowGenericVanguard::comm(),
                               deckFilename,
                               outputDir,
                               outputMode,
-                              outputCout_, "STDOUT_LOGGER", allRanksDbgPrtLog);
+                              outputCout_,
+                              "STDOUT_LOGGER",
+                              allRanksDbgPrtLog);
 
     if (outputCout_) {
-        printPRTHeader(FlowGenericVanguard::comm().size(), numThreads,
-                       parameters, moduleVersion, compileTimestamp);
+        printPRTHeader(FlowGenericVanguard::comm().size(), numThreads, parameters, moduleVersion, compileTimestamp);
         OpmLog::info("Reading deck file '" + deckFilename + "'");
     }
 
@@ -332,7 +339,8 @@ void Main::readDeck(const std::string& deckFilename,
     outputFiles_ = (omode != FileOutputMode::OUTPUT_NONE);
 }
 
-void Main::setupVanguard()
+void
+Main::setupVanguard()
 {
     FlowGenericVanguard::modelParams_.setupTime_ = this->setupTime_;
     FlowGenericVanguard::modelParams_.actionState_ = std::move(this->actionState_);
@@ -344,14 +352,16 @@ void Main::setupVanguard()
 }
 
 #if HAVE_DAMARIS
-void Main::setupDamaris(const std::string& outputDir )
+void
+Main::setupDamaris(const std::string& outputDir)
 {
     if (!outputDir.empty()) {
         ensureOutputDirExists(outputDir);
     }
 
-    //const auto find_replace_map;
-    //const auto find_replace_map = Opm::DamarisOutput::DamarisKeywords<PreTypeTag>(EclGenericVanguard::comm(), outputDir);
+    // const auto find_replace_map;
+    // const auto find_replace_map = Opm::DamarisOutput::DamarisKeywords<PreTypeTag>(EclGenericVanguard::comm(),
+    // outputDir);
     std::map<std::string, std::string> find_replace_map;
     find_replace_map = DamarisOutput::getDamarisKeywords(FlowGenericVanguard::comm(), outputDir);
 
@@ -361,14 +371,12 @@ void Main::setupDamaris(const std::string& outputDir )
     // node are aggregated by dedicated Damaris cores and stored to separate files per Damaris core.
     // Irrespective of mode, output is written asynchronously at the end of each timestep.
     // Using the ModifyModel class to set the XML file for Damaris.
-    DamarisOutput::initializeDamaris(FlowGenericVanguard::comm(),
-                                     FlowGenericVanguard::comm().rank(),
-                                     find_replace_map);
+    DamarisOutput::initializeDamaris(FlowGenericVanguard::comm(), FlowGenericVanguard::comm().rank(), find_replace_map);
     int is_client;
     MPI_Comm new_comm;
-    // damaris_start() is where the Damaris Server ranks will block, until damaris_stop() 
+    // damaris_start() is where the Damaris Server ranks will block, until damaris_stop()
     // is called from the client ranks
-    int err = damaris_start(&is_client);  
+    int err = damaris_start(&is_client);
     isSimulationRank_ = (is_client > 0);
     if (isSimulationRank_ && err == DAMARIS_OK) {
         damaris_client_comm_get(&new_comm);

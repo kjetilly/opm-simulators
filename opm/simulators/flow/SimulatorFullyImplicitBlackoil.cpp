@@ -22,46 +22,41 @@
 #include <config.h>
 #include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm::detail {
-
-void registerSimulatorParameters()
+namespace Opm::detail
 {
-    Parameters::Register<Parameters::EnableTerminalOutput>
-        ("Print high-level information about the simulation's progress to the terminal");
-    Parameters::Register<Parameters::EnableAdaptiveTimeStepping>
-        ("Use adaptive time stepping between report steps");
-    Parameters::Register<Parameters::OutputExtraConvergenceInfo>
-        ("Provide additional convergence output "
-         "files for diagnostic purposes. "
-         "\"none\" gives no extra output and "
-         "overrides all other options, "
-         "\"steps\" generates an INFOSTEP file, "
-         "\"iterations\" generates an INFOITER file. "
-         "Combine options with commas, e.g., "
-         "\"steps,iterations\" for multiple outputs.");
-    Parameters::Register<Parameters::SaveStep>
-        ("Save serialized state to .OPMRST file. "
-         "Either a specific report step, \"all\" to save "
-         "all report steps or \":x\" to save every x'th step."
-         "Use negative values of \"x\" to keep only the last "
-         "written step, or \"last\" to save every step, keeping "
-         "only the last.");
-    Parameters::Register<Parameters::LoadStep>
-        ("Load serialized state from .OPMRST file. "
-         "Either a specific report step, or 0 to load last "
-         "stored report step.");
-    Parameters::Register<Parameters::SaveFile>
-        ("FileName for .OPMRST file used for saving serialized state. "
-         "If empty, CASENAME.OPMRST is used.");
-    Parameters::Hide<Parameters::SaveFile>();
-    Parameters::Register<Parameters::LoadFile>
-        ("FileName for .OPMRST file used to load serialized state. "
-         "If empty, CASENAME.OPMRST is used.");
-    Parameters::Hide<Parameters::LoadFile>();
-    Parameters::Register<Parameters::Slave>
-        ("Specify if the simulation is a slave simulation in a master-slave simulation");
-    Parameters::Hide<Parameters::Slave>();
 
+void
+registerSimulatorParameters()
+{
+    Parameters::Register<Parameters::EnableTerminalOutput>(
+        "Print high-level information about the simulation's progress to the terminal");
+    Parameters::Register<Parameters::EnableAdaptiveTimeStepping>("Use adaptive time stepping between report steps");
+    Parameters::Register<Parameters::OutputExtraConvergenceInfo>("Provide additional convergence output "
+                                                                 "files for diagnostic purposes. "
+                                                                 "\"none\" gives no extra output and "
+                                                                 "overrides all other options, "
+                                                                 "\"steps\" generates an INFOSTEP file, "
+                                                                 "\"iterations\" generates an INFOITER file. "
+                                                                 "Combine options with commas, e.g., "
+                                                                 "\"steps,iterations\" for multiple outputs.");
+    Parameters::Register<Parameters::SaveStep>("Save serialized state to .OPMRST file. "
+                                               "Either a specific report step, \"all\" to save "
+                                               "all report steps or \":x\" to save every x'th step."
+                                               "Use negative values of \"x\" to keep only the last "
+                                               "written step, or \"last\" to save every step, keeping "
+                                               "only the last.");
+    Parameters::Register<Parameters::LoadStep>("Load serialized state from .OPMRST file. "
+                                               "Either a specific report step, or 0 to load last "
+                                               "stored report step.");
+    Parameters::Register<Parameters::SaveFile>("FileName for .OPMRST file used for saving serialized state. "
+                                               "If empty, CASENAME.OPMRST is used.");
+    Parameters::Hide<Parameters::SaveFile>();
+    Parameters::Register<Parameters::LoadFile>("FileName for .OPMRST file used to load serialized state. "
+                                               "If empty, CASENAME.OPMRST is used.");
+    Parameters::Hide<Parameters::LoadFile>();
+    Parameters::Register<Parameters::Slave>(
+        "Specify if the simulation is a slave simulation in a master-slave simulation");
+    Parameters::Hide<Parameters::Slave>();
 }
 
 } // namespace Opm::detail

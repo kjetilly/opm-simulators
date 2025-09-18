@@ -21,88 +21,95 @@
 #define OPM_GPUSOLVER_BACKEND_HEADER_INCLUDED
 
 
-#include <opm/simulators/linalg/gpubridge/GpuResult.hpp>
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
+#include <opm/simulators/linalg/gpubridge/GpuResult.hpp>
 
 #include <memory>
 
-namespace Opm {
-
-template<class Scalar> class WellContributions;
-
-namespace Accelerator {
-
-enum class SolverStatus {
-    GPU_SOLVER_SUCCESS,
-    GPU_SOLVER_ANALYSIS_FAILED,
-    GPU_SOLVER_CREATE_PRECONDITIONER_FAILED,
-    GPU_SOLVER_UNKNOWN_ERROR
-};
-
-/// This class serves to simplify choosing between different backend solvers, such as cusparseSolver and openclSolver
-/// This class is abstract, no instantiations can of it can be made, only of its children
-template<class Scalar, unsigned int block_size>
-class GpuSolver
+namespace Opm
 {
-protected:
-    // verbosity
-    // 0: print nothing during solves, only when initializing
-    // 1: print number of iterations and final norm
-    // 2: also print norm each iteration
-    // 3: also print timings of different backend functions
-    int verbosity = 0;
 
-    int maxit = 200;
-    Scalar tolerance = 1e-2;
+template <class Scalar>
+class WellContributions;
 
-    int N;           // number of rows
-    int Nb;          // number of blocked rows (Nb*block_size == N)
-    int nnz;         // number of nonzeroes (scalars)
-    int nnzb;        // number of nonzero blocks (nnzb*block_size*block_size == nnz)
+namespace Accelerator
+{
 
-    unsigned int platformID = 0; // ID of OpenCL platform to be used, only used by openclSolver now
-    unsigned int deviceID = 0;   // ID of the device to be used
+    enum class SolverStatus {
+        GPU_SOLVER_SUCCESS,
+        GPU_SOLVER_ANALYSIS_FAILED,
+        GPU_SOLVER_CREATE_PRECONDITIONER_FAILED,
+        GPU_SOLVER_UNKNOWN_ERROR
+    };
 
-    bool initialized = false;
+    /// This class serves to simplify choosing between different backend solvers, such as cusparseSolver and
+    /// openclSolver This class is abstract, no instantiations can of it can be made, only of its children
+    template <class Scalar, unsigned int block_size>
+    class GpuSolver
+    {
+    protected:
+        // verbosity
+        // 0: print nothing during solves, only when initializing
+        // 1: print number of iterations and final norm
+        // 2: also print norm each iteration
+        // 3: also print timings of different backend functions
+        int verbosity = 0;
 
-public:
-    /// Construct a GpuSolver
-    /// \param[in] linear_solver_verbosity    verbosity of solver
-    /// \param[in] max_it                     maximum number of iterations for solver
-    /// \param[in] tolerance_                 required relative tolerance for solver
-    GpuSolver(int linear_solver_verbosity, int max_it, Scalar tolerance_)
-        : verbosity(linear_solver_verbosity)
-        , maxit(max_it)
-        , tolerance(tolerance_)
-    {}
-    GpuSolver(int linear_solver_verbosity, int max_it,
-              Scalar tolerance_, unsigned int deviceID_)
-        : verbosity(linear_solver_verbosity)
-        , maxit(max_it)
-        , tolerance(tolerance_)
-        , deviceID(deviceID_) {};
-    GpuSolver(int linear_solver_verbosity, int max_it,
-              double tolerance_, unsigned int platformID_,
-              unsigned int deviceID_)
-        : verbosity(linear_solver_verbosity)
-        , maxit(max_it)
-        , tolerance(tolerance_)
-        , platformID(platformID_)
-        , deviceID(deviceID_)
-    {}
+        int maxit = 200;
+        Scalar tolerance = 1e-2;
 
-    /// Define virtual destructor, so that the derivedclass destructor will be called
-    virtual ~GpuSolver() = default;
+        int N; // number of rows
+        int Nb; // number of blocked rows (Nb*block_size == N)
+        int nnz; // number of nonzeroes (scalars)
+        int nnzb; // number of nonzero blocks (nnzb*block_size*block_size == nnz)
 
-    /// Define as pure virtual functions, so derivedclass must implement them
-    virtual SolverStatus solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-                                      Scalar* b,
-                                      std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-                                      WellContributions<Scalar>& wellContribs,
-                                      GpuResult& res) = 0;
+        unsigned int platformID = 0; // ID of OpenCL platform to be used, only used by openclSolver now
+        unsigned int deviceID = 0; // ID of the device to be used
 
-    virtual void get_result(Scalar* x) = 0;
-}; // end class GpuSolver
+        bool initialized = false;
+
+    public:
+        /// Construct a GpuSolver
+        /// \param[in] linear_solver_verbosity    verbosity of solver
+        /// \param[in] max_it                     maximum number of iterations for solver
+        /// \param[in] tolerance_                 required relative tolerance for solver
+        GpuSolver(int linear_solver_verbosity, int max_it, Scalar tolerance_)
+            : verbosity(linear_solver_verbosity)
+            , maxit(max_it)
+            , tolerance(tolerance_)
+        {
+        }
+        GpuSolver(int linear_solver_verbosity, int max_it, Scalar tolerance_, unsigned int deviceID_)
+            : verbosity(linear_solver_verbosity)
+            , maxit(max_it)
+            , tolerance(tolerance_)
+            , deviceID(deviceID_) { };
+        GpuSolver(int linear_solver_verbosity,
+                  int max_it,
+                  double tolerance_,
+                  unsigned int platformID_,
+                  unsigned int deviceID_)
+            : verbosity(linear_solver_verbosity)
+            , maxit(max_it)
+            , tolerance(tolerance_)
+            , platformID(platformID_)
+            , deviceID(deviceID_)
+        {
+        }
+
+        /// Define virtual destructor, so that the derivedclass destructor will be called
+        virtual ~GpuSolver() = default;
+
+        /// Define as pure virtual functions, so derivedclass must implement them
+        virtual SolverStatus solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
+                                          Scalar* b,
+                                          std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
+                                          WellContributions<Scalar>& wellContribs,
+                                          GpuResult& res)
+            = 0;
+
+        virtual void get_result(Scalar* x) = 0;
+    }; // end class GpuSolver
 
 } // namespace Accelerator
 } // namespace Opm

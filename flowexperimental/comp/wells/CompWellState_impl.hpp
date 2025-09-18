@@ -17,25 +17,25 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename FluidSystem>
-CompWellState<FluidSystem>::
-CompWellState(const CompositionalConfig& comp_config)
+CompWellState<FluidSystem>::CompWellState(const CompositionalConfig& comp_config)
     : comp_config_(comp_config)
 {
 }
 
 
 template <typename FluidSystem>
-void CompWellState<FluidSystem>::
-init(const std::vector<Well>& wells_ecl,
-     const std::vector<Scalar>& cell_pressures,
-     const Scalar temperature,
-     const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-     const std::vector<std::vector<CompConnectionData> >& well_connection_data,
-     const SummaryState& summary_state,
-     const CompWellState* /*prev_well_state*/)
+void
+CompWellState<FluidSystem>::init(const std::vector<Well>& wells_ecl,
+                                 const std::vector<Scalar>& cell_pressures,
+                                 const Scalar temperature,
+                                 const std::vector<std::vector<Scalar>>& cell_mole_fractions,
+                                 const std::vector<std::vector<CompConnectionData>>& well_connection_data,
+                                 const SummaryState& summary_state,
+                                 const CompWellState* /*prev_well_state*/)
 {
     this->base_init(wells_ecl, cell_pressures, temperature, cell_mole_fractions, well_connection_data, summary_state);
 
@@ -44,98 +44,85 @@ init(const std::vector<Well>& wells_ecl,
 }
 
 template <typename FluidSystem>
-void CompWellState<FluidSystem>::
-base_init(const std::vector<Well>& wells_ecl,
-          const std::vector<Scalar>& cell_pressures,
-          const Scalar temperature,
-          const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-          const std::vector<std::vector<CompConnectionData>>& well_connection_data,
-          const SummaryState& summary_state)
+void
+CompWellState<FluidSystem>::base_init(const std::vector<Well>& wells_ecl,
+                                      const std::vector<Scalar>& cell_pressures,
+                                      const Scalar temperature,
+                                      const std::vector<std::vector<Scalar>>& cell_mole_fractions,
+                                      const std::vector<std::vector<CompConnectionData>>& well_connection_data,
+                                      const SummaryState& summary_state)
 {
     this->wells_.clear();
 
     const auto num_wells = wells_ecl.size();
 
-    for (auto w = 0*num_wells; w < num_wells; ++w) {
+    for (auto w = 0 * num_wells; w < num_wells; ++w) {
         const Well& well = wells_ecl[w];
         const auto& conn_data = well_connection_data[w];
         initSingleWell(well, cell_pressures, temperature, cell_mole_fractions, conn_data, summary_state);
     }
-
 }
 
 template <typename FluidSystem>
-void CompWellState<FluidSystem>::
-initSingleWell(const Well& well,
-               const std::vector<Scalar>& cell_pressures,
-               const Scalar tempearture,
-               const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-               const std::vector<CompConnectionData>& conn_data,
-               const SummaryState& summary_state)
+void
+CompWellState<FluidSystem>::initSingleWell(const Well& well,
+                                           const std::vector<Scalar>& cell_pressures,
+                                           const Scalar tempearture,
+                                           const std::vector<std::vector<Scalar>>& cell_mole_fractions,
+                                           const std::vector<CompConnectionData>& conn_data,
+                                           const SummaryState& summary_state)
 {
     if (well.isInjector()) {
         initSingleInjector(well, cell_pressures, tempearture, conn_data, summary_state);
     } else {
         initSingleProducer(well, cell_pressures, tempearture, cell_mole_fractions, conn_data, summary_state);
     }
-
 }
 
 template <typename FluidSystem>
-void CompWellState<FluidSystem>::
-initSingleInjector(const Well& well,
-                   const std::vector<Scalar>& /* cell_pressures */,
-                   const Scalar temperature,
-                   const std::vector<CompConnectionData>& conn_data,
-                   const SummaryState& summary_state)
+void
+CompWellState<FluidSystem>::initSingleInjector(const Well& well,
+                                               const std::vector<Scalar>& /* cell_pressures */,
+                                               const Scalar temperature,
+                                               const std::vector<CompConnectionData>& conn_data,
+                                               const SummaryState& summary_state)
 {
     auto& ws = this->wells_.add(well.name(),
-                                SingleWellState(well.name(),
-                                    this->comp_config_,
-                                    temperature,
-                                    conn_data,
-                                    false) );
+                                SingleWellState(well.name(), this->comp_config_, temperature, conn_data, false));
     ws.update_injector_targets(well, summary_state);
 }
 
 template <typename FluidSystem>
-void CompWellState<FluidSystem>::
-initSingleProducer(const Well& well,
-                   const std::vector<Scalar>& /* cell_pressures */,
-                   const Scalar temperature,
-                   const std::vector<std::vector<Scalar>>& cell_mole_fractions,
-                   const std::vector<CompConnectionData>& conn_data,
-                   const SummaryState& summary_state)
+void
+CompWellState<FluidSystem>::initSingleProducer(const Well& well,
+                                               const std::vector<Scalar>& /* cell_pressures */,
+                                               const Scalar temperature,
+                                               const std::vector<std::vector<Scalar>>& cell_mole_fractions,
+                                               const std::vector<CompConnectionData>& conn_data,
+                                               const SummaryState& summary_state)
 {
-    auto& ws = this->wells_.add(well.name(),
-                                SingleWellState(well.name(),
-                                    this->comp_config_,
-                                    temperature,
-                                    conn_data,
-                                    true) );
+    auto& ws
+        = this->wells_.add(well.name(), SingleWellState(well.name(), this->comp_config_, temperature, conn_data, true));
     ws.update_producer_targets(well, cell_mole_fractions, summary_state);
 }
 
 template <typename FluidSystem>
 const typename CompWellState<FluidSystem>::SingleWellState&
-CompWellState<FluidSystem>::
-operator[](const std::string& well_name) const
+CompWellState<FluidSystem>::operator[](const std::string& well_name) const
 {
     return this->wells_[well_name];
 }
 
 template <typename FluidSystem>
 typename CompWellState<FluidSystem>::SingleWellState&
-CompWellState<FluidSystem>::
-operator[](const std::string& well_name)
+CompWellState<FluidSystem>::operator[](const std::string& well_name)
 {
     return this->wells_[well_name];
 }
 
 template <typename FluidSystem>
 data::Wells
-CompWellState<FluidSystem>::
-report() const
+CompWellState<FluidSystem>::report() const
 {
     if (this->wells_.empty()) {
         return {};

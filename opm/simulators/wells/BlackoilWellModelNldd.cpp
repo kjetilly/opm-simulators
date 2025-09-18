@@ -25,12 +25,12 @@
 
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::vector<Scalar>
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-getPrimaryVarsDomain(const int domainIdx) const
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::getPrimaryVarsDomain(const int domainIdx) const
 {
     std::vector<Scalar> ret;
     for (const auto& well : genWellModel_.genericWells()) {
@@ -42,10 +42,10 @@ getPrimaryVarsDomain(const int domainIdx) const
     return ret;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-setPrimaryVarsDomain(const int domainIdx, const std::vector<Scalar>& vars)
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::setPrimaryVarsDomain(const int domainIdx,
+                                                                        const std::vector<Scalar>& vars)
 {
     std::size_t offset = 0;
     for (const auto& well : genWellModel_.genericWells()) {
@@ -57,10 +57,9 @@ setPrimaryVarsDomain(const int domainIdx, const std::vector<Scalar>& vars)
     assert(offset == vars.size());
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-findWellDomains(const std::vector<const SubDomainIndices*>& domains)
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::findWellDomains(const std::vector<const SubDomainIndices*>& domains)
 {
     // TODO: This loop nest may be slow for very large numbers of
     // domains and wells, but that has not been observed on tests so
@@ -69,10 +68,8 @@ findWellDomains(const std::vector<const SubDomainIndices*>& domains)
     for (const auto& wellPtr : genWellModel_.genericWells()) {
         const int first_well_cell = wellPtr->cells().front();
         for (const auto& domain : domains) {
-            auto cell_present = [domain](const auto cell)
-            {
-                return std::binary_search(domain->cells.begin(),
-                                          domain->cells.end(), cell);
+            auto cell_present = [domain](const auto cell) {
+                return std::binary_search(domain->cells.begin(), domain->cells.end(), cell);
             };
 
             if (cell_present(first_well_cell)) {
@@ -82,10 +79,9 @@ findWellDomains(const std::vector<const SubDomainIndices*>& domains)
 
                 // Verify that all of that well's cells are in that same domain.
                 for (int well_cell : wellPtr->cells()) {
-                    if (! cell_present(well_cell)) {
+                    if (!cell_present(well_cell)) {
                         OPM_THROW(std::runtime_error,
-                                  fmt::format("Well '{}' found on multiple domains.",
-                                              wellPtr->name()));
+                                  fmt::format("Well '{}' found on multiple domains.", wellPtr->name()));
                     }
                 }
             }
@@ -93,10 +89,9 @@ findWellDomains(const std::vector<const SubDomainIndices*>& domains)
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-logDomains() const
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::logDomains() const
 {
     // Write well/domain info to the DBG file.
     const int rank = genWellModel_.comm().rank();
@@ -115,10 +110,9 @@ logDomains() const
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-calcLocalIndices(const std::vector<const SubDomainIndices*>& domains)
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::calcLocalIndices(const std::vector<const SubDomainIndices*>& domains)
 {
     well_local_cells_.clear();
     well_local_cells_.reserve(genWellModel_.genericWells().size(), 10);
@@ -136,25 +130,25 @@ calcLocalIndices(const std::vector<const SubDomainIndices*>& domains)
             if (it != domain_cells.end() && *it == global_cells[i]) {
                 local_cells[i] = std::distance(domain_cells.begin(), it);
             } else {
-                OPM_THROW(std::runtime_error, fmt::format("Cell {} not found in domain {}",
-                                                          global_cells[i], domain_index));
+                OPM_THROW(std::runtime_error,
+                          fmt::format("Cell {} not found in domain {}", global_cells[i], domain_index));
             }
         }
         well_local_cells_.appendRow(local_cells.begin(), local_cells.end());
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::
-calcDomains(const std::vector<const SubDomainIndices*>& domains)
+BlackoilWellModelNlddGeneric<Scalar, IndexTraits>::calcDomains(const std::vector<const SubDomainIndices*>& domains)
 {
     const Opm::Parallel::Communication& comm = genWellModel_.comm();
 
     OPM_BEGIN_PARALLEL_TRY_CATCH();
     this->findWellDomains(domains);
     OPM_END_PARALLEL_TRY_CATCH("BlackoilWellModel::setupDomains(): "
-                               "well found on multiple domains.", comm);
+                               "well found on multiple domains.",
+                               comm);
 
     // Write well/domain info to the DBG file.
     this->logDomains();

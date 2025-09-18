@@ -26,25 +26,24 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkEnergyParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteSolidInternalEnergy>
-        ("Include the volumetric internal energy of solid"
-         "matrix in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteThermalConductivity>
-        ("Include the total thermal conductivity of the"
-         "medium in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteEnthalpies>
-        ("Include the specific enthalpy of the phases in "
-         "the VTK output files");
-    Parameters::Register<Parameters::VtkWriteInternalEnergies>
-        ("Include the specific internal energy of the "
-         "phases in the VTK output files");
+
+void
+VtkEnergyParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteSolidInternalEnergy>("Include the volumetric internal energy of solid"
+                                                                  "matrix in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteThermalConductivity>("Include the total thermal conductivity of the"
+                                                                  "medium in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteEnthalpies>("Include the specific enthalpy of the phases in "
+                                                         "the VTK output files");
+    Parameters::Register<Parameters::VtkWriteInternalEnergies>("Include the specific internal energy of the "
+                                                               "phases in the VTK output files");
 }
 
-void VtkEnergyParams::read()
+void
+VtkEnergyParams::read()
 {
     solidInternalEnergyOutput_ = Parameters::Get<Parameters::VtkWriteSolidInternalEnergy>();
     thermalConductivityOutput_ = Parameters::Get<Parameters::VtkWriteThermalConductivity>();

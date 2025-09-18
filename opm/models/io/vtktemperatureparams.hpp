@@ -27,20 +27,23 @@
 #ifndef OPM_VTK_TEMPERATURE_PARAMS_HPP
 #define OPM_VTK_TEMPERATURE_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteTemperature { static constexpr bool value = true; };
+struct VtkWriteTemperature {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkTemperatureModule.
  */
-struct VtkTemperatureParams
-{
+struct VtkTemperatureParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

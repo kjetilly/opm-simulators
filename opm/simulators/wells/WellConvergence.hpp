@@ -30,16 +30,19 @@ namespace Opm
 
 class ConvergenceReport;
 class DeferredLogger;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class WellConvergence
 {
 public:
     explicit WellConvergence(const WellInterfaceGeneric<Scalar, IndexTraits>& well)
         : well_(well)
-    {}
+    {
+    }
 
     struct Tolerances {
         Scalar bhp; //!< Tolerance for bhp controlled well
@@ -53,7 +56,7 @@ public:
     void checkConvergenceControlEq(const WellState<Scalar, IndexTraits>& well_state,
                                    const Tolerances& tolerances,
                                    const Scalar well_control_residual,
-                                   const bool well_is_stopped, 
+                                   const bool well_is_stopped,
                                    ConvergenceReport& report,
                                    DeferredLogger& deferred_logger) const;
 
@@ -66,6 +69,6 @@ private:
     const WellInterfaceGeneric<Scalar, IndexTraits>& well_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_CONVERGENCE_HEADER_INCLUDED

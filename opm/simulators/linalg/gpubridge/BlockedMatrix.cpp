@@ -19,16 +19,17 @@
 
 #include <config.h>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
 #include <opm/simulators/linalg/gpubridge/Matrix.hpp>
-#include <opm/simulators/linalg/gpubridge/Matrix.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-void sortRow(int *colIndices, int *data, int left, int right)
+void
+sortRow(int* colIndices, int* data, int left, int right)
 {
     int l = left;
     int r = right;
@@ -60,8 +61,9 @@ void sortRow(int *colIndices, int *data, int left, int right)
 
 // LUMat->nnzValues[ik] = LUMat->nnzValues[ik] - (pivot * LUMat->nnzValues[jk]) in ilu decomposition
 // a = a - (b * c)
-template<class Scalar>
-void blockMultSub(Scalar* a, const Scalar* b, const Scalar* c, unsigned int block_size)
+template <class Scalar>
+void
+blockMultSub(Scalar* a, const Scalar* b, const Scalar* c, unsigned int block_size)
 {
     for (unsigned int row = 0; row < block_size; row++) {
         for (unsigned int col = 0; col < block_size; col++) {
@@ -75,9 +77,9 @@ void blockMultSub(Scalar* a, const Scalar* b, const Scalar* c, unsigned int bloc
 }
 
 /*Perform a 3x3 matrix-matrix multiplicationj on two blocks*/
-template<class Scalar>
-void blockMult(const Scalar* mat1, const Scalar* mat2,
-               Scalar* resMat, unsigned int block_size)
+template <class Scalar>
+void
+blockMult(const Scalar* mat1, const Scalar* mat2, Scalar* resMat, unsigned int block_size)
 {
     for (unsigned int row = 0; row < block_size; row++) {
         for (unsigned int col = 0; col < block_size; col++) {
@@ -90,8 +92,8 @@ void blockMult(const Scalar* mat1, const Scalar* mat2,
     }
 }
 
-#define INSTANTIATE_TYPE(T)                               \
-    template void blockMultSub(T*, const T*, const T*, unsigned int); \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template void blockMultSub(T*, const T*, const T*, unsigned int);                                                  \
     template void blockMult(const T*, const T*, T*, unsigned int);
 
 INSTANTIATE_TYPE(double)

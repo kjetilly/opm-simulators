@@ -19,10 +19,11 @@
 #include <flow/flow_blackoil_legacyassembly.hpp>
 
 #include <opm/material/common/ResetLocale.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 std::unique_ptr<FlowMain<Properties::TTag::FlowProblem>>
 flowBlackoilMainInit(int argc, char** argv, bool outputCout, bool outputFiles)
@@ -31,18 +32,19 @@ flowBlackoilMainInit(int argc, char** argv, bool outputCout, bool outputFiles)
     // with incorrect locale settings.
     resetLocale();
 
-    return std::make_unique<FlowMain<Properties::TTag::FlowProblem>>(
-        argc, argv, outputCout, outputFiles);
+    return std::make_unique<FlowMain<Properties::TTag::FlowProblem>>(argc, argv, outputCout, outputFiles);
 }
 
 // ----------------- Main program -----------------
-int flowBlackoilMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowBlackoilMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     auto mainfunc = flowBlackoilMainInit(argc, argv, outputCout, outputFiles);
     return mainfunc->execute();
 }
 
-int flowBlackoilMainStandalone(int argc, char** argv)
+int
+flowBlackoilMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -52,4 +54,4 @@ int flowBlackoilMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

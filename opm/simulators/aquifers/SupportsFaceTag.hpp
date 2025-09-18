@@ -24,20 +24,24 @@
 #ifndef OPM_SUPPORTS_FACETAG_HEADER_INCLUDED
 #define OPM_SUPPORTS_FACETAG_HEADER_INCLUDED
 
-namespace Dune { class CpGrid; }
+namespace Dune
+{
+class CpGrid;
+}
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Grid>
-class SupportsFaceTag
-    : public std::bool_constant<false>
-{};
+template <class Grid>
+class SupportsFaceTag : public std::bool_constant<false>
+{
+};
 
 
-template<>
-class SupportsFaceTag<Dune::CpGrid>
-    : public std::bool_constant<true>
-{};
+template <>
+class SupportsFaceTag<Dune::CpGrid> : public std::bool_constant<true>
+{
+};
 
 
 } // namespace Opm

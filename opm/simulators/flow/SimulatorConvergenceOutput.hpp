@@ -30,14 +30,16 @@
 #include <thread>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-    class EclipseState;
-    struct StepReport;
+class EclipseState;
+struct StepReport;
 
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 /// Class handling convergence history output for a simulator.
 class SimulatorConvergenceOutput
@@ -59,8 +61,8 @@ public:
     /// \param[in] getPhaseName Callable object for converting component
     /// indices into human readable component names.
     void startThread(const EclipseState& eclState,
-                     std::string_view    convOutputOptions,
-                     std::string_view    optionName,
+                     std::string_view convOutputOptions,
+                     std::string_view optionName,
                      ConvergenceOutputThread::ComponentToPhaseName getPhaseName);
 
     /// Create convergence output requests.
@@ -91,13 +93,13 @@ private:
     ///
     /// Nullopt unless convergence output has been requested at the
     /// non-linear iteration level.
-    std::optional<ConvergenceReportQueue> convergenceOutputQueue_{};
+    std::optional<ConvergenceReportQueue> convergenceOutputQueue_ {};
 
     /// Output request controller object.
     ///
     /// Nullopt unless convergence output has been requested at the
     /// non-linear iteration level.
-    std::optional<ConvergenceOutputThread> convergenceOutputObject_{};
+    std::optional<ConvergenceOutputThread> convergenceOutputObject_ {};
 
     /// Output request thread.
     ///
@@ -106,7 +108,7 @@ private:
     ///
     /// Nullopt unless convergence output has been requested at the
     /// non-linear iteration level.
-    std::optional<std::thread> convergenceOutputThread_{};
+    std::optional<std::thread> convergenceOutputThread_ {};
 };
 
 } // namespace Opm

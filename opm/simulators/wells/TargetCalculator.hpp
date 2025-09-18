@@ -28,90 +28,92 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
-template<class Scalar> class GroupState;
-template<typename IndexTraits> class PhaseUsageInfo;
+template <class Scalar>
+class GroupState;
+template <typename IndexTraits>
+class PhaseUsageInfo;
 
-namespace WGHelpers {
-
-/// Based on a group control mode, extract or calculate rates, and
-/// provide other conveniences.
-template<typename Scalar, typename IndexTraits>
-class TargetCalculator
+namespace WGHelpers
 {
-public:
-    TargetCalculator(const Group::ProductionCMode cmode,
-                     const PhaseUsageInfo<IndexTraits>& pu,
-                     const std::vector<Scalar>& resv_coeff,
-                     const Scalar group_grat_target_from_sales,
-                     const std::string& group_name,
-                     const GroupState<Scalar>& group_state,
-                     const bool use_gpmaint);
 
-    template <typename RateType>
-    RateType calcModeRateFromRates(const std::vector<RateType>& rates) const
+    /// Based on a group control mode, extract or calculate rates, and
+    /// provide other conveniences.
+    template <typename Scalar, typename IndexTraits>
+    class TargetCalculator
     {
-      return calcModeRateFromRates(rates.data());
-    }
+    public:
+        TargetCalculator(const Group::ProductionCMode cmode,
+                         const PhaseUsageInfo<IndexTraits>& pu,
+                         const std::vector<Scalar>& resv_coeff,
+                         const Scalar group_grat_target_from_sales,
+                         const std::string& group_name,
+                         const GroupState<Scalar>& group_state,
+                         const bool use_gpmaint);
 
-    template <typename RateType>
-    RateType calcModeRateFromRates(const RateType* rates) const;
+        template <typename RateType>
+        RateType calcModeRateFromRates(const std::vector<RateType>& rates) const
+        {
+            return calcModeRateFromRates(rates.data());
+        }
 
-    Scalar groupTarget(const std::optional<Group::ProductionControls>& ctrl,
-                       DeferredLogger& deferred_logger) const;
+        template <typename RateType>
+        RateType calcModeRateFromRates(const RateType* rates) const;
 
-    GuideRateModel::Target guideTargetMode() const;
+        Scalar groupTarget(const std::optional<Group::ProductionControls>& ctrl, DeferredLogger& deferred_logger) const;
 
-private:
-    Group::ProductionCMode cmode_;
-    const PhaseUsageInfo<IndexTraits>& pu_;
-    const std::vector<Scalar>& resv_coeff_;
-    const Scalar group_grat_target_from_sales_;
-    const std::string& group_name_;
-    const GroupState<Scalar>& group_state_;
-    bool use_gpmaint_;
-};
+        GuideRateModel::Target guideTargetMode() const;
 
-/// Based on a group control mode, extract or calculate rates, and
-/// provide other conveniences.
-template<typename Scalar, typename IndexTraits>
-class InjectionTargetCalculator
-{
-public:
-    InjectionTargetCalculator(const Group::InjectionCMode& cmode,
-                              const PhaseUsageInfo<IndexTraits>& pu,
-                              const std::vector<Scalar>& resv_coeff,
-                              const std::string& group_name,
-                              const Scalar sales_target,
-                              const GroupState<Scalar>& group_state,
-                              const Phase& injection_phase,
-                              const bool use_gpmaint,
-                              DeferredLogger& deferred_logger);
+    private:
+        Group::ProductionCMode cmode_;
+        const PhaseUsageInfo<IndexTraits>& pu_;
+        const std::vector<Scalar>& resv_coeff_;
+        const Scalar group_grat_target_from_sales_;
+        const std::string& group_name_;
+        const GroupState<Scalar>& group_state_;
+        bool use_gpmaint_;
+    };
 
-    template <typename RateVec>
-    auto calcModeRateFromRates(const RateVec& rates) const
+    /// Based on a group control mode, extract or calculate rates, and
+    /// provide other conveniences.
+    template <typename Scalar, typename IndexTraits>
+    class InjectionTargetCalculator
     {
-        return rates[pos_];
-    }
+    public:
+        InjectionTargetCalculator(const Group::InjectionCMode& cmode,
+                                  const PhaseUsageInfo<IndexTraits>& pu,
+                                  const std::vector<Scalar>& resv_coeff,
+                                  const std::string& group_name,
+                                  const Scalar sales_target,
+                                  const GroupState<Scalar>& group_state,
+                                  const Phase& injection_phase,
+                                  const bool use_gpmaint,
+                                  DeferredLogger& deferred_logger);
 
-    Scalar groupTarget(const std::optional<Group::InjectionControls>& ctrl,
-                       DeferredLogger& deferred_logger) const;
+        template <typename RateVec>
+        auto calcModeRateFromRates(const RateVec& rates) const
+        {
+            return rates[pos_];
+        }
 
-    GuideRateModel::Target guideTargetMode() const;
+        Scalar groupTarget(const std::optional<Group::InjectionControls>& ctrl, DeferredLogger& deferred_logger) const;
 
-private:
-    Group::InjectionCMode cmode_;
-    const PhaseUsageInfo<IndexTraits>& pu_;
-    const std::vector<Scalar>& resv_coeff_;
-    const std::string& group_name_;
-    Scalar sales_target_;
-    const GroupState<Scalar>& group_state_;
-    bool use_gpmaint_;
-    int pos_;
-    GuideRateModel::Target target_;
-};
+        GuideRateModel::Target guideTargetMode() const;
+
+    private:
+        Group::InjectionCMode cmode_;
+        const PhaseUsageInfo<IndexTraits>& pu_;
+        const std::vector<Scalar>& resv_coeff_;
+        const std::string& group_name_;
+        Scalar sales_target_;
+        const GroupState<Scalar>& group_state_;
+        bool use_gpmaint_;
+        int pos_;
+        GuideRateModel::Target target_;
+    };
 
 } // namespace WGHelpers
 

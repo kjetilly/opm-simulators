@@ -17,7 +17,8 @@
 #ifndef FLOW_GASWATER_BRINE_HPP
 #define FLOW_GASWATER_BRINE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasWaterBrineMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowGasWaterBrineMain(int argc, char** argv, bool outputCout, bool outputFil
 //! \brief Main function used in flow_gaswater_brine binary.
 int flowGasWaterBrineMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_GASWATER_BRINE_HPP

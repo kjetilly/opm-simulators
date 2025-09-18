@@ -31,24 +31,24 @@
 
 #include <fmt/format.h>
 
-namespace Opm::Pybind {
+namespace Opm::Pybind
+{
 
 template <class TypeTag>
-PyFluidState<TypeTag>::
-PyFluidState(Simulator* simulator)
+PyFluidState<TypeTag>::PyFluidState(Simulator* simulator)
     : simulator_(simulator)
-{}
+{
+}
 
 // Public methods alphabetically sorted
 // ------------------------------------
 
 template <class TypeTag>
 std::vector<int>
-PyFluidState<TypeTag>::
-getPrimaryVarMeaning(const std::string& variable) const
+PyFluidState<TypeTag>::getPrimaryVarMeaning(const std::string& variable) const
 {
     Model& model = this->simulator_->model();
-    auto& sol = model.solution(/*timeIdx*/0);
+    auto& sol = model.solution(/*timeIdx*/ 0);
     const auto size = model.numGridDof();
     std::vector<int> array(size);
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {
@@ -60,34 +60,29 @@ getPrimaryVarMeaning(const std::string& variable) const
 
 template <class TypeTag>
 std::map<std::string, int>
-PyFluidState<TypeTag>::
-getPrimaryVarMeaningMap(const std::string& variable) const
+PyFluidState<TypeTag>::getPrimaryVarMeaningMap(const std::string& variable) const
 {
     if (variable.compare("pressure") == 0) {
-        return {{ "Po", static_cast<int>(PrimaryVariables::PressureMeaning::Po) },
-                { "Pw", static_cast<int>(PrimaryVariables::PressureMeaning::Pw) },
-                { "Pg", static_cast<int>(PrimaryVariables::PressureMeaning::Pg) }};
-    }
-    else if (variable.compare("water") == 0) {
-        return {{ "Sw", static_cast<int>(PrimaryVariables::WaterMeaning::Sw) },
-                { "Rvw", static_cast<int>(PrimaryVariables::WaterMeaning::Rvw) },
-                { "Rsw", static_cast<int>(PrimaryVariables::WaterMeaning::Rsw) },
-                { "Disabled", static_cast<int>(PrimaryVariables::WaterMeaning::Disabled) }};
-    }
-    else if (variable.compare("gas") == 0) {
-        return {{ "Sg", static_cast<int>(PrimaryVariables::GasMeaning::Sg) },
-                { "Rs", static_cast<int>(PrimaryVariables::GasMeaning::Rs) },
-                { "Rv", static_cast<int>(PrimaryVariables::GasMeaning::Rv) },
-                { "Disabled", static_cast<int>(PrimaryVariables::GasMeaning::Disabled) }};
-    }
-    else if (variable.compare("brine") == 0) {
-        return {{ "Cs", static_cast<int>(PrimaryVariables::BrineMeaning::Cs) },
-                { "Sp", static_cast<int>(PrimaryVariables::BrineMeaning::Sp) },
-                { "Disabled", static_cast<int>(PrimaryVariables::BrineMeaning::Disabled) }};
-    }
-    else {
-        const std::string msg = fmt::format(
-            "Unknown variable meaning '{}': Expected pressure, water, gas, or brine", variable);
+        return {{"Po", static_cast<int>(PrimaryVariables::PressureMeaning::Po)},
+                {"Pw", static_cast<int>(PrimaryVariables::PressureMeaning::Pw)},
+                {"Pg", static_cast<int>(PrimaryVariables::PressureMeaning::Pg)}};
+    } else if (variable.compare("water") == 0) {
+        return {{"Sw", static_cast<int>(PrimaryVariables::WaterMeaning::Sw)},
+                {"Rvw", static_cast<int>(PrimaryVariables::WaterMeaning::Rvw)},
+                {"Rsw", static_cast<int>(PrimaryVariables::WaterMeaning::Rsw)},
+                {"Disabled", static_cast<int>(PrimaryVariables::WaterMeaning::Disabled)}};
+    } else if (variable.compare("gas") == 0) {
+        return {{"Sg", static_cast<int>(PrimaryVariables::GasMeaning::Sg)},
+                {"Rs", static_cast<int>(PrimaryVariables::GasMeaning::Rs)},
+                {"Rv", static_cast<int>(PrimaryVariables::GasMeaning::Rv)},
+                {"Disabled", static_cast<int>(PrimaryVariables::GasMeaning::Disabled)}};
+    } else if (variable.compare("brine") == 0) {
+        return {{"Cs", static_cast<int>(PrimaryVariables::BrineMeaning::Cs)},
+                {"Sp", static_cast<int>(PrimaryVariables::BrineMeaning::Sp)},
+                {"Disabled", static_cast<int>(PrimaryVariables::BrineMeaning::Disabled)}};
+    } else {
+        const std::string msg
+            = fmt::format("Unknown variable meaning '{}': Expected pressure, water, gas, or brine", variable);
         throw std::runtime_error(msg);
     }
 }
@@ -120,8 +115,7 @@ getPrimaryVarMeaningMap(const std::string& variable) const
  */
 template <class TypeTag>
 std::vector<double>
-PyFluidState<TypeTag>::
-getFluidStateVariable(const std::string& name) const
+PyFluidState<TypeTag>::getFluidStateVariable(const std::string& name) const
 {
     Model& model = this->simulator_->model();
     const auto size = model.numGridDof();
@@ -147,12 +141,11 @@ getFluidStateVariable(const std::string& name) const
 
 template <class TypeTag>
 std::vector<double>
-PyFluidState<TypeTag>::
-getPrimaryVariable(const std::string& idx_name) const
+PyFluidState<TypeTag>::getPrimaryVariable(const std::string& idx_name) const
 {
     std::size_t primary_var_idx = getPrimaryVarIndex_(idx_name);
     Model& model = this->simulator_->model();
-    auto& sol = model.solution(/*timeIdx*/0);
+    auto& sol = model.solution(/*timeIdx*/ 0);
     const auto size = model.numGridDof();
     std::vector<double> array(size);
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {
@@ -164,19 +157,15 @@ getPrimaryVariable(const std::string& idx_name) const
 
 template <class TypeTag>
 void
-PyFluidState<TypeTag>::
-setPrimaryVariable(const std::string& idx_name,
-                   const double* data,
-                   std::size_t size)
+PyFluidState<TypeTag>::setPrimaryVariable(const std::string& idx_name, const double* data, std::size_t size)
 {
     const std::size_t primary_var_idx = getPrimaryVarIndex_(idx_name);
     Model& model = this->simulator_->model();
-    auto& sol = model.solution(/*timeIdx*/0);
+    auto& sol = model.solution(/*timeIdx*/ 0);
     const auto model_size = model.numGridDof();
     if (model_size != size) {
         const std::string msg = fmt::format(
-            "Cannot set primary variable. Expected array of size {} but got array of size: {}",
-            model_size, size);
+            "Cannot set primary variable. Expected array of size {} but got array of size: {}", model_size, size);
         throw std::runtime_error(msg);
     }
     for (unsigned dof_idx = 0; dof_idx < size; ++dof_idx) {
@@ -190,19 +179,15 @@ setPrimaryVariable(const std::string& idx_name,
 
 template <class TypeTag>
 std::size_t
-PyFluidState<TypeTag>::
-getPrimaryVarIndex_(const std::string& idx_name) const
+PyFluidState<TypeTag>::getPrimaryVarIndex_(const std::string& idx_name) const
 {
     if (idx_name.compare("pressure") == 0) {
         return Indices::pressureSwitchIdx;
-    }
-    else if (idx_name.compare("water_saturation") == 0) {
+    } else if (idx_name.compare("water_saturation") == 0) {
         return Indices::waterSwitchIdx;
-    }
-    else if (idx_name.compare("composition") == 0) {
+    } else if (idx_name.compare("composition") == 0) {
         return Indices::compositionSwitchIdx;
-    }
-    else {
+    } else {
         const std::string msg = fmt::format("Unknown primary variable index name: {}", idx_name);
         throw std::runtime_error(msg);
     }
@@ -210,48 +195,39 @@ getPrimaryVarIndex_(const std::string& idx_name) const
 
 template <class TypeTag>
 int
-PyFluidState<TypeTag>::
-getVariableMeaning_(PrimaryVariables& primary_vars,
-                    const std::string& variable) const
+PyFluidState<TypeTag>::getVariableMeaning_(PrimaryVariables& primary_vars, const std::string& variable) const
 {
     if (variable.compare("pressure") == 0) {
         return static_cast<int>(primary_vars.primaryVarsMeaningPressure());
-    }
-    else if(variable.compare("water") == 0) {
+    } else if (variable.compare("water") == 0) {
         return static_cast<int>(primary_vars.primaryVarsMeaningWater());
-    }
-    else if (variable.compare("gas") == 0) {
+    } else if (variable.compare("gas") == 0) {
         return static_cast<int>(primary_vars.primaryVarsMeaningGas());
-    }
-    else if (variable.compare("brine") == 0) {
+    } else if (variable.compare("brine") == 0) {
         return static_cast<int>(primary_vars.primaryVarsMeaningBrine());
-    }
-    else {
-        const std::string msg = fmt::format(
-            "Unknown variable meaning '{}': Expected pressure, water, gas, or brine", variable);
+    } else {
+        const std::string msg
+            = fmt::format("Unknown variable meaning '{}': Expected pressure, water, gas, or brine", variable);
         throw std::runtime_error(msg);
     }
 }
 
 template <class TypeTag>
 typename PyFluidState<TypeTag>::VariableType
-PyFluidState<TypeTag>::
-getVariableType_(const std::string& name) const
+PyFluidState<TypeTag>::getVariableType_(const std::string& name) const
 {
-    static std::map<std::string, VariableType> variable_type_map{
-       {"Sw", VariableType::Sw},
-       {"Sg", VariableType::Sg},
-       {"So", VariableType::So},
-       {"pw", VariableType::pw},
-       {"pg", VariableType::pg},
-       {"po", VariableType::po},
-       {"Rs", VariableType::Rs},
-       {"Rv", VariableType::Rv},
-       {"rho_w", VariableType::rho_w},
-       {"rho_g", VariableType::rho_g},
-       {"rho_o", VariableType::rho_o},
-       {"T", VariableType::T}
-    };
+    static std::map<std::string, VariableType> variable_type_map {{"Sw", VariableType::Sw},
+                                                                  {"Sg", VariableType::Sg},
+                                                                  {"So", VariableType::So},
+                                                                  {"pw", VariableType::pw},
+                                                                  {"pg", VariableType::pg},
+                                                                  {"po", VariableType::po},
+                                                                  {"Rs", VariableType::Rs},
+                                                                  {"Rv", VariableType::Rv},
+                                                                  {"rho_w", VariableType::rho_w},
+                                                                  {"rho_g", VariableType::rho_g},
+                                                                  {"rho_o", VariableType::rho_o},
+                                                                  {"T", VariableType::T}};
 
     if (variable_type_map.count(name) == 0) {
         variableNotFoundError_(name);
@@ -262,35 +238,32 @@ getVariableType_(const std::string& name) const
 template <class TypeTag>
 template <class FluidState>
 double
-PyFluidState<TypeTag>::
-getVariableValue_(FluidState& fs,
-                  VariableType var_type,
-                  const std::string& name) const
+PyFluidState<TypeTag>::getVariableValue_(FluidState& fs, VariableType var_type, const std::string& name) const
 {
-    switch(var_type) {
-    case VariableType::pw :
+    switch (var_type) {
+    case VariableType::pw:
         return getValue(fs.pressure(FluidSystem::waterPhaseIdx));
-    case VariableType::pg :
+    case VariableType::pg:
         return getValue(fs.pressure(FluidSystem::gasPhaseIdx));
-    case VariableType::po :
+    case VariableType::po:
         return getValue(fs.pressure(FluidSystem::oilPhaseIdx));
-    case VariableType::rho_w :
+    case VariableType::rho_w:
         return getValue(fs.density(FluidSystem::waterPhaseIdx));
-    case VariableType::rho_g :
+    case VariableType::rho_g:
         return getValue(fs.density(FluidSystem::gasPhaseIdx));
-    case VariableType::rho_o :
+    case VariableType::rho_o:
         return getValue(fs.density(FluidSystem::oilPhaseIdx));
-    case VariableType::Rs :
+    case VariableType::Rs:
         return getValue(fs.Rs());
-    case VariableType::Rv :
+    case VariableType::Rv:
         return getValue(fs.Rv());
-    case VariableType::Sw :
+    case VariableType::Sw:
         return getValue(fs.saturation(FluidSystem::waterPhaseIdx));
-    case VariableType::Sg :
+    case VariableType::Sg:
         return getValue(fs.saturation(FluidSystem::gasPhaseIdx));
-    case VariableType::So :
+    case VariableType::So:
         return getValue(fs.saturation(FluidSystem::oilPhaseIdx));
-    case VariableType::T :
+    case VariableType::T:
         return getValue(fs.temperature(FluidSystem::waterPhaseIdx));
     default:
         variableNotFoundError_(name);
@@ -300,8 +273,7 @@ getVariableValue_(FluidState& fs,
 
 template <class TypeTag>
 void
-PyFluidState<TypeTag>::
-variableNotFoundError_(const std::string& name) const
+PyFluidState<TypeTag>::variableNotFoundError_(const std::string& name) const
 {
     const std::string msg = fmt::format("Access to variable '{}' is not implemented yet!", name);
     throw std::runtime_error(msg);

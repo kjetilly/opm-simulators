@@ -32,9 +32,9 @@
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/Grid/FieldPropsManager.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/Eqldims.hpp>
 #include <opm/input/eclipse/EclipseState/SimulationConfig/SimulationConfig.hpp>
 #include <opm/input/eclipse/EclipseState/SimulationConfig/ThresholdPressure.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/Eqldims.hpp>
 
 #include <fmt/format.h>
 
@@ -43,14 +43,15 @@
 #include <limits>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
-GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-GenericThresholdPressure(const CartesianIndexMapper& cartMapper,
-                         const GridView& gridView,
-                         const ElementMapper& elementMapper,
-                         const EclipseState& eclState)
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::GenericThresholdPressure(
+    const CartesianIndexMapper& cartMapper,
+    const GridView& gridView,
+    const ElementMapper& elementMapper,
+    const EclipseState& eclState)
     : cartMapper_(cartMapper)
     , gridView_(gridView)
     , elementMapper_(elementMapper)
@@ -60,9 +61,9 @@ GenericThresholdPressure(const CartesianIndexMapper& cartMapper,
 {
 }
 
-template<class Grid, class GridView, class ElementMapper,class Scalar>
-Scalar GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-thresholdPressure(int elem1Idx, int elem2Idx) const
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+Scalar
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::thresholdPressure(int elem1Idx, int elem2Idx) const
 {
     if (!enableThresholdPressure_)
         return 0.0;
@@ -95,12 +96,12 @@ thresholdPressure(int elem1Idx, int elem2Idx) const
         return 0.0;
     }
 
-    return thpres_[equilRegion1Idx*numEquilRegions_ + equilRegion2Idx];
+    return thpres_[equilRegion1Idx * numEquilRegions_ + equilRegion2Idx];
 }
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
-void GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-finishInit()
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+void
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::finishInit()
 {
     const auto& simConfig = eclState_.getSimulationConfig();
 
@@ -110,8 +111,8 @@ finishInit()
     }
 
     numEquilRegions_ = eclState_.getTableManager().getEqldims().getNumEquilRegions();
-    const decltype(numEquilRegions_) maxRegions =
-        std::numeric_limits<std::decay_t<decltype(elemEquilRegion_[0])>>::max();
+    const decltype(numEquilRegions_) maxRegions
+        = std::numeric_limits<std::decay_t<decltype(elemEquilRegion_[0])>>::max();
 
     if (numEquilRegions_ > maxRegions) {
         // make sure that the index of an equilibration region can be stored
@@ -120,21 +121,22 @@ finishInit()
                   (fmt::format("The maximum number of supported "
                                "equilibration regions by OPM flow is {}, but "
                                "{} are used!",
-                               maxRegions, numEquilRegions_)));
+                               maxRegions,
+                               numEquilRegions_)));
     }
 
     if (numEquilRegions_ > 2048) {
         // warn about performance
         OpmLog::warning(fmt::format("Number of equilibration regions is {}, which is "
-                                 "rather large. Note, that this might "
-                                 "have a negative impact on performance "
-                                 "and memory consumption.", numEquilRegions_));
+                                    "rather large. Note, that this might "
+                                    "have a negative impact on performance "
+                                    "and memory consumption.",
+                                    numEquilRegions_));
     }
 
     // internalize the data specified using the EQLNUM keyword
-    elemEquilRegion_ = lookUpData_.
-        template assignFieldPropsIntOnLeaf<short unsigned int>(eclState_.fieldProps(),
-                                                               "EQLNUM", true);
+    elemEquilRegion_
+        = lookUpData_.template assignFieldPropsIntOnLeaf<short unsigned int>(eclState_.fieldProps(), "EQLNUM", true);
 
     /*
       If this is a restart run the ThresholdPressure object will be active,
@@ -146,13 +148,13 @@ finishInit()
     }
 
     // allocate the array which specifies the threshold pressures
-    thpres_.resize(numEquilRegions_*numEquilRegions_, 0.0);
-    thpresDefault_.resize(numEquilRegions_*numEquilRegions_, 0.0);
+    thpres_.resize(numEquilRegions_ * numEquilRegions_, 0.0);
+    thpresDefault_.resize(numEquilRegions_ * numEquilRegions_, 0.0);
 }
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
-void GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-applyExplicitThresholdPressures_()
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+void
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::applyExplicitThresholdPressures_()
 {
     const SimulationConfig& simConfig = eclState_.getSimulationConfig();
     const auto& thpres = simConfig.getThresholdPressure();
@@ -163,8 +165,7 @@ applyExplicitThresholdPressures_()
         for (const auto& intersection : intersections(gridView_, elem)) {
             if (intersection.boundary()) {
                 continue; // ignore boundary intersections for now (TODO?)
-            }
-            else if (!intersection.neighbor()) { // processor boundary but not domain boundary
+            } else if (!intersection.neighbor()) { // processor boundary but not domain boundary
                 continue;
             }
 
@@ -179,15 +180,14 @@ applyExplicitThresholdPressures_()
                 if (thpres.hasThresholdPressure(equilRegionInside + 1, equilRegionOutside + 1)) {
                     // threshold pressure explicitly specified
                     pth = thpres.getThresholdPressure(equilRegionInside + 1, equilRegionOutside + 1);
-                }
-                else {
+                } else {
                     // take the threshold pressure from the initial condition
-                    unsigned offset = equilRegionInside*numEquilRegions_ + equilRegionOutside;
+                    unsigned offset = equilRegionInside * numEquilRegions_ + equilRegionOutside;
                     pth = thpresDefault_[offset];
                 }
 
-                unsigned offset1 = equilRegionInside*numEquilRegions_ + equilRegionOutside;
-                unsigned offset2 = equilRegionOutside*numEquilRegions_ + equilRegionInside;
+                unsigned offset1 = equilRegionInside * numEquilRegions_ + equilRegionOutside;
+                unsigned offset2 = equilRegionOutside * numEquilRegions_ + equilRegionInside;
 
                 thpres_[offset1] = pth;
                 thpres_[offset2] = pth;
@@ -201,9 +201,9 @@ applyExplicitThresholdPressures_()
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
-void GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-configureThpresft_()
+template <class Grid, class GridView, class ElementMapper, class Scalar>
+void
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::configureThpresft_()
 {
     // retrieve the faults collection.
     const FaultCollection& faults = eclState_.getFaults();
@@ -228,10 +228,9 @@ configureThpresft_()
     }
 }
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class Scalar>
 std::vector<Scalar>
-GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-getRestartVector() const
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::getRestartVector() const
 {
     if (!enableThresholdPressure_) {
         return {};
@@ -240,37 +239,36 @@ getRestartVector() const
     return this->thpres_;
 }
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class Scalar>
 bool
-GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-enableThresholdPressure() const
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::enableThresholdPressure() const
 {
     return this->enableThresholdPressure_;
 }
 
 
-template<class Grid, class GridView, class ElementMapper, class Scalar>
+template <class Grid, class GridView, class ElementMapper, class Scalar>
 void
-GenericThresholdPressure<Grid,GridView,ElementMapper,Scalar>::
-logPressures()
+GenericThresholdPressure<Grid, GridView, ElementMapper, Scalar>::logPressures()
 {
     if (!enableThresholdPressure_) {
         return;
     }
 
-    auto lineFormat = [this](unsigned i, unsigned j, double val)
-    {
+    auto lineFormat = [this](unsigned i, unsigned j, double val) {
         const auto& units = eclState_.getUnits();
         return fmt::format("{:4}{:>6}{:23}{:>6}{:24}{:>11.07}{:7}{}\n",
-                           " ", i,
-                           " ", j,
-                           " ", units.from_si(UnitSystem::measure::pressure, val),
-                           " ", units.name(UnitSystem::measure::pressure));
+                           " ",
+                           i,
+                           " ",
+                           j,
+                           " ",
+                           units.from_si(UnitSystem::measure::pressure, val),
+                           " ",
+                           units.name(UnitSystem::measure::pressure));
     };
-    auto lineFormatS = [](auto s1, auto s2, auto s3)
-    {
-        return fmt::format("{:4}{:^16}{:13}{:^9}{:21}{:^18}\n",
-                           " ", s1, " ", s2, " ", s3);
+    auto lineFormatS = [](auto s1, auto s2, auto s3) {
+        return fmt::format("{:4}{:^16}{:13}{:^9}{:21}{:^18}\n", " ", s1, " ", s2, " ", s3);
     };
 
     std::string str = "\nLIST OF ALL NON-ZERO THRESHOLD PRESSURES\n"
@@ -286,8 +284,7 @@ logPressures()
             if (thpres.hasRegionBarrier(i, j)) {
                 if (thpres.hasThresholdPressure(i, j)) {
                     str += lineFormat(i, j, thpres.getThresholdPressure(j, i));
-                }
-                else {
+                } else {
                     std::size_t idx = (j - 1) * numEquilRegions_ + (i - 1);
                     str += lineFormat(i, j, this->thpresDefault_[idx]);
                 }

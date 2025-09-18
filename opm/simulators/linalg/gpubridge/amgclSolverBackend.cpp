@@ -23,9 +23,9 @@
 
 #include <opm/simulators/linalg/gpubridge/GpuResult.hpp>
 
-#include <opm/common/OpmLog/OpmLog.hpp>
-#include <opm/common/ErrorMacros.hpp>
 #include <dune/common/timer.hh>
+#include <opm/common/ErrorMacros.hpp>
+#include <opm/common/OpmLog/OpmLog.hpp>
 
 #include <boost/property_tree/json_parser.hpp>
 
@@ -37,35 +37,38 @@
 #include <algorithm>
 #include <fstream>
 #include <ios>
-#include <ostream>
 #include <memory>
 #include <mutex>
+#include <ostream>
 #include <sstream>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <vector>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 using Dune::Timer;
 
-template<class Scalar, unsigned int block_size>
-amgclSolverBackend<Scalar,block_size>::
-amgclSolverBackend(const int          verbosity_,
-                   const int          maxit_,
-                   const Scalar       tolerance_,
-                   const unsigned int platformID_,
-                   const unsigned int deviceID_)
+template <class Scalar, unsigned int block_size>
+amgclSolverBackend<Scalar, block_size>::amgclSolverBackend(const int verbosity_,
+                                                           const int maxit_,
+                                                           const Scalar tolerance_,
+                                                           const unsigned int platformID_,
+                                                           const unsigned int deviceID_)
     : Base(verbosity_, maxit_, tolerance_, platformID_, deviceID_)
-{}
+{
+}
 
-template<class Scalar, unsigned int block_size>
-amgclSolverBackend<Scalar,block_size>::~amgclSolverBackend()
-{}
+template <class Scalar, unsigned int block_size>
+amgclSolverBackend<Scalar, block_size>::~amgclSolverBackend()
+{
+}
 
-template<class Scalar, unsigned int block_size>
-void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
+template <class Scalar, unsigned int block_size>
+void
+amgclSolverBackend<Scalar, block_size>::initialize(int Nb_, int nnzbs)
 {
     this->Nb = Nb_;
     this->N = Nb * block_size;
@@ -73,8 +76,7 @@ void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
     this->nnz = nnzbs * block_size * block_size;
 
     std::ostringstream out;
-    out << "Initializing amgclSolverBackend, matrix size: " << Nb
-        << " blockrows, nnzb: " << nnzb << " blocks\n";
+    out << "Initializing amgclSolverBackend, matrix size: " << Nb << " blockrows, nnzb: " << nnzb << " blocks\n";
     out << "Maxit: " << maxit << std::scientific << ", tolerance: " << tolerance << "\n";
     out << "DeviceID: " << deviceID << "\n";
     OpmLog::info(out.str());
@@ -117,8 +119,7 @@ void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
         prm.put("solver.maxiter", t3);
         bool t4 = prm.get("solver.verbose", verbosity >= 2);
         prm.put("solver.verbose", t4);
-        out << "Using parameters from " << filename
-            << " (with default values for omitted parameters):\n";
+        out << "Using parameters from " << filename << " (with default values for omitted parameters):\n";
     } else { // otherwise use default parameters, same as Dune
         prm.put("backend_type", "cpu"); // put it in the tree so it gets printed
         prm.put("precond.class", "relaxation");
@@ -133,7 +134,7 @@ void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
     }
 
     boost::property_tree::write_json(out, prm); // print amgcl parameters
-    prm.erase("backend_type");                  // delete custom parameter, otherwise amgcl prints a warning
+    prm.erase("backend_type"); // delete custom parameter, otherwise amgcl prints a warning
 
     if (backend_type_string == "cpu") {
         backend_type = Amgcl_backend_type::cpu;
@@ -142,8 +143,7 @@ void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
     } else if (backend_type_string == "vexcl") {
         backend_type = Amgcl_backend_type::vexcl;
     } else {
-        OPM_THROW(std::logic_error,
-                  "Error unknown value for amgcl parameter 'backend_type', use [cpu|cuda|vexcl]");
+        OPM_THROW(std::logic_error, "Error unknown value for amgcl parameter 'backend_type', use [cpu|cuda|vexcl]");
     }
 
     if (backend_type == Amgcl_backend_type::cuda) {
@@ -161,9 +161,9 @@ void amgclSolverBackend<Scalar,block_size>::initialize(int Nb_, int nnzbs)
     initialized = true;
 } // end initialize()
 
-template<class Scalar, unsigned int block_size>
-void amgclSolverBackend<Scalar,block_size>::
-convert_sparsity_pattern(const int* rows, const int* cols)
+template <class Scalar, unsigned int block_size>
+void
+amgclSolverBackend<Scalar, block_size>::convert_sparsity_pattern(const int* rows, const int* cols)
 {
     Timer t;
     const unsigned int bs = block_size;
@@ -172,7 +172,7 @@ convert_sparsity_pattern(const int* rows, const int* cols)
     A_rows[0] = 0;
     for (int row = 0; row < Nb; ++row) {
         int rowStart = rows[row];
-        int rowEnd = rows[row+1];
+        int rowEnd = rows[row + 1];
         for (unsigned r = 0; r < bs; ++r) {
             for (int ij = rowStart; ij < rowEnd; ++ij) {
                 for (unsigned c = 0; c < bs; ++c) {
@@ -180,7 +180,7 @@ convert_sparsity_pattern(const int* rows, const int* cols)
                     idx++;
                 }
             }
-            A_rows[row*bs + r + 1] = idx;
+            A_rows[row * bs + r + 1] = idx;
         }
     }
 
@@ -191,9 +191,9 @@ convert_sparsity_pattern(const int* rows, const int* cols)
     }
 } // end convert_sparsity_pattern()
 
-template<class Scalar, unsigned int block_size>
-void amgclSolverBackend<Scalar,block_size>::
-convert_data(const Scalar* vals, const int* rows)
+template <class Scalar, unsigned int block_size>
+void
+amgclSolverBackend<Scalar, block_size>::convert_data(const Scalar* vals, const int* rows)
 {
     Timer t;
     const unsigned int bs = block_size;
@@ -201,11 +201,11 @@ convert_data(const Scalar* vals, const int* rows)
 
     for (int row = 0; row < Nb; ++row) {
         int rowStart = rows[row];
-        int rowEnd = rows[row+1];
+        int rowEnd = rows[row + 1];
         for (unsigned r = 0; r < bs; ++r) {
             for (int ij = rowStart; ij < rowEnd; ++ij) {
                 for (unsigned c = 0; c < bs; ++c) {
-                    A_vals[idx] = vals[ij*bs*bs + r*bs + c];
+                    A_vals[idx] = vals[ij * bs * bs + r * bs + c];
                     idx++;
                 }
             }
@@ -220,8 +220,8 @@ convert_data(const Scalar* vals, const int* rows)
 } // end convert_data()
 
 #if HAVE_VEXCL
-void initialize_vexcl(std::vector<cl::CommandQueue>& ctx,
-                      unsigned int platformID, unsigned int deviceID)
+void
+initialize_vexcl(std::vector<cl::CommandQueue>& ctx, unsigned int platformID, unsigned int deviceID)
 {
     std::vector<cl::Platform> platforms;
     std::vector<cl::Device> devices;
@@ -235,7 +235,7 @@ void initialize_vexcl(std::vector<cl::CommandQueue>& ctx,
     platforms[platformID].getInfo(CL_PLATFORM_NAME, &platform_name);
     platforms[platformID].getDevices(CL_DEVICE_TYPE_ALL, &devices);
 
-    if (devices.size() <= deviceID){
+    if (devices.size() <= deviceID) {
         OPM_THROW(std::logic_error, "Error chosen too high OpenCL device ID");
     }
 
@@ -250,23 +250,27 @@ void initialize_vexcl(std::vector<cl::CommandQueue>& ctx,
     OpmLog::info(out.str());
 }
 
-template <typename vexcl_matrix_type, typename vexcl_vector_type,
-          unsigned int block_size, typename Scalar, typename AIJInfo>
-void solve_vexcl(const AIJInfo& A,
-                 const boost::property_tree::ptree prm,
-                 const std::vector<cl::CommandQueue>& ctx,
-                 Scalar* b,
-                 std::vector<Scalar>& x,
-                 const int N,
-                 int& iters,
-                 Scalar& error)
+template <typename vexcl_matrix_type,
+          typename vexcl_vector_type,
+          unsigned int block_size,
+          typename Scalar,
+          typename AIJInfo>
+void
+solve_vexcl(const AIJInfo& A,
+            const boost::property_tree::ptree prm,
+            const std::vector<cl::CommandQueue>& ctx,
+            Scalar* b,
+            std::vector<Scalar>& x,
+            const int N,
+            int& iters,
+            Scalar& error)
 {
     using Backend = amgcl::backend::vexcl<vexcl_matrix_type>;
-    using Solver = amgcl::make_solver<amgcl::runtime::preconditioner<Backend>,
-                                      amgcl::runtime::solver::wrapper<Backend>>;
+    using Solver
+        = amgcl::make_solver<amgcl::runtime::preconditioner<Backend>, amgcl::runtime::solver::wrapper<Backend>>;
 
     typename Solver::backend_params bprm;
-    bprm.q = ctx;  // set vexcl context
+    bprm.q = ctx; // set vexcl context
 
     Solver solve(A, prm, bprm); // create solver
 
@@ -281,9 +285,9 @@ void solve_vexcl(const AIJInfo& A,
 }
 #endif
 
-template<class Scalar, unsigned int block_size>
-void amgclSolverBackend<Scalar,block_size>::
-solve_system(Scalar* b, GpuResult& res)
+template <class Scalar, unsigned int block_size>
+void
+amgclSolverBackend<Scalar, block_size>::solve_system(Scalar* b, GpuResult& res)
 {
     Timer t;
 
@@ -295,10 +299,9 @@ solve_system(Scalar* b, GpuResult& res)
         } else if (backend_type == Amgcl_backend_type::cpu) { // use builtin backend (CPU)
             // create matrix object
             auto Atmp = std::tie(N, A_rows, A_cols, A_vals);
-            auto print = [this](const auto& solve)
-            {
+            auto print = [this](const auto& solve) {
                 // print solver structure (once)
-                std::call_once(print_info, [&](){
+                std::call_once(print_info, [&]() {
                     std::ostringstream out;
                     out << solve << std::endl;
                     OpmLog::info(out.str());
@@ -351,10 +354,8 @@ solve_system(Scalar* b, GpuResult& res)
         } else if (backend_type == Amgcl_backend_type::vexcl) {
 #if HAVE_VEXCL
             static std::vector<cl::CommandQueue> ctx; // using CommandQueue directly instead of vex::Context
-            std::call_once(vexcl_initialize, [&](){
-                initialize_vexcl(ctx, platformID, deviceID);
-            });
-            if constexpr(block_size == 1){
+            std::call_once(vexcl_initialize, [&]() { initialize_vexcl(ctx, platformID, deviceID); });
+            if constexpr (block_size == 1) {
                 auto A = std::tie(N, A_rows, A_cols, A_vals);
 
                 solve_vexcl<Scalar, Scalar, block_size>(A, prm, ctx, b, x, N, iters, error);
@@ -397,8 +398,9 @@ solve_system(Scalar* b, GpuResult& res)
 
 // copy result to host memory
 // caller must be sure that x is a valid array
-template<class Scalar, unsigned int block_size>
-void amgclSolverBackend<Scalar,block_size>::get_result(Scalar* x_)
+template <class Scalar, unsigned int block_size>
+void
+amgclSolverBackend<Scalar, block_size>::get_result(Scalar* x_)
 {
     Timer t;
 
@@ -411,13 +413,13 @@ void amgclSolverBackend<Scalar,block_size>::get_result(Scalar* x_)
     }
 } // end get_result()
 
-template<class Scalar, unsigned int block_size>
-SolverStatus amgclSolverBackend<Scalar,block_size>::
-solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-             Scalar* b,
-             [[maybe_unused]] std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
-             [[maybe_unused]] WellContributions<Scalar>& wellContribs,
-             GpuResult& res)
+template <class Scalar, unsigned int block_size>
+SolverStatus
+amgclSolverBackend<Scalar, block_size>::solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
+                                                     Scalar* b,
+                                                     [[maybe_unused]] std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix,
+                                                     [[maybe_unused]] WellContributions<Scalar>& wellContribs,
+                                                     GpuResult& res)
 {
     if (initialized == false) {
         initialize(matrix->Nb, matrix->nnzbs);
@@ -428,13 +430,13 @@ solve_system(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
     return SolverStatus::GPU_SOLVER_SUCCESS;
 }
 
-#define INSTANTIATE_TYPE(T)                 \
-    template class amgclSolverBackend<T,1>; \
-    template class amgclSolverBackend<T,2>; \
-    template class amgclSolverBackend<T,3>; \
-    template class amgclSolverBackend<T,4>; \
-    template class amgclSolverBackend<T,5>; \
-    template class amgclSolverBackend<T,6>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class amgclSolverBackend<T, 1>;                                                                           \
+    template class amgclSolverBackend<T, 2>;                                                                           \
+    template class amgclSolverBackend<T, 3>;                                                                           \
+    template class amgclSolverBackend<T, 4>;                                                                           \
+    template class amgclSolverBackend<T, 5>;                                                                           \
+    template class amgclSolverBackend<T, 6>;
 
 INSTANTIATE_TYPE(double)
 

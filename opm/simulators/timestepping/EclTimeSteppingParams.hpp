@@ -23,32 +23,48 @@
 #ifndef OPM_ECL_TIMESTEPPING_PARAMS_HPP
 #define OPM_ECL_TIMESTEPPING_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct EnableTuning { static constexpr bool value = false; };
-template<class Scalar>
-struct SolverGrowthFactor { static constexpr Scalar value = 2.0; };
+struct EnableTuning {
+    static constexpr bool value = false;
+};
+template <class Scalar>
+struct SolverGrowthFactor {
+    static constexpr Scalar value = 2.0;
+};
 
-template<class Scalar>
-struct SolverMaxGrowth { static constexpr Scalar value = 3.0; };
+template <class Scalar>
+struct SolverMaxGrowth {
+    static constexpr Scalar value = 3.0;
+};
 
-template<class Scalar>
-struct SolverMinTimeStep { static constexpr Scalar value = 1e-12; };
+template <class Scalar>
+struct SolverMinTimeStep {
+    static constexpr Scalar value = 1e-12;
+};
 
-template<class Scalar>
-struct SolverMaxTimeStepInDays { static constexpr Scalar value = 365.0; };
+template <class Scalar>
+struct SolverMaxTimeStepInDays {
+    static constexpr Scalar value = 365.0;
+};
 
-template<class Scalar>
-struct SolverRestartFactor { static constexpr Scalar value = 0.33; };
+template <class Scalar>
+struct SolverRestartFactor {
+    static constexpr Scalar value = 0.33;
+};
 
-template<class Scalar>
-struct TimeStepAfterEventInDays { static constexpr Scalar value = -1.0; };
+template <class Scalar>
+struct TimeStepAfterEventInDays {
+    static constexpr Scalar value = -1.0;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 void registerEclTimeSteppingParameters();
 
 } // namespace Opm

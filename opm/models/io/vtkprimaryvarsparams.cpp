@@ -26,19 +26,20 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkPrimaryVarsParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWritePrimaryVars>
-        ("Include the primary variables into the VTK output files");
-    Parameters::Register<Parameters::VtkWriteProcessRank>
-        ("Include the MPI process rank into the VTK output files");
-    Parameters::Register<Parameters::VtkWriteDofIndex>
-        ("Include the index of the degrees of freedom into the VTK output files");
+
+void
+VtkPrimaryVarsParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWritePrimaryVars>("Include the primary variables into the VTK output files");
+    Parameters::Register<Parameters::VtkWriteProcessRank>("Include the MPI process rank into the VTK output files");
+    Parameters::Register<Parameters::VtkWriteDofIndex>(
+        "Include the index of the degrees of freedom into the VTK output files");
 }
 
-void VtkPrimaryVarsParams::read()
+void
+VtkPrimaryVarsParams::read()
 {
     primaryVarsOutput_ = Parameters::Get<Parameters::VtkWritePrimaryVars>();
     processRankOutput_ = Parameters::Get<Parameters::VtkWriteProcessRank>();

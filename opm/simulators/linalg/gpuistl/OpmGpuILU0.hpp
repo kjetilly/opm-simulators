@@ -24,8 +24,8 @@
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
-#include <opm/simulators/linalg/gpuistl/gpu_resources.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/kernel_enums.hpp>
+#include <opm/simulators/linalg/gpuistl/gpu_resources.hpp>
 #include <optional>
 #include <type_traits>
 #include <vector>
@@ -63,7 +63,7 @@ public:
 
     //! \brief The matrix type the preconditioner is for.
     using matrix_type = GpuMatrix;
-    
+
 
     //! \brief Constructor.
     //!
@@ -118,7 +118,8 @@ public:
         return false;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 
@@ -173,10 +174,10 @@ private:
     std::map<std::pair<field_type*, const field_type*>, GPUGraphExec> m_executableGraphs;
 
     // Stream for the DILU operations on the GPU
-    GPUStream m_stream{};
+    GPUStream m_stream {};
     // Events for synchronization with main stream
-    GPUEvent m_before{};
-    GPUEvent m_after{};
+    GPUEvent m_before {};
+    GPUEvent m_after {};
 };
 } // end namespace Opm::gpuistl
 

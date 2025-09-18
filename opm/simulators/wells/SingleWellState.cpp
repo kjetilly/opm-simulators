@@ -28,17 +28,17 @@
 
 #include <opm/simulators/wells/PerforationData.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-SingleWellState<Scalar, IndexTraits>::
-SingleWellState(const std::string& name_,
-                const ParallelWellInfo<Scalar>& pinfo,
-                const PhaseUsageInfo<IndexTraits>&  pu_arg,
-                bool is_producer,
-                Scalar pressure_first_connection,
-                const std::vector<PerforationData<Scalar>>& perf_input,
-                Scalar temp)
+template <typename Scalar, typename IndexTraits>
+SingleWellState<Scalar, IndexTraits>::SingleWellState(const std::string& name_,
+                                                      const ParallelWellInfo<Scalar>& pinfo,
+                                                      const PhaseUsageInfo<IndexTraits>& pu_arg,
+                                                      bool is_producer,
+                                                      Scalar pressure_first_connection,
+                                                      const std::vector<PerforationData<Scalar>>& perf_input,
+                                                      Scalar temp)
     : name(name_)
     , parallel_info(pinfo)
     , producer(is_producer)
@@ -63,19 +63,19 @@ SingleWellState(const std::string& name_,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-SingleWellState<Scalar, IndexTraits> SingleWellState<Scalar, IndexTraits>::
-serializationTestObject(const ParallelWellInfo<Scalar>& pinfo)
+template <typename Scalar, typename IndexTraits>
+SingleWellState<Scalar, IndexTraits>
+SingleWellState<Scalar, IndexTraits>::serializationTestObject(const ParallelWellInfo<Scalar>& pinfo)
 {
-    SingleWellState<Scalar, IndexTraits> result("testing", pinfo, PhaseUsageInfo<IndexTraits>{},
-                                                true, 1.0, {}, 2.0);
+    SingleWellState<Scalar, IndexTraits> result("testing", pinfo, PhaseUsageInfo<IndexTraits> {}, true, 1.0, {}, 2.0);
     result.perf_data = PerfData<Scalar>::serializationTestObject();
 
     return result;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::init_timestep(const SingleWellState& other)
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::init_timestep(const SingleWellState& other)
 {
     if (this->producer != other.producer)
         return;
@@ -91,8 +91,9 @@ void SingleWellState<Scalar, IndexTraits>::init_timestep(const SingleWellState& 
     this->temperature = other.temperature;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::shut()
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::shut()
 {
     this->bhp = 0;
     this->thp = 0;
@@ -108,21 +109,24 @@ void SingleWellState<Scalar, IndexTraits>::shut()
     connpi.assign(connpi.size(), 0);
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::stop()
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::stop()
 {
     this->thp = 0;
     this->status = Well::Status::STOP;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::open()
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::open()
 {
     this->status = Well::Status::OPEN;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool SingleWellState<Scalar, IndexTraits>::updateStatus(Well::Status new_status)
+template <typename Scalar, typename IndexTraits>
+bool
+SingleWellState<Scalar, IndexTraits>::updateStatus(Well::Status new_status)
 {
     if (this->status == new_status) {
         return false;
@@ -144,106 +148,109 @@ bool SingleWellState<Scalar, IndexTraits>::updateStatus(Well::Status new_status)
     return true;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::
-reset_connection_factors(const std::vector<PerforationData<Scalar>>& new_perf_data)
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::reset_connection_factors(
+    const std::vector<PerforationData<Scalar>>& new_perf_data)
 {
-   if (this->perf_data.size() != new_perf_data.size()) {
-        throw std::invalid_argument {
-            "Size mismatch for perforation data in well " + this->name
-        };
+    if (this->perf_data.size() != new_perf_data.size()) {
+        throw std::invalid_argument {"Size mismatch for perforation data in well " + this->name};
     }
 
     for (std::size_t conn_index = 0; conn_index < new_perf_data.size(); conn_index++) {
         if (this->perf_data.cell_index[conn_index] != static_cast<std::size_t>(new_perf_data[conn_index].cell_index)) {
-            throw std::invalid_argument {
-                "Cell index mismatch in connection "
-                    + std::to_string(conn_index)
-                    + " of well "
-                    + this->name
-            };
+            throw std::invalid_argument {"Cell index mismatch in connection " + std::to_string(conn_index) + " of well "
+                                         + this->name};
         }
 
         if (this->perf_data.satnum_id[conn_index] != new_perf_data[conn_index].satnum_id) {
-            throw std::invalid_argument {
-                "Saturation function table mismatch in connection "
-                + std::to_string(conn_index)
-                        + " of well "
-                        + this->name
-            };
+            throw std::invalid_argument {"Saturation function table mismatch in connection "
+                                         + std::to_string(conn_index) + " of well " + this->name};
         }
-        this->perf_data.connection_transmissibility_factor[conn_index] = new_perf_data[conn_index].connection_transmissibility_factor;
+        this->perf_data.connection_transmissibility_factor[conn_index]
+            = new_perf_data[conn_index].connection_transmissibility_factor;
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::
-sum_connection_rates(const std::vector<Scalar>& connection_rates) const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_connection_rates(const std::vector<Scalar>& connection_rates) const
 {
     return this->parallel_info.get().sumPerfValues(connection_rates.begin(), connection_rates.end());
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_brine_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_brine_rates() const
 {
     return this->sum_connection_rates(this->perf_data.brine_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_polymer_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_polymer_rates() const
 {
     return this->sum_connection_rates(this->perf_data.polymer_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_solvent_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_solvent_rates() const
 {
     return this->sum_connection_rates(this->perf_data.solvent_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_microbial_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_microbial_rates() const
 {
     return this->sum_connection_rates(this->perf_data.microbial_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_oxygen_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_oxygen_rates() const
 {
     return this->sum_connection_rates(this->perf_data.oxygen_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_urea_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_urea_rates() const
 {
     return this->sum_connection_rates(this->perf_data.urea_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_wat_mass_rates() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_wat_mass_rates() const
 {
     return this->sum_connection_rates(this->perf_data.wat_mass_rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_filtrate_rate() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_filtrate_rate() const
 {
-    if (this->producer) return 0.;
+    if (this->producer)
+        return 0.;
 
     return this->sum_connection_rates(this->perf_data.filtrate_data.rates);
 }
 
-template<typename Scalar, typename IndexTraits>
-Scalar SingleWellState<Scalar, IndexTraits>::sum_filtrate_total() const
+template <typename Scalar, typename IndexTraits>
+Scalar
+SingleWellState<Scalar, IndexTraits>::sum_filtrate_total() const
 {
-    if (this->producer) return 0.;
+    if (this->producer)
+        return 0.;
 
     return this->sum_connection_rates(this->perf_data.filtrate_data.total);
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::
-update_producer_targets(const Well& ecl_well, const SummaryState& st)
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::update_producer_targets(const Well& ecl_well, const SummaryState& st)
 {
     constexpr Scalar bhp_safety_factor = 0.99;
     const auto& prod_controls = ecl_well.productionControls(st);
@@ -300,9 +307,9 @@ update_producer_targets(const Well& ecl_well, const SummaryState& st)
         this->bhp = this->perf_data.pressure_first_connection * bhp_safety_factor;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::
-update_injector_targets(const Well& ecl_well, const SummaryState& st)
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::update_injector_targets(const Well& ecl_well, const SummaryState& st)
 {
     const Scalar bhp_safety_factor = 1.01;
     const auto& inj_controls = ecl_well.injectionControls(st);
@@ -352,9 +359,9 @@ update_injector_targets(const Well& ecl_well, const SummaryState& st)
         this->bhp = this->perf_data.pressure_first_connection * bhp_safety_factor;
 }
 
-template<typename Scalar, typename IndexTraits>
-void SingleWellState<Scalar, IndexTraits>::
-update_type_and_targets(const Well& ecl_well, const SummaryState& st)
+template <typename Scalar, typename IndexTraits>
+void
+SingleWellState<Scalar, IndexTraits>::update_type_and_targets(const Well& ecl_well, const SummaryState& st)
 {
     if (this->producer != ecl_well.isProducer()) {
         // type has changed due to ACTIONX
@@ -363,16 +370,18 @@ update_type_and_targets(const Well& ecl_well, const SummaryState& st)
         if (switchedToProducer) {
             this->production_cmode = ecl_well.productionControls(st).cmode;
             // clear injection rates (those are positive)
-            std::transform(this->surface_rates.begin(), this->surface_rates.end(),
+            std::transform(this->surface_rates.begin(),
+                           this->surface_rates.end(),
                            this->surface_rates.begin(),
-                           [](const Scalar& val){ return std::min(Scalar(), val);});
+                           [](const Scalar& val) { return std::min(Scalar(), val); });
         } else {
             perf_data.prepareInjectorContainers();
             this->injection_cmode = ecl_well.injectionControls(st).cmode;
             // clear production rates (those are negative)
-            std::transform(this->surface_rates.begin(), this->surface_rates.end(),
+            std::transform(this->surface_rates.begin(),
+                           this->surface_rates.end(),
                            this->surface_rates.begin(),
-                           [](const Scalar& val){ return std::max(Scalar(), val);});
+                           [](const Scalar& val) { return std::max(Scalar(), val); });
         }
     }
 
@@ -380,37 +389,24 @@ update_type_and_targets(const Well& ecl_well, const SummaryState& st)
         this->update_producer_targets(ecl_well, st);
     else
         this->update_injector_targets(ecl_well, st);
-
 }
 
-template<typename Scalar, typename IndexTraits>
-bool SingleWellState<Scalar, IndexTraits>::operator==(const SingleWellState& rhs) const
+template <typename Scalar, typename IndexTraits>
+bool
+SingleWellState<Scalar, IndexTraits>::operator==(const SingleWellState& rhs) const
 {
     // TODO: we are missing pu, while it was not there in the first place
-    return this->name == rhs.name &&
-           this->status == rhs.status &&
-           this->producer == rhs.producer &&
-           this->bhp == rhs.bhp &&
-           this->thp == rhs.thp &&
-           this->temperature == rhs.temperature &&
-           this->phase_mixing_rates == rhs.phase_mixing_rates &&
-           this->well_potentials == rhs.well_potentials &&
-           this->productivity_index == rhs.productivity_index &&
-           this->implicit_ipr_a == rhs.implicit_ipr_a &&
-           this->implicit_ipr_b == rhs.implicit_ipr_b &&
-           this->surface_rates == rhs.surface_rates &&
-           this->reservoir_rates == rhs.reservoir_rates &&
-           this->prev_surface_rates == rhs.prev_surface_rates &&
-           this->perf_data == rhs.perf_data &&
-           this->filtrate_conc == rhs.filtrate_conc &&
-           this->trivial_group_target == rhs.trivial_group_target &&
-           this->segments == rhs.segments &&
-           this->events == rhs.events &&
-           this->injection_cmode == rhs.injection_cmode &&
-           this->production_cmode == rhs.production_cmode &&
-           this->alq_state == rhs.alq_state &&
-           this->primaryvar == rhs.primaryvar &&
-           this->group_target == rhs.group_target;
+    return this->name == rhs.name && this->status == rhs.status && this->producer == rhs.producer
+        && this->bhp == rhs.bhp && this->thp == rhs.thp && this->temperature == rhs.temperature
+        && this->phase_mixing_rates == rhs.phase_mixing_rates && this->well_potentials == rhs.well_potentials
+        && this->productivity_index == rhs.productivity_index && this->implicit_ipr_a == rhs.implicit_ipr_a
+        && this->implicit_ipr_b == rhs.implicit_ipr_b && this->surface_rates == rhs.surface_rates
+        && this->reservoir_rates == rhs.reservoir_rates && this->prev_surface_rates == rhs.prev_surface_rates
+        && this->perf_data == rhs.perf_data && this->filtrate_conc == rhs.filtrate_conc
+        && this->trivial_group_target == rhs.trivial_group_target && this->segments == rhs.segments
+        && this->events == rhs.events && this->injection_cmode == rhs.injection_cmode
+        && this->production_cmode == rhs.production_cmode && this->alq_state == rhs.alq_state
+        && this->primaryvar == rhs.primaryvar && this->group_target == rhs.group_target;
 }
 
 template class SingleWellState<double, BlackOilDefaultFluidSystemIndices>;
@@ -419,4 +415,4 @@ template class SingleWellState<double, BlackOilDefaultFluidSystemIndices>;
 template class SingleWellState<float, BlackOilDefaultFluidSystemIndices>;
 #endif
 
-}
+} // namespace Opm

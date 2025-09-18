@@ -27,24 +27,35 @@
 #ifndef OPM_VTK_BLACK_OIL_SOLVENT_PARAMS_HPP
 #define OPM_VTK_BLACK_OIL_SOLVENT_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteSolventSaturation { static constexpr bool value = true; };
-struct VtkWriteSolventRsw { static constexpr bool value = true; };
-struct VtkWriteSolventDensity { static constexpr bool value = true; };
-struct VtkWriteSolventViscosity { static constexpr bool value = true; };
-struct VtkWriteSolventMobility { static constexpr bool value = true; };
+struct VtkWriteSolventSaturation {
+    static constexpr bool value = true;
+};
+struct VtkWriteSolventRsw {
+    static constexpr bool value = true;
+};
+struct VtkWriteSolventDensity {
+    static constexpr bool value = true;
+};
+struct VtkWriteSolventViscosity {
+    static constexpr bool value = true;
+};
+struct VtkWriteSolventMobility {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkBlackoilPolymerModule.
  */
-struct VtkBlackOilSolventParams
-{
+struct VtkBlackOilSolventParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

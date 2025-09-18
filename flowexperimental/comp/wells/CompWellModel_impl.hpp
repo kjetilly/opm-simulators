@@ -30,7 +30,8 @@
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellConnections.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename TypeTag>
 CompWellModel<TypeTag>::CompWellModel(Simulator& simulator)
@@ -48,8 +49,7 @@ CompWellModel<TypeTag>::CompWellModel(Simulator& simulator)
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-beginReportStep(unsigned report_step)
+CompWellModel<TypeTag>::beginReportStep(unsigned report_step)
 {
     // TODO: not considering the parallel running yet
     wells_ecl_ = schedule_.getWells(report_step);
@@ -59,8 +59,7 @@ beginReportStep(unsigned report_step)
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-beginTimeStep()
+CompWellModel<TypeTag>::beginTimeStep()
 {
     createWellContainer();
     initWellContainer();
@@ -68,16 +67,14 @@ beginTimeStep()
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-init()
+CompWellModel<TypeTag>::init()
 {
     simulator_.model().addAuxiliaryModule(this);
 }
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-createWellContainer()
+CompWellModel<TypeTag>::createWellContainer()
 {
     // const auto& schedule = simulator_.vanguard().schedule();
     const auto nw = wells_ecl_.size(); // not considering the parallel running yet
@@ -89,8 +86,7 @@ createWellContainer()
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-initWellContainer()
+CompWellModel<TypeTag>::initWellContainer()
 {
     for (auto& well : well_container_) {
         well->init();
@@ -99,8 +95,7 @@ initWellContainer()
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-initWellConnectionData()
+CompWellModel<TypeTag>::initWellConnectionData()
 {
     // TODO: we need to consider the parallel running
     // we can refer to the BlackoilWellModelGeneric::initializeWellPerfData()
@@ -114,11 +109,9 @@ initWellConnectionData()
 
         well_connection_data.reserve(well_connections.size());
         for (const auto& connection : well_connections) {
-            const auto active_index =
-                    this->compressedIndexForInterior(connection.global_index());
+            const auto active_index = this->compressedIndexForInterior(connection.global_index());
 
-            const auto connIsOpen =
-                    connection.state() == Connection::State::OPEN;
+            const auto connIsOpen = connection.state() == Connection::State::OPEN;
 
             if (connIsOpen && (active_index >= 0)) {
                 auto& pd = well_connection_data_[well_index].emplace_back();
@@ -132,34 +125,31 @@ initWellConnectionData()
         }
         ++well_index;
     }
-
 }
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-initWellState()
+CompWellModel<TypeTag>::initWellState()
 {
     // TODO: the following might need to be adjusted based on understanding
-    const auto pressIx = []()
-    {
-        if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx) ) {
+    const auto pressIx = []() {
+        if (FluidSystem::phaseIsActive(FluidSystem::oilPhaseIdx)) {
             return FluidSystem::oilPhaseIdx;
         }
-        if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx) ) {
+        if (FluidSystem::phaseIsActive(FluidSystem::gasPhaseIdx)) {
             return FluidSystem::gasPhaseIdx;
         }
         assert(false && "the usage of oil and gas phase is not correct");
         return FluidSystem::gasPhaseIdx;
     }();
 
-    auto cell_pressure = std::vector<Scalar>(this->local_num_cells_, Scalar{0.});
-    auto cell_mole_fractions = std::vector<std::vector<Scalar>>(this->local_num_cells_,
-                                           std::vector<Scalar>(FluidSystem::numComponents, Scalar{0.}));
+    auto cell_pressure = std::vector<Scalar>(this->local_num_cells_, Scalar {0.});
+    auto cell_mole_fractions = std::vector<std::vector<Scalar>>(
+        this->local_num_cells_, std::vector<Scalar>(FluidSystem::numComponents, Scalar {0.}));
 
-    auto cell_temperature = std::vector<Scalar>(this->local_num_cells_, Scalar{0.});
+    auto cell_temperature = std::vector<Scalar>(this->local_num_cells_, Scalar {0.});
 
-    auto elemCtx = ElementContext { this->simulator_ };
+    auto elemCtx = ElementContext {this->simulator_};
     const auto& gridView = this->simulator_.vanguard().gridView();
 
     OPM_BEGIN_PARALLEL_TRY_CATCH();
@@ -171,43 +161,45 @@ initWellState()
         const auto& fs = elemCtx.intensiveQuantities(/*spaceIdx=*/0, /*timeIdx=*/0).fluidState();
 
         cell_pressure[ix] = fs.pressure(pressIx).value();
-        // TODO: we are not simulating dynamic temperature, so all the phases and cells have the same temperature for now
+        // TODO: we are not simulating dynamic temperature, so all the phases and cells have the same temperature for
+        // now
         cell_temperature[ix] = fs.temperature(0).value();
         for (unsigned compIdx = 0; compIdx < FluidSystem::numComponents; ++compIdx) {
             cell_mole_fractions[ix][compIdx] = fs.moleFraction(compIdx).value();
         }
     }
     OPM_END_PARALLEL_TRY_CATCH("ComposotionalWellModel::initializeWellState() failed: ",
-                           this->simulator_.vanguard().grid().comm());
+                               this->simulator_.vanguard().grid().comm());
 
     /* TODO: no prev well state for now */
-    // \Note:: we are not supporting dynamic temperature, so the temperature is constant, so we just pass in a single value
+    // \Note:: we are not supporting dynamic temperature, so the temperature is constant, so we just pass in a single
+    // value
     this->comp_well_states_.init(this->wells_ecl_,
-                                 cell_pressure, cell_temperature[0], cell_mole_fractions, this->well_connection_data_,
+                                 cell_pressure,
+                                 cell_temperature[0],
+                                 cell_mole_fractions,
+                                 this->well_connection_data_,
                                  this->summary_state_);
 }
 
 
 template <typename TypeTag>
 std::size_t
-CompWellModel<TypeTag>::
-compressedIndexForInterior(std::size_t cartesian_cell_idx) const
+CompWellModel<TypeTag>::compressedIndexForInterior(std::size_t cartesian_cell_idx) const
 {
     return simulator_.vanguard().compressedIndexForInterior(cartesian_cell_idx);
 }
 
 template <typename TypeTag>
 std::vector<int>
-CompWellModel<TypeTag>::
-getCellsForConnections(const Well& well) const
+CompWellModel<TypeTag>::getCellsForConnections(const Well& well) const
 {
     std::vector<int> wellCells;
     // All possible connections of the well
     const auto& connectionSet = well.getConnections();
     wellCells.reserve(connectionSet.size());
 
-    for (const auto& connection : connectionSet)
-    {
+    for (const auto& connection : connectionSet) {
         int compressed_idx = compressedIndexForInterior(connection.global_index());
         if (compressed_idx >= 0) { // Ignore connections in inactive/remote cells.
             wellCells.push_back(compressed_idx);
@@ -215,13 +207,11 @@ getCellsForConnections(const Well& well) const
     }
 
     return wellCells;
-
 }
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-beginIteration()
+CompWellModel<TypeTag>::beginIteration()
 {
     // do we need to do every iteration here?
     const auto& grid = simulator_.vanguard().grid();
@@ -237,9 +227,7 @@ beginIteration()
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-assemble(const int iterationIdx,
-         const double dt)
+CompWellModel<TypeTag>::assemble(const int iterationIdx, const double dt)
 {
 
     if (iterationIdx == 0) {
@@ -255,8 +243,7 @@ assemble(const int iterationIdx,
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-calculateExplicitQuantities()
+CompWellModel<TypeTag>::calculateExplicitQuantities()
 {
     for (auto& well : well_container_) {
         const auto& well_state = comp_well_states_[well->name()];
@@ -266,18 +253,16 @@ calculateExplicitQuantities()
 
 template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-computeTotalRatesForDof(RateVector& rate,
-                        unsigned globalIdx) const {
-    for (const auto& well: well_container_) {
+CompWellModel<TypeTag>::computeTotalRatesForDof(RateVector& rate, unsigned globalIdx) const
+{
+    for (const auto& well : well_container_) {
         well->addCellRates(rate, globalIdx);
     }
 }
 
-template<typename TypeTag>
+template <typename TypeTag>
 void
-CompWellModel<TypeTag>::
-recoverWellSolutionAndUpdateWellState(const BVector& x)
+CompWellModel<TypeTag>::recoverWellSolutionAndUpdateWellState(const BVector& x)
 {
     {
         for (const auto& well : well_container_) {
@@ -295,8 +280,7 @@ recoverWellSolutionAndUpdateWellState(const BVector& x)
 
 template <typename TypeTag>
 bool
-CompWellModel<TypeTag>::
-getWellConvergence() const
+CompWellModel<TypeTag>::getWellConvergence() const
 {
     bool converged = true;
     for (const auto& well : this->well_container_) {
@@ -307,8 +291,7 @@ getWellConvergence() const
 
 template <typename TypeTag>
 data::Wells
-CompWellModel<TypeTag>::
-wellData() const
+CompWellModel<TypeTag>::wellData() const
 {
     return this->comp_well_states_.report();
 }

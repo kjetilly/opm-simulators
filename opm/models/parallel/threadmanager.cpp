@@ -30,18 +30,20 @@
 #include <opm/models/discretization/common/fvbaseparameters.hh>
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 int ThreadManager::numThreads_ = 1;
 
-void ThreadManager::registerParameters()
+void
+ThreadManager::registerParameters()
 {
-    Parameters::Register<Parameters::ThreadsPerProcess>
-        ("The maximum number of threads to be instantiated per process "
-         "('-1' means 'automatic')");
+    Parameters::Register<Parameters::ThreadsPerProcess>("The maximum number of threads to be instantiated per process "
+                                                        "('-1' means 'automatic')");
 }
 
-void ThreadManager::init(bool queryCommandLineParameter)
+void
+ThreadManager::init(bool queryCommandLineParameter)
 {
     if (queryCommandLineParameter) {
         numThreads_ = Parameters::Get<Parameters::ThreadsPerProcess>();
@@ -50,7 +52,8 @@ void ThreadManager::init(bool queryCommandLineParameter)
 #if !defined(_OPENMP)
         if (numThreads_ != 1 && numThreads_ != -1) {
             throw std::invalid_argument("OpenMP is not available. The only valid values for "
-                                        "threads-per-process is 1 and -1 but it is "+std::to_string(numThreads_)+"!");
+                                        "threads-per-process is 1 and -1 but it is "
+                                        + std::to_string(numThreads_) + "!");
         }
         numThreads_ = 1;
 #elif !defined NDEBUG && defined DUNE_INTERFACECHECK
@@ -81,7 +84,8 @@ void ThreadManager::init(bool queryCommandLineParameter)
 #endif
 }
 
-unsigned ThreadManager::threadId()
+unsigned
+ThreadManager::threadId()
 {
 #ifdef _OPENMP
     return static_cast<unsigned>(omp_get_thread_num());

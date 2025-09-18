@@ -24,10 +24,12 @@
 
 #include <opm/simulators/wells/ConnFiltrateData.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-void ConnFiltrateData<Scalar>::resize(std::size_t num_perf)
+template <class Scalar>
+void
+ConnFiltrateData<Scalar>::resize(std::size_t num_perf)
 {
     this->rates.resize(num_perf);
     this->total.resize(num_perf);
@@ -39,7 +41,7 @@ void ConnFiltrateData<Scalar>::resize(std::size_t num_perf)
     this->area_of_flow.resize(num_perf);
 }
 
-template<class Scalar>
+template <class Scalar>
 ConnFiltrateData<Scalar>
 ConnFiltrateData<Scalar>::serializationTestObject()
 {
@@ -55,17 +57,13 @@ ConnFiltrateData<Scalar>::serializationTestObject()
     return result;
 }
 
-template<class Scalar>
-bool ConnFiltrateData<Scalar>::operator==(const ConnFiltrateData& rhs) const
+template <class Scalar>
+bool
+ConnFiltrateData<Scalar>::operator==(const ConnFiltrateData& rhs) const
 {
-    return this->rates == rhs.rates &&
-           this->total == rhs.total &&
-           this->skin_factor == rhs.skin_factor &&
-           this->thickness == rhs.thickness &&
-           this->perm == rhs.perm &&
-           this->poro == rhs.poro &&
-           this->radius == rhs.radius &&
-           this->area_of_flow == rhs.area_of_flow;
+    return this->rates == rhs.rates && this->total == rhs.total && this->skin_factor == rhs.skin_factor
+        && this->thickness == rhs.thickness && this->perm == rhs.perm && this->poro == rhs.poro
+        && this->radius == rhs.radius && this->area_of_flow == rhs.area_of_flow;
 }
 
 template struct ConnFiltrateData<double>;
@@ -74,4 +72,4 @@ template struct ConnFiltrateData<double>;
 template struct ConnFiltrateData<float>;
 #endif
 
-}
+} // namespace Opm

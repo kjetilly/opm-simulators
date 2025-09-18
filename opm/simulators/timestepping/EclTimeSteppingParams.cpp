@@ -27,28 +27,27 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-template<class Scalar>
-void registerEclTimeSteppingParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::EnableTuning>
-        ("Honor some aspects of the TUNING keyword.");
-    Parameters::Register<Parameters::SolverGrowthFactor<Scalar>>
-        ("The factor time steps are elongated after a successful substep");
-    Parameters::Register<Parameters::SolverMaxGrowth<Scalar>>
-        ("The maximum factor time steps are elongated after a report step");
-    Parameters::Register<Parameters::SolverMaxTimeStepInDays<Scalar>>
-        ("The maximum size of a time step in days");
-    Parameters::Register<Parameters::SolverMinTimeStep<Scalar>>
-        ("The minimum size of a time step in days for field and "
-         "metric and hours for lab. If a step cannot converge without "
-         "getting cut below this step size the simulator will stop");
-    Parameters::Register<Parameters::SolverRestartFactor<Scalar>>
-        ("The factor time steps are elongated after restarts");
-    Parameters::Register<Parameters::TimeStepAfterEventInDays<Scalar>>
-        ("Time step size of the first time step after an event "
-         "occurs during the simulation in days");
+
+template <class Scalar>
+void
+registerEclTimeSteppingParameters()
+{
+    Parameters::Register<Parameters::EnableTuning>("Honor some aspects of the TUNING keyword.");
+    Parameters::Register<Parameters::SolverGrowthFactor<Scalar>>(
+        "The factor time steps are elongated after a successful substep");
+    Parameters::Register<Parameters::SolverMaxGrowth<Scalar>>(
+        "The maximum factor time steps are elongated after a report step");
+    Parameters::Register<Parameters::SolverMaxTimeStepInDays<Scalar>>("The maximum size of a time step in days");
+    Parameters::Register<Parameters::SolverMinTimeStep<Scalar>>(
+        "The minimum size of a time step in days for field and "
+        "metric and hours for lab. If a step cannot converge without "
+        "getting cut below this step size the simulator will stop");
+    Parameters::Register<Parameters::SolverRestartFactor<Scalar>>("The factor time steps are elongated after restarts");
+    Parameters::Register<Parameters::TimeStepAfterEventInDays<Scalar>>(
+        "Time step size of the first time step after an event "
+        "occurs during the simulation in days");
 }
 
 template void registerEclTimeSteppingParameters<double>();

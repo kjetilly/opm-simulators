@@ -28,32 +28,41 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
 #include <opm/models/immiscible/immisciblemodel.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/lensproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct LensProblemVcfvAd { using InheritsFrom = std::tuple<LensBaseProblem, ImmiscibleTwoPhaseModel>; };
+namespace TTag
+{
+    struct LensProblemVcfvAd {
+        using InheritsFrom = std::tuple<LensBaseProblem, ImmiscibleTwoPhaseModel>;
+    };
 } // end namespace TTag
 
 // use automatic differentiation for this simulator
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::LensProblemVcfvAd> { using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::LensProblemVcfvAd> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 // use linear finite element gradients if dune-localfunctions is available
 #if HAVE_DUNE_LOCALFUNCTIONS
-template<class TypeTag>
-struct UseP1FiniteElementGradients<TypeTag, TTag::LensProblemVcfvAd> { static constexpr bool value = true; };
+template <class TypeTag>
+struct UseP1FiniteElementGradients<TypeTag, TTag::LensProblemVcfvAd> {
+    static constexpr bool value = true;
+};
 #endif
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemVcfvAd;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

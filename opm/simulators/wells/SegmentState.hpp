@@ -23,13 +23,15 @@
 #include <cstddef>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 class WellSegments;
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class SegmentState
 {
 public:
@@ -45,7 +47,7 @@ public:
     const std::vector<int>& segment_number() const;
     std::size_t size() const;
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(rates);
@@ -105,9 +107,9 @@ public:
     std::vector<Scalar> pressure_drop_accel;
 
 private:
-    std::vector<int>    m_segment_number;
+    std::vector<int> m_segment_number;
 };
 
-} // namepace Opm
+} // namespace Opm
 
-#endif  // OPM_SEGMENTSTATE_HEADER_INCLUDED
+#endif // OPM_SEGMENTSTATE_HEADER_INCLUDED

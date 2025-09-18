@@ -19,117 +19,125 @@
 #ifndef OPM_ADAPTIVESIMULATORTIMER_HEADER_INCLUDED
 #define OPM_ADAPTIVESIMULATORTIMER_HEADER_INCLUDED
 
+#include <algorithm>
 #include <cassert>
 #include <iosfwd>
-#include <vector>
 #include <limits>
-#include <algorithm>
 #include <memory>
 #include <numeric>
+#include <vector>
 
 #include <opm/simulators/timestepping/SimulatorTimerInterface.hpp>
 
 namespace Opm
 {
 
-    /////////////////////////////////////////////////////////
-    ///
-    /// \brief Simulation timer for adaptive time stepping
-    ///
-    /////////////////////////////////////////////////////////
-    class AdaptiveSimulatorTimer : public SimulatorTimerInterface
+/////////////////////////////////////////////////////////
+///
+/// \brief Simulation timer for adaptive time stepping
+///
+/////////////////////////////////////////////////////////
+class AdaptiveSimulatorTimer : public SimulatorTimerInterface
+{
+public:
+    /// \brief constructor taking a simulator timer to determine start and end time
+    ///  \param simulation_start_time Start time for simulation
+    ///  \param step_length Time step length
+    ///  \param elapsed_time Current elapsed time
+    ///  \param last_step_taken Last suggested time step
+    ///  \param report_step Current report step index
+    ///  \param max_time_step    maximum time step allowed
+    AdaptiveSimulatorTimer(const boost::posix_time::ptime simulation_start_time,
+                           const double step_length,
+                           const double elapsed_time,
+                           const double last_step_taken,
+                           const int report_step,
+                           const double max_time_step = std::numeric_limits<double>::max());
+
+    /// \brief advance time by currentStepLength
+    AdaptiveSimulatorTimer& operator++();
+
+    /// \brief advance time by currentStepLength
+    void advance() override
     {
-    public:
-        /// \brief constructor taking a simulator timer to determine start and end time
-        ///  \param simulation_start_time Start time for simulation
-        ///  \param step_length Time step length
-        ///  \param elapsed_time Current elapsed time
-        ///  \param last_step_taken Last suggested time step
-        ///  \param report_step Current report step index
-        ///  \param max_time_step    maximum time step allowed
-        AdaptiveSimulatorTimer(const boost::posix_time::ptime simulation_start_time,
-                               const double step_length,
-                               const double elapsed_time,
-                               const double last_step_taken,
-                               const int report_step,
-                               const double max_time_step = std::numeric_limits<double>::max());
+        this->operator++();
+    }
 
-        /// \brief advance time by currentStepLength
-        AdaptiveSimulatorTimer& operator++ ();
+    /// \brief provide and estimate for new time step size
+    void provideTimeStepEstimate(const double dt_estimate);
 
-        /// \brief advance time by currentStepLength
-        void advance() override { this->operator++ (); }
+    /// \brief Whether this is the first step
+    bool initialStep() const override;
 
-        /// \brief provide and estimate for new time step size
-        void provideTimeStepEstimate( const double dt_estimate );
+    /// \brief \copydoc SimulationTimer::currentStepNum
+    int currentStepNum() const override;
 
-        /// \brief Whether this is the first step
-        bool initialStep () const override;
+    /// \brief return current report step
+    int reportStepNum() const override;
 
-        /// \brief \copydoc SimulationTimer::currentStepNum
-        int currentStepNum () const override;
+    /// \brief \copydoc SimulationTimer::currentStepLength
+    double currentStepLength() const override;
 
-        /// \brief return current report step
-        int reportStepNum() const override;
+    // \brief Set next step length
+    void setCurrentStepLength(double dt);
 
-        /// \brief \copydoc SimulationTimer::currentStepLength
-        double currentStepLength () const override;
+    /// \brief \copydoc SimulationTimer::totalTime
+    double totalTime() const;
 
-        // \brief Set next step length
-        void setCurrentStepLength(double dt);
+    /// \brief \copydoc SimulationTimer::simulationTimeElapsed
+    double simulationTimeElapsed() const override;
 
-        /// \brief \copydoc SimulationTimer::totalTime
-        double totalTime() const;
+    /// \brief \copydoc SimulationTimer::done
+    bool done() const override;
 
-        /// \brief \copydoc SimulationTimer::simulationTimeElapsed
-        double simulationTimeElapsed() const override;
+    /// \brief return average step length used so far
+    double averageStepLength() const;
 
-        /// \brief \copydoc SimulationTimer::done
-        bool done () const override;
+    /// \brief return max step length used so far
+    double maxStepLength() const;
 
-        /// \brief return average step length used so far
-        double averageStepLength() const;
+    /// \brief return min step length used so far
+    double minStepLength() const;
 
-        /// \brief return max step length used so far
-        double maxStepLength () const;
+    /// \brief Previous step length. This is the length of the step that
+    ///        was taken to arrive at this time.
+    double stepLengthTaken() const override;
 
-        /// \brief return min step length used so far
-        double minStepLength () const;
+    /// \brief report start and end time as well as used steps so far
+    void report(std::ostream& os) const;
 
-        /// \brief Previous step length. This is the length of the step that
-        ///        was taken to arrive at this time.
-        double stepLengthTaken () const override;
+    /// \brief start date time of simulation
+    boost::posix_time::ptime startDateTime() const override;
 
-        /// \brief report start and end time as well as used steps so far
-        void report(std::ostream& os) const;
+    /// \brief Return true if last time step failed
+    bool lastStepFailed() const override
+    {
+        return last_step_failed_;
+    }
 
-        /// \brief start date time of simulation
-        boost::posix_time::ptime startDateTime() const override;
+    /// \brief tell the timestepper whether timestep failed or not
+    void setLastStepFailed(bool last_step_failed)
+    {
+        last_step_failed_ = last_step_failed;
+    }
 
-        /// \brief Return true if last time step failed
-        bool lastStepFailed() const override { return last_step_failed_; }
+    /// return copy of object
+    std::unique_ptr<SimulatorTimerInterface> clone() const override;
 
-        /// \brief tell the timestepper whether timestep failed or not
-        void setLastStepFailed(bool last_step_failed) { last_step_failed_ = last_step_failed; }
+protected:
+    std::shared_ptr<boost::posix_time::ptime> start_date_time_;
+    const double start_time_;
+    const double total_time_;
+    const int report_step_;
+    const double max_time_step_;
 
-        /// return copy of object
-        std::unique_ptr<SimulatorTimerInterface> clone() const override;
+    double current_time_;
+    double dt_;
+    int current_step_;
 
-    protected:
-        std::shared_ptr<boost::posix_time::ptime> start_date_time_;
-        const double start_time_;
-        const double total_time_;
-        const int report_step_;
-        const double max_time_step_;
-
-        double current_time_;
-        double dt_;
-        int current_step_;
-
-        std::vector< double > steps_;
-        bool last_step_failed_;
-
-    };
+    std::vector<double> steps_;
+    bool last_step_failed_;
+};
 
 } // namespace Opm
 

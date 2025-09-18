@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(ReadWrite)
     std::filesystem::create_directory(path);
     auto rwpath = (std::filesystem::path(path) / "rw.hdf5").string();
     std::vector<char> test_data(10);
-    std::iota(test_data.begin(), test_data.end(), 10*comm.rank());
+    std::iota(test_data.begin(), test_data.end(), 10 * comm.rank());
     {
         Opm::HDF5File out_file(rwpath, Opm::HDF5File::OpenMode::OVERWRITE, comm);
         BOOST_CHECK_NO_THROW(out_file.write("/test_data", "d1", test_data));
@@ -60,19 +60,20 @@ BOOST_AUTO_TEST_CASE(ReadWrite)
         Opm::HDF5File in_file(rwpath, Opm::HDF5File::OpenMode::READ, comm);
         std::vector<char> data;
         BOOST_CHECK_NO_THROW(in_file.read("/test_data", "d1", data));
-        BOOST_CHECK_EQUAL_COLLECTIONS(data.begin(), data.end(),
-                                      test_data.begin(), test_data.end());
+        BOOST_CHECK_EQUAL_COLLECTIONS(data.begin(), data.end(), test_data.begin(), test_data.end());
     }
     std::filesystem::remove(rwpath);
     std::filesystem::remove(path);
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

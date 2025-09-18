@@ -32,32 +32,32 @@ namespace Opm::gpuistl::HypreInterface
 /**
  * @brief Extract owned vector values in the order expected by HYPRE
  */
- template <typename VectorType>
- void
- setContinuousVectorForHypre(const VectorType& v,
-                             std::vector<HYPRE_Real>& continuous_vector_values,
-                             const std::vector<int>& local_hypre_to_local_dune)
- {
-     // Set v values solution vectors
-     for (size_t i = 0; i < local_hypre_to_local_dune.size(); ++i) {
-         continuous_vector_values[i] = v[local_hypre_to_local_dune[i]][0];
-     }
- }
+template <typename VectorType>
+void
+setContinuousVectorForHypre(const VectorType& v,
+                            std::vector<HYPRE_Real>& continuous_vector_values,
+                            const std::vector<int>& local_hypre_to_local_dune)
+{
+    // Set v values solution vectors
+    for (size_t i = 0; i < local_hypre_to_local_dune.size(); ++i) {
+        continuous_vector_values[i] = v[local_hypre_to_local_dune[i]][0];
+    }
+}
 
- /**
-  * @brief Distribute HYPRE vector values back to original vector positions
-  */
- template <typename VectorType>
- void
- setDuneVectorFromContinuousVector(VectorType& v,
-                                   const std::vector<HYPRE_Real>& continuous_vector_values,
-                                   const std::vector<int>& local_hypre_to_local_dune)
- {
-     // Place values back in original positions
-     for (size_t i = 0; i < local_hypre_to_local_dune.size(); ++i) {
-         v[local_hypre_to_local_dune[i]][0] = continuous_vector_values[i];
-     }
- }
+/**
+ * @brief Distribute HYPRE vector values back to original vector positions
+ */
+template <typename VectorType>
+void
+setDuneVectorFromContinuousVector(VectorType& v,
+                                  const std::vector<HYPRE_Real>& continuous_vector_values,
+                                  const std::vector<int>& local_hypre_to_local_dune)
+{
+    // Place values back in original positions
+    for (size_t i = 0; i < local_hypre_to_local_dune.size(); ++i) {
+        v[local_hypre_to_local_dune[i]][0] = continuous_vector_values[i];
+    }
+}
 
 /**
  * @brief Transfer CPU vector to Hypre vector

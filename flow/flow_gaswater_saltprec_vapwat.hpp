@@ -17,7 +17,8 @@
 #ifndef FLOW_GASWATERSALTPRECVAPWAT_BRINE_HPP
 #define FLOW_GASWATERSALTPRECVAPWAT_BRINE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasWaterSaltprecVapwatMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowGasWaterSaltprecVapwatMain(int argc, char** argv, bool outputCout, bool 
 //! \brief Main function used in flow_gaswater_brine binary.
 int flowGasWaterSaltprecVapwatMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_GASWATERSALTPRECVAPWAT_HPP

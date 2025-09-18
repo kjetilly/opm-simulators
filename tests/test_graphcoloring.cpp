@@ -12,7 +12,8 @@
 #include <boost/test/unit_test.hpp>
 
 ///! \brief check that all indices are represented in the new ordering.
-void checkAllIndices(const std::vector<std::size_t>& ordering)
+void
+checkAllIndices(const std::vector<std::size_t>& ordering)
 {
     std::vector<int> counters(ordering.size(), 0);
     for (auto index : ordering) {
@@ -26,29 +27,28 @@ void checkAllIndices(const std::vector<std::size_t>& ordering)
 
 BOOST_AUTO_TEST_CASE(TestWelschPowell)
 {
-    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double,1,1>>;
+    using Matrix = Dune::BCRSMatrix<Dune::FieldMatrix<double, 1, 1>>;
     using Graph = Dune::Amg::MatrixGraph<Matrix>;
     int N = 10;
-    Matrix matrix(N*N, N*N, 5, 0.4, Matrix::implicit);
+    Matrix matrix(N * N, N * N, 5, 0.4, Matrix::implicit);
     for (int j = 0; j < N; j++) {
         for (int i = 0; i < N; i++) {
             auto index = j * 10 + i;
-            matrix.entry(index,index) = 1;
+            matrix.entry(index, index) = 1;
 
             if (i > 0) {
-                matrix.entry(index,index-1) = 1;
+                matrix.entry(index, index - 1) = 1;
             }
-            if (i  < N - 1) {
-                matrix.entry(index,index+1) = 1;
+            if (i < N - 1) {
+                matrix.entry(index, index + 1) = 1;
             }
 
             if (j > 0) {
-                matrix.entry(index,index-N) = 1;
+                matrix.entry(index, index - N) = 1;
             }
-            if (j  < N - 1) {
-                matrix.entry(index,index+N) = 1;
+            if (j < N - 1) {
+                matrix.entry(index, index + N) = 1;
             }
-
         }
     }
     matrix.compress();
@@ -71,21 +71,18 @@ BOOST_AUTO_TEST_CASE(TestWelschPowell)
             index++;
             expectedColor = (expectedColor + 1) % 2;
         }
-        firstCornerColor=(firstCornerColor + 1) % 2;
+        firstCornerColor = (firstCornerColor + 1) % 2;
     }
-    auto newOrder = Opm::reorderVerticesPreserving(colors, noColors, verticesPerColor,
-                                                   graph);
+    auto newOrder = Opm::reorderVerticesPreserving(colors, noColors, verticesPerColor, graph);
     std::vector<std::size_t> colorIndex(noColors, 0);
-    std::partial_sum(verticesPerColor.begin(),
-                    verticesPerColor.begin()+verticesPerColor.size()-1,
-                    colorIndex.begin()+1);
+    std::partial_sum(
+        verticesPerColor.begin(), verticesPerColor.begin() + verticesPerColor.size() - 1, colorIndex.begin() + 1);
 
     for (auto vertex : graph) {
         BOOST_CHECK(colorIndex[colors[vertex]]++ == newOrder[vertex]);
     }
     checkAllIndices(newOrder);
-    newOrder = Opm::reorderVerticesSpheres(colors, noColors, verticesPerColor,
-                                           graph, 0);
+    newOrder = Opm::reorderVerticesSpheres(colors, noColors, verticesPerColor, graph, 0);
     checkAllIndices(newOrder);
 }
 
@@ -93,14 +90,14 @@ BOOST_AUTO_TEST_CASE(TestWelschPowell)
 // can be operated on at the same time in the DILU preconditioner
 BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms3x3Matrix)
 {
-     /*
-    Matrix on this form:
-    |x  |
-    | xx|
-    | xx|
-    We only expect a DILU dependency from the second to the third row,
-    hence row 1 and 2 should have color 0, row 3 should have color 1
-    */
+    /*
+   Matrix on this form:
+   |x  |
+   | xx|
+   | xx|
+   We only expect a DILU dependency from the second to the third row,
+   hence row 1 and 2 should have color 0, row 3 should have color 1
+   */
     const int N = 3;
     constexpr int bz = 3;
     const int nonZeroes = 5;
@@ -157,14 +154,14 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms3x3Matrix)
 
 BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Simple)
 {
-     /*
-    Test matrix:
-    |xxx  |
-    |xx   |
-    |x xx |
-    |   x |
-    |   xx|
-    */
+    /*
+   Test matrix:
+   |xxx  |
+   |xx   |
+   |x xx |
+   |   x |
+   |   xx|
+   */
     const int N = 5;
     constexpr int bz = 3;
     const int nonZeroes = 11;
@@ -176,8 +173,8 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Simple)
     for (auto row = testMatrix.createbegin(); row != testMatrix.createend(); ++row) {
         if (row.index() == 0) {
             row.insert(row.index());
-            row.insert(row.index()+1);
-            row.insert(row.index()+2);
+            row.insert(row.index() + 1);
+            row.insert(row.index() + 2);
         } else if (row.index() == 1) {
             row.insert(row.index());
             row.insert(row.index() - 1);
@@ -236,15 +233,15 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Simple)
 
 BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Tridiagonal)
 {
-     /*
-    Test matrix:
-    |xx   |
-    |xxx  |
-    | xxx |
-    |  xxx|
-    |   xx|
-    The tridiagonal structure will force a strictly serial computation stage
-    */
+    /*
+   Test matrix:
+   |xx   |
+   |xxx  |
+   | xxx |
+   |  xxx|
+   |   xx|
+   The tridiagonal structure will force a strictly serial computation stage
+   */
     const int N = 5;
     constexpr int bz = 3;
     const int nonZeroes = 13;
@@ -256,7 +253,7 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Tridiagonal)
     for (auto row = testMatrix.createbegin(); row != testMatrix.createend(); ++row) {
         if (row.index() == 0) {
             row.insert(row.index());
-            row.insert(row.index()+1);
+            row.insert(row.index() + 1);
         } else if (row.index() > 0 && row.index() < 4) {
             row.insert(row.index() - 1);
             row.insert(row.index());
@@ -285,7 +282,7 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Tridiagonal)
 
     std::vector<std::vector<std::size_t>> correctColor = {{0}, {1}, {2}, {3}, {4}};
 
-    for (std::size_t i = 0; i < correctColor.size(); ++i){
+    for (std::size_t i = 0; i < correctColor.size(); ++i) {
         for (std::size_t j = 0; j < correctColor[i].size(); ++j) {
             BOOST_CHECK(coloring[i][j] == correctColor[i][j]);
         }
@@ -312,14 +309,14 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Tridiagonal)
 
 BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Complex)
 {
-     /*
-    Test matrix:
-    |xxx x|
-    |xx x |
-    |x x x|
-    | x x |
-    |x x x|
-    */
+    /*
+   Test matrix:
+   |xxx x|
+   |xx x |
+   |x x x|
+   | x x |
+   |x x x|
+   */
     const int N = 5;
     constexpr int bz = 3;
     const int nonZeroes = 15;
@@ -331,9 +328,9 @@ BOOST_AUTO_TEST_CASE(TestColoredDiluParallelisms5x5Complex)
     for (auto row = testMatrix.createbegin(); row != testMatrix.createend(); ++row) {
         if (row.index() == 0) {
             row.insert(row.index());
-            row.insert(row.index()+1);
-            row.insert(row.index()+2);
-            row.insert(row.index()+4);
+            row.insert(row.index() + 1);
+            row.insert(row.index() + 2);
+            row.insert(row.index() + 4);
         } else if (row.index() == 1) {
             row.insert(row.index() - 1);
             row.insert(row.index());

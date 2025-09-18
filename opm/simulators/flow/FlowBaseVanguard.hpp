@@ -29,9 +29,9 @@
 
 #include <dune/grid/common/partitionset.hh>
 
-#include <opm/grid/common/GridEnums.hpp>
-#include <opm/grid/common/CartesianIndexMapper.hpp>
 #include <opm/grid/LookUpCellCentroid.hh>
+#include <opm/grid/common/CartesianIndexMapper.hpp>
+#include <opm/grid/common/GridEnums.hpp>
 
 #include <opm/input/eclipse/EclipseState/Aquifer/NumericalAquifer/NumericalAquiferCell.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
@@ -51,27 +51,35 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class FlowBaseVanguard;
-template<typename Grid, typename GridView> struct LookUpCellCentroid;
-}
+template <typename Grid, typename GridView>
+struct LookUpCellCentroid;
+} // namespace Opm
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct FlowBaseVanguard {};
+    struct FlowBaseVanguard {
+    };
 
-}
+} // namespace TTag
 
 // declare the properties required by the for the ecl simulator vanguard
-template<class TypeTag, class MyTypeTag>
-struct EquilGrid { using type = UndefinedProperty; };
+template <class TypeTag, class MyTypeTag>
+struct EquilGrid {
+    using type = UndefinedProperty;
+};
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -79,8 +87,7 @@ namespace Opm {
  * \brief Helper class for grid instantiation of ECL file-format using problems.
  */
 template <class TypeTag>
-class FlowBaseVanguard : public BaseVanguard<TypeTag>,
-                         public FlowGenericVanguard
+class FlowBaseVanguard : public BaseVanguard<TypeTag>, public FlowGenericVanguard
 {
     using ParentType = BaseVanguard<TypeTag>;
     using Implementation = GetPropType<TypeTag, Properties::Vanguard>;
@@ -130,41 +137,51 @@ public:
     }
 
     const CartesianIndexMapper& cartesianMapper() const
-    {  return asImp_().cartesianIndexMapper(); }
+    {
+        return asImp_().cartesianIndexMapper();
+    }
 
     /*!
      * \brief Returns the number of logically Cartesian cells in each direction
      */
     const std::array<int, dimension>& cartesianDimensions() const
-    { return asImp_().cartesianIndexMapper().cartesianDimensions(); }
+    {
+        return asImp_().cartesianIndexMapper().cartesianDimensions();
+    }
 
     /*!
      * \brief Returns the overall number of cells of the logically Cartesian grid
      */
     int cartesianSize() const
-    { return asImp_().cartesianIndexMapper().cartesianSize(); }
+    {
+        return asImp_().cartesianIndexMapper().cartesianSize();
+    }
 
     /*!
      * \brief Returns the overall number of cells of the logically EquilCartesian grid
      */
     int equilCartesianSize() const
-    { return asImp_().equilCartesianIndexMapper().cartesianSize(); }
+    {
+        return asImp_().equilCartesianIndexMapper().cartesianSize();
+    }
 
     /*!
      * \brief Returns the Cartesian cell id for identifaction with ECL data
      */
     unsigned cartesianIndex(unsigned compressedCellIdx) const
-    { return asImp_().cartesianIndexMapper().cartesianIndex(compressedCellIdx); }
+    {
+        return asImp_().cartesianIndexMapper().cartesianIndex(compressedCellIdx);
+    }
 
     /*!
      * \brief Return the index of the cells in the logical Cartesian grid
      */
-    unsigned cartesianIndex(const std::array<int,dimension>& coords) const
+    unsigned cartesianIndex(const std::array<int, dimension>& coords) const
     {
         unsigned cartIndex = coords[0];
         int factor = cartesianDimensions()[0];
         for (unsigned i = 1; i < dimension; ++i) {
-            cartIndex += coords[i]*factor;
+            cartIndex += coords[i] * factor;
             factor *= cartesianDimensions()[i];
         }
 
@@ -180,7 +197,7 @@ public:
     int compressedIndex(int cartesianCellIdx) const
     {
         auto index_pair = cartesianToCompressed_.find(cartesianCellIdx);
-        if (index_pair!=cartesianToCompressed_.end())
+        if (index_pair != cartesianToCompressed_.end())
             return index_pair->second;
         else
             return -1;
@@ -195,19 +212,15 @@ public:
     int compressedIndexForInterior(int cartesianCellIdx) const
     {
         auto index_pair = cartesianToCompressed_.find(cartesianCellIdx);
-        if (index_pair == cartesianToCompressed_.end() ||
-            !is_interior_[index_pair->second])
-        {
+        if (index_pair == cartesianToCompressed_.end() || !is_interior_[index_pair->second]) {
             return -1;
-        }
-        else
-        {
+        } else {
             return index_pair->second;
         }
     }
 
-    virtual int compressedIndexForInteriorLGR([[maybe_unused]] const std::string& lgr_tag, 
-                                              [[maybe_unused]]  const Connection&    conn) const
+    virtual int compressedIndexForInteriorLGR([[maybe_unused]] const std::string& lgr_tag,
+                                              [[maybe_unused]] const Connection& conn) const
     {
         throw std::runtime_error("compressedIndexForInteriorLGR not implemented");
     }
@@ -218,14 +231,18 @@ public:
      * \param [in] cellIdx Active cell index.
      * \param [out] ijk Cartesian index triplet
      */
-    void cartesianCoordinate(unsigned cellIdx, std::array<int,3>& ijk) const
-    { return asImp_().cartesianIndexMapper().cartesianCoordinate(cellIdx, ijk); }
+    void cartesianCoordinate(unsigned cellIdx, std::array<int, 3>& ijk) const
+    {
+        return asImp_().cartesianIndexMapper().cartesianCoordinate(cellIdx, ijk);
+    }
 
     /*!
      * \brief Returns the Cartesian cell id given an element index for the grid used for equilibration
      */
     unsigned equilCartesianIndex(unsigned compressedEquilCellIdx) const
-    { return asImp_().equilCartesianIndexMapper().cartesianIndex(compressedEquilCellIdx); }
+    {
+        return asImp_().equilCartesianIndexMapper().cartesianIndex(compressedEquilCellIdx);
+    }
 
     /*!
      * \brief Extract Cartesian index triplet (i,j,k) of an active cell of the grid used for EQUIL.
@@ -233,8 +250,10 @@ public:
      * \param [in] cellIdx Active cell index.
      * \param [out] ijk Cartesian index triplet
      */
-    void equilCartesianCoordinate(unsigned cellIdx, std::array<int,3>& ijk) const
-    { return asImp_().equilCartesianIndexMapper().cartesianCoordinate(cellIdx, ijk); }
+    void equilCartesianCoordinate(unsigned cellIdx, std::array<int, 3>& ijk) const
+    {
+        return asImp_().equilCartesianIndexMapper().cartesianCoordinate(cellIdx, ijk);
+    }
 
 
     /*!
@@ -274,15 +293,13 @@ public:
     std::size_t globalNumCells() const
     {
         const auto& grid = asImp_().grid();
-        if (grid.comm().size() == 1)
-        {
+        if (grid.comm().size() == 1) {
             return grid.leafGridView().size(0);
         }
         const auto& gridView = grid.leafGridView();
         constexpr int codim = 0;
         constexpr auto Part = Dune::Interior_Partition;
-        auto local_cells = std::distance(gridView.template begin<codim, Part>(),
-                                         gridView.template end<codim, Part>());
+        auto local_cells = std::distance(gridView.template begin<codim, Part>(), gridView.template end<codim, Part>());
         return grid.comm().sum(local_cells);
     }
 
@@ -297,22 +314,19 @@ protected:
      *        cartesian indices
      * \param isCpGrid True if grid is a CpGrid
      */
-    template<class CartMapper>
-    std::function<std::array<double,dimensionworld>(int)>
-    cellCentroids_(const CartMapper& cartMapper, const bool& isCpGrid) const
+    template <class CartMapper>
+    std::function<std::array<double, dimensionworld>(int)> cellCentroids_(const CartMapper& cartMapper,
+                                                                          const bool& isCpGrid) const
     {
         return [this, cartMapper, isCpGrid](int elemIdx) {
-            std::array<double,dimensionworld> centroid;
+            std::array<double, dimensionworld> centroid;
             const auto rank = this->gridView().comm().rank();
             const auto maxLevel = this->gridView().grid().maxLevel();
             bool useEclipse = !isCpGrid || (isCpGrid && (rank == 0) && (maxLevel == 0));
-            if (useEclipse)
-            {
-                centroid =  this->eclState().getInputGrid().getCellCenter(cartMapper.cartesianIndex(elemIdx));
-            }
-            else
-            {
-                LookUpCellCentroid<Grid,GridView> lookUpCellCentroid(this->gridView(), cartMapper, nullptr);
+            if (useEclipse) {
+                centroid = this->eclState().getInputGrid().getCellCenter(cartMapper.cartesianIndex(elemIdx));
+            } else {
+                LookUpCellCentroid<Grid, GridView> lookUpCellCentroid(this->gridView(), cartMapper, nullptr);
                 centroid = lookUpCellCentroid(elemIdx);
             }
             return centroid;
@@ -337,17 +351,13 @@ protected:
         is_interior_.resize(num_cells);
 
         ElementMapper elemMapper(this->gridView(), Dune::mcmgElementLayout());
-        for (const auto& element : elements(this->gridView()))
-        {
+        for (const auto& element : elements(this->gridView())) {
             const auto elemIdx = elemMapper.index(element);
             unsigned cartesianCellIdx = cartesianIndex(elemIdx);
             cartesianToCompressed_[cartesianCellIdx] = elemIdx;
-            if (element.partitionType() == Dune::InteriorEntity)
-            {
+            if (element.partitionType() == Dune::InteriorEntity) {
                 is_interior_[elemIdx] = 1;
-            }
-            else
-            {
+            } else {
                 is_interior_[elemIdx] = 0;
             }
         }
@@ -362,7 +372,7 @@ protected:
 
         const auto num_aqu_cells = this->allAquiferCells();
 
-        for(const auto& element : elements(this->gridView())) {
+        for (const auto& element : elements(this->gridView())) {
             const unsigned int elemIdx = elemMapper.index(element);
             cellCenterDepth_[elemIdx] = cellCenterDepth(element);
 
@@ -402,10 +412,10 @@ private:
 
         const Geometry& geometry = element.geometry();
         const int corners = geometry.corners();
-        for (int i=0; i < corners; ++i)
+        for (int i = 0; i < corners; ++i)
             zz += geometry.corner(i)[zCoord];
 
-        return zz/Scalar(corners);
+        return zz / Scalar(corners);
     }
 
     Scalar computeCellThickness(const typename GridView::template Codim<0>::Entity& element) const
@@ -422,26 +432,30 @@ private:
         // 4 corners are the top surface and
         // the 4 next are the bottomn.
         assert(geometry.corners() == 8);
-        for (int i=0; i < 4; ++i){
+        for (int i = 0; i < 4; ++i) {
             zz1 += geometry.corner(i)[zCoord];
-            zz2 += geometry.corner(i+4)[zCoord];
+            zz2 += geometry.corner(i + 4)[zCoord];
         }
-        zz1 /=4;
-        zz2 /=4;
-        return zz2-zz1;
-     }
+        zz1 /= 4;
+        zz2 /= 4;
+        return zz2 - zz1;
+    }
 
     Implementation& asImp_()
-    { return *static_cast<Implementation*>(this); }
+    {
+        return *static_cast<Implementation*>(this);
+    }
 
     const Implementation& asImp_() const
-    { return *static_cast<const Implementation*>(this); }
+    {
+        return *static_cast<const Implementation*>(this);
+    }
 
 protected:
     /*! \brief Mapping between cartesian and compressed cells.
      *  It is initialized the first time it is called
      */
-    std::unordered_map<int,int> cartesianToCompressed_;
+    std::unordered_map<int, int> cartesianToCompressed_;
     /*! \brief Mapping between LGR cartesian and compressed cells.
      *  It is initialized as it is called
      */

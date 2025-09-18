@@ -28,17 +28,19 @@
 #include <opm/simulators/wells/WellContainer.hpp>
 
 #include <map>
-#include <vector>
 #include <utility>
+#include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-    class GConSump;
-    class Schedule;
-    class SummaryState;
+class GConSump;
+class Schedule;
+class SummaryState;
 
-template<class Scalar>
-class GroupState {
+template <class Scalar>
+class GroupState
+{
 public:
     GroupState() = default;
     explicit GroupState(std::size_t num_phases);
@@ -48,10 +50,8 @@ public:
     bool operator==(const GroupState& other) const;
 
     bool has_production_rates(const std::string& gname) const;
-    void update_production_rates(const std::string& gname,
-                                 const std::vector<Scalar>& rates);
-    void update_network_leaf_node_production_rates(const std::string& gname,
-                                 const std::vector<Scalar>& rates);
+    void update_production_rates(const std::string& gname, const std::vector<Scalar>& rates);
+    void update_network_leaf_node_production_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& production_rates(const std::string& gname) const;
     const std::vector<Scalar>& network_leaf_node_production_rates(const std::string& gname) const;
 
@@ -60,27 +60,22 @@ public:
     bool is_autochoke_group(const std::string& gname) const;
 
     bool has_production_reduction_rates(const std::string& gname) const;
-    void update_production_reduction_rates(const std::string& gname,
-                                           const std::vector<Scalar>& rates);
+    void update_production_reduction_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& production_reduction_rates(const std::string& gname) const;
 
     bool has_injection_reduction_rates(const std::string& gname) const;
-    void update_injection_reduction_rates(const std::string& gname,
-                                          const std::vector<Scalar>& rates);
+    void update_injection_reduction_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& injection_reduction_rates(const std::string& gname) const;
 
     bool has_injection_reservoir_rates(const std::string& gname) const;
-    void update_injection_reservoir_rates(const std::string& gname,
-                                          const std::vector<Scalar>& rates);
+    void update_injection_reservoir_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& injection_reservoir_rates(const std::string& gname) const;
 
     bool has_injection_surface_rates(const std::string& gname) const;
-    void update_injection_surface_rates(const std::string& gname,
-                                        const std::vector<Scalar>& rates);
+    void update_injection_surface_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& injection_surface_rates(const std::string& gname) const;
 
-    void update_injection_rein_rates(const std::string& gname,
-                                     const std::vector<Scalar>& rates);
+    void update_injection_rein_rates(const std::string& gname, const std::vector<Scalar>& rates);
     const std::vector<Scalar>& injection_rein_rates(const std::string& gname) const;
 
     void update_injection_vrep_rate(const std::string& gname, Scalar rate);
@@ -118,12 +113,15 @@ public:
         Scalar water_rate;
 
         GroupPotential(Scalar oil = 0.0, Scalar gas = 0.0, Scalar water = 0.0)
-            : oil_rate(oil), gas_rate(gas), water_rate(water) {}
+            : oil_rate(oil)
+            , gas_rate(gas)
+            , water_rate(water)
+        {
+        }
     };
 
-    void update_group_production_potential(
-        const std::string& gname, Scalar oil_rate, Scalar gas_rate, Scalar water_rate
-    );
+    void
+    update_group_production_potential(const std::string& gname, Scalar oil_rate, Scalar gas_rate, Scalar water_rate);
     const GroupPotential& get_production_group_potential(const std::string& gname) const;
 
     std::size_t data_size() const;
@@ -132,7 +130,7 @@ public:
 
     GPMaint::State& gpmaint(const std::string& gname);
 
-    template<class Comm>
+    template <class Comm>
     void communicate_rates(const Comm& comm)
     {
         // Note that injection_group_vrep_rates is handled separate from
@@ -161,9 +159,7 @@ public:
 
         // Compute the size of the data.
         std::size_t sz = 0;
-        auto computeSize = [&sz](const auto& v) {
-            sz += v.size();
-        };
+        auto computeSize = [&sz](const auto& v) { sz += v.size(); };
         forAllGroupData(computeSize);
         sz += this->inj_vrep_rate.size();
 
@@ -203,7 +199,7 @@ public:
             throw std::logic_error("Internal size mismatch when distributing groupData");
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(num_phases);
@@ -227,7 +223,7 @@ public:
     }
 
 private:
-    std::size_t num_phases{};
+    std::size_t num_phases {};
     std::map<std::string, std::vector<Scalar>> m_production_rates;
     std::map<std::string, std::vector<Scalar>> m_network_leaf_node_production_rates;
     std::map<std::string, Group::ProductionCMode> production_controls;
@@ -247,10 +243,11 @@ private:
 
     std::map<std::pair<Phase, std::string>, Group::InjectionCMode> injection_controls;
     WellContainer<GPMaint::State> gpmaint_state;
-    std::map<std::string, std::pair<Scalar, Scalar>> m_gconsump_rates; // Pair with {consumption_rate, import_rate} for each group
+    std::map<std::string, std::pair<Scalar, Scalar>>
+        m_gconsump_rates; // Pair with {consumption_rate, import_rate} for each group
     static constexpr std::pair<Scalar, Scalar> zero_pair = {0.0, 0.0};
 };
 
-}
+} // namespace Opm
 
 #endif

@@ -36,7 +36,8 @@
 #include <stdexcept>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Load or save a state of a problem to/from the harddisk.
@@ -73,17 +74,16 @@ class Restart
     /*!
      * \brief Return the restart file name.
      */
-    static std::string restartFileName_(int rank,
-                                        const std::string& outputDir,
-                                        const std::string& simName,
-                                        double t);
+    static std::string restartFileName_(int rank, const std::string& outputDir, const std::string& simName, double t);
 
 public:
     /*!
      * \brief Returns the name of the file which is (de-)serialized.
      */
     const std::string& fileName() const
-    { return fileName_; }
+    {
+        return fileName_;
+    }
 
     /*!
      * \brief Write the current state of the model to disk.
@@ -104,7 +104,9 @@ public:
      * \brief The output stream to write the serialized data.
      */
     std::ostream& serializeStream()
-    { return outStream_; }
+    {
+        return outStream_;
+    }
 
     /*!
      * \brief Start a new section in the serialized output.
@@ -146,9 +148,8 @@ public:
     template <class Simulator, class Scalar>
     void deserializeBegin(Simulator& simulator, Scalar t)
     {
-        fileName_ = restartFileName_(simulator.gridView().comm().rank(),
-                                     simulator.problem().outputDir(),
-                                     simulator.problem().name(), t);
+        fileName_ = restartFileName_(
+            simulator.gridView().comm().rank(), simulator.problem().outputDir(), simulator.problem().name(), t);
         openInputStream(magicRestartCookie_(simulator.gridView()));
     }
 
@@ -157,7 +158,9 @@ public:
      *        deserialized.
      */
     std::istream& deserializeStream()
-    { return inStream_; }
+    {
+        return inStream_;
+    }
 
     /*!
      * \brief Start reading a new section of the restart file.

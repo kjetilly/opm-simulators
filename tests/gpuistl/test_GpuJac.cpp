@@ -27,10 +27,10 @@
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/PreconditionerAdapter.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/gpusparse_matrix_operations.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/fix_zero_diagonal.hpp>
-#include <opm/simulators/linalg/gpuistl/detail/vector_operations.hpp>
 #include <opm/simulators/linalg/gpuistl/PreconditionerCPUMatrixToGPUMatrix.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/fix_zero_diagonal.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/gpusparse_matrix_operations.hpp>
+#include <opm/simulators/linalg/gpuistl/detail/vector_operations.hpp>
 
 using NumericTypes = boost::mpl::list<double, float>;
 

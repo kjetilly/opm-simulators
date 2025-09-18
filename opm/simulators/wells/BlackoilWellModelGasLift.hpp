@@ -26,18 +26,22 @@
 #include <opm/models/blackoil/blackoilmodel.hh>
 #include <opm/simulators/wells/GasLiftSingleWellGeneric.hpp>
 
-#include <memory>
 #include <map>
+#include <memory>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 class DeferredLogger;
-template<class Scalar> class GroupState;
-template<typename Scalar, typename IndexTraits> class WellState;
-template<class TypeTag> class WellInterface;
+template <class Scalar>
+class GroupState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
+template <class TypeTag>
+class WellInterface;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class BlackoilWellModelGasLiftGeneric
 {
 public:
@@ -49,23 +53,28 @@ public:
 
     explicit BlackoilWellModelGasLiftGeneric(bool terminal_output)
         : terminal_output_(terminal_output)
-    {}
+    {
+    }
 
     static constexpr bool glift_debug = false;
 
-    void gliftDebug(const std::string& msg,
-                    DeferredLogger& deferred_logger) const;
+    void gliftDebug(const std::string& msg, DeferredLogger& deferred_logger) const;
 
-    bool terminalOutput() const { return terminal_output_; }
+    bool terminalOutput() const
+    {
+        return terminal_output_;
+    }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(last_glift_opt_time_);
     }
 
     bool operator==(const BlackoilWellModelGasLiftGeneric& that) const
-    { return this->last_glift_opt_time_ == that.last_glift_opt_time_; }
+    {
+        return this->last_glift_opt_time_ == that.last_glift_opt_time_;
+    }
 
 protected:
     void gliftDebugShowALQ(const std::vector<WellInterfaceGeneric<Scalar, IndexTraits>*>& well_container,
@@ -89,10 +98,10 @@ protected:
 };
 
 /// Class for handling the gaslift in the blackoil well model.
-template<typename TypeTag>
-class BlackoilWellModelGasLift :
-    public BlackoilWellModelGasLiftGeneric<GetPropType<TypeTag, Properties::Scalar>,
-                                           typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
+template <typename TypeTag>
+class BlackoilWellModelGasLift
+    : public BlackoilWellModelGasLiftGeneric<GetPropType<TypeTag, Properties::Scalar>,
+                                             typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
 {
 public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -104,17 +113,17 @@ public:
     using GLiftOptWells = typename Base::GLiftOptWells;
     using GLiftProdWells = typename Base::GLiftProdWells;
     using GLiftSyncGroups = typename GasLiftSingleWellGeneric<Scalar, IndexTraits>::GLiftSyncGroups;
-    using GLiftWellStateMap =  typename Base::GLiftWellStateMap;
+    using GLiftWellStateMap = typename Base::GLiftWellStateMap;
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
     using WellInterfacePtr = std::shared_ptr<WellInterface<TypeTag>>;
     using WellStateType = WellState<Scalar, IndexTraits>;
 
     explicit BlackoilWellModelGasLift(bool terminal_output)
         : Base(terminal_output)
-    {}
+    {
+    }
 
-    static void initGliftEclWellMap(const std::vector<WellInterfacePtr>& well_container,
-                                    GLiftEclWells& ecl_well_map);
+    static void initGliftEclWellMap(const std::vector<WellInterfacePtr>& well_container, GLiftEclWells& ecl_well_map);
 
     bool maybeDoGasLiftOptimize(const Simulator& simulator,
                                 const std::vector<WellInterfacePtr>& well_container,
@@ -152,7 +161,6 @@ private:
                               const std::map<std::string, Scalar>& node_pressures,
                               WellState<Scalar, IndexTraits>& wellState,
                               DeferredLogger& deferred_logger);
-
 };
 
 } // namespace Opm

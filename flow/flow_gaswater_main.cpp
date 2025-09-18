@@ -18,7 +18,8 @@
 #include <flow/flow_gaswater.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowGasWaterMainStandalone(argc, argv);
 }

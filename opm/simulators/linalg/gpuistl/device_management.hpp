@@ -26,9 +26,10 @@
   on the library and can be built in parallel.
 */
 
-namespace Opm::gpuistl {
-    void printDevice();
-    void setDevice();
-}
+namespace Opm::gpuistl
+{
+void printDevice();
+void setDevice();
+} // namespace Opm::gpuistl
 
 #endif // namespace Opm::gpuistl

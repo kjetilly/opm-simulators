@@ -26,17 +26,20 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkPtFlashParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteLiquidMoleFractions>
-        ("Include liquid mole fractions (L) in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteEquilibriumConstants>
-        ("Include equilibrium constants (K) in the VTK output files");
+
+void
+VtkPtFlashParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteLiquidMoleFractions>(
+        "Include liquid mole fractions (L) in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteEquilibriumConstants>(
+        "Include equilibrium constants (K) in the VTK output files");
 }
 
-void VtkPtFlashParams::read()
+void
+VtkPtFlashParams::read()
 {
     LOutput_ = Parameters::Get<Parameters::VtkWriteLiquidMoleFractions>();
     equilConstOutput_ = Parameters::Get<Parameters::VtkWriteEquilibriumConstants>();

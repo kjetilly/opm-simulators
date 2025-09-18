@@ -22,11 +22,11 @@
 
 
 #include <cstddef>
+#include <cuda_runtime.h>
 #include <fmt/format.h>
 #include <limits>
 #include <opm/common/ErrorMacros.hpp>
 #include <type_traits>
-#include <cuda_runtime.h>
 
 
 /**

@@ -24,40 +24,37 @@
 #include <config.h>
 #include <opm/simulators/flow/equil/EquilibrationHelpers_impl.hpp>
 
-namespace Opm {
-namespace EQUIL {
-    
-template<class Scalar>
-using MatLaw = EclMaterialLaw::Manager<ThreePhaseMaterialTraits<Scalar,0,1,2>>;
-template<class Scalar> using FS = BlackOilFluidSystem<Scalar>;
+namespace Opm
+{
+namespace EQUIL
+{
 
-#define INSTANTIATE_TYPE(T) \
-    template struct PcEq<FS<T>,MatLaw<T>>; \
-    template class EquilReg<T>; \
-    template T satFromPc<FS<T>,MatLaw<T>>(const MatLaw<T>&, \
-                                          const int,const int, \
-                                          const T,const bool); \
-    template T satFromSumOfPcs<FS<T>,MatLaw<T>>(const MatLaw<T>&,    \
-                                                const int,const int, \
-                                                const int,const T); \
-    template T satFromDepth<FS<T>,MatLaw<T>>(const MatLaw<T>&, \
-                                             const T,const T, \
-                                             const int,const int,const bool); \
-    template bool isConstPc<FS<T>,MatLaw<T>>(const MatLaw<T>&,const int,const int); \
-    template class Miscibility::PBVD<FS<T>>; \
-    template class Miscibility::PDVD<FS<T>>; \
-    template class Miscibility::RsVD<FS<T>>; \
-    template class Miscibility::RsSatAtContact<FS<T>>; \
-    template class Miscibility::RvSatAtContact<FS<T>>; \
-    template class Miscibility::RvwSatAtContact<FS<T>>; \
-    template class Miscibility::RvVD<FS<T>>; \
+    template <class Scalar>
+    using MatLaw = EclMaterialLaw::Manager<ThreePhaseMaterialTraits<Scalar, 0, 1, 2>>;
+    template <class Scalar>
+    using FS = BlackOilFluidSystem<Scalar>;
+
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct PcEq<FS<T>, MatLaw<T>>;                                                                            \
+    template class EquilReg<T>;                                                                                        \
+    template T satFromPc<FS<T>, MatLaw<T>>(const MatLaw<T>&, const int, const int, const T, const bool);               \
+    template T satFromSumOfPcs<FS<T>, MatLaw<T>>(const MatLaw<T>&, const int, const int, const int, const T);          \
+    template T satFromDepth<FS<T>, MatLaw<T>>(const MatLaw<T>&, const T, const T, const int, const int, const bool);   \
+    template bool isConstPc<FS<T>, MatLaw<T>>(const MatLaw<T>&, const int, const int);                                 \
+    template class Miscibility::PBVD<FS<T>>;                                                                           \
+    template class Miscibility::PDVD<FS<T>>;                                                                           \
+    template class Miscibility::RsVD<FS<T>>;                                                                           \
+    template class Miscibility::RsSatAtContact<FS<T>>;                                                                 \
+    template class Miscibility::RvSatAtContact<FS<T>>;                                                                 \
+    template class Miscibility::RvwSatAtContact<FS<T>>;                                                                \
+    template class Miscibility::RvVD<FS<T>>;                                                                           \
     template class Miscibility::RvwVD<FS<T>>;
 
-INSTANTIATE_TYPE(double)
+    INSTANTIATE_TYPE(double)
 
 #if FLOW_INSTANTIATE_FLOAT
-INSTANTIATE_TYPE(float)
+    INSTANTIATE_TYPE(float)
 #endif
 
-} // namespace Equil
+} // namespace EQUIL
 } // namespace Opm

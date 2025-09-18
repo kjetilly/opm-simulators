@@ -26,27 +26,26 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkCompositionParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteMassFractions>
-        ("Include mass fractions in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteMoleFractions>
-        ("Include mole fractions in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteTotalMassFractions>
-        ("Include total mass fractions in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteTotalMoleFractions>
-        ("Include total mole fractions in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteMolarities>
-        ("Include component molarities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFugacities>
-        ("Include component fugacities in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFugacityCoeffs>
-        ("Include component fugacity coefficients in the VTK output files");
+
+void
+VtkCompositionParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteMassFractions>("Include mass fractions in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteMoleFractions>("Include mole fractions in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteTotalMassFractions>(
+        "Include total mass fractions in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteTotalMoleFractions>(
+        "Include total mole fractions in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteMolarities>("Include component molarities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFugacities>("Include component fugacities in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFugacityCoeffs>(
+        "Include component fugacity coefficients in the VTK output files");
 }
 
-void VtkCompositionParams::read()
+void
+VtkCompositionParams::read()
 {
     massFracOutput_ = Parameters::Get<Parameters::VtkWriteMassFractions>();
     moleFracOutput_ = Parameters::Get<Parameters::VtkWriteMoleFractions>();

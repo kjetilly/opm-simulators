@@ -25,9 +25,9 @@
 
 #include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
-#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 #include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
+#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 
 #include <opm/simulators/wells/MultisegmentWellEquations.hpp>
 #include <opm/simulators/wells/MultisegmentWellPrimaryVariables.hpp>
@@ -37,20 +37,23 @@
 #include <opm/simulators/wells/WellInterfaceIndices.hpp>
 #include <opm/simulators/wells/WellState.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Class administering assembler access to equation system.
-template<class Scalar, typename IndexTraits, int numWellEq, int numEq>
-class MultisegmentWellEquationAccess {
+template <class Scalar, typename IndexTraits, int numWellEq, int numEq>
+class MultisegmentWellEquationAccess
+{
 public:
     //! \brief Constructor initializes reference to the equation system.
-    explicit MultisegmentWellEquationAccess(MultisegmentWellEquations<Scalar,IndexTraits,numWellEq,numEq>& eqns)
+    explicit MultisegmentWellEquationAccess(MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>& eqns)
         : eqns_(eqns)
-    {}
+    {
+    }
 
-    using BVectorWell = typename MultisegmentWellEquations<Scalar,IndexTraits,numWellEq,numEq>::BVectorWell;
-    using DiagMatWell = typename MultisegmentWellEquations<Scalar,IndexTraits,numWellEq,numEq>::DiagMatWell;
-    using OffDiatMatWell = typename MultisegmentWellEquations<Scalar,IndexTraits,numWellEq,numEq>::OffDiagMatWell;
+    using BVectorWell = typename MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::BVectorWell;
+    using DiagMatWell = typename MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::DiagMatWell;
+    using OffDiatMatWell = typename MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>::OffDiagMatWell;
 
     //! \brief Returns a reference to residual vector.
     BVectorWell& residual()
@@ -77,22 +80,22 @@ public:
     }
 
 private:
-    MultisegmentWellEquations<Scalar,IndexTraits,numWellEq,numEq>& eqns_; //!< Reference to equation system
+    MultisegmentWellEquations<Scalar, IndexTraits, numWellEq, numEq>& eqns_; //!< Reference to equation system
 };
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
-                  const GroupState<Scalar>& group_state,
-                  const Schedule& schedule,
-                  const SummaryState& summaryState,
-                  const Well::InjectionControls& inj_controls,
-                  const Well::ProductionControls& prod_controls,
-                  const Scalar rho,
-                  const PrimaryVariables& primary_variables,
-                  Equations& eqns1,
-                  const bool stopped_or_zero_target,
-                  DeferredLogger& deferred_logger) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
+                                                                  const GroupState<Scalar>& group_state,
+                                                                  const Schedule& schedule,
+                                                                  const SummaryState& summaryState,
+                                                                  const Well::InjectionControls& inj_controls,
+                                                                  const Well::ProductionControls& prod_controls,
+                                                                  const Scalar rho,
+                                                                  const PrimaryVariables& primary_variables,
+                                                                  Equations& eqns1,
+                                                                  const bool stopped_or_zero_target,
+                                                                  DeferredLogger& deferred_logger) const
 {
     /*
         This function assembles the control equation, similar as for StandardWells.
@@ -122,25 +125,22 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
 
     if (stopped_or_zero_target) {
         control_eq = primary_variables.getWQTotal();
-    } else if (well_.isInjector() ) {
+    } else if (well_.isInjector()) {
         // Find scaling factor to get injection rate,
         const InjectorType injectorType = inj_controls.injector_type;
         Scalar scaling;
         switch (injectorType) {
-        case InjectorType::WATER:
-        {
+        case InjectorType::WATER: {
             const int phase_pos = FluidSystem::canonicalToActivePhaseIdx(FluidSystem::waterPhaseIdx);
             scaling = well_.scalingFactor(phase_pos);
             break;
         }
-        case InjectorType::OIL:
-        {
+        case InjectorType::OIL: {
             const int phase_pos = FluidSystem::canonicalToActivePhaseIdx(FluidSystem::oilPhaseIdx);
             scaling = well_.scalingFactor(phase_pos);
             break;
         }
-        case InjectorType::GAS:
-        {
+        case InjectorType::GAS: {
             const int phase_pos = FluidSystem::canonicalToActivePhaseIdx(FluidSystem::gasPhaseIdx);
             scaling = well_.scalingFactor(phase_pos);
             break;
@@ -152,12 +152,8 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
         // Setup function for evaluation of BHP from THP (used only if needed).
         std::function<EvalWell()> bhp_from_thp = [&]() {
             const auto rates = getRates();
-            return WellBhpThpCalculator(well_).calculateBhpFromThp(well_state,
-                                                                   rates,
-                                                                   well,
-                                                                   summaryState,
-                                                                   rho,
-                                                                   deferred_logger);
+            return WellBhpThpCalculator(well_).calculateBhpFromThp(
+                well_state, rates, well, summaryState, rho, deferred_logger);
         };
         // Call generic implementation.
         WellAssemble(well_).assembleControlEqInj(well_state,
@@ -175,12 +171,8 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
         const auto rates = getRates();
         // Setup function for evaluation of BHP from THP (used only if needed).
         std::function<EvalWell()> bhp_from_thp = [&]() {
-            return WellBhpThpCalculator(well_).calculateBhpFromThp(well_state,
-                                                                   rates,
-                                                                   well,
-                                                                   summaryState,
-                                                                   rho,
-                                                                   deferred_logger);
+            return WellBhpThpCalculator(well_).calculateBhpFromThp(
+                well_state, rates, well, summaryState, rho, deferred_logger);
         };
         // Call generic implementation.
         WellAssemble(well_).assembleControlEqProd(well_state,
@@ -195,7 +187,7 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
                                                   deferred_logger);
     }
 
-    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     // using control_eq to update the matrix and residuals
     eqns.residual()[0][SPres] = control_eq.value();
     for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
@@ -203,26 +195,23 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
     }
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleAccelerationTerm(const int seg_target,
-                         const int seg,
-                         const int seg_upwind,
-                         const EvalWell& accelerationTerm,
-                         Equations& eqns1) const
-{   // seg_target:  segment for which we are assembling the acc term
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleAccelerationTerm(
+    const int seg_target, const int seg, const int seg_upwind, const EvalWell& accelerationTerm, Equations& eqns1) const
+{ // seg_target:  segment for which we are assembling the acc term
     // seg:         segment for wich we have computed the term
     // seg_upwind:  upwind segment to seg
     // acceleration term shold be
     //  * velocity head for seg_target if seg = seg_target
-    //  * negative velocity head for seg if seg != seg_target   
-    
+    //  * negative velocity head for seg if seg != seg_target
+
     /*
         This method is called in MultisegmentWellEval::assembleAccelerationPressureLoss.
         It does *not* need communication.
     */
 
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg_target][SPres] -= accelerationTerm.value();
     eqns.D()[seg_target][seg][SPres][SPres] -= accelerationTerm.derivative(SPres + Indices::numEq);
     eqns.D()[seg_target][seg][SPres][WQTotal] -= accelerationTerm.derivative(WQTotal + Indices::numEq);
@@ -232,39 +221,38 @@ assembleAccelerationTerm(const int seg_target,
     if constexpr (has_gfrac_variable) {
         eqns.D()[seg_target][seg_upwind][SPres][GFrac] -= accelerationTerm.derivative(GFrac + Indices::numEq);
     }
-}                     
+}
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleHydroPressureLoss(const int seg,
-                          const int seg_density,
-                          const EvalWell& hydro_pressure_drop_seg,
-                          Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleHydroPressureLoss(const int seg,
+                                                                          const int seg_density,
+                                                                          const EvalWell& hydro_pressure_drop_seg,
+                                                                          Equations& eqns1) const
 {
     /*
         This method is called in MultisegmentWellEval::assembleAccelerationAndHydroPressureLosses.
         It does *not* need communication.
     */
 
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][SPres] -= hydro_pressure_drop_seg.value();
     for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         eqns.D()[seg][seg_density][SPres][pv_idx] -= hydro_pressure_drop_seg.derivative(pv_idx + Indices::numEq);
     }
-
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePressureEqExtraDerivatives(const int seg,
-                                   const int seg_upwind,
-                                   const EvalWell& extra_derivatives,
-                                   Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assemblePressureEqExtraDerivatives(const int seg,
+                                                                                   const int seg_upwind,
+                                                                                   const EvalWell& extra_derivatives,
+                                                                                   Equations& eqns1) const
 {
     /*
         This method does *not* need communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     // disregard residual
     // Frac - derivatives are zero (they belong to upwind^2)
     eqns.D()[seg][seg_upwind][SPres][SPres] += extra_derivatives.derivative(SPres + Indices::numEq);
@@ -272,19 +260,19 @@ assemblePressureEqExtraDerivatives(const int seg,
 }
 
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePressureEq(const int seg,
-                   const int seg_upwind,
-                   const int outlet_segment_index,
-                   const EvalWell& pressure_equation,
-                   const EvalWell& outlet_pressure,
-                   Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assemblePressureEq(const int seg,
+                                                                   const int seg_upwind,
+                                                                   const int outlet_segment_index,
+                                                                   const EvalWell& pressure_equation,
+                                                                   const EvalWell& outlet_pressure,
+                                                                   Equations& eqns1) const
 {
     /*
         This method does *not* need communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][SPres] += pressure_equation.value();
     eqns.D()[seg][seg][SPres][SPres] += pressure_equation.derivative(SPres + Indices::numEq);
     eqns.D()[seg][seg][SPres][WQTotal] += pressure_equation.derivative(WQTotal + Indices::numEq);
@@ -302,55 +290,52 @@ assemblePressureEq(const int seg,
     }
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleTrivialEq(const int seg,
-                  const Scalar value,
-                  Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleTrivialEq(const int seg,
+                                                                  const Scalar value,
+                                                                  Equations& eqns1) const
 {
     /*
         This method is called from MultisegmentWellEval::assembleICDPressureEq,
         which is called from MultisegmentWellEval::assemblePressureEq.
-        This is the counterpart to assembleControlEquation, where assembleControlEquation is responsible for the top segment
-        and assembleICDPressureEq is responsible for the remaining segments.
-        This method does *not* need communication.
+        This is the counterpart to assembleControlEquation, where assembleControlEquation is responsible for the top
+       segment and assembleICDPressureEq is responsible for the remaining segments. This method does *not* need
+       communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][SPres] = value;
     eqns.D()[seg][seg][SPres][WQTotal] = 1.;
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleAccumulationTerm(const int seg,
-                         const int comp_idx,
-                         const EvalWell& accumulation_term,
-                         Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleAccumulationTerm(const int seg,
+                                                                         const int comp_idx,
+                                                                         const EvalWell& accumulation_term,
+                                                                         Equations& eqns1) const
 {
     /*
         This method is called from MultisegmentWell::assembleWellEqWithoutIteration.
         It only assembles on the diagonal of D and it does *not* need communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][comp_idx] += accumulation_term.value();
     for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
-      eqns.D()[seg][seg][comp_idx][pv_idx] += accumulation_term.derivative(pv_idx + Indices::numEq);
+        eqns.D()[seg][seg][comp_idx][pv_idx] += accumulation_term.derivative(pv_idx + Indices::numEq);
     }
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleOutflowTerm(const int seg,
-                    const int seg_upwind,
-                    const int comp_idx,
-                    const EvalWell& segment_rate,
-                    Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleOutflowTerm(
+    const int seg, const int seg_upwind, const int comp_idx, const EvalWell& segment_rate, Equations& eqns1) const
 {
     /*
         This method is called from MultisegmentWell::assembleWellEqWithoutIteration.
         It does *not* need communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][comp_idx] -= segment_rate.value();
     eqns.D()[seg][seg][comp_idx][WQTotal] -= segment_rate.derivative(WQTotal + Indices::numEq);
     if constexpr (has_wfrac_variable) {
@@ -362,20 +347,20 @@ assembleOutflowTerm(const int seg,
     // pressure derivative should be zero
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assembleInflowTerm(const int seg,
-                   const int inlet,
-                   const int inlet_upwind,
-                   const int comp_idx,
-                   const EvalWell& inlet_rate,
-                   Equations& eqns1) const
- {
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assembleInflowTerm(const int seg,
+                                                                   const int inlet,
+                                                                   const int inlet_upwind,
+                                                                   const int comp_idx,
+                                                                   const EvalWell& inlet_rate,
+                                                                   Equations& eqns1) const
+{
     /*
         This method is called from MultisegmentWell::assembleWellEqWithoutIteration.
         It does *not* need communication.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     eqns.residual()[seg][comp_idx] += inlet_rate.value();
     eqns.D()[seg][inlet][comp_idx][WQTotal] += inlet_rate.derivative(WQTotal + Indices::numEq);
     if constexpr (has_wfrac_variable) {
@@ -387,28 +372,29 @@ assembleInflowTerm(const int seg,
     // pressure derivative should be zero
 }
 
-template<class FluidSystem, class Indices>
-void MultisegmentWellAssemble<FluidSystem,Indices>::
-assemblePerforationEq(const int seg,
-                      const int local_perf_index,
-                      const int comp_idx,
-                      const EvalWell& cq_s_effective,
-                      Equations& eqns1) const
+template <class FluidSystem, class Indices>
+void
+MultisegmentWellAssemble<FluidSystem, Indices>::assemblePerforationEq(const int seg,
+                                                                      const int local_perf_index,
+                                                                      const int comp_idx,
+                                                                      const EvalWell& cq_s_effective,
+                                                                      Equations& eqns1) const
 {
     /*
         This method is called from MultisegmentWell::assembleWellEqWithoutIteration.
-        It *does* need communication, i.e. this method only assembles the parts of the matrix this process is responsible for
-        and after calling this function, the diagonal of the matrix D and the residual need to be combined by calling
-        the function MultisegmentWellEquations::sumDistributed.
+        It *does* need communication, i.e. this method only assembles the parts of the matrix this process is
+       responsible for and after calling this function, the diagonal of the matrix D and the residual need to be
+       combined by calling the function MultisegmentWellEquations::sumDistributed.
     */
-    MultisegmentWellEquationAccess<Scalar,IndexTraits,numWellEq,Indices::numEq> eqns(eqns1);
+    MultisegmentWellEquationAccess<Scalar, IndexTraits, numWellEq, Indices::numEq> eqns(eqns1);
     // subtract sum of phase fluxes in the well equations.
     eqns.residual()[seg][comp_idx] += cq_s_effective.value();
 
     // assemble the jacobians
     for (int pv_idx = 0; pv_idx < numWellEq; ++pv_idx) {
         // also need to consider the efficiency factor when manipulating the jacobians.
-        eqns.C()[seg][local_perf_index][pv_idx][comp_idx] -= cq_s_effective.derivative(pv_idx + Indices::numEq); // input in transformed matrix
+        eqns.C()[seg][local_perf_index][pv_idx][comp_idx]
+            -= cq_s_effective.derivative(pv_idx + Indices::numEq); // input in transformed matrix
 
         // the index name for the D should be eq_idx / pv_idx
         eqns.D()[seg][seg][comp_idx][pv_idx] += cq_s_effective.derivative(pv_idx + Indices::numEq);
@@ -429,4 +415,4 @@ INSTANTIATE_TYPE_INDICES(MultisegmentWellAssemble, double)
 INSTANTIATE_TYPE_INDICES(MultisegmentWellAssemble, float)
 #endif
 
-}
+} // namespace Opm

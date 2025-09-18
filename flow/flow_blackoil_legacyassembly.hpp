@@ -19,14 +19,23 @@
 
 #include <memory>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class TypeTag> class FlowMain;
+template <class TypeTag>
+class FlowMain;
 
-namespace Action {
-class State;
+namespace Action
+{
+    class State;
 }
-namespace Properties { namespace TTag { struct FlowProblem; } }
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowProblem;
+    }
+} // namespace Properties
 
 //! \brief Main function used in flow binary.
 int flowBlackoilMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -38,6 +47,6 @@ flowBlackoilMainInit(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_blackoil binary.
 int flowBlackoilMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_EBOS_BLACKOIL_HPP

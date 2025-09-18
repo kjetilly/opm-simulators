@@ -22,64 +22,72 @@
 #include <opm/simulators/flow/FlowGenericVanguard.hpp>
 #include <opm/simulators/utils/DeferredLogger.hpp>
 #if HAVE_CUDA
-#include <cuda_runtime.h>
 #include <cuda.h>
-#include <opm/simulators/linalg/gpuistl/set_device.hpp>
+#include <cuda_runtime.h>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
+#include <opm/simulators/linalg/gpuistl/set_device.hpp>
 #endif
 
-namespace Opm::gpuistl {
+namespace Opm::gpuistl
+{
 
-    /*
-        * Print the device name and compute capability on every rank
+/*
+    * Print the device name and compute capability on every rank
 
-        If you have an AMD GPU and you have an AMD CPU you might run
-        into problems with this code when using multiple MPI ranks.
-        The simulation might hang because the integrated GPU in the CPU
-        is detected has Radeon compute units, but it does not support ROCM.
-        This is fixable by making only the GPUS on your system visible with
-        ROCR_VISIBLE_DEVICES environment variable.
-    */
-    void printDevice()
-    {
-        int mpiRank = 0;
+    If you have an AMD GPU and you have an AMD CPU you might run
+    into problems with this code when using multiple MPI ranks.
+    The simulation might hang because the integrated GPU in the CPU
+    is detected has Radeon compute units, but it does not support ROCM.
+    This is fixable by making only the GPUS on your system visible with
+    ROCR_VISIBLE_DEVICES environment variable.
+*/
+void
+printDevice()
+{
+    int mpiRank = 0;
 #if HAVE_CUDA
 #if HAVE_MPI
-        mpiRank = FlowGenericVanguard::comm().rank();
+    mpiRank = FlowGenericVanguard::comm().rank();
 #endif
 
-        int deviceCount = -1;
-        OPM_GPU_WARN_IF_ERROR(cudaGetDeviceCount(&deviceCount));
+    int deviceCount = -1;
+    OPM_GPU_WARN_IF_ERROR(cudaGetDeviceCount(&deviceCount));
 
-        auto deferred_logger = ::Opm::DeferredLogger();
-        if (deviceCount > 0) {
-            const auto deviceId = mpiRank % deviceCount;
+    auto deferred_logger = ::Opm::DeferredLogger();
+    if (deviceCount > 0) {
+        const auto deviceId = mpiRank % deviceCount;
 
-            struct cudaDeviceProp props;
-            OPM_GPU_WARN_IF_ERROR(cudaGetDeviceProperties(&props, deviceId));
+        struct cudaDeviceProp props;
+        OPM_GPU_WARN_IF_ERROR(cudaGetDeviceProperties(&props, deviceId));
 
-            std::string out;
-            out = fmt::format("rank: {}, GPU: {}, Compute Capability: {}.{} (device {} out of {})\n",
-                mpiRank, props.name, props.major, props.minor, deviceId, deviceCount);
-            deferred_logger.info(out);
-        }
-
-        DeferredLogger global = gatherDeferredLogger(deferred_logger, FlowGenericVanguard::comm());
-        if (mpiRank == 0) {
-            global.logMessages();
-        }
-#endif
+        std::string out;
+        out = fmt::format("rank: {}, GPU: {}, Compute Capability: {}.{} (device {} out of {})\n",
+                          mpiRank,
+                          props.name,
+                          props.major,
+                          props.minor,
+                          deviceId,
+                          deviceCount);
+        deferred_logger.info(out);
     }
 
-    void setDevice()
-    {
+    DeferredLogger global = gatherDeferredLogger(deferred_logger, FlowGenericVanguard::comm());
+    if (mpiRank == 0) {
+        global.logMessages();
+    }
+#endif
+}
+
+void
+setDevice()
+{
 #if HAVE_CUDA
 #if HAVE_MPI
-        Opm::gpuistl::setDevice(FlowGenericVanguard::comm().rank(), FlowGenericVanguard::comm().size());
+    Opm::gpuistl::setDevice(FlowGenericVanguard::comm().rank(), FlowGenericVanguard::comm().size());
 #else
-        Opm::gpuistl::setDevice(0, 1);
+    Opm::gpuistl::setDevice(0, 1);
 #endif
 #endif
-    }
+}
 
 } // namespace Opm::gpuistl

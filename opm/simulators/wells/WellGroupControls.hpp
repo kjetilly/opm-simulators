@@ -24,10 +24,10 @@
 #ifndef OPM_WELL_GROUP_CONTROLS_HEADER_INCLUDED
 #define OPM_WELL_GROUP_CONTROLS_HEADER_INCLUDED
 
-#include <opm/input/eclipse/Schedule/Group/GuideRate.hpp>
-#include <string>
 #include <functional>
+#include <opm/input/eclipse/Schedule/Group/GuideRate.hpp>
 #include <optional>
+#include <string>
 #include <vector>
 
 namespace Opm
@@ -35,25 +35,32 @@ namespace Opm
 
 class DeferredLogger;
 class Group;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 enum class InjectorType;
 using RegionId = int;
 class Schedule;
 class SummaryState;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class for computing well group controls.
-template<typename Scalar, typename IndexTraits>
-class WellGroupControls {
+template <typename Scalar, typename IndexTraits>
+class WellGroupControls
+{
 public:
     //! \brief Constructor sets reference to well.
-    explicit WellGroupControls(const WellInterfaceGeneric<Scalar, IndexTraits>& well) : well_(well) {}
+    explicit WellGroupControls(const WellInterfaceGeneric<Scalar, IndexTraits>& well)
+        : well_(well)
+    {
+    }
 
-    using RateConvFunc = std::function<void(const RegionId, const int,
-                                            const std::optional<std::string>&, std::vector<Scalar>&)>;
+    using RateConvFunc
+        = std::function<void(const RegionId, const int, const std::optional<std::string>&, std::vector<Scalar>&)>;
 
-    template<class EvalWell>
+    template <class EvalWell>
     void getGroupInjectionControl(const Group& group,
                                   const WellState<Scalar, IndexTraits>& well_state,
                                   const GroupState<Scalar>& group_state,
@@ -67,18 +74,17 @@ public:
                                   EvalWell& control_eq,
                                   DeferredLogger& deferred_logger) const;
 
-    std::optional<Scalar>
-    getGroupInjectionTargetRate(const Group& group,
-                                const WellState<Scalar, IndexTraits>& well_state,
-                                const GroupState<Scalar>& group_state,
-                                const Schedule& schedule,
-                                const SummaryState& summaryState,
-                                const InjectorType& injectorType,
-                                const RateConvFunc& rateConverter,
-                                Scalar efficiencyFactor,
-                                DeferredLogger& deferred_logger) const;
+    std::optional<Scalar> getGroupInjectionTargetRate(const Group& group,
+                                                      const WellState<Scalar, IndexTraits>& well_state,
+                                                      const GroupState<Scalar>& group_state,
+                                                      const Schedule& schedule,
+                                                      const SummaryState& summaryState,
+                                                      const InjectorType& injectorType,
+                                                      const RateConvFunc& rateConverter,
+                                                      Scalar efficiencyFactor,
+                                                      DeferredLogger& deferred_logger) const;
 
-    template<class EvalWell>
+    template <class EvalWell>
     void getGroupProductionControl(const Group& group,
                                    const WellState<Scalar, IndexTraits>& well_state,
                                    const GroupState<Scalar>& group_state,
@@ -100,22 +106,23 @@ public:
                                         Scalar efficiencyFactor,
                                         DeferredLogger& deferred_logger) const;
 
-    static std::pair<Scalar, Group::ProductionCMode> getAutoChokeGroupProductionTargetRate(const std::string& name,
-                                                        const Group& parent,
-                                                        const WellState<Scalar, IndexTraits>& well_state,
-                                                        const GroupState<Scalar>& group_state,
-                                                        const Schedule& schedule,
-                                                        const SummaryState& summaryState,
-                                                        const std::vector<Scalar>& resv_coeff,
-                                                        Scalar efficiencyFactor,
-                                                        const int reportStepIdx,
-                                                        const GuideRate* guideRate,
-                                                        DeferredLogger& deferred_logger);
+    static std::pair<Scalar, Group::ProductionCMode>
+    getAutoChokeGroupProductionTargetRate(const std::string& name,
+                                          const Group& parent,
+                                          const WellState<Scalar, IndexTraits>& well_state,
+                                          const GroupState<Scalar>& group_state,
+                                          const Schedule& schedule,
+                                          const SummaryState& summaryState,
+                                          const std::vector<Scalar>& resv_coeff,
+                                          Scalar efficiencyFactor,
+                                          const int reportStepIdx,
+                                          const GuideRate* guideRate,
+                                          DeferredLogger& deferred_logger);
 
 private:
     const WellInterfaceGeneric<Scalar, IndexTraits>& well_; //!< Reference to well interface
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_WELL_GROUP_CONTROLS_HEADER_INCLUDED

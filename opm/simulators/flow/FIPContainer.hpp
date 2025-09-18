@@ -31,20 +31,23 @@
 #include <array>
 #include <cstddef>
 #include <map>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
-namespace Opm::data {
+namespace Opm::data
+{
 class Solution;
 }
 
-namespace Opm {
+namespace Opm
+{
 
 class SummaryConfig;
 
-template<class FluidSystem>
-class FIPContainer {
+template <class FluidSystem>
+class FIPContainer
+{
 public:
     using Scalar = typename FluidSystem::Scalar;
     using FIPMap = std::unordered_map<Inplace::Phase, std::vector<Scalar>>;
@@ -61,8 +64,7 @@ public:
 
     void add(const Inplace::Phase phase);
 
-    struct Co2InGasInput
-    {
+    struct Co2InGasInput {
         double pv;
         Scalar sg;
         Scalar sgcr;
@@ -78,66 +80,52 @@ public:
     bool has(const Inplace::Phase phase) const;
 
     bool hasCo2InGas() const;
-    void assignCo2InGas(const unsigned globalDofIdx,
-                      const Co2InGasInput& v);
+    void assignCo2InGas(const unsigned globalDofIdx, const Co2InGasInput& v);
 
     bool hasCo2InWater() const;
-    void assignCo2InWater(const unsigned globalDofIdx,
-                          const Scalar   co2InWater,
-                          const Scalar   mM);
+    void assignCo2InWater(const unsigned globalDofIdx, const Scalar co2InWater, const Scalar mM);
 
     bool hasMicrobialMass() const;
-    void assignMicrobialMass(const unsigned globalDofIdx,
-                             const Scalar   microbialMass);
+    void assignMicrobialMass(const unsigned globalDofIdx, const Scalar microbialMass);
 
     bool hasOxygenMass() const;
-    void assignOxygenMass(const unsigned globalDofIdx,
-                          const Scalar   oxygenMass);
+    void assignOxygenMass(const unsigned globalDofIdx, const Scalar oxygenMass);
 
     bool hasUreaMass() const;
-    void assignUreaMass(const unsigned globalDofIdx,
-                        const Scalar   ureaMass);
+    void assignUreaMass(const unsigned globalDofIdx, const Scalar ureaMass);
 
     bool hasBiofilmMass() const;
-    void assignBiofilmMass(const unsigned globalDofIdx,
-                           const Scalar   biofilmMass);
+    void assignBiofilmMass(const unsigned globalDofIdx, const Scalar biofilmMass);
 
     bool hasCalciteMass() const;
-    void assignCalciteMass(const unsigned globalDofIdx,
-                           const Scalar   calciteMass);
+    void assignCalciteMass(const unsigned globalDofIdx, const Scalar calciteMass);
 
     bool hasWaterMass() const;
-    void assignWaterMass(const unsigned globalDofIdx,
-                         const std::array<Scalar, numPhases>& fip,
-                         const Scalar   rhoW);
+    void assignWaterMass(const unsigned globalDofIdx, const std::array<Scalar, numPhases>& fip, const Scalar rhoW);
 
-    void assignGasWater(const unsigned  globalDofIdx,
+    void assignGasWater(const unsigned globalDofIdx,
                         const std::array<Scalar, numPhases>& fip,
-                        const Scalar    gasInPlaceWater,
-                        const Scalar    waterInPlaceGas);
+                        const Scalar gasInPlaceWater,
+                        const Scalar waterInPlaceGas);
 
-    void assignOilGasDistribution(const unsigned globalDofIdx,
-                                  const Scalar   gasInPlaceLiquid,
-                                  const Scalar   oilInPlaceGas);
+    void
+    assignOilGasDistribution(const unsigned globalDofIdx, const Scalar gasInPlaceLiquid, const Scalar oilInPlaceGas);
 
-    void assignPoreVolume(const unsigned globalDofIdx,
-                          const Scalar   value);
+    void assignPoreVolume(const unsigned globalDofIdx, const Scalar value);
 
-    void assignVolumesSurface(const unsigned globalDofIdx,
-                              const std::array<Scalar, numPhases>& fip);
+    void assignVolumesSurface(const unsigned globalDofIdx, const std::array<Scalar, numPhases>& fip);
 
-    void assignVolumesReservoir(const unsigned    globalDofIdx,
-                                const Scalar      saltConcentration,
+    void assignVolumesReservoir(const unsigned globalDofIdx,
+                                const Scalar saltConcentration,
                                 const std::array<Scalar, numPhases>& fipr);
 
     void outputRestart(data::Solution& sol);
 
 private:
-    FIPMap fip_{};
+    FIPMap fip_ {};
     std::size_t bufferSize_ = 0;
 
-    struct OutputRestart
-    {
+    struct OutputRestart {
         /// Whether or not run requests (surface condition) fluid-in-place
         /// restart file output using the 'FIP' mnemonic.
         bool noPrefix {false};
@@ -159,7 +147,7 @@ private:
         {
             return this->noPrefix || this->surface || this->reservoir;
         }
-    } outputRestart_{};
+    } outputRestart_ {};
 };
 
 } // namespace Opm

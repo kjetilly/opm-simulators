@@ -19,11 +19,12 @@
 
 #include <type_traits>
 
-#if HAVE_CUDA // Avoid including GpuVector.hpp if CUDA 
+#if HAVE_CUDA // Avoid including GpuVector.hpp if CUDA
               // is not enabled to avoid linking errors.
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #endif
-namespace Opm {
+namespace Opm
+{
 
 /**
  * \brief Check if a given operator is a GPU operator.
@@ -34,8 +35,7 @@ namespace Opm {
  * \tparam T The type of the operator to check.
  */
 template <typename T>
-struct is_gpu_operator
-{
+struct is_gpu_operator {
 #if HAVE_CUDA
     // TODO: This can be done more thoroughly by checking if range and matrix also is a gpu operator, but this
     // works for now.
@@ -59,21 +59,19 @@ static constexpr bool is_gpu_operator_v = is_gpu_operator<T>::value;
  *
  * \tparam T The type of the matrix to check.
  */
- template <typename T>
- struct is_gpu_matrix
- {
- #if HAVE_CUDA
+template <typename T>
+struct is_gpu_matrix {
+#if HAVE_CUDA
 
-     static constexpr bool value
-         = std::is_same_v<T, Opm::gpuistl::GpuSparseMatrix<typename T::field_type>>;
- #else
-     // If CUDA is not enabled, we assume that the matrix is not a GPU matrix.
-     static constexpr bool value = false;
- #endif
- };
- 
- template <typename T>
- static constexpr bool is_gpu_matrix_v = is_gpu_matrix<T>::value;
+    static constexpr bool value = std::is_same_v<T, Opm::gpuistl::GpuSparseMatrix<typename T::field_type>>;
+#else
+    // If CUDA is not enabled, we assume that the matrix is not a GPU matrix.
+    static constexpr bool value = false;
+#endif
+};
+
+template <typename T>
+static constexpr bool is_gpu_matrix_v = is_gpu_matrix<T>::value;
 
 } // namespace Opm
 

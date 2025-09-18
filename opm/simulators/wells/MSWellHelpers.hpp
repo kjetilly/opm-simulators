@@ -25,13 +25,17 @@
 
 #include <dune/istl/matrix.hh>
 
-namespace Dune {
-template<class Matrix> class UMFPack;
+namespace Dune
+{
+template <class Matrix>
+class UMFPack;
 }
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> class ParallelWellInfo;
+template <class Scalar>
+class ParallelWellInfo;
 class DeferredLogger;
 class SICD;
 
@@ -49,21 +53,20 @@ namespace mswellhelpers
     ///
     /// \tparam MatrixType The MatrixType of the Matrix B. From this, we
     ///                    deduce the Scalar used for the computation.
-    template<class MatrixType>
+    template <class MatrixType>
     class ParallellMSWellB
     {
     public:
         using Scalar = typename MatrixType::field_type;
-        ParallellMSWellB(const MatrixType& B,
-                         const ParallelWellInfo<Scalar>& parallel_well_info);
+        ParallellMSWellB(const MatrixType& B, const ParallelWellInfo<Scalar>& parallel_well_info);
 
         //! y = A x
-        template<class X, class Y>
-        void mv (const X& x, Y& y) const;
+        template <class X, class Y>
+        void mv(const X& x, Y& y) const;
 
         //! y = A x
-        template<class X, class Y>
-        void mmv (const X& x, Y& y) const;
+        template <class X, class Y>
+        void mmv(const X& x, Y& y) const;
 
     private:
         const MatrixType& B_;
@@ -72,25 +75,20 @@ namespace mswellhelpers
 
     /// Applies umfpack and checks for singularity
     template <typename MatrixType, typename VectorType>
-    VectorType
-    applyUMFPack(Dune::UMFPack<MatrixType>& linsolver,
-                 VectorType x);
+    VectorType applyUMFPack(Dune::UMFPack<MatrixType>& linsolver, VectorType x);
 
 
 
     /// Applies umfpack and checks for singularity
     template <typename VectorType, typename MatrixType>
     Dune::Matrix<typename MatrixType::block_type>
-    invertWithUMFPack(const int size,
-                      const int bsize,
-                      Dune::UMFPack<MatrixType>& linsolver);
+    invertWithUMFPack(const int size, const int bsize, Dune::UMFPack<MatrixType>& linsolver);
 
 
 
     // obtain y = D^-1 * x with a BICSSTAB iterative solver
     template <typename MatrixType, typename VectorType>
-    VectorType
-    invDX(const MatrixType& D, VectorType x, DeferredLogger& deferred_logger);
+    VectorType invDX(const MatrixType& D, VectorType x, DeferredLogger& deferred_logger);
 
     // calculating the friction pressure loss
     // l is the segment length
@@ -101,21 +99,24 @@ namespace mswellhelpers
     // roughness is the absolute roughness
     // mu is the average phase viscosity
     template <typename ValueType, typename Scalar>
-    ValueType frictionPressureLoss(const Scalar l, const Scalar diameter,
-                                   const Scalar area, const Scalar roughness,
+    ValueType frictionPressureLoss(const Scalar l,
+                                   const Scalar diameter,
+                                   const Scalar area,
+                                   const Scalar roughness,
                                    const ValueType& density,
-                                   const ValueType& w, const ValueType& mu);
+                                   const ValueType& w,
+                                   const ValueType& mu);
 
 
     template <typename ValueType, typename Scalar>
     ValueType valveContrictionPressureLoss(const ValueType& mass_rate,
                                            const ValueType& density,
-                                           const Scalar area_con, const Scalar cv);
+                                           const Scalar area_con,
+                                           const Scalar cv);
 
 
     template <typename ValueType, typename Scalar>
-    ValueType velocityHead(const Scalar area, const ValueType& mass_rate,
-                           const ValueType& density);
+    ValueType velocityHead(const Scalar area, const ValueType& mass_rate, const ValueType& density);
 
 
     // calculating the viscosity of oil-water emulsion at local conditons

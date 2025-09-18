@@ -22,31 +22,29 @@
 #include <opm/simulators/flow/ReservoirCouplingMpiTraits.hpp>
 #include <opm/simulators/flow/ReservoirCouplingSlave.hpp>
 
-#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
-#include <opm/input/eclipse/Schedule/ResCoup/MasterGroup.hpp>
-#include <opm/input/eclipse/Schedule/ResCoup/Slaves.hpp>
 #include <opm/common/ErrorMacros.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/MasterGroup.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/Slaves.hpp>
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
 #include <dune/common/parallel/mpitraits.hh>
 
-#include <vector>
 #include <fmt/format.h>
+#include <vector>
 
-namespace Opm {
+namespace Opm
+{
 // NOTE: All slave-master communicators have set a custom error handler, which eventually
 //   will call MPI_Abort() so there is no need to check the return value of any MPI_Recv()
 //   or MPI_Send() calls below.
 
-ReservoirCouplingSlave::
-ReservoirCouplingSlave(
-    const Parallel::Communication &comm,
-    const Schedule &schedule,
-    const SimulatorTimer &timer
-) :
-    comm_{comm},
-    schedule_{schedule},
-    timer_{timer}
+ReservoirCouplingSlave::ReservoirCouplingSlave(const Parallel::Communication& comm,
+                                               const Schedule& schedule,
+                                               const SimulatorTimer& timer)
+    : comm_ {comm}
+    , schedule_ {schedule}
+    , timer_ {timer}
 {
     this->slave_master_comm_ = MPI_COMM_NULL;
     MPI_Comm_get_parent(&this->slave_master_comm_);
@@ -60,8 +58,8 @@ ReservoirCouplingSlave(
 }
 
 void
-ReservoirCouplingSlave::
-sendAndReceiveInitialData() {
+ReservoirCouplingSlave::sendAndReceiveInitialData()
+{
     this->sendActivationDateToMasterProcess_();
     this->sendSimulationStartDateToMasterProcess_();
     this->receiveSlaveNameFromMasterProcess_();
@@ -69,23 +67,19 @@ sendAndReceiveInitialData() {
 }
 
 double
-ReservoirCouplingSlave::
-receiveNextTimeStepFromMaster() {
+ReservoirCouplingSlave::receiveNextTimeStepFromMaster()
+{
     double timestep;
     if (this->comm_.rank() == 0) {
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Recv(
-            &timestep,
-            /*count=*/1,
-            /*datatype=*/MPI_DOUBLE,
-            /*source_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveNextTimeStep),
-            this->slave_master_comm_,
-            MPI_STATUS_IGNORE
-        );
-        OpmLog::info(
-            fmt::format("Slave rank 0 received next timestep {} from master.", timestep)
-        );
+        MPI_Recv(&timestep,
+                 /*count=*/1,
+                 /*datatype=*/MPI_DOUBLE,
+                 /*source_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveNextTimeStep),
+                 this->slave_master_comm_,
+                 MPI_STATUS_IGNORE);
+        OpmLog::info(fmt::format("Slave rank 0 received next timestep {} from master.", timestep));
     }
     this->comm_.broadcast(&timestep, /*count=*/1, /*emitter_rank=*/0);
     OpmLog::info("Broadcasted slave next time step to all ranks");
@@ -94,8 +88,7 @@ receiveNextTimeStepFromMaster() {
 
 
 void
-ReservoirCouplingSlave::
-sendNextReportDateToMasterProcess() const
+ReservoirCouplingSlave::sendNextReportDateToMasterProcess() const
 {
     if (this->comm_.rank() == 0) {
         double elapsed_time = this->timer_.simulationTimeElapsed();
@@ -104,40 +97,33 @@ sendNextReportDateToMasterProcess() const
         //      would be the start date. In general, it should be a positive number.
         double next_report_time_offset = elapsed_time + current_step_length;
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Send(
-            &next_report_time_offset,
-            /*count=*/1,
-            /*datatype=*/MPI_DOUBLE,
-            /*dest_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveNextReportDate),
-            this->slave_master_comm_
-        );
+        MPI_Send(&next_report_time_offset,
+                 /*count=*/1,
+                 /*datatype=*/MPI_DOUBLE,
+                 /*dest_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveNextReportDate),
+                 this->slave_master_comm_);
         OpmLog::info("Sent next report date to master process from rank 0");
-   }
+    }
 }
 
 
 void
-ReservoirCouplingSlave::
-sendPotentialsToMaster(const std::vector<Potentials> &potentials) const
+ReservoirCouplingSlave::sendPotentialsToMaster(const std::vector<Potentials>& potentials) const
 {
     // NOTE: The master can determine from the ordering of the potentials in the vector
     //   which slave group for a given slave name the given potentials belong to,
     //   so we do not need to send the slave group names also.
     if (this->comm_.rank() == 0) {
-        //auto num_groups = potentials.size();
+        // auto num_groups = potentials.size();
         auto MPI_POTENTIALS_TYPE = Dune::MPITraits<Potentials>::getType();
-        MPI_Send(
-            potentials.data(),
-            /*count=*/potentials.size(),
-            /*datatype=*/MPI_POTENTIALS_TYPE,
-            /*dest_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::Potentials),
-            this->slave_master_comm_
-        );
-        this->logger_.info(
-            "Sent potentials to master process from rank 0, slave name: " + this->slave_name_
-        );
+        MPI_Send(potentials.data(),
+                 /*count=*/potentials.size(),
+                 /*datatype=*/MPI_POTENTIALS_TYPE,
+                 /*dest_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::Potentials),
+                 this->slave_master_comm_);
+        this->logger_.info("Sent potentials to master process from rank 0, slave name: " + this->slave_name_);
     }
 }
 
@@ -148,8 +134,7 @@ sendPotentialsToMaster(const std::vector<Potentials> &potentials) const
 // ------------------
 
 void
-ReservoirCouplingSlave::
-checkGrupSlavGroupNames_()
+ReservoirCouplingSlave::checkGrupSlavGroupNames_()
 {
     // Validate that each slave group name has a corresponding master group name
     bool grup_slav_found = false;
@@ -163,28 +148,27 @@ checkGrupSlavGroupNames_()
                 if (map_iter == this->slave_to_master_group_map_.end()) {
                     OPM_THROW(std::runtime_error,
                               "Reservoir coupling: Failed to find master group name for slave group: "
-                              + slave_group_name);
-                }
-                else {
+                                  + slave_group_name);
+                } else {
                     const auto& master_group_name = map_iter->second;
                     if (grup_slav.masterGroupName() != master_group_name) {
                         OPM_THROW(std::runtime_error,
                                   "Reservoir coupling: Inconsistent master group name for slave group: "
-                                  + slave_group_name);
+                                      + slave_group_name);
                     }
                 }
             }
         }
     }
     if (!grup_slav_found) {
-        OPM_THROW(std::runtime_error, "Reservoir coupling: Failed to find slave group names: "
+        OPM_THROW(std::runtime_error,
+                  "Reservoir coupling: Failed to find slave group names: "
                   "No GRUPSLAV keyword found in schedule");
     }
 }
 
 double
-ReservoirCouplingSlave::
-getGrupSlavActivationDate_() const
+ReservoirCouplingSlave::getGrupSlavActivationDate_() const
 {
     double start_date = this->schedule_.getStartTime();
     for (std::size_t report_step = 0; report_step < this->schedule_.size(); ++report_step) {
@@ -193,7 +177,8 @@ getGrupSlavActivationDate_() const
             return start_date + this->schedule_.seconds(report_step);
         }
     }
-    OPM_THROW(std::runtime_error, "Reservoir coupling: Failed to find slave activation time: "
+    OPM_THROW(std::runtime_error,
+              "Reservoir coupling: Failed to find slave activation time: "
               "No GRUPSLAV keyword found in schedule");
 }
 
@@ -201,8 +186,8 @@ getGrupSlavActivationDate_() const
 //       will be caught by the master when it receives the slave activation date. See:
 //       ReservoirCouplingSpawnSlaves::receiveActivationDateFromSlaves_()
 void
-ReservoirCouplingSlave::
-maybeActivate(int report_step) {
+ReservoirCouplingSlave::maybeActivate(int report_step)
+{
     if (!this->activated()) {
         auto rescoup = this->schedule_[report_step].rescoup();
         if (rescoup.grupSlavCount() > 0) {
@@ -214,33 +199,29 @@ maybeActivate(int report_step) {
 }
 
 void
-ReservoirCouplingSlave::
-receiveMasterGroupNamesFromMasterProcess_() {
+ReservoirCouplingSlave::receiveMasterGroupNamesFromMasterProcess_()
+{
     std::size_t size;
     std::vector<char> group_names;
     if (this->comm_.rank() == 0) {
         auto MPI_SIZE_T_TYPE = Dune::MPITraits<std::size_t>::getType();
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Recv(
-            &size,
-            /*count=*/1,
-            /*datatype=*/MPI_SIZE_T_TYPE,
-            /*source_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::MasterGroupNamesSize),
-            this->slave_master_comm_,
-            MPI_STATUS_IGNORE
-        );
+        MPI_Recv(&size,
+                 /*count=*/1,
+                 /*datatype=*/MPI_SIZE_T_TYPE,
+                 /*source_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::MasterGroupNamesSize),
+                 this->slave_master_comm_,
+                 MPI_STATUS_IGNORE);
         OpmLog::info("Received master group names size from master process rank 0");
         group_names.resize(size);
-        MPI_Recv(
-            group_names.data(),
-            /*count=*/size,
-            /*datatype=*/MPI_CHAR,
-            /*source_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::MasterGroupNames),
-            this->slave_master_comm_,
-            MPI_STATUS_IGNORE
-        );
+        MPI_Recv(group_names.data(),
+                 /*count=*/size,
+                 /*datatype=*/MPI_CHAR,
+                 /*source_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::MasterGroupNames),
+                 this->slave_master_comm_,
+                 MPI_STATUS_IGNORE);
         OpmLog::info("Received master group names from master process rank 0");
     }
     this->comm_.broadcast(&size, /*count=*/1, /*emitter_rank=*/0);
@@ -253,120 +234,107 @@ receiveMasterGroupNamesFromMasterProcess_() {
 }
 
 void
-ReservoirCouplingSlave::
-receiveSlaveNameFromMasterProcess_() {
+ReservoirCouplingSlave::receiveSlaveNameFromMasterProcess_()
+{
     std::size_t size;
     std::string slave_name;
     if (this->comm_.rank() == 0) {
         auto MPI_SIZE_T_TYPE = Dune::MPITraits<std::size_t>::getType();
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Recv(
-            &size,
-            /*count=*/1,
-            /*datatype=*/MPI_SIZE_T_TYPE,
-            /*source_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveNameSize),
-            this->slave_master_comm_,
-            MPI_STATUS_IGNORE
-        );
+        MPI_Recv(&size,
+                 /*count=*/1,
+                 /*datatype=*/MPI_SIZE_T_TYPE,
+                 /*source_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveNameSize),
+                 this->slave_master_comm_,
+                 MPI_STATUS_IGNORE);
         OpmLog::info("Received slave name size from master process rank 0");
-        slave_name.resize(size+1); // +1 for the null terminator
-        MPI_Recv(
-            slave_name.data(),
-            /*count=*/size,
-            /*datatype=*/MPI_CHAR,
-            /*source_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveName),
-            this->slave_master_comm_,
-            MPI_STATUS_IGNORE
-        );
-        slave_name[size] = '\0';  // Add null terminator
+        slave_name.resize(size + 1); // +1 for the null terminator
+        MPI_Recv(slave_name.data(),
+                 /*count=*/size,
+                 /*datatype=*/MPI_CHAR,
+                 /*source_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveName),
+                 this->slave_master_comm_,
+                 MPI_STATUS_IGNORE);
+        slave_name[size] = '\0'; // Add null terminator
         OpmLog::info("Received slave name from master process rank 0");
     }
     this->comm_.broadcast(&size, /*count=*/1, /*emitter_rank=*/0);
     if (this->comm_.rank() != 0) {
-        slave_name.resize(size+1); // +1 for the null terminator
+        slave_name.resize(size + 1); // +1 for the null terminator
     }
-    this->comm_.broadcast(slave_name.data(), /*count=*/size+1, /*emitter_rank=*/0);
+    this->comm_.broadcast(slave_name.data(), /*count=*/size + 1, /*emitter_rank=*/0);
     OpmLog::info(fmt::format("Received slave name: {}", slave_name));
     this->slave_name_ = slave_name;
 }
 
 void
-ReservoirCouplingSlave::
-saveMasterGroupNamesAsMap_(const std::vector<char>& group_names) {
+ReservoirCouplingSlave::saveMasterGroupNamesAsMap_(const std::vector<char>& group_names)
+{
     // Deserialize the group names vector into a map of slavegroup names -> mastergroup names
     auto total_size = group_names.size();
     std::size_t offset = 0;
     while (offset < total_size) {
-        std::string master_group{group_names.data() + offset};
+        std::string master_group {group_names.data() + offset};
         offset += master_group.size() + 1;
         assert(offset < total_size);
-        std::string slave_group{group_names.data() + offset};
+        std::string slave_group {group_names.data() + offset};
         offset += slave_group.size() + 1;
         this->slave_to_master_group_map_[slave_group] = master_group;
     }
 }
 
 void
-ReservoirCouplingSlave::
-sendActivationDateToMasterProcess_() const
+ReservoirCouplingSlave::sendActivationDateToMasterProcess_() const
 {
     if (this->comm_.rank() == 0) {
         // NOTE: The master process will use this date to check that no slave starts before the master
         double activation_date = this->getGrupSlavActivationDate_();
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Send(
-            &activation_date,
-            /*count=*/1,
-            /*datatype=*/MPI_DOUBLE,
-            /*dest_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveActivationDate),
-            this->slave_master_comm_
-        );
+        MPI_Send(&activation_date,
+                 /*count=*/1,
+                 /*datatype=*/MPI_DOUBLE,
+                 /*dest_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveActivationDate),
+                 this->slave_master_comm_);
         OpmLog::info("Sent simulation activation date to master process from rank 0");
-   }
+    }
 }
 
 void
-ReservoirCouplingSlave::
-sendActivationHandshakeToMasterProcess_() const
+ReservoirCouplingSlave::sendActivationHandshakeToMasterProcess_() const
 {
     if (this->comm_.rank() == 0) {
         std::uint8_t activation_handshake = 1u;
         auto MPI_UINT8_T_TYPE = Dune::MPITraits<std::uint8_t>::getType();
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Send(
-            &activation_handshake,
-            /*count=*/1,
-            /*datatype=*/MPI_UINT8_T_TYPE,
-            /*dest_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveActivationHandshake),
-            this->slave_master_comm_
-        );
+        MPI_Send(&activation_handshake,
+                 /*count=*/1,
+                 /*datatype=*/MPI_UINT8_T_TYPE,
+                 /*dest_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveActivationHandshake),
+                 this->slave_master_comm_);
         OpmLog::info("Sent simulation activation handshake to master process from rank 0");
     }
     this->comm_.barrier();
 }
 
 void
-ReservoirCouplingSlave::
-sendSimulationStartDateToMasterProcess_() const
+ReservoirCouplingSlave::sendSimulationStartDateToMasterProcess_() const
 {
     if (this->comm_.rank() == 0) {
         // NOTE: The master process needs the s
         double start_date = this->schedule_.getStartTime();
         // NOTE: See comment about error handling at the top of this file.
-        MPI_Send(
-            &start_date,
-            /*count=*/1,
-            /*datatype=*/MPI_DOUBLE,
-            /*dest_rank=*/0,
-            /*tag=*/static_cast<int>(MessageTag::SlaveSimulationStartDate),
-            this->slave_master_comm_
-        );
+        MPI_Send(&start_date,
+                 /*count=*/1,
+                 /*datatype=*/MPI_DOUBLE,
+                 /*dest_rank=*/0,
+                 /*tag=*/static_cast<int>(MessageTag::SlaveSimulationStartDate),
+                 this->slave_master_comm_);
         OpmLog::info("Sent simulation start date to master process from rank 0");
-   }
+    }
 }
 
 } // namespace Opm

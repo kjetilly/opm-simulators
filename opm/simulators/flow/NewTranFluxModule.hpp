@@ -31,8 +31,8 @@
 #ifndef OPM_NEWTRAN_FLUX_MODULE_HPP
 #define OPM_NEWTRAN_FLUX_MODULE_HPP
 
-#include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
+#include <dune/common/fvector.hh>
 
 #include <opm/common/OpmLog/OpmLog.hpp>
 
@@ -41,14 +41,15 @@
 #include <opm/material/common/MathToolbox.hpp>
 #include <opm/material/common/Valgrind.hpp>
 
-#include <opm/models/discretization/common/fvbaseproperties.hh>
-#include <opm/models/blackoil/blackoilproperties.hh>
-#include <opm/models/utils/signum.hh>
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
+#include <opm/models/blackoil/blackoilproperties.hh>
+#include <opm/models/discretization/common/fvbaseproperties.hh>
+#include <opm/models/utils/signum.hh>
 
 #include <array>
 
-namespace Opm {
+namespace Opm
+{
 
 template <class TypeTag>
 class NewTranIntensiveQuantities;
@@ -64,8 +65,7 @@ class NewTranBaseProblem;
  * \brief Specifies a flux module which uses ECL transmissibilities.
  */
 template <class TypeTag>
-struct NewTranFluxModule
-{
+struct NewTranFluxModule {
     using FluxIntensiveQuantities = NewTranIntensiveQuantities<TypeTag>;
     using FluxExtensiveQuantities = NewTranExtensiveQuantities<TypeTag>;
     using FluxBaseProblem = NewTranBaseProblem<TypeTag>;
@@ -74,7 +74,8 @@ struct NewTranFluxModule
      * \brief Register all run-time parameters for the flux module.
      */
     static void registerParameters()
-    { }
+    {
+    }
 };
 
 /*!
@@ -84,7 +85,8 @@ struct NewTranFluxModule
  */
 template <class TypeTag>
 class NewTranBaseProblem
-{ };
+{
+};
 
 /*!
  * \ingroup EclBlackOilSimulator
@@ -94,9 +96,11 @@ template <class TypeTag>
 class NewTranIntensiveQuantities
 {
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
+
 protected:
     void update_(const ElementContext&, unsigned, unsigned)
-    { }
+    {
+    }
 };
 
 /*!
@@ -133,13 +137,15 @@ class NewTranExtensiveQuantities
 
     using ConvectiveMixingModule = BlackOilConvectiveMixingModule<TypeTag, enableConvectiveMixing>;
     using ModuleParams = typename BlackOilLocalResidualTPFA<TypeTag>::ModuleParams;
+
 public:
     /*!
      * \brief Return the intrinsic permeability tensor at a face [m^2]
      */
     const DimMatrix& intrinsicPermeability() const
     {
-        throw std::invalid_argument("The ECL transmissibility module does not provide an explicit intrinsic permeability");
+        throw std::invalid_argument(
+            "The ECL transmissibility module does not provide an explicit intrinsic permeability");
     }
 
     /*!
@@ -160,7 +166,9 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     const Evaluation& pressureDifference(unsigned phaseIdx) const
-    { return pressureDifference_[phaseIdx]; }
+    {
+        return pressureDifference_[phaseIdx];
+    }
 
     /*!
      * \brief Return the filter velocity of a fluid phase at the face's integration point
@@ -183,7 +191,9 @@ public:
      * \param phaseIdx The index of the fluid phase
      */
     const Evaluation& volumeFlux(unsigned phaseIdx) const
-    { return volumeFlux_[phaseIdx]; }
+    {
+        return volumeFlux_[phaseIdx];
+    }
 
 protected:
     /*!
@@ -215,13 +225,16 @@ protected:
     }
 
     void updateSolvent(const ElementContext& elemCtx, unsigned scvfIdx, unsigned timeIdx)
-    { asImp_().updateVolumeFluxTrans(elemCtx, scvfIdx, timeIdx); }
+    {
+        asImp_().updateVolumeFluxTrans(elemCtx, scvfIdx, timeIdx);
+    }
 
     void updatePolymer(const ElementContext& elemCtx, unsigned scvfIdx, unsigned timeIdx)
-    { asImp_().updateShearMultipliers(elemCtx, scvfIdx, timeIdx); }
+    {
+        asImp_().updateShearMultipliers(elemCtx, scvfIdx, timeIdx);
+    }
 
 public:
-
     static void volumeAndPhasePressureDifferences(std::array<short, numPhases>& upIdx,
                                                   std::array<short, numPhases>& dnIdx,
                                                   Evaluation (&volumeFlux)[numPhases],
@@ -267,7 +280,7 @@ public:
         Scalar Vin = elemCtx.dofVolume(interiorDofIdx, /*timeIdx=*/0);
         Scalar Vex = elemCtx.dofVolume(exteriorDofIdx, /*timeIdx=*/0);
 
-        for (unsigned phaseIdx=0; phaseIdx < numPhases; phaseIdx++) {
+        for (unsigned phaseIdx = 0; phaseIdx < numPhases; phaseIdx++) {
             if (!FluidSystem::phaseIsActive(phaseIdx))
                 continue;
             calculatePhasePressureDiff_(upIdx[phaseIdx],
@@ -275,38 +288,38 @@ public:
                                         pressureDifferences[phaseIdx],
                                         intQuantsIn,
                                         intQuantsEx,
-                                        phaseIdx,//input
-                                        interiorDofIdx,//input
-                                        exteriorDofIdx,//input
+                                        phaseIdx, // input
+                                        interiorDofIdx, // input
+                                        exteriorDofIdx, // input
                                         Vin,
                                         Vex,
                                         I,
                                         J,
-                                        distZ*g,
+                                        distZ * g,
                                         thpres,
                                         problem.moduleParams());
 
             const bool upwindIsInterior = (static_cast<unsigned>(upIdx[phaseIdx]) == interiorDofIdx);
             const IntensiveQuantities& up = upwindIsInterior ? intQuantsIn : intQuantsEx;
             // Use arithmetic average (more accurate with harmonic, but that requires recomputing the transmissbility)
-            const Evaluation transMult = (intQuantsIn.rockCompTransMultiplier() + Toolbox::value(intQuantsEx.rockCompTransMultiplier()))/2;
+            const Evaluation transMult
+                = (intQuantsIn.rockCompTransMultiplier() + Toolbox::value(intQuantsEx.rockCompTransMultiplier())) / 2;
 
             const auto& materialLawManager = problem.materialLawManager();
             FaceDir::DirEnum facedir = FaceDir::DirEnum::Unknown;
             if (materialLawManager->hasDirectionalRelperms()) {
-                facedir = scvf.faceDirFromDirId();  // direction (X, Y, or Z) of the face
+                facedir = scvf.faceDirFromDirId(); // direction (X, Y, or Z) of the face
             }
             if (upwindIsInterior)
-                volumeFlux[phaseIdx] =
-                    pressureDifferences[phaseIdx]*up.mobility(phaseIdx, facedir)*transMult*(-trans/faceArea);
+                volumeFlux[phaseIdx]
+                    = pressureDifferences[phaseIdx] * up.mobility(phaseIdx, facedir) * transMult * (-trans / faceArea);
             else
-                volumeFlux[phaseIdx] =
-                    pressureDifferences[phaseIdx]*
-                        (Toolbox::value(up.mobility(phaseIdx, facedir))*transMult*(-trans/faceArea));
+                volumeFlux[phaseIdx] = pressureDifferences[phaseIdx]
+                    * (Toolbox::value(up.mobility(phaseIdx, facedir)) * transMult * (-trans / faceArea));
         }
     }
 
-    template<class EvalType>
+    template <class EvalType>
     static void calculatePhasePressureDiff_(short& upIdx,
                                             short& dnIdx,
                                             EvalType& pressureDifference,
@@ -326,9 +339,7 @@ public:
 
         // check shortcut: if the mobility of the phase is zero in the interior as
         // well as the exterior DOF, we can skip looking at the phase.
-        if (intQuantsIn.mobility(phaseIdx) <= 0.0 &&
-            intQuantsEx.mobility(phaseIdx) <= 0.0)
-        {
+        if (intQuantsIn.mobility(phaseIdx) <= 0.0 && intQuantsEx.mobility(phaseIdx) <= 0.0) {
             upIdx = interiorDofIdx;
             dnIdx = exteriorDofIdx;
             pressureDifference = 0.0;
@@ -339,19 +350,20 @@ public:
         // external at the depth of the internal one
         const Evaluation& rhoIn = intQuantsIn.fluidState().density(phaseIdx);
         Scalar rhoEx = Toolbox::value(intQuantsEx.fluidState().density(phaseIdx));
-        Evaluation rhoAvg = (rhoIn + rhoEx)/2;
+        Evaluation rhoAvg = (rhoIn + rhoEx) / 2;
 
-        if constexpr(enableConvectiveMixing) {
-            ConvectiveMixingModule::modifyAvgDensity(rhoAvg, intQuantsIn, intQuantsEx, phaseIdx, moduleParams.convectiveMixingModuleParam);
+        if constexpr (enableConvectiveMixing) {
+            ConvectiveMixingModule::modifyAvgDensity(
+                rhoAvg, intQuantsIn, intQuantsEx, phaseIdx, moduleParams.convectiveMixingModuleParam);
         }
 
         const Evaluation& pressureInterior = intQuantsIn.fluidState().pressure(phaseIdx);
         Evaluation pressureExterior = Toolbox::value(intQuantsEx.fluidState().pressure(phaseIdx));
         if (enableExtbo) // added stability; particulary useful for solvent migrating in pure water
                          // where the solvent fraction displays a 0/1 behaviour ...
-            pressureExterior += Toolbox::value(rhoAvg)*(distZg);
+            pressureExterior += Toolbox::value(rhoAvg) * (distZg);
         else
-            pressureExterior += rhoAvg*(distZg);
+            pressureExterior += rhoAvg * (distZg);
 
         pressureDifference = pressureExterior - pressureInterior;
 
@@ -362,32 +374,27 @@ public:
         if (pressureDifference > 0.0) {
             upIdx = exteriorDofIdx;
             dnIdx = interiorDofIdx;
-        }
-        else if (pressureDifference < 0.0) {
+        } else if (pressureDifference < 0.0) {
             upIdx = interiorDofIdx;
             dnIdx = exteriorDofIdx;
-        }
-        else {
+        } else {
             // if the pressure difference is zero, we chose the DOF which has the
             // larger volume associated to it as upstream DOF
             if (Vin > Vex) {
                 upIdx = interiorDofIdx;
                 dnIdx = exteriorDofIdx;
-            }
-            else if (Vin < Vex) {
+            } else if (Vin < Vex) {
                 upIdx = exteriorDofIdx;
                 dnIdx = interiorDofIdx;
-            }
-            else {
+            } else {
                 assert(Vin == Vex);
                 // if the volumes are also equal, we pick the DOF which exhibits the
                 // smaller global index
                 if (globalIndexIn < globalIndexEx) {
                     upIdx = interiorDofIdx;
                     dnIdx = exteriorDofIdx;
-                }
-                else {
-                    upIdx  = exteriorDofIdx;
+                } else {
+                    upIdx = exteriorDofIdx;
                     dnIdx = interiorDofIdx;
                 }
             }
@@ -403,8 +410,7 @@ public:
                     pressureDifference += thpres;
                 else
                     pressureDifference -= thpres;
-            }
-            else {
+            } else {
                 pressureDifference = 0.0;
             }
         }
@@ -418,7 +424,7 @@ protected:
     {
         Valgrind::SetUndefined(*this);
 
-        volumeAndPhasePressureDifferences(upIdx_ , dnIdx_, volumeFlux_, pressureDifference_, elemCtx, scvfIdx, timeIdx);
+        volumeAndPhasePressureDifferences(upIdx_, dnIdx_, volumeFlux_, pressureDifference_, elemCtx, scvfIdx, timeIdx);
     }
 
     /*!
@@ -456,7 +462,8 @@ protected:
             if (upIdx_[gasPhaseIdx] == 0) {
                 const Scalar trans = problem.transmissibilityBoundary(globalSpaceIdx, scvfIdx);
                 const Scalar transModified = trans * Toolbox::value(intQuantsIn.rockCompTransMultiplier());
-                const auto solventFlux = pressureDifference_[gasPhaseIdx] * intQuantsIn.mobility(gasPhaseIdx) * (-transModified/faceArea);
+                const auto solventFlux = pressureDifference_[gasPhaseIdx] * intQuantsIn.mobility(gasPhaseIdx)
+                    * (-transModified / faceArea);
                 asImp_().setSolventVolumeFlux(solventFlux);
             } else {
                 asImp_().setSolventVolumeFlux(0.0);
@@ -504,7 +511,7 @@ public:
         // exterior DOF)
         Scalar distZ = zIn - zEx;
 
-        for (unsigned phaseIdx=0; phaseIdx < numPhases; phaseIdx++) {
+        for (unsigned phaseIdx = 0; phaseIdx < numPhases; phaseIdx++) {
             if (!FluidSystem::phaseIsActive(phaseIdx))
                 continue;
 
@@ -512,11 +519,11 @@ public:
             // integration position
             const Evaluation& rhoIn = intQuantsIn.fluidState().density(phaseIdx);
             const auto& rhoEx = exFluidState.density(phaseIdx);
-            Evaluation rhoAvg = (rhoIn + rhoEx)/2;
+            Evaluation rhoAvg = (rhoIn + rhoEx) / 2;
 
             const Evaluation& pressureInterior = intQuantsIn.fluidState().pressure(phaseIdx);
             Evaluation pressureExterior = exFluidState.pressure(phaseIdx);
-            pressureExterior += rhoAvg*(distZ*g);
+            pressureExterior += rhoAvg * (distZ * g);
 
             pressureDifference[phaseIdx] = pressureExterior - pressureInterior;
 
@@ -528,8 +535,7 @@ public:
             if (pressureDifference[phaseIdx] > 0.0) {
                 upIdx[phaseIdx] = -1;
                 dnIdx[phaseIdx] = interiorDofIdx;
-            }
-            else {
+            } else {
                 upIdx[phaseIdx] = interiorDofIdx;
                 dnIdx[phaseIdx] = -1;
             }
@@ -546,40 +552,43 @@ public:
                 const Scalar transMult = Toolbox::value(up.rockCompTransMultiplier());
                 transModified *= transMult;
 
-                volumeFlux[phaseIdx] =
-                    pressureDifference[phaseIdx]*up.mobility(phaseIdx)*(-transModified/faceArea);
-            }
-            else {
+                volumeFlux[phaseIdx]
+                    = pressureDifference[phaseIdx] * up.mobility(phaseIdx) * (-transModified / faceArea);
+            } else {
                 // compute the phase mobility using the material law parameters of the
                 // interior element. TODO: this could probably be done more efficiently
                 const auto& matParams = problem.materialLawParams(globalSpaceIdx);
-                std::array<typename FluidState::Scalar,numPhases> kr;
+                std::array<typename FluidState::Scalar, numPhases> kr;
                 MaterialLaw::relativePermeabilities(kr, matParams, exFluidState);
 
-                const auto& mob = kr[phaseIdx]/exFluidState.viscosity(phaseIdx);
-                volumeFlux[phaseIdx] =
-                    pressureDifference[phaseIdx]*mob*(-transModified/faceArea);
+                const auto& mob = kr[phaseIdx] / exFluidState.viscosity(phaseIdx);
+                volumeFlux[phaseIdx] = pressureDifference[phaseIdx] * mob * (-transModified / faceArea);
             }
         }
     }
 
 protected:
-
     /*!
      * \brief Update the volumetric fluxes for all fluid phases on the interior faces of the context
      */
     void calculateFluxes_(const ElementContext&, unsigned, unsigned)
-    { }
+    {
+    }
 
     void calculateBoundaryFluxes_(const ElementContext&, unsigned, unsigned)
-    {}
+    {
+    }
 
 private:
     Implementation& asImp_()
-    { return *static_cast<Implementation*>(this); }
+    {
+        return *static_cast<Implementation*>(this);
+    }
 
     const Implementation& asImp_() const
-    { return *static_cast<const Implementation*>(this); }
+    {
+        return *static_cast<const Implementation*>(this);
+    }
 
     // the volumetric flux of all phases [m^3/s]
     Evaluation volumeFlux_[numPhases];
@@ -591,7 +600,7 @@ private:
     // the local indices of the interior and exterior degrees of freedom
     std::array<short, numPhases> upIdx_;
     std::array<short, numPhases> dnIdx_;
- };
+};
 
 } // namespace Opm
 

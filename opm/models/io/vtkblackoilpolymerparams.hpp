@@ -27,25 +27,38 @@
 #ifndef OPM_VTK_BLACK_OIL_POLYMER_PARAMS_HPP
 #define OPM_VTK_BLACK_OIL_POLYMER_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWritePolymerConcentration { static constexpr bool value = true; };
-struct VtkWritePolymerDeadPoreVolume { static constexpr bool value = true; };
-struct VtkWritePolymerViscosityCorrection { static constexpr bool value = true; };
-struct VtkWriteWaterViscosityCorrection { static constexpr bool value = true; };
-struct VtkWritePolymerRockDensity { static constexpr bool value = true; };
-struct VtkWritePolymerAdsorption { static constexpr bool value = true; };
+struct VtkWritePolymerConcentration {
+    static constexpr bool value = true;
+};
+struct VtkWritePolymerDeadPoreVolume {
+    static constexpr bool value = true;
+};
+struct VtkWritePolymerViscosityCorrection {
+    static constexpr bool value = true;
+};
+struct VtkWriteWaterViscosityCorrection {
+    static constexpr bool value = true;
+};
+struct VtkWritePolymerRockDensity {
+    static constexpr bool value = true;
+};
+struct VtkWritePolymerAdsorption {
+    static constexpr bool value = true;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkBlackoilPolymerModule.
  */
-struct VtkBlackoilPolymerParams
-{
+struct VtkBlackoilPolymerParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

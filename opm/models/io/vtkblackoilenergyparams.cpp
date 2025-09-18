@@ -26,23 +26,25 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackoilEnergyParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteRockInternalEnergy>
-        ("Include the volumetric internal energy of rock "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteTotalThermalConductivity>
-        ("Include the total thermal conductivity of the medium and the fluids "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFluidInternalEnergies>
-        ("Include the internal energies of the fluids in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteFluidEnthalpies>
-        ("Include the enthalpies of the fluids in the VTK output files");
+
+void
+VtkBlackoilEnergyParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteRockInternalEnergy>("Include the volumetric internal energy of rock "
+                                                                 "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteTotalThermalConductivity>(
+        "Include the total thermal conductivity of the medium and the fluids "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFluidInternalEnergies>(
+        "Include the internal energies of the fluids in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteFluidEnthalpies>(
+        "Include the enthalpies of the fluids in the VTK output files");
 }
 
-void VtkBlackoilEnergyParams::read()
+void
+VtkBlackoilEnergyParams::read()
 {
     rockInternalEnergyOutput_ = Parameters::Get<Parameters::VtkWriteRockInternalEnergy>();
     totalThermalConductivityOutput_ = Parameters::Get<Parameters::VtkWriteTotalThermalConductivity>();

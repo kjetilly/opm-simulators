@@ -27,31 +27,56 @@
 #ifndef OPM_VTK_MULTI_PHASE_PARAMS_HPP
 #define OPM_VTK_MULTI_PHASE_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteExtrusionFactor { static constexpr bool value = false; };
-struct VtkWritePressures { static constexpr bool value = true; };
-struct VtkWriteDensities { static constexpr bool value = true; };
-struct VtkWriteSaturations { static constexpr bool value = true; };
-struct VtkWriteMobilities { static constexpr bool value = false; };
-struct VtkWriteRelativePermeabilities { static constexpr bool value = true; };
-struct VtkWriteViscosities { static constexpr bool value = false; };
-struct VtkWriteAverageMolarMasses { static constexpr bool value = false; };
-struct VtkWritePorosity { static constexpr bool value = true; };
-struct VtkWriteIntrinsicPermeabilities { static constexpr bool value = false; };
-struct VtkWritePotentialGradients { static constexpr bool value = false; };
-struct VtkWriteFilterVelocities { static constexpr bool value = false; };
+struct VtkWriteExtrusionFactor {
+    static constexpr bool value = false;
+};
+struct VtkWritePressures {
+    static constexpr bool value = true;
+};
+struct VtkWriteDensities {
+    static constexpr bool value = true;
+};
+struct VtkWriteSaturations {
+    static constexpr bool value = true;
+};
+struct VtkWriteMobilities {
+    static constexpr bool value = false;
+};
+struct VtkWriteRelativePermeabilities {
+    static constexpr bool value = true;
+};
+struct VtkWriteViscosities {
+    static constexpr bool value = false;
+};
+struct VtkWriteAverageMolarMasses {
+    static constexpr bool value = false;
+};
+struct VtkWritePorosity {
+    static constexpr bool value = true;
+};
+struct VtkWriteIntrinsicPermeabilities {
+    static constexpr bool value = false;
+};
+struct VtkWritePotentialGradients {
+    static constexpr bool value = false;
+};
+struct VtkWriteFilterVelocities {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkMultiPhaseModule.
  */
-struct VtkMultiPhaseParams
-{
+struct VtkMultiPhaseParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

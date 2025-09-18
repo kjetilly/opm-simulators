@@ -81,7 +81,7 @@ GpuJac<M, X, Y, l>::update()
 }
 
 template <class M, class X, class Y, int l>
-template<int blocksize>
+template <int blocksize>
 void
 GpuJac<M, X, Y, l>::dispatchInvertDiagonalAndFlatten()
 {
@@ -92,12 +92,11 @@ GpuJac<M, X, Y, l>::dispatchInvertDiagonalAndFlatten()
             OPM_THROW(std::runtime_error, fmt::format("Block size {} is not supported.", m_matrix.blockSize()));
         }
     } else {
-        detail::JAC::invertDiagonalAndFlatten<field_type, blocksize>(
-            m_matrix.getNonZeroValues().data(),
-            m_matrix.getRowIndices().data(),
-            m_matrix.getColumnIndices().data(),
-            m_matrix.N(),
-            m_diagInvFlattened.data());
+        detail::JAC::invertDiagonalAndFlatten<field_type, blocksize>(m_matrix.getNonZeroValues().data(),
+                                                                     m_matrix.getRowIndices().data(),
+                                                                     m_matrix.getColumnIndices().data(),
+                                                                     m_matrix.N(),
+                                                                     m_diagInvFlattened.data());
     }
 }
 
@@ -105,14 +104,14 @@ template <class M, class X, class Y, int l>
 void
 GpuJac<M, X, Y, l>::invertDiagonalAndFlatten()
 {
-    dispatchInvertDiagonalAndFlatten<6>();   
+    dispatchInvertDiagonalAndFlatten<6>();
 }
 
 } // namespace Opm::gpuistl
-#define INSTANTIATE_CUJAC_DUNE(realtype)                                                         \
-    template class ::Opm::gpuistl::GpuJac<::Opm::gpuistl::GpuSparseMatrix<realtype>,             \
-                                        ::Opm::gpuistl::GpuVector<realtype>,                     \
-                                        ::Opm::gpuistl::GpuVector<realtype>>
-   
+#define INSTANTIATE_CUJAC_DUNE(realtype)                                                                               \
+    template class ::Opm::gpuistl::GpuJac<::Opm::gpuistl::GpuSparseMatrix<realtype>,                                   \
+                                          ::Opm::gpuistl::GpuVector<realtype>,                                         \
+                                          ::Opm::gpuistl::GpuVector<realtype>>
+
 INSTANTIATE_CUJAC_DUNE(double);
 INSTANTIATE_CUJAC_DUNE(float);
