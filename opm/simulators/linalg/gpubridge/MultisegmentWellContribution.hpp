@@ -26,28 +26,28 @@
 #include <cuda_runtime.h>
 #endif
 
-#include <umfpack.h>
 #include <dune/common/version.hh>
+#include <umfpack.h>
 
 namespace Opm
 {
 
 /// This class serves to duplicate the functionality of the MultisegmentWell
 /// A MultisegmentWell uses C, D and B and performs y -= (C^T * (D^-1 * (B*x)))
-/// B and C are matrices, with M rows and N columns, where N is the size of the matrix. They contain blocks of MultisegmentWell::numEq by MultisegmentWell::numWellEq.
-/// D is a MxM matrix, the square blocks have size MultisegmentWell::numWellEq.
-/// B*x and D*B*x are a vector with M*numWellEq doubles
-/// C*D*B*x is a vector with N*numEq doubles.
+/// B and C are matrices, with M rows and N columns, where N is the size of the matrix. They contain blocks of
+/// MultisegmentWell::numEq by MultisegmentWell::numWellEq. D is a MxM matrix, the square blocks have size
+/// MultisegmentWell::numWellEq. B*x and D*B*x are a vector with M*numWellEq doubles C*D*B*x is a vector with N*numEq
+/// doubles.
 
-template<class Scalar>
+template <class Scalar>
 class MultisegmentWellContribution
 {
 
 private:
-    unsigned int dim;                        // size of blockvectors in vectors x and y, equal to MultisegmentWell::numEq
-    unsigned int dim_wells;                  // size of blocks in C, B and D, equal to MultisegmentWell::numWellEq
-    unsigned int M;                          // number of rows, M == dim_wells*Mb
-    unsigned int Mb;                         // number of blockrows in C, D and B
+    unsigned int dim; // size of blockvectors in vectors x and y, equal to MultisegmentWell::numEq
+    unsigned int dim_wells; // size of blocks in C, B and D, equal to MultisegmentWell::numWellEq
+    unsigned int M; // number of rows, M == dim_wells*Mb
+    unsigned int Mb; // number of blockrows in C, D and B
 
 #if HAVE_CUDA
     cudaStream_t stream; // not actually used yet, will be when MultisegmentWellContribution are applied on GPU
@@ -55,20 +55,21 @@ private:
 
     // C and B are stored in BCRS format, D is stored in CSC format (Dune::UMFPack)
     // Sparsity pattern for C is not stored, since it is the same as B
-    unsigned int DnumBlocks;             // number of blocks in D
+    unsigned int DnumBlocks; // number of blocks in D
     std::vector<Scalar> Cvals;
     std::vector<Scalar> Dvals;
     std::vector<Scalar> Bvals;
-    std::vector<int> Dcols;              // Columnpointers, contains M+1 entries
+    std::vector<int> Dcols; // Columnpointers, contains M+1 entries
     std::vector<unsigned int> Bcols;
-    std::vector<int> Drows;              // Rowindicies, contains DnumBlocks*dim*dim_wells entries
+    std::vector<int> Drows; // Rowindicies, contains DnumBlocks*dim*dim_wells entries
     std::vector<unsigned int> Brows;
-    std::vector<Scalar> z1;          // z1 = B * x
-    std::vector<Scalar> z2;          // z2 = D^-1 * B * x
+    std::vector<Scalar> z1; // z1 = B * x
+    std::vector<Scalar> z2; // z2 = D^-1 * B * x
     void *UMFPACK_Symbolic, *UMFPACK_Numeric;
 
     /// Translate the columnIndex if needed
-    /// Some preconditioners reorder the rows of the matrix, this means the columnIndices of the wellcontributions need to be reordered as well
+    /// Some preconditioners reorder the rows of the matrix, this means the columnIndices of the wellcontributions need
+    /// to be reordered as well
     unsigned int getColIdx(unsigned int idx);
 
 public:
@@ -94,7 +95,8 @@ public:
     /// \param[in] DcolPointers     columnpointers of matrix D
     /// \param[in] DrowIndices      rowindices of matrix D
     /// \param[in] Cvalues          nonzero values of matrix C
-    MultisegmentWellContribution(unsigned int dim, unsigned int dim_wells,
+    MultisegmentWellContribution(unsigned int dim,
+                                 unsigned int dim_wells,
                                  unsigned int Mb,
                                  std::vector<Scalar>& Bvalues,
                                  std::vector<unsigned int>& BcolIndices,
@@ -115,6 +117,6 @@ public:
     void apply(Scalar* h_x, Scalar* h_y);
 };
 
-} //namespace Opm
+} // namespace Opm
 
 #endif

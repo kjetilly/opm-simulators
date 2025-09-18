@@ -39,7 +39,8 @@
 #include <filesystem>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
 SimulatorSerializer::SimulatorSerializer([[maybe_unused]] SerializableSim& simulator,
                                          Parallel::Communication& comm,
@@ -63,25 +64,29 @@ SimulatorSerializer::SimulatorSerializer([[maybe_unused]] SerializableSim& simul
     } else if (saveSpec == "last") {
         saveStride_ = -1;
     } else if (!saveSpec.empty() && saveSpec[0] == ':') {
-        saveStride_ = std::atoi(saveSpec.c_str()+1);
+        saveStride_ = std::atoi(saveSpec.c_str() + 1);
     } else if (!saveSpec.empty()) {
         saveStep_ = std::atoi(saveSpec.c_str());
     }
 
 #if !HAVE_HDF5
-    if (loadStep_ > -1)  {
-        OPM_THROW(std::runtime_error, "Loading of serialized state requested, "
-                                      "but no HDF5 support available.");
+    if (loadStep_ > -1) {
+        OPM_THROW(std::runtime_error,
+                  "Loading of serialized state requested, "
+                  "but no HDF5 support available.");
     }
-    if (saveStep_ > -1)  {
-        OPM_THROW(std::runtime_error, "Saving of serialized state requested, "
-                                      "but no HDF5 support available.");
+    if (saveStep_ > -1) {
+        OPM_THROW(std::runtime_error,
+                  "Saving of serialized state requested, "
+                  "but no HDF5 support available.");
     }
 #endif
 
     if (loadFile_.empty() || saveFile_.empty()) {
-        if (saveFile_.empty()) saveFile_ = ioconfig.fullBasePath() + ".OPMRST";
-        if (loadFile_.empty()) loadFile_ = saveFile_;
+        if (saveFile_.empty())
+            saveFile_ = ioconfig.fullBasePath() + ".OPMRST";
+        if (loadFile_.empty())
+            loadFile_ = saveFile_;
         if (loadStep_ != -1 && !std::filesystem::exists(loadFile_)) {
             std::filesystem::path path(ioconfig.getInputDir() + "/");
             path.replace_filename(ioconfig.getBaseName() + ".OPMRST");
@@ -93,7 +98,8 @@ SimulatorSerializer::SimulatorSerializer([[maybe_unused]] SerializableSim& simul
     }
 }
 
-void SimulatorSerializer::save(SimulatorTimer& timer)
+void
+SimulatorSerializer::save(SimulatorTimer& timer)
 {
     if (saveStride_ == 0 && saveStep_ == -1) {
         return;
@@ -102,8 +108,7 @@ void SimulatorSerializer::save(SimulatorTimer& timer)
     OPM_BEGIN_PARALLEL_TRY_CATCH();
 
     int nextStep = timer.currentStepNum();
-    if ((saveStep_ != -1 && nextStep == saveStep_)  ||
-        (saveStride_ != 0 && (nextStep % saveStride_) == 0)) {
+    if ((saveStep_ != -1 && nextStep == saveStep_) || (saveStride_ != 0 && (nextStep % saveStride_) == 0)) {
 #if HAVE_HDF5
         const std::string groupName = "/report_step/" + std::to_string(nextStep);
         if (saveStride_ < 0 || nextStep == saveStride_ || nextStep == saveStep_) {
@@ -121,8 +126,7 @@ void SimulatorSerializer::save(SimulatorTimer& timer)
             }
         }
         simulator_.saveState(writer, groupName);
-        writer.write(timer, groupName, "simulator_timer",
-                     HDF5File::DataSetMode::ROOT_ONLY);
+        writer.write(timer, groupName, "simulator_timer", HDF5File::DataSetMode::ROOT_ONLY);
         OpmLog::info("Serialized state written for report step " + std::to_string(nextStep));
 #endif
     }
@@ -130,8 +134,9 @@ void SimulatorSerializer::save(SimulatorTimer& timer)
     OPM_END_PARALLEL_TRY_CATCH("Error saving serialized state: ", comm_);
 }
 
-    //! \brief Load timer info from serialized state.
-void SimulatorSerializer::loadTimerInfo([[maybe_unused]] SimulatorTimer& timer)
+//! \brief Load timer info from serialized state.
+void
+SimulatorSerializer::loadTimerInfo([[maybe_unused]] SimulatorTimer& timer)
 {
 #if HAVE_HDF5
     OPM_BEGIN_PARALLEL_TRY_CATCH();
@@ -146,15 +151,13 @@ void SimulatorSerializer::loadTimerInfo([[maybe_unused]] SimulatorTimer& timer)
     const std::string groupName = "/report_step/" + std::to_string(loadStep_);
     reader.read(timer, groupName, "simulator_timer", HDF5File::DataSetMode::ROOT_ONLY);
 
-    std::tuple<std::array<std::string,5>,int> header;
+    std::tuple<std::array<std::string, 5>, int> header;
     reader.read(header, "/", "simulator_info", HDF5File::DataSetMode::ROOT_ONLY);
     const auto& [strings, procs] = header;
 
     if (comm_.size() != procs) {
-        throw std::runtime_error("Number of processes (procs=" +
-                                 std::to_string(comm_.size()) +
-                                 ") does not match .OPMRST file (procs=" +
-                                 std::to_string(procs) + ")");
+        throw std::runtime_error("Number of processes (procs=" + std::to_string(comm_.size())
+                                 + ") does not match .OPMRST file (procs=" + std::to_string(procs) + ")");
     }
 
     if (comm_.size() > 1) {
@@ -176,8 +179,9 @@ void SimulatorSerializer::loadTimerInfo([[maybe_unused]] SimulatorTimer& timer)
 #endif
 }
 
-    //! \brief Load simulator state from serialized state.
-void SimulatorSerializer::loadState()
+//! \brief Load simulator state from serialized state.
+void
+SimulatorSerializer::loadState()
 {
 #if HAVE_HDF5
     OPM_BEGIN_PARALLEL_TRY_CATCH();
@@ -191,23 +195,17 @@ void SimulatorSerializer::loadState()
     loadStep_ = -1;
 }
 
-void SimulatorSerializer::checkSerializedCmdLine(const std::string& current,
-                                                 const std::string& stored)
+void
+SimulatorSerializer::checkSerializedCmdLine(const std::string& current, const std::string& stored)
 {
-    auto filter_strings = [](const std::vector<std::string>& input)
-    {
+    auto filter_strings = [](const std::vector<std::string>& input) {
         std::vector<std::string> output;
         output.reserve(input.size());
-        std::copy_if(input.begin(), input.end(), std::back_inserter(output),
-                     [](const std::string& line)
-                     {
-                        return line.compare(0, 11, "EclDeckFile") != 0 &&
-                               line.compare(0, 9, "OutputDir") != 0 &&
-                               line.compare(0, 8, "LoadFile") != 0 &&
-                               line.compare(0, 8, "SaveFile") != 0 &&
-                               line.compare(0, 8, "LoadStep") != 0 &&
-                               line.compare(0, 8, "SaveStep") != 0;
-                     });
+        std::copy_if(input.begin(), input.end(), std::back_inserter(output), [](const std::string& line) {
+            return line.compare(0, 11, "EclDeckFile") != 0 && line.compare(0, 9, "OutputDir") != 0
+                && line.compare(0, 8, "LoadFile") != 0 && line.compare(0, 8, "SaveFile") != 0
+                && line.compare(0, 8, "LoadStep") != 0 && line.compare(0, 8, "SaveStep") != 0;
+        });
         return output;
     };
 
@@ -219,20 +217,20 @@ void SimulatorSerializer::checkSerializedCmdLine(const std::string& current,
     stored_strings = filter_strings(stored_strings);
 
     std::vector<std::string> difference;
-    std::set_symmetric_difference(stored_strings.begin(), stored_strings.end(),
-                                  curr_strings.begin(), curr_strings.end(),
+    std::set_symmetric_difference(stored_strings.begin(),
+                                  stored_strings.end(),
+                                  curr_strings.begin(),
+                                  curr_strings.end(),
                                   std::back_inserter(difference));
 
     if (!difference.empty()) {
         std::vector<std::string> only_stored, only_curr;
-        for (std::size_t i = 0; i < difference.size(); ) {
-            auto stored_it = std::find(stored_strings.begin(),
-                                       stored_strings.end(), difference[i]);
+        for (std::size_t i = 0; i < difference.size();) {
+            auto stored_it = std::find(stored_strings.begin(), stored_strings.end(), difference[i]);
             auto pos = difference[i].find_first_of('=');
-            if (i < difference.size() - 1 &&
-                difference[i].compare(0, pos, difference[i+1], 0, pos) == 0) {
+            if (i < difference.size() - 1 && difference[i].compare(0, pos, difference[i + 1], 0, pos) == 0) {
                 if (stored_it == stored_strings.end()) {
-                    std::swap(difference[i], difference[i+1]);
+                    std::swap(difference[i], difference[i + 1]);
                 }
                 i += 2;
             } else {

@@ -28,34 +28,35 @@
  */
 #include "config.h"
 
-#include <opm/models/utils/start.hh>
 #include "problems/co2ptflashproblem.hh"
+#include <opm/models/utils/start.hh>
 
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
     struct CO2PTEcfvProblem {
-    using InheritsFrom = std::tuple<CO2PTBaseProblem, FlashModel>;
-};
-}
+        using InheritsFrom = std::tuple<CO2PTBaseProblem, FlashModel>;
+    };
+} // namespace TTag
 
 template <class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::CO2PTEcfvProblem>
-{
+struct SpatialDiscretizationSplice<TypeTag, TTag::CO2PTEcfvProblem> {
     using type = TTag::EcfvDiscretization;
 };
 
 template <class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::CO2PTEcfvProblem>
-{
+struct LocalLinearizerSplice<TypeTag, TTag::CO2PTEcfvProblem> {
     using type = TTag::AutoDiffLocalLinearizer;
 };
 
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::CO2PTEcfvProblem;
     return Opm::start<EcfvProblemTypeTag>(argc, argv, true);

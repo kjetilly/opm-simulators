@@ -28,10 +28,11 @@
 
 #include <opm/simulators/wells/PerforationData.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename TypeTag>
-class CompWell  : public CompWellInterface<TypeTag>
+class CompWell : public CompWellInterface<TypeTag>
 {
 public:
     using Base = CompWellInterface<TypeTag>;
@@ -61,14 +62,14 @@ public:
     // TODO: this can be a rate converter role later
     // currently, it has the surface densities for each phase and volume fractions for each phase
     // it is part of the secondary variables used in the assembling of the well equations
-    struct SurfaceConditons
-    {
+    struct SurfaceConditons {
         static constexpr int num_phases = 2;
-        std::array<EvalWell, num_phases> surface_densities_{};
-        std::array<EvalWell, num_phases> volume_fractions_{};
-        std::array<std::array<EvalWell, num_comp>, num_phases> mass_fractions_{};
+        std::array<EvalWell, num_phases> surface_densities_ {};
+        std::array<EvalWell, num_phases> volume_fractions_ {};
+        std::array<std::array<EvalWell, num_comp>, num_phases> mass_fractions_ {};
 
-        EvalWell density() const {
+        EvalWell density() const
+        {
             EvalWell density = 0.;
             for (int i = 0; i < num_phases; ++i) {
                 density += surface_densities_[i] * volume_fractions_[i];
@@ -77,51 +78,42 @@ public:
         }
 
         // TODO: it looks like that we can have a concept of component mass density?
-        EvalWell massFraction(int comp_idx) const {
+        EvalWell massFraction(int comp_idx) const
+        {
             EvalWell mass = 0.;
-            for (unsigned  p = 0; p < num_phases; ++p) {
+            for (unsigned p = 0; p < num_phases; ++p) {
                 mass += surface_densities_[p] * volume_fractions_[p] * mass_fractions_[p][comp_idx];
             }
             return mass / density();
         }
     };
 
-    CompWell(const Well& well,
-             int index_of_well,
-             const std::vector<CompConnectionData>& well_connection_data);
+    CompWell(const Well& well, int index_of_well, const std::vector<CompConnectionData>& well_connection_data);
 
     void init() override;
 
-    void calculateExplicitQuantities(const Simulator& simulator,
-                                     const SingleWellState& well_state) override;
+    void calculateExplicitQuantities(const Simulator& simulator, const SingleWellState& well_state) override;
 
-    void updatePrimaryVariables(const Simulator& simulator,
-                                const SingleWellState& well_state) override;
+    void updatePrimaryVariables(const Simulator& simulator, const SingleWellState& well_state) override;
 
     void updateSecondaryQuantities(const Simulator& simulator);
 
     // TODO: control should be passed in later
-    void assembleWellEq(const Simulator& simulator,
-                        const SingleWellState& well_state,
-                        const double dt);
+    void assembleWellEq(const Simulator& simulator, const SingleWellState& well_state, const double dt);
 
-    bool iterateWellEq(const Simulator& simulator,
-                       const Scalar dt,
-                       SingleWellState& well_state) override;
+    bool iterateWellEq(const Simulator& simulator, const Scalar dt, SingleWellState& well_state) override;
 
     void solveEqAndUpdateWellState(SingleWellState& well_state);
 
     void apply(BVector& r) const override;
 
-    void recoverWellSolutionAndUpdateWellState(const BVector& x,
-                                               SingleWellState& well_state) override;
+    void recoverWellSolutionAndUpdateWellState(const BVector& x, SingleWellState& well_state) override;
 
     bool getConvergence() const override;
 
     void addWellContributions(SparseMatrixAdapter&) const override;
 
 private:
-
     // primary variables
     PrimaryVariables primary_variables_;
     WellEquations well_equations_;
@@ -129,36 +121,32 @@ private:
     // the following varialbes are temporary and remain to be cleaned up and re-organized
     // some are testing variables, and some are secondary variables might be kept
     // anyway, they are very rough prototype code for testing and will be changed
-    const Scalar wellbore_volume_ {21.6*0.001};
+    const Scalar wellbore_volume_ {21.6 * 0.001};
 
-    std::array<EvalWell, num_comp> mass_fractions_{0.};
-    EvalWell fluid_density_{0.};
+    std::array<EvalWell, num_comp> mass_fractions_ {0.};
+    EvalWell fluid_density_ {0.};
     // the original mass for each component in wellbore
-    std::array<Scalar, num_comp> component_masses_{0.};
+    std::array<Scalar, num_comp> component_masses_ {0.};
     // the new mass for each component in wellbore, derived from the primary variables
-    std::array<EvalWell, num_comp> new_component_masses_{0.};
+    std::array<EvalWell, num_comp> new_component_masses_ {0.};
     // quantities used to calculate the quantities under the surface conditions
     SurfaceConditons surface_conditions_;
 
     // following are some secondary property or variables to be used for later
-    void calculateSingleConnectionRate(const Simulator& simulator,
-                                       std::vector<EvalWell>& con_rates) const;
+    void calculateSingleConnectionRate(const Simulator& simulator, std::vector<EvalWell>& con_rates) const;
 
     void updateTotalMass();
 
     // TODO: a better name
     void updateSurfaceQuantities(const Simulator& simulator);
 
-    void getMobility(const Simulator& simulator,
-                     const int connection_idx,
-                     std::vector<EvalWell>& mob) const;
+    void getMobility(const Simulator& simulator, const int connection_idx, std::vector<EvalWell>& mob) const;
 
 
     // TODO: the following assembling functions will be moved to a separate assmeble class
     void assembleSourceTerm(const Scalar dt);
 
-    void assembleControlEq(const SingleWellState& well_state,
-                           const SummaryState& summary_state);
+    void assembleControlEq(const SingleWellState& well_state, const SummaryState& summary_state);
 
     void assembleControlEqProd(const SingleWellState& well_state,
                                const Well::ProductionControls& prod_controls,
@@ -173,19 +161,15 @@ private:
     // with passing in the SurfaceCondition, we should be able to do this in the primary variable class
     void updateWellStateFromPrimaryVariables(SingleWellState& well_state) const;
 
-    void updateWellState(const BVectorWell& dwells,
-                         SingleWellState& well_state);
+    void updateWellState(const BVectorWell& dwells, SingleWellState& well_state);
 
-    void updateWellControl(const SummaryState& summary_state,
-                           SingleWellState& well_state) const;
+    void updateWellControl(const SummaryState& summary_state, SingleWellState& well_state) const;
 
     template <typename T>
-    void
-    updateSurfanceCondition_(const StandardCond& surface_cond, FluidState<T>& fluid_state);
+    void updateSurfanceCondition_(const StandardCond& surface_cond, FluidState<T>& fluid_state);
 
     template <typename T>
-    void
-    flashFluidState_(FluidState<T>& fluid_state);
+    void flashFluidState_(FluidState<T>& fluid_state);
 };
 
 } // end of namespace Opm

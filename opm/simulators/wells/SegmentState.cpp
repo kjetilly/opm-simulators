@@ -31,46 +31,49 @@
 #include <stdexcept>
 #include <vector>
 
-namespace {
+namespace
+{
 
-std::vector<int> make_segment_number(const Opm::WellSegments& segments)
+std::vector<int>
+make_segment_number(const Opm::WellSegments& segments)
 {
     std::vector<int> segment_number;
     segment_number.reserve(segments.size());
 
-    std::transform(segments.begin(), segments.end(),
+    std::transform(segments.begin(),
+                   segments.end(),
                    std::back_inserter(segment_number),
-        [](const Opm::Segment& segment)
-    {
-        return segment.segmentNumber();
-    });
+                   [](const Opm::Segment& segment) { return segment.segmentNumber(); });
 
     return segment_number;
 }
 
 } // Anonymous namespace
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 SegmentState<Scalar>::SegmentState(int num_phases, const WellSegments& segments)
-    : rates                    (segments.size() * num_phases)
-    , dissolved_gas_rate       (segments.size())
-    , vaporized_oil_rate       (segments.size())
-    , phase_resv_rates         (segments.size() * num_phases)
-    , phase_velocity           (segments.size() * num_phases)
-    , phase_holdup             (segments.size() * num_phases)
-    , phase_viscosity          (segments.size() * num_phases)
-    , phase_density            (segments.size() * (num_phases + 2)) // +2 for mixture with and without exponents
-    , pressure                 (segments.size())
-    , pressure_drop_friction   (segments.size())
+    : rates(segments.size() * num_phases)
+    , dissolved_gas_rate(segments.size())
+    , vaporized_oil_rate(segments.size())
+    , phase_resv_rates(segments.size() * num_phases)
+    , phase_velocity(segments.size() * num_phases)
+    , phase_holdup(segments.size() * num_phases)
+    , phase_viscosity(segments.size() * num_phases)
+    , phase_density(segments.size() * (num_phases + 2)) // +2 for mixture with and without exponents
+    , pressure(segments.size())
+    , pressure_drop_friction(segments.size())
     , pressure_drop_hydrostatic(segments.size())
-    , pressure_drop_accel      (segments.size())
-    , m_segment_number         (make_segment_number(segments))
-{}
+    , pressure_drop_accel(segments.size())
+    , m_segment_number(make_segment_number(segments))
+{
+}
 
-template<class Scalar>
-SegmentState<Scalar> SegmentState<Scalar>::serializationTestObject()
+template <class Scalar>
+SegmentState<Scalar>
+SegmentState<Scalar>::serializationTestObject()
 {
     SegmentState result;
     result.rates = {1.0, 2.0};
@@ -90,26 +93,31 @@ SegmentState<Scalar> SegmentState<Scalar>::serializationTestObject()
     return result;
 }
 
-template<class Scalar>
-Scalar SegmentState<Scalar>::pressure_drop(std::size_t index) const
+template <class Scalar>
+Scalar
+SegmentState<Scalar>::pressure_drop(std::size_t index) const
 {
-    return this->pressure_drop_friction[index] + this->pressure_drop_hydrostatic[index] + this->pressure_drop_accel[index];
+    return this->pressure_drop_friction[index] + this->pressure_drop_hydrostatic[index]
+        + this->pressure_drop_accel[index];
 }
 
-template<class Scalar>
-bool SegmentState<Scalar>::empty() const
+template <class Scalar>
+bool
+SegmentState<Scalar>::empty() const
 {
     return this->rates.empty();
 }
 
-template<class Scalar>
-std::size_t SegmentState<Scalar>::size() const
+template <class Scalar>
+std::size_t
+SegmentState<Scalar>::size() const
 {
     return this->pressure.size();
 }
 
-template<class Scalar>
-void SegmentState<Scalar>::scale_pressure(const Scalar bhp)
+template <class Scalar>
+void
+SegmentState<Scalar>::scale_pressure(const Scalar bhp)
 {
     if (this->empty())
         throw std::logic_error("Tried to pressure scale empty SegmentState");
@@ -119,32 +127,27 @@ void SegmentState<Scalar>::scale_pressure(const Scalar bhp)
     std::transform(this->pressure.begin(),
                    this->pressure.end(),
                    this->pressure.begin(),
-                   [pressure_change] (const Scalar& p) { return p + pressure_change;});
+                   [pressure_change](const Scalar& p) { return p + pressure_change; });
 }
 
-template<class Scalar>
+template <class Scalar>
 const std::vector<int>&
 SegmentState<Scalar>::segment_number() const
 {
     return this->m_segment_number;
 }
 
-template<class Scalar>
-bool SegmentState<Scalar>::operator==(const SegmentState& rhs) const
+template <class Scalar>
+bool
+SegmentState<Scalar>::operator==(const SegmentState& rhs) const
 {
-    return this->rates == rhs.rates &&
-           this->dissolved_gas_rate == rhs.dissolved_gas_rate &&
-           this->vaporized_oil_rate == rhs.vaporized_oil_rate &&
-           this->phase_resv_rates == rhs.phase_resv_rates &&
-           this->phase_velocity == rhs.phase_velocity &&
-           this->phase_holdup == rhs.phase_holdup &&
-           this->phase_viscosity == rhs.phase_viscosity &&
-           this->phase_density == rhs.phase_density &&
-           this->pressure == rhs.pressure &&
-           this->pressure_drop_friction == rhs.pressure_drop_friction &&
-           this->pressure_drop_hydrostatic == rhs.pressure_drop_hydrostatic &&
-           this->pressure_drop_accel == rhs.pressure_drop_accel &&
-           this->m_segment_number == rhs.m_segment_number;
+    return this->rates == rhs.rates && this->dissolved_gas_rate == rhs.dissolved_gas_rate
+        && this->vaporized_oil_rate == rhs.vaporized_oil_rate && this->phase_resv_rates == rhs.phase_resv_rates
+        && this->phase_velocity == rhs.phase_velocity && this->phase_holdup == rhs.phase_holdup
+        && this->phase_viscosity == rhs.phase_viscosity && this->phase_density == rhs.phase_density
+        && this->pressure == rhs.pressure && this->pressure_drop_friction == rhs.pressure_drop_friction
+        && this->pressure_drop_hydrostatic == rhs.pressure_drop_hydrostatic
+        && this->pressure_drop_accel == rhs.pressure_drop_accel && this->m_segment_number == rhs.m_segment_number;
 }
 
 template class SegmentState<double>;

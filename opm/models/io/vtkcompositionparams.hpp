@@ -27,26 +27,41 @@
 #ifndef OPM_VTK_COMPOSITION_PARAMS_HPP
 #define OPM_VTK_COMPOSITION_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteMassFractions { static constexpr bool value = false; };
-struct VtkWriteMoleFractions { static constexpr bool value = true; };
-struct VtkWriteTotalMassFractions { static constexpr bool value = false; };
-struct VtkWriteTotalMoleFractions { static constexpr bool value = false; };
-struct VtkWriteMolarities { static constexpr bool value = false; };
-struct VtkWriteFugacities { static constexpr bool value = false; };
-struct VtkWriteFugacityCoeffs { static constexpr bool value = false; };
+struct VtkWriteMassFractions {
+    static constexpr bool value = false;
+};
+struct VtkWriteMoleFractions {
+    static constexpr bool value = true;
+};
+struct VtkWriteTotalMassFractions {
+    static constexpr bool value = false;
+};
+struct VtkWriteTotalMoleFractions {
+    static constexpr bool value = false;
+};
+struct VtkWriteMolarities {
+    static constexpr bool value = false;
+};
+struct VtkWriteFugacities {
+    static constexpr bool value = false;
+};
+struct VtkWriteFugacityCoeffs {
+    static constexpr bool value = false;
+};
 
-} // namespace Opm::Properties
+} // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkCompositionModule.
  */
-struct VtkCompositionParams
-{
+struct VtkCompositionParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

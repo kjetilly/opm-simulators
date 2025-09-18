@@ -58,11 +58,11 @@
 #include <unistd.h>
 #include <vector>
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
-void mergeParallelLogFiles(std::string_view output_dir,
-                           std::string_view deckFilename,
-                           bool enableLoggingFalloutWarning)
+void
+mergeParallelLogFiles(std::string_view output_dir, std::string_view deckFilename, bool enableLoggingFalloutWarning)
 {
     namespace fs = ::std::filesystem;
     fs::path output_path(output_dir);
@@ -77,47 +77,43 @@ void mergeParallelLogFiles(std::string_view output_dir,
     }
     std::for_each(fs::directory_iterator(output_path),
                   fs::directory_iterator(),
-                  detail::ParallelFileMerger(output_path, basename,
-                                             enableLoggingFalloutWarning));
+                  detail::ParallelFileMerger(output_path, basename, enableLoggingFalloutWarning));
 }
 
-void handleExtraConvergenceOutput(const SimulatorReport& report,
-                                  std::string_view option,
-                                  std::string_view optionName,
-                                  std::string_view output_dir,
-                                  std::string_view base_name)
+void
+handleExtraConvergenceOutput(const SimulatorReport& report,
+                             std::string_view option,
+                             std::string_view optionName,
+                             std::string_view output_dir,
+                             std::string_view base_name)
 {
-    const auto extraConvOutput = ConvergenceOutputConfiguration {
-        option, optionName
-    };
+    const auto extraConvOutput = ConvergenceOutputConfiguration {option, optionName};
 
     if (extraConvOutput.want(ConvergenceOutputConfiguration::Option::Steps)) {
-      namespace fs = ::std::filesystem;
+        namespace fs = ::std::filesystem;
 
-      const auto infostep = fs::path{output_dir} / fs::path{base_name}.concat(".INFOSTEP");
+        const auto infostep = fs::path {output_dir} / fs::path {base_name}.concat(".INFOSTEP");
 
-      std::ofstream os(infostep);
-      report.fullReports(os);
+        std::ofstream os(infostep);
+        report.fullReports(os);
     }
 }
-void checkAllMPIProcesses()
+void
+checkAllMPIProcesses()
 {
 #if HAVE_MPI
     const auto& comm = FlowGenericVanguard::comm();
-    if (comm.size() > 1)
-    {
+    if (comm.size() > 1) {
         // we try to prevent the abort here.
         // For that we need a signal that each process is here.
         // Each process sends  a message to rank 0.
         const int tag = 357912;
-        if (comm.rank() == 0)
-        {
+        if (comm.rank() == 0) {
             // wait for a message from all processes.
             std::vector<MPI_Request> requests(comm.size() - 1, MPI_REQUEST_NULL);
-            std::vector<int> data(comm.size()-1);
+            std::vector<int> data(comm.size() - 1);
 
-            for(decltype(comm.size()) i = 1; i < comm.size(); ++i)
-            {
+            for (decltype(comm.size()) i = 1; i < comm.size(); ++i) {
                 if (auto error = MPI_Irecv(data.data() + (i - 1), 1, MPI_INT, i, tag, comm, requests.data() + (i - 1));
                     error != MPI_SUCCESS) {
                     OpmLog::error(fmt::format("Error: Could not set up MPI receive (error code : {})", error));
@@ -125,19 +121,16 @@ void checkAllMPIProcesses()
                 }
             }
             std::size_t msgs = comm.size() - 1;
-            for(std::size_t tries = 0; msgs >0 && tries < 3; ++tries)
-            {
+            for (std::size_t tries = 0; msgs > 0 && tries < 3; ++tries) {
                 sleep(3);
                 int flag, idx;
-                for(auto left_msgs = msgs; left_msgs > 0; --left_msgs)
-                {
-                    if( auto error = MPI_Testany(comm.size()-1, requests.data(), &idx, &flag, MPI_STATUS_IGNORE);
+                for (auto left_msgs = msgs; left_msgs > 0; --left_msgs) {
+                    if (auto error = MPI_Testany(comm.size() - 1, requests.data(), &idx, &flag, MPI_STATUS_IGNORE);
                         error != MPI_SUCCESS) {
                         OpmLog::error(fmt::format("Error: Could not test for MPI message (error code : {})", error));
                         MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
                     }
-                    if (flag)
-                    {
+                    if (flag) {
                         --msgs;
                     }
                 }
@@ -146,28 +139,22 @@ void checkAllMPIProcesses()
                 // seems like some processes are stuck. Abort just to be save
                 MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
             }
-        }
-        else
-        {
-            int data= 3;
+        } else {
+            int data = 3;
             MPI_Request request = MPI_REQUEST_NULL;
-            if (auto error = MPI_Isend(&data, 1, MPI_INT, 0, tag, comm, &request);
-                error != MPI_SUCCESS) {
+            if (auto error = MPI_Isend(&data, 1, MPI_INT, 0, tag, comm, &request); error != MPI_SUCCESS) {
                 OpmLog::error(fmt::format("Error: Could send MPI message (error code : {})", error));
                 MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
             }
             bool completed = false;
-            for(std::size_t tries = 0; !completed && tries < 3; tries++)
-            {
+            for (std::size_t tries = 0; !completed && tries < 3; tries++) {
                 sleep(3);
                 int flag;
-                if( auto error = MPI_Test(&request, &flag, MPI_STATUS_IGNORE);
-                    error != MPI_SUCCESS) {
+                if (auto error = MPI_Test(&request, &flag, MPI_STATUS_IGNORE); error != MPI_SUCCESS) {
                     OpmLog::error(fmt::format("Error: Could not test for MPI message (error code : {})", error));
                     MPI_Abort(MPI_COMM_WORLD, EXIT_FAILURE);
                 }
-                if (flag)
-                {
+                if (flag) {
                     completed = true;
                 }
             }
@@ -179,8 +166,9 @@ void checkAllMPIProcesses()
 #endif
 }
 
-template<class Scalar>
-void hideUnusedParameters()
+template <class Scalar>
+void
+hideUnusedParameters()
 {
     // hide the parameters unused by flow. TODO: this is a pain to maintain
     Parameters::Hide<Parameters::EnableGravity>();
@@ -216,35 +204,35 @@ void hideUnusedParameters()
     Parameters::Hide<Parameters::RestartTime<Scalar>>();
     Parameters::Hide<Parameters::RestartWritingInterval>();
     // hide all vtk related it is not currently possible to do this dependet on if the vtk writing is used
-    //if(not(Parameters::Get<Parameters::EnableVtkOutput>())){
-        Parameters::Hide<Parameters::VtkWriteOilFormationVolumeFactor>();
-        Parameters::Hide<Parameters::VtkWriteOilSaturationPressure>();
-        Parameters::Hide<Parameters::VtkWriteOilVaporizationFactor>();
-        Parameters::Hide<Parameters::VtkWritePorosity>();
-        Parameters::Hide<Parameters::VtkWritePotentialGradients>();
-        Parameters::Hide<Parameters::VtkWritePressures>();
-        Parameters::Hide<Parameters::VtkWritePrimaryVars>();
-        Parameters::Hide<Parameters::VtkWritePrimaryVarsMeaning>();
-        Parameters::Hide<Parameters::VtkWriteProcessRank>();
-        Parameters::Hide<Parameters::VtkWriteRelativePermeabilities>();
-        Parameters::Hide<Parameters::VtkWriteSaturatedGasOilVaporizationFactor>();
-        Parameters::Hide<Parameters::VtkWriteSaturatedOilGasDissolutionFactor>();
-        Parameters::Hide<Parameters::VtkWriteSaturationRatios>();
-        Parameters::Hide<Parameters::VtkWriteSaturations>();
-        Parameters::Hide<Parameters::VtkWriteTemperature>();
-        Parameters::Hide<Parameters::VtkWriteViscosities>();
-        Parameters::Hide<Parameters::VtkWriteWaterFormationVolumeFactor>();
-        Parameters::Hide<Parameters::VtkWriteGasDissolutionFactor>();
-        Parameters::Hide<Parameters::VtkWriteGasFormationVolumeFactor>();
-        Parameters::Hide<Parameters::VtkWriteGasSaturationPressure>();
-        Parameters::Hide<Parameters::VtkWriteIntrinsicPermeabilities>();
-        Parameters::Hide<Parameters::VtkWriteTracerConcentration>();
-        Parameters::Hide<Parameters::VtkWriteExtrusionFactor>();
-        Parameters::Hide<Parameters::VtkWriteFilterVelocities>();
-        Parameters::Hide<Parameters::VtkWriteDensities>();
-        Parameters::Hide<Parameters::VtkWriteDofIndex>();
-        Parameters::Hide<Parameters::VtkWriteMobilities>();
-        //}
+    // if(not(Parameters::Get<Parameters::EnableVtkOutput>())){
+    Parameters::Hide<Parameters::VtkWriteOilFormationVolumeFactor>();
+    Parameters::Hide<Parameters::VtkWriteOilSaturationPressure>();
+    Parameters::Hide<Parameters::VtkWriteOilVaporizationFactor>();
+    Parameters::Hide<Parameters::VtkWritePorosity>();
+    Parameters::Hide<Parameters::VtkWritePotentialGradients>();
+    Parameters::Hide<Parameters::VtkWritePressures>();
+    Parameters::Hide<Parameters::VtkWritePrimaryVars>();
+    Parameters::Hide<Parameters::VtkWritePrimaryVarsMeaning>();
+    Parameters::Hide<Parameters::VtkWriteProcessRank>();
+    Parameters::Hide<Parameters::VtkWriteRelativePermeabilities>();
+    Parameters::Hide<Parameters::VtkWriteSaturatedGasOilVaporizationFactor>();
+    Parameters::Hide<Parameters::VtkWriteSaturatedOilGasDissolutionFactor>();
+    Parameters::Hide<Parameters::VtkWriteSaturationRatios>();
+    Parameters::Hide<Parameters::VtkWriteSaturations>();
+    Parameters::Hide<Parameters::VtkWriteTemperature>();
+    Parameters::Hide<Parameters::VtkWriteViscosities>();
+    Parameters::Hide<Parameters::VtkWriteWaterFormationVolumeFactor>();
+    Parameters::Hide<Parameters::VtkWriteGasDissolutionFactor>();
+    Parameters::Hide<Parameters::VtkWriteGasFormationVolumeFactor>();
+    Parameters::Hide<Parameters::VtkWriteGasSaturationPressure>();
+    Parameters::Hide<Parameters::VtkWriteIntrinsicPermeabilities>();
+    Parameters::Hide<Parameters::VtkWriteTracerConcentration>();
+    Parameters::Hide<Parameters::VtkWriteExtrusionFactor>();
+    Parameters::Hide<Parameters::VtkWriteFilterVelocities>();
+    Parameters::Hide<Parameters::VtkWriteDensities>();
+    Parameters::Hide<Parameters::VtkWriteDofIndex>();
+    Parameters::Hide<Parameters::VtkWriteMobilities>();
+    //}
     Parameters::Hide<Parameters::VtkWriteAverageMolarMasses>();
     Parameters::Hide<Parameters::VtkWriteFugacities>();
     Parameters::Hide<Parameters::VtkWriteFugacityCoeffs>();
@@ -262,30 +250,31 @@ void hideUnusedParameters()
     Parameters::Hide<Parameters::UseAverageDensityMsWells>();
 }
 
-namespace {
-    bool isEmptyString(const std::string& str) {
-        return str.size()==0 || str=="\"\"" || str=="''";
-    }
-}
-
-int eclPositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
-                           std::set<std::string>& seenParams,
-                           std::string& errorMsg,
-                           const char** argv,
-                           int paramIdx)
+namespace
 {
-    std::string param  = argv[paramIdx];
+    bool isEmptyString(const std::string& str)
+    {
+        return str.size() == 0 || str == "\"\"" || str == "''";
+    }
+} // namespace
+
+int
+eclPositionalParameter(std::function<void(const std::string&, const std::string&)> addKey,
+                       std::set<std::string>& seenParams,
+                       std::string& errorMsg,
+                       const char** argv,
+                       int paramIdx)
+{
+    std::string param = argv[paramIdx];
     std::size_t i = param.find('=');
     if (i != std::string::npos) {
         std::string oldParamName = param.substr(0, i);
-        std::string oldParamValue = param.substr(i+1);
+        std::string oldParamValue = param.substr(i + 1);
         std::string newParamName = "--" + oldParamName;
-        std::replace(newParamName.begin(),
-                     newParamName.end(), '_' , '-');
-        errorMsg =
-          "The old syntax to specify parameters on the command line is no longer supported: "
-          "Try replacing '" + oldParamName + "=" + oldParamValue + "' with "+
-          "'" + newParamName + "=" + oldParamValue + "'!";
+        std::replace(newParamName.begin(), newParamName.end(), '_', '-');
+        errorMsg = "The old syntax to specify parameters on the command line is no longer supported: "
+                   "Try replacing '"
+            + oldParamName + "=" + oldParamValue + "' with " + "'" + newParamName + "=" + oldParamValue + "'!";
         return 0;
     }
 
@@ -293,9 +282,8 @@ int eclPositionalParameter(std::function<void(const std::string&, const std::str
         return 1;
 
     if (seenParams.count("EclDeckFileName") > 0) {
-        errorMsg =
-            "Parameter 'EclDeckFileName' specified multiple times"
-            " as a command line parameter";
+        errorMsg = "Parameter 'EclDeckFileName' specified multiple times"
+                   " as a command line parameter";
         return 0;
     }
 

@@ -29,33 +29,37 @@
 #include <algorithm>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Grid>
+template <class Grid>
 struct IsNumericalAquiferCell {
     explicit IsNumericalAquiferCell(const Grid&)
-    {}
+    {
+    }
 
-    template<class T>
-    bool operator()(const T&) const { return false; }
+    template <class T>
+    bool operator()(const T&) const
+    {
+        return false;
+    }
 };
 
-template<>
+template <>
 struct IsNumericalAquiferCell<Dune::CpGrid> {
     explicit IsNumericalAquiferCell(const Dune::CpGrid& grid)
         : grid_(grid)
-    {}
+    {
+    }
 
-    template<class T>
+    template <class T>
     bool operator()(const T& elem) const
     {
         const auto& aquiferCells = grid_.sortedNumAquiferCells();
-        if (aquiferCells.empty())
-        {
-          return false;
+        if (aquiferCells.empty()) {
+            return false;
         }
-        auto candidate = std::lower_bound(aquiferCells.begin(),
-                                          aquiferCells.end(), elem.index());
+        auto candidate = std::lower_bound(aquiferCells.begin(), aquiferCells.end(), elem.index());
         return candidate != aquiferCells.end() && *candidate == elem.index();
     }
 

@@ -33,10 +33,10 @@ namespace Opm::gpuistl::detail
 
 /**
  * @brief FlexibleSolverWrapper is compilational trick to reduce compile time overhead
- * 
+ *
  * Essentially this class acts as a direct interface towards the FlexibleSolver class, but
  * we want to have a clear wall between the ISTLSolverGPUISTL and the FlexibleSolver to avoid
- * compilational overhead (the former is based on TypeTag the latter on operators). 
+ * compilational overhead (the former is based on TypeTag the latter on operators).
  *
  * This wrapper handles the mapping from matrices to concrete operator types.
  */
@@ -50,10 +50,9 @@ public:
 
     using AbstractOperatorPtrType = std::unique_ptr<AbstractOperatorType>;
     using AbstractSolverPtrType = std::unique_ptr<AbstractSolverType>;
-    using GpuCommunicationType = std::conditional_t<
-        std::is_same_v<Comm, Dune::Communication<int>>,
-        int, // Dummy type for serial case
-        GpuOwnerOverlapCopy<typename Matrix::field_type, Comm>>;
+    using GpuCommunicationType = std::conditional_t<std::is_same_v<Comm, Dune::Communication<int>>,
+                                                    int, // Dummy type for serial case
+                                                    GpuOwnerOverlapCopy<typename Matrix::field_type, Comm>>;
 
     FlexibleSolverWrapper(const Matrix& matrix,
                           bool parallel,
@@ -74,9 +73,10 @@ private:
     AbstractPreconditionerType& m_preconditioner;
     std::shared_ptr<GpuCommunicationType> m_gpuCommunication;
 
-    FlexibleSolverWrapper(
-        std::tuple<AbstractOperatorPtrType, AbstractSolverPtrType, std::reference_wrapper<AbstractPreconditionerType>, std::shared_ptr<GpuCommunicationType>>&&
-            solverTuple);
+    FlexibleSolverWrapper(std::tuple<AbstractOperatorPtrType,
+                                     AbstractSolverPtrType,
+                                     std::reference_wrapper<AbstractPreconditionerType>,
+                                     std::shared_ptr<GpuCommunicationType>>&& solverTuple);
 };
 } // namespace Opm::gpuistl::detail
 

@@ -71,9 +71,9 @@ GpuVector<T>::operator=(const GpuVector<T>& other)
     assertSameSize(other);
 
     OPM_GPU_SAFE_CALL(cudaMemcpy(m_dataOnDevice,
-                                  other.m_dataOnDevice,
-                                  detail::to_size_t(m_numberOfElements) * sizeof(T),
-                                  cudaMemcpyDeviceToDevice));
+                                 other.m_dataOnDevice,
+                                 detail::to_size_t(m_numberOfElements) * sizeof(T),
+                                 cudaMemcpyDeviceToDevice));
     return *this;
 }
 
@@ -84,9 +84,9 @@ GpuVector<T>::GpuVector(const GpuVector<T>& other)
     assertHasElements();
     assertSameSize(other);
     OPM_GPU_SAFE_CALL(cudaMemcpy(m_dataOnDevice,
-                                  other.m_dataOnDevice,
-                                  detail::to_size_t(m_numberOfElements) * sizeof(T),
-                                  cudaMemcpyDeviceToDevice));
+                                 other.m_dataOnDevice,
+                                 detail::to_size_t(m_numberOfElements) * sizeof(T),
+                                 cudaMemcpyDeviceToDevice));
 }
 
 template <class T>
@@ -207,7 +207,8 @@ template <typename T>
 T
 GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<int>& indexSet, GpuVector<T>& buffer) const
 {
-    return detail::innerProductAtIndices(m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
+    return detail::innerProductAtIndices(
+        m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template <typename T>
@@ -223,7 +224,8 @@ T
 GpuVector<T>::dot(const GpuVector<T>& other, const GpuVector<int>& indexSet) const
 {
     GpuVector<T> buffer(indexSet.dim());
-    return detail::innerProductAtIndices(m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
+    return detail::innerProductAtIndices(
+        m_cuBlasHandle.get(), m_dataOnDevice, other.data(), buffer.data(), indexSet.dim(), indexSet.data());
 }
 
 template <typename T>
@@ -279,7 +281,8 @@ GpuVector<T>::copyFromHostAsync(const T* dataPointer, size_t numberOfElements, c
                               numberOfElements));
     }
     // Asynchronous copy. CUDA runtime will use pinned memory if dataPointer is in a registered region.
-    OPM_GPU_SAFE_CALL(cudaMemcpyAsync(data(), dataPointer, numberOfElements * sizeof(T), cudaMemcpyHostToDevice, stream));
+    OPM_GPU_SAFE_CALL(
+        cudaMemcpyAsync(data(), dataPointer, numberOfElements * sizeof(T), cudaMemcpyHostToDevice, stream));
 }
 
 template <class T>
@@ -297,7 +300,8 @@ GpuVector<T>::copyToHostAsync(T* dataPointer, size_t numberOfElements, cudaStrea
 {
     assertSameSize(detail::to_int(numberOfElements));
     // Asynchronous copy. CUDA runtime will use pinned memory if dataPointer is in a registered region.
-    OPM_GPU_SAFE_CALL(cudaMemcpyAsync(dataPointer, data(), numberOfElements * sizeof(T), cudaMemcpyDeviceToHost, stream));
+    OPM_GPU_SAFE_CALL(
+        cudaMemcpyAsync(dataPointer, data(), numberOfElements * sizeof(T), cudaMemcpyDeviceToHost, stream));
 }
 
 template <class T>
@@ -336,9 +340,9 @@ GpuVector<T>::copyFromDeviceToDevice(const GpuVector<T>& data) const
     assertSameSize(data);
 
     OPM_GPU_SAFE_CALL(cudaMemcpy(m_dataOnDevice,
-                                data.m_dataOnDevice,
-                                detail::to_size_t(m_numberOfElements) * sizeof(T),
-                                cudaMemcpyDeviceToDevice));
+                                 data.m_dataOnDevice,
+                                 detail::to_size_t(m_numberOfElements) * sizeof(T),
+                                 cudaMemcpyDeviceToDevice));
 }
 
 template <typename T>

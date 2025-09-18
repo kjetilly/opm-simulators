@@ -25,7 +25,8 @@
 
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Break up a string in lines suitable for terminal output.
@@ -34,9 +35,7 @@ namespace Opm {
  * \param maxWidth Maximum with of terminal
  * \return
  */
-std::string breakLines(const std::string& msg,
-                       int indentWidth,
-                       int maxWidth);
+std::string breakLines(const std::string& msg, int indentWidth, int maxWidth);
 
 /*!
  * \brief Get the width of the tty we are attached to.

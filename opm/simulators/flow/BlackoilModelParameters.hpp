@@ -24,159 +24,306 @@
 
 #include <string>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-template<class Scalar>
-struct DbhpMaxRel { static constexpr Scalar value = 1.0; };
+template <class Scalar>
+struct DbhpMaxRel {
+    static constexpr Scalar value = 1.0;
+};
 
-template<class Scalar>
-struct DwellFractionMax { static constexpr Scalar value = 0.2; };
+template <class Scalar>
+struct DwellFractionMax {
+    static constexpr Scalar value = 0.2;
+};
 
-struct EclDeckFileName { static constexpr auto value = ""; };
+struct EclDeckFileName {
+    static constexpr auto value = "";
+};
 
-template<class Scalar>
-struct InjMultOscThreshold { static constexpr Scalar value = 0.1; };
+template <class Scalar>
+struct InjMultOscThreshold {
+    static constexpr Scalar value = 0.1;
+};
 
-template<class Scalar>
-struct InjMultDampMult { static constexpr Scalar value = 0.9; };
+template <class Scalar>
+struct InjMultDampMult {
+    static constexpr Scalar value = 0.9;
+};
 
-template<class Scalar>
-struct InjMultMinDampFactor { static constexpr Scalar value = 0.05; };
+template <class Scalar>
+struct InjMultMinDampFactor {
+    static constexpr Scalar value = 0.05;
+};
 
-template<class Scalar>
-struct MaxResidualAllowed { static constexpr Scalar value = 1e7; };
+template <class Scalar>
+struct MaxResidualAllowed {
+    static constexpr Scalar value = 1e7;
+};
 
-template<class Scalar>
-struct RelaxedMaxPvFraction { static constexpr Scalar value = 0.03; };
+template <class Scalar>
+struct RelaxedMaxPvFraction {
+    static constexpr Scalar value = 0.03;
+};
 
-template<class Scalar>
-struct ToleranceMb { static constexpr Scalar value = 1e-7; };
+template <class Scalar>
+struct ToleranceMb {
+    static constexpr Scalar value = 1e-7;
+};
 
-template<class Scalar>
-struct ToleranceMbRelaxed { static constexpr Scalar value = 1e-6; };
+template <class Scalar>
+struct ToleranceMbRelaxed {
+    static constexpr Scalar value = 1e-6;
+};
 
-template<class Scalar>
-struct ToleranceEnergyBalance { static constexpr Scalar value = 1e-7; };
+template <class Scalar>
+struct ToleranceEnergyBalance {
+    static constexpr Scalar value = 1e-7;
+};
 
-template<class Scalar>
-struct ToleranceEnergyBalanceRelaxed { static constexpr Scalar value = 1e-6; };
+template <class Scalar>
+struct ToleranceEnergyBalanceRelaxed {
+    static constexpr Scalar value = 1e-6;
+};
 
-template<class Scalar>
-struct ToleranceCnv { static constexpr Scalar value = 1e-2; };
+template <class Scalar>
+struct ToleranceCnv {
+    static constexpr Scalar value = 1e-2;
+};
 
-template<class Scalar>
-struct ToleranceCnvRelaxed { static constexpr Scalar value = 1.0; };
+template <class Scalar>
+struct ToleranceCnvRelaxed {
+    static constexpr Scalar value = 1.0;
+};
 
-template<class Scalar>
-struct ToleranceCnvEnergy { static constexpr Scalar value = 1e-2; };
+template <class Scalar>
+struct ToleranceCnvEnergy {
+    static constexpr Scalar value = 1e-2;
+};
 
-template<class Scalar>
-struct ToleranceCnvEnergyRelaxed { static constexpr Scalar value = 1.0; };
+template <class Scalar>
+struct ToleranceCnvEnergyRelaxed {
+    static constexpr Scalar value = 1.0;
+};
 
-template<class Scalar>
-struct ToleranceWells { static constexpr Scalar value = 1e-4; };
+template <class Scalar>
+struct ToleranceWells {
+    static constexpr Scalar value = 1e-4;
+};
 
-template<class Scalar>
-struct ToleranceWellControl { static constexpr Scalar value = 1e-7; };
+template <class Scalar>
+struct ToleranceWellControl {
+    static constexpr Scalar value = 1e-7;
+};
 
-struct MaxWelleqIter { static constexpr int value = 30; };
+struct MaxWelleqIter {
+    static constexpr int value = 30;
+};
 
-template<class Scalar>
-struct MaxSinglePrecisionDays { static constexpr Scalar value = 20.0; };
+template <class Scalar>
+struct MaxSinglePrecisionDays {
+    static constexpr Scalar value = 20.0;
+};
 
-struct MinStrictCnvIter { static constexpr int value = -1; };
-struct MinStrictMbIter { static constexpr int value = -1; };
-struct SolveWelleqInitially { static constexpr bool value = true; };
-struct PreSolveNetwork { static constexpr bool value = true; };
-struct UpdateEquationsScaling { static constexpr bool value = false; };
-struct UseUpdateStabilization { static constexpr bool value = true; };
-struct MatrixAddWellContributions { static constexpr bool value = false; };
+struct MinStrictCnvIter {
+    static constexpr int value = -1;
+};
+struct MinStrictMbIter {
+    static constexpr int value = -1;
+};
+struct SolveWelleqInitially {
+    static constexpr bool value = true;
+};
+struct PreSolveNetwork {
+    static constexpr bool value = true;
+};
+struct UpdateEquationsScaling {
+    static constexpr bool value = false;
+};
+struct UseUpdateStabilization {
+    static constexpr bool value = true;
+};
+struct MatrixAddWellContributions {
+    static constexpr bool value = false;
+};
 
-struct UseMultisegmentWell { static constexpr bool value = true; };
+struct UseMultisegmentWell {
+    static constexpr bool value = true;
+};
 
-template<class Scalar>
-struct TolerancePressureMsWells { static constexpr Scalar value = 0.01*1e5; };
+template <class Scalar>
+struct TolerancePressureMsWells {
+    static constexpr Scalar value = 0.01 * 1e5;
+};
 
-template<class Scalar>
-struct MaxPressureChangeMsWells { static constexpr Scalar value = 10*1e5; };
+template <class Scalar>
+struct MaxPressureChangeMsWells {
+    static constexpr Scalar value = 10 * 1e5;
+};
 
-struct MaxNewtonIterationsWithInnerWellIterations { static constexpr int value = 8; };
-struct MaxInnerIterMsWells { static constexpr int value = 100; };
-struct MaxInnerIterWells { static constexpr int value = 50; };
-struct MaxWellStatusSwitchInInnerIterWells { static constexpr int value = 99; };
-struct ShutUnsolvableWells { static constexpr bool value = true; };
-struct AlternativeWellRateInit { static constexpr bool value = true; };
-struct StrictOuterIterWells { static constexpr int value = 6; };
-struct StrictInnerIterWells { static constexpr int value = 40; };
+struct MaxNewtonIterationsWithInnerWellIterations {
+    static constexpr int value = 8;
+};
+struct MaxInnerIterMsWells {
+    static constexpr int value = 100;
+};
+struct MaxInnerIterWells {
+    static constexpr int value = 50;
+};
+struct MaxWellStatusSwitchInInnerIterWells {
+    static constexpr int value = 99;
+};
+struct ShutUnsolvableWells {
+    static constexpr bool value = true;
+};
+struct AlternativeWellRateInit {
+    static constexpr bool value = true;
+};
+struct StrictOuterIterWells {
+    static constexpr int value = 6;
+};
+struct StrictInnerIterWells {
+    static constexpr int value = 40;
+};
 
-template<class Scalar>
-struct RegularizationFactorWells { static constexpr Scalar value = 100.0; };
+template <class Scalar>
+struct RegularizationFactorWells {
+    static constexpr Scalar value = 100.0;
+};
 
-struct EnableWellOperabilityCheck { static constexpr bool value = true; };
-struct EnableWellOperabilityCheckIter { static constexpr bool value = false; };
-struct DebugEmitCellPartition { static constexpr bool value = false; };
+struct EnableWellOperabilityCheck {
+    static constexpr bool value = true;
+};
+struct EnableWellOperabilityCheckIter {
+    static constexpr bool value = false;
+};
+struct DebugEmitCellPartition {
+    static constexpr bool value = false;
+};
 
-template<class Scalar>
-struct RelaxedWellFlowTol { static constexpr Scalar value = 1e-3; };
+template <class Scalar>
+struct RelaxedWellFlowTol {
+    static constexpr Scalar value = 1e-3;
+};
 
-template<class Scalar>
-struct RelaxedPressureTolMsw { static constexpr Scalar value = 1e4; };
+template <class Scalar>
+struct RelaxedPressureTolMsw {
+    static constexpr Scalar value = 1e4;
+};
 
-struct MaximumNumberOfWellSwitches { static constexpr int value = 3; };
-struct MaximumNumberOfGroupSwitches { static constexpr int value = 3; };
-struct UseAverageDensityMsWells { static constexpr bool value = false; };
-struct LocalWellSolveControlSwitching { static constexpr bool value = true; };
-struct UseImplicitIpr { static constexpr bool value = true; };
-struct CheckGroupConstraintsInnerWellIterations { static constexpr bool value = true; };
+struct MaximumNumberOfWellSwitches {
+    static constexpr int value = 3;
+};
+struct MaximumNumberOfGroupSwitches {
+    static constexpr int value = 3;
+};
+struct UseAverageDensityMsWells {
+    static constexpr bool value = false;
+};
+struct LocalWellSolveControlSwitching {
+    static constexpr bool value = true;
+};
+struct UseImplicitIpr {
+    static constexpr bool value = true;
+};
+struct CheckGroupConstraintsInnerWellIterations {
+    static constexpr bool value = true;
+};
 
 // Network solver parameters
-struct NetworkMaxStrictOuterIterations { static constexpr int value = 10; };
-struct NetworkMaxOuterIterations { static constexpr int value = 10; };
-struct NetworkMaxSubIterations { static constexpr int value = 20; };
-template<class Scalar>
-struct NetworkPressureUpdateDampingFactor { static constexpr Scalar value = 0.1; };
-template<class Scalar>
-struct NetworkMaxPressureUpdateInBars { static constexpr Scalar value = 5.0; };
-struct NonlinearSolver { static constexpr auto value = "newton"; };
-struct LocalSolveApproach { static constexpr auto value = "gauss-seidel"; };
-struct MaxLocalSolveIterations { static constexpr int value = 20; };
-struct NewtonMinIterations { static constexpr int value = 2; };
+struct NetworkMaxStrictOuterIterations {
+    static constexpr int value = 10;
+};
+struct NetworkMaxOuterIterations {
+    static constexpr int value = 10;
+};
+struct NetworkMaxSubIterations {
+    static constexpr int value = 20;
+};
+template <class Scalar>
+struct NetworkPressureUpdateDampingFactor {
+    static constexpr Scalar value = 0.1;
+};
+template <class Scalar>
+struct NetworkMaxPressureUpdateInBars {
+    static constexpr Scalar value = 5.0;
+};
+struct NonlinearSolver {
+    static constexpr auto value = "newton";
+};
+struct LocalSolveApproach {
+    static constexpr auto value = "gauss-seidel";
+};
+struct MaxLocalSolveIterations {
+    static constexpr int value = 20;
+};
+struct NewtonMinIterations {
+    static constexpr int value = 2;
+};
 
-struct WellGroupConstraintsMaxIterations { static constexpr int value = 1; };
-template<class Scalar>
-struct LocalToleranceScalingMb { static constexpr Scalar value = 1.0; };
+struct WellGroupConstraintsMaxIterations {
+    static constexpr int value = 1;
+};
+template <class Scalar>
+struct LocalToleranceScalingMb {
+    static constexpr Scalar value = 1.0;
+};
 
-template<class Scalar>
-struct LocalToleranceScalingCnv { static constexpr Scalar value = 0.1; };
-struct NlddNumInitialNewtonIter { static constexpr int value = 1; };
-template<class Scalar>
-struct NlddRelativeMobilityChangeTol { static constexpr Scalar value = 0.1; };
-struct NumLocalDomains { static constexpr int value = 0; };
+template <class Scalar>
+struct LocalToleranceScalingCnv {
+    static constexpr Scalar value = 0.1;
+};
+struct NlddNumInitialNewtonIter {
+    static constexpr int value = 1;
+};
+template <class Scalar>
+struct NlddRelativeMobilityChangeTol {
+    static constexpr Scalar value = 0.1;
+};
+struct NumLocalDomains {
+    static constexpr int value = 0;
+};
 
-template<class Scalar>
-struct LocalDomainsPartitioningImbalance { static constexpr Scalar value = 1.03; };
+template <class Scalar>
+struct LocalDomainsPartitioningImbalance {
+    static constexpr Scalar value = 1.03;
+};
 
-struct LocalDomainsPartitioningMethod { static constexpr auto value = "zoltan"; };
-struct LocalDomainsPartitionWellNeighborLevels { static constexpr int value = 1; };
-struct LocalDomainsOrderingMeasure { static constexpr auto value = "maxpressure"; };
+struct LocalDomainsPartitioningMethod {
+    static constexpr auto value = "zoltan";
+};
+struct LocalDomainsPartitionWellNeighborLevels {
+    static constexpr int value = 1;
+};
+struct LocalDomainsOrderingMeasure {
+    static constexpr auto value = "maxpressure";
+};
 
-struct ConvergenceMonitoring { static constexpr bool value = false; };
-struct ConvergenceMonitoringCutOff { static constexpr int value = 6; };
-template<class Scalar>
-struct ConvergenceMonitoringDecayFactor { static constexpr Scalar value = 0.75; };
+struct ConvergenceMonitoring {
+    static constexpr bool value = false;
+};
+struct ConvergenceMonitoringCutOff {
+    static constexpr int value = 6;
+};
+template <class Scalar>
+struct ConvergenceMonitoringDecayFactor {
+    static constexpr Scalar value = 0.75;
+};
 
 
-template<class Scalar>
-struct NupcolGroupRateTolerance { static constexpr Scalar value = 0.001; };
+template <class Scalar>
+struct NupcolGroupRateTolerance {
+    static constexpr Scalar value = 0.001;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /// Solver parameters for the BlackoilModel.
 template <class Scalar>
-struct BlackoilModelParameters
-{
+struct BlackoilModelParameters {
 public:
     /// Max relative change in bhp in single iteration.
     Scalar dbhp_max_rel_;
@@ -203,11 +350,13 @@ public:
     Scalar tolerance_energy_balance_relaxed_;
     /// Local convergence tolerance (max of local saturation errors).
     Scalar tolerance_cnv_;
-    /// Relaxed local convergence tolerance (can be used when iter >= min_strict_cnv_iter_ && cnvViolatedPV < relaxed_max_pv_fraction_).
+    /// Relaxed local convergence tolerance (can be used when iter >= min_strict_cnv_iter_ && cnvViolatedPV <
+    /// relaxed_max_pv_fraction_).
     Scalar tolerance_cnv_relaxed_;
     /// Local energy convergence tolerance (max of local energy errors).
     Scalar tolerance_cnv_energy_;
-    /// Relaxed local energy convergence tolerance (can be used when iter >= min_strict_cnv_iter_ && cnvViolatedPV < relaxed_max_pv_fraction_).
+    /// Relaxed local energy convergence tolerance (can be used when iter >= min_strict_cnv_iter_ && cnvViolatedPV <
+    /// relaxed_max_pv_fraction_).
     Scalar tolerance_cnv_energy_relaxed_;
     /// Well convergence tolerance.
     Scalar tolerance_wells_;
@@ -305,7 +454,7 @@ public:
     bool use_implicit_ipr_;
 
     /// Whether to allow checking/changing to group controls during inner well iterations
-    bool check_group_constraints_inner_well_iterations_; 
+    bool check_group_constraints_inner_well_iterations_;
 
     /// Maximum number of iterations in the network solver before relaxing tolerance
     int network_max_strict_outer_iterations_;
@@ -330,9 +479,9 @@ public:
 
     /// Nonlinear solver type: newton or nldd
     std::string nonlinear_solver_;
-  
+
     /// 'jacobi' and 'gauss-seidel' supported
-    DomainSolveApproach local_solve_approach_{DomainSolveApproach::Jacobi};
+    DomainSolveApproach local_solve_approach_ {DomainSolveApproach::Jacobi};
 
     /// Maximum number of Newton iterations per time step
     int newton_max_iter_;
@@ -345,20 +494,19 @@ public:
     Scalar local_tolerance_scaling_mb_;
     Scalar local_tolerance_scaling_cnv_;
 
-    int nldd_num_initial_newton_iter_{1};
+    int nldd_num_initial_newton_iter_ {1};
     /// Threshold for single cell relative mobility change in NLDD
     Scalar nldd_relative_mobility_change_tol_;
-    int num_local_domains_{0};
-    Scalar local_domains_partition_imbalance_{1.03};
+    int num_local_domains_ {0};
+    Scalar local_domains_partition_imbalance_ {1.03};
     std::string local_domains_partition_method_;
-    int local_domains_partition_well_neighbor_levels_{1};
-    DomainOrderingMeasure local_domains_ordering_{DomainOrderingMeasure::MaxPressure};
+    int local_domains_partition_well_neighbor_levels_ {1};
+    DomainOrderingMeasure local_domains_ordering_ {DomainOrderingMeasure::MaxPressure};
 
-    bool write_partitions_{false};
+    bool write_partitions_ {false};
 
     /// Struct holding convergence monitor params
-    struct ConvergenceMonitorParams
-    {
+    struct ConvergenceMonitorParams {
         /// Whether to enable convergence monitoring
         bool enabled_;
         /// Cut-off limit for convergence monitoring

@@ -20,25 +20,26 @@
 
 #include <vector>
 
-namespace Opm {
-namespace detail {
+namespace Opm
+{
+namespace detail
+{
 
-//! \brief Calculates average pressure value.
-template<class Scalar>
-Scalar pressureAverage(const Scalar pressurePvHydrocarbon,
-                       const Scalar pvHydrocarbon,
-                       const Scalar pressurePv,
-                       const Scalar pv,
-                       const bool hydrocarbon);
+    //! \brief Calculates average pressure value.
+    template <class Scalar>
+    Scalar pressureAverage(const Scalar pressurePvHydrocarbon,
+                           const Scalar pvHydrocarbon,
+                           const Scalar pressurePv,
+                           const Scalar pv,
+                           const bool hydrocarbon);
 
-//! \brief Calculates average pressure value for a vector.
-template<class Scalar>
-std::vector<Scalar>
-pressureAverage(const std::vector<Scalar>& pressurePvHydrocarbon,
-                const std::vector<Scalar>& pvHydrocarbon,
-                const std::vector<Scalar>& pressurePv,
-                const std::vector<Scalar>& pv,
-                const bool hydrocarbon);
+    //! \brief Calculates average pressure value for a vector.
+    template <class Scalar>
+    std::vector<Scalar> pressureAverage(const std::vector<Scalar>& pressurePvHydrocarbon,
+                                        const std::vector<Scalar>& pvHydrocarbon,
+                                        const std::vector<Scalar>& pressurePv,
+                                        const std::vector<Scalar>& pv,
+                                        const bool hydrocarbon);
 
 } // namespace detail
 } // namespace Opm

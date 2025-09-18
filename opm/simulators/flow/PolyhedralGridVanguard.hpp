@@ -41,36 +41,40 @@
 #include <tuple>
 #include <unordered_set>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class PolyhedralGridVanguard;
 }
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
-struct PolyhedralGridVanguard {
-    using InheritsFrom = std::tuple<FlowBaseVanguard>;
-};
-}
+namespace TTag
+{
+    struct PolyhedralGridVanguard {
+        using InheritsFrom = std::tuple<FlowBaseVanguard>;
+    };
+} // namespace TTag
 
 // declare the properties
-template<class TypeTag>
+template <class TypeTag>
 struct Vanguard<TypeTag, TTag::PolyhedralGridVanguard> {
     using type = Opm::PolyhedralGridVanguard<TypeTag>;
 };
-template<class TypeTag>
+template <class TypeTag>
 struct Grid<TypeTag, TTag::PolyhedralGridVanguard> {
     using type = Dune::PolyhedralGrid<3, 3>;
 };
-template<class TypeTag>
+template <class TypeTag>
 struct EquilGrid<TypeTag, TTag::PolyhedralGridVanguard> {
     using type = GetPropType<TypeTag, Properties::Grid>;
 };
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup BlackOilSimulator
@@ -104,8 +108,7 @@ private:
     using EquilGridPointer = EquilGrid*;
 
 public:
-    using TransmissibilityType = Transmissibility<Grid, GridView, ElementMapper,
-                                                  CartesianIndexMapper, Scalar>;
+    using TransmissibilityType = Transmissibility<Grid, GridView, ElementMapper, CartesianIndexMapper, Scalar>;
 
     explicit PolyhedralGridVanguard(Simulator& simulator)
         : FlowBaseVanguard<TypeTag>(simulator)
@@ -116,7 +119,7 @@ public:
         const int* globalcellorg = this->grid().globalCell();
         int num_cells = this->gridView().size(0);
         globalcell_.resize(num_cells);
-        for(int i=0; i < num_cells; ++i){
+        for (int i = 0; i < num_cells; ++i) {
             globalcell_[i] = globalcellorg[i];
         }
     }
@@ -125,13 +128,17 @@ public:
      * \brief Return a reference to the simulation grid.
      */
     Grid& grid()
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Return a reference to the simulation grid.
      */
     const Grid& grid() const
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Returns a refefence to the grid which should be used by the EQUIL
@@ -143,7 +150,9 @@ public:
      * same as the grid which is used for the actual simulation.
      */
     const EquilGrid& equilGrid() const
-    { return *grid_; }
+    {
+        return *grid_;
+    }
 
     /*!
      * \brief Indicates that the initial condition has been computed and the memory used
@@ -153,7 +162,8 @@ public:
      * crashes.
      */
     void releaseEquilGrid()
-    { /* do nothing: The EQUIL grid is the simulation grid! */ }
+    { /* do nothing: The EQUIL grid is the simulation grid! */
+    }
 
     /*!
      * \brief Distribute the simulation grid over multiple processes
@@ -173,7 +183,9 @@ public:
      *        to the corresponding element index of the logically Cartesian index.
      */
     const CartesianIndexMapper& cartesianIndexMapper() const
-    { return *cartesianIndexMapper_; }
+    {
+        return *cartesianIndexMapper_;
+    }
 
     /*!
      * \brief Returns the object which maps a global element index of the simulation grid
@@ -181,7 +193,9 @@ public:
      *        No refinement is supported for AluGrid so it coincides with CartesianIndexMapper.
      */
     const LevelCartesianIndexMapper levelCartesianIndexMapper() const
-    { return LevelCartesianIndexMapper(*cartesianIndexMapper_); }
+    {
+        return LevelCartesianIndexMapper(*cartesianIndexMapper_);
+    }
 
     /*!
      * \brief Returns mapper from compressed to cartesian indices for the EQUIL grid
@@ -190,18 +204,22 @@ public:
      * cartesianIndexMapper().
      */
     const CartesianIndexMapper& equilCartesianIndexMapper() const
-    { return *cartesianIndexMapper_; }
+    {
+        return *cartesianIndexMapper_;
+    }
 
     const std::vector<int>& globalCell()
     {
         return globalcell_;
     }
 
-    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const {
-         return elemIndex;
+    unsigned int gridEquilIdxToGridIdx(unsigned int elemIndex) const
+    {
+        return elemIndex;
     }
 
-    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const {
+    unsigned int gridIdxToEquilGridIdx(unsigned int elemIndex) const
+    {
         return elemIndex;
     }
 
@@ -215,7 +233,9 @@ public:
     }
 
     std::unordered_set<std::string> defunctWellNames() const
-    { return defunctWellNames_; }
+    {
+        return defunctWellNames_;
+    }
 
     const TransmissibilityType& globalTransmissibility() const
     {
@@ -229,8 +249,7 @@ public:
      * It is a function return the centroid for the given element
      * index.
      */
-    std::function<std::array<double,FlowBaseVanguard<TypeTag>::dimensionworld>(int)>
-    cellCentroids() const
+    std::function<std::array<double, FlowBaseVanguard<TypeTag>::dimensionworld>(int)> cellCentroids() const
     {
         return this->cellCentroids_(this->cartesianIndexMapper(), false);
     }
@@ -244,13 +263,10 @@ public:
 protected:
     void createGrids_()
     {
-        this->grid_ = std::make_unique<Grid>
-            (this->eclState().getInputGrid(),
-             this->eclState().fieldProps().porv(true),
-             this->edgeConformal());
+        this->grid_ = std::make_unique<Grid>(
+            this->eclState().getInputGrid(), this->eclState().fieldProps().porv(true), this->edgeConformal());
 
-        this->cartesianIndexMapper_ =
-            std::make_unique<CartesianIndexMapper>(*this->grid_);
+        this->cartesianIndexMapper_ = std::make_unique<CartesianIndexMapper>(*this->grid_);
 
         this->updateGridView_();
         this->updateCartesianToCompressedMapping_();
@@ -266,7 +282,7 @@ protected:
 
     std::unique_ptr<Grid> grid_;
     std::unique_ptr<CartesianIndexMapper> cartesianIndexMapper_;
-    //CartesianIndexMapperPointer cartesianIndexMapper_;
+    // CartesianIndexMapperPointer cartesianIndexMapper_;
 
     std::unordered_set<std::string> defunctWellNames_;
     std::vector<int> globalcell_;

@@ -17,7 +17,8 @@
 #ifndef FLOW_OILWATER_POLYMER_INJECTIVITY_HPP
 #define FLOW_OILWATER_POLYMER_INJECTIVITY_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowOilWaterPolymerInjectivityMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowOilWaterPolymerInjectivityMain(int argc, char** argv, bool outputCout, b
 //! \brief Main function used in flow_oilwater_polymer_injectivity binary.
 int flowOilWaterPolymerInjectivityMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_OILWATER_POLYMER_INJECTIVITY_HPP

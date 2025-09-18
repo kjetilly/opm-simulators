@@ -24,18 +24,16 @@
 #include <config.h>
 #include <opm/models/io/restart.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-std::string Restart::restartFileName_(int rank,
-                                      const std::string& outputDir,
-                                      const std::string& simName,
-                                      double t)
+std::string
+Restart::restartFileName_(int rank, const std::string& outputDir, const std::string& simName, double t)
 {
     std::string dir = outputDir;
     if (dir == ".") {
         dir = "";
-    }
-    else if (!dir.empty() && dir.back() != '/') {
+    } else if (!dir.empty() && dir.back() != '/') {
         dir += "/";
     }
 
@@ -44,17 +42,20 @@ std::string Restart::restartFileName_(int rank,
     return oss.str();
 }
 
-void Restart::serializeSectionBegin(const std::string& cookie)
+void
+Restart::serializeSectionBegin(const std::string& cookie)
 {
     outStream_ << cookie << "\n";
 }
 
-void Restart::serializeSectionEnd()
+void
+Restart::serializeSectionEnd()
 {
     outStream_ << "\n";
 }
 
-void Restart::deserializeSectionBegin(const std::string& cookie)
+void
+Restart::deserializeSectionBegin(const std::string& cookie)
 {
     if (!inStream_.good()) {
         throw std::runtime_error("Encountered unexpected EOF in restart file.");
@@ -62,11 +63,12 @@ void Restart::deserializeSectionBegin(const std::string& cookie)
     std::string buf;
     std::getline(inStream_, buf);
     if (buf != cookie) {
-        throw std::runtime_error("Could not start section '"+cookie+"'");
+        throw std::runtime_error("Could not start section '" + cookie + "'");
     }
 }
 
-void Restart::deserializeSectionEnd()
+void
+Restart::deserializeSectionEnd()
 {
     std::string dummy;
     std::getline(inStream_, dummy);
@@ -77,23 +79,25 @@ void Restart::deserializeSectionEnd()
     }
 }
 
-void Restart::deserializeEnd()
+void
+Restart::deserializeEnd()
 {
     inStream_.close();
 }
 
-void Restart::serializeEnd()
+void
+Restart::serializeEnd()
 {
     outStream_.close();
 }
 
-void Restart::openInputStream(const std::string& cookie)
+void
+Restart::openInputStream(const std::string& cookie)
 {
     // open input file and read magic cookie
     inStream_.open(fileName_.c_str());
     if (!inStream_.good()) {
-        throw std::runtime_error("Restart file '" + fileName_ +
-                                 "' could not be opened properly");
+        throw std::runtime_error("Restart file '" + fileName_ + "' could not be opened properly");
     }
 
     // make sure that we don't open an empty file
@@ -108,7 +112,8 @@ void Restart::openInputStream(const std::string& cookie)
     deserializeSectionEnd();
 }
 
-void Restart::openOutputStream(const std::string& cookie)
+void
+Restart::openOutputStream(const std::string& cookie)
 {
     outStream_.open(fileName_);
     outStream_.precision(20);

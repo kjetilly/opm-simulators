@@ -41,8 +41,7 @@
 
 int
 main()
-try
-{
+try {
     typedef AutoDiff::Forward<double> AdFW;
 
     AdFW a = AdFW::variable(0.0);
@@ -69,9 +68,7 @@ try
     std::cout << "a:     " << a << '\n';
     std::cout << "a - 1: " << (a - 1) << '\n';
     std::cout << "a - b: " << (a - b) << '\n';
-}
-catch (const std::exception &e) {
+} catch (const std::exception& e) {
     std::cerr << "Program threw an exception: " << e.what() << "\n";
     throw;
 }
-

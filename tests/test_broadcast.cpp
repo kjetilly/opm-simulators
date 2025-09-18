@@ -25,21 +25,25 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <dune/common/parallel/mpihelper.hh>
 #include <opm/simulators/utils/MPIPacker.hpp>
 #include <opm/simulators/utils/MPISerializer.hpp>
-#include <dune/common/parallel/mpihelper.hh>
 
 #include <numeric>
 
 #if HAVE_MPI
-struct MPIError
-{
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+struct MPIError {
+    MPIError(std::string s, int e)
+        : errorstring(std::move(s))
+        , errorcode(e)
+    {
+    }
     std::string errorstring;
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
     int err_length;
@@ -72,17 +76,18 @@ BOOST_AUTO_TEST_CASE(BroadCast)
     size_t i1 = cc.rank() == 1 ? 8 : 0;
 
     Opm::Parallel::MpiSerializer ser(cc);
-    ser.broadcast(Opm::Parallel::RootRank{1}, d, i, d1, i1);
+    ser.broadcast(Opm::Parallel::RootRank {1}, d, i, d1, i1);
 
     for (size_t c = 0; c < 3; ++c) {
-        BOOST_CHECK_EQUAL(d[c], 1.0+c);
-        BOOST_CHECK_EQUAL(i[c], 4+c);
+        BOOST_CHECK_EQUAL(d[c], 1.0 + c);
+        BOOST_CHECK_EQUAL(i[c], 4 + c);
     }
     BOOST_CHECK_EQUAL(d1, 7.0);
     BOOST_CHECK_EQUAL(i1, 8);
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

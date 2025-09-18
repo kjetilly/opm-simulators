@@ -67,7 +67,8 @@ public:
     CuSparseResource(CreatorType creator, DeleterType deleter);
 
     /**
-     * @brief CuSparseResource will automatically select the proper creator and deleter based on the type (and throw an exception if not available)
+     * @brief CuSparseResource will automatically select the proper creator and deleter based on the type (and throw an
+     * exception if not available)
      */
     CuSparseResource();
 
@@ -94,6 +95,6 @@ private:
     DeleterType m_deleter;
 };
 
-} // namespace Opm::gpuistl::impl
+} // namespace Opm::gpuistl::detail
 #include <opm/simulators/linalg/gpuistl/detail/CuSparseResource_impl.hpp>
 #endif // CUSPARSERESOURCE_HPP

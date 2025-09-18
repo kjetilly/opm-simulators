@@ -25,9 +25,9 @@
 #include <opm/material/densead/Evaluation.hpp>
 #include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
-#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 #include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
+#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 
 #include <opm/simulators/wells/StandardWellEquations.hpp>
 #include <opm/simulators/wells/StandardWellPrimaryVariables.hpp>
@@ -37,16 +37,19 @@
 #include <opm/simulators/wells/WellState.hpp>
 
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Class administering assembler access to equation system.
-template<typename Scalar, typename IndexTraits, int numEq>
-class StandardWellEquationAccess {
+template <typename Scalar, typename IndexTraits, int numEq>
+class StandardWellEquationAccess
+{
 public:
     //! \brief Constructor initializes reference to the equation system.
     explicit StandardWellEquationAccess(StandardWellEquations<Scalar, IndexTraits, numEq>& eqns)
         : eqns_(eqns)
-    {}
+    {
+    }
 
     using BVectorWell = typename StandardWellEquations<Scalar, IndexTraits, numEq>::BVectorWell;
     using DiagMatWell = typename StandardWellEquations<Scalar, IndexTraits, numEq>::DiagMatWell;
@@ -80,20 +83,19 @@ private:
     StandardWellEquations<Scalar, IndexTraits, numEq>& eqns_; //!< Reference to equation system
 };
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 void
-StandardWellAssemble<FluidSystem,Indices>::
-assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
-                  const GroupState<Scalar>& group_state,
-                  const Schedule& schedule,
-                  const SummaryState& summaryState,
-                  const Well::InjectionControls& inj_controls,
-                  const Well::ProductionControls& prod_controls,
-                  const PrimaryVariables& primary_variables,
-                  const Scalar rho,
-                  StandardWellEquationsType& eqns1,
-                  const bool stopped_or_zero_target,
-                  DeferredLogger& deferred_logger) const
+StandardWellAssemble<FluidSystem, Indices>::assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
+                                                              const GroupState<Scalar>& group_state,
+                                                              const Schedule& schedule,
+                                                              const SummaryState& summaryState,
+                                                              const Well::InjectionControls& inj_controls,
+                                                              const Well::ProductionControls& prod_controls,
+                                                              const PrimaryVariables& primary_variables,
+                                                              const Scalar rho,
+                                                              StandardWellEquationsType& eqns1,
+                                                              const bool stopped_or_zero_target,
+                                                              DeferredLogger& deferred_logger) const
 {
     static constexpr int Water = FluidSystem::waterPhaseIdx;
     static constexpr int Oil = FluidSystem::oilPhaseIdx;
@@ -124,51 +126,41 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
     } else if (well_.isInjector()) {
         // Find injection rate.
         const EvalWell injection_rate = primary_variables.eval(PrimaryVariables::WQTotal);
-                                                 // Setup function for evaluation of BHP from THP (used only if needed).
+        // Setup function for evaluation of BHP from THP (used only if needed).
         std::function<EvalWell()> bhp_from_thp = [&]() {
             const auto rates = getRates();
-            return WellBhpThpCalculator(well_).calculateBhpFromThp(well_state,
-                                                                   rates,
-                                                                   well,
-                                                                   summaryState,
-                                                                   rho,
-                                                                   deferred_logger);
+            return WellBhpThpCalculator(well_).calculateBhpFromThp(
+                well_state, rates, well, summaryState, rho, deferred_logger);
         };
 
-        WellAssemble(well_).
-            assembleControlEqInj(well_state,
-                                 group_state,
-                                 schedule,
-                                 summaryState,
-                                 inj_controls,
-                                 primary_variables.eval(PrimaryVariables::Bhp),
-                                 injection_rate,
-                                 bhp_from_thp,
-                                 control_eq,
-                                 deferred_logger);
+        WellAssemble(well_).assembleControlEqInj(well_state,
+                                                 group_state,
+                                                 schedule,
+                                                 summaryState,
+                                                 inj_controls,
+                                                 primary_variables.eval(PrimaryVariables::Bhp),
+                                                 injection_rate,
+                                                 bhp_from_thp,
+                                                 control_eq,
+                                                 deferred_logger);
     } else {
-             // Find rates.
+        // Find rates.
         const auto rates = getRates();
-                                            // Setup function for evaluation of BHP from THP (used only if needed).
+        // Setup function for evaluation of BHP from THP (used only if needed).
         std::function<EvalWell()> bhp_from_thp = [&]() {
-            return WellBhpThpCalculator(well_).calculateBhpFromThp(well_state,
-                                                                   rates,
-                                                                   well,
-                                                                   summaryState,
-                                                                   rho,
-                                                                   deferred_logger);
+            return WellBhpThpCalculator(well_).calculateBhpFromThp(
+                well_state, rates, well, summaryState, rho, deferred_logger);
         };
-        WellAssemble(well_).
-            assembleControlEqProd(well_state,
-                                  group_state,
-                                  schedule,
-                                  summaryState,
-                                  prod_controls,
-                                  primary_variables.eval(PrimaryVariables::Bhp),
-                                  rates,
-                                  bhp_from_thp,
-                                  control_eq,
-                                  deferred_logger);
+        WellAssemble(well_).assembleControlEqProd(well_state,
+                                                  group_state,
+                                                  schedule,
+                                                  summaryState,
+                                                  prod_controls,
+                                                  primary_variables.eval(PrimaryVariables::Bhp),
+                                                  rates,
+                                                  bhp_from_thp,
+                                                  control_eq,
+                                                  deferred_logger);
     }
 
     // using control_eq to update the matrix and residuals
@@ -180,48 +172,49 @@ assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
     }
 }
 
-template<class FluidSystem, class Indices>
-void StandardWellAssemble<FluidSystem,Indices>::
-assembleInjectivityEq(const EvalWell& eq_pskin,
-                      const EvalWell& eq_wat_vel,
-                      const int pskin_index,
-                      const int wat_vel_index,
-                      const int cell_idx,
-                      const int numWellEq,
-                      StandardWellEquationsType& eqns1) const
+template <class FluidSystem, class Indices>
+void
+StandardWellAssemble<FluidSystem, Indices>::assembleInjectivityEq(const EvalWell& eq_pskin,
+                                                                  const EvalWell& eq_wat_vel,
+                                                                  const int pskin_index,
+                                                                  const int wat_vel_index,
+                                                                  const int cell_idx,
+                                                                  const int numWellEq,
+                                                                  StandardWellEquationsType& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
     eqns.residual()[0][pskin_index] = eq_pskin.value();
     eqns.residual()[0][wat_vel_index] = eq_wat_vel.value();
     for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
-        eqns.D()[0][0][wat_vel_index][pvIdx] = eq_wat_vel.derivative(pvIdx+Indices::numEq);
-        eqns.D()[0][0][pskin_index][pvIdx] = eq_pskin.derivative(pvIdx+Indices::numEq);
+        eqns.D()[0][0][wat_vel_index][pvIdx] = eq_wat_vel.derivative(pvIdx + Indices::numEq);
+        eqns.D()[0][0][pskin_index][pvIdx] = eq_pskin.derivative(pvIdx + Indices::numEq);
     }
 
-         // the water velocity is impacted by the reservoir primary varaibles. It needs to enter matrix B
+    // the water velocity is impacted by the reservoir primary varaibles. It needs to enter matrix B
     for (int pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
         eqns.B()[0][cell_idx][wat_vel_index][pvIdx] = eq_wat_vel.derivative(pvIdx);
     }
 }
 
-template<class FluidSystem, class Indices>
-void StandardWellAssemble<FluidSystem,Indices>::
-assemblePerforationEq(const EvalWell& cq_s_effective,
-                      const int componentIdx,
-                      const int cell_idx,
-                      const int numWellEq,
-                      StandardWellEquationsType& eqns1) const
+template <class FluidSystem, class Indices>
+void
+StandardWellAssemble<FluidSystem, Indices>::assemblePerforationEq(const EvalWell& cq_s_effective,
+                                                                  const int componentIdx,
+                                                                  const int cell_idx,
+                                                                  const int numWellEq,
+                                                                  StandardWellEquationsType& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
 
     // subtract sum of phase fluxes in the well equations.
     eqns.residual()[0][componentIdx] += cq_s_effective.value();
 
-       // assemble the jacobians
+    // assemble the jacobians
     for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
         // also need to consider the efficiency factor when manipulating the jacobians.
-        eqns.C()[0][cell_idx][pvIdx][componentIdx] -= cq_s_effective.derivative(pvIdx+Indices::numEq); // intput in transformed matrix
-        eqns.D()[0][0][componentIdx][pvIdx] += cq_s_effective.derivative(pvIdx+Indices::numEq);
+        eqns.C()[0][cell_idx][pvIdx][componentIdx]
+            -= cq_s_effective.derivative(pvIdx + Indices::numEq); // intput in transformed matrix
+        eqns.D()[0][0][componentIdx][pvIdx] += cq_s_effective.derivative(pvIdx + Indices::numEq);
     }
 
     for (int pvIdx = 0; pvIdx < Indices::numEq; ++pvIdx) {
@@ -229,30 +222,31 @@ assemblePerforationEq(const EvalWell& cq_s_effective,
     }
 }
 
-template<class FluidSystem, class Indices>
-void StandardWellAssemble<FluidSystem,Indices>::
-assembleSourceEq(const EvalWell& resWell_loc,
-                 const int componentIdx,
-                 const int numWellEq,
-                 StandardWellEquationsType& eqns1) const
+template <class FluidSystem, class Indices>
+void
+StandardWellAssemble<FluidSystem, Indices>::assembleSourceEq(const EvalWell& resWell_loc,
+                                                             const int componentIdx,
+                                                             const int numWellEq,
+                                                             StandardWellEquationsType& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
     for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
-        eqns.D()[0][0][componentIdx][pvIdx] += resWell_loc.derivative(pvIdx+Indices::numEq);
+        eqns.D()[0][0][componentIdx][pvIdx] += resWell_loc.derivative(pvIdx + Indices::numEq);
     }
     eqns.residual()[0][componentIdx] += resWell_loc.value();
 }
 
-template<class FluidSystem, class Indices>
-void StandardWellAssemble<FluidSystem,Indices>::
-assembleZFracEq(const EvalWell& cq_s_zfrac_effective,
-                const int cell_idx,
-                const int numWellEq,
-                StandardWellEquationsType& eqns1) const
+template <class FluidSystem, class Indices>
+void
+StandardWellAssemble<FluidSystem, Indices>::assembleZFracEq(const EvalWell& cq_s_zfrac_effective,
+                                                            const int cell_idx,
+                                                            const int numWellEq,
+                                                            StandardWellEquationsType& eqns1) const
 {
     StandardWellEquationAccess eqns(eqns1);
     for (int pvIdx = 0; pvIdx < numWellEq; ++pvIdx) {
-        eqns.C()[0][cell_idx][pvIdx][Indices::contiZfracEqIdx] -= cq_s_zfrac_effective.derivative(pvIdx+Indices::numEq);
+        eqns.C()[0][cell_idx][pvIdx][Indices::contiZfracEqIdx]
+            -= cq_s_zfrac_effective.derivative(pvIdx + Indices::numEq);
     }
 }
 
@@ -264,4 +258,4 @@ INSTANTIATE_TYPE_INDICES(StandardWellAssemble, double)
 INSTANTIATE_TYPE_INDICES(StandardWellAssemble, float)
 #endif
 
-}
+} // namespace Opm

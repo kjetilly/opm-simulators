@@ -17,7 +17,8 @@
 #ifndef FLOW_OILWATER_POLYMER_HPP
 #define FLOW_OILWATER_POLYMER_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main functon used in main flow binary.
 int flowOilWaterPolymerMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowOilWaterPolymerMain(int argc, char** argv, bool outputCout, bool outputF
 //! \brief Main function used in flow_oilwater_polymer binary.
 int flowOilWaterPolymerMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_OILWATER_POLYMER_HPP

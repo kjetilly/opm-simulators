@@ -26,7 +26,8 @@
 namespace Opm::FlowKeywordValidation
 {
 
-const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
+const KeywordValidation::UnsupportedKeywords&
+unsupportedKeywords()
 {
     static const KeywordValidation::UnsupportedKeywords unsupported_keywords = {
         {"ACTION", {true, std::nullopt}},
@@ -58,7 +59,7 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"AQUCHGAS", {true, std::nullopt}},
         {"AQUCHWAT", {true, std::nullopt}},
         {"AQUCWFAC", {true, std::nullopt}},
-        {"AQUFET", {true, std::string{"Use the AQUFETP keyword instead"}}},
+        {"AQUFET", {true, std::string {"Use the AQUFETP keyword instead"}}},
         {"AQUNNC", {true, std::nullopt}},
         {"AUTOCOAR", {true, std::nullopt}},
         {"AUTOREF", {true, std::nullopt}},
@@ -97,7 +98,7 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"COMPRIV", {true, std::nullopt}},
         {"COMPRP", {true, std::nullopt}},
         {"COMPRPL", {true, std::nullopt}},
-        {"COMPS", {false,  std::nullopt}},
+        {"COMPS", {false, std::nullopt}},
         {"COMPSEGL", {true, std::nullopt}},
         {"COMPVE", {true, std::nullopt}},
         {"COMPVEL", {true, std::nullopt}},
@@ -105,7 +106,7 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"CPIFACTL", {true, std::nullopt}},
         {"CONNECTION", {true, std::nullopt}},
         {"CONNECTION_PROBE", {true, std::nullopt}},
-        {"COORDSYS", {false, std::string{"Multiple grid systems not supported, COORDSYS is ignored."}}},
+        {"COORDSYS", {false, std::string {"Multiple grid systems not supported, COORDSYS is ignored."}}},
         {"COPYBOX", {true, std::nullopt}},
         {"CRITPERM", {true, std::nullopt}},
         {"DCQDEFN", {true, std::nullopt}},
@@ -140,10 +141,10 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"DPGRID", {true, std::nullopt}},
         {"DPKRMOD", {true, std::nullopt}},
         {"DPNUM", {true, std::nullopt}},
-        {"DR", {true, std::string{"Use the DRV keyword instead"}}},
+        {"DR", {true, std::string {"Use the DRV keyword instead"}}},
         {"DRILPRI", {true, std::nullopt}},
         {"DSPDEINT", {true, std::nullopt}},
-        {"DTHETA", {true, std::string{"Use the DTHETAV keyword instead"}}},
+        {"DTHETA", {true, std::string {"Use the DTHETAV keyword instead"}}},
         {"DUALPERM", {true, std::nullopt}},
         {"DUALPORO", {true, std::nullopt}},
         {"DUMPCUPL", {true, std::nullopt}},
@@ -179,7 +180,7 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"FHERCHBL", {true, std::nullopt}},
         {"FRICTION", {true, std::nullopt}},
         {"FIELDSEP", {false, std::nullopt}},
-        {"FIPOWG", {false, std::string{"Report not available"}}},
+        {"FIPOWG", {false, std::string {"Report not available"}}},
         {"FIPSEP", {true, std::nullopt}},
         {"FLUXREG", {true, std::nullopt}},
         {"FLUXTYPE", {true, std::nullopt}},
@@ -427,7 +428,7 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"OLDTRAN", {true, std::nullopt}},
         {"OLDTRANR", {true, std::nullopt}},
         {"OPTIONS", {true, std::nullopt}},
-        {"OUTRAD", {true, std::string{"Use the DRV keyword instead"}}},
+        {"OUTRAD", {true, std::string {"Use the DRV keyword instead"}}},
         {"OUTSOL", {false, std::nullopt}},
         {"PARAOPTS", {false, std::nullopt}},
         {"PCG32D", {true, std::nullopt}},
@@ -472,7 +473,10 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"PERMXY", {true, std::nullopt}},
         {"PERMYZ", {true, std::nullopt}},
         {"PERMZX", {true, std::nullopt}},
-        {"PETGRID", {true, std::string{"OPM Flow cannot read GSG format grid input, re-export case from Petrel using GRDECL instead."}}},
+        {"PETGRID",
+         {true,
+          std::string {
+              "OPM Flow cannot read GSG format grid input, re-export case from Petrel using GRDECL instead."}}},
         {"PICOND", {true, std::nullopt}},
         {"PIMULTAB", {true, std::nullopt}},
         {"PINCHNUM", {true, std::nullopt}},
@@ -735,10 +739,10 @@ const KeywordValidation::UnsupportedKeywords& unsupportedKeywords()
         {"WTHPMAX", {true, std::nullopt}},
         {"ZIPPY2", {false, std::nullopt}},
         {"ZIPP2OFF", {false, std::nullopt}},
-        {"ZMFVD", {false, std::nullopt}},        
+        {"ZMFVD", {false, std::nullopt}},
     };
 
     return unsupported_keywords;
 }
 
-}
+} // namespace Opm::FlowKeywordValidation

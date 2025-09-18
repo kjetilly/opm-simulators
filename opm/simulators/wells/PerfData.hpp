@@ -23,24 +23,22 @@
 #include <opm/simulators/wells/ConnFiltrateData.hpp>
 #include <opm/simulators/wells/ConnFracStatistics.hpp>
 
+#include <array>
 #include <cstddef>
 #include <vector>
-#include <array>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class PerfData
 {
 private:
-    bool injector{false};
+    bool injector {false};
 
 public:
     PerfData() = default;
-    PerfData(std::size_t num_perf,
-             Scalar pressure_first_connection_,
-             bool injector_,
-             std::size_t num_phases);
+    PerfData(std::size_t num_perf, Scalar pressure_first_connection_, bool injector_, std::size_t num_phases);
 
     static PerfData serializationTestObject();
 
@@ -53,7 +51,7 @@ public:
     /// Needed if a producer is switched to an injector,
     void prepareInjectorContainers();
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(injector);
@@ -92,35 +90,35 @@ public:
     // if you're adding a new member representing a dynamically calculated
     // result, e.g., a flow rate, then please update try_assign() as well.
 
-    Scalar pressure_first_connection{};
-    std::vector<Scalar> pressure{};
-    std::vector<Scalar> rates{};
-    std::vector<Scalar> phase_rates{};
-    std::vector<std::array<Scalar,4>> phase_mixing_rates{};
-    std::vector<Scalar> solvent_rates{};
-    std::vector<Scalar> polymer_rates{};
-    std::vector<Scalar> brine_rates{};
-    std::vector<Scalar> prod_index{};
-    std::vector<Scalar> microbial_rates{};
-    std::vector<Scalar> oxygen_rates{};
-    std::vector<Scalar> urea_rates{};
-    std::vector<std::size_t> cell_index{};
-    std::vector<Scalar> connection_transmissibility_factor{};
-    std::vector<Scalar> connection_d_factor{};
-    std::vector<Scalar> connection_compaction_tmult{};
-    std::vector<int> satnum_id{};
-    std::vector<std::size_t> ecl_index{};
-    std::vector<Scalar> gas_mass_rates{};
-    std::vector<Scalar> wat_mass_rates{};
+    Scalar pressure_first_connection {};
+    std::vector<Scalar> pressure {};
+    std::vector<Scalar> rates {};
+    std::vector<Scalar> phase_rates {};
+    std::vector<std::array<Scalar, 4>> phase_mixing_rates {};
+    std::vector<Scalar> solvent_rates {};
+    std::vector<Scalar> polymer_rates {};
+    std::vector<Scalar> brine_rates {};
+    std::vector<Scalar> prod_index {};
+    std::vector<Scalar> microbial_rates {};
+    std::vector<Scalar> oxygen_rates {};
+    std::vector<Scalar> urea_rates {};
+    std::vector<std::size_t> cell_index {};
+    std::vector<Scalar> connection_transmissibility_factor {};
+    std::vector<Scalar> connection_d_factor {};
+    std::vector<Scalar> connection_compaction_tmult {};
+    std::vector<int> satnum_id {};
+    std::vector<std::size_t> ecl_index {};
+    std::vector<Scalar> gas_mass_rates {};
+    std::vector<Scalar> wat_mass_rates {};
 
     // The water_throughput, skin_pressure and water_velocity variables are
     // only used for injectors to check the injectivity.
-    std::vector<Scalar> water_throughput{};
-    std::vector<Scalar> skin_pressure{};
-    std::vector<Scalar> water_velocity{};
+    std::vector<Scalar> water_throughput {};
+    std::vector<Scalar> skin_pressure {};
+    std::vector<Scalar> water_velocity {};
 
-    ConnFiltrateData<Scalar> filtrate_data{};
-    std::vector<ConnFracStatistics<Scalar>> connFracStatistics{};
+    ConnFiltrateData<Scalar> filtrate_data {};
+    std::vector<ConnFracStatistics<Scalar>> connFracStatistics {};
 };
 
 } // namespace Opm

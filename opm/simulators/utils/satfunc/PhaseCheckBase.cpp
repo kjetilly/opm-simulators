@@ -21,17 +21,18 @@
 
 #include <opm/simulators/utils/satfunc/PhaseCheckBase.hpp>
 
-namespace {
-    constexpr auto one_bit = static_cast<unsigned char>(1);
-    constexpr auto failed_bit = one_bit << 0u;
-    constexpr auto critical_bit = one_bit << 1u;
-}
+namespace
+{
+constexpr auto one_bit = static_cast<unsigned char>(1);
+constexpr auto failed_bit = one_bit << 0u;
+constexpr auto critical_bit = one_bit << 1u;
+} // namespace
 
 // ===========================================================================
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::
-test(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::test(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->flags_ = static_cast<unsigned char>(0);
 
@@ -39,25 +40,29 @@ test(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 }
 
 template <typename Scalar>
-bool Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::isViolated() const
+bool
+Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::isViolated() const
 {
     return (this->flags_ & failed_bit) != 0;
 }
 
 template <typename Scalar>
-bool Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::isCritical() const
+bool
+Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::isCritical() const
 {
     return (this->flags_ & critical_bit) != 0;
 }
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::setViolated()
+void
+Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::setViolated()
 {
     this->flags_ |= failed_bit;
 }
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::setCritical()
+void
+Opm::Satfunc::PhaseChecks::PhaseCheckBase<Scalar>::setCritical()
 {
     this->flags_ |= critical_bit;
 }

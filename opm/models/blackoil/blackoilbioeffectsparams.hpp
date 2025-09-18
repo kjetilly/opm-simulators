@@ -32,18 +32,18 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
 class EclipseState;
 #endif
 
 //! \brief Struct holding the parameters for the BlackOilBioeffectsModule class.
-template<class Scalar>
-struct BlackOilBioeffectsParams
-{
+template <class Scalar>
+struct BlackOilBioeffectsParams {
 #if HAVE_ECL_INPUT
-    template<bool enableBioeffects , bool enableMICP>
+    template <bool enableBioeffects, bool enableMICP>
     void initFromState(const EclipseState& eclState);
 #endif
 
@@ -57,21 +57,21 @@ struct BlackOilBioeffectsParams
     std::vector<TabulatedFunction> permfactTable_;
     std::vector<TabulatedFunction> pcfactTable_;
 
-    std::vector<Scalar> densityBiofilm_{};
-    std::vector<Scalar> densityCalcite_{};
-    std::vector<Scalar> detachmentRate_{};
-    std::vector<Scalar> detachmentExponent_{};
-    std::vector<Scalar> halfVelocityGrowth_{};
-    std::vector<Scalar> halfVelocityUrea_{};
-    std::vector<Scalar> maximumGrowthRate_{};
-    std::vector<Scalar> maximumUreaUtilization_{};
-    std::vector<Scalar> microbialAttachmentRate_{};
-    std::vector<Scalar> microbialDeathRate_{};
-    std::vector<Scalar> oxygenConsumptionFactor_{};
-    std::vector<Scalar> yieldGrowthCoefficient_{};
-    std::vector<Scalar> yieldUreaToCalciteCoefficient_{};
-    
-    std::vector<std::vector<Scalar>> bioDiffCoefficient_{};
+    std::vector<Scalar> densityBiofilm_ {};
+    std::vector<Scalar> densityCalcite_ {};
+    std::vector<Scalar> detachmentRate_ {};
+    std::vector<Scalar> detachmentExponent_ {};
+    std::vector<Scalar> halfVelocityGrowth_ {};
+    std::vector<Scalar> halfVelocityUrea_ {};
+    std::vector<Scalar> maximumGrowthRate_ {};
+    std::vector<Scalar> maximumUreaUtilization_ {};
+    std::vector<Scalar> microbialAttachmentRate_ {};
+    std::vector<Scalar> microbialDeathRate_ {};
+    std::vector<Scalar> oxygenConsumptionFactor_ {};
+    std::vector<Scalar> yieldGrowthCoefficient_ {};
+    std::vector<Scalar> yieldUreaToCalciteCoefficient_ {};
+
+    std::vector<std::vector<Scalar>> bioDiffCoefficient_ {};
 };
 
 } // namespace Opm

@@ -28,24 +28,28 @@
  */
 #include "config.h"
 
+#include "problems/obstacleproblem.hh"
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include "problems/obstacleproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct ObstacleProblem
-{ using InheritsFrom = std::tuple<ObstacleBaseProblem, ImmiscibleModel>; };
+namespace TTag
+{
+    struct ObstacleProblem {
+        using InheritsFrom = std::tuple<ObstacleBaseProblem, ImmiscibleModel>;
+    };
 
 } // end namespace TTag
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::ObstacleProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

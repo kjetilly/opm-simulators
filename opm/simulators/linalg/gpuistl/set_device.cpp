@@ -17,12 +17,12 @@
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
 #include <config.h>
-#include <sstream>
 #include <cuda_runtime.h>
 #include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/simulators/flow/FlowGenericVanguard.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/set_device.hpp>
+#include <sstream>
 
 namespace Opm::gpuistl
 {
@@ -33,9 +33,9 @@ setDevice(int mpiRank, [[maybe_unused]] int numberOfMpiRanks)
     [[maybe_unused]] auto cuError = cudaGetDeviceCount(&deviceCount);
 
     if (deviceCount <= 0) {
-        // If they have CUDA/HIP enabled (ie. using a component that needs CUDA, eg. gpubicgstab or CUILU0), this will fail
-        // later down the line. At this point in the simulator, we can not determine if CUDA is enabled, so we can only
-        // issue a warning.
+        // If they have CUDA/HIP enabled (ie. using a component that needs CUDA, eg. gpubicgstab or CUILU0), this will
+        // fail later down the line. At this point in the simulator, we can not determine if CUDA is enabled, so we can
+        // only issue a warning.
         OpmLog::warning("Could not find any CUDA/HIP devices.");
         return;
     }

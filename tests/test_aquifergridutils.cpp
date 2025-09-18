@@ -33,11 +33,13 @@
 
 #include <opm/simulators/aquifers/AquiferGridUtils.hpp>
 
-namespace {
-
-Opm::Deck createNumericalAquiferDeck()
+namespace
 {
-    const char *deckData = R"(
+
+Opm::Deck
+createNumericalAquiferDeck()
+{
+    const char* deckData = R"(
 DIMENS
  8 15 3 /
 AQUDIMS
@@ -108,7 +110,7 @@ struct Fixture {
 
 BOOST_FIXTURE_TEST_CASE(NumericalAquiferCellUnsupported, Fixture)
 {
-    Dune::PolyhedralGrid<3,3,double> grid(ecl_grid);
+    Dune::PolyhedralGrid<3, 3, double> grid(ecl_grid);
 
     Opm::IsNumericalAquiferCell isNumericalAquiferCell(grid);
 
@@ -123,18 +125,18 @@ BOOST_FIXTURE_TEST_CASE(NumericalAquiferCpGrid, Fixture)
     Opm::IsNumericalAquiferCell isNumericalAquiferCell(grid);
 
     for (const auto& elem : elements(grid.leafGridView())) {
-        BOOST_CHECK_EQUAL(isNumericalAquiferCell(elem), elem.index() == 0 ||
-                                                        elem.index() == 2 ||
-                                                        elem.index() == 3);
+        BOOST_CHECK_EQUAL(isNumericalAquiferCell(elem), elem.index() == 0 || elem.index() == 2 || elem.index() == 3);
     }
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

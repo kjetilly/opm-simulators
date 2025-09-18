@@ -2,18 +2,20 @@
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
-#include <opm/input/eclipse/Parser/Parser.hpp>
 #include <opm/input/eclipse/Parser/ParseContext.hpp>
+#include <opm/input/eclipse/Parser/Parser.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 
-#include <opm/grid/UnstructuredGrid.h>
+#include <opm/autodiff/GridHelpers.hpp>
 #include <opm/core/grid/cornerpoint_grid.h>
 #include <opm/grid/GridManager.hpp>
-#include <opm/autodiff/GridHelpers.hpp>
+#include <opm/grid/UnstructuredGrid.h>
 #include <opm/simulators/thresholdPressures.hpp> // Note: the GridHelpers must be included before this (to make overloads available)
 
 
-static DeckPtr createDeckSimConfig() {
+static DeckPtr
+createDeckSimConfig()
+{
     const std::string& inputStr = "RUNSPEC\n"
                                   "EQLOPTS\n"
                                   "THPRES /\n "
@@ -36,7 +38,7 @@ static DeckPtr createDeckSimConfig() {
 
 
     ParserPtr parser(new Parser());
-    return parser->parseString(inputStr, ParseContext()) ;
+    return parser->parseString(inputStr, ParseContext());
 }
 
 /*
@@ -45,16 +47,17 @@ static DeckPtr createDeckSimConfig() {
   opm-core codebase.
 */
 
-BOOST_AUTO_TEST_CASE(CreateSimulationConfig) {
+BOOST_AUTO_TEST_CASE(CreateSimulationConfig)
+{
     ParseContext parseContext;
-    typedef UnstructuredGrid  Grid;
+    typedef UnstructuredGrid Grid;
     DeckPtr deck = createDeckSimConfig();
     EclipseState state(*deck, parseContext);
     EclipseGridConstPtr eclipseGrid = state.getInputGrid();
     std::vector<double> porv = eclipseState->getDoubleGridProperty("PORV")->getData();
-    GridManager vanguard( eclipseState->getInputGrid(), porv );
+    GridManager vanguard(eclipseState->getInputGrid(), porv);
     const Grid& grid = *(vanguard.c_grid());
 
     std::vector<double> threshold_pressures = thresholdPressures(parseContext, eclipseState, grid);
-    BOOST_CHECK( threshold_pressures.size() > 0 );
+    BOOST_CHECK(threshold_pressures.size() > 0);
 }

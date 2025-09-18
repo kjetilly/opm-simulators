@@ -28,9 +28,9 @@
 #include <opm/simulators/linalg/gpuistl/GpuDILU.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
+#include <opm/simulators/linalg/gpuistl/PreconditionerCPUMatrixToGPUMatrix.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpusparse_matrix_operations.hpp>
-#include <opm/simulators/linalg/gpuistl/PreconditionerCPUMatrixToGPUMatrix.hpp>
 #include <random>
 #include <vector>
 
@@ -46,9 +46,11 @@ using CuMatrix = Opm::gpuistl::GpuSparseMatrix<T>;
 using CuIntVec = Opm::gpuistl::GpuVector<int>;
 using CuFloatingPointVec = Opm::gpuistl::GpuVector<T>;
 using GpuDilu1x1 = Opm::gpuistl::GpuDILU<Sp1x1BlockMatrix, CuFloatingPointVec, CuFloatingPointVec>;
-using Wrapped1x1 = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<CuFloatingPointVec, CuFloatingPointVec, GpuDilu1x1, Sp1x1BlockMatrix>;
+using Wrapped1x1 = Opm::gpuistl::
+    PreconditionerCPUMatrixToGPUMatrix<CuFloatingPointVec, CuFloatingPointVec, GpuDilu1x1, Sp1x1BlockMatrix>;
 using GpuDilu2x2 = Opm::gpuistl::GpuDILU<Sp2x2BlockMatrix, CuFloatingPointVec, CuFloatingPointVec>;
-using Wrapped2x2 = Opm::gpuistl::PreconditionerCPUMatrixToGPUMatrix<CuFloatingPointVec, CuFloatingPointVec, GpuDilu2x2, Sp2x2BlockMatrix>;
+using Wrapped2x2 = Opm::gpuistl::
+    PreconditionerCPUMatrixToGPUMatrix<CuFloatingPointVec, CuFloatingPointVec, GpuDilu2x2, Sp2x2BlockMatrix>;
 
 Sp1x1BlockMatrix
 get1x1BlockTestMatrix()

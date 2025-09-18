@@ -22,42 +22,43 @@
 
 #include <opm/simulators/linalg/gpubridge/BlockedMatrix.hpp>
 
+#include <opm/simulators/linalg/gpubridge/opencl/ChowPatelIlu.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 #include <opm/simulators/linalg/gpubridge/opencl/openclPreconditioner.hpp>
-#include <opm/simulators/linalg/gpubridge/opencl/ChowPatelIlu.hpp>
 
 #include <memory>
 #include <mutex>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class implements a Blocked ILU0 preconditioner
 /// The decomposition is done on GPU, using exact decomposition, or ChowPatel decomposition
 /// The preconditioner is applied via two exact triangular solves
-template<class Scalar, unsigned int block_size>
-class openclBILU0 : public openclPreconditioner<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class openclBILU0 : public openclPreconditioner<Scalar, block_size>
 {
-    using Base = openclPreconditioner<Scalar,block_size>;
+    using Base = openclPreconditioner<Scalar, block_size>;
 
+    using Base::context;
+    using Base::err;
+    using Base::events;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
-    using Base::context;
     using Base::queue;
-    using Base::events;
-    using Base::err;
+    using Base::verbosity;
 
 private:
-    std::unique_ptr<BlockedMatrix<Scalar>> LUmat{};
+    std::unique_ptr<BlockedMatrix<Scalar>> LUmat {};
 #if CHOW_PATEL
-    std::unique_ptr<BlockedMatrix<Scalar>> Lmat{}, Umat{};
+    std::unique_ptr<BlockedMatrix<Scalar>> Lmat {}, Umat {};
 #endif
     std::vector<Scalar> invDiagVals;
     std::vector<int> diagIndex;
-    std::vector<int> rowsPerColor;  // color i contains rowsPerColor[i] rows, which are processed in parallel
-    std::vector<int> rowsPerColorPrefix;  // the prefix sum of rowsPerColor
+    std::vector<int> rowsPerColor; // color i contains rowsPerColor[i] rows, which are processed in parallel
+    std::vector<int> rowsPerColorPrefix; // the prefix sum of rowsPerColor
     std::vector<int> toOrder, fromOrder;
     int numColors;
     std::once_flag pattern_uploaded;
@@ -65,12 +66,13 @@ private:
     bool opencl_ilu_parallel;
 
     struct GPU_storage {
-        cl::Buffer invDiagVals;    // nnz values of diagonal blocks of the matrix, inverted
-        cl::Buffer diagIndex;      // index of diagonal block of each row, used to differentiate between lower and upper triangular part
-        cl::Buffer rowsPerColor;   // number of rows for every color
-        cl::Buffer rowIndices;     // mapping every row to another index
-                                   // after mapping, all rows that are processed in parallel are contiguous
-                                   // equal to the contents of fromOrder
+        cl::Buffer invDiagVals; // nnz values of diagonal blocks of the matrix, inverted
+        cl::Buffer diagIndex; // index of diagonal block of each row, used to differentiate between lower and upper
+                              // triangular part
+        cl::Buffer rowsPerColor; // number of rows for every color
+        cl::Buffer rowIndices; // mapping every row to another index
+                               // after mapping, all rows that are processed in parallel are contiguous
+                               // equal to the contents of fromOrder
 #if CHOW_PATEL
         cl::Buffer Lvals, Lcols, Lrows;
         cl::Buffer Uvals, Ucols, Urows;
@@ -86,31 +88,26 @@ private:
 #endif
 
 public:
-
     openclBILU0(bool opencl_ilu_parallel, int verbosity);
 
     // analysis, extract parallelism if specified
     bool analyze_matrix(BlockedMatrix<Scalar>* mat) override;
-    bool analyze_matrix(BlockedMatrix<Scalar>* mat,
-                        BlockedMatrix<Scalar>* jacMat) override;
+    bool analyze_matrix(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     // ilu_decomposition
     bool create_preconditioner(BlockedMatrix<Scalar>* mat) override;
-    bool create_preconditioner(BlockedMatrix<Scalar>* mat,
-                               BlockedMatrix<Scalar>* jacMat) override;
+    bool create_preconditioner(BlockedMatrix<Scalar>* mat, BlockedMatrix<Scalar>* jacMat) override;
 
     // apply preconditioner, x = prec(y)
     // via Lz = y
     // and Ux = z
-    void apply(const cl::Buffer& y,
-               cl::Buffer& x,
-               WellContributions<Scalar>& wellContribs) override;
+    void apply(const cl::Buffer& y, cl::Buffer& x, WellContributions<Scalar>& wellContribs) override;
 
-    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>>
-    get_preconditioner_structure()
+    std::tuple<std::vector<int>, std::vector<int>, std::vector<int>> get_preconditioner_structure()
     {
         return {{LUmat->rowPointers, LUmat->rowPointers + (Nb + 1)},
-                {LUmat->colIndices, LUmat->colIndices + nnzb}, diagIndex};
+                {LUmat->colIndices, LUmat->colIndices + nnzb},
+                diagIndex};
     }
 
     std::pair<cl::Buffer, cl::Buffer> get_preconditioner_data()

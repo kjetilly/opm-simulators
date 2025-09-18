@@ -52,7 +52,8 @@ createMatrixDescription()
 
 /**
  * @brief createLowerDiagonalDescription creates a lower diagonal matrix description
- * @return a lower diagonal matrix description overlapped with options from ::Opm::gpuistl::detail::createMatrixDescription()
+ * @return a lower diagonal matrix description overlapped with options from
+ * ::Opm::gpuistl::detail::createMatrixDescription()
  *
  * @note This will assume it has a unit diagonal
  */
@@ -67,7 +68,8 @@ createLowerDiagonalDescription()
 
 /**
  * @brief createUpperDiagonalDescription creates an upper diagonal matrix description
- * @return an upper diagonal matrix description overlapped with options from ::Opm::gpuistl::detail::createMatrixDescription()
+ * @return an upper diagonal matrix description overlapped with options from
+ * ::Opm::gpuistl::detail::createMatrixDescription()
  *
  * @note This will assume it has a non-unit diagonal.
  */

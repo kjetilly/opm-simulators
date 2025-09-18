@@ -20,41 +20,38 @@
 #ifndef OPM_RESERVOIR_COUPLING_SPAWN_SLAVES_HPP
 #define OPM_RESERVOIR_COUPLING_SPAWN_SLAVES_HPP
 
-#include <opm/simulators/utils/ParallelCommunication.hpp>
 #include <opm/simulators/flow/ReservoirCoupling.hpp>
 #include <opm/simulators/flow/ReservoirCouplingMaster.hpp>
+#include <opm/simulators/utils/ParallelCommunication.hpp>
 
+#include <opm/common/OpmLog/OpmLog.hpp>
 #include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
-#include <opm/common/OpmLog/OpmLog.hpp>
 
 #include <mpi.h>
 
 #include <filesystem>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-class ReservoirCouplingSpawnSlaves {
+class ReservoirCouplingSpawnSlaves
+{
 public:
     using MessageTag = ReservoirCoupling::MessageTag;
 
-    ReservoirCouplingSpawnSlaves(
-        ReservoirCouplingMaster &master,
-        const ReservoirCoupling::CouplingInfo &rescoup
-    );
+    ReservoirCouplingSpawnSlaves(ReservoirCouplingMaster& master, const ReservoirCoupling::CouplingInfo& rescoup);
 
     void spawn();
 
 private:
     void createMasterGroupNameOrder_();
     void createMasterGroupToSlaveNameMap_();
-    std::pair<std::vector<char>, std::size_t>
-        getMasterGroupNamesForSlave_(const std::string &slave_name) const;
-    std::vector<char *> getSlaveArgv_(
-        const std::filesystem::path &data_file,
-        const std::string &slave_name,
-        std::string &log_filename) const;
+    std::pair<std::vector<char>, std::size_t> getMasterGroupNamesForSlave_(const std::string& slave_name) const;
+    std::vector<char*> getSlaveArgv_(const std::filesystem::path& data_file,
+                                     const std::string& slave_name,
+                                     std::string& log_filename) const;
     void prepareTimeStepping_();
     void receiveActivationDateFromSlaves_();
     void receiveSimulationStartDateFromSlaves_();
@@ -62,9 +59,9 @@ private:
     void sendSlaveNamesToSlaves_();
     void spawnSlaveProcesses_();
 
-    ReservoirCouplingMaster &master_;
-    const ReservoirCoupling::CouplingInfo &rescoup_;
-    const Parallel::Communication &comm_;
+    ReservoirCouplingMaster& master_;
+    const ReservoirCoupling::CouplingInfo& rescoup_;
+    const Parallel::Communication& comm_;
     ReservoirCoupling::Logger logger_;
 };
 

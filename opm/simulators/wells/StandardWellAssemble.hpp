@@ -29,21 +29,26 @@ namespace Opm
 {
 
 class DeferredLogger;
-template<class Scalar> class GroupState;
+template <class Scalar>
+class GroupState;
 class Schedule;
-template<typename Scalar, typename IndexTraits, int numEq> class StandardWellEquations;
-template<class FluidSystem, class Indices> class StandardWellPrimaryVariables;
+template <typename Scalar, typename IndexTraits, int numEq>
+class StandardWellEquations;
+template <class FluidSystem, class Indices>
+class StandardWellPrimaryVariables;
 class SummaryState;
-template<class FluidSystem> class WellInterfaceFluidSystem;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class FluidSystem>
+class WellInterfaceFluidSystem;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 //! \brief Class handling assemble of the equation system for StandardWell.
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 class StandardWellAssemble
 {
 public:
     using Scalar = typename FluidSystem::Scalar;
-    using PrimaryVariables = StandardWellPrimaryVariables<FluidSystem,Indices>;
+    using PrimaryVariables = StandardWellPrimaryVariables<FluidSystem, Indices>;
     using EvalWell = typename PrimaryVariables::EvalWell;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
     using StandardWellEquationsType = StandardWellEquations<Scalar, IndexTraits, Indices::numEq>;
@@ -51,7 +56,8 @@ public:
     //! \brief Constructor initializes reference to well.
     explicit StandardWellAssemble(const WellInterfaceFluidSystem<FluidSystem>& well)
         : well_(well)
-    {}
+    {
+    }
 
     //! \brief Assemble control equation.
     void assembleControlEq(const WellState<Scalar, IndexTraits>& well_state,
@@ -98,6 +104,6 @@ private:
     const WellInterfaceFluidSystem<FluidSystem>& well_; //!< Reference to well
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_STANDARDWELL_ASSEMBLE_HEADER_INCLUDED

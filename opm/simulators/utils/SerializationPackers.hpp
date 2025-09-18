@@ -25,23 +25,23 @@
 
 // Additional packers for serializers using the mempacker.
 
-namespace Opm {
-namespace Serialization {
-namespace detail {
-
-template<>
-struct Packing<false,boost::gregorian::date>
+namespace Opm
 {
-    static std::size_t packSize(const boost::gregorian::date& data);
+namespace Serialization
+{
+    namespace detail
+    {
 
-    static void pack(const boost::gregorian::date& data,
-                     std::vector<char>& buffer, std::size_t& position);
+        template <>
+        struct Packing<false, boost::gregorian::date> {
+            static std::size_t packSize(const boost::gregorian::date& data);
 
-    static void unpack(boost::gregorian::date& data,
-                       const std::vector<char>& buffer, std::size_t& position);
-};
+            static void pack(const boost::gregorian::date& data, std::vector<char>& buffer, std::size_t& position);
 
-}
+            static void unpack(boost::gregorian::date& data, const std::vector<char>& buffer, std::size_t& position);
+        };
+
+    } // namespace detail
 
 } // end namespace Serialization
 } // end namespace Opm

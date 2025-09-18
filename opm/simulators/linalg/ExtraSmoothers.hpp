@@ -5,8 +5,8 @@
 
 namespace Dune
 {
-    template <class M, class X, class Y>
-    class MultithreadDILU;
+template <class M, class X, class Y>
+class MultithreadDILU;
 
 namespace Amg
 {
@@ -15,9 +15,10 @@ namespace Amg
      */
     template <class M, class X, class Y>
     struct ConstructionTraits<MultithreadDILU<M, X, Y>> {
-    using Arguments = DefaultConstructionArgs<MultithreadDILU<M, X, Y>>;
+        using Arguments = DefaultConstructionArgs<MultithreadDILU<M, X, Y>>;
 
-        static inline std::shared_ptr<MultithreadDILU<M, X, Y>> construct(Arguments& args) {
+        static inline std::shared_ptr<MultithreadDILU<M, X, Y>> construct(Arguments& args)
+        {
             return std::make_shared<MultithreadDILU<M, X, Y>>(args.getMatrix());
         }
     };

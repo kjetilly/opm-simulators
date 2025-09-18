@@ -28,74 +28,81 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits> class BlackoilWellModelGeneric;
-namespace data {
-struct GroupData;
-class GroupAndNetworkValues;
-}
-template<class Scalar> class GroupState;
+template <typename Scalar, typename IndexTraits>
+class BlackoilWellModelGeneric;
+namespace data
+{
+    struct GroupData;
+    class GroupAndNetworkValues;
+} // namespace data
+template <class Scalar>
+class GroupState;
 class GuideRate;
 class GuideRateConfig;
-template<class Scalar> struct PerforationData;
-template<typename Scalar, typename IndexTraits> class SingleWellState;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <class Scalar>
+struct PerforationData;
+template <typename Scalar, typename IndexTraits>
+class SingleWellState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
 /// Class for restarting the blackoil well model.
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class BlackoilWellModelRestart
 {
 public:
     //! \brief Constructor initializes reference to the well model.
     explicit BlackoilWellModelRestart(const BlackoilWellModelGeneric<Scalar, IndexTraits>& wellModel)
         : wellModel_(wellModel)
-    {}
+    {
+    }
 
     //! \brief Loads guide rates from restart structures.
-    void loadRestartGuideRates(const int                    report_step,
+    void loadRestartGuideRates(const int report_step,
                                const GuideRateModel::Target target,
-                               const data::Wells&           rst_wells,
-                               GuideRate&                   guide_rate) const;
+                               const data::Wells& rst_wells,
+                               GuideRate& guide_rate) const;
 
     //! \brief Loads guide rates from restart structures.
-    void loadRestartGuideRates(const int                                     report_step,
-                               const GuideRateConfig&                        config,
+    void loadRestartGuideRates(const int report_step,
+                               const GuideRateConfig& config,
                                const std::map<std::string, data::GroupData>& rst_groups,
-                               GuideRate&                                    guide_rate) const;
+                               GuideRate& guide_rate) const;
 
     //! \brief Loads well data from restart structures.
-    void loadRestartData(const data::Wells&                 rst_wells,
+    void loadRestartData(const data::Wells& rst_wells,
                          const data::GroupAndNetworkValues& grpNwrkValues,
-                         const bool                         handle_ms_well,
-                         WellState<Scalar, IndexTraits>&   well_state,
-                         GroupState<Scalar>&                grpState) const;
+                         const bool handle_ms_well,
+                         WellState<Scalar, IndexTraits>& well_state,
+                         GroupState<Scalar>& grpState) const;
 
 private:
     //! \brief Loads per-connection data from restart structures.
     void loadRestartConnectionData(const std::vector<data::Rates::opt>& phs,
-                                   const data::Well&                    rst_well,
+                                   const data::Well& rst_well,
                                    const std::vector<PerforationData<Scalar>>& old_perf_data,
-                                   SingleWellState<Scalar, IndexTraits>&             ws) const;
+                                   SingleWellState<Scalar, IndexTraits>& ws) const;
 
     //! \brief Loads per-segment data from restart structures.
-    void loadRestartSegmentData(const std::string&                   well_name,
+    void loadRestartSegmentData(const std::string& well_name,
                                 const std::vector<data::Rates::opt>& phs,
-                                const data::Well&                    rst_well,
-                                SingleWellState<Scalar, IndexTraits>&             ws) const;
+                                const data::Well& rst_well,
+                                SingleWellState<Scalar, IndexTraits>& ws) const;
 
     //! \brief Loads per-well data from restart structures.
-    void loadRestartWellData(const std::string&                   well_name,
-                             const bool                           handle_ms_well,
+    void loadRestartWellData(const std::string& well_name,
+                             const bool handle_ms_well,
                              const std::vector<data::Rates::opt>& phs,
-                             const data::Well&                    rst_well,
+                             const data::Well& rst_well,
                              const std::vector<PerforationData<Scalar>>& old_perf_data,
-                             SingleWellState<Scalar, IndexTraits>&             ws) const;
+                             SingleWellState<Scalar, IndexTraits>& ws) const;
 
     //! \brief Loads per-group data from restart structures.
-    void loadRestartGroupData(const std::string&     group,
-                              const data::GroupData& value,
-                              GroupState<Scalar>&    grpState) const;
+    void
+    loadRestartGroupData(const std::string& group, const data::GroupData& value, GroupState<Scalar>& grpState) const;
 
     const BlackoilWellModelGeneric<Scalar, IndexTraits>& wellModel_; //!< Reference to well model
 };

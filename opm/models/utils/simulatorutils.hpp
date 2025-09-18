@@ -27,14 +27,15 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
-* \brief Given a time step size in seconds, return it in a format which is more
-*        easily parsable by humans.
-*
-* e.g. 874000.0 will become "10.12 days"
-*/
+ * \brief Given a time step size in seconds, return it in a format which is more
+ *        easily parsable by humans.
+ *
+ * e.g. 874000.0 will become "10.12 days"
+ */
 std::string humanReadableTime(double timeInSeconds, bool isAmendment = true);
 
 /*!
@@ -46,7 +47,7 @@ std::string simulatorOutputDir();
  * \brief Read explicitly defined time steps from file.
  * \param file File to read
  */
-template<class Scalar>
+template <class Scalar>
 std::vector<Scalar> readTimeStepFile(const std::string& file);
 
 } // namespace Opm

@@ -25,7 +25,8 @@
 #include <dune/istl/bcrsmatrix.hh>
 #include <dune/istl/bvector.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 // we should look into whether to use dynamic matrix and vector here
 template <typename Scalar, int numWellEq, int numEq>

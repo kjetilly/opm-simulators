@@ -36,20 +36,20 @@
 #include <opm/simulators/timestepping/EclTimeSteppingParams.hpp>
 #include <opm/simulators/wells/BlackoilWellModel.hpp>
 
-namespace Opm::Properties {
-
-namespace TTag {
-
-struct TestTypeTag
+namespace Opm::Properties
 {
-    using InheritsFrom = std::tuple<FlowBaseProblemBlackoil,
-                                    BlackOilModel>;
-};
 
-}
+namespace TTag
+{
+
+    struct TestTypeTag {
+        using InheritsFrom = std::tuple<FlowBaseProblemBlackoil, BlackOilModel>;
+    };
+
+} // namespace TTag
 
 // Set the problem class
-template<class TypeTag>
+template <class TypeTag>
 struct Problem<TypeTag, TTag::TestTypeTag> {
     using type = FlowProblemBlackoil<TypeTag>;
 };
@@ -57,42 +57,42 @@ struct Problem<TypeTag, TTag::TestTypeTag> {
 // Enable experimental features for ebos: ebos is the research simulator of the OPM
 // project. If you're looking for a more stable "production quality" simulator, consider
 // using `flow`
-template<class TypeTag>
+template <class TypeTag>
 struct EnableExperiments<TypeTag, TTag::TestTypeTag> {
     static constexpr bool value = true;
 };
 
 // use flow's well model for now
-template<class TypeTag>
+template <class TypeTag>
 struct WellModel<TypeTag, TTag::TestTypeTag> {
     using type = BlackoilWellModel<TypeTag>;
 };
 
 // flow's well model only works with surface volumes
-template<class TypeTag>
+template <class TypeTag>
 struct BlackoilConserveSurfaceVolume<TypeTag, TTag::TestTypeTag> {
     static constexpr bool value = true;
 };
 
 // the values for the residual are for the whole cell instead of for a cubic meter of the cell
-template<class TypeTag>
+template <class TypeTag>
 struct UseVolumetricResidual<TypeTag, TTag::TestTypeTag> {
     static constexpr bool value = false;
 };
 
 // by default use flow's aquifer model for now
-template<class TypeTag>
+template <class TypeTag>
 struct AquiferModel<TypeTag, TTag::TestTypeTag> {
     using type = BlackoilAquiferModel<TypeTag>;
 };
 
 // use flow's linear solver backend for now
-template<class TypeTag>
+template <class TypeTag>
 struct LinearSolverSplice<TypeTag, TTag::TestTypeTag> {
     using type = TTag::FlowIstlSolver;
 };
 
-template<>
+template <>
 struct LinearSolverBackend<TTag::TestTypeTag, TTag::FlowIstlSolverParams> {
     using type = ISTLSolver<TTag::TestTypeTag>;
 };

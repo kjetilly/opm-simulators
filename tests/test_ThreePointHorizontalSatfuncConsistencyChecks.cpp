@@ -28,7 +28,7 @@
 //
 // when compiling with "-Wundef".
 #define HAVE_MPI 0
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 #include <boost/test/unit_test.hpp>
 
@@ -50,9 +50,9 @@ BOOST_AUTO_TEST_SUITE(Displacing_Oil_in_Gas_Oil)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExportedCheckValues);
 
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.25f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.3f;
@@ -88,18 +88,18 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[4], 0.7f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(All_Good_2)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.4f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.2f;
@@ -119,23 +119,23 @@ BOOST_AUTO_TEST_CASE(All_Good_2)
         BOOST_CHECK_CLOSE(values[4], 0.6f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        constexpr auto expectNumExportedCheckValues = std::size_t{5};
+        constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.3f;
         endPoints.Sgu = 0.7;
 
-        auto check = Checks::DisplacingOil_GO<float>{};
+        auto check = Checks::DisplacingOil_GO<float> {};
         check.test(endPoints);
 
         {
@@ -449,15 +449,15 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        constexpr auto expectNumExportedCheckValues = std::size_t{5};
+        constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = std::numeric_limits<float>::infinity();
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.3f;
         endPoints.Sgu = 0.7;
 
-        auto check = Checks::DisplacingOil_GO<float>{};
+        auto check = Checks::DisplacingOil_GO<float> {};
         check.test(endPoints);
 
         {
@@ -772,12 +772,12 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Sr_TooSmall)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.55f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.35f;
@@ -803,12 +803,12 @@ BOOST_AUTO_TEST_CASE(Sr_TooSmall)
 
 BOOST_AUTO_TEST_CASE(Sr_Is_Lower_Bound)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.50f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.35f;
@@ -834,12 +834,12 @@ BOOST_AUTO_TEST_CASE(Sr_Is_Lower_Bound)
 
 BOOST_AUTO_TEST_CASE(Sr_TooLarge)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.0f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.25f;
@@ -865,12 +865,12 @@ BOOST_AUTO_TEST_CASE(Sr_TooLarge)
 
 BOOST_AUTO_TEST_CASE(Sr_Is_Upper_Bound)
 {
-    auto check = Checks::DisplacingOil_GO<float>{};
+    auto check = Checks::DisplacingOil_GO<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Swl = 0.05f;
         endPoints.Sgcr = 0.15f;
         endPoints.Sogcr = 0.25f;
@@ -890,8 +890,8 @@ BOOST_AUTO_TEST_CASE(Sr_Is_Upper_Bound)
         BOOST_CHECK_CLOSE(values[4], 0.7f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must NOT be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must NOT be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must NOT be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must NOT be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Displacing_Oil_in_Gas_Oil
@@ -902,9 +902,9 @@ BOOST_AUTO_TEST_SUITE(Displacing_Oil_in_Oil_Water)
 
 BOOST_AUTO_TEST_CASE(All_Good)
 {
-    auto check = Checks::DisplacingOil_OW<float>{};
+    auto check = Checks::DisplacingOil_OW<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     BOOST_CHECK_EQUAL(check.numExportedCheckValues(), expectNumExportedCheckValues);
 
@@ -920,7 +920,7 @@ BOOST_AUTO_TEST_CASE(All_Good)
     }
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = 0.25f;
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.3f;
@@ -940,23 +940,23 @@ BOOST_AUTO_TEST_CASE(All_Good)
         BOOST_CHECK_CLOSE(values[4], 0.7f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must not be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must not be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must not be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must not be violated at critical level");
 }
 
 BOOST_AUTO_TEST_CASE(Non_Finite)
 {
     // NaN
     if constexpr (std::numeric_limits<float>::has_quiet_NaN) {
-        constexpr auto expectNumExportedCheckValues = std::size_t{5};
+        constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::quiet_NaN();
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.3f;
         endPoints.Swu = 0.7;
 
-        auto check = Checks::DisplacingOil_OW<float>{};
+        auto check = Checks::DisplacingOil_OW<float> {};
         check.test(endPoints);
 
         {
@@ -1270,15 +1270,15 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
     // Inf
     if constexpr (std::numeric_limits<float>::has_infinity) {
-        constexpr auto expectNumExportedCheckValues = std::size_t{5};
+        constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = std::numeric_limits<float>::infinity();
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.3f;
         endPoints.Swu = 0.7;
 
-        auto check = Checks::DisplacingOil_OW<float>{};
+        auto check = Checks::DisplacingOil_OW<float> {};
         check.test(endPoints);
 
         {
@@ -1593,12 +1593,12 @@ BOOST_AUTO_TEST_CASE(Non_Finite)
 
 BOOST_AUTO_TEST_CASE(Sr_TooSmall)
 {
-    auto check = Checks::DisplacingOil_OW<float>{};
+    auto check = Checks::DisplacingOil_OW<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = 0.55f;
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.35f;
@@ -1624,12 +1624,12 @@ BOOST_AUTO_TEST_CASE(Sr_TooSmall)
 
 BOOST_AUTO_TEST_CASE(Sr_Is_Lower_Bound)
 {
-    auto check = Checks::DisplacingOil_OW<float>{};
+    auto check = Checks::DisplacingOil_OW<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = 0.50f;
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.35f;
@@ -1655,12 +1655,12 @@ BOOST_AUTO_TEST_CASE(Sr_Is_Lower_Bound)
 
 BOOST_AUTO_TEST_CASE(Sr_TooLarge)
 {
-    auto check = Checks::DisplacingOil_OW<float>{};
+    auto check = Checks::DisplacingOil_OW<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = 0.0f;
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.25f;
@@ -1686,12 +1686,12 @@ BOOST_AUTO_TEST_CASE(Sr_TooLarge)
 
 BOOST_AUTO_TEST_CASE(Sr_Is_Upper_Bound)
 {
-    auto check = Checks::DisplacingOil_OW<float>{};
+    auto check = Checks::DisplacingOil_OW<float> {};
 
-    constexpr auto expectNumExportedCheckValues = std::size_t{5};
+    constexpr auto expectNumExportedCheckValues = std::size_t {5};
 
     {
-        auto endPoints = Opm::EclEpsScalingPointsInfo<float>{};
+        auto endPoints = Opm::EclEpsScalingPointsInfo<float> {};
         endPoints.Sgl = 0.05f;
         endPoints.Swcr = 0.15f;
         endPoints.Sowcr = 0.25f;
@@ -1711,8 +1711,8 @@ BOOST_AUTO_TEST_CASE(Sr_Is_Upper_Bound)
         BOOST_CHECK_CLOSE(values[4], 0.7f, 1.0e-6f);
     }
 
-    BOOST_CHECK_MESSAGE(! check.isViolated(), "Test must NOT be violated");
-    BOOST_CHECK_MESSAGE(! check.isCritical(), "Test must NOT be violated at critical level");
+    BOOST_CHECK_MESSAGE(!check.isViolated(), "Test must NOT be violated");
+    BOOST_CHECK_MESSAGE(!check.isCritical(), "Test must NOT be violated at critical level");
 }
 
 BOOST_AUTO_TEST_SUITE_END() // Displacing_Oil_in_Oil_Water

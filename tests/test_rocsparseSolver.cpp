@@ -20,9 +20,9 @@
 
 #include <config.h>
 
-#include <stdexcept>
 #include <fstream>
 #include <memory>
+#include <stdexcept>
 
 #define BOOST_TEST_MODULE OPM_test_rocsparseSolver
 #include <boost/test/unit_test.hpp>
@@ -31,11 +31,11 @@
 #include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
 
 #include <dune/common/fvector.hh>
-#include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/istl/matrixmarket.hh>
-#include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/istl/solvers.hh>
 
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
@@ -43,7 +43,8 @@
 class HIPInitException : public std::logic_error
 {
 public:
-    HIPInitException(std::string msg) : logic_error(msg){};
+    HIPInitException(std::string msg)
+        : logic_error(msg) { };
 };
 
 template <int bz>
@@ -52,7 +53,11 @@ template <int bz>
 using Vector = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 
 template <int bz>
-void readLinearSystem(const std::string& matrix_filename, const std::string& rhs_filename, Matrix<bz>& matrix, Vector<bz>& rhs)
+void
+readLinearSystem(const std::string& matrix_filename,
+                 const std::string& rhs_filename,
+                 Matrix<bz>& matrix,
+                 Vector<bz>& rhs)
 {
     {
         std::ifstream mfile(matrix_filename);
@@ -78,21 +83,22 @@ getDuneSolution(Matrix<bz>& matrix, Vector<bz>& rhs)
 
     Vector<bz> x(rhs.size());
 
-    typedef Dune::MatrixAdapter<Matrix<bz>,Vector<bz>,Vector<bz> > Operator;
+    typedef Dune::MatrixAdapter<Matrix<bz>, Vector<bz>, Vector<bz>> Operator;
     Operator fop(matrix);
     double relaxation = 0.9;
-    Dune::SeqILU<Matrix<bz>,Vector<bz>,Vector<bz> > prec(matrix, relaxation);
+    Dune::SeqILU<Matrix<bz>, Vector<bz>, Vector<bz>> prec(matrix, relaxation);
     double reduction = 1e-2;
     int maxit = 10;
     int verbosity = 0;
-    Dune::BiCGSTABSolver<Vector<bz> > solver(fop, prec, reduction, maxit, verbosity);
+    Dune::BiCGSTABSolver<Vector<bz>> solver(fop, prec, reduction, maxit, verbosity);
     solver.apply(x, rhs, result);
     return x;
 }
 
 template <int bz>
 void
-createBridge(const boost::property_tree::ptree& prm, std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >& bridge)
+createBridge(const boost::property_tree::ptree& prm,
+             std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>>& bridge)
 {
     const int linear_solver_verbosity = prm.get<int>("verbosity");
     const int maxit = prm.get<int>("maxiter");
@@ -104,14 +110,14 @@ createBridge(const boost::property_tree::ptree& prm, std::unique_ptr<Opm::GpuBri
     const std::string linsolver("ilu0");
 
     try {
-        bridge = std::make_unique<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >(accelerator_mode,
-                                                                               linear_solver_verbosity,
-                                                                               maxit,
-                                                                               tolerance,
-                                                                               platformID,
-                                                                               deviceID,
-                                                                               opencl_ilu_parallel,
-                                                                               linsolver);
+        bridge = std::make_unique<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>>(accelerator_mode,
+                                                                              linear_solver_verbosity,
+                                                                              maxit,
+                                                                              tolerance,
+                                                                              platformID,
+                                                                              deviceID,
+                                                                              opencl_ilu_parallel,
+                                                                              linsolver);
     } catch (const std::logic_error& error) {
         BOOST_WARN_MESSAGE(true, error.what());
         if (strstr(error.what(), "HIP Error: could not get device") != nullptr)
@@ -123,7 +129,9 @@ createBridge(const boost::property_tree::ptree& prm, std::unique_ptr<Opm::GpuBri
 
 template <int bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
-testRocsparseSolver(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >& bridge, Matrix<bz>& matrix, Vector<bz>& rhs)
+testRocsparseSolver(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>>& bridge,
+                    Matrix<bz>& matrix,
+                    Vector<bz>& rhs)
 {
     Dune::InverseOperatorResult result;
     Vector<bz> x(rhs.size());
@@ -138,7 +146,9 @@ testRocsparseSolver(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >
 
 template <int bz>
 Dune::BlockVector<Dune::FieldVector<double, bz>>
-testRocsparseSolverJacobi(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> >& bridge, Matrix<bz>& matrix, Vector<bz>& rhs)
+testRocsparseSolverJacobi(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>>& bridge,
+                          Matrix<bz>& matrix,
+                          Vector<bz>& rhs)
 {
     Dune::InverseOperatorResult result;
     Vector<bz> x(rhs.size());
@@ -155,7 +165,8 @@ testRocsparseSolverJacobi(std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>,
 
 namespace pt = boost::property_tree;
 
-void test3(const pt::ptree& prm)
+void
+test3(const pt::ptree& prm)
 {
     const int bz = 3;
     Matrix<bz> matrix;
@@ -169,7 +180,7 @@ void test3(const pt::ptree& prm)
     // if not present, no memory is allocated, and subsequent calls
     // with a jacobi matrix will cause nans
     {
-        std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> > bridge;
+        std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>> bridge;
         createBridge(prm, bridge); // create bridge with rocsparseSolver
 
         // test rocsparseSolver without Jacobi matrix
@@ -183,7 +194,7 @@ void test3(const pt::ptree& prm)
     }
 
     {
-        std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz> > bridge;
+        std::unique_ptr<Opm::GpuBridge<Matrix<bz>, Vector<bz>, bz>> bridge;
         createBridge(prm, bridge); // create bridge with rocsparseSolver
 
         // test rocsparseSolver with Jacobi matrix
@@ -211,7 +222,7 @@ BOOST_AUTO_TEST_CASE(TestRocsparseSolver)
     try {
         // Test with 3x3 block solvers.
         test3(prm);
-    } catch(const HIPInitException& ) {
+    } catch (const HIPInitException&) {
         BOOST_ERROR("Problem with initializing HIP.");
     }
 }

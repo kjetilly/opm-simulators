@@ -20,56 +20,142 @@
 #ifndef OPENCL_HPP
 #define OPENCL_HPP
 
-#include <string>
-#include <memory>
 #include <cstddef>
+#include <memory>
+#include <string>
 
 #include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
-using spmv_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         const cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>;
-using spmv_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         const cl::Buffer&, cl::Buffer&, cl::LocalSpaceArg>;
-using residual_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         cl::Buffer&, const cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>;
-using residual_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int,
-                                         cl::Buffer&, const cl::Buffer&, cl::Buffer&, cl::LocalSpaceArg>;
-using ilu_apply1_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, const cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int, cl::LocalSpaceArg>;
-using ilu_apply2_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int, cl::LocalSpaceArg>;
-using stdwell_apply_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                             cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                                             const unsigned int, const unsigned int, cl::Buffer&,
-                                                             cl::LocalSpaceArg, cl::LocalSpaceArg, cl::LocalSpaceArg>;
-using ilu_decomp_kernel_type = cl::KernelFunctor<const unsigned int, const unsigned int, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                               cl::Buffer&, cl::Buffer&, cl::Buffer&, const int, cl::LocalSpaceArg>;
-using isaiL_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>;
-using isaiU_kernel_type = cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&,
-                                  cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>;
+using spmv_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                                   cl::Buffer&,
+                                                   cl::Buffer&,
+                                                   const unsigned int,
+                                                   const cl::Buffer&,
+                                                   cl::Buffer&,
+                                                   const unsigned int,
+                                                   cl::LocalSpaceArg>;
+using spmv_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                           cl::Buffer&,
+                                           cl::Buffer&,
+                                           const unsigned int,
+                                           const cl::Buffer&,
+                                           cl::Buffer&,
+                                           cl::LocalSpaceArg>;
+using residual_blocked_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                                       cl::Buffer&,
+                                                       cl::Buffer&,
+                                                       const unsigned int,
+                                                       cl::Buffer&,
+                                                       const cl::Buffer&,
+                                                       cl::Buffer&,
+                                                       const unsigned int,
+                                                       cl::LocalSpaceArg>;
+using residual_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                               cl::Buffer&,
+                                               cl::Buffer&,
+                                               const unsigned int,
+                                               cl::Buffer&,
+                                               const cl::Buffer&,
+                                               cl::Buffer&,
+                                               cl::LocalSpaceArg>;
+using ilu_apply1_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 const cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 const unsigned int,
+                                                 const unsigned int,
+                                                 cl::LocalSpaceArg>;
+using ilu_apply2_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 const unsigned int,
+                                                 const unsigned int,
+                                                 cl::LocalSpaceArg>;
+using stdwell_apply_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    cl::Buffer&,
+                                                    const unsigned int,
+                                                    const unsigned int,
+                                                    cl::Buffer&,
+                                                    cl::LocalSpaceArg,
+                                                    cl::LocalSpaceArg,
+                                                    cl::LocalSpaceArg>;
+using ilu_decomp_kernel_type = cl::KernelFunctor<const unsigned int,
+                                                 const unsigned int,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 cl::Buffer&,
+                                                 const int,
+                                                 cl::LocalSpaceArg>;
+using isaiL_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            const unsigned int>;
+using isaiU_kernel_type = cl::KernelFunctor<cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            cl::Buffer&,
+                                            const unsigned int>;
 
-template<class Scalar>
+template <class Scalar>
 class OpenclKernels
 {
 private:
     static int verbosity;
-    static cl::CommandQueue *queue;
-    static std::vector<Scalar> tmp;     // used as tmp CPU buffer for dot() and norm()
+    static cl::CommandQueue* queue;
+    static std::vector<Scalar> tmp; // used as tmp CPU buffer for dot() and norm()
     static bool initialized;
     static std::size_t preferred_workgroup_size_multiple; // stores CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
 
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > dot_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg> > norm_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int> > axpy_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int> > scale_k;
-    static std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > vmul_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int> > custom_k;
-    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int> > full_to_pressure_restriction_k;
-    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int> > add_coarse_pressure_correction_k;
-    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int> > prolongate_vector_k;
+    static std::unique_ptr<
+        cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>>
+        dot_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, cl::LocalSpaceArg>> norm_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, cl::Buffer&, const unsigned int>> axpy_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, const Scalar, const unsigned int>> scale_k;
+    static std::unique_ptr<cl::KernelFunctor<const Scalar, cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>>
+        vmul_k;
+    static std::unique_ptr<
+        cl::KernelFunctor<cl::Buffer&, cl::Buffer&, cl::Buffer&, const Scalar, const Scalar, const unsigned int>>
+        custom_k;
+    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, cl::Buffer&, const unsigned int>>
+        full_to_pressure_restriction_k;
+    static std::unique_ptr<cl::KernelFunctor<cl::Buffer&, cl::Buffer&, const unsigned int, const unsigned int>>
+        add_coarse_pressure_correction_k;
+    static std::unique_ptr<cl::KernelFunctor<const cl::Buffer&, cl::Buffer&, const cl::Buffer&, const unsigned int>>
+        prolongate_vector_k;
     static std::unique_ptr<spmv_blocked_kernel_type> spmv_blocked_k;
     static std::unique_ptr<spmv_blocked_kernel_type> spmv_blocked_add_k;
     static std::unique_ptr<spmv_kernel_type> spmv_k;
@@ -83,7 +169,7 @@ private:
     static std::unique_ptr<isaiL_kernel_type> isaiL_k;
     static std::unique_ptr<isaiU_kernel_type> isaiU_k;
 
-    OpenclKernels(){}; // disable instantiation
+    OpenclKernels() { }; // disable instantiation
 
 public:
     static const std::string axpy_str;
@@ -113,7 +199,7 @@ public:
     static const std::string isaiL_str;
     static const std::string isaiU_str;
 
-    static void init(cl::Context *context, cl::CommandQueue *queue, std::vector<cl::Device>& devices, int verbosity);
+    static void init(cl::Context* context, cl::CommandQueue* queue, std::vector<cl::Device>& devices, int verbosity);
 
     static Scalar dot(cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N);
     static Scalar norm(cl::Buffer& in, cl::Buffer& out, int N);
@@ -121,64 +207,154 @@ public:
     static void scale(cl::Buffer& in, const Scalar a, int N);
     static void vmul(const Scalar alpha, cl::Buffer& in1, cl::Buffer& in2, cl::Buffer& out, int N);
     static void custom(cl::Buffer& p, cl::Buffer& v, cl::Buffer& r, const Scalar omega, const Scalar beta, int N);
-    static void full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, int Nb);
+    static void
+    full_to_pressure_restriction(const cl::Buffer& fine_y, cl::Buffer& weights, cl::Buffer& coarse_y, int Nb);
     static void add_coarse_pressure_correction(cl::Buffer& coarse_x, cl::Buffer& fine_x, int pressure_idx, int Nb);
     static void prolongate_vector(const cl::Buffer& in, cl::Buffer& out, const cl::Buffer& cols, int N);
-    static void spmv(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, const cl::Buffer& x, cl::Buffer& b, int Nb, unsigned int block_size, bool reset = true, bool add = false);
-    static void residual(cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& x, const cl::Buffer& rhs, cl::Buffer& out, int Nb, unsigned int block_size);
+    static void spmv(cl::Buffer& vals,
+                     cl::Buffer& cols,
+                     cl::Buffer& rows,
+                     const cl::Buffer& x,
+                     cl::Buffer& b,
+                     int Nb,
+                     unsigned int block_size,
+                     bool reset = true,
+                     bool add = false);
+    static void residual(cl::Buffer& vals,
+                         cl::Buffer& cols,
+                         cl::Buffer& rows,
+                         cl::Buffer& x,
+                         const cl::Buffer& rhs,
+                         cl::Buffer& out,
+                         int Nb,
+                         unsigned int block_size);
 
-    static void ILU_apply1(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& diagIndex,
-        const cl::Buffer& y, cl::Buffer& x, cl::Buffer& rowsPerColor, int color, int Nb, unsigned int block_size);
+    static void ILU_apply1(cl::Buffer& rowIndices,
+                           cl::Buffer& vals,
+                           cl::Buffer& cols,
+                           cl::Buffer& rows,
+                           cl::Buffer& diagIndex,
+                           const cl::Buffer& y,
+                           cl::Buffer& x,
+                           cl::Buffer& rowsPerColor,
+                           int color,
+                           int Nb,
+                           unsigned int block_size);
 
-    static void ILU_apply2(cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows, cl::Buffer& diagIndex,
-        cl::Buffer& invDiagVals, cl::Buffer& x, cl::Buffer& rowsPerColor, int color, int Nb, unsigned int block_size);
+    static void ILU_apply2(cl::Buffer& rowIndices,
+                           cl::Buffer& vals,
+                           cl::Buffer& cols,
+                           cl::Buffer& rows,
+                           cl::Buffer& diagIndex,
+                           cl::Buffer& invDiagVals,
+                           cl::Buffer& x,
+                           cl::Buffer& rowsPerColor,
+                           int color,
+                           int Nb,
+                           unsigned int block_size);
 
-    static void ILU_decomp(int firstRow, int lastRow, cl::Buffer& rowIndices, cl::Buffer& vals, cl::Buffer& cols, cl::Buffer& rows,
-        cl::Buffer& diagIndex, cl::Buffer& invDiagVals, int Nb, unsigned int block_size);
+    static void ILU_decomp(int firstRow,
+                           int lastRow,
+                           cl::Buffer& rowIndices,
+                           cl::Buffer& vals,
+                           cl::Buffer& cols,
+                           cl::Buffer& rows,
+                           cl::Buffer& diagIndex,
+                           cl::Buffer& invDiagVals,
+                           int Nb,
+                           unsigned int block_size);
 
-    static void apply_stdwells(cl::Buffer& d_Cnnzs_ocl, cl::Buffer &d_Dnnzs_ocl, cl::Buffer &d_Bnnzs_ocl,
-        cl::Buffer &d_Ccols_ocl, cl::Buffer &d_Bcols_ocl, cl::Buffer &d_x, cl::Buffer &d_y,
-        int dim, int dim_wells, cl::Buffer &d_val_pointers_ocl, int num_std_wells);
+    static void apply_stdwells(cl::Buffer& d_Cnnzs_ocl,
+                               cl::Buffer& d_Dnnzs_ocl,
+                               cl::Buffer& d_Bnnzs_ocl,
+                               cl::Buffer& d_Ccols_ocl,
+                               cl::Buffer& d_Bcols_ocl,
+                               cl::Buffer& d_x,
+                               cl::Buffer& d_y,
+                               int dim,
+                               int dim_wells,
+                               cl::Buffer& d_val_pointers_ocl,
+                               int num_std_wells);
 
-    static void isaiL(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& mapping, cl::Buffer& nvc,
-            cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals, cl::Buffer& invLvals, unsigned int Nb);
+    static void isaiL(cl::Buffer& diagIndex,
+                      cl::Buffer& colPointers,
+                      cl::Buffer& mapping,
+                      cl::Buffer& nvc,
+                      cl::Buffer& luIdxs,
+                      cl::Buffer& xxIdxs,
+                      cl::Buffer& dxIdxs,
+                      cl::Buffer& LUvals,
+                      cl::Buffer& invLvals,
+                      unsigned int Nb);
 
-    static void isaiU(cl::Buffer& diagIndex, cl::Buffer& colPointers, cl::Buffer& rowIndices, cl::Buffer& mapping,
-            cl::Buffer& nvc, cl::Buffer& luIdxs, cl::Buffer& xxIdxs, cl::Buffer& dxIdxs, cl::Buffer& LUvals,
-            cl::Buffer& invDiagVals, cl::Buffer& invUvals, unsigned int Nb);
+    static void isaiU(cl::Buffer& diagIndex,
+                      cl::Buffer& colPointers,
+                      cl::Buffer& rowIndices,
+                      cl::Buffer& mapping,
+                      cl::Buffer& nvc,
+                      cl::Buffer& luIdxs,
+                      cl::Buffer& xxIdxs,
+                      cl::Buffer& dxIdxs,
+                      cl::Buffer& LUvals,
+                      cl::Buffer& invDiagVals,
+                      cl::Buffer& invUvals,
+                      unsigned int Nb);
 };
 
 #if CHOW_PATEL
-#define DECLARE_ILU(T)                                             \
-    template<> const std::string OpenclKernels<T>::ILU_apply1_str; \
-    template<> const std::string OpenclKernels<T>::ILU_apply2_str;
+#define DECLARE_ILU(T)                                                                                                 \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::ILU_apply1_str;                                                                \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::ILU_apply2_str;
 #else
-#define DECLARE_ILU(T)                                                \
-    template<> const std::string OpenclKernels<T>::ILU_apply1_fm_str; \
-    template<> const std::string OpenclKernels<T>::ILU_apply2_fm_str;
+#define DECLARE_ILU(T)                                                                                                 \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::ILU_apply1_fm_str;                                                             \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::ILU_apply2_fm_str;
 #endif
 
-#define DECLARE_INSTANCE(T)                                                            \
-    DECLARE_ILU(T)                                                                     \
-    template<> const std::string OpenclKernels<T>::axpy_str;                           \
-    template<> const std::string OpenclKernels<T>::scale_str;                          \
-    template<> const std::string OpenclKernels<T>::vmul_str;                           \
-    template<> const std::string OpenclKernels<T>::dot_1_str;                          \
-    template<> const std::string OpenclKernels<T>::norm_str;                           \
-    template<> const std::string OpenclKernels<T>::custom_str;                         \
-    template<> const std::string OpenclKernels<T>::full_to_pressure_restriction_str;   \
-    template<> const std::string OpenclKernels<T>::add_coarse_pressure_correction_str; \
-    template<> const std::string OpenclKernels<T>::prolongate_vector_str;              \
-    template<> const std::string OpenclKernels<T>::spmv_blocked_str;                   \
-    template<> const std::string OpenclKernels<T>::spmv_blocked_add_str;               \
-    template<> const std::string OpenclKernels<T>::spmv_str;                           \
-    template<> const std::string OpenclKernels<T>::spmv_noreset_str;                   \
-    template<> const std::string OpenclKernels<T>::residual_blocked_str;               \
-    template<> const std::string OpenclKernels<T>::residual_str;                       \
-    template<> const std::string OpenclKernels<T>::stdwell_apply_str;                  \
-    template<> const std::string OpenclKernels<T>::ILU_decomp_str;                     \
-    template<> const std::string OpenclKernels<T>::isaiL_str;                          \
-    template<> const std::string OpenclKernels<T>::isaiU_str;
+#define DECLARE_INSTANCE(T)                                                                                            \
+    DECLARE_ILU(T)                                                                                                     \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::axpy_str;                                                                      \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::scale_str;                                                                     \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::vmul_str;                                                                      \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::dot_1_str;                                                                     \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::norm_str;                                                                      \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::custom_str;                                                                    \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::full_to_pressure_restriction_str;                                              \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::add_coarse_pressure_correction_str;                                            \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::prolongate_vector_str;                                                         \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::spmv_blocked_str;                                                              \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::spmv_blocked_add_str;                                                          \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::spmv_str;                                                                      \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::spmv_noreset_str;                                                              \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::residual_blocked_str;                                                          \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::residual_str;                                                                  \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::stdwell_apply_str;                                                             \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::ILU_decomp_str;                                                                \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::isaiL_str;                                                                     \
+    template <>                                                                                                        \
+    const std::string OpenclKernels<T>::isaiU_str;
 
 DECLARE_INSTANCE(double)
 

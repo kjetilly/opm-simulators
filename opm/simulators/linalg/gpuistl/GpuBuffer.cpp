@@ -47,8 +47,7 @@ template <class T>
 GpuBuffer<T>::GpuBuffer(const T* dataOnHost, const size_t numberOfElements)
     : GpuBuffer(numberOfElements)
 {
-    OPM_GPU_SAFE_CALL(cudaMemcpy(
-        m_dataOnDevice, dataOnHost, m_numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
+    OPM_GPU_SAFE_CALL(cudaMemcpy(m_dataOnDevice, dataOnHost, m_numberOfElements * sizeof(T), cudaMemcpyHostToDevice));
 }
 
 template <class T>
@@ -59,10 +58,8 @@ GpuBuffer<T>::GpuBuffer(const GpuBuffer<T>& other)
     if (m_numberOfElements == 0) {
         return;
     }
-    OPM_GPU_SAFE_CALL(cudaMemcpy(m_dataOnDevice,
-                                  other.m_dataOnDevice,
-                                  m_numberOfElements * sizeof(T),
-                                  cudaMemcpyDeviceToDevice));
+    OPM_GPU_SAFE_CALL(
+        cudaMemcpy(m_dataOnDevice, other.m_dataOnDevice, m_numberOfElements * sizeof(T), cudaMemcpyDeviceToDevice));
 }
 
 template <class T>
@@ -89,18 +86,14 @@ GpuBuffer<T>::resize(size_t newSize)
     if (m_numberOfElements == 0) {
         // We have no data, so we can just allocate new memory
         OPM_GPU_SAFE_CALL(cudaMalloc(&m_dataOnDevice, sizeof(T) * newSize));
-    }
-    else {
+    } else {
         // Allocate memory for temporary buffer
         T* tmpBuffer = nullptr;
         OPM_GPU_SAFE_CALL(cudaMalloc(&tmpBuffer, sizeof(T) * m_numberOfElements));
 
         // Move the data from the old to the new buffer with truncation
         size_t sizeOfMove = std::min({m_numberOfElements, newSize});
-        OPM_GPU_SAFE_CALL(cudaMemcpy(tmpBuffer,
-                                    m_dataOnDevice,
-                                    sizeOfMove * sizeof(T),
-                                    cudaMemcpyDeviceToDevice));
+        OPM_GPU_SAFE_CALL(cudaMemcpy(tmpBuffer, m_dataOnDevice, sizeOfMove * sizeof(T), cudaMemcpyDeviceToDevice));
 
         // free the old buffer
         OPM_GPU_SAFE_CALL(cudaFree(m_dataOnDevice));
@@ -208,7 +201,9 @@ template class GpuBuffer<std::array<double, 9>>;
 template class GpuBuffer<std::array<float, 9>>;
 
 template <class T>
-GpuView<T> make_view(GpuBuffer<T>& buf) {
+GpuView<T>
+make_view(GpuBuffer<T>& buf)
+{
     return GpuView<T>(buf.data(), buf.size());
 }
 
@@ -221,7 +216,9 @@ template GpuView<std::array<double, 9>> make_view(GpuBuffer<std::array<double, 9
 template GpuView<std::array<float, 9>> make_view(GpuBuffer<std::array<float, 9>>&);
 
 template <class T>
-GpuView<const T> make_view(const GpuBuffer<T>& buf) {
+GpuView<const T>
+make_view(const GpuBuffer<T>& buf)
+{
     return GpuView<const T>(buf.data(), buf.size());
 }
 

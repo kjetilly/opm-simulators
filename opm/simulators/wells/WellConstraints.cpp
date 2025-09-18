@@ -31,20 +31,23 @@
 #include <opm/simulators/wells/SingleWellState.hpp>
 #include <opm/simulators/wells/WellInterfaceGeneric.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename Scalar, typename IndexTraits>
-bool WellConstraints<Scalar, IndexTraits>::
-checkIndividualConstraints(SingleWellState<Scalar, IndexTraits>& ws,
-                           const SummaryState& summaryState,
-                           const RateConvFunc& calcReservoirVoidageRates,
-                           bool& thp_limit_violated_but_not_switched,
-                           DeferredLogger& deferred_logger,
-                           const std::optional<Well::InjectionControls>& inj_controls,
-                           const std::optional<Well::ProductionControls>& prod_controls) const
+template <typename Scalar, typename IndexTraits>
+bool
+WellConstraints<Scalar, IndexTraits>::checkIndividualConstraints(
+    SingleWellState<Scalar, IndexTraits>& ws,
+    const SummaryState& summaryState,
+    const RateConvFunc& calcReservoirVoidageRates,
+    bool& thp_limit_violated_but_not_switched,
+    DeferredLogger& deferred_logger,
+    const std::optional<Well::InjectionControls>& inj_controls,
+    const std::optional<Well::ProductionControls>& prod_controls) const
 {
     if (well_.isProducer()) {
-        auto new_cmode = this->activeProductionConstraint(ws, summaryState,
+        auto new_cmode = this->activeProductionConstraint(ws,
+                                                          summaryState,
                                                           calcReservoirVoidageRates,
                                                           thp_limit_violated_but_not_switched,
                                                           deferred_logger,
@@ -56,10 +59,8 @@ checkIndividualConstraints(SingleWellState<Scalar, IndexTraits>& ws,
     }
 
     if (well_.isInjector()) {
-        auto new_cmode = this->activeInjectionConstraint(ws, summaryState,
-                                                        thp_limit_violated_but_not_switched,
-                                                        deferred_logger,
-                                                        inj_controls);
+        auto new_cmode = this->activeInjectionConstraint(
+            ws, summaryState, thp_limit_violated_but_not_switched, deferred_logger, inj_controls);
         if (new_cmode != ws.injection_cmode) {
             ws.injection_cmode = new_cmode;
             return true;
@@ -69,48 +70,44 @@ checkIndividualConstraints(SingleWellState<Scalar, IndexTraits>& ws,
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Well::InjectorCMode
-WellConstraints<Scalar, IndexTraits>::
-activeInjectionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
-                          const SummaryState& summaryState,
-                          bool& thp_limit_violated_but_not_switched,
-                          DeferredLogger& deferred_logger,
-                          const std::optional<Well::InjectionControls>& inj_controls) const
+WellConstraints<Scalar, IndexTraits>::activeInjectionConstraint(
+    const SingleWellState<Scalar, IndexTraits>& ws,
+    const SummaryState& summaryState,
+    bool& thp_limit_violated_but_not_switched,
+    DeferredLogger& deferred_logger,
+    const std::optional<Well::InjectionControls>& inj_controls) const
 {
     const auto& pu = well_.phaseUsage();
 
-    const auto controls =  inj_controls.has_value() ? inj_controls.value() : well_.wellEcl().injectionControls(summaryState);
+    const auto controls
+        = inj_controls.has_value() ? inj_controls.value() : well_.wellEcl().injectionControls(summaryState);
     const auto currentControl = ws.injection_cmode;
 
-    if (controls.hasControl(Well::InjectorCMode::BHP) && currentControl != Well::InjectorCMode::BHP)
-    {
+    if (controls.hasControl(Well::InjectorCMode::BHP) && currentControl != Well::InjectorCMode::BHP) {
         const auto& bhp = controls.bhp_limit;
         Scalar current_bhp = ws.bhp;
         if (bhp < current_bhp)
             return Well::InjectorCMode::BHP;
     }
 
-    if (controls.hasControl(Well::InjectorCMode::RATE) && currentControl != Well::InjectorCMode::RATE)
-    {
+    if (controls.hasControl(Well::InjectorCMode::RATE) && currentControl != Well::InjectorCMode::RATE) {
         InjectorType injectorType = controls.injector_type;
         Scalar current_rate = 0.0;
 
         switch (injectorType) {
-        case InjectorType::WATER:
-        {
+        case InjectorType::WATER: {
             const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
             current_rate = ws.surface_rates[water_pos];
             break;
         }
-        case InjectorType::OIL:
-        {
+        case InjectorType::OIL: {
             const int oil_pos = pu.canonicalToActivePhaseIdx(IndexTraits::oilPhaseIdx);
             current_rate = ws.surface_rates[oil_pos];
             break;
         }
-        case InjectorType::GAS:
-        {
+        case InjectorType::GAS: {
             const int gas_pos = pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx);
             current_rate = ws.surface_rates[gas_pos];
             break;
@@ -123,8 +120,7 @@ activeInjectionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
             return Well::InjectorCMode::RATE;
     }
 
-    if (controls.hasControl(Well::InjectorCMode::RESV) && currentControl != Well::InjectorCMode::RESV)
-    {
+    if (controls.hasControl(Well::InjectorCMode::RESV) && currentControl != Well::InjectorCMode::RESV) {
         Scalar current_rate = 0.0;
         if (pu.phaseIsActive(IndexTraits::waterPhaseIdx)) {
             const int water_pos = pu.canonicalToActivePhaseIdx(IndexTraits::waterPhaseIdx);
@@ -148,8 +144,7 @@ activeInjectionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
     // Note: we are not working on injecting network yet, so it is possible we need to change the following line
     // to be as follows to incorporate the injecting network nodal pressure
     // if (well_.wellHasTHPConstraints(summaryState) && currentControl != Well::InjectorCMode::THP)
-    if (controls.hasControl(Well::InjectorCMode::THP) && currentControl != Well::InjectorCMode::THP)
-    {
+    if (controls.hasControl(Well::InjectorCMode::THP) && currentControl != Well::InjectorCMode::THP) {
         const auto& thp = well_.getTHPConstraint(summaryState);
         Scalar current_thp = ws.thp;
         if (thp < current_thp) {
@@ -166,10 +161,10 @@ activeInjectionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
             } else {
                 thp_limit_violated_but_not_switched = true;
                 deferred_logger.debug("NOT_SWITCHING_TO_THP",
-                "The THP limit is violated for injector " +
-                well_.name() +
-                ". But the rate will increase if switched to THP. " +
-                "The well is therefore kept at " + WellInjectorCMode2String(currentControl));
+                                      "The THP limit is violated for injector " + well_.name()
+                                          + ". But the rate will increase if switched to THP. "
+                                          + "The well is therefore kept at "
+                                          + WellInjectorCMode2String(currentControl));
             }
         }
     }
@@ -177,18 +172,19 @@ activeInjectionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
     return currentControl;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 Well::ProducerCMode
-WellConstraints<Scalar, IndexTraits>::
-activeProductionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
-                           const SummaryState& summaryState,
-                           const RateConvFunc& calcReservoirVoidageRates,
-                           bool& thp_limit_violated_but_not_switched,
-                           DeferredLogger& deferred_logger,
-                           const std::optional<Well::ProductionControls>& prod_controls) const
+WellConstraints<Scalar, IndexTraits>::activeProductionConstraint(
+    const SingleWellState<Scalar, IndexTraits>& ws,
+    const SummaryState& summaryState,
+    const RateConvFunc& calcReservoirVoidageRates,
+    bool& thp_limit_violated_but_not_switched,
+    DeferredLogger& deferred_logger,
+    const std::optional<Well::ProductionControls>& prod_controls) const
 {
     const auto& pu = well_.phaseUsage();
-    const auto controls = prod_controls.has_value() ? prod_controls.value() : well_.wellEcl().productionControls(summaryState);
+    const auto controls
+        = prod_controls.has_value() ? prod_controls.value() : well_.wellEcl().productionControls(summaryState);
     const auto currentControl = ws.production_cmode;
 
     if (controls.hasControl(Well::ProducerCMode::BHP) && currentControl != Well::ProducerCMode::BHP) {
@@ -230,7 +226,10 @@ activeProductionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
             const Scalar current_water_rate = ws.surface_rates[water_pos];
             if (std::abs(current_water_rate) < 1e-12) {
                 skip = true;
-                deferred_logger.debug("LRAT_ORAT_WELL", "Well " + well_.name() + " The LRAT target is equal the ORAT target and the water rate is zero, skip checking LRAT");
+                deferred_logger.debug(
+                    "LRAT_ORAT_WELL",
+                    "Well " + well_.name()
+                        + " The LRAT target is equal the ORAT target and the water rate is zero, skip checking LRAT");
             }
         }
         if (!skip && controls.liquid_rate < current_rate)
@@ -295,7 +294,8 @@ activeProductionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
                     // Currently we use the well potentials here computed before the iterations.
                     // We may need to recompute the well potentials to get a more
                     // accurate check here.
-                    rate_less_than_potential = rate_less_than_potential && (-ws.surface_rates[p]) <= ws.well_potentials[p];
+                    rate_less_than_potential
+                        = rate_less_than_potential && (-ws.surface_rates[p]) <= ws.well_potentials[p];
                 }
             }
             if (!wvfpexp.prevent() || !rate_less_than_potential) {
@@ -304,10 +304,9 @@ activeProductionConstraint(const SingleWellState<Scalar, IndexTraits>& ws,
             } else {
                 thp_limit_violated_but_not_switched = true;
                 deferred_logger.info("NOT_SWITCHING_TO_THP",
-                "The THP limit is violated for producer " +
-                well_.name() +
-                ". But the rate will increase if switched to THP. " +
-                "The well is therefore kept at " + WellProducerCMode2String(currentControl));
+                                     "The THP limit is violated for producer " + well_.name()
+                                         + ". But the rate will increase if switched to THP. "
+                                         + "The well is therefore kept at " + WellProducerCMode2String(currentControl));
             }
         }
     }

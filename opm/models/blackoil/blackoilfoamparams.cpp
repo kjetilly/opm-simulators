@@ -33,13 +33,14 @@
 #include <cstddef>
 #include <stdexcept>
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableFoam>
-void BlackOilFoamParams<Scalar>::
-initFromState(const EclipseState& eclState)
+template <class Scalar>
+template <bool enableFoam>
+void
+BlackOilFoamParams<Scalar>::initFromState(const EclipseState& eclState)
 {
     // some sanity checks: if foam is enabled, the FOAM keyword must be
     // present, if foam is disabled the keyword must not be present.
@@ -48,8 +49,7 @@ initFromState(const EclipseState& eclState)
             throw std::runtime_error("Non-trivial foam treatment requested at compile time, but "
                                      "the deck does not contain the FOAM keyword");
         }
-    }
-    else {
+    } else {
         if (eclState.runspec().phases().active(Phase::FOAM)) {
             throw std::runtime_error("Foam treatment disabled at compile time, but the deck "
                                      "contains the FOAM keyword");
@@ -127,8 +127,9 @@ initFromState(const EclipseState& eclState)
 }
 #endif
 
-template<class Scalar>
-void BlackOilFoamParams<Scalar>::setNumSatRegions(unsigned numRegions)
+template <class Scalar>
+void
+BlackOilFoamParams<Scalar>::setNumSatRegions(unsigned numRegions)
 {
     foamCoefficients_.resize(numRegions);
     foamRockDensity_.resize(numRegions);
@@ -136,9 +137,9 @@ void BlackOilFoamParams<Scalar>::setNumSatRegions(unsigned numRegions)
     adsorbedFoamTable_.resize(numRegions);
 }
 
-#define INSTANTIATE_TYPE(T)                                                         \
-    template struct BlackOilFoamParams<T>;                                          \
-    template void BlackOilFoamParams<T>::initFromState<false>(const EclipseState&); \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilFoamParams<T>;                                                                             \
+    template void BlackOilFoamParams<T>::initFromState<false>(const EclipseState&);                                    \
     template void BlackOilFoamParams<T>::initFromState<true>(const EclipseState&);
 
 INSTANTIATE_TYPE(double)

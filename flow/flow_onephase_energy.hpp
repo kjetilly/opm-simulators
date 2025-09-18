@@ -22,7 +22,8 @@
 #ifndef FLOW_ONEPHASE_ENERGY_HPP
 #define FLOW_ONEPHASE_ENERGY_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main functon used in main flow binary.
 int flowWaterOnlyEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -30,6 +31,6 @@ int flowWaterOnlyEnergyMain(int argc, char** argv, bool outputCout, bool outputF
 //! \brief Main function used in flow_onephase_energy binary.
 int flowWaterOnlyEnergyMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif

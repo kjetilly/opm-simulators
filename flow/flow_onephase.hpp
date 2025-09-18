@@ -22,13 +22,14 @@
 #ifndef FLOW_ONEPHASE_HPP
 #define FLOW_ONEPHASE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main functon used in main flow binary.
 int flowWaterOnlyMain(int argc, char** argv, bool outputCout, bool outputFiles);
 
 //! \brief Main function used in flow_onephase binary.
 int flowWaterOnlyMainStandalone(int argc, char** argv);
-}
+} // namespace Opm
 
 #endif

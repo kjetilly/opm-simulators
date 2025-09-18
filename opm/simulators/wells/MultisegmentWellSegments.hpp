@@ -28,22 +28,26 @@
 #include <cstddef>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-    class  AutoICD;
-    template<class Scalar> class SegmentState;
-    class  UnitSystem;
-    template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
-    class  SummaryState;
+class AutoICD;
+template <class Scalar>
+class SegmentState;
+class UnitSystem;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
+class SummaryState;
 
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
-template<typename FluidSystem, typename Indices>
+template <typename FluidSystem, typename Indices>
 class MultisegmentWellSegments
 {
-    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem,Indices>;
+    using PrimaryVariables = MultisegmentWellPrimaryVariables<FluidSystem, Indices>;
     using Scalar = typename FluidSystem::Scalar;
     using EvalWell = typename PrimaryVariables::EvalWell;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
@@ -62,12 +66,10 @@ public:
     //! \brief Update upwinding segments.
     void updateUpwindingSegments(const PrimaryVariables& primary_variables);
 
-    EvalWell getHydroPressureLoss(const int seg,
-                                  const int seg_side) const;
+    EvalWell getHydroPressureLoss(const int seg, const int seg_side) const;
 
     //! Pressure difference between segment and perforation.
-    Scalar getPressureDiffSegLocalPerf(const int seg,
-                                       const int local_perf_index) const;
+    Scalar getPressureDiffSegLocalPerf(const int seg, const int local_perf_index) const;
 
     EvalWell getSurfaceVolume(const EvalWell& temperature,
                               const EvalWell& saltConcentration,
@@ -75,12 +77,10 @@ public:
                               const int pvt_region_index,
                               const int seg_idx) const;
 
-    EvalWell getFrictionPressureLoss(const int seg, 
-                                     const bool extra_reverse_flow_derivatives = false) const;
+    EvalWell getFrictionPressureLoss(const int seg, const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for Spiral ICD segment (WSEGSICD)
-    EvalWell pressureDropSpiralICD(const int seg,
-                                   const bool extra_reverse_flow_derivatives = false) const;
+    EvalWell pressureDropSpiralICD(const int seg, const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for Autonomous ICD segment (WSEGAICD)
     EvalWell pressureDropAutoICD(const int seg,
@@ -88,9 +88,8 @@ public:
                                  const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure drop for sub-critical valve (WSEGVALV)
-    EvalWell pressureDropValve(const int seg, 
-                               const SummaryState& st,
-                               const bool extra_reverse_flow_derivatives = false) const;
+    EvalWell
+    pressureDropValve(const int seg, const SummaryState& st, const bool extra_reverse_flow_derivatives = false) const;
 
     // pressure loss contribution due to acceleration
     EvalWell accelerationPressureLossContribution(const int seg,
@@ -178,9 +177,7 @@ private:
 
     WellInterfaceGeneric<Scalar, IndexTraits>& well_;
 
-    void copyPhaseDensities(const unsigned    phaseIdx,
-                            const std::size_t stride,
-                            Scalar*           dens) const;
+    void copyPhaseDensities(const unsigned phaseIdx, const std::size_t stride, Scalar* dens) const;
 
     Scalar mixtureDensity(const int seg) const;
     Scalar mixtureDensityWithExponents(const int seg) const;

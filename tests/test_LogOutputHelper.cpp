@@ -44,11 +44,13 @@
 #include <sstream>
 #include <string>
 
-namespace {
+namespace
+{
 
-    Opm::Deck deck()
-    {
-        return Opm::Parser{}.parseString(R"(RUNSPEC
+Opm::Deck
+deck()
+{
+    return Opm::Parser {}.parseString(R"(RUNSPEC
 OIL
 GAS
 WATER
@@ -94,11 +96,12 @@ WCONINJE
 /
 END
 )");
-    }
+}
 
-    Opm::Deck mswDeck()
-    {
-        return Opm::Parser{}.parseString(R"(RUNSPEC
+Opm::Deck
+mswDeck()
+{
+    return Opm::Parser {}.parseString(R"(RUNSPEC
 OIL
 GAS
 WATER
@@ -139,53 +142,56 @@ COMPSEGS
 /
 END
 )");
+}
+
+std::string
+trimStream(std::stringstream& str)
+{
+    std::string data;
+
+    std::array<char, 1024> buffer {};
+    do {
+        str.getline(buffer.data(), buffer.size(), '\n');
+
+        const auto tmp = std::string {buffer.data()};
+        if (!tmp.empty()) {
+            data += Opm::trim_copy(tmp);
+            data += '\n';
+        }
+    } while (!str.eof());
+
+    return data;
+}
+
+template <int type, bool msw = false>
+struct LogFixture {
+    LogFixture()
+        : LogFixture {msw ? mswDeck() : deck()}
+    {
     }
 
-    std::string trimStream(std::stringstream& str)
+    explicit LogFixture(const Opm::Deck& deck)
+        : eclState {deck}
+        , schedule {deck, eclState}
     {
-        std::string data;
-
-        std::array<char, 1024> buffer{};
-        do {
-            str.getline(buffer.data(), buffer.size(), '\n');
-
-            const auto tmp = std::string { buffer.data() };
-            if (!tmp.empty()) {
-                data += Opm::trim_copy(tmp);
-                data += '\n';
-            }
-        } while (!str.eof());
-
-        return data;
+        Opm::OpmLog::addBackend("stream", std::make_shared<Opm::StreamLog>(str, type));
     }
 
-    template <int type, bool msw = false>
-    struct LogFixture
+    ~LogFixture()
     {
-        LogFixture() : LogFixture { msw ? mswDeck() : deck() } {}
+        Opm::OpmLog::removeBackend("stream");
+    }
 
-        explicit LogFixture(const Opm::Deck& deck)
-            : eclState { deck }
-            , schedule { deck, eclState }
-        {
-            Opm::OpmLog::addBackend("stream", std::make_shared<Opm::StreamLog>(str, type));
-        }
+    Opm::EclipseState eclState {};
+    Opm::Schedule schedule {};
+    Opm::SummaryState st {};
 
-        ~LogFixture()
-        {
-            Opm::OpmLog::removeBackend("stream");
-        }
+    std::stringstream str;
+};
 
-        Opm::EclipseState eclState{};
-        Opm::Schedule schedule{};
-        Opm::SummaryState st{};
-
-        std::stringstream str;
-    };
-
-    using LogNoteFixture = LogFixture<Opm::Log::MessageType::Note>;
-    using LogNoteFixtureMSW = LogFixture<Opm::Log::MessageType::Note, true>;
-    using LogWarningFixture = LogFixture<Opm::Log::MessageType::Warning>;
+using LogNoteFixture = LogFixture<Opm::Log::MessageType::Note>;
+using LogNoteFixtureMSW = LogFixture<Opm::Log::MessageType::Note, true>;
+using LogWarningFixture = LogFixture<Opm::Log::MessageType::Warning>;
 
 } // Anonymous namespace
 
@@ -202,8 +208,7 @@ BOOST_FIXTURE_TEST_CASE(Cumulative, LogNoteFixture)
 :PROD    : 10, 10    :    PROD:ORAT:       16.0:       17.0:       18.0:       19.0:       20.0:       21.0:       22.0:       23.0:
 :INJ     :  1,  1    :     INJ:GRAT:       24.0:       25.0:       26.0:       27.0:       28.0:       29.0:       30.0:       31.0:
 :--------:-----------:--------:----:-----------:-----------:-----------:-----------:-----------:-----------:-----------:-----------:
-)"
-    };
+)"};
 
     // Note: Cumulative gas values--e.g., FGPT--multiplied by an additional
     // factor of 1000, for a total multiplicative factor of one million, in
@@ -217,7 +222,7 @@ BOOST_FIXTURE_TEST_CASE(Cumulative, LogNoteFixture)
     st.set("FGIT", 7.0e6);
     st.set("FVIT", 8.0e3);
 
-    st.update_group_var("G1", "GOPT",  9.0e3);
+    st.update_group_var("G1", "GOPT", 9.0e3);
     st.update_group_var("G1", "GWPT", 10.0e3);
     st.update_group_var("G1", "GGPT", 11.0e6);
     st.update_group_var("G1", "GVPT", 12.0e3);
@@ -266,8 +271,7 @@ BOOST_FIXTURE_TEST_CASE(CumulativeW2, LogNoteFixture)
 :INJ     :  1,  1    :     INJ:GRAT:       24.0:       25.0:       26.0:       27.0:       28.0:       29.0:       30.0:       31.0:
 :  BLOCK :  1,  1,  1:        :    :       32.0:       33.0:       34.0:       35.0:       36.0:       37.0:       38.0:       39.0:
 :--------:-----------:--------:----:-----------:-----------:-----------:-----------:-----------:-----------:-----------:-----------:
-)"
-    };
+)"};
 
     // Note: Cumulative gas values--e.g., FGPT--multiplied by an additional
     // factor of 1000, for a total multiplicative factor of one million, in
@@ -281,7 +285,7 @@ BOOST_FIXTURE_TEST_CASE(CumulativeW2, LogNoteFixture)
     st.set("FGIT", 7.0e6);
     st.set("FVIT", 8.0e3);
 
-    st.update_group_var("G1", "GOPT",  9.0e3);
+    st.update_group_var("G1", "GOPT", 9.0e3);
     st.update_group_var("G1", "GWPT", 10.0e3);
     st.update_group_var("G1", "GGPT", 11.0e6);
     st.update_group_var("G1", "GVPT", 12.0e3);
@@ -338,13 +342,12 @@ BOOST_FIXTURE_TEST_CASE(Error, LogWarningFixture)
     const auto reference = std::string {
         R"(Finding the bubble point pressure failed for 3 cells [(2,1,1), (1,3,1), (1,4,1)]
 Finding the dew point pressure failed for 3 cells [(5,1,1), (6,1,1), (7,1,1)]
-)"
-    };
+)"};
 
     Opm::LogOutputHelper<double> helper(eclState, schedule, st, "dummy version");
 
     str.str(""); // clear out parser errors
-    helper.error({1,20,30}, {4,5,6});
+    helper.error({1, 20, 30}, {4, 5, 6});
 
     const auto data = trimStream(str);
     BOOST_CHECK_EQUAL(data, reference);
@@ -384,8 +387,7 @@ BOOST_FIXTURE_TEST_CASE(Fip, LogNoteFixture)
  ====================================================================================================================================
 
 
-)"
-    };
+)"};
 
     Opm::Inplace initial, current;
     {
@@ -394,12 +396,12 @@ BOOST_FIXTURE_TEST_CASE(Fip, LogNoteFixture)
         double j = 1.0;
         for (const auto& phase : current.phases()) {
             initial.add(phase, j);
-            initial.add("FIPNUM", phase, 0, j + 2*offset);
-            initial.add("FIPNUM", phase, 1, j + 2*offset);
+            initial.add("FIPNUM", phase, 0, j + 2 * offset);
+            initial.add("FIPNUM", phase, 1, j + 2 * offset);
 
             current.add(phase, j + offset);
-            current.add("FIPNUM", phase, 0, j + 3*offset);
-            current.add("FIPNUM", phase, 1, j + 3*offset);
+            current.add("FIPNUM", phase, 0, j + 3 * offset);
+            current.add("FIPNUM", phase, 1, j + 3 * offset);
 
             ++j;
         }
@@ -440,8 +442,7 @@ BOOST_FIXTURE_TEST_CASE(FipResv, LogNoteFixture)
  :FIELD    :            176:             13:             19:             25:             38:
  :1        :            176:            170:            164:            176:            346:
  ===========================================================================================
-)"
-    };
+)"};
 
     const auto offset = 17.0;
 
@@ -479,8 +480,7 @@ BOOST_FIXTURE_TEST_CASE(Injection, LogNoteFixture)
 :G1      :           :      :      :      :        5.0:        6.0:        7.0:        8.0:        :        :
 :INJ     :  1,  1    :      :      :  GRAT:        9.0:       10.0:       11.0:       12.0:    13.0:    14.0:
 :--------:-----------:------:------:------:-----------:-----------:-----------:-----------:--------:--------:
-)"
-    };
+)"};
 
     st.set("FOIR", 1.0);
     st.set("FWIR", 2.0);
@@ -492,7 +492,7 @@ BOOST_FIXTURE_TEST_CASE(Injection, LogNoteFixture)
     st.update_group_var("G1", "GGIR", 7.0);
     st.update_group_var("G1", "GVIR", 8.0);
 
-    st.update_well_var("INJ", "WOIR",  9.0);
+    st.update_well_var("INJ", "WOIR", 9.0);
     st.update_well_var("INJ", "WWIR", 10.0);
     st.update_well_var("INJ", "WGIR", 11.0);
     st.update_well_var("INJ", "WVIR", 12.0);
@@ -519,8 +519,7 @@ BOOST_FIXTURE_TEST_CASE(InjectionW2, LogNoteFixture)
 :INJ     :  1,  1    :      :      :  GRAT:        9.0:       10.0:       11.0:       12.0:    13.0:    14.0:
 :  BLOCK :  1,  1,  1:      :      :      :       15.0:       16.0:       17.0:       18.0:    19.0:    20.0:
 :--------:-----------:------:------:------:-----------:-----------:-----------:-----------:--------:--------:
-)"
-    };
+)"};
 
     st.set("FOIR", 1.0);
     st.set("FWIR", 2.0);
@@ -532,7 +531,7 @@ BOOST_FIXTURE_TEST_CASE(InjectionW2, LogNoteFixture)
     st.update_group_var("G1", "GGIR", 7.0);
     st.update_group_var("G1", "GVIR", 8.0);
 
-    st.update_well_var("INJ", "WOIR",  9.0);
+    st.update_well_var("INJ", "WOIR", 9.0);
     st.update_well_var("INJ", "WWIR", 10.0);
     st.update_well_var("INJ", "WGIR", 11.0);
     st.update_well_var("INJ", "WVIR", 12.0);
@@ -545,7 +544,7 @@ BOOST_FIXTURE_TEST_CASE(InjectionW2, LogNoteFixture)
     st.update_conn_var("INJ", "CVIR", 1, 18.0);
     st.update_conn_var("INJ", "CPR", 1, 19.0);
 
-    const auto bprs = std::map<std::pair<std::string,int>,double> {
+    const auto bprs = std::map<std::pair<std::string, int>, double> {
         {{"BPR", 1}, eclState.getUnits().to_si(Opm::UnitSystem::measure::pressure, 20.0)},
     };
 
@@ -567,8 +566,7 @@ BOOST_FIXTURE_TEST_CASE(MultiSegment, LogNoteFixtureMSW)
 : PROD     :  1  :  1  :        1.0:        2.0:        3.0:   12.200: 0.40 0.50 0.60 :     10.0:  11.000:  12.000:  13.000:
 :          :     :  2  :       14.0:       15.0:       16.0:   11.360: 0.17 0.18 0.19 :     23.0:  24.000:  25.000:  27.000:
 :----------:-----:-----:-----------:-----------:-----------:---------:----------------:---------:--------:--------:--------:
-)"
-    };
+)"};
 
     st.update_segment_var("PROD", "SOFR", 1, 1.0);
     st.update_segment_var("PROD", "SWFR", 1, 2.0);
@@ -618,8 +616,7 @@ BOOST_FIXTURE_TEST_CASE(Production, LogNoteFixture)
 :G1      :           :    :        7.0:        8.0:        9.0:       10.0:     11.000:     12.00:      0.8889:        :        :
 :PROD    : 10, 10    :ORAT:       13.0:       14.0:       15.0:       16.0:     17.000:     18.00:      0.9333:    19.0:    20.0:
 :--------:-----------:----:-----------:-----------:-----------:-----------:-----------:----------:------------:--------:--------:
-)"
-    };
+)"};
 
     st.set("FOPR", 1.0);
     st.set("FWPR", 2.0);
@@ -628,9 +625,9 @@ BOOST_FIXTURE_TEST_CASE(Production, LogNoteFixture)
     st.set("FWCT", 5.0);
     st.set("FGOR", 6.0);
 
-    st.update_group_var("G1", "GOPR",  7.0);
-    st.update_group_var("G1", "GWPR",  8.0);
-    st.update_group_var("G1", "GGPR",  9.0);
+    st.update_group_var("G1", "GOPR", 7.0);
+    st.update_group_var("G1", "GWPR", 8.0);
+    st.update_group_var("G1", "GGPR", 9.0);
     st.update_group_var("G1", "GVPR", 10.0);
     st.update_group_var("G1", "GWCT", 11.0);
     st.update_group_var("G1", "GGOR", 12.0);
@@ -664,8 +661,7 @@ BOOST_FIXTURE_TEST_CASE(ProductionW2, LogNoteFixture)
 :PROD    : 10, 10    :ORAT:       13.0:       14.0:       15.0:       16.0:     17.000:     18.00:      0.9333:    19.0:    20.0:
 :  BLOCK :  2,  2,  1:    :       21.0:       22.0:       23.0:       24.0:     25.000:      0.91:      0.9565:    26.0:    27.0:
 :--------:-----------:----:-----------:-----------:-----------:-----------:-----------:----------:------------:--------:--------:
-)"
-    };
+)"};
 
     st.set("FOPR", 1.0);
     st.set("FWPR", 2.0);
@@ -674,9 +670,9 @@ BOOST_FIXTURE_TEST_CASE(ProductionW2, LogNoteFixture)
     st.set("FWCT", 5.0);
     st.set("FGOR", 6.0);
 
-    st.update_group_var("G1", "GOPR",  7.0);
-    st.update_group_var("G1", "GWPR",  8.0);
-    st.update_group_var("G1", "GGPR",  9.0);
+    st.update_group_var("G1", "GOPR", 7.0);
+    st.update_group_var("G1", "GWPR", 8.0);
+    st.update_group_var("G1", "GGPR", 9.0);
     st.update_group_var("G1", "GVPR", 10.0);
     st.update_group_var("G1", "GWCT", 11.0);
     st.update_group_var("G1", "GGOR", 12.0);
@@ -698,7 +694,7 @@ BOOST_FIXTURE_TEST_CASE(ProductionW2, LogNoteFixture)
     st.update_conn_var("PROD", "CGOR", 12, 21.0 / 23.0);
     st.update_conn_var("PROD", "CPR", 12, 26.0);
 
-    const auto bprs = std::map<std::pair<std::string,int>,double> {
+    const auto bprs = std::map<std::pair<std::string, int>, double> {
         {{"BPR", 12}, eclState.getUnits().to_si(Opm::UnitSystem::measure::pressure, 27.0)},
     };
 

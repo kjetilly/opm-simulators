@@ -22,12 +22,12 @@
 
 #include <flowexperimental/comp/wells/SingleCompWellState.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename FluidSystem, typename Indices>
 void
-CompWellPrimaryVariables<FluidSystem, Indices>::
-update(const SingleWellState& well_state)
+CompWellPrimaryVariables<FluidSystem, Indices>::update(const SingleWellState& well_state)
 {
     value_[QTotal] = well_state.get_total_surface_rate();
     // the mole fractions of the first n-1 component
@@ -50,8 +50,7 @@ update(const SingleWellState& well_state)
 
 template <typename FluidSystem, typename Indices>
 void
-CompWellPrimaryVariables<FluidSystem, Indices>::
-updateEvaluation()
+CompWellPrimaryVariables<FluidSystem, Indices>::updateEvaluation()
 {
     for (std::size_t idx = 0; idx < numWellEq; ++idx) {
         evaluation_[idx] = 0.;
@@ -62,28 +61,25 @@ updateEvaluation()
 
 template <typename FluidSystem, typename Indices>
 typename CompWellPrimaryVariables<FluidSystem, Indices>::EvalWell
-CompWellPrimaryVariables<FluidSystem, Indices>::
-getBhp() const
+CompWellPrimaryVariables<FluidSystem, Indices>::getBhp() const
 {
     return evaluation_[Bhp];
 }
 
 template <typename FluidSystem, typename Indices>
 typename CompWellPrimaryVariables<FluidSystem, Indices>::EvalWell
-CompWellPrimaryVariables<FluidSystem, Indices>::
-getTotalRate() const
+CompWellPrimaryVariables<FluidSystem, Indices>::getTotalRate() const
 {
     return evaluation_[QTotal];
 }
 
 template <typename FluidSystem, typename Indices>
 typename CompWellPrimaryVariables<FluidSystem, Indices>::EvalWell
-CompWellPrimaryVariables<FluidSystem, Indices>::
-extendEval(const Eval& in)
+CompWellPrimaryVariables<FluidSystem, Indices>::extendEval(const Eval& in)
 {
     EvalWell out = 0.0;
     out.setValue(in.value());
-    for(int eq_idx = 0; eq_idx < Indices::numEq;++eq_idx) {
+    for (int eq_idx = 0; eq_idx < Indices::numEq; ++eq_idx) {
         out.setDerivative(eq_idx, in.derivative(eq_idx));
     }
     return out;
@@ -91,12 +87,11 @@ extendEval(const Eval& in)
 
 template <typename FluidSystem, typename Indices>
 typename CompWellPrimaryVariables<FluidSystem, Indices>::Eval
-CompWellPrimaryVariables<FluidSystem, Indices>::
-restrictEval(const EvalWell& in)
+CompWellPrimaryVariables<FluidSystem, Indices>::restrictEval(const EvalWell& in)
 {
     Eval out = 0.0;
     out.setValue(in.value());
-    for(int eq_idx = 0; eq_idx < Indices::numEq;++eq_idx) {
+    for (int eq_idx = 0; eq_idx < Indices::numEq; ++eq_idx) {
         out.setDerivative(eq_idx, in.derivative(eq_idx));
     }
     return out;
@@ -104,8 +99,7 @@ restrictEval(const EvalWell& in)
 
 template <typename FluidSystem, typename Indices>
 void
-CompWellPrimaryVariables<FluidSystem, Indices>::
-updateNewton(const BVectorWell& dwells)
+CompWellPrimaryVariables<FluidSystem, Indices>::updateNewton(const BVectorWell& dwells)
 {
     constexpr Scalar damping = 1.0;
 
@@ -117,7 +111,7 @@ updateNewton(const BVectorWell& dwells)
     value_[2] = std::clamp(value_[2], 1.e-10, 1.);
     std::vector<Scalar> mole_fractions(FluidSystem::numComponents, 0.);
     Scalar sum_mole_fraction = 0.;
-    for (int i = 0; i < FluidSystem::numComponents-1; ++i) {
+    for (int i = 0; i < FluidSystem::numComponents - 1; ++i) {
         mole_fractions[i] = std::max(value_[i + 1], 1.e-10);
         sum_mole_fraction += mole_fractions[i];
     }
@@ -133,10 +127,10 @@ updateNewton(const BVectorWell& dwells)
 template <typename FluidSystem, typename Indices>
 template <typename T>
 T
-CompWellPrimaryVariables<FluidSystem, Indices>::
-getValue_(int index) const
+CompWellPrimaryVariables<FluidSystem, Indices>::getValue_(int index) const
 {
-    static_assert(std::is_same_v<T, Scalar> || std::is_same_v<T, EvalWell>, "Unsupported type in CompWellPrimaryVariables::getValue_");
+    static_assert(std::is_same_v<T, Scalar> || std::is_same_v<T, EvalWell>,
+                  "Unsupported type in CompWellPrimaryVariables::getValue_");
 
     if constexpr (std::is_same_v<T, Scalar>) {
         return value_[index];
@@ -148,10 +142,10 @@ getValue_(int index) const
 template <typename FluidSystem, typename Indices>
 template <typename T>
 typename CompWellPrimaryVariables<FluidSystem, Indices>::template FluidState<T>
-CompWellPrimaryVariables<FluidSystem, Indices>::
-toFluidState() const
+CompWellPrimaryVariables<FluidSystem, Indices>::toFluidState() const
 {
-    static_assert(std::is_same_v<T, Scalar> || std::is_same_v<T, EvalWell>, "Unsupported type in CompWellPrimaryVariables::toFluidState");
+    static_assert(std::is_same_v<T, Scalar> || std::is_same_v<T, EvalWell>,
+                  "Unsupported type in CompWellPrimaryVariables::toFluidState");
 
     CompositionalFluidState<T, FluidSystem> fluid_state;
     const auto& pressure = getValue_<T>(Bhp);

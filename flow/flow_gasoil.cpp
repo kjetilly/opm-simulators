@@ -22,68 +22,79 @@
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
 
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowGasOilProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-
-template<class TypeTag>
-struct Linearizer<TypeTag, TTag::FlowGasOilProblem> { using type = TpfaLinearizer<TypeTag>; };
-
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::FlowGasOilProblem> { using type = BlackOilLocalResidualTPFA<TypeTag>; };
-
-template<class TypeTag>
-struct EnableDiffusion<TypeTag, TTag::FlowGasOilProblem> { static constexpr bool value = false; };
-
-//! The indices required by the model
-template<class TypeTag>
-struct Indices<TypeTag, TTag::FlowGasOilProblem>
+namespace Opm
 {
-private:
-    // it is unfortunately not possible to simply use 'TypeTag' here because this leads
-    // to cyclic definitions of some properties. if this happens the compiler error
-    // messages unfortunately are *really* confusing and not really helpful.
-    using BaseTypeTag = TTag::FlowProblem;
-    using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowGasOilProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
 
-public:
-  using type = BlackOilTwoPhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
-                                       getPropValue<TypeTag, Properties::EnableExtbo>(),
-                                       getPropValue<TypeTag, Properties::EnablePolymer>(),
-                                       getPropValue<TypeTag, Properties::EnableEnergy>(),
-                                       getPropValue<TypeTag, Properties::EnableFoam>(),
-                                       getPropValue<TypeTag, Properties::EnableBrine>(),
-                                       /*PVOffset=*/0,
-                                       /*disabledCompIdx=*/FluidSystem::waterCompIdx,
-                                       getPropValue<TypeTag, Properties::EnableBioeffects>()>;
-};
-}}
+    template <class TypeTag>
+    struct Linearizer<TypeTag, TTag::FlowGasOilProblem> {
+        using type = TpfaLinearizer<TypeTag>;
+    };
 
-namespace Opm {
+    template <class TypeTag>
+    struct LocalResidual<TypeTag, TTag::FlowGasOilProblem> {
+        using type = BlackOilLocalResidualTPFA<TypeTag>;
+    };
+
+    template <class TypeTag>
+    struct EnableDiffusion<TypeTag, TTag::FlowGasOilProblem> {
+        static constexpr bool value = false;
+    };
+
+    //! The indices required by the model
+    template <class TypeTag>
+    struct Indices<TypeTag, TTag::FlowGasOilProblem> {
+    private:
+        // it is unfortunately not possible to simply use 'TypeTag' here because this leads
+        // to cyclic definitions of some properties. if this happens the compiler error
+        // messages unfortunately are *really* confusing and not really helpful.
+        using BaseTypeTag = TTag::FlowProblem;
+        using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+
+    public:
+        using type = BlackOilTwoPhaseIndices<getPropValue<TypeTag, Properties::EnableSolvent>(),
+                                             getPropValue<TypeTag, Properties::EnableExtbo>(),
+                                             getPropValue<TypeTag, Properties::EnablePolymer>(),
+                                             getPropValue<TypeTag, Properties::EnableEnergy>(),
+                                             getPropValue<TypeTag, Properties::EnableFoam>(),
+                                             getPropValue<TypeTag, Properties::EnableBrine>(),
+                                             /*PVOffset=*/0,
+                                             /*disabledCompIdx=*/FluidSystem::waterCompIdx,
+                                             getPropValue<TypeTag, Properties::EnableBioeffects>()>;
+    };
+} // namespace Properties
+} // namespace Opm
+
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowGasOilMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowGasOilMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowGasOilProblem>
-        mainfunc {argc, argv, outputCout, outputFiles} ;
+    FlowMain<Properties::TTag::FlowGasOilProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowGasOilMainStandalone(int argc, char** argv)
+int
+flowGasOilMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowGasOilProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -93,4 +104,4 @@ int flowGasOilMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

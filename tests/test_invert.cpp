@@ -24,7 +24,9 @@
 #include <opm/simulators/linalg/matrixblock.hh>
 
 
-void checkIdentity(Dune::FieldMatrix<double, 4, 4> M) {
+void
+checkIdentity(Dune::FieldMatrix<double, 4, 4> M)
+{
     double diag = 0.0;
     double offDiag = 0.0;
     for (int i = 0; i < 4; ++i) {
@@ -47,10 +49,10 @@ BOOST_AUTO_TEST_CASE(Invert4x4)
 
     for (int i = 0; i < 4; ++i) {
         for (int j = 0; j < 4; ++j) {
-                matrix[i][j] = i + 4*j + 1;
+            matrix[i][j] = i + 4 * j + 1;
         }
     }
-    BaseType matrix_sing (matrix);
+    BaseType matrix_sing(matrix);
     // make matrix non-singular
     matrix[3][0] = 5;
     matrix[0][3] = 14;
@@ -62,6 +64,5 @@ BOOST_AUTO_TEST_CASE(Invert4x4)
     checkIdentity(matrix.rightmultiply(inverse));
 
     // check singular matrix
-    BOOST_CHECK_THROW(Opm::detail::invertMatrix4<Opm::detail::FMat4>(matrix_sing, inverse),
-                      Opm::NumericalProblem);
+    BOOST_CHECK_THROW(Opm::detail::invertMatrix4<Opm::detail::FMat4>(matrix_sing, inverse), Opm::NumericalProblem);
 }

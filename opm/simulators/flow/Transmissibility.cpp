@@ -33,17 +33,16 @@
 #include <opm/simulators/flow/FemCpGridCompat.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
-#define INSTANTIATE_TYPE(T)                                                                  \
-    template class Transmissibility<Dune::CpGrid,                                            \
-                                    Dune::GridView<                                          \
-                                        Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,      \
-                                    Dune::MultipleCodimMultipleGeomTypeMapper<               \
-                                        Dune::GridView<                                      \
-                                            Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>, \
-                                    Dune::CartesianIndexMapper<Dune::CpGrid>,                \
-                                    T>;
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template class Transmissibility<                                                                                   \
+        Dune::CpGrid,                                                                                                  \
+        Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>,                                                 \
+        Dune::MultipleCodimMultipleGeomTypeMapper<Dune::GridView<Dune::DefaultLeafGridViewTraits<Dune::CpGrid>>>,      \
+        Dune::CartesianIndexMapper<Dune::CpGrid>,                                                                      \
+        T>;
 
 INSTANTIATE_TYPE(double)
 
@@ -52,9 +51,7 @@ INSTANTIATE_TYPE(float)
 #endif
 
 #ifdef HAVE_DUNE_FEM
-using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid,
-                                           (Dune::PartitionIteratorType)4,
-                                           false>;
+using GV = Dune::Fem::AdaptiveLeafGridPart<Dune::CpGrid, (Dune::PartitionIteratorType)4, false>;
 template class Transmissibility<Dune::CpGrid,
                                 GV,
                                 Dune::MultipleCodimMultipleGeomTypeMapper<GV>,

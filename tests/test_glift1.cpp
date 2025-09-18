@@ -20,27 +20,27 @@
   module for the precise wording of the license and the list of
   copyright holders.
 */
-#include "config.h"
 #include "TestTypeTag.hpp"
+#include "config.h"
 
 #define BOOST_TEST_MODULE Glift1
 
-#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/utils/parametersystem.hpp>
+#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/utils/start.hh>
 
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
-#include <opm/simulators/utils/DeferredLogger.hpp>
 #include <opm/simulators/flow/BlackoilModel.hpp>
 #include <opm/simulators/flow/FlowProblemBlackoil.hpp>
 #include <opm/simulators/flow/equil/EquilibrationHelpers.hpp>
+#include <opm/simulators/utils/DeferredLogger.hpp>
 #include <opm/simulators/wells/BlackoilWellModel.hpp>
-#include <opm/simulators/wells/StandardWell.hpp>
+#include <opm/simulators/wells/GasLiftGroupInfo.hpp>
 #include <opm/simulators/wells/GasLiftSingleWell.hpp>
 #include <opm/simulators/wells/GasLiftSingleWellGeneric.hpp>
-#include <opm/simulators/wells/GasLiftGroupInfo.hpp>
+#include <opm/simulators/wells/StandardWell.hpp>
 #include <opm/simulators/wells/WellState.hpp>
 
 #if HAVE_DUNE_FEM
@@ -62,17 +62,19 @@
 #include <boost/test/tools/floating_point_comparison.hpp>
 #endif
 
-namespace Opm::Properties {
-    namespace TTag {
-        struct TestGliftTypeTag {
-            using InheritsFrom = std::tuple<TestTypeTag>;
-        };
-    }
-}
+namespace Opm::Properties
+{
+namespace TTag
+{
+    struct TestGliftTypeTag {
+        using InheritsFrom = std::tuple<TestTypeTag>;
+    };
+} // namespace TTag
+} // namespace Opm::Properties
 
 template <class TypeTag>
 std::unique_ptr<Opm::GetPropType<TypeTag, Opm::Properties::Simulator>>
-initSimulator(const char *filename)
+initSimulator(const char* filename)
 {
     using namespace Opm;
     using Simulator = GetPropType<TypeTag, Properties::Simulator>;
@@ -80,10 +82,7 @@ initSimulator(const char *filename)
     std::string filename_arg = "--ecl-deck-file-name=";
     filename_arg += filename;
 
-    const char* argv[] = {
-        "test_equil",
-        filename_arg.c_str()
-    };
+    const char* argv[] = {"test_equil", filename_arg.c_str()};
 
     Parameters::reset();
     registerAllParameters_<TypeTag>(false);
@@ -95,42 +94,42 @@ initSimulator(const char *filename)
     setupParameters_<TypeTag>(/*argc=*/sizeof(argv) / sizeof(argv[0]),
                               argv,
                               /*registerParams=*/false,
-                              /*allowUnused*/false,
-                              /*handleHelp*/true,
-                              /*myRank*/0);
+                              /*allowUnused*/ false,
+                              /*handleHelp*/ true,
+                              /*myRank*/ 0);
 
     FlowGenericVanguard::readDeck(filename);
     return std::make_unique<Simulator>();
 }
 
 
-namespace {
-
-struct GliftFixture
+namespace
 {
+
+struct GliftFixture {
     GliftFixture()
     {
         int argc = boost::unit_test::framework::master_test_suite().argc;
         char** argv = boost::unit_test::framework::master_test_suite().argv;
-    #if HAVE_DUNE_FEM
+#if HAVE_DUNE_FEM
         Dune::Fem::MPIManager::initialize(argc, argv);
-    #else
+#else
         Dune::MPIHelper::instance(argc, argv);
 #endif
         Opm::FlowGenericVanguard::setCommunication(std::make_unique<Opm::Parallel::Communication>());
     }
 };
 
-}
+} // namespace
 
 BOOST_GLOBAL_FIXTURE(GliftFixture);
 
 BOOST_AUTO_TEST_CASE(G1)
 {
-    //using TypeTag = Opm::Properties::TTag::FlowProblemBlackoil;
+    // using TypeTag = Opm::Properties::TTag::FlowProblemBlackoil;
     using TypeTag = Opm::Properties::TTag::TestGliftTypeTag;
-    //using EclProblem = Opm::EclProblem<TypeTag>;
-    //using EclWellModel = typename EclProblem::EclWellModel;
+    // using EclProblem = Opm::EclProblem<TypeTag>;
+    // using EclWellModel = typename EclProblem::EclWellModel;
     using FluidSystem = Opm::GetPropType<TypeTag, Opm::Properties::FluidSystem>;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
     using WellModel = Opm::BlackoilWellModel<TypeTag>;
@@ -149,7 +148,7 @@ BOOST_AUTO_TEST_CASE(G1)
     simulator->setEpisodeIndex(-1);
     simulator->setEpisodeLength(0.0);
     simulator->startNextEpisode(/*episodeStartTime=*/0.0, /*episodeLength=*/1e30);
-    simulator->setTimeStepSize(43200);  // 12 hours
+    simulator->setTimeStepSize(43200); // 12 hours
     simulator->model().newtonMethod().setIterationIndex(0);
     WellModel& well_model = simulator->problem().wellModel();
     int report_step_idx = 0;
@@ -159,48 +158,51 @@ BOOST_AUTO_TEST_CASE(G1)
     well_model.calculateExplicitQuantities(deferred_logger);
     well_model.prepareTimeStep(deferred_logger);
     well_model.updateWellControls(deferred_logger);
-    Opm::WellInterface<TypeTag> *well_ptr = well_model.getWell("B-1H").get();
-    StdWell *std_well = dynamic_cast<StdWell *>(well_ptr);
+    Opm::WellInterface<TypeTag>* well_ptr = well_model.getWell("B-1H").get();
+    StdWell* std_well = dynamic_cast<StdWell*>(well_ptr);
 
     const auto& schedule = simulator->vanguard().schedule();
     auto wells_ecl = schedule.getWells(report_step_idx);
     std::optional<std::size_t> idx;
     int num_producers = 0;
-    for(std::size_t i = 0; i < wells_ecl.size(); ++i) {
-        const auto &well =  wells_ecl[i];
+    for (std::size_t i = 0; i < wells_ecl.size(); ++i) {
+        const auto& well = wells_ecl[i];
         if (well.isProducer()) {
             idx = i;
             num_producers++;
         }
     }
-    BOOST_CHECK_EQUAL( num_producers, 1);
-    const auto &well = wells_ecl[*idx];
-    BOOST_CHECK_EQUAL( well.name(), "B-1H");
+    BOOST_CHECK_EQUAL(num_producers, 1);
+    const auto& well = wells_ecl[*idx];
+    BOOST_CHECK_EQUAL(well.name(), "B-1H");
     const auto& summary_state = simulator->vanguard().summaryState();
-    WellState &well_state = well_model.wellState();
-    const auto &group_state = well_model.groupState();
+    WellState& well_state = well_model.wellState();
+    const auto& group_state = well_model.groupState();
     GLiftEclWells ecl_well_map;
-    Opm::BlackoilWellModelGasLift<TypeTag>::
-        initGliftEclWellMap(well_model.localNonshutWells(), ecl_well_map);
+    Opm::BlackoilWellModelGasLift<TypeTag>::initGliftEclWellMap(well_model.localNonshutWells(), ecl_well_map);
     const int iteration_idx = simulator->model().newtonMethod().numIterations();
     const auto& comm = simulator->vanguard().grid().comm();
-    GasLiftGroupInfo group_info {
-        ecl_well_map,
-        schedule,
-        summary_state,
-        simulator->episodeIndex(),
-        iteration_idx,
-        deferred_logger,
-        well_state,
-        group_state,
-        comm,
-        /*glift_debug=*/false
-    };
+    GasLiftGroupInfo group_info {ecl_well_map,
+                                 schedule,
+                                 summary_state,
+                                 simulator->episodeIndex(),
+                                 iteration_idx,
+                                 deferred_logger,
+                                 well_state,
+                                 group_state,
+                                 comm,
+                                 /*glift_debug=*/false};
     GLiftSyncGroups sync_groups;
-    GasLiftSingleWell glift {*std_well, *(simulator.get()), summary_state,
-        deferred_logger, well_state, group_state, group_info, sync_groups,
-        comm, /*glift_debug=*/false
-    };
+    GasLiftSingleWell glift {*std_well,
+                             *(simulator.get()),
+                             summary_state,
+                             deferred_logger,
+                             well_state,
+                             group_state,
+                             group_info,
+                             sync_groups,
+                             comm,
+                             /*glift_debug=*/false};
     group_info.initialize();
     auto state = glift.runOptimize(iteration_idx);
     BOOST_CHECK_CLOSE(state->oilRate(), 0.01736111111111111, 1e-8);
@@ -211,4 +213,3 @@ BOOST_AUTO_TEST_CASE(G1)
     BOOST_CHECK_CLOSE(state->alq(), 0.0, 1e-8);
     BOOST_CHECK(!state->increase().has_value());
 }
-

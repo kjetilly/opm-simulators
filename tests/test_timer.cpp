@@ -19,12 +19,12 @@
 
 #include <config.h>
 
-#define NVERBOSE  // Suppress own messages when throw()ing
+#define NVERBOSE // Suppress own messages when throw()ing
 
-#define BOOST_TEST_MODULE OPM-TimerTest
+#define BOOST_TEST_MODULE OPM - TimerTest
 
-#include <boost/test/unit_test.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/test/unit_test.hpp>
 
 #include <opm/simulators/timestepping/SimulatorTimer.hpp>
 
@@ -49,69 +49,61 @@
 BOOST_AUTO_TEST_CASE(CreateTimer)
 {
     const std::string filename1 = "TESTTIMER.DATA";
-    const auto parserDeck = Opm::Parser{}.parseFile( filename1);
+    const auto parserDeck = Opm::Parser {}.parseFile(filename1);
 
     // Must be mutable.
-    Opm::EclipseGrid grid(10,10,10);
+    Opm::EclipseGrid grid(10, 10, 10);
 
-    const Opm::FieldPropsManager fp {
-        parserDeck,
-        Opm::Phases{true, true, true},
-        grid,
-        Opm::TableManager{}
-    };
+    const Opm::FieldPropsManager fp {parserDeck, Opm::Phases {true, true, true}, grid, Opm::TableManager {}};
 
-    const Opm::Runspec runspec { parserDeck };
+    const Opm::Runspec runspec {parserDeck};
     const Opm::Schedule schedule {
-        parserDeck, grid, fp,
-        Opm::NumericalAquifers{},
-        runspec, std::make_shared<Opm::Python>()
-    };
+        parserDeck, grid, fp, Opm::NumericalAquifers {}, runspec, std::make_shared<Opm::Python>()};
 
     Opm::SimulatorTimer simtimer;
 
-    boost::gregorian::date defaultStartDate( 2012, 1, 1);
-    BOOST_CHECK_EQUAL(  boost::posix_time::ptime(defaultStartDate), simtimer.currentDateTime() );
+    boost::gregorian::date defaultStartDate(2012, 1, 1);
+    BOOST_CHECK_EQUAL(boost::posix_time::ptime(defaultStartDate), simtimer.currentDateTime());
 
     simtimer.init(schedule);
-    boost::gregorian::date startDate( 2014, 3, 26);
-    BOOST_CHECK_EQUAL(  boost::posix_time::ptime(startDate), simtimer.currentDateTime() );
+    boost::gregorian::date startDate(2014, 3, 26);
+    BOOST_CHECK_EQUAL(boost::posix_time::ptime(startDate), simtimer.currentDateTime());
 
-    BOOST_CHECK_EQUAL( 0, simtimer.currentStepNum() );
-    BOOST_CHECK_EQUAL( 0., simtimer.simulationTimeElapsed() );
-    BOOST_CHECK_EQUAL( 125, simtimer.numSteps() );
+    BOOST_CHECK_EQUAL(0, simtimer.currentStepNum());
+    BOOST_CHECK_EQUAL(0., simtimer.simulationTimeElapsed());
+    BOOST_CHECK_EQUAL(125, simtimer.numSteps());
     // 1200 + 1000 * 365 * 5
-    BOOST_CHECK_EQUAL( 1826200, Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::day) );
-    BOOST_CHECK_EQUAL( 0., Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day) );
+    BOOST_CHECK_EQUAL(1826200, Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::day));
+    BOOST_CHECK_EQUAL(0., Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day));
 
     double testCurrentTime = 0.;
-    BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime, Opm::unit::day),
-                       Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day) );
+    BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime, Opm::unit::day),
+                      Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day));
 
-    for ( int i = 0; i < simtimer.numSteps(); ++i ) {
-        BOOST_CHECK_EQUAL( i, simtimer.currentStepNum() );
-        BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime, Opm::unit::minute),
-                           Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute) );
+    for (int i = 0; i < simtimer.numSteps(); ++i) {
+        BOOST_CHECK_EQUAL(i, simtimer.currentStepNum());
+        BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime, Opm::unit::minute),
+                          Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute));
         testCurrentTime += simtimer.currentStepLength();
         ++simtimer;
     }
 
-    for ( int i = 0; i <= simtimer.numSteps(); ++i ) {
+    for (int i = 0; i <= simtimer.numSteps(); ++i) {
         simtimer.setCurrentStepNum(i);
-        BOOST_CHECK_EQUAL( i, simtimer.currentStepNum() );
+        BOOST_CHECK_EQUAL(i, simtimer.currentStepNum());
     }
 
-    BOOST_CHECK_EQUAL( true, simtimer.done() );
+    BOOST_CHECK_EQUAL(true, simtimer.done());
     simtimer.setCurrentStepNum(0);
-    BOOST_CHECK_EQUAL( false, simtimer.done() );
-    BOOST_CHECK_EQUAL( 0., Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day) );
+    BOOST_CHECK_EQUAL(false, simtimer.done());
+    BOOST_CHECK_EQUAL(0., Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day));
 
     simtimer.setCurrentStepNum(125);
-    BOOST_CHECK_EQUAL( Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day),
-                       Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::day) );
+    BOOST_CHECK_EQUAL(Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::day),
+                      Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::day));
 
-    boost::gregorian::date endDate( 7014, 3, 14);
-    BOOST_CHECK_EQUAL ( simtimer.currentDateTime(), boost::posix_time::ptime(endDate));
+    boost::gregorian::date endDate(7014, 3, 14);
+    BOOST_CHECK_EQUAL(simtimer.currentDateTime(), boost::posix_time::ptime(endDate));
 
     int i = 0;
     double testCurrentTime1 = 0.;
@@ -120,19 +112,19 @@ BOOST_AUTO_TEST_CASE(CreateTimer)
 
     while (!simtimer.done()) {
         testCurrentTime1 += simtimer.currentStepLength();
-        BOOST_CHECK_EQUAL( i, simtimer.currentStepNum() );
+        BOOST_CHECK_EQUAL(i, simtimer.currentStepNum());
         ++i;
         ++simtimer;
         testCurrentTime2 += simtimer.stepLengthTaken();
-        BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime1, Opm::unit::minute),
-                           Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute) );
-        BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime2, Opm::unit::minute),
-                           Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute) );
+        BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime1, Opm::unit::minute),
+                          Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute));
+        BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime2, Opm::unit::minute),
+                          Opm::unit::convert::to(simtimer.simulationTimeElapsed(), Opm::unit::minute));
     }
 
-    BOOST_CHECK_EQUAL( true, simtimer.done() );
-    BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime1, Opm::unit::minute),
-                       Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::minute) );
-    BOOST_CHECK_EQUAL( Opm::unit::convert::to(testCurrentTime2, Opm::unit::minute),
-                       Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::minute) );
+    BOOST_CHECK_EQUAL(true, simtimer.done());
+    BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime1, Opm::unit::minute),
+                      Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::minute));
+    BOOST_CHECK_EQUAL(Opm::unit::convert::to(testCurrentTime2, Opm::unit::minute),
+                      Opm::unit::convert::to(simtimer.totalTime(), Opm::unit::minute));
 }

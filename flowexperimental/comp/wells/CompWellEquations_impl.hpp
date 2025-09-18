@@ -19,45 +19,40 @@
 
 #include <opm/simulators/linalg/matrixblock.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename Scalar, int numWellEq, int numEq>
-CompWellEquations<Scalar, numWellEq, numEq>::
-CompWellEquations()
+CompWellEquations<Scalar, numWellEq, numEq>::CompWellEquations()
 {
     duneB_.setBuildMode(OffDiagMatWell::row_wise);
-    duneC_.setBuildMode(OffDiagMatWell::row_wise),
-    duneD_.setBuildMode(DiagMatWell::row_wise);
+    duneC_.setBuildMode(OffDiagMatWell::row_wise), duneD_.setBuildMode(DiagMatWell::row_wise);
     invDuneD_.setBuildMode(DiagMatWell::row_wise);
 }
 
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-init(const int num_conn,  const std::vector<std::size_t>& cells)
+CompWellEquations<Scalar, numWellEq, numEq>::init(const int num_conn, const std::vector<std::size_t>& cells)
 {
     duneD_.setSize(1, 1, 1);
     duneB_.setSize(1, num_conn, num_conn);
     duneC_.setSize(1, num_conn, num_conn);
 
-    for (auto row = duneD_.createbegin(),
-              end = duneD_.createend(); row != end; ++row) {
+    for (auto row = duneD_.createbegin(), end = duneD_.createend(); row != end; ++row) {
         // Add nonzeros for diagonal
         row.insert(row.index());
     }
 
-    for (auto row = duneB_.createbegin(),
-                 end = duneB_.createend(); row != end; ++row) {
-        for (int con = 0 ; con < num_conn; ++con) {
+    for (auto row = duneB_.createbegin(), end = duneB_.createend(); row != end; ++row) {
+        for (int con = 0; con < num_conn; ++con) {
             row.insert(con);
         }
     }
 
     // make the C^T matrix
     // TODO: let us see whether we should change the naming of DuneC_
-    for (auto row = duneC_.createbegin(),
-                 end = duneC_.createend(); row != end; ++row) {
+    for (auto row = duneC_.createbegin(), end = duneC_.createend(); row != end; ++row) {
         for (int con = 0; con < num_conn; ++con) {
             row.insert(con);
         }
@@ -75,8 +70,7 @@ init(const int num_conn,  const std::vector<std::size_t>& cells)
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-clear()
+CompWellEquations<Scalar, numWellEq, numEq>::clear()
 {
     duneB_ = 0.0;
     duneC_ = 0.0;
@@ -86,16 +80,14 @@ clear()
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-solve(BVectorWell& dx_well) const
+CompWellEquations<Scalar, numWellEq, numEq>::solve(BVectorWell& dx_well) const
 {
     invDuneD_.mv(resWell_, dx_well);
 }
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-invert()
+CompWellEquations<Scalar, numWellEq, numEq>::invert()
 {
     try {
         invDuneD_ = duneD_; // Not strictly need if not cpr with well contributions is used
@@ -104,7 +96,7 @@ invert()
         // for singular matrices, use identity as the inverse
         invDuneD_[0][0] = 0.0;
         for (std::size_t i = 0; i < invDuneD_[0][0].rows; ++i) {
-           invDuneD_[0][0][i][i] = 1.0;
+            invDuneD_[0][0][i][i] = 1.0;
         }
     }
 }
@@ -112,8 +104,7 @@ invert()
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-apply(BVector& r) const
+CompWellEquations<Scalar, numWellEq, numEq>::apply(BVector& r) const
 {
     assert(invDrw_.size() == invDuneD_.N());
 
@@ -125,8 +116,7 @@ apply(BVector& r) const
 
 template <typename Scalar, int numWellEq, int numEq>
 void
-CompWellEquations<Scalar, numWellEq, numEq>::
-recoverSolutionWell(const BVector& x, BVectorWell& xw) const
+CompWellEquations<Scalar, numWellEq, numEq>::recoverSolutionWell(const BVector& x, BVectorWell& xw) const
 {
     BVectorWell resWell = resWell_;
     // resWell = resWell - B * x

@@ -26,12 +26,13 @@
 
 #include <opm/simulators/linalg/MILU.hpp>
 
+#include <opm/simulators/linalg/LinearSolverAcceleratorType.hpp>
 #include <opm/simulators/linalg/linalgparameters.hh>
 #include <opm/simulators/linalg/linalgproperties.hh>
-#include <opm/simulators/linalg/LinearSolverAcceleratorType.hpp>
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 
 template <class TypeTag>
 class ISTLSolverGpuBridge;
@@ -39,74 +40,127 @@ class ISTLSolverGpuBridge;
 template <class TypeTag>
 class ISTLSolver;
 
-template<class TypeTag>
+template <class TypeTag>
 class ISTLSolverRuntimeOptionProxy;
 
-}
+} // namespace Opm
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct FlowIstlSolverParams {};
+    struct FlowIstlSolverParams {
+    };
 
-}
+} // namespace TTag
 
 // Set the backend to be used.
-template<class TypeTag>
-struct LinearSolverBackend<TypeTag, TTag::FlowIstlSolverParams>
-{
+template <class TypeTag>
+struct LinearSolverBackend<TypeTag, TTag::FlowIstlSolverParams> {
     using type = ISTLSolverRuntimeOptionProxy<TypeTag>;
 };
 
-}
+} // namespace Opm::Properties
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct LinearSolverReduction { static constexpr double value = 1e-2; };
-struct NlddLocalLinearSolverReduction { static constexpr double value = 1e-2; };
-struct RelaxedLinearSolverReduction { static constexpr double value = 1e-2; };
-struct IluRelaxation { static constexpr double value = 0.9; };
-struct LinearSolverMaxIter { static constexpr int value = 200; };
-struct NlddLocalLinearSolverMaxIter { static constexpr int value = 200; };
-struct LinearSolverRestart { static constexpr int value = 40; };
-struct IluFillinLevel { static constexpr int value = 0; };
-struct MiluVariant { static constexpr auto value = "ilu"; };
-struct IluRedblack { static constexpr bool value = false; };
-struct IluReorderSpheres { static constexpr bool value = false; };
-struct UseGmres { static constexpr bool value = false; };
-struct LinearSolverIgnoreConvergenceFailure { static constexpr bool value = false; };
-struct ScaleLinearSystem { static constexpr bool value = false; };
-struct LinearSolver { static constexpr auto value = "cprw"; };
-struct NlddLocalLinearSolver { static constexpr auto value = "ilu0"; };
-struct LinearSolverPrintJsonDefinition { static constexpr auto value = true; };
-struct CprReuseSetup { static constexpr int value = 4; };
-struct CprReuseInterval { static constexpr int value = 30; };
-struct AcceleratorMode { static constexpr auto value = "none"; };
-struct GpuDeviceId { static constexpr int value = 0; };
-struct OpenclPlatformId { static constexpr int value = 0; };
-struct OpenclIluParallel { static constexpr bool value = true; }; // note: false should only be used in debug
-struct GpuAwareMpi { static constexpr bool value = false; };
-struct VerifyGpuAwareMpi { static constexpr bool value = false; };
+struct LinearSolverReduction {
+    static constexpr double value = 1e-2;
+};
+struct NlddLocalLinearSolverReduction {
+    static constexpr double value = 1e-2;
+};
+struct RelaxedLinearSolverReduction {
+    static constexpr double value = 1e-2;
+};
+struct IluRelaxation {
+    static constexpr double value = 0.9;
+};
+struct LinearSolverMaxIter {
+    static constexpr int value = 200;
+};
+struct NlddLocalLinearSolverMaxIter {
+    static constexpr int value = 200;
+};
+struct LinearSolverRestart {
+    static constexpr int value = 40;
+};
+struct IluFillinLevel {
+    static constexpr int value = 0;
+};
+struct MiluVariant {
+    static constexpr auto value = "ilu";
+};
+struct IluRedblack {
+    static constexpr bool value = false;
+};
+struct IluReorderSpheres {
+    static constexpr bool value = false;
+};
+struct UseGmres {
+    static constexpr bool value = false;
+};
+struct LinearSolverIgnoreConvergenceFailure {
+    static constexpr bool value = false;
+};
+struct ScaleLinearSystem {
+    static constexpr bool value = false;
+};
+struct LinearSolver {
+    static constexpr auto value = "cprw";
+};
+struct NlddLocalLinearSolver {
+    static constexpr auto value = "ilu0";
+};
+struct LinearSolverPrintJsonDefinition {
+    static constexpr auto value = true;
+};
+struct CprReuseSetup {
+    static constexpr int value = 4;
+};
+struct CprReuseInterval {
+    static constexpr int value = 30;
+};
+struct AcceleratorMode {
+    static constexpr auto value = "none";
+};
+struct GpuDeviceId {
+    static constexpr int value = 0;
+};
+struct OpenclPlatformId {
+    static constexpr int value = 0;
+};
+struct OpenclIluParallel {
+    static constexpr bool value = true;
+}; // note: false should only be used in debug
+struct GpuAwareMpi {
+    static constexpr bool value = false;
+};
+struct VerifyGpuAwareMpi {
+    static constexpr bool value = false;
+};
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /// This class carries all parameters for the NewtonIterationBlackoilInterleaved class.
-struct FlowLinearSolverParameters
-{
+struct FlowLinearSolverParameters {
     double linear_solver_reduction_;
     double relaxed_linear_solver_reduction_;
-    int    linear_solver_maxiter_;
-    int    linear_solver_restart_;
-    int    linear_solver_verbosity_;
+    int linear_solver_maxiter_;
+    int linear_solver_restart_;
+    int linear_solver_verbosity_;
     double ilu_relaxation_;
-    int    ilu_fillin_level_;
-    MILU_VARIANT   ilu_milu_;
-    bool   ilu_redblack_;
-    bool   ilu_reorder_sphere_;
-    bool   newton_use_gmres_;
-    bool   ignoreConvergenceFailure_;
+    int ilu_fillin_level_;
+    MILU_VARIANT ilu_milu_;
+    bool ilu_redblack_;
+    bool ilu_reorder_sphere_;
+    bool newton_use_gmres_;
+    bool ignoreConvergenceFailure_;
     bool scale_linear_system_;
     bool is_nldd_local_solver_;
     std::string linsolver_;
@@ -121,7 +175,10 @@ struct FlowLinearSolverParameters
     bool gpu_aware_mpi_;
     bool verify_gpu_aware_mpi_;
 
-    FlowLinearSolverParameters() { reset(); }
+    FlowLinearSolverParameters()
+    {
+        reset();
+    }
 
     void init(bool cprRequestedInDataFile);
 

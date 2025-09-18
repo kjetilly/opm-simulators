@@ -24,8 +24,8 @@
 #include <algorithm>
 #include <cassert>
 #include <cstddef>
-#include <ostream>
 #include <numeric>
+#include <ostream>
 #include <vector>
 
 #include <opm/input/eclipse/Units/Units.hpp>
@@ -35,155 +35,183 @@
 
 namespace Opm
 {
-    AdaptiveSimulatorTimer::
-    AdaptiveSimulatorTimer( const boost::posix_time::ptime simulation_start_time,
-                            const double step_length,
-                            const double elapsed_time,
-                            const double last_step_taken,
-                            const int report_step,
-                            const double max_time_step )
-        : start_date_time_{ std::make_shared<boost::posix_time::ptime>(simulation_start_time) }
-        , start_time_{ elapsed_time }
-        , total_time_{ start_time_ + step_length }
-        , report_step_{ report_step }
-        , max_time_step_{ max_time_step }
-        , current_time_{ start_time_ }
-        , dt_{ 0.0 }
-        , current_step_{ 0 }
-        , steps_{}
-        , last_step_failed_{ false }
-    {
-        // reserve memory for sub steps
-        steps_.reserve( 10 );
+AdaptiveSimulatorTimer::AdaptiveSimulatorTimer(const boost::posix_time::ptime simulation_start_time,
+                                               const double step_length,
+                                               const double elapsed_time,
+                                               const double last_step_taken,
+                                               const int report_step,
+                                               const double max_time_step)
+    : start_date_time_ {std::make_shared<boost::posix_time::ptime>(simulation_start_time)}
+    , start_time_ {elapsed_time}
+    , total_time_ {start_time_ + step_length}
+    , report_step_ {report_step}
+    , max_time_step_ {max_time_step}
+    , current_time_ {start_time_}
+    , dt_ {0.0}
+    , current_step_ {0}
+    , steps_ {}
+    , last_step_failed_ {false}
+{
+    // reserve memory for sub steps
+    steps_.reserve(10);
 
-        // set appropriate value for dt_
-        provideTimeStepEstimate( last_step_taken );
-    }
+    // set appropriate value for dt_
+    provideTimeStepEstimate(last_step_taken);
+}
 
-    bool AdaptiveSimulatorTimer::initialStep () const
-    {
-        return ( report_step_ == 0 ) && ( current_step_ == 0 );
-    }
+bool
+AdaptiveSimulatorTimer::initialStep() const
+{
+    return (report_step_ == 0) && (current_step_ == 0);
+}
 
-    AdaptiveSimulatorTimer& AdaptiveSimulatorTimer::operator++ ()
-    {
-        ++current_step_;
-        current_time_ += dt_;
-        assert(dt_ > 0);
-        // store used time step sizes
-        steps_.push_back( dt_ );
-        return *this;
-    }
+AdaptiveSimulatorTimer&
+AdaptiveSimulatorTimer::operator++()
+{
+    ++current_step_;
+    current_time_ += dt_;
+    assert(dt_ > 0);
+    // store used time step sizes
+    steps_.push_back(dt_);
+    return *this;
+}
 
-    void AdaptiveSimulatorTimer::
-    provideTimeStepEstimate( const double dt_estimate )
-    {
-        double remaining = (total_time_ - current_time_);
-        // apply max time step if it was set
-        dt_ = std::min( dt_estimate, max_time_step_ );
-        assert(dt_ > 0);
-        if( remaining > 0 ) {
+void
+AdaptiveSimulatorTimer::provideTimeStepEstimate(const double dt_estimate)
+{
+    double remaining = (total_time_ - current_time_);
+    // apply max time step if it was set
+    dt_ = std::min(dt_estimate, max_time_step_);
+    assert(dt_ > 0);
+    if (remaining > 0) {
 
-            // set new time step (depending on remaining time)
-            if( 1.05 * dt_ > remaining ) {
-                dt_ = remaining;
-                // check max time step again and use half remaining if too large
-                if( dt_ > max_time_step_ ) {
-                    dt_ = 0.5 * remaining;
-                }
-                assert(dt_ > 0);
-                return;
-            }
-
-            // check for half interval step to avoid very small step at the end
-            // remaining *= 0.5;
-
-            if( 1.5 * dt_ > remaining ) {
+        // set new time step (depending on remaining time)
+        if (1.05 * dt_ > remaining) {
+            dt_ = remaining;
+            // check max time step again and use half remaining if too large
+            if (dt_ > max_time_step_) {
                 dt_ = 0.5 * remaining;
-                assert(dt_ > 0);
-                return;
             }
+            assert(dt_ > 0);
+            return;
+        }
+
+        // check for half interval step to avoid very small step at the end
+        // remaining *= 0.5;
+
+        if (1.5 * dt_ > remaining) {
+            dt_ = 0.5 * remaining;
+            assert(dt_ > 0);
+            return;
         }
     }
+}
 
-    int AdaptiveSimulatorTimer::
-    currentStepNum () const { return current_step_; }
+int
+AdaptiveSimulatorTimer::currentStepNum() const
+{
+    return current_step_;
+}
 
-    int AdaptiveSimulatorTimer::
-    reportStepNum () const { return report_step_; }
+int
+AdaptiveSimulatorTimer::reportStepNum() const
+{
+    return report_step_;
+}
 
-    double AdaptiveSimulatorTimer::currentStepLength () const
-    {
-      assert(dt_ > 0);
-        return dt_;
+double
+AdaptiveSimulatorTimer::currentStepLength() const
+{
+    assert(dt_ > 0);
+    return dt_;
+}
+
+void
+AdaptiveSimulatorTimer::setCurrentStepLength(double dt)
+{
+    assert(dt > 0);
+    dt_ = dt;
+}
+
+double
+AdaptiveSimulatorTimer::stepLengthTaken() const
+{
+    assert(!steps_.empty());
+    return steps_.back();
+}
+
+
+
+double
+AdaptiveSimulatorTimer::totalTime() const
+{
+    return total_time_;
+}
+
+double
+AdaptiveSimulatorTimer::simulationTimeElapsed() const
+{
+    return current_time_;
+}
+
+bool
+AdaptiveSimulatorTimer::done() const
+{
+    return (current_time_ >= total_time_);
+}
+
+double
+AdaptiveSimulatorTimer::averageStepLength() const
+{
+    const int size = steps_.size();
+    if (size == 0)
+        return 0.0;
+
+    const double sum = std::accumulate(steps_.begin(), steps_.end(), 0.0);
+    return sum / double(size);
+}
+
+/// \brief return max step length used so far
+double
+AdaptiveSimulatorTimer::maxStepLength() const
+{
+    if (steps_.empty())
+        return 0.0;
+    return *(std::max_element(steps_.begin(), steps_.end()));
+}
+
+/// \brief return min step length used so far
+double
+AdaptiveSimulatorTimer::minStepLength() const
+{
+    if (steps_.empty())
+        return 0.0;
+    return *(std::min_element(steps_.begin(), steps_.end()));
+}
+
+/// \brief report start and end time as well as used steps so far
+void
+AdaptiveSimulatorTimer::report(std::ostream& os) const
+{
+    os << "Sub steps started at time = " << unit::convert::to(start_time_, unit::day) << " (days)" << std::endl;
+    for (std::size_t i = 0; i < steps_.size(); ++i) {
+        os << " step[ " << i << " ] = " << unit::convert::to(steps_[i], unit::day) << " (days)" << std::endl;
     }
+    os << "sub steps end time = " << unit::convert::to(simulationTimeElapsed(), unit::day) << " (days)" << std::endl;
+}
 
-    void AdaptiveSimulatorTimer::setCurrentStepLength(double dt)
-    {
-        assert(dt > 0);
-        dt_ = dt;
-    }
+boost::posix_time::ptime
+AdaptiveSimulatorTimer::startDateTime() const
+{
+    return *start_date_time_;
+}
 
-    double AdaptiveSimulatorTimer::stepLengthTaken() const
-    {
-        assert( ! steps_.empty() );
-        return steps_.back();
-    }
-
-
-
-    double AdaptiveSimulatorTimer::totalTime() const { return total_time_; }
-
-    double AdaptiveSimulatorTimer::simulationTimeElapsed() const { return current_time_; }
-
-    bool AdaptiveSimulatorTimer::done () const { return (current_time_ >= total_time_) ; }
-
-    double AdaptiveSimulatorTimer::averageStepLength() const
-    {
-        const int size = steps_.size();
-        if( size == 0 ) return 0.0;
-
-        const double sum = std::accumulate(steps_.begin(), steps_.end(), 0.0);
-        return sum / double(size);
-    }
-
-    /// \brief return max step length used so far
-    double AdaptiveSimulatorTimer::maxStepLength () const
-    {
-        if( steps_.empty() ) return 0.0;
-        return *(std::max_element( steps_.begin(), steps_.end() ));
-    }
-
-    /// \brief return min step length used so far
-    double AdaptiveSimulatorTimer::minStepLength () const
-    {
-        if( steps_.empty() ) return 0.0;
-        return *(std::min_element( steps_.begin(), steps_.end() ));
-    }
-
-    /// \brief report start and end time as well as used steps so far
-    void AdaptiveSimulatorTimer::
-    report(std::ostream& os) const
-    {
-        os << "Sub steps started at time = " <<  unit::convert::to( start_time_, unit::day ) << " (days)" << std::endl;
-        for (std::size_t i = 0; i < steps_.size(); ++i)
-        {
-            os << " step[ " << i << " ] = " << unit::convert::to( steps_[ i ], unit::day ) << " (days)" << std::endl;
-        }
-        os << "sub steps end time = " << unit::convert::to( simulationTimeElapsed(), unit::day ) << " (days)" << std::endl;
-    }
-
-    boost::posix_time::ptime AdaptiveSimulatorTimer::startDateTime() const
-    {
-        return *start_date_time_;
-    }
-
-    /// return copy of object
-    std::unique_ptr< SimulatorTimerInterface >
-    AdaptiveSimulatorTimer::clone() const
-    {
-        return std::make_unique<AdaptiveSimulatorTimer>(*this);
-    }
+/// return copy of object
+std::unique_ptr<SimulatorTimerInterface>
+AdaptiveSimulatorTimer::clone() const
+{
+    return std::make_unique<AdaptiveSimulatorTimer>(*this);
+}
 
 
 

@@ -2,12 +2,13 @@
 
 #include <opm/simulators/linalg/PreconditionerFactory_impl.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-INSTANTIATE_PF(double,2)
+INSTANTIATE_PF(double, 2)
 
 #if FLOW_INSTANTIATE_FLOAT
-INSTANTIATE_PF(float,2)
+INSTANTIATE_PF(float, 2)
 #endif
 
-}
+} // namespace Opm

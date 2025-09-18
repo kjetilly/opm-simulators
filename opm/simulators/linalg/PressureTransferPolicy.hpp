@@ -22,39 +22,43 @@
 #define OPM_PRESSURE_TRANSFER_POLICY_HEADER_INCLUDED
 
 
-#include <opm/simulators/linalg/twolevelmethodcpr.hh>
 #include <opm/simulators/linalg/PropertyTree.hpp>
-#include <opm/simulators/linalg/matrixblock.hh>
 #include <opm/simulators/linalg/WellOperators.hpp>
+#include <opm/simulators/linalg/matrixblock.hh>
+#include <opm/simulators/linalg/twolevelmethodcpr.hh>
 
 #include <cstddef>
 
-namespace Opm { namespace Details {
-    template<class Scalar> using PressureMatrixType = Dune::BCRSMatrix<MatrixBlock<Scalar, 1, 1>>;
-    template<class Scalar> using PressureVectorType = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
-    template<class Scalar> using SeqCoarseOperatorType = Dune::MatrixAdapter<PressureMatrixType<Scalar>,
-                                                                             PressureVectorType<Scalar>,
-                                                                             PressureVectorType<Scalar>>;
-    template<class Scalar, class Comm>
-    using ParCoarseOperatorType
-        = Opm::GhostLastMatrixAdapter<PressureMatrixType<Scalar>,
-                                       PressureVectorType<Scalar>,
-                                       PressureVectorType<Scalar>,
-                                       Comm>;
-    template<class Scalar, class Comm>
+namespace Opm
+{
+namespace Details
+{
+    template <class Scalar>
+    using PressureMatrixType = Dune::BCRSMatrix<MatrixBlock<Scalar, 1, 1>>;
+    template <class Scalar>
+    using PressureVectorType = Dune::BlockVector<Dune::FieldVector<Scalar, 1>>;
+    template <class Scalar>
+    using SeqCoarseOperatorType
+        = Dune::MatrixAdapter<PressureMatrixType<Scalar>, PressureVectorType<Scalar>, PressureVectorType<Scalar>>;
+    template <class Scalar, class Comm>
+    using ParCoarseOperatorType = Opm::GhostLastMatrixAdapter<PressureMatrixType<Scalar>,
+                                                              PressureVectorType<Scalar>,
+                                                              PressureVectorType<Scalar>,
+                                                              Comm>;
+    template <class Scalar, class Comm>
     using CoarseOperatorType = std::conditional_t<std::is_same<Comm, Dune::Amg::SequentialInformation>::value,
                                                   SeqCoarseOperatorType<Scalar>,
-                                                  ParCoarseOperatorType<Scalar,Comm>>;
+                                                  ParCoarseOperatorType<Scalar, Comm>>;
 } // namespace Details
 
 
 
 template <class FineOperator, class Communication, class Scalar, bool transpose = false>
 class PressureTransferPolicy
-    : public Dune::Amg::LevelTransferPolicyCpr<FineOperator, Details::CoarseOperatorType<Scalar,Communication>>
+    : public Dune::Amg::LevelTransferPolicyCpr<FineOperator, Details::CoarseOperatorType<Scalar, Communication>>
 {
 public:
-    using CoarseOperator = typename Details::CoarseOperatorType<Scalar,Communication>;
+    using CoarseOperator = typename Details::CoarseOperatorType<Scalar, Communication>;
     using ParentType = Dune::Amg::LevelTransferPolicyCpr<FineOperator, CoarseOperator>;
     using ParallelInformation = Communication;
     using FineVectorType = typename FineOperator::domain_type;
@@ -74,7 +78,8 @@ public:
     {
         using CoarseMatrix = typename CoarseOperator::matrix_type;
         const auto& fineLevelMatrix = fineOperator.getmat();
-        coarseLevelMatrix_.reset(new CoarseMatrix(fineLevelMatrix.N(), fineLevelMatrix.M(), fineLevelMatrix.nonzeroes(), CoarseMatrix::row_wise));
+        coarseLevelMatrix_.reset(new CoarseMatrix(
+            fineLevelMatrix.N(), fineLevelMatrix.M(), fineLevelMatrix.nonzeroes(), CoarseMatrix::row_wise));
         auto createIter = coarseLevelMatrix_->createbegin();
 
         for (const auto& row : fineLevelMatrix) {
@@ -85,7 +90,7 @@ public:
         }
 
         calculateCoarseEntries(fineOperator);
-        coarseLevelCommunication_.reset(communication_, [](Communication*) {});
+        coarseLevelCommunication_.reset(communication_, [](Communication*) { });
 
         this->lhs_.resize(this->coarseLevelMatrix_->M());
         this->rhs_.resize(this->coarseLevelMatrix_->N());

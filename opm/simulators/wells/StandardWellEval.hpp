@@ -37,20 +37,23 @@ class ConvergenceReport;
 class DeferredLogger;
 class Schedule;
 class SummaryState;
-template<class Scalar> class WellContributions;
-template<class FluidSystem, class Indices> class WellInterfaceIndices;
-template<typename FluidSystem, typename Indices> class WellState;
+template <class Scalar>
+class WellContributions;
+template <class FluidSystem, class Indices>
+class WellInterfaceIndices;
+template <typename FluidSystem, typename Indices>
+class WellState;
 
-template<class FluidSystem, class Indices>
+template <class FluidSystem, class Indices>
 class StandardWellEval
 {
 protected:
     using Scalar = typename FluidSystem::Scalar;
     using IndexTraits = typename FluidSystem::IndexTraitsType;
-    using PrimaryVariables = StandardWellPrimaryVariables<FluidSystem,Indices>;
-    using StdWellConnections = StandardWellConnections<FluidSystem,Indices>;
+    using PrimaryVariables = StandardWellPrimaryVariables<FluidSystem, Indices>;
+    using StdWellConnections = StandardWellConnections<FluidSystem, Indices>;
     static constexpr int Bhp = PrimaryVariables::Bhp;
-    static constexpr int WQTotal= PrimaryVariables::WQTotal;
+    static constexpr int WQTotal = PrimaryVariables::WQTotal;
     static constexpr int numWellConservationEq = PrimaryVariables::numWellConservationEq;
 
     static constexpr bool has_wfrac_variable = PrimaryVariables::has_wfrac_variable;
@@ -66,12 +69,14 @@ public:
 
     //! \brief Returns a const reference to equation system.
     const StandardWellEquations<Scalar, IndexTraits, Indices::numEq>& linSys() const
-    { return linSys_; }
+    {
+        return linSys_;
+    }
 
 protected:
-    explicit StandardWellEval(const WellInterfaceIndices<FluidSystem,Indices>& baseif);
+    explicit StandardWellEval(const WellInterfaceIndices<FluidSystem, Indices>& baseif);
 
-    const WellInterfaceIndices<FluidSystem,Indices>& baseif_;
+    const WellInterfaceIndices<FluidSystem, Indices>& baseif_;
 
     EvalWell extendEval(const Eval& in) const;
 
@@ -84,13 +89,11 @@ protected:
                                          const Scalar tol_wells,
                                          const Scalar relaxed_tolerance_flow,
                                          const bool relax_tolerance,
-                                         const bool well_is_stopped, 
+                                         const bool well_is_stopped,
                                          std::vector<Scalar>& res,
                                          DeferredLogger& deferred_logger) const;
 
-    void init(std::vector<Scalar>& perf_depth,
-              const std::vector<Scalar>& depth_arg,
-              const bool has_polymermw);
+    void init(std::vector<Scalar>& perf_depth, const std::vector<Scalar>& depth_arg, const bool has_polymermw);
 
     void updateWellStateFromPrimaryVariables(WellState<Scalar, IndexTraits>& well_state,
                                              const SummaryState& summary_state,
@@ -105,6 +108,6 @@ protected:
     StdWellConnections connections_; //!< Connection level values
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_STANDARDWELL_EVAL_HEADER_INCLUDED

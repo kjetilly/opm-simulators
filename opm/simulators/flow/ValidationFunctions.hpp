@@ -25,21 +25,21 @@
 #include <unordered_map>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 class DeckKeyword;
 }
 
-namespace Opm::KeywordValidation {
+namespace Opm::KeywordValidation
+{
 
 struct ValidationError;
 
-using ValidationFunction = std::function<void(const DeckKeyword&,
-                                              std::vector<ValidationError>&)>;
+using ValidationFunction = std::function<void(const DeckKeyword&, std::vector<ValidationError>&)>;
 
 // This is a mapping between keyword names and small functions
 // for validation of special keywords.
-std::unordered_map<std::string, ValidationFunction>
-specialValidation();
+std::unordered_map<std::string, ValidationFunction> specialValidation();
 
 } // namespace Opm::KeywordValidation
 

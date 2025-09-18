@@ -14,7 +14,8 @@
 #ifndef FLOW_BIOFILM_HPP
 #define FLOW_BIOFILM_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowBiofilmMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -22,6 +23,6 @@ int flowBiofilmMain(int argc, char** argv, bool outputCout, bool outputFiles);
 //! \brief Main function used in flow_biofilm binary.
 int flowBiofilmMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_BIOFILM_HPP

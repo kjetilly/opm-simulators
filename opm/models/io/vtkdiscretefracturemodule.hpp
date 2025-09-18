@@ -37,16 +37,17 @@
 #include <opm/models/io/vtkdiscretefractureparams.hpp>
 #include <opm/models/io/vtkmultiwriter.hh>
 
-#include <opm/models/utils/propertysystem.hh>
 #include <opm/models/utils/parametersystem.hpp>
+#include <opm/models/utils/propertysystem.hh>
 
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <cstdio>
 #include <cstddef>
+#include <cstdio>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
@@ -183,8 +184,7 @@ public:
                 }
                 if (params_.relativePermeabilityOutput_) {
                     Valgrind::CheckDefined(intQuants.fractureRelativePermeability(phaseIdx));
-                    fractureRelativePermeability_[phaseIdx][I] =
-                        intQuants.fractureRelativePermeability(phaseIdx);
+                    fractureRelativePermeability_[phaseIdx][I] = intQuants.fractureRelativePermeability(phaseIdx);
                 }
                 if (params_.volumeFractionOutput_) {
                     Valgrind::CheckDefined(intQuants.fractureVolume());
@@ -209,8 +209,7 @@ public:
                 }
 
                 for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
-                    Scalar weight = std::max(Scalar{1e-16},
-                                             std::abs(extQuants.fractureVolumeFlux(phaseIdx)));
+                    Scalar weight = std::max(Scalar {1e-16}, std::abs(extQuants.fractureVolumeFlux(phaseIdx)));
                     Valgrind::CheckDefined(extQuants.extrusionFactor());
                     assert(extQuants.extrusionFactor() > 0);
                     weight *= extQuants.extrusionFactor();
@@ -240,33 +239,29 @@ public:
         }
 
         if (params_.saturationOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "fractureSaturation_%s",
-                                     fractureSaturation_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "fractureSaturation_%s", fractureSaturation_, BufferType::Dof);
         }
         if (params_.mobilityOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "fractureMobility_%s",
-                                     fractureMobility_, BufferType::Dof);
+            this->commitPhaseBuffer_(baseWriter, "fractureMobility_%s", fractureMobility_, BufferType::Dof);
         }
         if (params_.relativePermeabilityOutput_) {
-            this->commitPhaseBuffer_(baseWriter, "fractureRelativePerm_%s",
-                                     fractureRelativePermeability_, BufferType::Dof);
+            this->commitPhaseBuffer_(
+                baseWriter, "fractureRelativePerm_%s", fractureRelativePermeability_, BufferType::Dof);
         }
 
         if (params_.porosityOutput_) {
-            this->commitScalarBuffer_(baseWriter, "fracturePorosity",
-                                      fracturePorosity_, BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "fracturePorosity", fracturePorosity_, BufferType::Dof);
         }
         if (params_.intrinsicPermeabilityOutput_) {
-            this->commitScalarBuffer_(baseWriter, "fractureIntrinsicPerm",
-                                      fractureIntrinsicPermeability_, BufferType::Dof);
+            this->commitScalarBuffer_(
+                baseWriter, "fractureIntrinsicPerm", fractureIntrinsicPermeability_, BufferType::Dof);
         }
         if (params_.volumeFractionOutput_) {
             // divide the fracture volume by the total volume of the finite volumes
             for (unsigned I = 0; I < fractureVolumeFraction_.size(); ++I) {
                 fractureVolumeFraction_[I] /= this->simulator_.model().dofTotalVolume(I);
             }
-            this->commitScalarBuffer_(baseWriter, "fractureVolumeFraction",
-                                      fractureVolumeFraction_, BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "fractureVolumeFraction", fractureVolumeFraction_, BufferType::Dof);
         }
 
         if (params_.velocityOutput_) {
@@ -275,8 +270,8 @@ public:
                 // first, divide the velocity field by the
                 // respective finite volume's surface area
                 for (unsigned dofIdx = 0; dofIdx < nDof; ++dofIdx) {
-                    fractureVelocity_[phaseIdx][dofIdx] /=
-                        std::max<Scalar>(1e-20, fractureVelocityWeight_[phaseIdx][dofIdx]);
+                    fractureVelocity_[phaseIdx][dofIdx]
+                        /= std::max<Scalar>(1e-20, fractureVelocityWeight_[phaseIdx][dofIdx]);
                 }
                 // commit the phase velocity
                 char name[512];
@@ -288,20 +283,20 @@ public:
     }
 
 private:
-    VtkDiscreteFractureParams params_{};
-    PhaseBuffer fractureSaturation_{};
-    PhaseBuffer fractureMobility_{};
-    PhaseBuffer fractureRelativePermeability_{};
+    VtkDiscreteFractureParams params_ {};
+    PhaseBuffer fractureSaturation_ {};
+    PhaseBuffer fractureMobility_ {};
+    PhaseBuffer fractureRelativePermeability_ {};
 
-    ScalarBuffer fracturePorosity_{};
-    ScalarBuffer fractureVolumeFraction_{};
-    ScalarBuffer fractureIntrinsicPermeability_{};
+    ScalarBuffer fracturePorosity_ {};
+    ScalarBuffer fractureVolumeFraction_ {};
+    ScalarBuffer fractureIntrinsicPermeability_ {};
 
-    PhaseVectorBuffer fractureVelocity_{};
-    PhaseBuffer fractureVelocityWeight_{};
+    PhaseVectorBuffer fractureVelocity_ {};
+    PhaseBuffer fractureVelocityWeight_ {};
 
-    PhaseVectorBuffer potentialGradient_{};
-    PhaseBuffer potentialWeight_{};
+    PhaseVectorBuffer potentialGradient_ {};
+    PhaseBuffer potentialWeight_ {};
 };
 
 } // namespace Opm

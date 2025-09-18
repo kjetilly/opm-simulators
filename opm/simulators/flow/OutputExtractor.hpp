@@ -39,19 +39,19 @@
 
 #include <algorithm>
 #include <array>
-#include <unordered_map>
 #include <set>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
 #include <fmt/format.h>
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
 //! \brief Wrapping struct holding types used for element-level data extraction.
-template<class TypeTag>
-struct Extractor
-{
+template <class TypeTag>
+struct Extractor {
     using IntensiveQuantities = GetPropType<TypeTag, Properties::IntensiveQuantities>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
     using FluidState = typename IntensiveQuantities::FluidState;
@@ -59,23 +59,21 @@ struct Extractor
     static constexpr int numPhases = FluidSystem::numPhases;
 
     //! \brief Struct holding hysteresis parameters.
-    struct HysteresisParams
-    {
-        Scalar somax{}; //!< Max oil saturation
-        Scalar swmax{}; //!< Max water saturation
-        Scalar swmin{}; //!< Min water saturation
-        Scalar sgmax{}; //!< Max gas saturation
-        Scalar shmax{}; //!< Max something
-        Scalar somin{}; //!< Min oil saturation
+    struct HysteresisParams {
+        Scalar somax {}; //!< Max oil saturation
+        Scalar swmax {}; //!< Max water saturation
+        Scalar swmin {}; //!< Min water saturation
+        Scalar sgmax {}; //!< Max gas saturation
+        Scalar shmax {}; //!< Max something
+        Scalar somin {}; //!< Min oil saturation
     };
 
     //! \brief Context passed to extractor functions.
-    struct Context
-    {
+    struct Context {
         unsigned globalDofIdx; //!< Global degree-of-freedom index
         unsigned pvtRegionIdx; //!< pvt region for dof
-        int episodeIndex;      //!< Current report step
-        const FluidState& fs;  //!< Fluid state for cell
+        int episodeIndex; //!< Current report step
+        const FluidState& fs; //!< Fluid state for cell
         const IntensiveQuantities& intQuants; //!< Intensive quantities for cell
         const HysteresisParams& hParams; //!< Hysteresis parameters for cell
     };
@@ -92,32 +90,29 @@ struct Extractor
     using PhaseFunc = std::function<Scalar(const unsigned /*phase*/, const Context&)>;
 
     using ScalarBuffer = std::vector<Scalar>; //!< A scalar buffer
-    using PhaseArray = std::array<ScalarBuffer,numPhases>; //!< An array of buffers, one for each phase
+    using PhaseArray = std::array<ScalarBuffer, numPhases>; //!< An array of buffers, one for each phase
 
     //! \brief A scalar extractor descriptor.
-    struct ScalarEntry
-    {
+    struct ScalarEntry {
         ScalarBuffer* data; //!< Buffer to store data in
         ScalarFunc extract; //!< Function to call for extraction
     };
 
     //! \brief A phase buffer extractor descriptor.
-    struct PhaseEntry
-    {
+    struct PhaseEntry {
         PhaseArray* data; //!< Array of buffers to store data in
         PhaseFunc extract; //!< Function to call for extraction
     };
 
     //! \brief Descriptor for extractors
-    struct Entry
-    {
+    struct Entry {
         std::variant<AssignFunc, ScalarEntry, PhaseEntry> data; //!< Extractor
         bool condition = true; //!< Additional condition for enabling extractor
     };
 
     //! \brief Obtain vector of active extractors from an array of extractors.
-    template<std::size_t size>
-    static std::vector<Entry> removeInactive(std::array<Entry,size>& input)
+    template <std::size_t size>
+    static std::vector<Entry> removeInactive(std::array<Entry, size>& input)
     {
         // Setup active extractors
         std::vector<Entry> filtered_extractors;
@@ -125,28 +120,19 @@ struct Extractor
         std::copy_if(std::move_iterator(input.begin()),
                      std::move_iterator(input.end()),
                      std::back_inserter(filtered_extractors),
-                     [](const Entry& e)
-                     {
+                     [](const Entry& e) {
                          if (!e.condition) {
-                            return false;
+                             return false;
                          }
-                         return std::visit(VisitorOverloadSet{
-                                               [](const AssignFunc&)
-                                               {
-                                                   return true;
-                                               },
-                                               [](const ScalarEntry& v)
-                                               {
-                                                   return !v.data->empty();
-                                               },
-                                               [](const PhaseEntry& v)
-                                               {
-                                                   return std::any_of(v.data->begin(),
-                                                                      v.data->end(),
-                                                                      [](const auto& ve)
-                                                                      { return !ve.empty(); });
-                                               }
-                                           }, e.data);
+                         return std::visit(VisitorOverloadSet {[](const AssignFunc&) { return true; },
+                                                               [](const ScalarEntry& v) { return !v.data->empty(); },
+                                                               [](const PhaseEntry& v) {
+                                                                   return std::any_of(
+                                                                       v.data->begin(),
+                                                                       v.data->end(),
+                                                                       [](const auto& ve) { return !ve.empty(); });
+                                                               }},
+                                           e.data);
                      });
 
         return filtered_extractors;
@@ -155,42 +141,35 @@ struct Extractor
     //! \brief Process the given extractor entries
     //! \param ectx Context for extractors
     //! \param extractors List of extractors to process
-    static void process(const Context& ectx,
-                        const std::vector<Entry>& extractors)
+    static void process(const Context& ectx, const std::vector<Entry>& extractors)
     {
-        std::for_each(extractors.begin(), extractors.end(),
-                      [&ectx](const auto& entry)
-                      {
-                          std::visit(VisitorOverloadSet{
-                              [&ectx](const ScalarEntry& v)
-                              {
-                                  auto& array = *v.data;
-                                  array[ectx.globalDofIdx] = v.extract(ectx);
-                                  Valgrind::CheckDefined(array[ectx.globalDofIdx]);
-                              },
-                              [&ectx](const PhaseEntry& v)
-                              {
-                                  std::for_each(v.data->begin(), v.data->end(),
-                                                [phaseIdx = 0, &ectx, &v](auto& array) mutable
-                                                {
-                                                    if (!array.empty()) {
-                                                        array[ectx.globalDofIdx] = v.extract(phaseIdx, ectx);
-                                                        Valgrind::CheckDefined(array[ectx.globalDofIdx]);
-                                                    }
-                                                    ++phaseIdx;
-                                                });
-                              },
-                              [&ectx](const typename Extractor::AssignFunc& extract)
-                              { extract(ectx); },
-                          }, entry.data);
-                      });
+        std::for_each(extractors.begin(), extractors.end(), [&ectx](const auto& entry) {
+            std::visit(VisitorOverloadSet {
+                           [&ectx](const ScalarEntry& v) {
+                               auto& array = *v.data;
+                               array[ectx.globalDofIdx] = v.extract(ectx);
+                               Valgrind::CheckDefined(array[ectx.globalDofIdx]);
+                           },
+                           [&ectx](const PhaseEntry& v) {
+                               std::for_each(
+                                   v.data->begin(), v.data->end(), [phaseIdx = 0, &ectx, &v](auto& array) mutable {
+                                       if (!array.empty()) {
+                                           array[ectx.globalDofIdx] = v.extract(phaseIdx, ectx);
+                                           Valgrind::CheckDefined(array[ectx.globalDofIdx]);
+                                       }
+                                       ++phaseIdx;
+                                   });
+                           },
+                           [&ectx](const typename Extractor::AssignFunc& extract) { extract(ectx); },
+                       },
+                       entry.data);
+        });
     }
 };
 
 //! \brief Wrapping struct holding types used for block-level data extraction.
-template<class TypeTag>
-struct BlockExtractor
-{
+template <class TypeTag>
+struct BlockExtractor {
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
     using IntensiveQuantities = GetPropType<TypeTag, Properties::IntensiveQuantities>;
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
@@ -202,11 +181,10 @@ struct BlockExtractor
     static constexpr int waterPhaseIdx = FluidSystem::waterPhaseIdx;
 
     //! \brief Context passed to element extractor functions.
-    struct Context
-    {
+    struct Context {
         unsigned globalDofIdx; //!< Global degree-of-freedom index
         unsigned dofIdx;
-        const FluidState& fs;  //!< Fluid state for cell
+        const FluidState& fs; //!< Fluid state for cell
         const IntensiveQuantities& intQuants; //!< Intensive quantities for cell
         const ElementContext& elemCtx;
     };
@@ -222,8 +200,7 @@ struct BlockExtractor
     /// Returns value to store in buffer for requested phase
     using PhaseFunc = std::function<Scalar(const unsigned /*phase*/, const Context&)>;
 
-    struct ScalarEntry
-    {
+    struct ScalarEntry {
         /// A single name or a list of names for the keyword
         std::variant<std::string_view, std::vector<std::string_view>> kw;
 
@@ -231,11 +208,10 @@ struct BlockExtractor
         ScalarFunc extract;
     };
 
-    struct PhaseEntry
-    {
+    struct PhaseEntry {
         /// One or two lists of names for the keyword for each phase
-        std::variant<std::array<std::string_view, numPhases>,
-                     std::array<std::array<std::string_view, numPhases>, 2>> kw;
+        std::variant<std::array<std::string_view, numPhases>, std::array<std::array<std::string_view, numPhases>, 2>>
+            kw;
 
         /// Associated extraction lambda
         PhaseFunc extract;
@@ -245,12 +221,13 @@ struct BlockExtractor
     using Entry = std::variant<ScalarEntry, PhaseEntry>;
 
     //! \brief Descriptor for extractor execution.
-    struct Exec
-    {
+    struct Exec {
         //! \brief Move constructor.
         Exec(double* d, ScalarFunc&& e)
-            : data(d), extract(std::move(e))
-        {}
+            : data(d)
+            , extract(std::move(e))
+        {
+        }
 
         double* data; //!< Where to store output data
         ScalarFunc extract; //!< Extraction function to call
@@ -260,116 +237,84 @@ struct BlockExtractor
     using ExecMap = std::unordered_map<int, std::vector<Exec>>;
 
     //! \brief Setup an extractor executor map from a map of evaluations to perform.
-    template<std::size_t size>
+    template <std::size_t size>
     static ExecMap setupExecMap(std::map<std::pair<std::string, int>, double>& blockData,
-                                const std::array<Entry,size>& handlers)
+                                const std::array<Entry, size>& handlers)
     {
         using PhaseViewArray = std::array<std::string_view, numPhases>;
         using StringViewVec = std::vector<std::string_view>;
 
         ExecMap extractors;
 
-        std::for_each(
-            blockData.begin(),
-            blockData.end(),
-            [&handlers, &extractors](auto& bd_info)
-            {
-                unsigned phase{};
-                const auto& [key, cell] = bd_info.first;
-                const auto& handler_info =
-                    std::find_if(
-                        handlers.begin(),
-                        handlers.end(),
-                        [&kw_name = bd_info.first.first, &phase](const auto& handler)
-                        {
-                           // Extract list of keyword names from handler
-                           const auto gen_handlers =
-                              std::visit(VisitorOverloadSet{
-                                            [](const ScalarEntry& entry)
-                                            {
-                                                return std::visit(VisitorOverloadSet{
-                                                                      [](const std::string_view& kw) -> StringViewVec
-                                                                      {
-                                                                          return {kw};
-                                                                      },
-                                                                      [](const StringViewVec& kws) -> StringViewVec
-                                                                      { return kws; }
-                                                                  }, entry.kw);
-                                            },
-                                            [](const PhaseEntry& entry)
-                                            {
-                                                return std::visit(VisitorOverloadSet{
-                                                                      [](const PhaseViewArray& data)
-                                                                      {
-                                                                          return StringViewVec{data.begin(), data.end()};
-                                                                      },
-                                                                      [](const std::array<PhaseViewArray,2>& data)
-                                                                      {
-                                                                          StringViewVec res;
-                                                                          res.reserve(2*numPhases);
-                                                                          res.insert(res.end(),
-                                                                                     data[0].begin(),
-                                                                                     data[0].end());
-                                                                          res.insert(res.end(),
-                                                                                     data[1].begin(),
-                                                                                     data[1].end());
-                                                                          return res;
-                                                                      }
-                                                                  }, entry.kw);
-                                            }
-                                        }, handler);
+        std::for_each(blockData.begin(), blockData.end(), [&handlers, &extractors](auto& bd_info) {
+            unsigned phase {};
+            const auto& [key, cell] = bd_info.first;
+            const auto& handler_info = std::find_if(
+                handlers.begin(), handlers.end(), [&kw_name = bd_info.first.first, &phase](const auto& handler) {
+                    // Extract list of keyword names from handler
+                    const auto gen_handlers = std::visit(
+                        VisitorOverloadSet {
+                            [](const ScalarEntry& entry) {
+                                return std::visit(VisitorOverloadSet {
+                                                      [](const std::string_view& kw) -> StringViewVec { return {kw}; },
+                                                      [](const StringViewVec& kws) -> StringViewVec { return kws; }},
+                                                  entry.kw);
+                            },
+                            [](const PhaseEntry& entry) {
+                                return std::visit(
+                                    VisitorOverloadSet {[](const PhaseViewArray& data) {
+                                                            return StringViewVec {data.begin(), data.end()};
+                                                        },
+                                                        [](const std::array<PhaseViewArray, 2>& data) {
+                                                            StringViewVec res;
+                                                            res.reserve(2 * numPhases);
+                                                            res.insert(res.end(), data[0].begin(), data[0].end());
+                                                            res.insert(res.end(), data[1].begin(), data[1].end());
+                                                            return res;
+                                                        }},
+                                    entry.kw);
+                            }},
+                        handler);
 
-                            const auto found_handler =
-                                std::find(gen_handlers.begin(), gen_handlers.end(), kw_name);
-                            if (found_handler != gen_handlers.end()) {
-                                phase = std::distance(gen_handlers.begin(), found_handler) % numPhases;
-                            }
-                            return found_handler != gen_handlers.end();
-                        }
-                    );
+                    const auto found_handler = std::find(gen_handlers.begin(), gen_handlers.end(), kw_name);
+                    if (found_handler != gen_handlers.end()) {
+                        phase = std::distance(gen_handlers.begin(), found_handler) % numPhases;
+                    }
+                    return found_handler != gen_handlers.end();
+                });
 
-                if (handler_info != handlers.end()) {
-                    extractors[cell - 1].emplace_back(
-                        &bd_info.second,
-                        std::visit(VisitorOverloadSet{
-                                       [](const ScalarEntry& e)
-                                       {
-                                           return e.extract;
-                                       },
-                                       [phase](const PhaseEntry& e) -> ScalarFunc
-                                       {
-                                           return [phase, extract = e.extract]
-                                                  (const Context& ectx)
-                                                  {
-                                                      static constexpr auto phaseMap = std::array{
-                                                          waterPhaseIdx,
-                                                          oilPhaseIdx,
-                                                          gasPhaseIdx,
-                                                      };
-                                                      return extract(phaseMap[phase], ectx);
-                                                  };
-                                       }
-                                   }, *handler_info)
-                     );
-                }
-                else {
-                    OpmLog::warning("Unhandled output keyword",
-                                    fmt::format("Keyword '{}' is unhandled for output "
-                                                "to summary file.", key));
-                }
+            if (handler_info != handlers.end()) {
+                extractors[cell - 1].emplace_back(
+                    &bd_info.second,
+                    std::visit(VisitorOverloadSet {[](const ScalarEntry& e) { return e.extract; },
+                                                   [phase](const PhaseEntry& e) -> ScalarFunc {
+                                                       return [phase, extract = e.extract](const Context& ectx) {
+                                                           static constexpr auto phaseMap = std::array {
+                                                               waterPhaseIdx,
+                                                               oilPhaseIdx,
+                                                               gasPhaseIdx,
+                                                           };
+                                                           return extract(phaseMap[phase], ectx);
+                                                       };
+                                                   }},
+                               *handler_info));
+            } else {
+                OpmLog::warning("Unhandled output keyword",
+                                fmt::format("Keyword '{}' is unhandled for output "
+                                            "to summary file.",
+                                            key));
             }
-        );
+        });
 
         return extractors;
     }
 
     //! \brief Process a list of block extractors.
-    static void process(const std::vector<Exec>& blockExtractors,
-                        const Context& ectx)
+    static void process(const std::vector<Exec>& blockExtractors, const Context& ectx)
     {
-        std::for_each(blockExtractors.begin(), blockExtractors.end(),
-                      [&ectx](auto& bdata)
-                      { *bdata.data = bdata.extract(ectx); });
+        std::for_each(blockExtractors.begin(), blockExtractors.end(), [&ectx](auto& bdata) {
+            *bdata.data = bdata.extract(ectx);
+        });
     }
 };
 

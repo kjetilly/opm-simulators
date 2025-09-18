@@ -17,24 +17,28 @@
 #include "config.h"
 #include <opm/simulators/flow/Main.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowBrineEnergyProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnableBrine<TypeTag, TTag::FlowBrineEnergyProblem> {
-    static constexpr bool value = true;
-};
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::FlowBrineEnergyProblem> {
-    static constexpr bool value = true;
-};
-}
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowBrineEnergyProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnableBrine<TypeTag, TTag::FlowBrineEnergyProblem> {
+        static constexpr bool value = true;
+    };
+    template <class TypeTag>
+    struct EnableEnergy<TypeTag, TTag::FlowBrineEnergyProblem> {
+        static constexpr bool value = true;
+    };
+} // namespace Properties
 
-int flowBrineEnergyMain(int argc, char** argv)
+int
+flowBrineEnergyMain(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowBrineEnergyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -44,4 +48,4 @@ int flowBrineEnergyMain(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

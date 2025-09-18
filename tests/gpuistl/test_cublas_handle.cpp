@@ -21,8 +21,8 @@
 
 #define BOOST_TEST_MODULE TestCublasHandle
 
-#include <cuda_runtime.h>
 #include <boost/test/unit_test.hpp>
+#include <cuda_runtime.h>
 #include <opm/simulators/linalg/gpuistl/detail/CuBlasHandle.hpp>
 
 BOOST_AUTO_TEST_CASE(TestGetCublasVersion)

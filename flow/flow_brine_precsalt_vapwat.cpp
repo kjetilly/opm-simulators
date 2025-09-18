@@ -18,49 +18,55 @@
 
 #include <flow/flow_brine_precsalt_vapwat.hpp>
 
-#include <opm/material/common/ResetLocale.hpp>
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowBrinePrecsaltVapwatProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnableBrine<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
-    static constexpr bool value = true;
-};
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowBrinePrecsaltVapwatProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnableBrine<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
+        static constexpr bool value = true;
+    };
 
-template<class TypeTag>
-struct EnableSaltPrecipitation<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
-    static constexpr bool value = true;
-};
+    template <class TypeTag>
+    struct EnableSaltPrecipitation<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
+        static constexpr bool value = true;
+    };
 
-template<class TypeTag>
-struct EnableVapwat<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
-    static constexpr bool value = true;
-};
-}}
+    template <class TypeTag>
+    struct EnableVapwat<TypeTag, TTag::FlowBrinePrecsaltVapwatProblem> {
+        static constexpr bool value = true;
+    };
+} // namespace Properties
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowBrinePrecsaltVapwatMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowBrinePrecsaltVapwatProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowBrinePrecsaltVapwatProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowBrinePrecsaltVapwatMainStandalone(int argc, char** argv)
+int
+flowBrinePrecsaltVapwatMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowBrinePrecsaltVapwatProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -70,4 +76,4 @@ int flowBrinePrecsaltVapwatMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

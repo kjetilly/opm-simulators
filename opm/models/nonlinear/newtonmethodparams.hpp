@@ -23,15 +23,20 @@
 #ifndef OPM_NEWTON_METHOD_PARAMS_HPP
 #define OPM_NEWTON_METHOD_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 //! The maximum error which may occur in a simulation before the
 //! Newton method for the time step is aborted
-template<class Scalar>
-struct NewtonMaxError { static constexpr Scalar value = 1e100; };
+template <class Scalar>
+struct NewtonMaxError {
+    static constexpr Scalar value = 1e100;
+};
 
 //! Number of maximum iterations for the Newton method.
-struct NewtonMaxIterations { static constexpr int value = 20; };
+struct NewtonMaxIterations {
+    static constexpr int value = 20;
+};
 
 /*!
  * \brief The number of iterations at which the Newton method
@@ -41,7 +46,9 @@ struct NewtonMaxIterations { static constexpr int value = 20; };
  * is to scale the last time-step size by the deviation of the
  * number of iterations used from the target steps.
  */
-struct NewtonTargetIterations { static constexpr int value = 10; };
+struct NewtonTargetIterations {
+    static constexpr int value = 10;
+};
 
 /*!
  * \brief The value for the error below which convergence is declared
@@ -49,26 +56,32 @@ struct NewtonTargetIterations { static constexpr int value = 10; };
  * This value can (and for the porous media models will) be changed to account for grid
  * scaling and other effects.
  */
-template<class Scalar>
-struct NewtonTolerance { static constexpr Scalar value = 1e-8; };
+template <class Scalar>
+struct NewtonTolerance {
+    static constexpr Scalar value = 1e-8;
+};
 
 //! Specifies whether the Newton method should print messages or not
-struct NewtonVerbose { static constexpr bool value = true; };
+struct NewtonVerbose {
+    static constexpr bool value = true;
+};
 
 //! Specifies whether the convergence rate and the global residual
 //! gets written out to disk for every Newton iteration
-struct NewtonWriteConvergence { static constexpr bool value = false; };
+struct NewtonWriteConvergence {
+    static constexpr bool value = false;
+};
 
 } // end namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for NewtonMethod.
  */
-template<class Scalar>
-struct NewtonMethodParams
-{
+template <class Scalar>
+struct NewtonMethodParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

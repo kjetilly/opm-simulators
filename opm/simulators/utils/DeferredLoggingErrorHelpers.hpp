@@ -28,9 +28,9 @@
 
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-#include <string>
 #include <exception>
 #include <stdexcept>
+#include <string>
 
 // Macro to log an error and throw an exception.
 // Inspired by ErrorMacros.hpp in opm-common.
@@ -42,13 +42,11 @@
 // std::runtime_error.
 //
 // Usage: OPM_DEFLOG_THROW(ExceptionClass, "Error message", DeferredLogger);
-#define OPM_DEFLOG_THROW(Exception, message, deferred_logger)  \
-    do {                                                       \
-        std::string oss_ = std::string{"["} + __FILE__ + ":" + \
-                           std::to_string(__LINE__) + "] " +   \
-                           message;                            \
-        deferred_logger.error(oss_);                           \
-        throw Exception(oss_);                                 \
+#define OPM_DEFLOG_THROW(Exception, message, deferred_logger)                                                          \
+    do {                                                                                                               \
+        std::string oss_ = std::string {"["} + __FILE__ + ":" + std::to_string(__LINE__) + "] " + message;             \
+        deferred_logger.error(oss_);                                                                                   \
+        throw Exception(oss_);                                                                                         \
     } while (false)
 
 // Macro to log a problem and throw an exception.
@@ -58,21 +56,19 @@
 // be NumericalProblem.
 //
 // Usage: OPM_DEFLOG_PROBLEM(ExceptionClass, "Error message", DeferredLogger);
-#define OPM_DEFLOG_PROBLEM(Exception, message, deferred_logger)  \
-    do {                                                         \
-        std::string oss_ = std::string{"["} + __FILE__ + ":" +   \
-                           std::to_string(__LINE__) + "] " +     \
-                           message;                              \
-        deferred_logger.problem(oss_);                           \
-        throw Exception(oss_);                                   \
+#define OPM_DEFLOG_PROBLEM(Exception, message, deferred_logger)                                                        \
+    do {                                                                                                               \
+        std::string oss_ = std::string {"["} + __FILE__ + ":" + std::to_string(__LINE__) + "] " + message;             \
+        deferred_logger.problem(oss_);                                                                                 \
+        throw Exception(oss_);                                                                                         \
     } while (false)
 
 
-namespace {
+namespace
+{
 
-void _throw(Opm::ExceptionType::ExcEnum exc_type,
-            const std::string& message,
-            Opm::Parallel::Communication comm)
+void
+_throw(Opm::ExceptionType::ExcEnum exc_type, const std::string& message, Opm::Parallel::Communication comm)
 {
     auto global_exc = comm.max(exc_type);
 
@@ -101,18 +97,20 @@ void _throw(Opm::ExceptionType::ExcEnum exc_type,
 
 
 
-inline void checkForExceptionsAndThrow(Opm::ExceptionType::ExcEnum exc_type,
-                                       const std::string& message,
-                                       Opm::Parallel::Communication comm)
+inline void
+checkForExceptionsAndThrow(Opm::ExceptionType::ExcEnum exc_type,
+                           const std::string& message,
+                           Opm::Parallel::Communication comm)
 {
     _throw(exc_type, message, comm);
 }
 
-inline void logAndCheckForExceptionsAndThrow(Opm::DeferredLogger& deferred_logger,
-                                             Opm::ExceptionType::ExcEnum exc_type,
-                                             const std::string& message,
-                                             const bool terminal_output,
-                                             Opm::Parallel::Communication comm)
+inline void
+logAndCheckForExceptionsAndThrow(Opm::DeferredLogger& deferred_logger,
+                                 Opm::ExceptionType::ExcEnum exc_type,
+                                 const std::string& message,
+                                 const bool terminal_output,
+                                 Opm::Parallel::Communication comm)
 {
     // add exception message to logger in order to display message from all ranks
     if (exc_type != Opm::ExceptionType::NONE && comm.size() > 1) {
@@ -130,11 +128,12 @@ inline void logAndCheckForExceptionsAndThrow(Opm::DeferredLogger& deferred_logge
     _throw(exc_type, message, comm);
 }
 
-inline void logAndCheckForProblemsAndThrow(Opm::DeferredLogger& deferred_logger,
-                                          Opm::ExceptionType::ExcEnum exc_type,
-                                          const std::string& message,
-                                          const bool terminal_output,
-                                          Opm::Parallel::Communication comm)
+inline void
+logAndCheckForProblemsAndThrow(Opm::DeferredLogger& deferred_logger,
+                               Opm::ExceptionType::ExcEnum exc_type,
+                               const std::string& message,
+                               const bool terminal_output,
+                               Opm::Parallel::Communication comm)
 {
     // add exception message to logger in order to display message from all ranks
     if (exc_type != Opm::ExceptionType::NONE && comm.size() > 1) {
@@ -155,53 +154,61 @@ inline void logAndCheckForProblemsAndThrow(Opm::DeferredLogger& deferred_logger,
 ///
 /// Use OPM_END_PARALLEL_TRY_CATCH or OPM_END_PARALLEL_TRY_CATCH_LOG
 /// fot the catch part.
-#define OPM_BEGIN_PARALLEL_TRY_CATCH()    \
-std::string obptc_exc_msg;                \
-auto obptc_exc_type = Opm::ExceptionType::NONE; \
-try {
+#define OPM_BEGIN_PARALLEL_TRY_CATCH()                                                                                 \
+    std::string obptc_exc_msg;                                                                                         \
+    auto obptc_exc_type = Opm::ExceptionType::NONE;                                                                    \
+    try {
 
 /// \brief Inserts catch classes for the parallel try-catch
 ///
 /// There is a clause that will catch anything
-#define OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type,          \
-                                  obptc_exc_msg)           \
-catch (const Opm::NumericalProblem& e){                    \
-    obptc_exc_type = Opm::ExceptionType::NUMERICAL_ISSUE;  \
-    obptc_exc_msg = e.what();                              \
-} catch (const std::runtime_error& e) {                    \
-    obptc_exc_type = Opm::ExceptionType::RUNTIME_ERROR;    \
-    obptc_exc_msg = e.what();                              \
-} catch (const std::invalid_argument& e) {                 \
-    obptc_exc_type = Opm::ExceptionType::INVALID_ARGUMENT; \
-    obptc_exc_msg = e.what();                              \
-} catch (const std::logic_error& e) {                      \
-    obptc_exc_type = Opm::ExceptionType::LOGIC_ERROR;      \
-    obptc_exc_msg = e.what();                              \
-} catch (const std::exception& e) {                        \
-    obptc_exc_type = Opm::ExceptionType::DEFAULT;          \
-    obptc_exc_msg = e.what();                              \
-} catch (...) {                                            \
-    obptc_exc_type = Opm::ExceptionType::DEFAULT;          \
-    obptc_exc_msg = "Unknown exception was thrown";        \
-}
+#define OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type, obptc_exc_msg)                                                       \
+    catch (const Opm::NumericalProblem& e)                                                                             \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::NUMERICAL_ISSUE;                                                          \
+        obptc_exc_msg = e.what();                                                                                      \
+    }                                                                                                                  \
+    catch (const std::runtime_error& e)                                                                                \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::RUNTIME_ERROR;                                                            \
+        obptc_exc_msg = e.what();                                                                                      \
+    }                                                                                                                  \
+    catch (const std::invalid_argument& e)                                                                             \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::INVALID_ARGUMENT;                                                         \
+        obptc_exc_msg = e.what();                                                                                      \
+    }                                                                                                                  \
+    catch (const std::logic_error& e)                                                                                  \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::LOGIC_ERROR;                                                              \
+        obptc_exc_msg = e.what();                                                                                      \
+    }                                                                                                                  \
+    catch (const std::exception& e)                                                                                    \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::DEFAULT;                                                                  \
+        obptc_exc_msg = e.what();                                                                                      \
+    }                                                                                                                  \
+    catch (...)                                                                                                        \
+    {                                                                                                                  \
+        obptc_exc_type = Opm::ExceptionType::DEFAULT;                                                                  \
+        obptc_exc_msg = "Unknown exception was thrown";                                                                \
+    }
 
 /// \brief Catch exception and throw in a parallel try-catch clause
 ///
 /// Assumes that OPM_BEGIN_PARALLEL_TRY_CATCH() was called to initiate
 /// the try-catch clause
-#define OPM_END_PARALLEL_TRY_CATCH(prefix, comm)         \
-}                                                        \
-OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type, obptc_exc_msg);\
-checkForExceptionsAndThrow(obptc_exc_type,               \
-                           prefix + obptc_exc_msg, comm);                        
+#define OPM_END_PARALLEL_TRY_CATCH(prefix, comm)                                                                       \
+    }                                                                                                                  \
+    OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type, obptc_exc_msg);                                                          \
+    checkForExceptionsAndThrow(obptc_exc_type, prefix + obptc_exc_msg, comm);
 
 /// \brief Catch exception, log, and throw in a parallel try-catch clause
 ///
 /// Assumes that OPM_BEGIN_PARALLEL_TRY_CATCH() was called to initiate
 /// the try-catch clause
-#define OPM_END_PARALLEL_TRY_CATCH_LOG(obptc_logger, obptc_prefix, obptc_output, comm)\
-}                                                              \
-OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type, obptc_exc_msg);      \
-logAndCheckForExceptionsAndThrow(obptc_logger, obptc_exc_type, \
-    obptc_prefix + obptc_exc_msg, obptc_output, comm);
+#define OPM_END_PARALLEL_TRY_CATCH_LOG(obptc_logger, obptc_prefix, obptc_output, comm)                                 \
+    }                                                                                                                  \
+    OPM_PARALLEL_CATCH_CLAUSE(obptc_exc_type, obptc_exc_msg);                                                          \
+    logAndCheckForExceptionsAndThrow(obptc_logger, obptc_exc_type, obptc_prefix + obptc_exc_msg, obptc_output, comm);
 #endif // OPM_DEFERREDLOGGINGERRORHELPERS_HPP

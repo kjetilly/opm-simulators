@@ -32,47 +32,54 @@
 #include <opm/material/common/quad.hpp>
 #endif
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/flash/flashmodel.hh>
-#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
 #include "problems/co2injectionflash.hh"
 #include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/flash/flashmodel.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/utils/start.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionFlashVcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, FlashModel>; };
+    struct Co2InjectionFlashVcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, FlashModel>;
+    };
 
 } // end namespace TTag
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionFlashVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionFlashVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
 // use the flash solver adapted to the CO2 injection problem
-template<class TypeTag>
-struct FlashSolver<TypeTag, TTag::Co2InjectionFlashVcfvProblem>
-{ using type = Opm::Co2InjectionFlash<GetPropType<TypeTag, Properties::Scalar>,
-                                      GetPropType<TypeTag, Properties::FluidSystem>>; };
+template <class TypeTag>
+struct FlashSolver<TypeTag, TTag::Co2InjectionFlashVcfvProblem> {
+    using type = Opm::Co2InjectionFlash<GetPropType<TypeTag, Properties::Scalar>,
+                                        GetPropType<TypeTag, Properties::FluidSystem>>;
+};
 
 // the flash model has serious problems with the numerical
 // precision. if quadruple precision math is available, we use it,
 // else we increase the tolerance of the Newton solver
 #if HAVE_QUAD
-template<class TypeTag>
-struct Scalar<TypeTag, TTag::Co2InjectionFlashVcfvProblem>
-{ using type = quad; };
+template <class TypeTag>
+struct Scalar<TypeTag, TTag::Co2InjectionFlashVcfvProblem> {
+    using type = quad;
+};
 #endif
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using VcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionFlashVcfvProblem;
-#if ! HAVE_QUAD
+#if !HAVE_QUAD
     Opm::Co2InjectionTolerance = 1e-5;
 #endif
     return Opm::start<VcfvProblemTypeTag>(argc, argv, true);

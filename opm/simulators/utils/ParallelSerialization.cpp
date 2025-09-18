@@ -25,24 +25,24 @@
 #include <opm/input/eclipse/EclipseState/Grid/TransMult.hpp>
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
 
-#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/ASTNode.hpp>
+#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/Schedule/GasLiftOpt.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSale.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSump.hpp>
+#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/Schedule/Group/GroupEconProductionLimits.hpp>
 #include <opm/input/eclipse/Schedule/Group/GroupSatelliteInjection.hpp>
-#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/Schedule/Group/GuideRateConfig.hpp>
 #include <opm/input/eclipse/Schedule/MSW/SICD.hpp>
 #include <opm/input/eclipse/Schedule/MSW/Valve.hpp>
 #include <opm/input/eclipse/Schedule/MSW/WellSegments.hpp>
 #include <opm/input/eclipse/Schedule/Network/Balance.hpp>
 #include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
-#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/RFTConfig.hpp>
 #include <opm/input/eclipse/Schedule/RPTConfig.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQASTNode.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQActive.hpp>
@@ -50,6 +50,10 @@
 #include <opm/input/eclipse/Schedule/UDQ/UDQState.hpp>
 #include <opm/input/eclipse/Schedule/Well/NameOrder.hpp>
 #include <opm/input/eclipse/Schedule/Well/WDFAC.hpp>
+#include <opm/input/eclipse/Schedule/Well/WList.hpp>
+#include <opm/input/eclipse/Schedule/Well/WListManager.hpp>
+#include <opm/input/eclipse/Schedule/Well/WVFPDP.hpp>
+#include <opm/input/eclipse/Schedule/Well/WVFPEXP.hpp>
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellBrineProperties.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellConnections.hpp>
@@ -61,36 +65,37 @@
 #include <opm/input/eclipse/Schedule/Well/WellTestConfig.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellTestState.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellTracerProperties.hpp>
-#include <opm/input/eclipse/Schedule/Well/WList.hpp>
-#include <opm/input/eclipse/Schedule/Well/WListManager.hpp>
-#include <opm/input/eclipse/Schedule/Well/WVFPDP.hpp>
-#include <opm/input/eclipse/Schedule/Well/WVFPEXP.hpp>
 
 #include <opm/simulators/utils/MPISerializer.hpp>
 
 #include <dune/common/parallel/mpihelper.hh>
 
-namespace Opm {
+namespace Opm
+{
 
-void eclStateBroadcast(Parallel::Communication comm, EclipseState& eclState, Schedule& schedule,
-                       SummaryConfig& summaryConfig,
-                       UDQState& udqState,
-                       Action::State& actionState,
-                       WellTestState&  wtestState)
+void
+eclStateBroadcast(Parallel::Communication comm,
+                  EclipseState& eclState,
+                  Schedule& schedule,
+                  SummaryConfig& summaryConfig,
+                  UDQState& udqState,
+                  Action::State& actionState,
+                  WellTestState& wtestState)
 {
     Parallel::MpiSerializer ser(comm);
-    ser.broadcast(Parallel::RootRank{0}, eclState, schedule, summaryConfig, udqState, actionState, wtestState);
+    ser.broadcast(Parallel::RootRank {0}, eclState, schedule, summaryConfig, udqState, actionState, wtestState);
 }
 
 template <class T>
-void eclBroadcast(Parallel::Communication comm, T& data)
+void
+eclBroadcast(Parallel::Communication comm, T& data)
 {
     Parallel::MpiSerializer ser(comm);
-    ser.broadcast(Parallel::RootRank{0}, data);
+    ser.broadcast(Parallel::RootRank {0}, data);
 }
 
 template void eclBroadcast(Parallel::Communication, TransMult&);
 template void eclBroadcast(Parallel::Communication, Schedule&);
 template void eclBroadcast(Parallel::Communication, SummaryConfig&);
 
-}
+} // namespace Opm

@@ -19,31 +19,32 @@
 */
 #ifndef OPM_PARALLELOVERLAPPINGILU0_HEADER_INCLUDED
 #define OPM_PARALLELOVERLAPPINGILU0_HEADER_INCLUDED
+#include <dune/istl/paamg/smoother.hh>
 #include <opm/common/TimingMacros.hpp>
 #include <opm/simulators/linalg/MILU.hpp>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
-#include <dune/istl/paamg/smoother.hh>
 
 #include <cstddef>
-#include <vector>
 #include <type_traits>
+#include <vector>
 
 namespace Opm
 {
 
-//template<class M, class X, class Y, class C>
-//class ParallelOverlappingILU0;
-template<class Matrix, class Domain, class Range, class ParallelInfo>
+// template<class M, class X, class Y, class C>
+// class ParallelOverlappingILU0;
+template <class Matrix, class Domain, class Range, class ParallelInfo>
 class ParallelOverlappingILU0;
 
-template<class F>
-class ParallelOverlappingILU0Args
-    : public Dune::Amg::DefaultSmootherArgs<F>
+template <class F>
+class ParallelOverlappingILU0Args : public Dune::Amg::DefaultSmootherArgs<F>
 {
- public:
-    explicit ParallelOverlappingILU0Args(MILU_VARIANT milu = MILU_VARIANT::ILU )
-        : milu_(milu), n_(0)
-    {}
+public:
+    explicit ParallelOverlappingILU0Args(MILU_VARIANT milu = MILU_VARIANT::ILU)
+        : milu_(milu)
+        , n_(0)
+    {
+    }
     void setMilu(MILU_VARIANT milu)
     {
         milu_ = milu;
@@ -60,7 +61,8 @@ class ParallelOverlappingILU0Args
     {
         return n_;
     }
- private:
+
+private:
     MILU_VARIANT milu_;
     int n_;
 };
@@ -73,36 +75,33 @@ namespace Amg
 {
 
 
-template<class M, class X, class Y, class C>
-struct SmootherTraits<Opm::ParallelOverlappingILU0<M,X,Y,C> >
-{
-    using Arguments = Opm::ParallelOverlappingILU0Args<typename M::field_type>;
-};
+    template <class M, class X, class Y, class C>
+    struct SmootherTraits<Opm::ParallelOverlappingILU0<M, X, Y, C>> {
+        using Arguments = Opm::ParallelOverlappingILU0Args<typename M::field_type>;
+    };
 
-/// \brief Tells AMG how to construct the Opm::ParallelOverlappingILU0 smoother
-/// \tparam Matrix The type of the Matrix.
-/// \tparam Domain The type of the Vector representing the domain.
-/// \tparam Range The type of the Vector representing the range.
-/// \tparam ParallelInfo The type of the parallel information object
-///         used, e.g. Dune::OwnerOverlapCommunication
-template<class Matrix, class Domain, class Range, class ParallelInfo>
-struct ConstructionTraits<Opm::ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfo> >
-{
-    using T = Opm::ParallelOverlappingILU0<Matrix,Domain,Range,ParallelInfo>;
-    using Arguments = DefaultParallelConstructionArgs<T,ParallelInfo>;
+    /// \brief Tells AMG how to construct the Opm::ParallelOverlappingILU0 smoother
+    /// \tparam Matrix The type of the Matrix.
+    /// \tparam Domain The type of the Vector representing the domain.
+    /// \tparam Range The type of the Vector representing the range.
+    /// \tparam ParallelInfo The type of the parallel information object
+    ///         used, e.g. Dune::OwnerOverlapCommunication
+    template <class Matrix, class Domain, class Range, class ParallelInfo>
+    struct ConstructionTraits<Opm::ParallelOverlappingILU0<Matrix, Domain, Range, ParallelInfo>> {
+        using T = Opm::ParallelOverlappingILU0<Matrix, Domain, Range, ParallelInfo>;
+        using Arguments = DefaultParallelConstructionArgs<T, ParallelInfo>;
 
-    using ParallelOverlappingILU0Pointer = std::shared_ptr<T>;
+        using ParallelOverlappingILU0Pointer = std::shared_ptr<T>;
 
-    static inline ParallelOverlappingILU0Pointer construct(Arguments& args)
-    {
-        return ParallelOverlappingILU0Pointer(
-                new T(args.getMatrix(),
-                      args.getComm(),
-                      args.getArgs().getN(),
-                      args.getArgs().relaxationFactor,
-                      args.getArgs().getMilu()) );
-    }
-};
+        static inline ParallelOverlappingILU0Pointer construct(Arguments& args)
+        {
+            return ParallelOverlappingILU0Pointer(new T(args.getMatrix(),
+                                                        args.getComm(),
+                                                        args.getArgs().getN(),
+                                                        args.getArgs().relaxationFactor,
+                                                        args.getArgs().getMilu()));
+        }
+    };
 
 } // end namespace Amg
 
@@ -125,9 +124,8 @@ namespace Opm
 /// \tparam Range The type of the Vector representing the range.
 /// \tparam ParallelInfo The type of the parallel information object
 ///         used, e.g. Dune::OwnerOverlapCommunication
-template<class Matrix, class Domain, class Range, class ParallelInfoT>
-class ParallelOverlappingILU0
-    : public Dune::PreconditionerWithUpdate<Domain,Range>
+template <class Matrix, class Domain, class Range, class ParallelInfoT>
+class ParallelOverlappingILU0 : public Dune::PreconditionerWithUpdate<Domain, Range>
 {
     using ParallelInfo = ParallelInfoT;
 
@@ -144,61 +142,65 @@ public:
     using block_type = typename matrix_type::block_type;
     using size_type = typename matrix_type::size_type;
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 
 protected:
-    struct CRS
-    {
-      CRS() : nRows_( 0 ) {}
+    struct CRS {
+        CRS()
+            : nRows_(0)
+        {
+        }
 
-      size_type rows() const { return nRows_; }
+        size_type rows() const
+        {
+            return nRows_;
+        }
 
-      size_type nonZeros() const
-      {
-        assert( rows_[ rows() ] != size_type(-1) );
-        return rows_[ rows() ];
-      }
+        size_type nonZeros() const
+        {
+            assert(rows_[rows()] != size_type(-1));
+            return rows_[rows()];
+        }
 
-      void resize( const size_type nRows )
-      {
-          if( nRows_ != nRows )
-          {
-            nRows_ = nRows ;
-            rows_.resize( nRows_+1, size_type(-1) );
-          }
-      }
+        void resize(const size_type nRows)
+        {
+            if (nRows_ != nRows) {
+                nRows_ = nRows;
+                rows_.resize(nRows_ + 1, size_type(-1));
+            }
+        }
 
-      void reserveAdditional( const size_type nonZeros )
-      {
-          const size_type needed = values_.size() + nonZeros ;
-          if( values_.capacity() < needed )
-          {
-              const size_type estimate = needed * 1.1;
-              values_.reserve( estimate );
-              cols_.reserve( estimate );
-          }
-      }
+        void reserveAdditional(const size_type nonZeros)
+        {
+            const size_type needed = values_.size() + nonZeros;
+            if (values_.capacity() < needed) {
+                const size_type estimate = needed * 1.1;
+                values_.reserve(estimate);
+                cols_.reserve(estimate);
+            }
+        }
 
-      void push_back( const block_type& value, const size_type index )
-      {
-          values_.push_back( value );
-          cols_.push_back( index );
-      }
+        void push_back(const block_type& value, const size_type index)
+        {
+            values_.push_back(value);
+            cols_.push_back(index);
+        }
 
-      void clear()
-      {
-          rows_.clear();
-          values_.clear();
-          cols_.clear();
-          nRows_= 0;
-      }
+        void clear()
+        {
+            rows_.clear();
+            values_.clear();
+            cols_.clear();
+            nRows_ = 0;
+        }
 
-      std::vector<size_type> rows_;
-      std::vector<block_type> values_;
-      std::vector<size_type> cols_;
-      size_type nRows_;
+        std::vector<size_type> rows_;
+        std::vector<block_type> values_;
+        std::vector<size_type> cols_;
+        size_type nRows_;
     };
 
 public:
@@ -217,10 +219,12 @@ public:
                             ordered consecutivly. If false, we preserver the order of
                             the vertices with the same color.
     */
-    ParallelOverlappingILU0 (const Matrix& A,
-                             const int n, const field_type w,
-                             MILU_VARIANT milu, bool redblack = false,
-                             bool reorder_sphere = true);
+    ParallelOverlappingILU0(const Matrix& A,
+                            const int n,
+                            const field_type w,
+                            MILU_VARIANT milu,
+                            bool redblack = false,
+                            bool reorder_sphere = true);
 
     /*! \brief Constructor gets all parameters to operate the prec.
       \param A The matrix to operate on.
@@ -234,10 +238,13 @@ public:
                             ordered consecutivly. If false, we preserver the order of
                             the vertices with the same color.
     */
-    ParallelOverlappingILU0 (const Matrix& A,
-                             const ParallelInfo& comm, const int n, const field_type w,
-                             MILU_VARIANT milu, bool redblack = false,
-                             bool reorder_sphere = true);
+    ParallelOverlappingILU0(const Matrix& A,
+                            const ParallelInfo& comm,
+                            const int n,
+                            const field_type w,
+                            MILU_VARIANT milu,
+                            bool redblack = false,
+                            bool reorder_sphere = true);
 
     /*! \brief Constructor.
 
@@ -251,10 +258,8 @@ public:
                   ordered consecutivly. If false, we preserver the order of
                   the vertices with the same color.
     */
-    ParallelOverlappingILU0 (const Matrix& A,
-                             const field_type w, MILU_VARIANT milu,
-                             bool redblack = false,
-                             bool reorder_sphere = true);
+    ParallelOverlappingILU0(
+        const Matrix& A, const field_type w, MILU_VARIANT milu, bool redblack = false, bool reorder_sphere = true);
 
     /*! \brief Constructor.
 
@@ -269,10 +274,12 @@ public:
                             ordered consecutivly. If false, we preserver the order of
                             the vertices with the same color.
     */
-    ParallelOverlappingILU0 (const Matrix& A,
-                             const ParallelInfo& comm, const field_type w,
-                             MILU_VARIANT milu, bool redblack = false,
-                             bool reorder_sphere = true);
+    ParallelOverlappingILU0(const Matrix& A,
+                            const ParallelInfo& comm,
+                            const field_type w,
+                            MILU_VARIANT milu,
+                            bool redblack = false,
+                            bool reorder_sphere = true);
 
     /*! \brief Constructor.
 
@@ -288,37 +295,41 @@ public:
                             ordered consecutivly. If false, we preserver the order of
                             the vertices with the same color.
     */
-    ParallelOverlappingILU0 (const Matrix& A,
-                             const ParallelInfo& comm,
-                             const field_type w, MILU_VARIANT milu,
-                             size_type interiorSize, bool redblack = false,
-                             bool reorder_sphere = true);
+    ParallelOverlappingILU0(const Matrix& A,
+                            const ParallelInfo& comm,
+                            const field_type w,
+                            MILU_VARIANT milu,
+                            size_type interiorSize,
+                            bool redblack = false,
+                            bool reorder_sphere = true);
 
     /*!
       \brief Prepare the preconditioner.
 
       \copydoc Preconditioner::pre(X&,Y&)
     */
-    void pre (Domain&, Range&) override
-    {}
+    void pre(Domain&, Range&) override
+    {
+    }
 
     /*!
       \brief Apply the preconditoner.
 
       \copydoc Preconditioner::apply(X&,const Y&)
     */
-    void apply (Domain& v, const Range& d) override;
+    void apply(Domain& v, const Range& d) override;
 
     template <class V>
-    void copyOwnerToAll( V& v ) const;
+    void copyOwnerToAll(V& v) const;
 
     /*!
       \brief Clean up.
 
       \copydoc Preconditioner::post(X&)
     */
-    void post (Range&) override
-    {}
+    void post(Range&) override
+    {
+    }
 
     void update() override;
 
@@ -335,9 +346,9 @@ protected:
     std::unique_ptr<Matrix> ILU_;
     CRS lower_;
     CRS upper_;
-    std::vector< block_type > inv_;
+    std::vector<block_type> inv_;
     //! \brief the reordering of the unknowns
-    std::vector< std::size_t > ordering_;
+    std::vector<std::size_t> ordering_;
     //! \brief The reordered right hand side
     Range reorderedD_;
     //! \brief The reordered left hand side.

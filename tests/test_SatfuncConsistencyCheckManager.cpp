@@ -30,7 +30,7 @@
 //
 // when compiling with "-Wundef".
 #define HAVE_MPI 0
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 #include <boost/test/unit_test.hpp>
 
@@ -38,8 +38,8 @@
 
 #include <opm/grid/CpGrid.hpp>
 
-#include <opm/input/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
+#include <opm/input/eclipse/EclipseState/Grid/EclipseGrid.hpp>
 
 #include <opm/input/eclipse/Deck/Deck.hpp>
 
@@ -59,81 +59,85 @@
 #if HAVE_MPI
 #include <array>
 #include <iostream>
-#endif  // HAVE_MPI
+#endif // HAVE_MPI
 
 // ###########################################################################
 
-namespace {
+namespace
+{
 
 #if HAVE_MPI
-    struct MPIError
+struct MPIError {
+    MPIError(std::string_view errstr, const int ec)
+        : errorstring {errstr}
+        , errorcode {ec}
     {
-        MPIError(std::string_view errstr, const int ec)
-            : errorstring { errstr }
-            , errorcode   { ec }
-        {}
-
-        std::string errorstring;
-        int errorcode;
-    };
-
-    void MPI_err_handler(MPI_Comm*, int* err_code, ...)
-    {
-        std::array<char, MPI_MAX_ERROR_STRING> err_string_vec{'\0'};
-        auto err_length = 0;
-
-        MPI_Error_string(*err_code, err_string_vec.data(), &err_length);
-
-        auto err_string = std::string_view {
-            err_string_vec.data(),
-            static_cast<std::string_view::size_type>(err_length)
-        };
-
-        std::cerr << "An MPI Error ocurred:\n  -> " << err_string << '\n';
-
-        throw MPIError { err_string, *err_code };
     }
 
-    // Register a throwing error handler to allow for debugging with
-    //
-    //   catch throw
-    //
-    // in GDB.
-    void register_error_handler()
-    {
-        MPI_Errhandler handler{};
+    std::string errorstring;
+    int errorcode;
+};
 
-        MPI_Comm_create_errhandler(MPI_err_handler, &handler);
-        MPI_Comm_set_errhandler(MPI_COMM_WORLD, handler);
-    }
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
+{
+    std::array<char, MPI_MAX_ERROR_STRING> err_string_vec {'\0'};
+    auto err_length = 0;
+
+    MPI_Error_string(*err_code, err_string_vec.data(), &err_length);
+
+    auto err_string = std::string_view {err_string_vec.data(), static_cast<std::string_view::size_type>(err_length)};
+
+    std::cerr << "An MPI Error ocurred:\n  -> " << err_string << '\n';
+
+    throw MPIError {err_string, *err_code};
+}
+
+// Register a throwing error handler to allow for debugging with
+//
+//   catch throw
+//
+// in GDB.
+void
+register_error_handler()
+{
+    MPI_Errhandler handler {};
+
+    MPI_Comm_create_errhandler(MPI_err_handler, &handler);
+    MPI_Comm_set_errhandler(MPI_COMM_WORLD, handler);
+}
 
 #else // !HAVE_MPI
 
-    void register_error_handler()
-    {}
+void
+register_error_handler()
+{
+}
 
 #endif // HAVE_MPI
 
-    bool init_unit_test_func()
-    {
-        return true;
-    }
+bool
+init_unit_test_func()
+{
+    return true;
+}
 
-    // -----------------------------------------------------------------------
+// -----------------------------------------------------------------------
 
-    template <typename Scalar>
-    using CheckMgr = Opm::Satfunc::PhaseChecks::SatfuncConsistencyCheckManager<Scalar>;
+template <typename Scalar>
+using CheckMgr = Opm::Satfunc::PhaseChecks::SatfuncConsistencyCheckManager<Scalar>;
 
-    template <typename Scalar>
-    using ViolationLevel = typename CheckMgr<Scalar>::ViolationLevel;
+template <typename Scalar>
+using ViolationLevel = typename CheckMgr<Scalar>::ViolationLevel;
 
-    constexpr auto root = 0;
-    constexpr auto numSamplePoints = std::size_t{1};
-    const auto localToGlobal = [](const int) { return std::size_t{0}; };
+constexpr auto root = 0;
+constexpr auto numSamplePoints = std::size_t {1};
+const auto localToGlobal = [](const int) { return std::size_t {0}; };
 
-    Opm::Deck makeEpsDeck(std::string_view epsSpec)
-    {
-        return Opm::Parser{}.parseString(fmt::format(R"(RUNSPEC
+Opm::Deck
+makeEpsDeck(std::string_view epsSpec)
+{
+    return Opm::Parser {}.parseString(fmt::format(R"(RUNSPEC
 DIMENS
  1 1 1 /
 
@@ -197,28 +201,27 @@ SATNUM
  1 /
 
 END
-)", epsSpec));
-    }
+)",
+                                                  epsSpec));
+}
 
-    std::pair<Dune::CpGrid, Opm::EclipseState>
-    setup(std::string_view epsSpec)
-    {
-        auto ret = std::pair<Dune::CpGrid, Opm::EclipseState> {
-            std::piecewise_construct,
-            std::forward_as_tuple(),
-            std::forward_as_tuple(makeEpsDeck(epsSpec))
-        };
+std::pair<Dune::CpGrid, Opm::EclipseState>
+setup(std::string_view epsSpec)
+{
+    auto ret = std::pair<Dune::CpGrid, Opm::EclipseState> {
+        std::piecewise_construct, std::forward_as_tuple(), std::forward_as_tuple(makeEpsDeck(epsSpec))};
 
-        auto& [cpgrid, es] = ret;
+    auto& [cpgrid, es] = ret;
 
-        cpgrid.processEclipseFormat(&es.getInputGrid(), &es,
-                                    /* periodic_extension = */ false,
-                                    /* turn_normals = */       false,
-                                    /* clip_z = */             false,
-                                    /* pinchActive = */        false);
+    cpgrid.processEclipseFormat(&es.getInputGrid(),
+                                &es,
+                                /* periodic_extension = */ false,
+                                /* turn_normals = */ false,
+                                /* clip_z = */ false,
+                                /* pinchActive = */ false);
 
-        return ret;
-    }
+    return ret;
+}
 
 } // Anonymous namespace
 
@@ -237,18 +240,15 @@ SWL
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum water saturation
@@ -277,18 +277,14 @@ SWL
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum oil saturation in G/O system
@@ -346,8 +342,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum water saturation
@@ -389,18 +384,15 @@ SWU
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Positive maximum water saturation
@@ -442,18 +434,14 @@ SWU
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum oil saturation in G/O system
@@ -472,8 +460,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Positive maximum water saturation
@@ -502,18 +489,15 @@ SWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile water saturation
@@ -542,18 +526,14 @@ SWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in O/W system at critical water saturation
@@ -572,8 +552,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile water saturation
@@ -608,18 +587,15 @@ SGL
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum gas saturation
@@ -648,18 +624,14 @@ SGL
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in G/O system at minimum gas saturation
@@ -717,8 +689,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum gas saturation
@@ -760,18 +731,15 @@ SGU
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Positive maximum gas saturation must not exceed one
@@ -813,18 +781,14 @@ SGU
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum oil saturation in G/O system
@@ -843,8 +807,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Positive maximum gas saturation must not exceed one
@@ -873,18 +836,15 @@ SGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile gas saturation
@@ -913,18 +873,14 @@ SGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in G/O system at critical gas saturation
@@ -943,8 +899,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile gas saturation
@@ -981,18 +936,14 @@ SWL
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedCriticalChecks(),
-                        "There must not be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedCriticalChecks(), "There must not be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum oil saturation in G/O system
@@ -1025,18 +976,14 @@ SGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedCriticalChecks(),
-                        "There must not be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedCriticalChecks(), "There must not be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative minimum oil saturation in G/O system
@@ -1065,18 +1012,15 @@ SOWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative critical oil saturation in O/W system
@@ -1105,18 +1049,14 @@ SOWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in O/W system at minimum water saturation
@@ -1148,8 +1088,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative critical oil saturation in O/W system
@@ -1178,18 +1117,15 @@ SOGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative critical oil saturation in G/O system
@@ -1218,18 +1154,14 @@ SOGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in G/O system at minimum gas saturation
@@ -1261,8 +1193,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Non-negative critical oil saturation in G/O system
@@ -1293,18 +1224,15 @@ SOWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedCriticalChecks(),
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedCriticalChecks(),
                         "There must not be any failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in O/W system at critical water saturation
@@ -1337,18 +1265,14 @@ SOWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in O/W system at minimum water saturation
@@ -1367,8 +1291,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile water saturation
@@ -1399,18 +1322,15 @@ SOGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedCriticalChecks(),
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedCriticalChecks(),
                         "There must not be any failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in G/O system at critical gas saturation
@@ -1441,18 +1361,14 @@ SOGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(),
-                        "There must be failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedStandardChecks(), "There must be failed checks at the standard level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Standard,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile oil saturation in G/O system at minimum gas saturation
@@ -1484,8 +1400,7 @@ List of Violations
 
     msg.clear();
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile gas saturation
@@ -1524,18 +1439,15 @@ SOWCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile displacing oil in three point horizontally scaled oil/water system
@@ -1574,18 +1486,15 @@ SOGCR
 
     auto checkMgr = CheckMgr<Scalar>(numSamplePoints, es, localToGlobal);
 
-    checkMgr.collectFailuresTo(root)
-        .run(grid.leafGridView(), [](const auto&) { return 0; });
+    checkMgr.collectFailuresTo(root).run(grid.leafGridView(), [](const auto&) { return 0; });
 
-    BOOST_CHECK_MESSAGE(! checkMgr.anyFailedStandardChecks(),
+    BOOST_CHECK_MESSAGE(!checkMgr.anyFailedStandardChecks(),
                         "There must not be any failed checks at the standard level");
-    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(),
-                        "There must be failed checks at the critical level");
+    BOOST_CHECK_MESSAGE(checkMgr.anyFailedCriticalChecks(), "There must be failed checks at the critical level");
 
-    auto msg = std::string{};
+    auto msg = std::string {};
     checkMgr.reportFailures(ViolationLevel<Scalar>::Critical,
-                            [&msg](std::string_view record)
-                            { msg += fmt::format("{}\n", record); });
+                            [&msg](std::string_view record) { msg += fmt::format("{}\n", record); });
 
     BOOST_CHECK_EQUAL(msg, R"(Consistency Problem:
   Mobile displacing oil in three point horizontally scaled gas/oil system
@@ -1607,7 +1516,8 @@ BOOST_AUTO_TEST_SUITE_END() // Oil_Phase
 
 // ===========================================================================
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 

@@ -43,11 +43,8 @@ namespace Opm::gpuistl::detail
  * @param[out] diagIndices Array to store the indices of diagonal elements
  */
 template <class T>
-void computeDiagIndicesNoReorder(const int* rowIndices,
-                                 const int* colIndices,
-                                 const size_t* indexConversion,
-                                 int rows,
-                                 size_t* diagIndices);
+void computeDiagIndicesNoReorder(
+    const int* rowIndices, const int* colIndices, const size_t* indexConversion, int rows, size_t* diagIndices);
 
 /**
  * @brief Computes indices of diagonal elements for reordered GPU preconditioner.
@@ -60,11 +57,8 @@ void computeDiagIndicesNoReorder(const int* rowIndices,
  * @param[out] diagIndices Array to store the indices of diagonal elements
  */
 template <class T>
-void computeDiagIndices(const int* rowIndices,
-                        const int* colIndices,
-                        const int* reorderedToNatural,
-                        int rows,
-                        size_t* diagIndices);
+void computeDiagIndices(
+    const int* rowIndices, const int* colIndices, const int* reorderedToNatural, int rows, size_t* diagIndices);
 
 } // namespace Opm::gpuistl::detail
 

@@ -30,31 +30,28 @@
 #include <opm/material/common/quad.hpp>
 #endif
 
-namespace Opm {
-
-template<class Scalar>
-void NewtonMethodParams<Scalar>::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::NewtonVerbose>
-        ("Specify whether the Newton method should inform "
-         "the user about its progress or not");
-    Parameters::Register<Parameters::NewtonWriteConvergence>
-        ("Write the convergence behaviour of the Newton "
-         "method to a VTK file");
-    Parameters::Register<Parameters::NewtonTargetIterations>
-        ("The 'optimum' number of Newton iterations per time step");
-    Parameters::Register<Parameters::NewtonMaxIterations>
-        ("The maximum number of Newton iterations per time step");
-    Parameters::Register<Parameters::NewtonTolerance<Scalar>>
-        ("The maximum raw error tolerated by the Newton"
-         "method for considering a solution to be converged");
-    Parameters::Register<Parameters::NewtonMaxError<Scalar>>
-        ("The maximum error tolerated by the Newton "
-         "method to which does not cause an abort");
+
+template <class Scalar>
+void
+NewtonMethodParams<Scalar>::registerParameters()
+{
+    Parameters::Register<Parameters::NewtonVerbose>("Specify whether the Newton method should inform "
+                                                    "the user about its progress or not");
+    Parameters::Register<Parameters::NewtonWriteConvergence>("Write the convergence behaviour of the Newton "
+                                                             "method to a VTK file");
+    Parameters::Register<Parameters::NewtonTargetIterations>("The 'optimum' number of Newton iterations per time step");
+    Parameters::Register<Parameters::NewtonMaxIterations>("The maximum number of Newton iterations per time step");
+    Parameters::Register<Parameters::NewtonTolerance<Scalar>>("The maximum raw error tolerated by the Newton"
+                                                              "method for considering a solution to be converged");
+    Parameters::Register<Parameters::NewtonMaxError<Scalar>>("The maximum error tolerated by the Newton "
+                                                             "method to which does not cause an abort");
 }
 
-template<class Scalar>
-void NewtonMethodParams<Scalar>::read()
+template <class Scalar>
+void
+NewtonMethodParams<Scalar>::read()
 {
     verbose_ = Parameters::Get<Parameters::NewtonVerbose>();
     writeConvergence_ = Parameters::Get<Parameters::NewtonWriteConvergence>();

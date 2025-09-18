@@ -16,66 +16,62 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "config.h"
 #include "FlowExpNewtonMethod.hpp"
+#include "config.h"
 #include "flowexp.hpp"
 
 #include <opm/models/discretization/common/tpfalinearizer.hh>
 #include <opm/models/utils/parametersystem.hpp>
-#include <opm/simulators/flow/Main.hpp>
 #include <opm/simulators/flow/FlowProblemBlackoil.hpp>
+#include <opm/simulators/flow/Main.hpp>
 
 #include "BlackOilIntensiveQuantitiesGlobalIndex.hpp"
 #include "FIBlackOilModelNoCache.hpp"
 
-namespace Opm::Properties {
-namespace TTag {
-struct FlowExpProblemBlackOil
+namespace Opm::Properties
 {
-    using InheritsFrom = std::tuple<FlowExpTypeTag>;
-};
-}
+namespace TTag
+{
+    struct FlowExpProblemBlackOil {
+        using InheritsFrom = std::tuple<FlowExpTypeTag>;
+    };
+} // namespace TTag
 
-template<class TypeTag>
-struct Model<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct Model<TypeTag, TTag::FlowExpProblemBlackOil> {
     using type = FIBlackOilModelNoCache<TypeTag>;
 };
 
-template<class TypeTag>
-struct IntensiveQuantities<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct IntensiveQuantities<TypeTag, TTag::FlowExpProblemBlackOil> {
     using type = BlackOilIntensiveQuantitiesGlobalIndex<TypeTag>;
 };
 
 // Set the problem class
-template<class TypeTag>
-struct Problem<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct Problem<TypeTag, TTag::FlowExpProblemBlackOil> {
     using type = FlowExpProblem<TypeTag>;
 };
 
-template<class TypeTag>
-struct EnableDiffusion<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct EnableDiffusion<TypeTag, TTag::FlowExpProblemBlackOil> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag>
-struct EnableDisgasInWater<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct EnableDisgasInWater<TypeTag, TTag::FlowExpProblemBlackOil> {
     static constexpr bool value = false;
 };
 
-template<class TypeTag>
-struct Simulator<TypeTag, TTag::FlowExpProblemBlackOil>
-{
+template <class TypeTag>
+struct Simulator<TypeTag, TTag::FlowExpProblemBlackOil> {
     using type = Opm::Simulator<TypeTag>;
 };
 
 } // namespace Opm::Properties
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     using TypeTag = Opm::Properties::TTag::FlowExpProblemBlackOil;
     Opm::registerEclTimeSteppingParameters<double>();

@@ -46,24 +46,26 @@
 
 #include <opm/simulators/wells/BlackoilWellModel.hpp>
 
-namespace Opm {
+namespace Opm
+{
 template <class TypeTag>
 class FlowExpProblem;
 }
 
-namespace Opm::Properties {
-
-namespace TTag {
-
-struct FlowExpTypeTag
+namespace Opm::Properties
 {
-    using InheritsFrom = std::tuple<FlowBaseProblemBlackoil, BlackOilModel>;
-};
 
-}
+namespace TTag
+{
+
+    struct FlowExpTypeTag {
+        using InheritsFrom = std::tuple<FlowBaseProblemBlackoil, BlackOilModel>;
+    };
+
+} // namespace TTag
 
 // Set the problem class
-template<class TypeTag>
+template <class TypeTag>
 struct Problem<TypeTag, TTag::FlowExpTypeTag> {
     using type = FlowExpProblem<TypeTag>;
 };
@@ -71,59 +73,60 @@ struct Problem<TypeTag, TTag::FlowExpTypeTag> {
 // Enable experimental features for flowexp: flowexp is the research simulator of the OPM
 // project. If you're looking for a more stable "production quality" simulator, consider
 // using `flow`
-template<class TypeTag>
+template <class TypeTag>
 struct EnableExperiments<TypeTag, TTag::FlowExpTypeTag> {
     static constexpr bool value = true;
 };
 
 // use flow's well model for now
-template<class TypeTag>
+template <class TypeTag>
 struct WellModel<TypeTag, TTag::FlowExpTypeTag> {
     using type = BlackoilWellModel<TypeTag>;
 };
 
-template<class TypeTag>
+template <class TypeTag>
 struct NewtonMethod<TypeTag, TTag::FlowExpTypeTag> {
     using type = FlowExpNewtonMethod<TypeTag>;
 };
 
 // flow's well model only works with surface volumes
-template<class TypeTag>
+template <class TypeTag>
 struct BlackoilConserveSurfaceVolume<TypeTag, TTag::FlowExpTypeTag> {
     static constexpr bool value = true;
 };
 
 // the values for the residual are for the whole cell instead of for a cubic meter of the cell
-template<class TypeTag>
+template <class TypeTag>
 struct UseVolumetricResidual<TypeTag, TTag::FlowExpTypeTag> {
     static constexpr bool value = false;
 };
 
 // by default use flow's aquifer model for now
-template<class TypeTag>
+template <class TypeTag>
 struct AquiferModel<TypeTag, TTag::FlowExpTypeTag> {
     using type = BlackoilAquiferModel<TypeTag>;
 };
 
 // use flow's linear solver backend for now
-template<class TypeTag>
+template <class TypeTag>
 struct LinearSolverSplice<TypeTag, TTag::FlowExpTypeTag> {
     using type = TTag::FlowIstlSolver;
 };
 
-template<>
+template <>
 struct LinearSolverBackend<TTag::FlowExpTypeTag, TTag::FlowIstlSolverParams> {
     using type = ISTLSolver<TTag::FlowExpTypeTag>;
 };
 
-template<class TypeTag>
+template <class TypeTag>
 struct LinearSolverBackend<TypeTag, TTag::FlowExpTypeTag> {
     using type = ISTLSolver<TypeTag>;
 };
 
 } // namespace Opm::Properties
 
-namespace Opm {
+namespace Opm
+{
 
 template <class TypeTag>
 class FlowExpProblem : public FlowProblemBlackoil<TypeTag> //, public FvBaseProblem<TypeTag>
@@ -137,11 +140,9 @@ public:
         OPM_TIMEBLOCK(problemWriteOutput);
         // use the generic code to prepare the output fields and to
         // write the desired VTK files.
-        if (Parameters::Get<Parameters::EnableWriteAllSolutions>() ||
-            this->simulator().episodeWillBeOver())
-        {
-            // \Note: the SimulatorTimer does not carry any useful information, so PRT file (if it gets output) will contain wrong
-            // timing information.
+        if (Parameters::Get<Parameters::EnableWriteAllSolutions>() || this->simulator().episodeWillBeOver()) {
+            // \Note: the SimulatorTimer does not carry any useful information, so PRT file (if it gets output) will
+            // contain wrong timing information.
             ParentType::writeOutput(verbose);
         }
     }
@@ -207,6 +208,6 @@ public:
     using ParentType::FlowProblemBlackoil;
 };
 
-}
+} // namespace Opm
 
 #endif

@@ -22,7 +22,8 @@
 #include <flow/flow_onephase.hpp>
 
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     return Opm::flowWaterOnlyMainStandalone(argc, argv);
 }

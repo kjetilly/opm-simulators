@@ -22,66 +22,71 @@
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
 
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 #include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowOilWaterPolymerInjectivityProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
-template<class TypeTag>
-struct EnablePolymer<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem> {
-    static constexpr bool value = true;
-};
-template<class TypeTag>
-struct EnablePolymerMW<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem> {
-    static constexpr bool value = true;
-};
-
-//! The indices required by the model
-// For this case, there will be two primary variables introduced for the polymer
-// polymer concentration and polymer molecular weight
-template<class TypeTag>
-struct Indices<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem>
+namespace Opm
 {
-private:
-    // it is unfortunately not possible to simply use 'TypeTag' here because this leads
-    // to cyclic definitions of some properties. if this happens the compiler error
-    // messages unfortunately are *really* confusing and not really helpful.
-    using BaseTypeTag = TTag::FlowProblem;
-    using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowOilWaterPolymerInjectivityProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
+    template <class TypeTag>
+    struct EnablePolymer<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem> {
+        static constexpr bool value = true;
+    };
+    template <class TypeTag>
+    struct EnablePolymerMW<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem> {
+        static constexpr bool value = true;
+    };
 
-public:
-    using type = BlackOilTwoPhaseIndices<0,
-                                         0,
-                                         2,
-                                         0,
-                                         getPropValue<TypeTag, Properties::EnableFoam>(),
-                                         getPropValue<TypeTag, Properties::EnableBrine>(),
-                                         /*PVOffset=*/0,
-                                         /*disabledCompIdx=*/FluidSystem::gasCompIdx,
-                                         getPropValue<TypeTag, Properties::EnableBioeffects>()>;
-};
-}}
+    //! The indices required by the model
+    // For this case, there will be two primary variables introduced for the polymer
+    // polymer concentration and polymer molecular weight
+    template <class TypeTag>
+    struct Indices<TypeTag, TTag::FlowOilWaterPolymerInjectivityProblem> {
+    private:
+        // it is unfortunately not possible to simply use 'TypeTag' here because this leads
+        // to cyclic definitions of some properties. if this happens the compiler error
+        // messages unfortunately are *really* confusing and not really helpful.
+        using BaseTypeTag = TTag::FlowProblem;
+        using FluidSystem = GetPropType<BaseTypeTag, Properties::FluidSystem>;
 
-namespace Opm {
+    public:
+        using type = BlackOilTwoPhaseIndices<0,
+                                             0,
+                                             2,
+                                             0,
+                                             getPropValue<TypeTag, Properties::EnableFoam>(),
+                                             getPropValue<TypeTag, Properties::EnableBrine>(),
+                                             /*PVOffset=*/0,
+                                             /*disabledCompIdx=*/FluidSystem::gasCompIdx,
+                                             getPropValue<TypeTag, Properties::EnableBioeffects>()>;
+    };
+} // namespace Properties
+} // namespace Opm
+
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowOilWaterPolymerInjectivityMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowOilWaterPolymerInjectivityMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowOilWaterPolymerInjectivityProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowOilWaterPolymerInjectivityProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowOilWaterPolymerInjectivityMainStandalone(int argc, char** argv)
+int
+flowOilWaterPolymerInjectivityMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowOilWaterPolymerInjectivityProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -91,4 +96,4 @@ int flowOilWaterPolymerInjectivityMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

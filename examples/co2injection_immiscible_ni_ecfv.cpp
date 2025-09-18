@@ -28,40 +28,47 @@
  */
 #include "config.h"
 
+#include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
-#include "problems/co2injectionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct Co2InjectionImmiscibleNiEcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>; };
+namespace TTag
+{
+    struct Co2InjectionImmiscibleNiEcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>;
+    };
 
 } // end namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem>
-{ static constexpr bool value = true; };
+template <class TypeTag>
+struct EnableEnergy<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem> {
+    static constexpr bool value = true;
+};
 
 //! Use automatic differentiation to linearize the system of PDEs
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem>
-{ using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::Co2InjectionImmiscibleNiEcfvProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 } // namespace Opm::Properties
 
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionImmiscibleNiEcfvProblem;
     return Opm::start<EcfvProblemTypeTag>(argc, argv, true);

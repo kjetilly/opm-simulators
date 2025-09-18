@@ -57,7 +57,12 @@ void setZeroAtIndexSet(T* deviceData, size_t numberOfElements, const int* indice
  * of those projected vectors.
  */
 template <class T>
-T innerProductAtIndices(cublasHandle_t cublasHandle, const T* deviceA, const T* deviceB, T* buffer, size_t numberOfElements, const int* indices);
+T innerProductAtIndices(cublasHandle_t cublasHandle,
+                        const T* deviceA,
+                        const T* deviceB,
+                        T* buffer,
+                        size_t numberOfElements,
+                        const int* indices);
 
 template <class T>
 void prepareSendBuf(const T* deviceA, T* buffer, size_t numberOfElements, const int* indices);

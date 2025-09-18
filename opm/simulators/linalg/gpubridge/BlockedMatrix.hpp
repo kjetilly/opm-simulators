@@ -20,11 +20,12 @@
 #ifndef OPM_BLOCKED_MATRIX_HPP
 #define OPM_BLOCKED_MATRIX_HPP
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This struct resembles a blocked csr matrix, like Dune::BCRSMatrix.
 /// The data is stored in contiguous memory, such that they can be copied to a device in one transfer.
-template<class Scalar>
+template <class Scalar>
 class BlockedMatrix
 {
 public:
@@ -33,20 +34,21 @@ public:
     /// \param[in] nnzbs_           number of nonzero blocks
     /// \param[in] block_size_      the number of rows and columns for each block
     BlockedMatrix(int Nb_, int nnzbs_, unsigned int block_size_)
-        : nnzValues(new Scalar[nnzbs_*block_size_*block_size_])
-        , colIndices(new int[nnzbs_*block_size_*block_size_])
-        , rowPointers(new int[Nb_+1])
+        : nnzValues(new Scalar[nnzbs_ * block_size_ * block_size_])
+        , colIndices(new int[nnzbs_ * block_size_ * block_size_])
+        , rowPointers(new int[Nb_ + 1])
         , Nb(Nb_)
         , nnzbs(nnzbs_)
         , block_size(block_size_)
         , deleteNnzs(true)
         , deleteSparsity(true)
-    {}
+    {
+    }
 
     /// Allocate BlockedMatrix, but copy sparsity pattern instead of allocating new memory
     /// \param[in] M              matrix to be copied
     BlockedMatrix(const BlockedMatrix& M)
-        : nnzValues(new Scalar[M.nnzbs*M.block_size*M.block_size])
+        : nnzValues(new Scalar[M.nnzbs * M.block_size * M.block_size])
         , colIndices(M.colIndices)
         , rowPointers(M.rowPointers)
         , Nb(M.Nb)
@@ -54,7 +56,8 @@ public:
         , block_size(M.block_size)
         , deleteNnzs(true)
         , deleteSparsity(false)
-    {}
+    {
+    }
 
     /// Allocate BlockedMatrix, but let data arrays point to existing arrays
     /// \param[in] Nb_            number of blockrows
@@ -63,8 +66,8 @@ public:
     /// \param[in] nnzValues_     array of nonzero values, contains nnzb*block_size*block_size scalars
     /// \param[in] colIndices_    array of column indices, contains nnzb entries
     /// \param[in] rowPointers_   array of row pointers, contains Nb+1 entries
-    BlockedMatrix(int Nb_, int nnzbs_, unsigned int block_size_,
-                  Scalar* nnzValues_, int *colIndices_, int *rowPointers_)
+    BlockedMatrix(
+        int Nb_, int nnzbs_, unsigned int block_size_, Scalar* nnzValues_, int* colIndices_, int* rowPointers_)
         : nnzValues(nnzValues_)
         , colIndices(colIndices_)
         , rowPointers(rowPointers_)
@@ -73,7 +76,8 @@ public:
         , block_size(block_size_)
         , deleteNnzs(false)
         , deleteSparsity(false)
-    {}
+    {
+    }
 
     ~BlockedMatrix()
     {
@@ -87,8 +91,8 @@ public:
     }
 
     Scalar* nnzValues;
-    int *colIndices;
-    int *rowPointers;
+    int* colIndices;
+    int* rowPointers;
     int Nb;
     int nnzbs;
     unsigned int block_size;
@@ -110,9 +114,8 @@ void sortRow(int* colIndices, int* data, int left, int right);
 /// \param[in] b                 input block
 /// \param[in] c                 input block
 /// \param[in] block_size        size of block
-template<class Scalar>
-void blockMultSub(Scalar* a, const Scalar* b,
-                  const Scalar* c, unsigned int block_size);
+template <class Scalar>
+void blockMultSub(Scalar* a, const Scalar* b, const Scalar* c, unsigned int block_size);
 
 /// Perform a matrix-matrix multiplication on two blocks
 /// resMat = mat1 * mat2
@@ -120,7 +123,7 @@ void blockMultSub(Scalar* a, const Scalar* b,
 /// \param[in] mat2              input block 2
 /// \param[out] resMat           output block
 /// \param[in] block_size        size of block
-template<class Scalar>
+template <class Scalar>
 void blockMult(Scalar* mat1, Scalar* mat2, Scalar* resMat, unsigned int block_size);
 
 } // namespace Opm::Accelerator

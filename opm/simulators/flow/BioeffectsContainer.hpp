@@ -28,12 +28,17 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
-template<class Scalar> struct BioeffectsSolutionContainer;
+namespace data
+{
+    class Solution;
+}
+template <class Scalar>
+struct BioeffectsSolutionContainer;
 
-template<class Scalar>
+template <class Scalar>
 class BioeffectsContainer
 {
     using ScalarBuffer = std::vector<Scalar>;
@@ -46,29 +51,26 @@ public:
                 const Scalar ureaConcentration,
                 const Scalar calciteConcentration);
 
-    void assign(const unsigned globalDofIdx,
-                const Scalar microbialConcentration,
-                const Scalar biofilmConcentration);
+    void assign(const unsigned globalDofIdx, const Scalar microbialConcentration, const Scalar biofilmConcentration);
 
     BioeffectsSolutionContainer<Scalar> getSolution() const;
 
     void outputRestart(data::Solution& sol, const bool isMICP);
 
-    void readRestart(const unsigned globalDofIdx,
-                     const unsigned elemIdx,
-                     const data::Solution& sol,
-                     const bool isMICP);
+    void readRestart(const unsigned globalDofIdx, const unsigned elemIdx, const data::Solution& sol, const bool isMICP);
 
     bool allocated() const
-    { return allocated_; }
+    {
+        return allocated_;
+    }
 
 private:
     bool allocated_ = false;
-    ScalarBuffer cMicrobes_{};
-    ScalarBuffer cOxygen_{};
-    ScalarBuffer cUrea_{};
-    ScalarBuffer cBiofilm_{};
-    ScalarBuffer cCalcite_{};
+    ScalarBuffer cMicrobes_ {};
+    ScalarBuffer cOxygen_ {};
+    ScalarBuffer cUrea_ {};
+    ScalarBuffer cBiofilm_ {};
+    ScalarBuffer cCalcite_ {};
 };
 
 } // namespace Opm

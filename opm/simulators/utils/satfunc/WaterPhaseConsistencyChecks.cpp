@@ -28,22 +28,22 @@
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Water::SWmin<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Water::SWmin<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // 0 <= SWL < 1
 
     this->swl_ = endPoints.Swl;
 
-    if (! std::isfinite(this->swl_)) {
+    if (!std::isfinite(this->swl_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = this->swl_ < Scalar{0};
-    const auto high = ! (this->swl_ < Scalar{1});
+    const auto low = this->swl_ < Scalar {0};
+    const auto high = !(this->swl_ < Scalar {1});
 
     if (low || high) {
         this->setViolated();
@@ -54,22 +54,22 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Water::SWmax<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Water::SWmax<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // 0 < SWU <= 1
 
     this->swu_ = endPoints.Swu;
 
-    if (! std::isfinite(this->swu_)) {
+    if (!std::isfinite(this->swu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = ! (this->swu_ > Scalar{0});
-    const auto high = this->swu_ > Scalar{1};
+    const auto low = !(this->swu_ > Scalar {0});
+    const auto high = this->swu_ > Scalar {1};
 
     if (low || high) {
         this->setViolated();
@@ -80,19 +80,16 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Water::SWcr<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Water::SWcr<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // SWL <= SWCR < SWU
 
-    this->swl_  = endPoints.Swl;
+    this->swl_ = endPoints.Swl;
     this->swcr_ = endPoints.Swcr;
-    this->swu_  = endPoints.Swu;
+    this->swu_ = endPoints.Swu;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->swcr_) ||
-        ! std::isfinite(this->swu_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->swcr_) || !std::isfinite(this->swu_)) {
         this->setViolated();
         this->setCritical();
 
@@ -100,7 +97,7 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
     }
 
     const auto low = this->swcr_ < this->swl_;
-    const auto high = ! (this->swcr_ < this->swu_);
+    const auto high = !(this->swcr_ < this->swu_);
 
     if (low || high) {
         this->setViolated();

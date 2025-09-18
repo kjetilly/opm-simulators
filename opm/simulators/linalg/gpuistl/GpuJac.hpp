@@ -93,7 +93,8 @@ public:
         return false;
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return true;
     }
 
@@ -108,7 +109,7 @@ private:
 
     void invertDiagonalAndFlatten();
 
-    template<int blocksize>
+    template <int blocksize>
     void dispatchInvertDiagonalAndFlatten();
 };
 } // end namespace Opm::gpuistl

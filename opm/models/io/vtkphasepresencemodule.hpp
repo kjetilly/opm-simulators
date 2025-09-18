@@ -30,20 +30,21 @@
 #include <opm/models/discretization/common/fvbaseparameters.hh>
 
 #include <opm/models/io/baseoutputmodule.hh>
-#include <opm/models/io/vtkphasepresenceparams.hpp>
 #include <opm/models/io/vtkmultiwriter.hh>
+#include <opm/models/io/vtkphasepresenceparams.hpp>
 
 #include <opm/models/utils/parametersystem.hpp>
 #include <opm/models/utils/propertysystem.hh>
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \ingroup Vtk
  *
  * \brief VTK output module for the fluid composition
  */
-template<class TypeTag>
+template <class TypeTag>
 class VtkPhasePresenceModule : public BaseOutputModule<TypeTag>
 {
     using ParentType = BaseOutputModule<TypeTag>;
@@ -115,14 +116,13 @@ public:
         }
 
         if (params_.phasePresenceOutput_) {
-            this->commitScalarBuffer_(baseWriter, "phase presence", phasePresence_,
-                                      ParentType::BufferType::Dof);
+            this->commitScalarBuffer_(baseWriter, "phase presence", phasePresence_, ParentType::BufferType::Dof);
         }
     }
 
 private:
-    VtkPhasePresenceParams params_{};
-    ScalarBuffer phasePresence_{};
+    VtkPhasePresenceParams params_ {};
+    ScalarBuffer phasePresence_ {};
 };
 
 } // namespace Opm

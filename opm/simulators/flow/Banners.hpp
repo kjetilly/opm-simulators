@@ -25,13 +25,15 @@
 #include <string>
 #include <string_view>
 
-namespace Opm {
+namespace Opm
+{
 
 struct SimulatorReport;
 struct SimulatorReportSingle;
 
 // Print an ASCII-art header to the PRT and DEBUG files.
-void printPRTHeader(const int nprocs, const int nthreads,
+void printPRTHeader(const int nprocs,
+                    const int nthreads,
                     const std::string& parameters,
                     std::string_view moduleVersion,
                     std::string_view compileTimestamp);

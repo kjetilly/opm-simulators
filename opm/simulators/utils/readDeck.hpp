@@ -29,21 +29,24 @@
 #include <optional>
 #include <string>
 
-namespace Opm {
-    class EclipseState;
-    class ErrorGuard;
-    class ParseContext;
-    class Python;
-    class Schedule;
-    class SummaryConfig;
-    class UDQState;
-    class WellTestState;
+namespace Opm
+{
+class EclipseState;
+class ErrorGuard;
+class ParseContext;
+class Python;
+class Schedule;
+class SummaryConfig;
+class UDQState;
+class WellTestState;
 } // end namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
-namespace Action {
-class State;
+namespace Action
+{
+    class State;
 }
 
 enum class FileOutputMode {
@@ -58,12 +61,10 @@ enum class FileOutputMode {
 };
 
 // Ensure that a directory exists, creating it if it does not.
-void
-ensureOutputDirExists(const std::string& cmdline_output_dir);
+void ensureOutputDirExists(const std::string& cmdline_output_dir);
 
 // Prepare the result ouptut directory by removing files from previous simulation runs.
-void
-prepareResultOutputDirectory(const std::string& baseName, const std::filesystem::path& outputDir);
+void prepareResultOutputDirectory(const std::string& baseName, const std::filesystem::path& outputDir);
 
 std::unique_ptr<ParseContext> setupParseContext(const bool exitOnAllErrors);
 
@@ -71,39 +72,37 @@ std::unique_ptr<ParseContext> setupParseContext(const bool exitOnAllErrors);
 void setupStreamLogging(const std::string& stdout_log_id);
 
 // Setup the OpmLog backends
-FileOutputMode
-setupLogging(Parallel::Communication& comm,
-             const std::string&       deck_filename,
-             const std::string&       cmdline_output_dir,
-             const std::string&       cmdline_output,
-             bool                     output_cout_,
-             const std::string&       stdout_log_id,
-             const bool               allRanksDbgLog);
+FileOutputMode setupLogging(Parallel::Communication& comm,
+                            const std::string& deck_filename,
+                            const std::string& cmdline_output_dir,
+                            const std::string& cmdline_output,
+                            bool output_cout_,
+                            const std::string& stdout_log_id,
+                            const bool allRanksDbgLog);
 
 /// \brief Reads the deck and creates all necessary objects if needed
 ///
 /// If pointers already contains objects then they are used otherwise they
 /// are created and can be used outside later.
-void readDeck(Parallel::Communication         comm,
-              const std::string&              deckFilename,
-              std::shared_ptr<EclipseState>&  eclipseState,
-              std::shared_ptr<Schedule>&      schedule,
-              std::unique_ptr<UDQState>&      udqState,
+void readDeck(Parallel::Communication comm,
+              const std::string& deckFilename,
+              std::shared_ptr<EclipseState>& eclipseState,
+              std::shared_ptr<Schedule>& schedule,
+              std::unique_ptr<UDQState>& udqState,
               std::unique_ptr<Action::State>& actionState,
               std::unique_ptr<WellTestState>& wtestState,
               std::shared_ptr<SummaryConfig>& summaryConfig,
-              std::shared_ptr<Python>         python,
-              const std::string&              parsingStrictness,
-              const std::string&              actionParsingStrictness,
-              const std::string&              inputSkipMode,
-              bool                            initFromRestart,
-              bool                            checkDeck,
-              bool                            keepKeywords,
-              const std::optional<int>&       outputInterval,
-              bool                            slaveMode);
+              std::shared_ptr<Python> python,
+              const std::string& parsingStrictness,
+              const std::string& actionParsingStrictness,
+              const std::string& inputSkipMode,
+              bool initFromRestart,
+              bool checkDeck,
+              bool keepKeywords,
+              const std::optional<int>& outputInterval,
+              bool slaveMode);
 
-void verifyValidCellGeometry(Parallel::Communication comm,
-                             const EclipseState&     eclipseState);
+void verifyValidCellGeometry(Parallel::Communication comm, const EclipseState& eclipseState);
 } // end namespace Opm
 
 #endif // OPM_READDECK_HEADER_INCLUDED

@@ -34,19 +34,22 @@
 #include <memory>
 #include <vector>
 
-namespace Opm {
-    class GridDims;
-    template<class Scalar> class ParallelWellInfo;
-    class PAvg;
-    class Well;
-}
+namespace Opm
+{
+class GridDims;
+template <class Scalar>
+class ParallelWellInfo;
+class PAvg;
+class Well;
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 /// Parallel facility for managing the on-rank collection and global
 /// distribution of WBPn source values as well as local calculation and
 /// distributed reduction of the inferred WBPn report values.
-template<class Scalar>
+template <class Scalar>
 class ParallelWBPCalculation
 {
 public:
@@ -67,8 +70,7 @@ public:
     /// \param[in] cellIndexMap Cell index triple map ((I,J,K) <-> global).
     ///
     /// \param[in] gridComm Main, grid level, global communicator.
-    explicit ParallelWBPCalculation(const GridDims&                cellIndexMap,
-                                    const Parallel::Communication& gridComm);
+    explicit ParallelWBPCalculation(const GridDims& cellIndexMap, const Parallel::Communication& gridComm);
 
     /// Assign translation function for inferring the on-rank IDs of the
     /// known source locations.
@@ -111,11 +113,10 @@ public:
     /// \return Calculator object index.  Must be used in subsequent calls
     ///   to inferBlockAveragePressures() and averagePressures() for this \p
     ///   well.
-    std::size_t
-    createCalculator(const Well&             well,
-                     const ParallelWellInfo<Scalar>& parallelWellInfo,
-                     const std::vector<int>& localConnIdx,
-                     EvaluatorFactory        makeWellSourceEvaluator);
+    std::size_t createCalculator(const Well& well,
+                                 const ParallelWellInfo<Scalar>& parallelWellInfo,
+                                 const std::vector<int>& localConnIdx,
+                                 EvaluatorFactory makeWellSourceEvaluator);
 
     /// Set up communication patterns for both cell and connection level
     /// source terms and partial/intermediate WBPn results.
@@ -152,9 +153,9 @@ public:
     /// \param[in] refDepth WBPn reference depth.  Typically \code
     ///   Well::getWPaveRefDepth() \endcode.
     void inferBlockAveragePressures(const std::size_t calcIndex,
-                                    const PAvg&       controls,
-                                    const Scalar      gravity,
-                                    const Scalar      refDepth);
+                                    const PAvg& controls,
+                                    const Scalar gravity,
+                                    const Scalar refDepth);
 
     /// Retrieve results from most recent WBPn value calculation for
     /// specified well.
@@ -164,8 +165,7 @@ public:
     ///
     /// \return Result set from most recent call to member function \c
     ///   inferBlockAveragePressures() for \c calcIndex.
-    const PAvgCalculatorResult<Scalar>&
-    averagePressures(const std::size_t calcIndex) const;
+    const PAvgCalculatorResult<Scalar>& averagePressures(const std::size_t calcIndex) const;
 
 private:
     /// Callable wrapper for the local, per-well reservoir connections.
@@ -203,7 +203,7 @@ private:
         /// current rank.  Use a negative value to identify a connection
         /// that is either not flowing or which does not intersect the
         /// current MPI rank.
-        std::vector<int> localConnIdx_{};
+        std::vector<int> localConnIdx_ {};
     };
 
     /// Parallel collection of individual source terms
@@ -290,8 +290,7 @@ private:
         /// \return Local, on-rank, indices for each index in \p
         ///   globalIndex.  Negative local index value for global indices
         ///   which are either not active or not on the current MPI rank.
-        std::vector<int>
-        getLocalIndex(const std::vector<std::size_t>& globalIndex) const;
+        std::vector<int> getLocalIndex(const std::vector<std::size_t>& globalIndex) const;
 
     private:
         /// Type of wrapped object.
@@ -301,19 +300,19 @@ private:
         std::reference_wrapper<const Parallel::Communication> comm_;
 
         /// Translation from global indices to local, on-rank, indices.
-        GlobalToLocal localIdx_{};
+        GlobalToLocal localIdx_ {};
 
         /// Source term evaluator object.  Empty if we need deferred
         /// initialisation, e.g., for well connections.
-        Evaluator eval_{};
+        Evaluator eval_ {};
 
         /// Creation function for source term evaluation functions.  Empty
         /// if evaluation function has already been assigned, e.g., for
         /// reservoir cells.
-        EvaluatorFactory evalFactory_{};
+        EvaluatorFactory evalFactory_ {};
 
         /// Parallel WBPn source term object.
-        DataPtr srcData_{};
+        DataPtr srcData_ {};
     };
 
     /// Calculation object IDs.
@@ -327,13 +326,13 @@ private:
 
     /// Collection of WBPn calculation objects.  One object for each well on
     /// rank.
-    PAvgCalculatorCollection<Scalar> calculators_{};
+    PAvgCalculatorCollection<Scalar> calculators_ {};
 
     /// Source term objects for each well on rank.
-    std::vector<SourceData> wellConnSrc_{};
+    std::vector<SourceData> wellConnSrc_ {};
 
     /// Local connection indices for each well on rank.
-    std::vector<LocalConnSet> localConnSet_{};
+    std::vector<LocalConnSet> localConnSet_ {};
 
     /// Eliminate inactive cells from the source locations backing \c
     /// reservoirSrc_.
@@ -361,8 +360,7 @@ private:
     /// terms.
     ///
     /// \return WBPn source terms aggregated for \p well.
-    typename PAvgCalculator<Scalar>::Sources
-    makeEvaluationSources(const WellID well) const;
+    typename PAvgCalculator<Scalar>::Sources makeEvaluationSources(const WellID well) const;
 };
 
 } // namespace Opm

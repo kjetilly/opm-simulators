@@ -23,7 +23,10 @@
 
 #include <any>
 
-namespace Dune { class CpGrid; }
+namespace Dune
+{
+class CpGrid;
+}
 
 namespace Opm
 {
@@ -42,9 +45,11 @@ void extractParallelGridInformationToISTL(const Dune::CpGrid& grid, std::any& an
 
 // Grid is not CpGrid --> do nothing.
 template <class Grid>
-void extractParallelGridInformationToISTL(const Grid&, std::any&)
-{}
+void
+extractParallelGridInformationToISTL(const Grid&, std::any&)
+{
+}
 
 } // end namespace Opm
-#endif //defined(HAVE_OPM_GRID)
+#endif // defined(HAVE_OPM_GRID)
 #endif // OPM_EXTRACTPARALLELGRIDINFORMATIONTOISTL_HEADER_INCLUDED

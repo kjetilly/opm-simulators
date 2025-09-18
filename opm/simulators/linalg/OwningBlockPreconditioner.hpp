@@ -74,7 +74,8 @@ public:
         orig_precond_.update();
     }
 
-    virtual bool hasPerfectUpdate() const override {
+    virtual bool hasPerfectUpdate() const override
+    {
         return orig_precond_.hasPerfectUpdate();
     }
 

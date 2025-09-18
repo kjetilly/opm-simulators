@@ -28,39 +28,34 @@
 #include <config.h>
 #include <opm/simulators/flow/SolutionContainers.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 PolymerSolutionContainer<Scalar>
 PolymerSolutionContainer<Scalar>::serializationTestObject()
 {
-    return {{3.0, 4.0, 5.0},
-            {12.0},
-            {13.0, 14.0}};
+    return {{3.0, 4.0, 5.0}, {12.0}, {13.0, 14.0}};
 }
 
-template<class Scalar>
-bool PolymerSolutionContainer<Scalar>::
-operator==(const PolymerSolutionContainer<Scalar>& rhs) const
+template <class Scalar>
+bool
+PolymerSolutionContainer<Scalar>::operator==(const PolymerSolutionContainer<Scalar>& rhs) const
 {
-    return this->maxAdsorption == rhs.maxAdsorption &&
-           this->concentration == rhs.concentration &&
-           this->moleWeight == rhs.moleWeight;
+    return this->maxAdsorption == rhs.maxAdsorption && this->concentration == rhs.concentration
+        && this->moleWeight == rhs.moleWeight;
 }
 
-template<class Scalar>
+template <class Scalar>
 BioeffectsSolutionContainer<Scalar>
 BioeffectsSolutionContainer<Scalar>::serializationTestObject()
 {
-    return {{16.0},
-            {17.0},
-            {18.0},
-            {19.0},
-            {20.0}};
+    return {{16.0}, {17.0}, {18.0}, {19.0}, {20.0}};
 }
 
-template<class Scalar>
-void BioeffectsSolutionContainer<Scalar>::resize(const unsigned numElems)
+template <class Scalar>
+void
+BioeffectsSolutionContainer<Scalar>::resize(const unsigned numElems)
 {
     microbialConcentration.resize(numElems, 0.0);
     oxygenConcentration.resize(numElems, 0.0);
@@ -69,19 +64,18 @@ void BioeffectsSolutionContainer<Scalar>::resize(const unsigned numElems)
     calciteConcentration.resize(numElems, 0.0);
 }
 
-template<class Scalar>
-bool BioeffectsSolutionContainer<Scalar>::
-operator==(const BioeffectsSolutionContainer<Scalar>& rhs) const
+template <class Scalar>
+bool
+BioeffectsSolutionContainer<Scalar>::operator==(const BioeffectsSolutionContainer<Scalar>& rhs) const
 {
-    return this->microbialConcentration == rhs.microbialConcentration &&
-           this->oxygenConcentration == rhs.oxygenConcentration &&
-           this->ureaConcentration == rhs.ureaConcentration &&
-           this->biofilmConcentration == rhs.biofilmConcentration &&
-           this->calciteConcentration == rhs.calciteConcentration;
+    return this->microbialConcentration == rhs.microbialConcentration
+        && this->oxygenConcentration == rhs.oxygenConcentration && this->ureaConcentration == rhs.ureaConcentration
+        && this->biofilmConcentration == rhs.biofilmConcentration
+        && this->calciteConcentration == rhs.calciteConcentration;
 }
 
-#define INSTANTIATE_TYPE(T) \
-    template struct PolymerSolutionContainer<T>; \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct PolymerSolutionContainer<T>;                                                                       \
     template struct BioeffectsSolutionContainer<T>;
 
 INSTANTIATE_TYPE(double)

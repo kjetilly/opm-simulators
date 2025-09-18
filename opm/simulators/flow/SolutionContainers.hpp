@@ -30,10 +30,11 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Struct holding polymer extension data.
-template<class Scalar>
+template <class Scalar>
 struct PolymerSolutionContainer {
     std::vector<Scalar> maxAdsorption;
     std::vector<Scalar> concentration;
@@ -41,7 +42,7 @@ struct PolymerSolutionContainer {
 
     static PolymerSolutionContainer serializationTestObject();
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(maxAdsorption);
@@ -53,7 +54,7 @@ struct PolymerSolutionContainer {
 };
 
 //! \brief Struct holding MICP extension data.
-template<class Scalar>
+template <class Scalar>
 struct BioeffectsSolutionContainer {
     std::vector<Scalar> microbialConcentration;
     std::vector<Scalar> oxygenConcentration;
@@ -66,7 +67,7 @@ struct BioeffectsSolutionContainer {
     //! \brief Resize vectors and zero initialize.
     void resize(const unsigned numElems);
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(microbialConcentration);

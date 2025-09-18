@@ -19,8 +19,8 @@
 #ifndef OPM_ILU0_KERNELS_HPP
 #define OPM_ILU0_KERNELS_HPP
 #include <cstddef>
-#include <vector>
 #include <opm/simulators/linalg/gpuistl/detail/kernel_enums.hpp>
+#include <vector>
 namespace Opm::gpuistl::detail::ILU0
 {
 

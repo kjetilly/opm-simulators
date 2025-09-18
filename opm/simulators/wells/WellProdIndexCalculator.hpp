@@ -23,16 +23,18 @@
 #include <cstddef>
 #include <vector>
 
-namespace Opm {
-    class Well;
+namespace Opm
+{
+class Well;
 } // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 /// Collect per-connection static information to enable calculating
 /// connection-level or well-level productivity index values when
 /// incorporating dynamic phase mobilities.
-template<class Scalar>
+template <class Scalar>
 class WellProdIndexCalculator
 {
 public:
@@ -63,8 +65,7 @@ public:
     ///   intersected by well's connection \p connIdx.
     ///
     /// \return Connection-level steady-state productivity index.
-    Scalar connectionProdIndStandard(const std::size_t connIdx,
-                                     const Scalar      connMobility) const;
+    Scalar connectionProdIndStandard(const std::size_t connIdx, const Scalar connMobility) const;
 
     /// Number of connections in this well.
     ///
@@ -80,7 +81,7 @@ private:
     /// Corresponds to the well's connection transmissibility factors,
     /// multiplied by a ratio of logarithms if the well has an explicit,
     /// positive drainage radius.
-    std::vector<Scalar> standardConnFactors_{};
+    std::vector<Scalar> standardConnFactors_ {};
 };
 
 /// Compute connection-level productivity index values for all
@@ -95,10 +96,9 @@ private:
 ///
 /// \return Connection-level steady-state productivity index values for
 ///   all connections.
-template<class Scalar>
-std::vector<Scalar>
-connectionProdIndStandard(const WellProdIndexCalculator<Scalar>& wellPICalc,
-                          const std::vector<Scalar>&             connMobility);
+template <class Scalar>
+std::vector<Scalar> connectionProdIndStandard(const WellProdIndexCalculator<Scalar>& wellPICalc,
+                                              const std::vector<Scalar>& connMobility);
 
 /// Compute well-level productivity index value.
 ///
@@ -110,9 +110,8 @@ connectionProdIndStandard(const WellProdIndexCalculator<Scalar>& wellPICalc,
 ///   \code wellPICalc.numConnections() \endcode well connection.
 ///
 /// \return Well-level steady-state productivity index value.
-template<class Scalar>
-Scalar wellProdIndStandard(const WellProdIndexCalculator<Scalar>& wellPICalc,
-                           const std::vector<Scalar>&             connMobility);
+template <class Scalar>
+Scalar wellProdIndStandard(const WellProdIndexCalculator<Scalar>& wellPICalc, const std::vector<Scalar>& connMobility);
 
 } // namespace Opm
 

@@ -26,31 +26,32 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackoilPolymerParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWritePolymerConcentration>
-        ("Include the concentration of the polymer component in the water phase "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWritePolymerDeadPoreVolume>
-        ("Include the fraction of the \"dead\" pore volume "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWritePolymerRockDensity>
-        ("Include the amount of already adsorbed polymer component"
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWritePolymerAdsorption>
-        ("Include the adsorption rate of the polymer component"
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWritePolymerViscosityCorrection>
-        ("Include the viscosity correction of the polymer component "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteWaterViscosityCorrection>
-        ("Include the viscosity correction of the water component "
-         "due to polymers in the VTK output files");
+
+void
+VtkBlackoilPolymerParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWritePolymerConcentration>(
+        "Include the concentration of the polymer component in the water phase "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWritePolymerDeadPoreVolume>("Include the fraction of the \"dead\" pore volume "
+                                                                    "in the VTK output files");
+    Parameters::Register<Parameters::VtkWritePolymerRockDensity>(
+        "Include the amount of already adsorbed polymer component"
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWritePolymerAdsorption>("Include the adsorption rate of the polymer component"
+                                                                "in the VTK output files");
+    Parameters::Register<Parameters::VtkWritePolymerViscosityCorrection>(
+        "Include the viscosity correction of the polymer component "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteWaterViscosityCorrection>(
+        "Include the viscosity correction of the water component "
+        "due to polymers in the VTK output files");
 }
 
-void VtkBlackoilPolymerParams::read()
+void
+VtkBlackoilPolymerParams::read()
 {
     polymerConcentrationOutput_ = Parameters::Get<Parameters::VtkWritePolymerConcentration>();
     polymerDeadPoreVolumeOutput_ = Parameters::Get<Parameters::VtkWritePolymerDeadPoreVolume>();

@@ -20,8 +20,8 @@
 #ifndef OPM_KEYWORDVALIDATION_HEADER_INCLUDED
 #define OPM_KEYWORDVALIDATION_HEADER_INCLUDED
 
-#include <opm/input/eclipse/Deck/DeckItem.hpp>
 #include <opm/common/OpmLog/KeywordLocation.hpp>
+#include <opm/input/eclipse/Deck/DeckItem.hpp>
 #include <opm/simulators/flow/ValidationFunctions.hpp>
 
 #include <algorithm>
@@ -65,7 +65,8 @@ namespace KeywordValidation
     template <typename T>
     using SupportedSingleKeywordItems = std::map<std::size_t, SupportedKeywordProperties<T>>;
 
-    // This is used to list the keywords that have partially supported items or items that benefit from early validation:
+    // This is used to list the keywords that have partially supported items or items that benefit from early
+    // validation:
     template <typename T>
     using SupportedKeywordItems = std::map<std::string, SupportedSingleKeywordItems<T>>;
 
@@ -89,11 +90,11 @@ namespace KeywordValidation
                                  const bool include_noncritical,
                                  const bool include_critical);
 
-struct SupportedKeywords {
-    const SupportedKeywordItems<std::string> string_items;
-    const SupportedKeywordItems<int> int_items;
-    const SupportedKeywordItems<double> double_items;
-};
+    struct SupportedKeywords {
+        const SupportedKeywordItems<std::string> string_items;
+        const SupportedKeywordItems<int> int_items;
+        const SupportedKeywordItems<double> double_items;
+    };
 
     class KeywordValidator
     {
@@ -156,9 +157,7 @@ struct SupportedKeywords {
     public:
         allow_values(const std::initializer_list<T>& allowed_values)
         {
-            std::copy(allowed_values.begin(),
-                      allowed_values.end(),
-                      std::back_inserter(m_allowed_values));
+            std::copy(allowed_values.begin(), allowed_values.end(), std::back_inserter(m_allowed_values));
         }
 
         bool operator()(const T& value) const
@@ -172,8 +171,11 @@ struct SupportedKeywords {
 
     // Helper to test if given string value is convertible to bool (see DeckItem::to_bool)
     struct is_bool_convertible {
-        is_bool_convertible() {}
-        bool operator()(const std::string& value) const {
+        is_bool_convertible()
+        {
+        }
+        bool operator()(const std::string& value) const
+        {
             try {
                 return DeckItem::to_bool(value) || true;
             } catch (const std::invalid_argument& e) {

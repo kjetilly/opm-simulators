@@ -23,9 +23,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include <opm/simulators/linalg/FlexibleSolver.hpp>
+#include <opm/simulators/linalg/PropertyTree.hpp>
 #include <opm/simulators/linalg/getQuasiImpesWeights.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
-#include <opm/simulators/linalg/PropertyTree.hpp>
 
 #include <dune/common/fmatrix.hh>
 #include <dune/istl/bcrsmatrix.hh>
@@ -60,13 +60,10 @@ testSolver(const Opm::PropertyTree& prm, const std::string& matrix_filename, con
     }
     bool transpose = false;
 
-    if(prm.get<std::string>("preconditioner.type") == "cprt"){
+    if (prm.get<std::string>("preconditioner.type") == "cprt") {
         transpose = true;
     }
-    auto wc = [&matrix, transpose]()
-    {
-        return Opm::Amg::getQuasiImpesWeights<Matrix, Vector>(matrix, 1, transpose);
-    };
+    auto wc = [&matrix, transpose]() { return Opm::Amg::getQuasiImpesWeights<Matrix, Vector>(matrix, 1, transpose); };
 
     using SeqOperatorType = Dune::MatrixAdapter<Matrix, Vector, Vector>;
     SeqOperatorType op(matrix);

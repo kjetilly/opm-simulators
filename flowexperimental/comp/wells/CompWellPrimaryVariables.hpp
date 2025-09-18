@@ -26,7 +26,8 @@
 
 #include <array>
 
-namespace Opm {
+namespace Opm
+{
 
 template <typename FluidSystem>
 class SingleCompWellState;
@@ -43,7 +44,8 @@ public:
     // the last primary variable will be the BHP
     // the one in the middle with will the mole fractions for the numWellEq - 1 components
     // this can be changed based on the implementation itself
-    static constexpr int QTotal = 0; // TODO: for now, it is the total surface rate, but later, we might make it total mass rate
+    static constexpr int QTotal
+        = 0; // TODO: for now, it is the total surface rate, but later, we might make it total mass rate
     static constexpr int Bhp = numWellEq - numWellControlEq;
 
     using Scalar = typename FluidSystem::Scalar;
@@ -83,11 +85,10 @@ private:
     std::array<EvalWell, numWellEq> evaluation_;
     // temperature for now is constant, so it is not part of the primary variables
     // we need it for the flash calculation
-    Scalar temperature_{0.};
+    Scalar temperature_ {0.};
 
     template <typename T>
     T getValue_(int index) const;
-
 };
 
 } // end of namespace Opm

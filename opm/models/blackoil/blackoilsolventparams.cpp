@@ -26,23 +26,24 @@
 
 #if HAVE_ECL_INPUT
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/SsfnTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/Sof2Table.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/MiscTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/MsfnTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/PmiscTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/MiscTable.hpp>
-#include <opm/input/eclipse/EclipseState/Tables/SorwmisTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/SgcwmisTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/Sof2Table.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/SorwmisTable.hpp>
+#include <opm/input/eclipse/EclipseState/Tables/SsfnTable.hpp>
 #include <opm/input/eclipse/EclipseState/Tables/TlpmixpaTable.hpp>
 #endif
 
-namespace Opm {
+namespace Opm
+{
 
 #if HAVE_ECL_INPUT
-template<class Scalar>
-template<bool enableSolvent>
-void BlackOilSolventParams<Scalar>::
-initFromState(const EclipseState& eclState, const Schedule& schedule)
+template <class Scalar>
+template <bool enableSolvent>
+void
+BlackOilSolventParams<Scalar>::initFromState(const EclipseState& eclState, const Schedule& schedule)
 {
     // some sanity checks: if solvents are enabled, the SOLVENT keyword must be
     // present, if solvents are disabled the keyword must not be present.
@@ -116,8 +117,7 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
                                                        sof2Table.getKroColumn(),
                                                        /*sortInput=*/true);
             }
-        }
-        else if (eclState.runspec().phases().active(Phase::OIL)) {
+        } else if (eclState.runspec().phases().active(Phase::OIL)) {
             throw std::runtime_error("SOF2 must be specified in MISCIBLE (SOLVENT and OIL) runs\n");
         }
 
@@ -135,8 +135,7 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
                 const auto& misc = miscTable.getMiscibilityColumn();
                 misc_[miscRegionIdx].setXYContainers(solventFraction, misc);
             }
-        }
-        else {
+        } else {
             throw std::runtime_error("MISC must be specified in MISCIBLE (SOLVENT) runs\n");
         }
 
@@ -155,10 +154,9 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
 
                 pmisc_[regionIdx].setXYContainers(po, pmisc);
             }
-        }
-        else {
-            std::vector<double> x = {0.0,1.0e20};
-            std::vector<double> y = {1.0,1.0};
+        } else {
+            std::vector<double> x = {0.0, 1.0e20};
+            std::vector<double> y = {1.0, 1.0};
             TabulatedFunction constant = TabulatedFunction(2, x, y);
             for (unsigned regionIdx = 0; regionIdx < numMiscRegions; ++regionIdx) {
                 pmisc_[regionIdx] = constant;
@@ -184,10 +182,9 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
                 msfnKrsg_[regionIdx].setXYContainers(Ssg, krsg);
                 msfnKro_[regionIdx].setXYContainers(Ssg, kro);
             }
-        }
-        else {
-            std::vector<double> x = {0.0,1.0};
-            std::vector<double> y = {1.0,0.0};
+        } else {
+            std::vector<double> x = {0.0, 1.0};
+            std::vector<double> y = {1.0, 0.0};
             TabulatedFunction unit = TabulatedFunction(2, x, x);
             TabulatedFunction invUnit = TabulatedFunction(2, x, y);
 
@@ -210,11 +207,10 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
 
                 sorwmis_[regionIdx].setXYContainers(sw, sorwmis);
             }
-        }
-        else {
+        } else {
             // default
-            std::vector<double> x = {0.0,1.0};
-            std::vector<double> y = {0.0,0.0};
+            std::vector<double> x = {0.0, 1.0};
+            std::vector<double> y = {0.0, 0.0};
             TabulatedFunction zero = TabulatedFunction(2, x, y);
             for (unsigned regionIdx = 0; regionIdx < numMiscRegions; ++regionIdx) {
                 sorwmis_[regionIdx] = zero;
@@ -236,11 +232,10 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
 
                 sgcwmis_[regionIdx].setXYContainers(sw, sgcwmis);
             }
-        }
-        else {
+        } else {
             // default
-            std::vector<double> x = {0.0,1.0};
-            std::vector<double> y = {0.0,0.0};
+            std::vector<double> x = {0.0, 1.0};
+            std::vector<double> y = {0.0, 0.0};
             TabulatedFunction zero = TabulatedFunction(2, x, y);
             for (unsigned regionIdx = 0; regionIdx < numMiscRegions; ++regionIdx)
                 sgcwmis_[regionIdx] = zero;
@@ -258,8 +253,7 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
                 tlMixParamViscosity_[regionIdx] = tlp.viscosity_parameter;
                 tlMixParamDensity_[regionIdx] = tlp.density_parameter;
             }
-        }
-        else
+        } else
             throw std::runtime_error("TLMIXPAR must be specified in MISCIBLE (SOLVENT) runs\n");
 
         // resize the attributes of the object
@@ -277,23 +271,20 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
 
                     tlPMixTable_[regionIdx].setXYContainers(po, tlpmixpa);
                 }
-            }
-            else {
+            } else {
                 // if empty keyword. Try to use the pmisc table as default.
                 if (!pmisc_.empty()) {
                     tlPMixTable_ = pmisc_;
-                }
-                else {
+                } else {
                     throw std::invalid_argument("If the pressure dependent TL values in "
                                                 "TLPMIXPA is defaulted (no entries), then "
                                                 "the PMISC tables must be specified.");
                 }
             }
-        }
-        else {
+        } else {
             // default
-            std::vector<double> x = {0.0,1.0e20};
-            std::vector<double> y = {1.0,1.0};
+            std::vector<double> x = {0.0, 1.0e20};
+            std::vector<double> y = {1.0, 1.0};
             TabulatedFunction ones = TabulatedFunction(2, x, y);
             for (unsigned regionIdx = 0; regionIdx < numMiscRegions; ++regionIdx)
                 tlPMixTable_[regionIdx] = ones;
@@ -302,27 +293,27 @@ initFromState(const EclipseState& eclState, const Schedule& schedule)
 }
 #endif
 
-template<class Scalar>
-void BlackOilSolventParams<Scalar>::
-setNumSatRegions(unsigned numRegions)
+template <class Scalar>
+void
+BlackOilSolventParams<Scalar>::setNumSatRegions(unsigned numRegions)
 {
     ssfnKrg_.resize(numRegions);
     ssfnKrs_.resize(numRegions);
 }
 
-template<class Scalar>
-void BlackOilSolventParams<Scalar>::
-setMsfn(unsigned satRegionIdx,
-        const TabulatedFunction& msfnKrsg,
-        const TabulatedFunction& msfnKro)
+template <class Scalar>
+void
+BlackOilSolventParams<Scalar>::setMsfn(unsigned satRegionIdx,
+                                       const TabulatedFunction& msfnKrsg,
+                                       const TabulatedFunction& msfnKro)
 {
     msfnKrsg_[satRegionIdx] = msfnKrsg;
     msfnKro_[satRegionIdx] = msfnKro;
 }
 
-#define INSTANTIATE_TYPE(T)                                                                             \
-    template struct BlackOilSolventParams<T>;                                                           \
-    template void BlackOilSolventParams<T>::initFromState<false>(const EclipseState&, const Schedule&); \
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template struct BlackOilSolventParams<T>;                                                                          \
+    template void BlackOilSolventParams<T>::initFromState<false>(const EclipseState&, const Schedule&);                \
     template void BlackOilSolventParams<T>::initFromState<true>(const EclipseState&, const Schedule&);
 
 INSTANTIATE_TYPE(double)

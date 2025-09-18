@@ -20,12 +20,12 @@
 #ifndef OPM_INSTANTIATION_INDICES_MACROS_HPP
 #define OPM_INSTANTIATION_INDICES_MACROS_HPP
 
-#include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
+#include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 
-#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 #include <opm/models/blackoil/blackoilonephaseindices.hh>
 #include <opm/models/blackoil/blackoiltwophaseindices.hh>
+#include <opm/models/blackoil/blackoilvariableandequationindices.hh>
 
 /**
  * \brief Macro INSTANTIATE_TYPE_INDICES is used to to instantiate a template class with
@@ -56,36 +56,35 @@
  * `double` and `float` scalar types (if `FLOW_INSTANTIATE_FLOAT` is defined).
  */
 
-    template<class Scalar>
-    using FS = Opm::BlackOilFluidSystem<Scalar, Opm::BlackOilDefaultFluidSystemIndices>;
+template <class Scalar>
+using FS = Opm::BlackOilFluidSystem<Scalar, Opm::BlackOilDefaultFluidSystemIndices>;
 
-#define INSTANTIATE_CLASS(CLASS, T, ...) \
-    template class CLASS<FS<T>,__VA_ARGS__>;
+#define INSTANTIATE_CLASS(CLASS, T, ...) template class CLASS<FS<T>, __VA_ARGS__>;
 
-#define INSTANTIATE_TYPE_INDICES(CLASS, T)                                                  \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilOnePhaseIndices<0u,0u,0u,0u,false,false,0u,1u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilOnePhaseIndices<0u,0u,0u,1u,false,false,0u,1u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilOnePhaseIndices<0u,0u,0u,0u,false,false,0u,1u,5u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,false,0u,0u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,false,0u,1u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,false,0u,2u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,true,0u,2u,0u>)  \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,1u,0u,false,false,0u,2u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,2u,0u,false,false,0u,2u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,1u,false,false,0u,1u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,true,0u,0u,0u>)  \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,1u,false,false,0u,0u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,1u,false,true,0u,0u,0u>)  \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<1u,0u,0u,0u,false,false,0u,0u,0u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilTwoPhaseIndices<0u,0u,0u,0u,false,false,0u,0u,2u>) \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,0u,0u,false,false,0u,0u>)            \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,0u,0u,true,false,0u,0u>)             \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,0u,0u,false,true,0u,0u>)             \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<1u,0u,0u,0u,false,false,0u,0u>)            \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,1u,0u,0u,false,false,0u,0u>)            \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,1u,0u,false,false,0u,0u>)            \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,0u,1u,false,false,0u,0u>)            \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<0u,0u,0u,1u,false,true,0u,0u>)             \
-    INSTANTIATE_CLASS(CLASS,T,BlackOilVariableAndEquationIndices<1u,0u,0u,0u,true,false,0u,0u>)
+#define INSTANTIATE_TYPE_INDICES(CLASS, T)                                                                             \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilOnePhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 1u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilOnePhaseIndices<0u, 0u, 0u, 1u, false, false, 0u, 1u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilOnePhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 1u, 5u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 0u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 1u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 2u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, true, 0u, 2u, 0u>)                      \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 1u, 0u, false, false, 0u, 2u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 2u, 0u, false, false, 0u, 2u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 1u, false, false, 0u, 1u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, true, 0u, 0u, 0u>)                      \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 1u, false, false, 0u, 0u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 1u, false, true, 0u, 0u, 0u>)                      \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<1u, 0u, 0u, 0u, false, false, 0u, 0u, 0u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilTwoPhaseIndices<0u, 0u, 0u, 0u, false, false, 0u, 0u, 2u>)                     \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 0u, 0u, false, false, 0u, 0u>)              \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 0u, 0u, true, false, 0u, 0u>)               \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 0u, 0u, false, true, 0u, 0u>)               \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<1u, 0u, 0u, 0u, false, false, 0u, 0u>)              \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 1u, 0u, 0u, false, false, 0u, 0u>)              \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 1u, 0u, false, false, 0u, 0u>)              \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 0u, 1u, false, false, 0u, 0u>)              \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<0u, 0u, 0u, 1u, false, true, 0u, 0u>)               \
+    INSTANTIATE_CLASS(CLASS, T, BlackOilVariableAndEquationIndices<1u, 0u, 0u, 0u, true, false, 0u, 0u>)
 
 #endif

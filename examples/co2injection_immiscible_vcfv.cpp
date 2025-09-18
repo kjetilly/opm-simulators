@@ -28,32 +28,37 @@
  */
 #include "config.h"
 
+#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/immiscible/immisciblemodel.hh>
-#include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
 
 #include "problems/co2injectionproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionImmiscibleVcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>; };
+    struct Co2InjectionImmiscibleVcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, ImmiscibleModel>;
+    };
 
 } // namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionImmiscibleVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
 } // namespace Opm::Properties
 
 ////////////////////////
 // the main function
 ////////////////////////
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using VcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionImmiscibleVcfvProblem;
     return Opm::start<VcfvProblemTypeTag>(argc, argv, true);

@@ -18,8 +18,9 @@
 #ifndef FLOW_BRINE_ENERGY_HPP
 #define FLOW_BRINE_ENERGY_HPP
 
-namespace Opm {
-  int flowBrineEnergyMain(int argc, char** argv);
+namespace Opm
+{
+int flowBrineEnergyMain(int argc, char** argv);
 }
 
 #endif

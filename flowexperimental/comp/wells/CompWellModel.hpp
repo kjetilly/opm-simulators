@@ -22,9 +22,9 @@
 
 #include <opm/output/data/Wells.hpp>
 
-#include <opm/models/discretization/common/baseauxiliarymodule.hh>
-#include <opm/input/eclipse/Schedule/Well/WellTestState.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
+#include <opm/input/eclipse/Schedule/Well/WellTestState.hpp>
+#include <opm/models/discretization/common/baseauxiliarymodule.hh>
 
 #include <flowexperimental/comp/wells/CompWell.hpp>
 #include <flowexperimental/comp/wells/CompWellState.hpp>
@@ -38,11 +38,12 @@
 
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class Schedule;
 
-template<typename TypeTag>
+template <typename TypeTag>
 class CompWellModel : WellConnectionAuxiliaryModule<TypeTag, CompWellModel<TypeTag>>
 {
     using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
@@ -68,51 +69,69 @@ public:
 
 
     // TODO: Scalar will probably to be TypeTag later
-    using CompWellPtr = std::shared_ptr<CompWell<TypeTag> >;
+    using CompWellPtr = std::shared_ptr<CompWell<TypeTag>>;
     explicit CompWellModel(Simulator& /*simulator*/);
 
     // No extra dofs are inserted for wells. (we use a Schur complement.)
     [[nodiscard]] unsigned numDofs() const override
-    { return 0; }
+    {
+        return 0;
+    }
 
-//    void addNeighbors(std::vector<NeighborSet>& /* neighbors */) const override
-//    {}
+    //    void addNeighbors(std::vector<NeighborSet>& /* neighbors */) const override
+    //    {}
 
-    void applyInitial() override {}
+    void applyInitial() override
+    {
+    }
 
     // void linearize(SparseMatrixAdapter& /*matrix*/, GlobalEqVector& /*residual*/) override;
 
     template <class Restarter>
     void serialize(Restarter& /*res*/)
-    {}
+    {
+    }
 
     template <class Restarter>
     void deserialize(Restarter& /*res*/)
-    {}
+    {
+    }
 
 
-    void beginEpisode() { beginReportStep(simulator_.episodeIndex()); }
+    void beginEpisode()
+    {
+        beginReportStep(simulator_.episodeIndex());
+    }
     void beginReportStep(unsigned report_step);
     void beginTimeStep();
     void beginIteration();
 
     void init();
-    void endIteration() const {}
-    void endTimeStep() {}
-    void endEpisode() {}
+    void endIteration() const
+    {
+    }
+    void endTimeStep()
+    {
+    }
+    void endEpisode()
+    {
+    }
 
     void computeTotalRatesForDof(RateVector& /*rate*/, unsigned /*globalIdx*/) const;
     //
     [[nodiscard]] data::Wells wellData() const;
 
-    [[nodiscard]] data::WellBlockAveragePressures wellBlockAveragePressures() const {
-         return data::WellBlockAveragePressures{};
+    [[nodiscard]] data::WellBlockAveragePressures wellBlockAveragePressures() const
+    {
+        return data::WellBlockAveragePressures {};
     }
-    [[nodiscard]] data::GroupAndNetworkValues groupAndNetworkData(const int&) const {
-         return data::GroupAndNetworkValues{};
+    [[nodiscard]] data::GroupAndNetworkValues groupAndNetworkData(const int&) const
+    {
+        return data::GroupAndNetworkValues {};
     }
-    [[nodiscard]] WellTestState wellTestState() const {
-         return WellTestState{};
+    [[nodiscard]] WellTestState wellTestState() const
+    {
+        return WellTestState {};
     }
 
     // using the solution x to recover the solution xw for wells and applying
@@ -120,10 +139,22 @@ public:
     void recoverWellSolutionAndUpdateWellState(const BVector& x);
 
     // some functions to compile
-    bool addMatrixContributions() const { return false; }
-    const Schedule& schedule() const { return schedule_; }
-    auto begin() const { return well_container_.begin(); }
-    auto end() const { return well_container_.end(); }
+    bool addMatrixContributions() const
+    {
+        return false;
+    }
+    const Schedule& schedule() const
+    {
+        return schedule_;
+    }
+    auto begin() const
+    {
+        return well_container_.begin();
+    }
+    auto end() const
+    {
+        return well_container_.end();
+    }
 
     bool getWellConvergence() const;
 
@@ -133,38 +164,37 @@ public:
     std::vector<int> getCellsForConnections(const Well& well) const;
 
 private:
-     Simulator& simulator_;
-     const Schedule& schedule_;
-     const SummaryState& summary_state_;
-     const EclipseState& ecl_state_;
-     const Parallel::Communication& comm_;
+    Simulator& simulator_;
+    const Schedule& schedule_;
+    const SummaryState& summary_state_;
+    const EclipseState& ecl_state_;
+    const Parallel::Communication& comm_;
 
-     // we might need something lighter
-     const CompositionalConfig& comp_config_;
+    // we might need something lighter
+    const CompositionalConfig& comp_config_;
 
-     // we will need two to handle the changes between time stepping
-     CompWellState<FluidSystem> comp_well_states_;
+    // we will need two to handle the changes between time stepping
+    CompWellState<FluidSystem> comp_well_states_;
 
-     // this is needed for parallel running, not all the wells will be in the same process
-     std::vector<Well> wells_ecl_;
-     std::vector<std::vector<CompConnectionData> > well_connection_data_;
-     // const Schedule& schedule_;
-     std::vector<CompWellPtr> well_container_;
+    // this is needed for parallel running, not all the wells will be in the same process
+    std::vector<Well> wells_ecl_;
+    std::vector<std::vector<CompConnectionData>> well_connection_data_;
+    // const Schedule& schedule_;
+    std::vector<CompWellPtr> well_container_;
 
-     mutable BVector x_local_;
+    mutable BVector x_local_;
 
-     std::size_t local_num_cells_{0};
+    std::size_t local_num_cells_ {0};
 
-     void createWellContainer();
-     void initWellContainer();
+    void createWellContainer();
+    void initWellContainer();
 
-     void initWellConnectionData();
-     void initWellState();
+    void initWellConnectionData();
+    void initWellState();
 
-     void assemble(const int iterationIdx,
-                   const double dt);
+    void assemble(const int iterationIdx, const double dt);
 
-     void calculateExplicitQuantities();
+    void calculateExplicitQuantities();
 };
 
 } // end of namespace Opm

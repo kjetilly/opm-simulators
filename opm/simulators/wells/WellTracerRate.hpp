@@ -26,21 +26,23 @@
 #include <string>
 #include <unordered_map>
 
-namespace Opm {
-
-template<class Scalar>
-struct WellTracerRate
+namespace Opm
 {
-    std::string name{};
-    Scalar rate{};
+
+template <class Scalar>
+struct WellTracerRate {
+    std::string name {};
+    Scalar rate {};
 
     WellTracerRate() = default;
 
     WellTracerRate(const std::string& n, const Scalar r)
-        : name(n), rate(r)
-    {}
+        : name(n)
+        , rate(r)
+    {
+    }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(name);
@@ -49,25 +51,23 @@ struct WellTracerRate
 
     bool operator==(const WellTracerRate& that) const
     {
-        return
-               this->name == that.name
-            && this->rate == that.rate;
+        return this->name == that.name && this->rate == that.rate;
     }
 };
 
-template<class Scalar>
-struct MSWellTracerRate
-{
-    std::string name{};
-    std::unordered_map<int,Scalar> rate{};
+template <class Scalar>
+struct MSWellTracerRate {
+    std::string name {};
+    std::unordered_map<int, Scalar> rate {};
 
     MSWellTracerRate() = default;
 
     MSWellTracerRate(const std::string& n)
         : name(n)
-    {}
+    {
+    }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(name);
@@ -76,9 +76,7 @@ struct MSWellTracerRate
 
     bool operator==(const MSWellTracerRate& that) const
     {
-        return
-               this->name == that.name
-            && this->rate == that.rate;
+        return this->name == that.name && this->rate == that.rate;
     }
 };
 

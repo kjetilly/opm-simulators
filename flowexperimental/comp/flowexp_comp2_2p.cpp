@@ -25,12 +25,14 @@
 
 #include "flowexp_comp.hpp"
 
-namespace Opm {
+namespace Opm
+{
 
-template<>
-int dispatchFlowExpComp<2, false>(int argc, char** argv)
+template <>
+int
+dispatchFlowExpComp<2, false>(int argc, char** argv)
 {
     return start<Properties::TTag::FlowExpCompProblem<2, false>>(argc, argv, false);
 }
 
-}
+} // namespace Opm

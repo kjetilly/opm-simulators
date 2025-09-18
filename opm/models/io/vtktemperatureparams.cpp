@@ -26,15 +26,17 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkTemperatureParams::registerParameters()
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteTemperature>
-        ("Include the temperature in the VTK output files");
+
+void
+VtkTemperatureParams::registerParameters()
+{
+    Parameters::Register<Parameters::VtkWriteTemperature>("Include the temperature in the VTK output files");
 }
 
-void VtkTemperatureParams::read()
+void
+VtkTemperatureParams::read()
 {
     temperatureOutput_ = Parameters::Get<Parameters::VtkWriteTemperature>();
 }

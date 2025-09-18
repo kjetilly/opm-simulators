@@ -26,7 +26,8 @@
 #include <cstddef>
 #include <type_traits>
 
-namespace Opm {
+namespace Opm
+{
 
 /// Collection of fracturing statistics measures at the connection level.
 ///
@@ -38,8 +39,7 @@ class ConnFracStatistics
 public:
     /// Known quantities for which this collection provides statistics
     /// measures.
-    enum class Quantity : std::size_t
-    {
+    enum class Quantity : std::size_t {
         /// Fracture pressure
         Pressure,
 
@@ -58,8 +58,7 @@ public:
     ///
     /// Client code must populate an object of this type in order to collect
     /// statistics.
-    using SamplePoint = std::array
-        <Scalar, static_cast<std::underlying_type_t<Quantity>>(Quantity::NumQuantities)>;
+    using SamplePoint = std::array<Scalar, static_cast<std::underlying_type_t<Quantity>>(Quantity::NumQuantities)>;
 
     /// Convert between byte array and object representation.
     ///
@@ -76,7 +75,9 @@ public:
     /// sample statistics.
     void reset()
     {
-        for (auto& q : this->quantity_) { q.reset(); }
+        for (auto& q : this->quantity_) {
+            q.reset();
+        }
     }
 
     /// Include new element into sample.
@@ -87,7 +88,7 @@ public:
     /// fracturing of the current well/reservoir connection.
     void addSamplePoint(const SamplePoint& samplePoint)
     {
-        for (auto qIdx = 0*samplePoint.size(); qIdx < samplePoint.size(); ++qIdx) {
+        for (auto qIdx = 0 * samplePoint.size(); qIdx < samplePoint.size(); ++qIdx) {
             this->quantity_[qIdx].addSamplePoint(samplePoint[qIdx]);
         }
     }
@@ -99,16 +100,15 @@ public:
     /// \return Sample statistics for quantity \p q.
     const RunningStatistics<Scalar>& statistics(const Quantity q) const
     {
-        return this->quantity_[ static_cast<std::underlying_type_t<Quantity>>(q) ];
+        return this->quantity_[static_cast<std::underlying_type_t<Quantity>>(q)];
     }
 
     /// Create a serialisation test object.
     static ConnFracStatistics serializationTestObject()
     {
-        auto stat = ConnFracStatistics{};
+        auto stat = ConnFracStatistics {};
 
-        stat.quantity_
-            .fill(RunningStatistics<Scalar>::serializationTestObject());
+        stat.quantity_.fill(RunningStatistics<Scalar>::serializationTestObject());
 
         return stat;
     }
@@ -125,13 +125,11 @@ public:
     }
 
 private:
-    using StatArray = std::array<
-    RunningStatistics<Scalar>,
-    static_cast<std::underlying_type_t<Quantity>>(Quantity::NumQuantities)
-    >;
+    using StatArray
+        = std::array<RunningStatistics<Scalar>, static_cast<std::underlying_type_t<Quantity>>(Quantity::NumQuantities)>;
 
     /// Collection of connection level fracturing statistics.
-    StatArray quantity_{};
+    StatArray quantity_ {};
 };
 
 } // namespace Opm

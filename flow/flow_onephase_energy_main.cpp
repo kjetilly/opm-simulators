@@ -21,7 +21,8 @@
 #include "config.h"
 #include <flow/flow_onephase_energy.hpp>
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
-    return Opm::flowWaterOnlyEnergyMainStandalone(argc,argv);
+    return Opm::flowWaterOnlyEnergyMainStandalone(argc, argv);
 }

@@ -29,13 +29,14 @@
 #include <vector>
 
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
+template <class Scalar>
 class WellContributionsOCL : public WellContributions<Scalar>
 {
 public:
-    void setOpenCLEnv(cl::Context *context_, cl::CommandQueue *queue_);
+    void setOpenCLEnv(cl::Context* context_, cl::CommandQueue* queue_);
 
     void apply_stdwells(cl::Buffer d_x, cl::Buffer d_y);
     void apply_mswells(cl::Buffer d_x, cl::Buffer d_y);
@@ -47,8 +48,7 @@ protected:
 
     using MatrixType = typename WellContributions<Scalar>::MatrixType;
 
-    void APIaddMatrix(MatrixType type, int* colIndices,
-                      Scalar* values, unsigned int val_size) override;
+    void APIaddMatrix(MatrixType type, int* colIndices, Scalar* values, unsigned int val_size) override;
 
     cl::Context* context;
     cl::CommandQueue* queue;

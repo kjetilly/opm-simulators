@@ -29,7 +29,8 @@
 #include <fstream>
 #include <string>
 
-namespace {
+namespace
+{
 
 struct Fixture {
     Fixture()
@@ -87,7 +88,7 @@ END
     std::filesystem::path input_path;
 };
 
-}
+} // namespace
 
 BOOST_FIXTURE_TEST_CASE(WithOutputDir, Fixture)
 {
@@ -96,23 +97,22 @@ BOOST_FIXTURE_TEST_CASE(WithOutputDir, Fixture)
     using PathPair = std::pair<std::filesystem::path, std::filesystem::path>;
 
     for (const bool createFaultyFileWithDirectory : {true, false}) {
-        for (const auto& Case : {PathPair{input_path, input_path / "output1"},
-                                 PathPair{input_path / "subdir", input_path / "output2"},
-                                 PathPair{input_path / "subdir" / "subdir", input_path / "output3"}}) {
+        for (const auto& Case : {PathPair {input_path, input_path / "output1"},
+                                 PathPair {input_path / "subdir", input_path / "output2"},
+                                 PathPair {input_path / "subdir" / "subdir", input_path / "output3"}}) {
             const std::string output_path = "--output-dir=" + Case.second.string();
             const std::string input_file_path = (Case.first / "INPUT.DATA");
 
             const std::string output_dbg_path = (Case.second / "INPUT.DBG");
             if (createFaultyFileWithDirectory) {
                 std::filesystem::create_directories(Case.second);
-                // Create file with faulty content 
+                // Create file with faulty content
                 std::string dummy = R"(dummy)";
                 std::ofstream of(output_dbg_path);
                 of << dummy << std::endl;
             }
 
-            const char* no_param[] = {"test_outputdir", input_file_path.c_str(),
-                                      output_path.c_str(), nullptr};
+            const char* no_param[] = {"test_outputdir", input_file_path.c_str(), output_path.c_str(), nullptr};
 
             Opm::Parameters::reset();
 
@@ -120,7 +120,7 @@ BOOST_FIXTURE_TEST_CASE(WithOutputDir, Fixture)
             Opm::Main main(3, const_cast<char**>(no_param), false);
 
             BOOST_CHECK_EQUAL(main.justInitialize(), EXIT_SUCCESS);
-            // Check if the files have been created at the right spot 
+            // Check if the files have been created at the right spot
             BOOST_CHECK(!std::filesystem::exists(input_path / "INPUT.PRT"));
             BOOST_CHECK(!std::filesystem::exists(input_path / "INPUT.DBG"));
             BOOST_CHECK(!std::filesystem::exists(Case.first / "INPUT.PRT"));
@@ -128,7 +128,7 @@ BOOST_FIXTURE_TEST_CASE(WithOutputDir, Fixture)
             BOOST_CHECK(std::filesystem::exists(Case.second / "INPUT.PRT"));
             BOOST_CHECK(std::filesystem::exists(output_dbg_path));
 
-            // Check if the file with the faulty content has been removed and replaced by a valid one 
+            // Check if the file with the faulty content has been removed and replaced by a valid one
             std::ifstream file(output_dbg_path);
             std::string line;
             std::getline(file, line);
@@ -141,12 +141,11 @@ BOOST_FIXTURE_TEST_CASE(NoOutputDir, Fixture)
 {
     std::filesystem::current_path(input_path);
 
-    for (const auto& Case : {input_path / "subdir" / "subdir",
-                             input_path / "subdir"}) {
+    for (const auto& Case : {input_path / "subdir" / "subdir", input_path / "subdir"}) {
         const std::string input_file_path = (Case / "INPUT.DATA");
 
         const std::string output_dbg_path = (Case / "INPUT.DBG");
-        // Create file with faulty content 
+        // Create file with faulty content
         std::string dummy = R"(dummy)";
         std::ofstream of(output_dbg_path);
         of << dummy << std::endl;
@@ -159,13 +158,13 @@ BOOST_FIXTURE_TEST_CASE(NoOutputDir, Fixture)
         Opm::Main main(2, const_cast<char**>(no_param), false);
 
         BOOST_CHECK_EQUAL(main.justInitialize(), EXIT_SUCCESS);
-        // Check if the files have been created at the right spot 
+        // Check if the files have been created at the right spot
         BOOST_CHECK(!std::filesystem::exists(input_path / "INPUT.PRT"));
         BOOST_CHECK(!std::filesystem::exists(input_path / "INPUT.DBG"));
-        BOOST_CHECK(std::filesystem::exists(Case/ "INPUT.PRT"));
+        BOOST_CHECK(std::filesystem::exists(Case / "INPUT.PRT"));
         BOOST_CHECK(std::filesystem::exists(output_dbg_path));
 
-        // Check if the file with the faulty content has been removed and replaced by a valid one 
+        // Check if the file with the faulty content has been removed and replaced by a valid one
         std::ifstream file(output_dbg_path);
         std::string line;
         std::getline(file, line);
@@ -173,17 +172,19 @@ BOOST_FIXTURE_TEST_CASE(NoOutputDir, Fixture)
     }
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     // MPI setup.
     int argcDummy = 1;
-    const char *tmp[] = {"test_outputdir"};
-    char **argvDummy = const_cast<char**>(tmp);
+    const char* tmp[] = {"test_outputdir"};
+    char** argvDummy = const_cast<char**>(tmp);
 #if HAVE_DUNE_FEM
     Dune::Fem::MPIManager::initialize(argcDummy, argvDummy);
 #else

@@ -24,25 +24,35 @@
 #define BOOST_TEST_MODULE ParameterSystemTest
 #include <boost/test/unit_test.hpp>
 
-namespace Opm::Parameters {
-
-struct SimpleParamBool { static constexpr bool value = false; };
-struct SimpleParamDouble { static constexpr double value = 1.0; };
-struct SimpleParamFloat { static constexpr float value = 2.0; };
-struct SimpleParamInt { static constexpr int value = 1; };
-struct SimpleParamString  { static constexpr auto value = "foo"; };
-struct SimpleParamBoolN2
+namespace Opm::Parameters
 {
-  static constexpr auto name = "SimpleB2";
-  static constexpr bool value = true;
+
+struct SimpleParamBool {
+    static constexpr bool value = false;
+};
+struct SimpleParamDouble {
+    static constexpr double value = 1.0;
+};
+struct SimpleParamFloat {
+    static constexpr float value = 2.0;
+};
+struct SimpleParamInt {
+    static constexpr int value = 1;
+};
+struct SimpleParamString {
+    static constexpr auto value = "foo";
+};
+struct SimpleParamBoolN2 {
+    static constexpr auto name = "SimpleB2";
+    static constexpr bool value = true;
 };
 
-}
+} // namespace Opm::Parameters
 
-namespace {
-
-struct Fixture
+namespace
 {
+
+struct Fixture {
     Fixture()
     {
         Opm::Parameters::reset();
@@ -58,7 +68,8 @@ struct Fixture
     }
 };
 
-std::string trimString(const std::string& input)
+std::string
+trimString(const std::string& input)
 {
     std::string result(input);
     result.erase(std::remove(result.begin(), result.end(), ' '), result.end());
@@ -66,80 +77,75 @@ std::string trimString(const std::string& input)
     return result;
 }
 
-}
+} // namespace
 
 BOOST_FIXTURE_TEST_CASE(GetLists, Fixture)
 {
-  const char* argv[] = {
-      "test_parametersystem",
-      "--simple-param-bool=true",
-      "--simple-param-float=3.0",
-      "--simple-param-string=bar",
-      "--unused-param=foo",
-  };
+    const char* argv[] = {
+        "test_parametersystem",
+        "--simple-param-bool=true",
+        "--simple-param-float=3.0",
+        "--simple-param-string=bar",
+        "--unused-param=foo",
+    };
 
-    auto noPositional = [](std::function<void(const std::string&,
-                                              const std::string&)>,
+    auto noPositional = [](std::function<void(const std::string&, const std::string&)>,
                            std::set<std::string>&,
                            std::string&,
                            int,
                            const char**,
                            int,
-                           int) -> int
-                        {
-                            assert("Should not be here!");
-                            return 0;
-                        };
+                           int) -> int {
+        assert("Should not be here!");
+        return 0;
+    };
 
 
-  Opm::Parameters::parseCommandLineOptions(5, argv, noPositional);
+    Opm::Parameters::parseCommandLineOptions(5, argv, noPositional);
 
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamBool>(), true);
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamFloat>(), true);
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamString>(), true);
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamBoolN2>(), false);
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamDouble>(), false);
-  BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamInt>(), false);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamBool>(), true);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamFloat>(), true);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamString>(), true);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamBoolN2>(), false);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamDouble>(), false);
+    BOOST_CHECK_EQUAL(Opm::Parameters::IsSet<Opm::Parameters::SimpleParamInt>(), false);
 
-  using SettingMap = std::vector<Opm::Parameters::Parameter>;
+    using SettingMap = std::vector<Opm::Parameters::Parameter>;
 
-  const SettingMap set_ref = {
-      {"SimpleParamBool", "true"},
-      {"SimpleParamFloat", "3.0"},
-      {"SimpleParamString", "bar"},
-  };
+    const SettingMap set_ref = {
+        {"SimpleParamBool", "true"},
+        {"SimpleParamFloat", "3.0"},
+        {"SimpleParamString", "bar"},
+    };
 
-  const SettingMap unused_ref = {
-      {"UnusedParam", "foo"},
-  };
+    const SettingMap unused_ref = {
+        {"UnusedParam", "foo"},
+    };
 
-  SettingMap  set, unused;
-  Opm::Parameters::getLists(set, unused);
+    SettingMap set, unused;
+    Opm::Parameters::getLists(set, unused);
 
-  BOOST_CHECK_EQUAL_COLLECTIONS(set.begin(), set.end(),
-                                set_ref.begin(), set_ref.end());
-  BOOST_CHECK_EQUAL_COLLECTIONS(unused.begin(), unused.end(),
-                                unused_ref.begin(), unused_ref.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(set.begin(), set.end(), set_ref.begin(), set_ref.end());
+    BOOST_CHECK_EQUAL_COLLECTIONS(unused.begin(), unused.end(), unused_ref.begin(), unused_ref.end());
 }
 
 BOOST_FIXTURE_TEST_CASE(ParseParameterFile, Fixture)
 {
-  Opm::Parameters::parseParameterFile("parametersystem.ini", true);
+    Opm::Parameters::parseParameterFile("parametersystem.ini", true);
 
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamBool>(), true);
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamFloat>(), 3.f);
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamString>(), "bar");
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamBoolN2>(), true);
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamDouble>(), 1.0);
-  BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamInt>(), 10);
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamBool>(), true);
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamFloat>(), 3.f);
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamString>(), "bar");
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamBoolN2>(), true);
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamDouble>(), 1.0);
+    BOOST_CHECK_EQUAL(Opm::Parameters::Get<Opm::Parameters::SimpleParamInt>(), 10);
 }
 
 BOOST_FIXTURE_TEST_CASE(PrintUsage, Fixture)
 {
-  std::stringstream usage;
-  Opm::Parameters::printUsage("", usage);
-  BOOST_CHECK_EQUAL(trimString(usage.str()),
-trimString(R"(
+    std::stringstream usage;
+    Opm::Parameters::printUsage("", usage);
+    BOOST_CHECK_EQUAL(trimString(usage.str()), trimString(R"(
 Recognized options:
     --simple-b2=BOOLEAN                           Simpler bool parameter. Default: true
     --simple-param-bool=BOOLEAN                   Simple bool parameter. Default: false
@@ -151,10 +157,9 @@ Recognized options:
 
 BOOST_FIXTURE_TEST_CASE(PrintUsageAll, Fixture)
 {
-  std::stringstream usage;
-  Opm::Parameters::printUsage("===foobar===", usage, "", true);
-  BOOST_CHECK_EQUAL(trimString(usage.str()),
-trimString(R"(===foobar===
+    std::stringstream usage;
+    Opm::Parameters::printUsage("===foobar===", usage, "", true);
+    BOOST_CHECK_EQUAL(trimString(usage.str()), trimString(R"(===foobar===
 Recognized options:
     -h,--help                                     Print this help message and exit
     --help-all                                    Print all parameters, including obsolete, hidden and deprecated ones.
@@ -169,10 +174,9 @@ Recognized options:
 
 BOOST_FIXTURE_TEST_CASE(PrintValues, Fixture)
 {
-  std::stringstream values;
-  Opm::Parameters::printValues(values);
-  BOOST_CHECK_EQUAL(trimString(values.str()),
-trimString(R"(# [parameters which were specified at compile-time]
+    std::stringstream values;
+    Opm::Parameters::printValues(values);
+    BOOST_CHECK_EQUAL(trimString(values.str()), trimString(R"(# [parameters which were specified at compile-time]
 SimpleB2="1"
 SimpleParamBool="0"
 SimpleParamDouble="1"

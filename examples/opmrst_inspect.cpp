@@ -32,7 +32,8 @@
 #include <iostream>
 #include <string>
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     if (argc < 2) {
         std::cerr << "Need one parameter, the .OPMRST file to inspect\n";
@@ -41,46 +42,48 @@ int main(int argc, char** argv)
 
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI
-    Opm::Parallel::Communication comm{MPI_COMM_SELF};
+    Opm::Parallel::Communication comm {MPI_COMM_SELF};
 #else
-    Opm::Parallel::Communication comm{};
+    Opm::Parallel::Communication comm {};
 #endif
 
     Opm::HDF5Serializer ser(argv[1], Opm::HDF5File::OpenMode::READ, comm);
 
-    std::tuple<std::array<std::string,5>,int> header;
+    std::tuple<std::array<std::string, 5>, int> header;
     try {
         ser.read(header, "/", "simulator_info", Opm::HDF5File::DataSetMode::ROOT_ONLY);
-    } catch(...) {
+    } catch (...) {
         std::cerr << "Error reading data from file, is it really a .OPMRST file?\n";
         return 2;
     }
 
     const auto& [strings, procs] = header;
-    std::cout << "Info for " << argv[1] <<":\n";
+    std::cout << "Info for " << argv[1] << ":\n";
     std::cout << fmt::format("\tSimulator name: {}\n"
                              "\tSimulator version: {}\n"
                              "\tCompile time stamp: {}\n"
                              "\tCase name: {}\n"
                              "\tNumber of processes: {}\n",
-                             strings[0], strings[1], strings[2], strings[3], procs);
+                             strings[0],
+                             strings[1],
+                             strings[2],
+                             strings[3],
+                             procs);
 
     std::cout << fmt::format("\tLast report step: {}\n", ser.lastReportStep());
     const std::vector<int> reportSteps = ser.reportSteps();
     for (int step : reportSteps) {
         Opm::SimulatorTimer timer;
         try {
-            ser.read(timer, fmt::format("/report_step/{}", step),
-                     "simulator_timer", Opm::HDF5File::DataSetMode::ROOT_ONLY);
+            ser.read(
+                timer, fmt::format("/report_step/{}", step), "simulator_timer", Opm::HDF5File::DataSetMode::ROOT_ONLY);
         } catch (...) {
             std::cerr << "*** Failed to read timer info for level " << step << std::endl;
         }
-        std::cout << "\t\tReport step id " << step << ": Time "
-                  << timer.currentDateTime() << std::endl;
+        std::cout << "\t\tReport step id " << step << ": Time " << timer.currentDateTime() << std::endl;
     }
 
-    std::cout << "====== Parameter values ====\n"
-              << strings[4];
+    std::cout << "====== Parameter values ====\n" << strings[4];
 
     return 0;
 }

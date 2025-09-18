@@ -28,12 +28,12 @@
 #include <opm/material/fluidsystems/BlackOilDefaultFluidSystemIndices.hpp>
 
 #include <opm/simulators/utils/DeferredLogger.hpp>
+#include <opm/simulators/wells/GasLiftGroupInfo.hpp>
 #include <opm/simulators/wells/GasLiftSingleWellGeneric.hpp>
 #include <opm/simulators/wells/GasLiftWellState.hpp>
 #include <opm/simulators/wells/GroupState.hpp>
 #include <opm/simulators/wells/WellInterfaceGeneric.hpp>
 #include <opm/simulators/wells/WellState.hpp>
-#include <opm/simulators/wells/GasLiftGroupInfo.hpp>
 
 #include <algorithm>
 #include <cstddef>
@@ -42,33 +42,34 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
-
-template<typename Scalar, typename IndexTraits>
-GasLiftStage2<Scalar, IndexTraits>::GasLiftStage2(const int report_step_idx,
-                                     const Parallel::Communication& comm,
-                                     const Schedule& schedule,
-                                     const SummaryState& summary_state,
-                                     DeferredLogger &deferred_logger,
-                                     WellState<Scalar, IndexTraits>& well_state,
-                                     const GroupState<Scalar>& group_state,
-                                     GLiftProdWells &prod_wells,
-                                     GLiftOptWells &glift_wells,
-                                     GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
-                                     GLiftWellStateMap &state_map,
-                                     bool glift_debug)
-    : GasLiftCommon<Scalar, IndexTraits>(well_state, group_state, deferred_logger, comm, glift_debug)
-    , prod_wells_{prod_wells}
-    , stage1_wells_{glift_wells}
-    , group_info_{group_info}
-    , well_state_map_{state_map}
-    , report_step_idx_{report_step_idx}
-    , summary_state_{summary_state}
-    , schedule_{schedule}
-    , glo_{schedule_.glo(report_step_idx_)}
+namespace Opm
 {
-//    this->time_step_idx_
-//        = this->simulator_.model().newtonMethod().currentTimeStep();
+
+template <typename Scalar, typename IndexTraits>
+GasLiftStage2<Scalar, IndexTraits>::GasLiftStage2(const int report_step_idx,
+                                                  const Parallel::Communication& comm,
+                                                  const Schedule& schedule,
+                                                  const SummaryState& summary_state,
+                                                  DeferredLogger& deferred_logger,
+                                                  WellState<Scalar, IndexTraits>& well_state,
+                                                  const GroupState<Scalar>& group_state,
+                                                  GLiftProdWells& prod_wells,
+                                                  GLiftOptWells& glift_wells,
+                                                  GasLiftGroupInfo<Scalar, IndexTraits>& group_info,
+                                                  GLiftWellStateMap& state_map,
+                                                  bool glift_debug)
+    : GasLiftCommon<Scalar, IndexTraits>(well_state, group_state, deferred_logger, comm, glift_debug)
+    , prod_wells_ {prod_wells}
+    , stage1_wells_ {glift_wells}
+    , group_info_ {group_info}
+    , well_state_map_ {state_map}
+    , report_step_idx_ {report_step_idx}
+    , summary_state_ {summary_state}
+    , schedule_ {schedule}
+    , glo_ {schedule_.glo(report_step_idx_)}
+{
+    //    this->time_step_idx_
+    //        = this->simulator_.model().newtonMethod().currentTimeStep();
 }
 
 /********************************************
@@ -84,8 +85,9 @@ GasLiftStage2<Scalar, IndexTraits>::GasLiftStage2(const int report_step_idx,
 // currently has the largest weighted incremental gradient. The
 // procedure takes account of any limits on the group production rate
 // or lift gas supply applied to any level of group, including the FIELD level group.
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::runOptimize()
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::runOptimize()
 {
     OPM_TIMEFUNCTION();
     const auto& group = this->schedule_.getGroup("FIELD", this->report_step_idx_);
@@ -102,11 +104,9 @@ void GasLiftStage2<Scalar, IndexTraits>::runOptimize()
 //   saved in "grad_map")
 // INPUT: grad_map : map of incremental (if "add" is true) or decremental
 //        (if "add" is false) GradInfo structs for each well name.
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-addOrRemoveALQincrement_(GradMap &grad_map,
-                         const std::string& well_name,
-                         bool add)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::addOrRemoveALQincrement_(GradMap& grad_map, const std::string& well_name, bool add)
 {
     // only applies to wells in the well_state_map (i.e. wells on this rank)
     auto it = this->well_state_map_.find(well_name);
@@ -119,8 +119,11 @@ addOrRemoveALQincrement_(GradMap &grad_map,
         const GasLiftWellState<Scalar>& state = *(it->second.get());
         auto old_alq = state.alq();
         const std::string msg = fmt::format("well {} : {} ALQ increment, "
-            "old alq: {}, new alq: {}",
-            well_name, (add ? "adding" : "subtracting"), old_alq, new_alq);
+                                            "old alq: {}, new alq: {}",
+                                            well_name,
+                                            (add ? "adding" : "subtracting"),
+                                            old_alq,
+                                            new_alq);
         this->displayDebugMessage_(msg);
     }
     this->well_state_.well(well_name).alq_state.set(gi.alq);
@@ -139,13 +142,12 @@ addOrRemoveALQincrement_(GradMap &grad_map,
     this->well_state_[well_name].well_potentials = well_pot;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::optional<typename GasLiftStage2<Scalar, IndexTraits>::GradInfo>
-GasLiftStage2<Scalar, IndexTraits>::
-calcIncOrDecGrad_(const std::string well_name,
-                  const GasLiftSingleWell& gs_well,
-                  const std::string& gr_name_dont_limit,
-                  bool increase)
+GasLiftStage2<Scalar, IndexTraits>::calcIncOrDecGrad_(const std::string well_name,
+                                                      const GasLiftSingleWell& gs_well,
+                                                      const std::string& gr_name_dont_limit,
+                                                      bool increase)
 {
     // only applies to wells in the well_state_map (i.e. wells on this rank)
     if (this->well_state_map_.count(well_name) == 0)
@@ -153,30 +155,24 @@ calcIncOrDecGrad_(const std::string well_name,
     GasLiftWellState<Scalar>& state = *(this->well_state_map_.at(well_name).get());
     if (checkRateAlreadyLimited_(well_name, state, increase)) {
         return std::nullopt;
-    }
-    else {
+    } else {
         auto [oil_rate, gas_rate] = state.getRates();
         auto alq = state.alq();
         auto grad = gs_well.calcIncOrDecGradient(
             oil_rate, gas_rate, state.waterRate(), alq, gr_name_dont_limit, increase, /*debug_output=*/false);
         if (this->debug) {
             if (grad) {
-                const std::string msg = fmt::format(
-                    "well {} : alq = {} : adding {} gradient = {}",
-                    well_name,
-                    alq,
-                    (increase ? "incremental" : "decremental"),
-                    grad->grad
-                );
+                const std::string msg = fmt::format("well {} : alq = {} : adding {} gradient = {}",
+                                                    well_name,
+                                                    alq,
+                                                    (increase ? "incremental" : "decremental"),
+                                                    grad->grad);
                 displayDebugMessage_(msg);
-            }
-            else {
-                const std::string msg = fmt::format(
-                    "well {} : alq = {} : failed to compute {} gradient",
-                    well_name,
-                    alq,
-                    (increase ? "incremental" : "decremental")
-                );
+            } else {
+                const std::string msg = fmt::format("well {} : alq = {} : failed to compute {} gradient",
+                                                    well_name,
+                                                    alq,
+                                                    (increase ? "incremental" : "decremental"));
                 displayDebugMessage_(msg);
             }
         }
@@ -184,11 +180,11 @@ calcIncOrDecGrad_(const std::string well_name,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::
-checkRateAlreadyLimited_(const std::string& well_name,
-                         GasLiftWellState<Scalar>& state,
-                         bool increase)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::checkRateAlreadyLimited_(const std::string& well_name,
+                                                             GasLiftWellState<Scalar>& state,
+                                                             bool increase)
 {
     auto current_increase = state.increase();
     bool do_check = false;
@@ -196,8 +192,7 @@ checkRateAlreadyLimited_(const std::string& well_name,
         if (*current_increase == increase) {
             do_check = true;
         }
-    }
-    else {
+    } else {
         // If current_increase is not defined, it means that stage1
         //   was unable to either increase nor decrease the ALQ. If the
         //   initial rates stored in "state" is limited, and if
@@ -210,15 +205,13 @@ checkRateAlreadyLimited_(const std::string& well_name,
         }
     }
     if (do_check) {
-        if (state.gasIsLimited() || state.oilIsLimited() ||
-            state.alqIsLimited() || state.waterIsLimited()) {
-            const std::string msg = fmt::format(
-                "Well {} : alq = {} : skipping {} gradient since {} was limited in previous step",
-                well_name,
-                state.alq(),
-                (increase ? "incremental" : "decremental"),
-                (state.oilIsLimited() ? "oil" : (state.gasIsLimited() ? "gas" : "alq"))
-            );
+        if (state.gasIsLimited() || state.oilIsLimited() || state.alqIsLimited() || state.waterIsLimited()) {
+            const std::string msg
+                = fmt::format("Well {} : alq = {} : skipping {} gradient since {} was limited in previous step",
+                              well_name,
+                              state.alq(),
+                              (increase ? "incremental" : "decremental"),
+                              (state.oilIsLimited() ? "oil" : (state.gasIsLimited() ? "gas" : "alq")));
             displayDebugMessage_(msg);
             return true;
         }
@@ -226,81 +219,76 @@ checkRateAlreadyLimited_(const std::string& well_name,
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 typename GasLiftStage2<Scalar, IndexTraits>::GradInfo
-GasLiftStage2<Scalar, IndexTraits>::
-deleteGrad_(const std::string& name, bool increase)
+GasLiftStage2<Scalar, IndexTraits>::deleteGrad_(const std::string& name, bool increase)
 {
-    GradMap &map = increase ? this->inc_grads_ : this->dec_grads_;
+    GradMap& map = increase ? this->inc_grads_ : this->dec_grads_;
     auto value = map.at(name);
     map.erase(name);
     return value;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 typename GasLiftStage2<Scalar, IndexTraits>::GradInfo
-GasLiftStage2<Scalar, IndexTraits>::
-deleteDecGradItem_(const std::string& name)
+GasLiftStage2<Scalar, IndexTraits>::deleteDecGradItem_(const std::string& name)
 {
     return deleteGrad_(name, /*increase=*/false);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 typename GasLiftStage2<Scalar, IndexTraits>::GradInfo
-GasLiftStage2<Scalar, IndexTraits>::
-deleteIncGradItem_(const std::string& name)
+GasLiftStage2<Scalar, IndexTraits>::deleteIncGradItem_(const std::string& name)
 {
     return deleteGrad_(name, /*increase=*/true);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-displayWarning_(const std::string& msg, const std::string& group_name)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::displayWarning_(const std::string& msg, const std::string& group_name)
 {
     const std::string message = fmt::format("GROUP: {} : {}", group_name, msg);
     displayWarning_(message);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-displayWarning_(const std::string& msg)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::displayWarning_(const std::string& msg)
 {
     this->logMessage_(/*prefix=*/"GLIFT2", msg, MessageType::WARNING);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-displayDebugMessage_(const std::string& msg) const
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::displayDebugMessage_(const std::string& msg) const
 {
     if (this->debug) {
         this->logMessage_(/*prefix=*/"GLIFT2", msg);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-displayDebugMessage2B_(const std::string& msg)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::displayDebugMessage2B_(const std::string& msg)
 {
     if (this->debug) {
         this->logMessage_(/*prefix=*/"GLIFT2B", msg);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-displayDebugMessage_(const std::string& msg, const std::string& group_name)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::displayDebugMessage_(const std::string& msg, const std::string& group_name)
 {
     if (this->debug) {
-        const std::string message = fmt::format(
-            "Group {} : {}", group_name, msg);
+        const std::string message = fmt::format("Group {} : {}", group_name, msg);
         displayDebugMessage_(message);
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::tuple<Scalar, Scalar, Scalar, Scalar>
-GasLiftStage2<Scalar, IndexTraits>::
-getCurrentGroupRates_(const Group& group)
+GasLiftStage2<Scalar, IndexTraits>::getCurrentGroupRates_(const Group& group)
 {
     return {this->group_info_.oilRate(group.name()),
             this->group_info_.gasRate(group.name()),
@@ -308,7 +296,7 @@ getCurrentGroupRates_(const Group& group)
             this->group_info_.alqRate(group.name())};
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::optional<Scalar>
 GasLiftStage2<Scalar, IndexTraits>::getGroupMaxALQ_(const Group& group)
 {
@@ -319,7 +307,7 @@ GasLiftStage2<Scalar, IndexTraits>::getGroupMaxALQ_(const Group& group)
     return std::nullopt; // If GLIFTOPT is missing from schedule, assume unlimited alq
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::optional<Scalar>
 GasLiftStage2<Scalar, IndexTraits>::getGroupMaxTotalGas_(const Group& group)
 {
@@ -338,25 +326,23 @@ GasLiftStage2<Scalar, IndexTraits>::getGroupMaxTotalGas_(const Group& group)
 // NOTE: This means that wells are located at the leaf nodes of the tree, and
 //       groups are located at the other nodes (not leaf nodes) of the tree
 //
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::vector<GasLiftSingleWellGeneric<Scalar, IndexTraits>*>
-GasLiftStage2<Scalar, IndexTraits>::
-getGroupGliftWells_(const Group& group)
+GasLiftStage2<Scalar, IndexTraits>::getGroupGliftWells_(const Group& group)
 {
     std::vector<GasLiftSingleWell*> wells;
     getGroupGliftWellsRecursive_(group, wells);
     return wells;
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-getGroupGliftWellsRecursive_(const Group& group,
-                             std::vector<GasLiftSingleWell*> &wells)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::getGroupGliftWellsRecursive_(const Group& group,
+                                                                 std::vector<GasLiftSingleWell*>& wells)
 {
     for (const std::string& group_name : group.groups()) {
         if (this->schedule_.back().groups.has(group_name)) {
-            const Group& sub_group =
-                this->schedule_.getGroup(group_name, this->report_step_idx_);
+            const Group& sub_group = this->schedule_.getGroup(group_name, this->report_step_idx_);
             getGroupGliftWellsRecursive_(sub_group, wells);
         }
     }
@@ -368,9 +354,9 @@ getGroupGliftWellsRecursive_(const Group& group,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-mpiSyncGlobalGradVector_(std::vector<GradPair>& grads_global) const
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::mpiSyncGlobalGradVector_(std::vector<GradPair>& grads_global) const
 {
     if (this->comm_.size() == 1)
         return;
@@ -384,12 +370,12 @@ mpiSyncGlobalGradVector_(std::vector<GradPair>& grads_global) const
     mpiSyncLocalToGlobalGradVector_(grads_local, grads_global);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
-                                std::vector<GradPair>& grads_global) const
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
+                                                                    std::vector<GradPair>& grads_global) const
 {
-    assert(this->comm_.size() > 1);  // The parent should check if comm. size is > 1
+    assert(this->comm_.size() > 1); // The parent should check if comm. size is > 1
     using Pair = std::pair<int, double>;
     std::vector<Pair> grads_local_tmp;
     grads_local_tmp.reserve(grads_local.size());
@@ -397,44 +383,40 @@ mpiSyncLocalToGlobalGradVector_(const std::vector<GradPair>& grads_local,
         if (!this->well_state_.wellIsOwned(grads_local[i].first))
             continue;
         grads_local_tmp.push_back(
-           std::make_pair(
-              this->well_state_.wellNameToGlobalIdx(grads_local[i].first),
-              grads_local[i].second));
+            std::make_pair(this->well_state_.wellNameToGlobalIdx(grads_local[i].first), grads_local[i].second));
     }
 
     std::vector<int> sizes_(this->comm_.size());
     std::vector<int> displ_(this->comm_.size() + 1, 0);
     int mySize = grads_local_tmp.size();
     this->comm_.allgather(&mySize, 1, sizes_.data());
-    std::partial_sum(sizes_.begin(), sizes_.end(), displ_.begin()+1);
+    std::partial_sum(sizes_.begin(), sizes_.end(), displ_.begin() + 1);
     std::vector<Pair> grads_global_tmp(displ_.back());
 
-    this->comm_.allgatherv(grads_local_tmp.data(), grads_local_tmp.size(),
-        grads_global_tmp.data(), sizes_.data(), displ_.data());
+    this->comm_.allgatherv(
+        grads_local_tmp.data(), grads_local_tmp.size(), grads_global_tmp.data(), sizes_.data(), displ_.data());
 
     // NOTE: This leaves the capacity of 'grads_global' unchanged, so
     //   memory is not reallocated here
     grads_global.clear();
 
     for (std::size_t i = 0; i < grads_global_tmp.size(); ++i) {
-        grads_global.emplace_back(
-            std::make_pair(
-                this->well_state_.globalIdxToWellName(grads_global_tmp[i].first),
-                grads_global_tmp[i].second));
+        grads_global.emplace_back(std::make_pair(this->well_state_.globalIdxToWellName(grads_global_tmp[i].first),
+                                                 grads_global_tmp[i].second));
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-optimizeGroup_(const Group& group)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::optimizeGroup_(const Group& group)
 {
     OPM_TIMEFUNCTION();
     const auto& group_name = group.name();
     const auto prod_control = this->group_state_.production_control(group_name);
-    if ((prod_control != Group::ProductionCMode::NONE) && (prod_control != Group::ProductionCMode::FLD))
-    {
+    if ((prod_control != Group::ProductionCMode::NONE) && (prod_control != Group::ProductionCMode::FLD)) {
         if (this->debug) {
-            const std::string msg = fmt::format("optimizing (control = {})", Group::ProductionCMode2String(prod_control));
+            const std::string msg
+                = fmt::format("optimizing (control = {})", Group::ProductionCMode2String(prod_control));
             displayDebugMessage_(msg, group_name);
         }
         auto wells = getGroupGliftWells_(group);
@@ -442,8 +424,7 @@ optimizeGroup_(const Group& group)
         std::vector<GradPair> dec_grads;
         redistributeALQ_(wells, group, inc_grads, dec_grads);
         removeSurplusALQ_(group, dec_grads);
-    }
-    else {
+    } else {
         if (this->debug) {
             const std::string msg = fmt::format("skipping (control = {})", Group::ProductionCMode2String(prod_control));
             displayDebugMessage_(msg, group_name);
@@ -451,31 +432,31 @@ optimizeGroup_(const Group& group)
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-optimizeGroupsRecursive_(const Group& group)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::optimizeGroupsRecursive_(const Group& group)
 {
     OPM_TIMEFUNCTION();
     for (const std::string& group_name : group.groups()) {
-        if(!this->schedule_.back().groups.has(group_name))
+        if (!this->schedule_.back().groups.has(group_name))
             continue;
-        const Group& sub_group = this->schedule_.getGroup(
-            group_name, this->report_step_idx_);
+        const Group& sub_group = this->schedule_.getGroup(group_name, this->report_step_idx_);
         optimizeGroupsRecursive_(sub_group);
     }
     optimizeGroup_(group);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-recalculateGradientAndUpdateData_(GradPairItr& grad_itr,
-                                  const std::string& gr_name_dont_limit,
-                                  bool increase,
-        //incremental and decremental gradients, if 'grads' are incremental, then
-        // 'other_grads' are decremental, or conversely, if 'grads' are decremental, then
-        // 'other_grads' are incremental
-                                  std::vector<GradPair>& grads,
-                                  std::vector<GradPair>& other_grads)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::recalculateGradientAndUpdateData_(
+    GradPairItr& grad_itr,
+    const std::string& gr_name_dont_limit,
+    bool increase,
+    // incremental and decremental gradients, if 'grads' are incremental, then
+    //  'other_grads' are decremental, or conversely, if 'grads' are decremental, then
+    //  'other_grads' are incremental
+    std::vector<GradPair>& grads,
+    std::vector<GradPair>& other_grads)
 {
     // NOTE: We make a copy of the name string instead of taking a reference
     //   since we may have to erase grad_itr (in the "else" condition below)
@@ -484,15 +465,14 @@ recalculateGradientAndUpdateData_(GradPairItr& grad_itr,
 
     // only applies to wells in the well_state_map (i.e. wells on this rank)
     // the grads and other grads are synchronized later
-    if(this->stage1_wells_.count(name) > 0) {
+    if (this->stage1_wells_.count(name) > 0) {
         const GasLiftSingleWell& gs_well = *(this->stage1_wells_.at(name).get());
         {
             auto grad = calcIncOrDecGrad_(name, gs_well, gr_name_dont_limit, increase);
             if (grad) {
                 grad_itr->second = grad->grad;
                 old_grad = updateGrad_(name, *grad, increase);
-            }
-            else {
+            } else {
                 grads.erase(grad_itr); // NOTE: this invalidates grad_itr
                 old_grad = deleteGrad_(name, increase);
             }
@@ -513,13 +493,10 @@ recalculateGradientAndUpdateData_(GradPairItr& grad_itr,
                 // NOTE: This may invalidate any iterator into 'other_grads' since
                 //   updateGradVector_() will do a push_back() if 'name' is not found..
                 updateGradVector_(name, other_grads, grad->grad);
-            }
-            else {
-                auto new_end = std::remove_if(other_grads.begin(), other_grads.end(), [&name](const GradPair& pair)
-                                                                        {
-                                                                            return (name==pair.first);
-                                                                        }
-                            );
+            } else {
+                auto new_end = std::remove_if(other_grads.begin(), other_grads.end(), [&name](const GradPair& pair) {
+                    return (name == pair.first);
+                });
                 if (new_end != other_grads.end()) {
                     this->deleteGrad_(name, !increase);
                     other_grads.erase(new_end, other_grads.end());
@@ -572,12 +549,12 @@ recalculateGradientAndUpdateData_(GradPairItr& grad_itr,
 //  just do it once for the topmost group "PLAT-A" and then skip redistribution for
 //  all sub groups of "PLAT-A"
 //
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-redistributeALQ_(std::vector<GasLiftSingleWell*>& wells,
-                 const Group& group,
-                 std::vector<GradPair>& inc_grads,
-                 std::vector<GradPair>& dec_grads)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::redistributeALQ_(std::vector<GasLiftSingleWell*>& wells,
+                                                     const Group& group,
+                                                     std::vector<GradPair>& inc_grads,
+                                                     std::vector<GradPair>& dec_grads)
 {
     OPM_TIMEFUNCTION();
     OptimizeState state {*this, group};
@@ -588,8 +565,7 @@ redistributeALQ_(std::vector<GasLiftSingleWell*>& wells,
         inc_grads.reserve(wells.size());
         dec_grads.reserve(wells.size());
         state.calculateEcoGradients(wells, inc_grads, dec_grads);
-    }
-    else {
+    } else {
         auto max_size = this->comm_.sum(wells.size());
         inc_grads.reserve(max_size);
         dec_grads.reserve(max_size);
@@ -613,24 +589,21 @@ redistributeALQ_(std::vector<GasLiftSingleWell*>& wells,
     bool stop_iteration = false;
     while (!stop_iteration && (state.it++ <= this->max_iterations_)) {
         state.debugShowIterationInfo();
-        auto [min_dec_grad, max_inc_grad]
-            = state.getEcoGradients(inc_grads, dec_grads);
+        auto [min_dec_grad, max_inc_grad] = state.getEcoGradients(inc_grads, dec_grads);
         if (min_dec_grad) {
-            assert( max_inc_grad );
+            assert(max_inc_grad);
             // Redistribute if the largest incremental gradient exceeds the
             //   smallest decremental gradient
             if ((*max_inc_grad)->second > (*min_dec_grad)->second) {
                 state.redistributeALQ(*min_dec_grad, *max_inc_grad);
-                state.recalculateGradients(
-                    inc_grads, dec_grads, *min_dec_grad, *max_inc_grad);
+                state.recalculateGradients(inc_grads, dec_grads, *min_dec_grad, *max_inc_grad);
                 continue;
             }
         }
         stop_iteration = true;
     }
     if (state.it > this->max_iterations_) {
-        const std::string msg = fmt::format("Max iterations {} exceeded.",
-            this->max_iterations_);
+        const std::string msg = fmt::format("Max iterations {} exceeded.", this->max_iterations_);
         displayWarning_(msg, group.name());
     }
 }
@@ -641,10 +614,9 @@ redistributeALQ_(std::vector<GasLiftSingleWell*>& wells,
 // Lift gas increments are removed in turn from the well that currently has
 //   the smallest weighted decremental gradient, until there is no surplus
 //   lift gas in the group.
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-removeSurplusALQ_(const Group& group,
-                  std::vector<GradPair>& dec_grads)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::removeSurplusALQ_(const Group& group, std::vector<GradPair>& dec_grads)
 {
     OPM_TIMEFUNCTION();
     if (dec_grads.empty()) {
@@ -656,28 +628,42 @@ removeSurplusALQ_(const Group& group,
     const auto max_glift = getGroupMaxALQ_(group);
     const auto max_totalgas = getGroupMaxTotalGas_(group);
     const auto controls = group.productionControls(this->summary_state_);
-    //const auto &max_total_gas = gl_group.max_total_gas();
+    // const auto &max_total_gas = gl_group.max_total_gas();
     auto [oil_rate, gas_rate, water_rate, alq] = getCurrentGroupRates_(group);
     auto min_eco_grad = this->glo_.min_eco_gradient();
     bool stop_iteration = false;
     if (this->debug) {
         std::string max_glift_str = "unlimited";
-        if (max_glift) max_glift_str = fmt::format("{}", *max_glift);
+        if (max_glift)
+            max_glift_str = fmt::format("{}", *max_glift);
         const std::string msg = fmt::format("Starting remove surplus iteration for group: {}. "
-            "oil_rate = {}, oil_target = {}, gas_rate = {}, gas_target = {}, "
-            "water_rate = {}, liquid_target = {}, alq = {}, max_alq = {}",
-            group.name(), oil_rate, controls.oil_target,
-            gas_rate, controls.gas_target, water_rate, controls.liquid_target,
-            alq, max_glift_str);
+                                            "oil_rate = {}, oil_target = {}, gas_rate = {}, gas_target = {}, "
+                                            "water_rate = {}, liquid_target = {}, alq = {}, max_alq = {}",
+                                            group.name(),
+                                            oil_rate,
+                                            controls.oil_target,
+                                            gas_rate,
+                                            controls.gas_target,
+                                            water_rate,
+                                            controls.liquid_target,
+                                            alq,
+                                            max_glift_str);
         displayDebugMessage_(msg);
     }
-    SurplusState state {*this, group, this->well_state_, oil_rate, gas_rate, water_rate, alq,
+    SurplusState state {*this,
+                        group,
+                        this->well_state_,
+                        oil_rate,
+                        gas_rate,
+                        water_rate,
+                        alq,
                         static_cast<Scalar>(min_eco_grad),
                         static_cast<Scalar>(controls.oil_target),
                         static_cast<Scalar>(controls.gas_target),
                         static_cast<Scalar>(controls.water_target),
                         static_cast<Scalar>(controls.liquid_target),
-                        max_glift, max_totalgas};
+                        max_glift,
+                        max_totalgas};
 
     while (!stop_iteration) {
         if (dec_grads.size() >= 2) {
@@ -690,98 +676,95 @@ removeSurplusALQ_(const Group& group,
         const auto delta = state.computeDelta(well_name);
         const auto& [delta_oil, delta_gas, delta_water, delta_alq] = delta;
         if (state.checkOilTarget(delta_oil) || state.checkGasTarget(delta_gas)
-              || state.checkLiquidTarget(delta_oil + delta_water) || state.checkWaterTarget(delta_water)
-              || state.checkALQlimit())
-        {
+            || state.checkLiquidTarget(delta_oil + delta_water) || state.checkWaterTarget(delta_water)
+            || state.checkALQlimit()) {
             remove = true;
-        }
-        else {
+        } else {
             // NOTE: It is enough to check the economic gradient of the first well
             //   in dec_grads since they are sorted according to the eco. grad.
             //   If the first well's eco. grad. is greater than the minimum
             //   eco. grad. then all the other wells' eco. grad. will also be
             //   greater.
-            if (state.checkEcoGradient(well_name, eco_grad)) remove = true;
+            if (state.checkEcoGradient(well_name, eco_grad))
+                remove = true;
         }
         if (remove) {
             state.updateRates(delta);
-            state.addOrRemoveALQincrement( this->dec_grads_, well_name, /*add=*/false);
+            state.addOrRemoveALQincrement(this->dec_grads_, well_name, /*add=*/false);
             // We pass the current group rate in order to avoid limiting the rates
             // and gaslift based on the current group limits. In other words we want to reduce
             // the gaslift as much as possible as long as we are able to produce the group
             // targets
             // Note: empty_vector passed to avoid adding gradients to inc_grads
-            recalculateGradientAndUpdateData_(
-                        dec_grad_itr, group.name(), /*increase=*/false, dec_grads, empty_vector);
+            recalculateGradientAndUpdateData_(dec_grad_itr, group.name(), /*increase=*/false, dec_grads, empty_vector);
 
             // The dec_grads needs to be syncronized across ranks
             mpiSyncGlobalGradVector_(dec_grads);
             // NOTE: recalculateGradientAndUpdateData_() will remove the current gradient
             //   from dec_grads if it cannot calculate a new decremental gradient.
             //   This will invalidate dec_grad_itr and well_name
-            if (dec_grads.empty()) stop_iteration = true;
+            if (dec_grads.empty())
+                stop_iteration = true;
             ++state.it;
-        }
-        else {
+        } else {
             stop_iteration = true;
         }
     }
     if (state.it >= 1) {
         if (this->debug) {
             auto [oil_rate2, gas_rate2, water_rate2, alq2] = getCurrentGroupRates_(group);
-            const std::string msg = fmt::format(
-                 "Finished after {} iterations for group: {}."
-                 " oil_rate = {}, gas_rate = {}, water_rate = {}, alq = {}", state.it,
-                 group.name(), oil_rate2, gas_rate2, water_rate2, alq2);
+            const std::string msg = fmt::format("Finished after {} iterations for group: {}."
+                                                " oil_rate = {}, gas_rate = {}, water_rate = {}, alq = {}",
+                                                state.it,
+                                                group.name(),
+                                                oil_rate2,
+                                                gas_rate2,
+                                                water_rate2,
+                                                alq2);
             displayDebugMessage_(msg);
         }
-    }
-    else {
+    } else {
         displayDebugMessage_("Finished after 0 iterations");
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-saveGrad_(GradMap& map, const std::string& name, GradInfo& grad)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::saveGrad_(GradMap& map, const std::string& name, GradInfo& grad)
 {
     if (auto it = map.find(name); it == map.end()) {
         [[maybe_unused]] auto result = map.emplace(name, grad);
         assert(result.second); // the insert was successful
-    }
-    else {
+    } else {
         it->second = grad;
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-saveDecGrad_(const std::string& name, GradInfo& grad)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::saveDecGrad_(const std::string& name, GradInfo& grad)
 {
     saveGrad_(this->dec_grads_, name, grad);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-saveIncGrad_(const std::string& name, GradInfo& grad)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::saveIncGrad_(const std::string& name, GradInfo& grad)
 {
     saveGrad_(this->inc_grads_, name, grad);
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-sortGradients_(std::vector<GradPair>& grads)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::sortGradients_(std::vector<GradPair>& grads)
 {
-    auto cmp = [](GradPair a, GradPair b) {
-         return a.second <  b.second;
-    };
+    auto cmp = [](GradPair a, GradPair b) { return a.second < b.second; };
     std::sort(grads.begin(), grads.end(), cmp);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::optional<typename GasLiftStage2<Scalar, IndexTraits>::GradInfo>
-GasLiftStage2<Scalar, IndexTraits>::
-updateGrad_(const std::string& name, GradInfo& grad, bool increase)
+GasLiftStage2<Scalar, IndexTraits>::updateGrad_(const std::string& name, GradInfo& grad, bool increase)
 {
     GradMap& map = increase ? this->inc_grads_ : this->dec_grads_;
     std::optional<GradInfo> old_value = std::nullopt;
@@ -792,19 +775,16 @@ updateGrad_(const std::string& name, GradInfo& grad, bool increase)
     return old_value;
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::
-updateGradVector_(const std::string& name,
-                  std::vector<GradPair>& grads,
-                  Scalar grad)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::updateGradVector_(const std::string& name,
+                                                      std::vector<GradPair>& grads,
+                                                      Scalar grad)
 {
-    auto it = std::find_if(grads.begin(), grads.end(),
-                           [&name](const auto& itr)
-                           { return itr.first == name; });
+    auto it = std::find_if(grads.begin(), grads.end(), [&name](const auto& itr) { return itr.first == name; });
     if (it != grads.end()) {
         it->second = grad;
-    }
-    else {
+    } else {
         grads.push_back({name, grad});
         // NOTE: the gradient vector is no longer sorted, but sorting will be done
         //   later in getEcoGradients()
@@ -812,16 +792,15 @@ updateGradVector_(const std::string& name,
 }
 
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 void
-GasLiftStage2<Scalar, IndexTraits>::
-updateGroupInfo(const std::string& well_name, bool add)
+GasLiftStage2<Scalar, IndexTraits>::updateGroupInfo(const std::string& well_name, bool add)
 {
     const auto delta = computeDelta(well_name, add);
     const auto& [delta_oil, delta_gas, delta_water, delta_alq] = delta;
     if (this->group_info_.hasWell(well_name)) {
         const auto& pairs = this->group_info_.getWellGroups(well_name);
-       for (const auto& [group_name, efficiency] : pairs) {
+        for (const auto& [group_name, efficiency] : pairs) {
             this->group_info_.update(group_name,
                                      efficiency * delta_oil,
                                      efficiency * delta_gas,
@@ -831,33 +810,36 @@ updateGroupInfo(const std::string& well_name, bool add)
     }
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::array<Scalar, 4>
-GasLiftStage2<Scalar, IndexTraits>::
-computeDelta(const std::string& well_name, bool add)
+GasLiftStage2<Scalar, IndexTraits>::computeDelta(const std::string& well_name, bool add)
 {
     std::array<Scalar, 4> delta = {0.0, 0.0, 0.0, 0.0};
     // compute the delta on wells on own rank
     if (this->well_state_map_.count(well_name) > 0) {
-        const GradInfo& gi = add? this->inc_grads_.at(well_name) : this->dec_grads_.at(well_name);
+        const GradInfo& gi = add ? this->inc_grads_.at(well_name) : this->dec_grads_.at(well_name);
         GasLiftWellState<Scalar>& state = *(this->well_state_map_.at(well_name).get());
         GasLiftSingleWell& gs_well = *(this->stage1_wells_.at(well_name).get());
         const WellInterfaceGeneric<Scalar, IndexTraits>& well = gs_well.getWell();
         // only get deltas for wells owned by this rank
         if (this->well_state_.wellIsOwned(well.indexOfWell(), well_name)) {
             const auto& well_ecl = well.wellEcl();
-            Scalar factor = well_ecl.getEfficiencyFactor() *
-                            this->well_state_[well_name].efficiency_scaling_factor;
+            Scalar factor = well_ecl.getEfficiencyFactor() * this->well_state_[well_name].efficiency_scaling_factor;
             auto& [delta_oil, delta_gas, delta_water, delta_alq] = delta;
             delta_oil = factor * (gi.new_oil_rate - state.oilRate());
             delta_gas = factor * (gi.new_gas_rate - state.gasRate());
             delta_water = factor * (gi.new_water_rate - state.waterRate());
             delta_alq = factor * (gi.alq - state.alq());
         }
-        state.update(gi.new_oil_rate, gi.oil_is_limited,
-                gi.new_gas_rate, gi.gas_is_limited,
-                gi.alq, gi.alq_is_limited,
-                gi.new_water_rate, gi.water_is_limited, add);
+        state.update(gi.new_oil_rate,
+                     gi.oil_is_limited,
+                     gi.new_gas_rate,
+                     gi.gas_is_limited,
+                     gi.alq,
+                     gi.alq_is_limited,
+                     gi.new_water_rate,
+                     gi.water_is_limited,
+                     add);
     }
 
     // and communicate the results
@@ -869,14 +851,14 @@ computeDelta(const std::string& well_name, bool add)
  * Public methods declared in OptimizeState
  ***********************************************/
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-calculateEcoGradients(std::vector<GasLiftSingleWell*>& wells,
-                      std::vector<GradPair>& inc_grads,
-                      std::vector<GradPair>& dec_grads)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::calculateEcoGradients(std::vector<GasLiftSingleWell*>& wells,
+                                                                         std::vector<GradPair>& inc_grads,
+                                                                         std::vector<GradPair>& dec_grads)
 {
     for (auto well_ptr : wells) {
-        const auto& gs_well = *well_ptr;  // gs = GasLiftSingleWell
+        const auto& gs_well = *well_ptr; // gs = GasLiftSingleWell
         const auto& name = gs_well.name();
         auto inc_grad = this->parent.calcIncOrDecGrad_(name, gs_well, group.name(), /*increase=*/true);
         if (inc_grad) {
@@ -891,12 +873,12 @@ calculateEcoGradients(std::vector<GasLiftSingleWell*>& wells,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-checkAtLeastTwoWells(std::vector<GasLiftSingleWell*>& wells)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::checkAtLeastTwoWells(std::vector<GasLiftSingleWell*>& wells)
 {
     int numberOfwells = 0;
-    for (auto well : wells){
+    for (auto well : wells) {
         int index_of_wells = well->getWell().indexOfWell();
         if (!this->parent.well_state_.wellIsOwned(index_of_wells, well->name()))
             continue;
@@ -904,28 +886,26 @@ checkAtLeastTwoWells(std::vector<GasLiftSingleWell*>& wells)
     }
     numberOfwells = this->parent.comm_.sum(numberOfwells);
     if (numberOfwells < 2) {
-        const std::string msg = fmt::format(
-            "skipping: too few wells ({}) to optimize.", numberOfwells);
+        const std::string msg = fmt::format("skipping: too few wells ({}) to optimize.", numberOfwells);
         displayDebugMessage_(msg);
         return false;
     }
     return true;
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-debugShowIterationInfo()
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::debugShowIterationInfo()
 {
     const std::string msg = fmt::format("redistribute ALQ iteration {}", this->it);
     displayDebugMessage_(msg);
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::pair<std::optional<typename GasLiftStage2<Scalar, IndexTraits>::GradPairItr>,
           std::optional<typename GasLiftStage2<Scalar, IndexTraits>::GradPairItr>>
-GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-getEcoGradients(std::vector<GradPair>& inc_grads,
-                std::vector<GradPair>& dec_grads)
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::getEcoGradients(std::vector<GradPair>& inc_grads,
+                                                                   std::vector<GradPair>& dec_grads)
 {
     if (!inc_grads.empty() && !dec_grads.empty()) {
         this->parent.sortGradients_(inc_grads);
@@ -945,7 +925,7 @@ getEcoGradients(std::vector<GradPair>& inc_grads,
         }
         if (dec_grad_opt) {
             inc_grad_opt = inc_grad;
-            return { dec_grad_opt, inc_grad_opt };
+            return {dec_grad_opt, inc_grad_opt};
         }
     }
     return {std::nullopt, std::nullopt};
@@ -964,12 +944,12 @@ getEcoGradients(std::vector<GradPair>& inc_grads,
 //   a new decremental gradient given the new ALQ. The new incremental gradient
 //   for this well is set equal to the current decremental gradient
 //   (before the ALQ is subtracted)
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-recalculateGradients(std::vector<GradPair>& inc_grads,
-                     std::vector<GradPair>& dec_grads,
-                     GradPairItr& min_dec_grad_itr,
-                     GradPairItr& max_inc_grad_itr)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::recalculateGradients(std::vector<GradPair>& inc_grads,
+                                                                        std::vector<GradPair>& dec_grads,
+                                                                        GradPairItr& min_dec_grad_itr,
+                                                                        GradPairItr& max_inc_grad_itr)
 {
     this->parent.recalculateGradientAndUpdateData_(
         max_inc_grad_itr, this->group.name(), /*increase=*/true, inc_grads, dec_grads);
@@ -982,21 +962,19 @@ recalculateGradients(std::vector<GradPair>& inc_grads,
 }
 
 // Take one ALQ increment from well1, and give it to well2
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-redistributeALQ(GradPairItr& min_dec_grad,
-                GradPairItr& max_inc_grad)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::redistributeALQ(GradPairItr& min_dec_grad, GradPairItr& max_inc_grad)
 {
-    const std::string msg = fmt::format(
-        "redistributing ALQ from well {} (dec gradient: {}) "
-        "to well {} (inc gradient {})",
-        min_dec_grad->first, min_dec_grad->second,
-        max_inc_grad->first, max_inc_grad->second);
+    const std::string msg = fmt::format("redistributing ALQ from well {} (dec gradient: {}) "
+                                        "to well {} (inc gradient {})",
+                                        min_dec_grad->first,
+                                        min_dec_grad->second,
+                                        max_inc_grad->first,
+                                        max_inc_grad->second);
     displayDebugMessage_(msg);
-    this->parent.addOrRemoveALQincrement_(
-        this->parent.dec_grads_, /*well_name=*/min_dec_grad->first, /*add=*/false);
-    this->parent.addOrRemoveALQincrement_(
-        this->parent.inc_grads_, /*well_name=*/max_inc_grad->first, /*add=*/true);
+    this->parent.addOrRemoveALQincrement_(this->parent.dec_grads_, /*well_name=*/min_dec_grad->first, /*add=*/false);
+    this->parent.addOrRemoveALQincrement_(this->parent.inc_grads_, /*well_name=*/max_inc_grad->first, /*add=*/true);
 
     this->parent.updateGroupInfo(min_dec_grad->first, /*add=*/false);
     this->parent.updateGroupInfo(max_inc_grad->first, /*add=*/true);
@@ -1006,16 +984,16 @@ redistributeALQ(GradPairItr& min_dec_grad,
  * Private methods declared in OptimizeState
  **********************************************/
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-displayDebugMessage_(const std::string& msg)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::displayDebugMessage_(const std::string& msg)
 {
     this->parent.displayDebugMessage_(msg, this->group.name());
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::OptimizeState::
-displayWarning_(const std::string& msg)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::OptimizeState::displayWarning_(const std::string& msg)
 {
     this->parent.displayWarning_(msg, this->group.name());
 }
@@ -1024,32 +1002,34 @@ displayWarning_(const std::string& msg)
  * Public methods declared in SurplusState
  **********************************************/
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-addOrRemoveALQincrement(GradMap& grad_map,
-                        const std::string& well_name,
-                        bool add)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::addOrRemoveALQincrement(GradMap& grad_map,
+                                                                          const std::string& well_name,
+                                                                          bool add)
 {
     if (this->parent.debug) {
-        const std::string msg = fmt::format("group: {} : well {} : {} ALQ increment",
-            this->group.name(), well_name, (add ? "adding" : "subtracting"));
+        const std::string msg = fmt::format(
+            "group: {} : well {} : {} ALQ increment", this->group.name(), well_name, (add ? "adding" : "subtracting"));
         this->parent.displayDebugMessage_(msg);
     }
     this->parent.addOrRemoveALQincrement_(grad_map, well_name, add);
     this->parent.updateGroupInfo(well_name, add);
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkALQlimit()
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkALQlimit()
 {
     if (this->max_glift) {
         Scalar max_alq = *(this->max_glift);
-        if ((max_alq) < (this->alq)  ) {
+        if ((max_alq) < (this->alq)) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "ALQ rate {} is greater than ALQ limit {}", this->group.name(),
-                    this->alq, max_alq);
+                                                    "ALQ rate {} is greater than ALQ limit {}",
+                                                    this->group.name(),
+                                                    this->alq,
+                                                    max_alq);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1058,11 +1038,13 @@ checkALQlimit()
     if (this->max_total_gas) {
         Scalar max_total = *(this->max_total_gas);
         Scalar total_gas_rate = (this->alq + this->gas_rate);
-        if ((max_total) < total_gas_rate ) {
+        if ((max_total) < total_gas_rate) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "Total gas rate {} is greater than Total gas limit {}", this->group.name(),
-                    total_gas_rate, max_total);
+                                                    "Total gas rate {} is greater than Total gas limit {}",
+                                                    this->group.name(),
+                                                    total_gas_rate,
+                                                    max_total);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1071,38 +1053,42 @@ checkALQlimit()
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkEcoGradient(const std::string& well_name, Scalar eco_grad)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkEcoGradient(const std::string& well_name, Scalar eco_grad)
 {
     if (eco_grad < this->min_eco_grad) {
         if (this->parent.debug) {
             const std::string msg = fmt::format("group: {}, well: {} : "
-                "economic gradient {} less than minimum ({})", this->group.name(),
-                well_name, eco_grad, this->min_eco_grad);
+                                                "economic gradient {} less than minimum ({})",
+                                                this->group.name(),
+                                                well_name,
+                                                eco_grad,
+                                                this->min_eco_grad);
             this->parent.displayDebugMessage_(msg);
         }
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkGasTarget(Scalar delta_gas)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkGasTarget(Scalar delta_gas)
 {
     if (this->group.has_control(Group::ProductionCMode::GRAT)) {
         // the change in gas rate is added to the gas rate to make sure the
         // group still can produce its target
         // i.e. we want to find the solution that optimize gas lift while still
         // producing the given group limit
-        if (this->gas_target < (this->gas_rate + delta_gas) ) {
+        if (this->gas_target < (this->gas_rate + delta_gas)) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "gas rate {} is greater than gas target {}", this->group.name(),
-                    this->gas_rate, this->gas_target);
+                                                    "gas rate {} is greater than gas target {}",
+                                                    this->group.name(),
+                                                    this->gas_rate,
+                                                    this->gas_target);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1111,9 +1097,9 @@ checkGasTarget(Scalar delta_gas)
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkLiquidTarget(Scalar delta_liquid)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkLiquidTarget(Scalar delta_liquid)
 {
     if (this->group.has_control(Group::ProductionCMode::LRAT)) {
         // the change in liquid rate is added to the liquid rate to make sure the
@@ -1121,11 +1107,13 @@ checkLiquidTarget(Scalar delta_liquid)
         // i.e. we want to find the solution that optimize gas lift while still
         // producing the given group limit
         auto liquid_rate = this->oil_rate + this->water_rate + delta_liquid;
-        if (this->liquid_target < (liquid_rate) ) {
+        if (this->liquid_target < (liquid_rate)) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "liquid rate {} is greater than liquid target {}", this->group.name(),
-                    liquid_rate, this->liquid_target);
+                                                    "liquid rate {} is greater than liquid target {}",
+                                                    this->group.name(),
+                                                    liquid_rate,
+                                                    this->liquid_target);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1134,20 +1122,22 @@ checkLiquidTarget(Scalar delta_liquid)
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkOilTarget(Scalar delta_oil)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkOilTarget(Scalar delta_oil)
 {
     if (this->group.has_control(Group::ProductionCMode::ORAT)) {
         // the change in oil rate is added to the oil rate to make sure the
         // group still can produce its target
         // i.e. we want to find the solution that optimize gas lift while still
         // producing the given group limit
-        if (this->oil_target < (this->oil_rate + delta_oil) ) {
+        if (this->oil_target < (this->oil_rate + delta_oil)) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "oil rate {} is greater than oil target {}", this->group.name(),
-                    this->oil_rate - delta_oil, this->oil_target);
+                                                    "oil rate {} is greater than oil target {}",
+                                                    this->group.name(),
+                                                    this->oil_rate - delta_oil,
+                                                    this->oil_target);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1156,20 +1146,22 @@ checkOilTarget(Scalar delta_oil)
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
-bool GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-checkWaterTarget(Scalar delta_water)
+template <typename Scalar, typename IndexTraits>
+bool
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::checkWaterTarget(Scalar delta_water)
 {
     if (this->group.has_control(Group::ProductionCMode::WRAT)) {
         // the change in water rate is added to the water rate to make sure the
         // group still can produce its target
         // i.e. we want to find the solution that optimize gas lift while still
         // producing the given group limit
-        if (this->water_target < (this->water_rate + delta_water) ) {
+        if (this->water_target < (this->water_rate + delta_water)) {
             if (this->parent.debug) {
                 const std::string msg = fmt::format("group: {} : "
-                    "water rate {} is greater than oil target {}", this->group.name(),
-                    this->water_rate, this->water_target);
+                                                    "water rate {} is greater than oil target {}",
+                                                    this->group.name(),
+                                                    this->water_rate,
+                                                    this->water_target);
                 this->parent.displayDebugMessage_(msg);
             }
             return true;
@@ -1178,10 +1170,9 @@ checkWaterTarget(Scalar delta_water)
     return false;
 }
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 std::array<Scalar, 4>
-GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-computeDelta(const std::string& well_name)
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::computeDelta(const std::string& well_name)
 {
     std::array<Scalar, 4> delta = {0.0, 0.0, 0.0, 0.0};
     // compute the delta on wells on own rank
@@ -1192,8 +1183,7 @@ computeDelta(const std::string& well_name)
         // only get deltas for wells owned by this rank
         if (this->parent.well_state_.wellIsOwned(well.indexOfWell(), well_name)) {
             const auto& well_ecl = well.wellEcl();
-            Scalar factor = well_ecl.getEfficiencyFactor() *
-                            this->well_state[well_name].efficiency_scaling_factor;
+            Scalar factor = well_ecl.getEfficiencyFactor() * this->well_state[well_name].efficiency_scaling_factor;
             const GasLiftWellState<Scalar>& state = *(this->parent.well_state_map_.at(well_name).get());
             auto& [delta_oil, delta_gas, delta_water, delta_alq] = delta;
             delta_oil = factor * (gi.new_oil_rate - state.oilRate());
@@ -1209,9 +1199,9 @@ computeDelta(const std::string& well_name)
     return delta;
 }
 
-template<typename Scalar, typename IndexTraits>
-void GasLiftStage2<Scalar, IndexTraits>::SurplusState::
-updateRates(const std::array<Scalar, 4>& delta)
+template <typename Scalar, typename IndexTraits>
+void
+GasLiftStage2<Scalar, IndexTraits>::SurplusState::updateRates(const std::array<Scalar, 4>& delta)
 {
     const auto& [delta_oil, delta_gas, delta_water, delta_alq] = delta;
     this->oil_rate += delta_oil;

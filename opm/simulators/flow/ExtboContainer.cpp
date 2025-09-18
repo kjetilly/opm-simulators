@@ -32,11 +32,12 @@
 #include <string>
 #include <tuple>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-void ExtboContainer<Scalar>::
-allocate(const unsigned bufferSize)
+template <class Scalar>
+void
+ExtboContainer<Scalar>::allocate(const unsigned bufferSize)
 {
     X_volume_.resize(bufferSize, 0.0);
     Y_volume_.resize(bufferSize, 0.0);
@@ -48,66 +49,60 @@ allocate(const unsigned bufferSize)
     allocated_ = true;
 }
 
-template<class Scalar>
-void ExtboContainer<Scalar>::
-assignMassFractions(const unsigned globalDofIdx,
-                    const Scalar gas,
-                    const Scalar oil,
-                    const Scalar co2)
+template <class Scalar>
+void
+ExtboContainer<Scalar>::assignMassFractions(const unsigned globalDofIdx,
+                                            const Scalar gas,
+                                            const Scalar oil,
+                                            const Scalar co2)
 {
     this->mFracGas_[globalDofIdx] = gas;
     this->mFracOil_[globalDofIdx] = oil;
     this->mFracCo2_[globalDofIdx] = co2;
 }
 
-template<class Scalar>
-void ExtboContainer<Scalar>::
-assignVolumes(const unsigned globalDofIdx,
-              const Scalar xVolume,
-              const Scalar yVolume)
+template <class Scalar>
+void
+ExtboContainer<Scalar>::assignVolumes(const unsigned globalDofIdx, const Scalar xVolume, const Scalar yVolume)
 {
     X_volume_[globalDofIdx] = xVolume;
     Y_volume_[globalDofIdx] = yVolume;
 }
 
-template<class Scalar>
-void ExtboContainer<Scalar>::
-assignZFraction(const unsigned globalDofIdx,
-                const Scalar zFraction)
+template <class Scalar>
+void
+ExtboContainer<Scalar>::assignZFraction(const unsigned globalDofIdx, const Scalar zFraction)
 {
     Z_fraction_[globalDofIdx] = zFraction;
 }
 
-template<class Scalar>
-void ExtboContainer<Scalar>::
-outputRestart(data::Solution& sol)
+template <class Scalar>
+void
+ExtboContainer<Scalar>::outputRestart(data::Solution& sol)
 {
     if (!this->allocated_) {
         return;
     }
 
-    using DataEntry =
-        std::tuple<std::string, UnitSystem::measure, std::vector<Scalar>&>;
+    using DataEntry = std::tuple<std::string, UnitSystem::measure, std::vector<Scalar>&>;
 
     auto solutionArrays = std::array {
-        DataEntry{"SS_X",     UnitSystem::measure::identity,           X_volume_},
-        DataEntry{"SS_Y",     UnitSystem::measure::identity,           Y_volume_},
-        DataEntry{"SS_Z",     UnitSystem::measure::identity,           Z_fraction_},
-        DataEntry{"STD_CO2",  UnitSystem::measure::identity,           mFracCo2_},
-        DataEntry{"STD_GAS",  UnitSystem::measure::identity,           mFracGas_},
-        DataEntry{"STD_OIL",  UnitSystem::measure::identity,           mFracOil_},
+        DataEntry {"SS_X", UnitSystem::measure::identity, X_volume_},
+        DataEntry {"SS_Y", UnitSystem::measure::identity, Y_volume_},
+        DataEntry {"SS_Z", UnitSystem::measure::identity, Z_fraction_},
+        DataEntry {"STD_CO2", UnitSystem::measure::identity, mFracCo2_},
+        DataEntry {"STD_GAS", UnitSystem::measure::identity, mFracGas_},
+        DataEntry {"STD_OIL", UnitSystem::measure::identity, mFracOil_},
     };
 
-    std::for_each(solutionArrays.begin(), solutionArrays.end(),
-                  [&sol](auto& entry)
-                  {
-                      if (!std::get<2>(entry).empty()) {
-                          sol.insert(std::get<std::string>(entry),
-                          std::get<UnitSystem::measure>(entry),
-                          std::move(std::get<2>(entry)),
-                          data::TargetType::RESTART_OPM_EXTENDED);
-                      }
-                  });
+    std::for_each(solutionArrays.begin(), solutionArrays.end(), [&sol](auto& entry) {
+        if (!std::get<2>(entry).empty()) {
+            sol.insert(std::get<std::string>(entry),
+                       std::get<UnitSystem::measure>(entry),
+                       std::move(std::get<2>(entry)),
+                       data::TargetType::RESTART_OPM_EXTENDED);
+        }
+    });
 
     this->allocated_ = false;
 }

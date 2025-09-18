@@ -28,29 +28,34 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
-#include <opm/models/pvs/pvsmodel.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include "problems/co2injectionproblem.hh"
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/pvs/pvsmodel.hh>
+#include <opm/models/utils/start.hh>
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct Co2InjectionPvsEcfvProblem
-{ using InheritsFrom = std::tuple<Co2InjectionBaseProblem, PvsModel>; };
+    struct Co2InjectionPvsEcfvProblem {
+        using InheritsFrom = std::tuple<Co2InjectionBaseProblem, PvsModel>;
+    };
 
 } // end namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionPvsEcfvProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::Co2InjectionPvsEcfvProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using EcfvProblemTypeTag = Opm::Properties::TTag::Co2InjectionPvsEcfvProblem;
     return Opm::start<EcfvProblemTypeTag>(argc, argv, true);

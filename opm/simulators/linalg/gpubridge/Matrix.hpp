@@ -27,41 +27,41 @@ namespace Opm
 namespace Accelerator
 {
 
-/// This struct resembles a csr matrix, only doubles are supported
-/// The data is stored in contiguous memory, such that they can be copied to a device in one transfer.
-template<class Scalar>
-class Matrix
-{
-public:
-    /// Allocate square Matrix and data arrays with given sizes
-    /// \param[in] N_              number of rows
-    /// \param[in] nnzs_           number of nonzeros
-    Matrix(int N_, int nnzs_)
-        : N(N_)
-        , M(N_)
-        , nnzs(nnzs_)
+    /// This struct resembles a csr matrix, only doubles are supported
+    /// The data is stored in contiguous memory, such that they can be copied to a device in one transfer.
+    template <class Scalar>
+    class Matrix
     {
-        nnzValues.resize(nnzs);
-        colIndices.resize(nnzs);
-        rowPointers.resize(N+1);
-    }
+    public:
+        /// Allocate square Matrix and data arrays with given sizes
+        /// \param[in] N_              number of rows
+        /// \param[in] nnzs_           number of nonzeros
+        Matrix(int N_, int nnzs_)
+            : N(N_)
+            , M(N_)
+            , nnzs(nnzs_)
+        {
+            nnzValues.resize(nnzs);
+            colIndices.resize(nnzs);
+            rowPointers.resize(N + 1);
+        }
 
-    /// Allocate rectangular Matrix and data arrays with given sizes
-    /// \param[in] N_              number of rows
-    /// \param[in] M_              number of columns
-    /// \param[in] nnzs_           number of nonzeros
-    Matrix(int N_, int M_, int nnzs_)
-        : Matrix(N_, nnzs_)
-    {
-        M = M_;
-    }
+        /// Allocate rectangular Matrix and data arrays with given sizes
+        /// \param[in] N_              number of rows
+        /// \param[in] M_              number of columns
+        /// \param[in] nnzs_           number of nonzeros
+        Matrix(int N_, int M_, int nnzs_)
+            : Matrix(N_, nnzs_)
+        {
+            M = M_;
+        }
 
-    std::vector<Scalar> nnzValues;
-    std::vector<int> colIndices;
-    std::vector<int> rowPointers;
-    int N, M;
-    int nnzs;
-};
+        std::vector<Scalar> nnzValues;
+        std::vector<int> colIndices;
+        std::vector<int> rowPointers;
+        int N, M;
+        int nnzs;
+    };
 
 } // namespace Accelerator
 } // namespace Opm

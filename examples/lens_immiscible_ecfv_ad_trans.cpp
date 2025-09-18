@@ -29,27 +29,35 @@
  */
 #include "config.h"
 
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/models/immiscible/immisciblemodel.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/lensproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct LensProblemEcfvAdTrans { using InheritsFrom = std::tuple<LensBaseProblem, ImmiscibleTwoPhaseModel>; };
+namespace TTag
+{
+    struct LensProblemEcfvAdTrans {
+        using InheritsFrom = std::tuple<LensBaseProblem, ImmiscibleTwoPhaseModel>;
+    };
 } // end namespace TTag
 
 // use automatic differentiation for this simulator
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::LensProblemEcfvAdTrans> { using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::LensProblemEcfvAdTrans> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 // use the element centered finite volume spatial discretization
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::LensProblemEcfvAdTrans> { using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::LensProblemEcfvAdTrans> {
+    using type = TTag::EcfvDiscretization;
+};
 
 // Set the problem property
 template <class TypeTag>
@@ -57,9 +65,10 @@ struct FluxModule<TypeTag, TTag::LensProblemEcfvAdTrans> {
     using type = TransFluxModule<TypeTag>;
 };
 
-}
+} // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::LensProblemEcfvAdTrans;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

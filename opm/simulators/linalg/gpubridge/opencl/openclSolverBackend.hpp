@@ -20,53 +20,54 @@
 #ifndef OPM_OPENCLSOLVER_BACKEND_HEADER_INCLUDED
 #define OPM_OPENCLSOLVER_BACKEND_HEADER_INCLUDED
 
-#include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 #include <opm/simulators/linalg/gpubridge/GpuResult.hpp>
 #include <opm/simulators/linalg/gpubridge/GpuSolver.hpp>
 #include <opm/simulators/linalg/gpubridge/WellContributions.hpp>
+#include <opm/simulators/linalg/gpubridge/opencl/opencl.hpp>
 
 #include <opm/simulators/linalg/gpubridge/opencl/openclPreconditioner.hpp>
 
-namespace Opm::Accelerator {
+namespace Opm::Accelerator
+{
 
 /// This class implements a opencl-based ilu0-bicgstab solver on GPU
-template<class Scalar, unsigned int block_size>
-class openclSolverBackend : public GpuSolver<Scalar,block_size>
+template <class Scalar, unsigned int block_size>
+class openclSolverBackend : public GpuSolver<Scalar, block_size>
 {
-    using Base = GpuSolver<Scalar,block_size>;
+    using Base = GpuSolver<Scalar, block_size>;
 
+    using Base::deviceID;
+    using Base::initialized;
+    using Base::maxit;
     using Base::N;
     using Base::Nb;
     using Base::nnz;
     using Base::nnzb;
-    using Base::verbosity;
     using Base::platformID;
-    using Base::deviceID;
-    using Base::maxit;
     using Base::tolerance;
-    using Base::initialized;
+    using Base::verbosity;
 
 private:
-    Scalar* h_b = nullptr;                // b vector, on host
-    std::vector<Scalar> vals_contiguous;  // only used if COPY_ROW_BY_ROW is true in openclSolverBackend.cpp
+    Scalar* h_b = nullptr; // b vector, on host
+    std::vector<Scalar> vals_contiguous; // only used if COPY_ROW_BY_ROW is true in openclSolverBackend.cpp
 
     // OpenCL variables must be reusable, they are initialized in initialize()
-    cl::Buffer d_Avals, d_Acols, d_Arows;        // matrix in BSR format on GPU
-    cl::Buffer d_x, d_b, d_rb, d_r, d_rw, d_p;   // vectors, used during linear solve
-    cl::Buffer d_pw, d_s, d_t, d_v;              // vectors, used during linear solve
-    cl::Buffer d_tmp;                            // used as tmp GPU buffer for dot() and norm()
+    cl::Buffer d_Avals, d_Acols, d_Arows; // matrix in BSR format on GPU
+    cl::Buffer d_x, d_b, d_rb, d_r, d_rw, d_p; // vectors, used during linear solve
+    cl::Buffer d_pw, d_s, d_t, d_v; // vectors, used during linear solve
+    cl::Buffer d_tmp; // used as tmp GPU buffer for dot() and norm()
 
     std::vector<cl::Device> devices;
 
     bool useJacMatrix = false;
 
-    std::unique_ptr<openclPreconditioner<Scalar,block_size>> prec;
-                                                                  // can perform blocked ILU0 and AMG on pressure component
-    bool is_root;                                                 // allow for nested solvers, the root solver is called by GpuBridge
+    std::unique_ptr<openclPreconditioner<Scalar, block_size>> prec;
+    // can perform blocked ILU0 and AMG on pressure component
+    bool is_root; // allow for nested solvers, the root solver is called by GpuBridge
     bool analysis_done = false;
-    std::shared_ptr<BlockedMatrix<Scalar>> mat{};                 // original matrix
-    std::shared_ptr<BlockedMatrix<Scalar>> jacMat{};              // matrix for preconditioner
-    bool opencl_ilu_parallel;                                     // parallelize ILU operations (with level_scheduling)
+    std::shared_ptr<BlockedMatrix<Scalar>> mat {}; // original matrix
+    std::shared_ptr<BlockedMatrix<Scalar>> jacMat {}; // matrix for preconditioner
+    bool opencl_ilu_parallel; // parallelize ILU operations (with level_scheduling)
     std::vector<cl::Event> events;
     cl_int err;
 
@@ -78,8 +79,7 @@ private:
     /// Initialize GPU and allocate memory
     /// \param[in] matrix     matrix A
     /// \param[in] jacMatrix  matrix for preconditioner
-    void initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix,
-                    std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix);
+    void initialize(std::shared_ptr<BlockedMatrix<Scalar>> matrix, std::shared_ptr<BlockedMatrix<Scalar>> jacMatrix);
 
     /// Copy linear system to GPU
     void copy_system_to_gpu();
@@ -107,8 +107,8 @@ private:
     void solve_system(WellContributions<Scalar>& wellContribs, GpuResult& res);
 
 public:
-    std::shared_ptr<cl::Context> context{};
-    std::shared_ptr<cl::CommandQueue> queue{};
+    std::shared_ptr<cl::Context> context {};
+    std::shared_ptr<cl::CommandQueue> queue {};
 
     /// Construct a openclSolver
     /// \param[in] linear_solver_verbosity    verbosity of openclSolver
@@ -116,16 +116,21 @@ public:
     /// \param[in] tolerance                  required relative tolerance for openclSolver
     /// \param[in] platformID                 the OpenCL platform to be used
     /// \param[in] deviceID                   the device to be used
-    /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL with level_scheduling
-    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline argument
+    /// \param[in] opencl_ilu_parallel        whether to parallelize the ILU decomposition and application in OpenCL
+    /// with level_scheduling
+    /// \param[in] linsolver                  indicating the preconditioner, equal to the --linear-solver cmdline
+    /// argument
     ///                                       only ilu0, cpr_quasiimpes and isai are supported
-    openclSolverBackend(int linear_solver_verbosity, int maxit, Scalar tolerance,
-                        unsigned int platformID, unsigned int deviceID,
-                        bool opencl_ilu_parallel, std::string linsolver);
+    openclSolverBackend(int linear_solver_verbosity,
+                        int maxit,
+                        Scalar tolerance,
+                        unsigned int platformID,
+                        unsigned int deviceID,
+                        bool opencl_ilu_parallel,
+                        std::string linsolver);
 
     /// For the CPR coarse solver
-    openclSolverBackend(int linear_solver_verbosity, int maxit,
-                        Scalar tolerance, bool opencl_ilu_parallel);
+    openclSolverBackend(int linear_solver_verbosity, int maxit, Scalar tolerance, bool opencl_ilu_parallel);
 
     /// Solve linear system, A*x = b, matrix A must be in blocked-CSR format
     /// \param[in] matrix         matrix A
@@ -152,8 +157,7 @@ public:
     /// This class either creates them based on platformID and deviceID or receives them through this function
     /// \param[in] context   the opencl context to be used
     /// \param[in] queue     the opencl queue to be used
-    void setOpencl(std::shared_ptr<cl::Context>& context,
-                   std::shared_ptr<cl::CommandQueue>& queue);
+    void setOpencl(std::shared_ptr<cl::Context>& context, std::shared_ptr<cl::CommandQueue>& queue);
 }; // end class openclSolverBackend
 
 } // namespace Opm::Accelerator

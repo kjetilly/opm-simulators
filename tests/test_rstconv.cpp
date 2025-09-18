@@ -29,8 +29,8 @@
 #include <boost/test/data/test_case.hpp>
 #endif
 
-#include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/parallel/mpihelper.hh>
 #include <dune/istl/bvector.hh>
 
 #include <opm/input/eclipse/Schedule/RSTConfig.hpp>
@@ -42,14 +42,18 @@
 #include <random>
 
 #if HAVE_MPI
-struct MPIError
-{
-    MPIError(std::string s, int e) : errorstring(std::move(s)), errorcode(e){}
+struct MPIError {
+    MPIError(std::string s, int e)
+        : errorstring(std::move(s))
+        , errorcode(e)
+    {
+    }
     std::string errorstring;
     int errorcode;
 };
 
-void MPI_err_handler(MPI_Comm*, int* err_code, ...)
+void
+MPI_err_handler(MPI_Comm*, int* err_code, ...)
 {
     std::vector<char> err_string(MPI_MAX_ERROR_STRING);
     int err_length;
@@ -68,10 +72,11 @@ init_unit_test_func()
 
 struct TestCase {
     std::size_t N;
-    std::array<int,6> phase;
+    std::array<int, 6> phase;
 };
 
-std::ostream& operator<<(std::ostream& os, const TestCase& t)
+std::ostream&
+operator<<(std::ostream& os, const TestCase& t)
 {
     os << t.N;
     for (int i : t.phase)
@@ -82,15 +87,15 @@ std::ostream& operator<<(std::ostream& os, const TestCase& t)
 }
 
 static const std::vector<TestCase> tests = {
-    {1, { 0,  1,  2, -1, -1, -1}},
-    {3, { 0,  1,  2, -1, -1, -1}},
-    {1, { 0, -1,  1, -1, -1, -1}},
-    {5, { 0, -1,  1, -1, -1, -1}},
-    {1, {-1, -1,  0, -1, -1, -1}},
-    {4, {-1, -1,  0, -1, -1, -1}},
-    {1, { 0,  1, -1,  2, -1, -1}},
-    {1, { 0,  1, -1, -1,  2, -1}},
-    {1, { 0,  1, -1, -1, -1,  2}},
+    {1, {0, 1, 2, -1, -1, -1}},
+    {3, {0, 1, 2, -1, -1, -1}},
+    {1, {0, -1, 1, -1, -1, -1}},
+    {5, {0, -1, 1, -1, -1, -1}},
+    {1, {-1, -1, 0, -1, -1, -1}},
+    {4, {-1, -1, 0, -1, -1, -1}},
+    {1, {0, 1, -1, 2, -1, -1}},
+    {1, {0, 1, -1, -1, 2, -1}},
+    {1, {0, 1, -1, -1, -1, 2}},
 };
 
 #if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 > 66
@@ -102,103 +107,100 @@ BOOST_AUTO_TEST_CASE(RstConvTest)
 #if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 67
     for (const auto& sample : tests) {
 #endif
-    const auto& cc = Dune::MPIHelper::getCommunication();
+        const auto& cc = Dune::MPIHelper::getCommunication();
 
-    Opm::RSTConfig rst;
-    rst.keywords["CONV"] = sample.N;
+        Opm::RSTConfig rst;
+        rst.keywords["CONV"] = sample.N;
 
-    std::vector<int> cellMapping(10);
-    std::iota(cellMapping.begin(), cellMapping.end(), cc.rank()*10);
+        std::vector<int> cellMapping(10);
+        std::iota(cellMapping.begin(), cellMapping.end(), cc.rank() * 10);
 
-    Dune::BlockVector<Dune::FieldVector<double,6>> residual(10);
+        Dune::BlockVector<Dune::FieldVector<double, 6>> residual(10);
 
-    // generate data
-    std::vector<std::vector<int>> max(6);
-    if (cc.rank() == 0) {
-        std::random_device rng_device;
-        std::mt19937 mersenne_engine{rng_device()};
-        std::uniform_int_distribution<int> dist{0, 10*cc.size()-1};
+        // generate data
+        std::vector<std::vector<int>> max(6);
+        if (cc.rank() == 0) {
+            std::random_device rng_device;
+            std::mt19937 mersenne_engine {rng_device()};
+            std::uniform_int_distribution<int> dist {0, 10 * cc.size() - 1};
 
-        for (int c = 0; c < 6; ++c) {
-            if (sample.phase[c] == -1) {
-                continue;
-            }
-            std::vector<int>& v = max[c];
-            while (v.size() < sample.N) {
-                int m = dist(mersenne_engine);
-                if (std::find(v.begin(), v.end(), m) == v.end()) {
-                    v.push_back(m);
+            for (int c = 0; c < 6; ++c) {
+                if (sample.phase[c] == -1) {
+                    continue;
+                }
+                std::vector<int>& v = max[c];
+                while (v.size() < sample.N) {
+                    int m = dist(mersenne_engine);
+                    if (std::find(v.begin(), v.end(), m) == v.end()) {
+                        v.push_back(m);
+                    }
                 }
             }
         }
-    }
 
-    for (int c = 0; c < 6; ++c) {
-        std::size_t size = max[c].size();
-        cc.broadcast(&size, 1, 0);
-        if (cc.rank() != 0) {
-            max[c].resize(size);
-        }
-        cc.broadcast(max[c].data(), max[c].size(), 0);
-    }
-
-    for (int i = 0; i < 10; ++i) {
         for (int c = 0; c < 6; ++c) {
-            if (sample.phase[c] != -1) {
-                bool inMax = std::find(max[c].begin(),
-                                       max[c].end(),
-                                       cellMapping[i]) != max[c].end();
-                residual[i][sample.phase[c]] = inMax ? 1.0 : 1.0 / (i+2);
+            std::size_t size = max[c].size();
+            cc.broadcast(&size, 1, 0);
+            if (cc.rank() != 0) {
+                max[c].resize(size);
             }
-        }
-    }
-
-    Opm::RSTConv cnv([&cellMapping](const int idx) { return cellMapping[idx]; }, cc);
-    cnv.init(10*cc.size(), rst, sample.phase);
-
-    cnv.update(residual);
-    cnv.update(residual);
-
-    if (cc.rank() == 0) {
-        BOOST_CHECK_EQUAL(cnv.getData().size(), 6);
-        for (std::size_t i = 0; i < 6; ++i) {
-            BOOST_CHECK_EQUAL(cnv.getData()[i].size(),
-                              sample.phase[i] == -1 ? 0 : cc.size() * 10);
+            cc.broadcast(max[c].data(), max[c].size(), 0);
         }
 
-        for (int i = 0; i < cc.size() * 10; ++i) {
+        for (int i = 0; i < 10; ++i) {
             for (int c = 0; c < 6; ++c) {
                 if (sample.phase[c] != -1) {
-                    bool inMax = std::find(max[c].begin(),
-                                           max[c].end(), i) != max[c].end();
-                    BOOST_CHECK_EQUAL(cnv.getData()[c][i], inMax ? 2 : 0);
+                    bool inMax = std::find(max[c].begin(), max[c].end(), cellMapping[i]) != max[c].end();
+                    residual[i][sample.phase[c]] = inMax ? 1.0 : 1.0 / (i + 2);
                 }
             }
         }
-    }
 
-    {
-        const std::vector<int> conv_new(10, 0);
-        cnv.updateNewton(conv_new);
+        Opm::RSTConv cnv([&cellMapping](const int idx) { return cellMapping[idx]; }, cc);
+        cnv.init(10 * cc.size(), rst, sample.phase);
 
-        const std::vector<int> conv_new_ite1(10, 1);
-        cnv.updateNewton(conv_new_ite1);
+        cnv.update(residual);
+        cnv.update(residual);
 
         if (cc.rank() == 0) {
-            BOOST_CHECK_EQUAL(cnv.getConvNew().size(), 10*cc.size());
+            BOOST_CHECK_EQUAL(cnv.getData().size(), 6);
+            for (std::size_t i = 0; i < 6; ++i) {
+                BOOST_CHECK_EQUAL(cnv.getData()[i].size(), sample.phase[i] == -1 ? 0 : cc.size() * 10);
+            }
 
-            for (const auto& count : cnv.getConvNew()) {
-                BOOST_CHECK_EQUAL(count, 2);
+            for (int i = 0; i < cc.size() * 10; ++i) {
+                for (int c = 0; c < 6; ++c) {
+                    if (sample.phase[c] != -1) {
+                        bool inMax = std::find(max[c].begin(), max[c].end(), i) != max[c].end();
+                        BOOST_CHECK_EQUAL(cnv.getData()[c][i], inMax ? 2 : 0);
+                    }
+                }
             }
         }
-    }
+
+        {
+            const std::vector<int> conv_new(10, 0);
+            cnv.updateNewton(conv_new);
+
+            const std::vector<int> conv_new_ite1(10, 1);
+            cnv.updateNewton(conv_new_ite1);
+
+            if (cc.rank() == 0) {
+                BOOST_CHECK_EQUAL(cnv.getConvNew().size(), 10 * cc.size());
+
+                for (const auto& count : cnv.getConvNew()) {
+                    BOOST_CHECK_EQUAL(count, 2);
+                }
+            }
+        }
 
 #if BOOST_VERSION / 100000 == 1 && BOOST_VERSION / 100 % 1000 < 67
     }
 #endif
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
 #if HAVE_MPI

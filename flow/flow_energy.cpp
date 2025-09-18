@@ -18,48 +18,58 @@
 
 #include <flow/flow_energy.hpp>
 
-#include <opm/material/common/ResetLocale.hpp>
 #include <opm/grid/CpGrid.hpp>
-#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
-#include <opm/simulators/flow/Main.hpp>
+#include <opm/material/common/ResetLocale.hpp>
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
 #include <opm/models/discretization/common/tpfalinearizer.hh>
+#include <opm/simulators/flow/Main.hpp>
+#include <opm/simulators/flow/SimulatorFullyImplicitBlackoil.hpp>
 
-namespace Opm {
-namespace Properties {
-namespace TTag {
-struct FlowEnergyProblem {
-    using InheritsFrom = std::tuple<FlowProblem>;
-};
-}
+namespace Opm
+{
+namespace Properties
+{
+    namespace TTag
+    {
+        struct FlowEnergyProblem {
+            using InheritsFrom = std::tuple<FlowProblem>;
+        };
+    } // namespace TTag
 
-template<class TypeTag>
-struct EnableEnergy<TypeTag, TTag::FlowEnergyProblem> {
-    static constexpr bool value = true;
-};
-template<class TypeTag>
-struct Linearizer<TypeTag, TTag::FlowEnergyProblem> { using type = TpfaLinearizer<TypeTag>; };
-template<class TypeTag>
-struct LocalResidual<TypeTag, TTag::FlowEnergyProblem> { using type = BlackOilLocalResidualTPFA<TypeTag>; };
+    template <class TypeTag>
+    struct EnableEnergy<TypeTag, TTag::FlowEnergyProblem> {
+        static constexpr bool value = true;
+    };
+    template <class TypeTag>
+    struct Linearizer<TypeTag, TTag::FlowEnergyProblem> {
+        using type = TpfaLinearizer<TypeTag>;
+    };
+    template <class TypeTag>
+    struct LocalResidual<TypeTag, TTag::FlowEnergyProblem> {
+        using type = BlackOilLocalResidualTPFA<TypeTag>;
+    };
 
 
-}}
+} // namespace Properties
+} // namespace Opm
 
-namespace Opm {
+namespace Opm
+{
 
 // ----------------- Main program -----------------
-int flowEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
+int
+flowEnergyMain(int argc, char** argv, bool outputCout, bool outputFiles)
 {
     // we always want to use the default locale, and thus spare us the trouble
     // with incorrect locale settings.
     resetLocale();
 
-    FlowMain<Properties::TTag::FlowEnergyProblem>
-        mainfunc {argc, argv, outputCout, outputFiles};
+    FlowMain<Properties::TTag::FlowEnergyProblem> mainfunc {argc, argv, outputCout, outputFiles};
     return mainfunc.execute();
 }
 
-int flowEnergyMainStandalone(int argc, char** argv)
+int
+flowEnergyMainStandalone(int argc, char** argv)
 {
     using TypeTag = Properties::TTag::FlowEnergyProblem;
     auto mainObject = std::make_unique<Opm::Main>(argc, argv);
@@ -69,4 +79,4 @@ int flowEnergyMainStandalone(int argc, char** argv)
     return ret;
 }
 
-}
+} // namespace Opm

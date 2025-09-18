@@ -1,26 +1,24 @@
-#include <iostream>
+#include <algorithm>
 #include <fstream>
+#include <iostream>
+#include <limits>
+#include <map>
 #include <sstream>
 #include <string>
 #include <vector>
-#include <map>
-#include <limits>
-#include <algorithm>
 
 #define BOOST_TEST_MODULE TestTuningTRGMBE
 #include <boost/test/unit_test.hpp>
 
-struct Column : public std::vector<std::string>
-{
-    explicit Column(const std::string& name_,
-                    const int size = 0,
-                    const int num_rows_estimate = 1000)
-        : std::vector<std::string>(size), name(name_)
+struct Column : public std::vector<std::string> {
+    explicit Column(const std::string& name_, const int size = 0, const int num_rows_estimate = 1000)
+        : std::vector<std::string>(size)
+        , name(name_)
     {
         this->reserve(num_rows_estimate);
     }
 
-           // Return vector of double values, invalid elements set to NaN
+    // Return vector of double values, invalid elements set to NaN
     std::vector<double> dvalues() const
     {
         std::vector<double> vec;
@@ -40,7 +38,7 @@ struct Column : public std::vector<std::string>
         return vec;
     }
 
-           // Return vector of double values values, invalid elements set to std::numeric_limits<int>::min()
+    // Return vector of double values values, invalid elements set to std::numeric_limits<int>::min()
     std::vector<int> ivalues() const
     {
         std::vector<int> vec;
@@ -63,10 +61,8 @@ struct Column : public std::vector<std::string>
     std::string name;
 };
 
-struct ColumnData
-{
-    explicit ColumnData(const std::string& file_name,
-                        const int num_columns_estimate = 20)
+struct ColumnData {
+    explicit ColumnData(const std::string& file_name, const int num_columns_estimate = 20)
     {
         raw_columns.reserve(num_columns_estimate);
         load_file(file_name);
@@ -87,11 +83,12 @@ struct ColumnData
         }
         const int num_columns = column_names.size();
 
-               // Read remaining lines into std::string vectors
+        // Read remaining lines into std::string vectors
         int lineno = 1;
         while (std::getline(ifs, line)) {
-            iss.str(line); iss.clear();
-            int i=0;
+            iss.str(line);
+            iss.clear();
+            int i = 0;
             while (iss >> colname && i < num_columns) {
                 raw_columns[i].push_back(colname);
                 ++i;
@@ -103,11 +100,20 @@ struct ColumnData
         }
     }
 
-           // Get data vectors of different types
-    std::vector<double> get_dvector(const std::string& colname) const { return columns.at(colname)->dvalues(); }
-    std::vector<int> get_ivector(const std::string& colname) const { return columns.at(colname)->ivalues(); }
+    // Get data vectors of different types
+    std::vector<double> get_dvector(const std::string& colname) const
+    {
+        return columns.at(colname)->dvalues();
+    }
+    std::vector<int> get_ivector(const std::string& colname) const
+    {
+        return columns.at(colname)->ivalues();
+    }
     // Default is to return double values
-    std::vector<double> operator[](const std::string& colname) const { return columns.at(colname)->dvalues(); }
+    std::vector<double> operator[](const std::string& colname) const
+    {
+        return columns.at(colname)->dvalues();
+    }
 
     std::vector<std::string> column_names;
     std::vector<Column> raw_columns;
@@ -116,7 +122,7 @@ struct ColumnData
 
 BOOST_AUTO_TEST_CASE(CheckMassBalanceWithinTRGMBE)
 {
-    //std::string case_name(boost::unit_test::framework::master_test_suite().argv[1]);
+    // std::string case_name(boost::unit_test::framework::master_test_suite().argv[1]);
     std::string case_name("01_TUNING_TRGMBE");
     std::string file_name = case_name + ".INFOITER";
 
@@ -132,23 +138,23 @@ BOOST_AUTO_TEST_CASE(CheckMassBalanceWithinTRGMBE)
     max_mb.reserve(num_reports);
 
 
-           // Find the maximum mass balance error at each converged time step for each report step..
+    // Find the maximum mass balance error at each converged time step for each report step..
     const int nrows = rstep.size();
     int rcur = 0;
     int tcur = 0;
     double max_mb_step = std::numeric_limits<double>::min();
-    for (int i=0; i<(nrows-1); ++i) {
-        if (tcur != tstep[i+1] || rcur != rstep[i+1]) {
+    for (int i = 0; i < (nrows - 1); ++i) {
+        if (tcur != tstep[i + 1] || rcur != rstep[i + 1]) {
             max_mb_step = std::max({mbo[i], mbw[i], mbg[i], max_mb_step});
-            tcur = tstep[i+1];
+            tcur = tstep[i + 1];
         }
-        if (rcur != rstep[i+1]) {
+        if (rcur != rstep[i + 1]) {
             max_mb.push_back(max_mb_step);
             max_mb_step = std::numeric_limits<double>::min();
-            rcur = rstep[i+1];
+            rcur = rstep[i + 1];
         }
     }
-    max_mb.push_back( std::max({mbo.back(), mbw.back(), mbg.back(), max_mb_step}) );
+    max_mb.push_back(std::max({mbo.back(), mbw.back(), mbg.back(), max_mb_step}));
 
     BOOST_TEST_MESSAGE("---------------------------------------------------------------------------");
     BOOST_TEST_MESSAGE("Found the following converged max mass balance error (per report step):");
@@ -157,7 +163,7 @@ BOOST_AUTO_TEST_CASE(CheckMassBalanceWithinTRGMBE)
     BOOST_TEST_MESSAGE("---------------------------------------------------------------------------");
 
 
-    BOOST_CHECK_MESSAGE( max_mb[0] < 1.0e-7, "max_mb[0] (= " << max_mb[0] << ") is not strictly less than 1.0e-7" );
-    BOOST_CHECK_MESSAGE( max_mb[1] < 1.0e-8, "max_mb[1] (= " << max_mb[1] << ") is not strictly less than 1.0e-8"  );
-    BOOST_CHECK_MESSAGE( max_mb[2] < 1.0e-10, "max_mb[2] (= " << max_mb[1] << ") is not strictly less than 1.0e-10"  );
+    BOOST_CHECK_MESSAGE(max_mb[0] < 1.0e-7, "max_mb[0] (= " << max_mb[0] << ") is not strictly less than 1.0e-7");
+    BOOST_CHECK_MESSAGE(max_mb[1] < 1.0e-8, "max_mb[1] (= " << max_mb[1] << ") is not strictly less than 1.0e-8");
+    BOOST_CHECK_MESSAGE(max_mb[2] < 1.0e-10, "max_mb[2] (= " << max_mb[1] << ") is not strictly less than 1.0e-10");
 }

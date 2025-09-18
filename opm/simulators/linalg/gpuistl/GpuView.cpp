@@ -16,9 +16,9 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
+#include <algorithm>
 #include <cuda.h>
 #include <cuda_runtime.h>
-#include <algorithm>
 #include <fmt/core.h>
 #include <opm/simulators/linalg/gpuistl/GpuView.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>

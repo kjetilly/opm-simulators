@@ -29,36 +29,36 @@
 #include <functional>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 class TracerConfig;
 
-template<class FluidSystem>
+template <class FluidSystem>
 class TracerContainer
 {
     using Scalar = typename FluidSystem::Scalar;
     using ScalarBuffer = std::vector<Scalar>;
 
 public:
-    void allocate(const unsigned bufferSize,
-                  const TracerConfig& tracers);
+    void allocate(const unsigned bufferSize, const TracerConfig& tracers);
 
     using AssignFunction = std::function<Scalar(const unsigned)>;
 
-    void assignFreeConcentrations(const unsigned globalDofIdx,
-                                  const AssignFunction& concentration);
+    void assignFreeConcentrations(const unsigned globalDofIdx, const AssignFunction& concentration);
 
-    void assignSolConcentrations(const unsigned globalDofIdx,
-                                 const AssignFunction& concentration);
+    void assignSolConcentrations(const unsigned globalDofIdx, const AssignFunction& concentration);
 
-    void outputRestart(data::Solution& sol,
-                       const TracerConfig& tracers);
+    void outputRestart(data::Solution& sol, const TracerConfig& tracers);
 
 private:
-    std::vector<ScalarBuffer> freeConcentrations_{};
-    std::vector<ScalarBuffer> solConcentrations_{};
-    bool allocated_{false};
+    std::vector<ScalarBuffer> freeConcentrations_ {};
+    std::vector<ScalarBuffer> solConcentrations_ {};
+    bool allocated_ {false};
 };
 
 } // namespace Opm

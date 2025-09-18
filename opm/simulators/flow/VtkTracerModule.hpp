@@ -39,143 +39,148 @@
 #include <string>
 #include <vector>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteTracerConcentration { static constexpr bool value = false; };
+struct VtkWriteTracerConcentration {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
+
+/*!
+ * \ingroup Vtk
+ *
+ * \brief VTK output module for the tracer model's parameters.
+ */
+template <class TypeTag>
+class VtkTracerModule : public BaseOutputModule<TypeTag>
+{
+    using ParentType = BaseOutputModule<TypeTag>;
+
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using Evaluation = GetPropType<TypeTag, Properties::Evaluation>;
+    using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
+
+    using GridView = GetPropType<TypeTag, Properties::GridView>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+
+    static constexpr auto vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
+    using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
+
+    using BufferType = typename ParentType::BufferType;
+    using ScalarBuffer = typename ParentType::ScalarBuffer;
+
+public:
+    explicit VtkTracerModule(const Simulator& simulator)
+        : ParentType(simulator)
+    {
+    }
 
     /*!
-     * \ingroup Vtk
-     *
-     * \brief VTK output module for the tracer model's parameters.
+     * \brief Register all run-time parameters for the tracer VTK output
+     * module.
      */
-    template <class TypeTag>
-    class VtkTracerModule : public BaseOutputModule<TypeTag>
+    static void registerParameters()
     {
-        using ParentType = BaseOutputModule<TypeTag>;
+        Parameters::Register<Parameters::VtkWriteTracerConcentration>(
+            "Include the tracer concentration in the VTK output files");
+    }
 
-        using Simulator = GetPropType<TypeTag, Properties::Simulator>;
-        using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-        using Evaluation = GetPropType<TypeTag, Properties::Evaluation>;
-        using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
-
-        using GridView = GetPropType<TypeTag, Properties::GridView>;
-        using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-
-        static constexpr auto vtkFormat = getPropValue<TypeTag, Properties::VtkOutputFormat>();
-        using VtkMultiWriter = ::Opm::VtkMultiWriter<GridView, vtkFormat>;
-
-        using BufferType = typename ParentType::BufferType;
-        using ScalarBuffer = typename ParentType::ScalarBuffer;
-
-    public:
-        explicit VtkTracerModule(const Simulator& simulator)
-            : ParentType(simulator)
-        {}
-
-        /*!
-         * \brief Register all run-time parameters for the tracer VTK output
-         * module.
-         */
-        static void registerParameters()
-        {
-            Parameters::Register<Parameters::VtkWriteTracerConcentration>
-                ("Include the tracer concentration in the VTK output files");
-        }
-
-        /*!
+    /*!
      * \brief Allocate memory for the scalar fields we would like to
      *        write to the VTK file.
      */
-        void allocBuffers() override
-        {
-            if (eclTracerConcentrationOutput_()) {
-                const auto& tracerModel = this->simulator_.problem().tracerModel();
-                eclFreeTracerConcentration_.resize(tracerModel.numTracers());
-                eclSolTracerConcentration_.resize(tracerModel.numTracers());
-                const auto& enableSolTracers = tracerModel.enableSolTracers();
+    void allocBuffers() override
+    {
+        if (eclTracerConcentrationOutput_()) {
+            const auto& tracerModel = this->simulator_.problem().tracerModel();
+            eclFreeTracerConcentration_.resize(tracerModel.numTracers());
+            eclSolTracerConcentration_.resize(tracerModel.numTracers());
+            const auto& enableSolTracers = tracerModel.enableSolTracers();
 
-                for (std::size_t tracerIdx = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
-                    this->resizeScalarBuffer_(eclFreeTracerConcentration_[tracerIdx], BufferType::Dof);
-                    if (enableSolTracers[tracerIdx]) {
-                        this->resizeScalarBuffer_(eclSolTracerConcentration_[tracerIdx], BufferType::Dof);
-                    }
+            for (std::size_t tracerIdx = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
+                this->resizeScalarBuffer_(eclFreeTracerConcentration_[tracerIdx], BufferType::Dof);
+                if (enableSolTracers[tracerIdx]) {
+                    this->resizeScalarBuffer_(eclSolTracerConcentration_[tracerIdx], BufferType::Dof);
                 }
             }
         }
+    }
 
-        /*!
+    /*!
      * \brief Modify the internal buffers according to the intensive quantities relevant for
      *        an element
      */
-        void processElement(const ElementContext& elemCtx) override
-        {
-            if (!Parameters::Get<Parameters::EnableVtkOutput>()) {
-                return;
-            }
+    void processElement(const ElementContext& elemCtx) override
+    {
+        if (!Parameters::Get<Parameters::EnableVtkOutput>()) {
+            return;
+        }
 
-            if (eclTracerConcentrationOutput_()) {
-                const auto& tracerModel = elemCtx.problem().tracerModel();
-                const auto& enableSolTracers = tracerModel.enableSolTracers();
+        if (eclTracerConcentrationOutput_()) {
+            const auto& tracerModel = elemCtx.problem().tracerModel();
+            const auto& enableSolTracers = tracerModel.enableSolTracers();
 
-                for (std::size_t tracerIdx  = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
-                    // free tracer
+            for (std::size_t tracerIdx = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
+                // free tracer
+                for (unsigned dofIdx = 0; dofIdx < elemCtx.numPrimaryDof(/*timeIdx=*/0); ++dofIdx) {
+                    const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
+                    eclFreeTracerConcentration_[tracerIdx][globalDofIdx]
+                        = tracerModel.freeTracerConcentration(tracerIdx, globalDofIdx);
+                }
+                // solution tracer (only if it exist)
+                if (enableSolTracers[tracerIdx]) {
                     for (unsigned dofIdx = 0; dofIdx < elemCtx.numPrimaryDof(/*timeIdx=*/0); ++dofIdx) {
                         const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
-                        eclFreeTracerConcentration_[tracerIdx][globalDofIdx] =
-                            tracerModel.freeTracerConcentration(tracerIdx, globalDofIdx);
-                    }
-                    // solution tracer (only if it exist)
-                    if (enableSolTracers[tracerIdx]) {
-                        for (unsigned dofIdx = 0; dofIdx < elemCtx.numPrimaryDof(/*timeIdx=*/0); ++dofIdx) {
-                            const unsigned globalDofIdx = elemCtx.globalSpaceIndex(dofIdx, /*timeIdx=*/0);
-                            eclSolTracerConcentration_[tracerIdx][globalDofIdx] =
-                                tracerModel.solTracerConcentration(tracerIdx, globalDofIdx);
-                        }
+                        eclSolTracerConcentration_[tracerIdx][globalDofIdx]
+                            = tracerModel.solTracerConcentration(tracerIdx, globalDofIdx);
                     }
                 }
             }
         }
+    }
 
-        /*!
+    /*!
      * \brief Add all buffers to the VTK output writer.
      */
-        void commitBuffers(BaseOutputWriter& baseWriter) override
-        {
-            if (!dynamic_cast<VtkMultiWriter*>(&baseWriter))
-                return;
+    void commitBuffers(BaseOutputWriter& baseWriter) override
+    {
+        if (!dynamic_cast<VtkMultiWriter*>(&baseWriter))
+            return;
 
-            if (eclTracerConcentrationOutput_()){
-                const auto& tracerModel = this->simulator_.problem().tracerModel();
-                const auto& enableSolTracers = tracerModel.enableSolTracers();
+        if (eclTracerConcentrationOutput_()) {
+            const auto& tracerModel = this->simulator_.problem().tracerModel();
+            const auto& enableSolTracers = tracerModel.enableSolTracers();
 
-                for (std::size_t tracerIdx = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
-                    const std::string tmp = "freeTracerConcentration_" + tracerModel.name(tracerIdx);
-                    this->commitScalarBuffer_(baseWriter, tmp.c_str(),
-                                              eclFreeTracerConcentration_[tracerIdx], BufferType::Dof);
-                    if (enableSolTracers[tracerIdx]) {
-                        const std::string tmp2 = "solTracerConcentration_" + tracerModel.name(tracerIdx);
-                        this->commitScalarBuffer_(baseWriter, tmp2.c_str(),
-                                                  eclSolTracerConcentration_[tracerIdx], BufferType::Dof);
-                    }
+            for (std::size_t tracerIdx = 0; tracerIdx < eclFreeTracerConcentration_.size(); ++tracerIdx) {
+                const std::string tmp = "freeTracerConcentration_" + tracerModel.name(tracerIdx);
+                this->commitScalarBuffer_(
+                    baseWriter, tmp.c_str(), eclFreeTracerConcentration_[tracerIdx], BufferType::Dof);
+                if (enableSolTracers[tracerIdx]) {
+                    const std::string tmp2 = "solTracerConcentration_" + tracerModel.name(tracerIdx);
+                    this->commitScalarBuffer_(
+                        baseWriter, tmp2.c_str(), eclSolTracerConcentration_[tracerIdx], BufferType::Dof);
                 }
             }
         }
+    }
 
-    private:
-        static bool eclTracerConcentrationOutput_()
-        {
-            static bool val = Parameters::Get<Parameters::VtkWriteTracerConcentration>();
-            return val;
-        }
+private:
+    static bool eclTracerConcentrationOutput_()
+    {
+        static bool val = Parameters::Get<Parameters::VtkWriteTracerConcentration>();
+        return val;
+    }
 
-        std::vector<ScalarBuffer> eclFreeTracerConcentration_;
-        std::vector<ScalarBuffer> eclSolTracerConcentration_;
-    };
+    std::vector<ScalarBuffer> eclFreeTracerConcentration_;
+    std::vector<ScalarBuffer> eclSolTracerConcentration_;
+};
 
 } // namespace Opm
 

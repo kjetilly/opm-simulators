@@ -27,34 +27,40 @@
  */
 #include "config.h"
 
+#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
-#include <opm/models/discretization/ecfv/ecfvdiscretization.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/richardslensproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
-struct RichardsLensEcfvProblem
-{ using InheritsFrom = std::tuple<RichardsLensProblem>; };
+namespace TTag
+{
+    struct RichardsLensEcfvProblem {
+        using InheritsFrom = std::tuple<RichardsLensProblem>;
+    };
 
 } // end namespace TTag
 
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::RichardsLensEcfvProblem>
-{ using type = TTag::EcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::RichardsLensEcfvProblem> {
+    using type = TTag::EcfvDiscretization;
+};
 
 //! Use automatic differentiation to linearize the system of PDEs
-template<class TypeTag>
-struct LocalLinearizerSplice<TypeTag, TTag::RichardsLensEcfvProblem>
-{ using type = TTag::AutoDiffLocalLinearizer; };
+template <class TypeTag>
+struct LocalLinearizerSplice<TypeTag, TTag::RichardsLensEcfvProblem> {
+    using type = TTag::AutoDiffLocalLinearizer;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::RichardsLensEcfvProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

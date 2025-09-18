@@ -26,28 +26,31 @@
 
 #include <opm/models/utils/parametersystem.hpp>
 
-namespace Opm {
-
-void VtkBlackOilBioeffectsParams::registerParameters(const bool isMICP)
+namespace Opm
 {
-    Parameters::Register<Parameters::VtkWriteMicrobialConcentration>
-        ("Include the concentration of the microbial component in the water phase "
-         "in the VTK output files");
-    Parameters::Register<Parameters::VtkWriteBiofilmConcentration>
-        ("Include the biofilm volume fraction in the VTK output files");
+
+void
+VtkBlackOilBioeffectsParams::registerParameters(const bool isMICP)
+{
+    Parameters::Register<Parameters::VtkWriteMicrobialConcentration>(
+        "Include the concentration of the microbial component in the water phase "
+        "in the VTK output files");
+    Parameters::Register<Parameters::VtkWriteBiofilmConcentration>(
+        "Include the biofilm volume fraction in the VTK output files");
     if (isMICP) {
-        Parameters::Register<Parameters::VtkWriteOxygenConcentration>
-            ("Include the concentration of the oxygen component in the water phase "
+        Parameters::Register<Parameters::VtkWriteOxygenConcentration>(
+            "Include the concentration of the oxygen component in the water phase "
             "in the VTK output files");
-        Parameters::Register<Parameters::VtkWriteUreaConcentration>
-            ("Include the concentration of the urea component in the water phase "
+        Parameters::Register<Parameters::VtkWriteUreaConcentration>(
+            "Include the concentration of the urea component in the water phase "
             "in the VTK output files");
-        Parameters::Register<Parameters::VtkWriteCalciteConcentration>
-            ("Include the calcite volume fraction in the VTK output files");
+        Parameters::Register<Parameters::VtkWriteCalciteConcentration>(
+            "Include the calcite volume fraction in the VTK output files");
     }
 }
 
-void VtkBlackOilBioeffectsParams::read(const bool isMICP)
+void
+VtkBlackOilBioeffectsParams::read(const bool isMICP)
 {
     microbialConcentrationOutput_ = Parameters::Get<Parameters::VtkWriteMicrobialConcentration>();
     biofilmConcentrationOutput_ = Parameters::Get<Parameters::VtkWriteBiofilmConcentration>();

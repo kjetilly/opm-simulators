@@ -21,7 +21,8 @@
 
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
 class EclipseState;
 class Schedule;
@@ -30,8 +31,9 @@ class UDQState;
 class WellTestState;
 class TransMult;
 
-namespace Action {
-class State;
+namespace Action
+{
+    class State;
 }
 
 /*! \brief Broadcasts an eclipse state from root node in parallel runs.
@@ -42,7 +44,7 @@ class State;
  *! \param udqState UDQ state to broadcast
  *! \param actionState Action state to broadcast
  *! \param wtestState Well test state to broadcast
-*/
+ */
 void eclStateBroadcast(Parallel::Communication comm,
                        EclipseState& eclState,
                        Schedule& schedule,
@@ -53,11 +55,12 @@ void eclStateBroadcast(Parallel::Communication comm,
 
 
 template <class T>
-void eclBroadcast(Parallel::Communication, T& )
+void eclBroadcast(Parallel::Communication, T&)
 #if HAVE_MPI
-;
+    ;
 #else
-{}
+{
+}
 #endif
 
 

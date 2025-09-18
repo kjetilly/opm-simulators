@@ -24,9 +24,9 @@
 #include <config.h>
 #include <opm/simulators/flow/FlowGenericVanguard.hpp>
 
-#include <dune/common/version.hh>
 #include <dune/common/parallel/mpihelper.hh>
 #include <dune/common/timer.hh>
+#include <dune/common/version.hh>
 
 #include <opm/common/utility/MemPacker.hpp>
 #include <opm/common/utility/Serializer.hpp>
@@ -42,32 +42,35 @@
 
 #include <opm/input/eclipse/Python/Python.hpp>
 
-#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/ASTNode.hpp>
+#include <opm/input/eclipse/Schedule/Action/Actions.hpp>
 #include <opm/input/eclipse/Schedule/Action/State.hpp>
 #include <opm/input/eclipse/Schedule/GasLiftOpt.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSale.hpp>
 #include <opm/input/eclipse/Schedule/Group/GConSump.hpp>
+#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/Schedule/Group/GroupEconProductionLimits.hpp>
 #include <opm/input/eclipse/Schedule/Group/GroupSatelliteInjection.hpp>
-#include <opm/input/eclipse/Schedule/Group/GSatProd.hpp>
 #include <opm/input/eclipse/Schedule/Group/GuideRateConfig.hpp>
+#include <opm/input/eclipse/Schedule/MSW/WellSegments.hpp>
 #include <opm/input/eclipse/Schedule/Network/Balance.hpp>
 #include <opm/input/eclipse/Schedule/Network/ExtNetwork.hpp>
-#include <opm/input/eclipse/Schedule/MSW/WellSegments.hpp>
 #include <opm/input/eclipse/Schedule/OilVaporizationProperties.hpp>
-#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/RFTConfig.hpp>
 #include <opm/input/eclipse/Schedule/RPTConfig.hpp>
+#include <opm/input/eclipse/Schedule/ResCoup/ReservoirCouplingInfo.hpp>
 #include <opm/input/eclipse/Schedule/Schedule.hpp>
 #include <opm/input/eclipse/Schedule/SummaryState.hpp>
-#include <opm/input/eclipse/Schedule/UDQ/UDQActive.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQASTNode.hpp>
+#include <opm/input/eclipse/Schedule/UDQ/UDQActive.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQConfig.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQParams.hpp>
 #include <opm/input/eclipse/Schedule/UDQ/UDQState.hpp>
 #include <opm/input/eclipse/Schedule/Well/NameOrder.hpp>
 #include <opm/input/eclipse/Schedule/Well/WDFAC.hpp>
+#include <opm/input/eclipse/Schedule/Well/WListManager.hpp>
+#include <opm/input/eclipse/Schedule/Well/WVFPDP.hpp>
+#include <opm/input/eclipse/Schedule/Well/WVFPEXP.hpp>
 #include <opm/input/eclipse/Schedule/Well/Well.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellBrineProperties.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellConnections.hpp>
@@ -79,9 +82,6 @@
 #include <opm/input/eclipse/Schedule/Well/WellTestConfig.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellTestState.hpp>
 #include <opm/input/eclipse/Schedule/Well/WellTracerProperties.hpp>
-#include <opm/input/eclipse/Schedule/Well/WListManager.hpp>
-#include <opm/input/eclipse/Schedule/Well/WVFPDP.hpp>
-#include <opm/input/eclipse/Schedule/Well/WVFPEXP.hpp>
 
 #include <opm/input/eclipse/Parser/InputErrorAction.hpp>
 
@@ -100,14 +100,16 @@
 
 #include <fmt/format.h>
 
-namespace Opm {
+namespace Opm
+{
 
 std::unique_ptr<Parallel::Communication> FlowGenericVanguard::comm_;
 FlowGenericVanguard::SimulationModelParams FlowGenericVanguard::modelParams_;
 
 FlowGenericVanguard::FlowGenericVanguard()
     : FlowGenericVanguard(std::move(modelParams_))
-{}
+{
+}
 
 FlowGenericVanguard::FlowGenericVanguard(SimulationModelParams&& params)
     : python(std::make_shared<Python>())
@@ -195,7 +197,8 @@ FlowGenericVanguard::serializationTestParams()
 
 FlowGenericVanguard::~FlowGenericVanguard() = default;
 
-void FlowGenericVanguard::defineSimulationModel(SimulationModelParams&& params)
+void
+FlowGenericVanguard::defineSimulationModel(SimulationModelParams&& params)
 {
     actionState_ = std::move(params.actionState_);
     eclSchedule_ = std::move(params.eclSchedule_);
@@ -207,7 +210,8 @@ void FlowGenericVanguard::defineSimulationModel(SimulationModelParams&& params)
     summaryState_ = std::move(params.summaryState_);
 }
 
-void FlowGenericVanguard::readDeck(const std::string& filename)
+void
+FlowGenericVanguard::readDeck(const std::string& filename)
 {
     Dune::Timer setupTimer;
     setupTimer.start();
@@ -220,14 +224,22 @@ void FlowGenericVanguard::readDeck(const std::string& filename)
                   modelParams_.actionState_,
                   modelParams_.wtestState_,
                   modelParams_.eclSummaryConfig_,
-                  nullptr, "normal", "normal", "100", false, false, false, {}, /*slaveMode=*/false);
+                  nullptr,
+                  "normal",
+                  "normal",
+                  "100",
+                  false,
+                  false,
+                  false,
+                  {},
+                  /*slaveMode=*/false);
     modelParams_.setupTime_ = setupTimer.stop();
 }
 
-std::string FlowGenericVanguard::canonicalDeckPath(const std::string& caseName)
+std::string
+FlowGenericVanguard::canonicalDeckPath(const std::string& caseName)
 {
-    const auto fileExists = [](const std::filesystem::path& f) -> bool
-    {
+    const auto fileExists = [](const std::filesystem::path& f) -> bool {
         if (!std::filesystem::exists(f))
             return false;
 
@@ -241,44 +253,40 @@ std::string FlowGenericVanguard::canonicalDeckPath(const std::string& caseName)
     if (fileExists(simcase))
         return simcase.string();
 
-    for (const auto& ext : { std::string("data"), std::string("DATA") }) {
+    for (const auto& ext : {std::string("data"), std::string("DATA")}) {
         if (fileExists(simcase.replace_extension(ext)))
             return simcase.string();
     }
 
-    throw std::invalid_argument("Cannot find input case '"+caseName+"'");
+    throw std::invalid_argument("Cannot find input case '" + caseName + "'");
 }
 
-void FlowGenericVanguard::updateNOSIM_(std::string_view dryRunString)
+void
+FlowGenericVanguard::updateNOSIM_(std::string_view dryRunString)
 {
     try {
         // Possible to force initialization only behavior (NOSIM).
         if (dryRunString != "" && dryRunString != "auto") {
             bool enableDryRun;
-            if (dryRunString == "true"
-                || dryRunString == "t"
-                || dryRunString == "1")
+            if (dryRunString == "true" || dryRunString == "t" || dryRunString == "1")
                 enableDryRun = true;
-            else if (dryRunString == "false"
-                        || dryRunString == "f"
-                        || dryRunString == "0")
+            else if (dryRunString == "false" || dryRunString == "f" || dryRunString == "0")
                 enableDryRun = false;
             else
-                throw std::invalid_argument("Invalid value for parameter EnableDryRun: '"
-                                            + std::string(dryRunString) + "'");
+                throw std::invalid_argument("Invalid value for parameter EnableDryRun: '" + std::string(dryRunString)
+                                            + "'");
             auto& ioConfig = eclState().getIOConfig();
             ioConfig.overrideNOSIM(enableDryRun);
         }
-    }
-    catch (const std::invalid_argument& e) {
+    } catch (const std::invalid_argument& e) {
         std::cerr << "Failed to create valid EclipseState object" << std::endl;
         std::cerr << "Exception caught: " << e.what() << std::endl;
         throw;
     }
 }
 
-void FlowGenericVanguard::updateOutputDir_(std::string outputDir,
-                                           bool enableEclCompatFile)
+void
+FlowGenericVanguard::updateOutputDir_(std::string outputDir, bool enableEclCompatFile)
 {
     // update the location for output
     auto& ioConfig = eclState_->getIOConfig();
@@ -292,9 +300,8 @@ void FlowGenericVanguard::updateOutputDir_(std::string outputDir,
     if (!std::filesystem::is_directory(outputDir)) {
         try {
             std::filesystem::create_directories(outputDir);
-        }
-        catch (...) {
-            throw std::runtime_error("Creation of output directory '"+outputDir+"' failed\n");
+        } catch (...) {
+            throw std::runtime_error("Creation of output directory '" + outputDir + "' failed\n");
         }
     }
 
@@ -305,26 +312,27 @@ void FlowGenericVanguard::updateOutputDir_(std::string outputDir,
     ioConfig.setEclCompatibleRST(enableEclCompatFile);
 }
 
-void FlowGenericVanguard::init()
+void
+FlowGenericVanguard::init()
 {
     // Make proper case name.
     {
         if (fileName_.empty())
             throw std::runtime_error("No input deck file has been specified as a command line argument,"
-                                        " or via '--ecl-deck-file-name=CASE.DATA'");
+                                     " or via '--ecl-deck-file-name=CASE.DATA'");
 
         fileName_ = canonicalDeckPath(fileName_);
 
         // compute the base name of the input file name
         const char directorySeparator = '/';
         long int i;
-        for (i = fileName_.size(); i >= 0; -- i)
+        for (i = fileName_.size(); i >= 0; --i)
             if (fileName_[i] == directorySeparator)
                 break;
         std::string baseName = fileName_.substr(i + 1, fileName_.size());
 
         // remove the extension from the input file
-        for (i = baseName.size(); i >= 0; -- i)
+        for (i = baseName.size(); i >= 0; --i)
             if (baseName[i] == '.')
                 break;
         std::string rawCaseName;
@@ -339,56 +347,50 @@ void FlowGenericVanguard::init()
     }
 
     // set communicator if not set as in opm flow
-    if(!comm_){
+    if (!comm_) {
         FlowGenericVanguard::setCommunication(std::make_unique<Parallel::Communication>());
     }
-    
+
     // set eclState if not already set as in opm flow
     // it means that setParams is called
-    if(!eclState_){
+    if (!eclState_) {
         this->readDeck(fileName_);
         this->defineSimulationModel(std::move(this->modelParams_));
     }
 
-    
+
     if (!this->summaryState_) {
-        this->summaryState_ = std::make_unique<SummaryState>
-            (TimeService::from_time_t(this->eclSchedule_->getStartTime()),
-             this->eclState_->runspec().udqParams().undefinedValue());
+        this->summaryState_
+            = std::make_unique<SummaryState>(TimeService::from_time_t(this->eclSchedule_->getStartTime()),
+                                             this->eclState_->runspec().udqParams().undefinedValue());
     }
 
     // Initialize parallelWells with all local wells
     const auto& schedule_wells = schedule().getWellsatEnd();
     parallelWells_.reserve(schedule_wells.size());
 
-    for (const auto& well: schedule_wells)
-    {
+    for (const auto& well : schedule_wells) {
         parallelWells_.emplace_back(well.name(), true);
     }
     std::sort(parallelWells_.begin(), parallelWells_.end());
 
     // Check whether allowing distribute wells makes sense
-    if (enableDistributedWells() )
-    {
+    if (enableDistributedWells()) {
         int hasMsWell = false;
         const auto& comm = FlowGenericVanguard::comm();
 
-        if (useMultisegmentWell_)
-        {
-            if (comm.rank() == 0)
-            {
+        if (useMultisegmentWell_) {
+            if (comm.rank() == 0) {
                 const auto& wells = this->schedule().getWellsatEnd();
-                hasMsWell = std::any_of(wells.begin(), wells.end(),
-                                        [](const auto& well) { return well.isMultiSegment(); });
+                hasMsWell
+                    = std::any_of(wells.begin(), wells.end(), [](const auto& well) { return well.isMultiSegment(); });
             }
         }
 
         hasMsWell = comm.max(hasMsWell);
 
-        if (hasMsWell)
-        {
-            if (comm.rank() == 0)
-            {
+        if (hasMsWell) {
+            if (comm.rank() == 0) {
                 OpmLog::info("Option --allow-distributed-wells=true in a model with\n"
                              "multisegment wells. This feature is still experimental. You can\n"
                              "set --use-multisegment-well=false to treat the existing\n"
@@ -399,25 +401,23 @@ void FlowGenericVanguard::init()
     }
 }
 
-bool FlowGenericVanguard::drsdtconEnabled() const
+bool
+FlowGenericVanguard::drsdtconEnabled() const
 {
-    return std::any_of(this->schedule().begin(), this->schedule().end(),
-                       [](const auto& schIt)
-                       {
-                           return schIt.oilvap().getType() ==
-                              OilVaporizationProperties::OilVaporization::DRSDTCON;
-                       });
+    return std::any_of(this->schedule().begin(), this->schedule().end(), [](const auto& schIt) {
+        return schIt.oilvap().getType() == OilVaporizationProperties::OilVaporization::DRSDTCON;
+    });
 }
 
 std::unordered_map<size_t, const NumericalAquiferCell*>
 FlowGenericVanguard::allAquiferCells() const
 {
-  return this->eclState_->aquifer().numericalAquifers().allAquiferCells();
+    return this->eclState_->aquifer().numericalAquifers().allAquiferCells();
 }
 
-template<>
-void FlowGenericVanguard::
-serializeOp<Serializer<Serialization::MemPacker>>(Serializer<Serialization::MemPacker>& serializer)
+template <>
+void
+FlowGenericVanguard::serializeOp<Serializer<Serialization::MemPacker>>(Serializer<Serialization::MemPacker>& serializer)
 {
     serializer(*summaryState_);
     serializer(*udqState_);
@@ -425,10 +425,10 @@ serializeOp<Serializer<Serialization::MemPacker>>(Serializer<Serialization::MemP
     serializer(*eclSchedule_);
 }
 
-bool FlowGenericVanguard::operator==(const FlowGenericVanguard& rhs) const
+bool
+FlowGenericVanguard::operator==(const FlowGenericVanguard& rhs) const
 {
-    auto cmp_ptr = [](const auto& a, const auto& b)
-    {
+    auto cmp_ptr = [](const auto& a, const auto& b) {
         if (!a && !b) {
             return true;
         }
@@ -440,95 +440,85 @@ bool FlowGenericVanguard::operator==(const FlowGenericVanguard& rhs) const
         return false;
     };
     return cmp_ptr(this->summaryState_, rhs.summaryState_);
-           cmp_ptr(this->udqState_, rhs.udqState_) &&
-           cmp_ptr(this->actionState_, rhs.actionState_) &&
-           cmp_ptr(this->eclSchedule_, rhs.eclSchedule_);
+    cmp_ptr(this->udqState_, rhs.udqState_) && cmp_ptr(this->actionState_, rhs.actionState_)
+        && cmp_ptr(this->eclSchedule_, rhs.eclSchedule_);
 }
 
-template<class Scalar>
-void FlowGenericVanguard::registerParameters_()
+template <class Scalar>
+void
+FlowGenericVanguard::registerParameters_()
 {
-    Parameters::Register<Parameters::EclDeckFileName>
-        ("The name of the file which contains the ECL deck to be simulated");
-    Parameters::Register<Parameters::EclOutputInterval>
-        ("The number of report steps that ought to be skipped between two writes of ECL results");
-    Parameters::Register<Parameters::EnableDryRun>
-        ("Specify if the simulation ought to be actually run, or just pretended to be");
-    Parameters::Register<Parameters::EnableEclOutput>
-        ("Write binary output which is compatible with the commercial Eclipse simulator");
-    Parameters::Register<Parameters::EnableOpmRstFile>
-        ("Include OPM-specific keywords in the ECL restart file to "
-         "enable restart of OPM simulators from these files");
-    Parameters::Register<Parameters::IgnoreKeywords>
-        ("List of Eclipse keywords which should be ignored. As a ':' separated string.");
-    Parameters::Register<Parameters::ParsingStrictness>
-        ("Set strictness of parsing process. Available options are "
-         "normal (stop for critical errors), "
-         "high (stop for all errors) and "
-         "low (as normal, except do not stop due to unsupported "
-         "keywords even if marked critical");
-    Parameters::Register<Parameters::ActionParsingStrictness>
-        ("Set strictness of parsing process for ActionX and PyAction. Available options are "
-         "normal (do not apply keywords that have not been tested for ActionX or PyAction) and "
-         "low (try to apply all keywords, beware: the simulation outcome might be incorrect).");
-    Parameters::Register<Parameters::InputSkipMode>
-        ("Set compatibility mode for the SKIP100/SKIP300 keywords. Options are "
-         "100 (skip SKIP100..ENDSKIP, keep SKIP300..ENDSKIP) [default], "
-         "300 (skip SKIP300..ENDSKIP, keep SKIP100..ENDSKIP) and "
-         "all (skip both SKIP100..ENDSKIP and SKIP300..ENDSKIP) ");
-    Parameters::Register<Parameters::SchedRestart>
-        ("When restarting: should we try to initialize wells and "
-         "groups from historical SCHEDULE section.");
-    Parameters::Register<Parameters::EdgeWeightsMethod>
-        ("Choose edge-weighing strategy: 'uniform', 'transmissibility', or 'logtrans' (logarithm of transmissibility).");
+    Parameters::Register<Parameters::EclDeckFileName>(
+        "The name of the file which contains the ECL deck to be simulated");
+    Parameters::Register<Parameters::EclOutputInterval>(
+        "The number of report steps that ought to be skipped between two writes of ECL results");
+    Parameters::Register<Parameters::EnableDryRun>(
+        "Specify if the simulation ought to be actually run, or just pretended to be");
+    Parameters::Register<Parameters::EnableEclOutput>(
+        "Write binary output which is compatible with the commercial Eclipse simulator");
+    Parameters::Register<Parameters::EnableOpmRstFile>("Include OPM-specific keywords in the ECL restart file to "
+                                                       "enable restart of OPM simulators from these files");
+    Parameters::Register<Parameters::IgnoreKeywords>(
+        "List of Eclipse keywords which should be ignored. As a ':' separated string.");
+    Parameters::Register<Parameters::ParsingStrictness>("Set strictness of parsing process. Available options are "
+                                                        "normal (stop for critical errors), "
+                                                        "high (stop for all errors) and "
+                                                        "low (as normal, except do not stop due to unsupported "
+                                                        "keywords even if marked critical");
+    Parameters::Register<Parameters::ActionParsingStrictness>(
+        "Set strictness of parsing process for ActionX and PyAction. Available options are "
+        "normal (do not apply keywords that have not been tested for ActionX or PyAction) and "
+        "low (try to apply all keywords, beware: the simulation outcome might be incorrect).");
+    Parameters::Register<Parameters::InputSkipMode>(
+        "Set compatibility mode for the SKIP100/SKIP300 keywords. Options are "
+        "100 (skip SKIP100..ENDSKIP, keep SKIP300..ENDSKIP) [default], "
+        "300 (skip SKIP300..ENDSKIP, keep SKIP100..ENDSKIP) and "
+        "all (skip both SKIP100..ENDSKIP and SKIP300..ENDSKIP) ");
+    Parameters::Register<Parameters::SchedRestart>("When restarting: should we try to initialize wells and "
+                                                   "groups from historical SCHEDULE section.");
+    Parameters::Register<Parameters::EdgeWeightsMethod>(
+        "Choose edge-weighing strategy: 'uniform', 'transmissibility', or 'logtrans' (logarithm of transmissibility).");
 
 #if HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
-    Parameters::Register<Parameters::NumJacobiBlocks>
-        ("Number of blocks to be created for the Block-Jacobi preconditioner.");
+    Parameters::Register<Parameters::NumJacobiBlocks>(
+        "Number of blocks to be created for the Block-Jacobi preconditioner.");
 #endif // HAVE_OPENCL || HAVE_ROCSPARSE || HAVE_CUDA
 
-    Parameters::Register<Parameters::OwnerCellsFirst>
-        ("Order cells owned by rank before ghost/overlap cells.");
-    Parameters::Register<Parameters::EdgeConformal>
-        ("Edge conformal cornerpoint processing.");
+    Parameters::Register<Parameters::OwnerCellsFirst>("Order cells owned by rank before ghost/overlap cells.");
+    Parameters::Register<Parameters::EdgeConformal>("Edge conformal cornerpoint processing.");
 
 #if HAVE_MPI
-    Parameters::Register<Parameters::AddCorners>
-        ("Add corners to partition.");
-    Parameters::Register<Parameters::NumOverlap>
-        ("Numbers of layers overlap in parallel partition");
-    Parameters::Register<Parameters::PartitionMethod>
-        ("Choose partitioning method: 'simple', 'zoltan', 'metis', or "
-         "'zoltanwell' (Zoltan with all cells perforated by a well represented by a single vertex).");
-    Parameters::Register<Parameters::SerialPartitioning>
-        ("Perform partitioning for parallel runs on a single process.");
-    Parameters::Register<Parameters::ZoltanImbalanceTol<Scalar>>
-        ("Tolerable imbalance of the loadbalancing provided by Zoltan. "
-         "DEPRECATED: Use --imbalance-tol instead.");
-    Parameters::Register<Parameters::ZoltanParams>
-        ("Configuration of Zoltan partitioner. "
-         "Valid options are: graph, hypergraph or scotch. "
-         "Alternatively, you can request a configuration to be read "
-         "from a JSON file by giving the filename here, with extension '.json'. "
-         "See https://sandialabs.github.io/Zoltan/ug_html/ug.html "
-         "for available Zoltan options.");
-    Parameters::Register<Parameters::ImbalanceTol<Scalar>>
-        ("Tolerable imbalance of the loadbalancing.");
-    Parameters::Register<Parameters::ZoltanPhgEdgeSizeThreshold>
-        ("Low-level threshold fraction in the range [0,1] controlling "
-         "which hypergraph edge to omit. Used if --zoltan-params=\"graph\" "
-         "or if --zoltan-params=\"hypergraph\".");
-    Parameters::Register<Parameters::MetisParams>
-        ("Configuration of Metis partitioner. "
-         "You can request a configuration to be read "
-         "from a JSON file by giving the filename here, with extension '.json'. "
-         "See http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/manual.pdf "
-         "for available METIS options.");
-    Parameters::Register<Parameters::ExternalPartition>
-        ("Name of file from which to load an externally generated "
-         "partitioning of the model's active cells for MPI "
-         "distribution purposes. If empty, the built-in partitioning "
-         "method will be employed.");
+    Parameters::Register<Parameters::AddCorners>("Add corners to partition.");
+    Parameters::Register<Parameters::NumOverlap>("Numbers of layers overlap in parallel partition");
+    Parameters::Register<Parameters::PartitionMethod>(
+        "Choose partitioning method: 'simple', 'zoltan', 'metis', or "
+        "'zoltanwell' (Zoltan with all cells perforated by a well represented by a single vertex).");
+    Parameters::Register<Parameters::SerialPartitioning>("Perform partitioning for parallel runs on a single process.");
+    Parameters::Register<Parameters::ZoltanImbalanceTol<Scalar>>(
+        "Tolerable imbalance of the loadbalancing provided by Zoltan. "
+        "DEPRECATED: Use --imbalance-tol instead.");
+    Parameters::Register<Parameters::ZoltanParams>(
+        "Configuration of Zoltan partitioner. "
+        "Valid options are: graph, hypergraph or scotch. "
+        "Alternatively, you can request a configuration to be read "
+        "from a JSON file by giving the filename here, with extension '.json'. "
+        "See https://sandialabs.github.io/Zoltan/ug_html/ug.html "
+        "for available Zoltan options.");
+    Parameters::Register<Parameters::ImbalanceTol<Scalar>>("Tolerable imbalance of the loadbalancing.");
+    Parameters::Register<Parameters::ZoltanPhgEdgeSizeThreshold>(
+        "Low-level threshold fraction in the range [0,1] controlling "
+        "which hypergraph edge to omit. Used if --zoltan-params=\"graph\" "
+        "or if --zoltan-params=\"hypergraph\".");
+    Parameters::Register<Parameters::MetisParams>(
+        "Configuration of Metis partitioner. "
+        "You can request a configuration to be read "
+        "from a JSON file by giving the filename here, with extension '.json'. "
+        "See http://glaros.dtc.umn.edu/gkhome/fetch/sw/metis/manual.pdf "
+        "for available METIS options.");
+    Parameters::Register<Parameters::ExternalPartition>("Name of file from which to load an externally generated "
+                                                        "partitioning of the model's active cells for MPI "
+                                                        "distribution purposes. If empty, the built-in partitioning "
+                                                        "method will be employed.");
     Parameters::Hide<Parameters::ExternalPartition>();
 
     Parameters::Hide<Parameters::ZoltanImbalanceTol<Scalar>>();
@@ -536,13 +526,13 @@ void FlowGenericVanguard::registerParameters_()
     Parameters::Hide<Parameters::ZoltanPhgEdgeSizeThreshold>();
 #endif // HAVE_MPI
 
-    Parameters::Register<Parameters::AllowDistributedWells>
-        ("Allow the perforations of a well to be distributed to interior of multiple processes");
-    Parameters::Register<Parameters::AllowSplittingInactiveWells>
-        ("Allow inactive (never non-shut) wells to be split across multiple domains");
+    Parameters::Register<Parameters::AllowDistributedWells>(
+        "Allow the perforations of a well to be distributed to interior of multiple processes");
+    Parameters::Register<Parameters::AllowSplittingInactiveWells>(
+        "Allow inactive (never non-shut) wells to be split across multiple domains");
     // register here for the use in the tests without BlackoilModelParameters
-    Parameters::Register<Parameters::UseMultisegmentWell>
-        ("Use the well model for multi-segment wells instead of the one for single-segment wells");
+    Parameters::Register<Parameters::UseMultisegmentWell>(
+        "Use the well model for multi-segment wells instead of the one for single-segment wells");
 }
 
 template void FlowGenericVanguard::registerParameters_<double>();

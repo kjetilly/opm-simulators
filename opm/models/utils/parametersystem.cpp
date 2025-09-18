@@ -49,10 +49,10 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
-namespace {
-
-struct ParamInfo
+namespace
 {
+
+struct ParamInfo {
     std::string paramName;
     std::string paramTypeName;
     std::string typeTagName;
@@ -62,28 +62,33 @@ struct ParamInfo
 
     bool operator==(const ParamInfo& other) const
     {
-        return other.paramName == paramName
-            && other.paramTypeName == paramTypeName
-            && other.typeTagName == typeTagName
+        return other.paramName == paramName && other.paramTypeName == paramTypeName && other.typeTagName == typeTagName
             && other.usageString == usageString;
     }
 };
 
-struct MetaData
-{
+struct MetaData {
     using type = Dune::ParameterTree;
 
     static Dune::ParameterTree& tree()
-    { return *storage_().tree; }
+    {
+        return *storage_().tree;
+    }
 
     static std::map<std::string, ParamInfo>& mutableRegistry()
-    { return storage_().registry; }
+    {
+        return storage_().registry;
+    }
 
     static const std::map<std::string, ParamInfo>& registry()
-    { return storage_().registry; }
+    {
+        return storage_().registry;
+    }
 
     static bool& registrationOpen()
-    { return storage_().registrationOpen; }
+    {
+        return storage_().registrationOpen;
+    }
 
     static void clear()
     {
@@ -97,8 +102,7 @@ private:
     // member functions of the ParameterMetaData property class triggers a bug in clang
     // 3.5's address sanitizer which causes these variables to be initialized multiple
     // times...
-    struct Storage_
-    {
+    struct Storage_ {
         Storage_()
             : tree(std::make_unique<Dune::ParameterTree>())
             , registrationOpen(true)
@@ -118,9 +122,8 @@ private:
 };
 
 
-void getFlattenedKeyList(std::vector<std::string>& dest,
-                         const Dune::ParameterTree& tree,
-                         const std::string& prefix = "")
+void
+getFlattenedKeyList(std::vector<std::string>& dest, const Dune::ParameterTree& tree, const std::string& prefix = "")
 {
     // add the keys of the current sub-structure
     for (const auto& valueKey : tree.getValueKeys()) {
@@ -135,16 +138,17 @@ void getFlattenedKeyList(std::vector<std::string>& dest,
     }
 }
 
-std::string parseKey(std::string& s)
+std::string
+parseKey(std::string& s)
 {
-    auto it = std::find_if(s.begin(), s.end(),
-                           [](const char ch) { return std::isspace(ch) || ch == '='; });
+    auto it = std::find_if(s.begin(), s.end(), [](const char ch) { return std::isspace(ch) || ch == '='; });
     std::string ret {s.begin(), it};
     s.erase(s.begin(), it);
     return ret;
 }
 
-std::string parseQuotedValue(std::string& s, const std::string& errorPrefix)
+std::string
+parseQuotedValue(std::string& s, const std::string& errorPrefix)
 {
     if (s.empty() || s[0] != '"') {
         throw std::runtime_error(errorPrefix + "Expected quoted string");
@@ -161,38 +165,46 @@ std::string parseQuotedValue(std::string& s, const std::string& errorPrefix)
             }
 
             switch (s[i]) {
-            case 'n':  result += '\n'; break;
-            case 'r':  result += '\r'; break;
-            case 't':  result += '\t'; break;
-            case '"':  result += '"';  break;
-            case '\\': result += '\\'; break;
-            default:   throw std::runtime_error(errorPrefix +
-                                                "Unknown escape character '\\" + s[i] + "'");
+            case 'n':
+                result += '\n';
+                break;
+            case 'r':
+                result += '\r';
+                break;
+            case 't':
+                result += '\t';
+                break;
+            case '"':
+                result += '"';
+                break;
+            case '\\':
+                result += '\\';
+                break;
+            default:
+                throw std::runtime_error(errorPrefix + "Unknown escape character '\\" + s[i] + "'");
             }
-        }
-        else if (s[i] == '"') {
+        } else if (s[i] == '"') {
             break;
-        }
-        else {
+        } else {
             result += s[i];
         }
     }
 
-    s = s.substr(i+1);
+    s = s.substr(i + 1);
     return result;
 }
 
-std::string parseUnquotedValue(std::string& s, const std::string&)
+std::string
+parseUnquotedValue(std::string& s, const std::string&)
 {
     auto it = std::find_if(s.begin(), s.end(), ::isspace);
-    std::string ret{s.begin(), it};
+    std::string ret {s.begin(), it};
     s.erase(s.begin(), it);
     return ret;
 }
 
-void printParamList(std::ostream& os,
-                    const std::vector<std::string>& keyList,
-                    bool printDefaults = false)
+void
+printParamList(std::ostream& os, const std::vector<std::string>& keyList, bool printDefaults = false)
 {
     const Dune::ParameterTree& tree = MetaData::tree();
 
@@ -210,8 +222,8 @@ void printParamList(std::ostream& os,
     }
 }
 
-void printParamUsage(std::ostream& os,
-                     const ParamInfo& paramInfo)
+void
+printParamUsage(std::ostream& os, const ParamInfo& paramInfo)
 {
     std::string paramMessage;
 
@@ -233,34 +245,27 @@ void printParamUsage(std::ostream& os,
 
     // add the =VALUE_TYPE part
     bool isString = false;
-    if (paramInfo.paramTypeName == Dune::className<std::string>()
-        || paramInfo.paramTypeName == "const char *")
-    {
+    if (paramInfo.paramTypeName == Dune::className<std::string>() || paramInfo.paramTypeName == "const char *") {
         paramMessage += "=STRING";
         isString = true;
-    }
-    else if (paramInfo.paramTypeName == Dune::className<float>()
-             || paramInfo.paramTypeName == Dune::className<double>()
-             || paramInfo.paramTypeName == Dune::className<long double>()
+    } else if (paramInfo.paramTypeName == Dune::className<float>()
+               || paramInfo.paramTypeName == Dune::className<double>()
+               || paramInfo.paramTypeName == Dune::className<long double>()
 #if HAVE_QUAD
-             || paramInfo.paramTypeName == Dune::className<quad>()
+               || paramInfo.paramTypeName == Dune::className<quad>()
 #endif // HAVE_QUAD
-            ) {
+    ) {
         paramMessage += "=SCALAR";
-    }
-    else if (paramInfo.paramTypeName == Dune::className<int>()
-             || paramInfo.paramTypeName == Dune::className<unsigned int>()
-             || paramInfo.paramTypeName == Dune::className<short>()
-             || paramInfo.paramTypeName == Dune::className<unsigned short>()) {
+    } else if (paramInfo.paramTypeName == Dune::className<int>()
+               || paramInfo.paramTypeName == Dune::className<unsigned int>()
+               || paramInfo.paramTypeName == Dune::className<short>()
+               || paramInfo.paramTypeName == Dune::className<unsigned short>()) {
         paramMessage += "=INTEGER";
-    }
-    else if (paramInfo.paramTypeName == Dune::className<bool>()) {
+    } else if (paramInfo.paramTypeName == Dune::className<bool>()) {
         paramMessage += "=BOOLEAN";
-    }
-    else if (paramInfo.paramTypeName.empty()) {
+    } else if (paramInfo.paramTypeName.empty()) {
         // the parameter is a flag. Do nothing!
-    }
-    else {
+    } else {
         // unknown type
         paramMessage += "=VALUE";
     }
@@ -283,17 +288,14 @@ void printParamUsage(std::ostream& os,
         if (paramInfo.paramTypeName == "bool") {
             if (paramInfo.defaultValue == "0") {
                 paramMessage += "false";
-            }
-            else {
+            } else {
                 paramMessage += "true";
             }
-        }
-        else if (isString) {
+        } else if (isString) {
             paramMessage += "\"";
             paramMessage += paramInfo.defaultValue;
             paramMessage += "\"";
-        }
-        else {
+        } else {
             paramMessage += paramInfo.defaultValue;
         }
     }
@@ -305,16 +307,14 @@ void printParamUsage(std::ostream& os,
     os << paramMessage;
 }
 
-void removeLeadingSpace(std::string& s)
+void
+removeLeadingSpace(std::string& s)
 {
-    s.erase(s.begin(),
-            std::find_if(s.begin(), s.end(),
-                         [](const char ch) { return !std::isspace(ch); }));
+    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](const char ch) { return !std::isspace(ch); }));
 }
 
-std::string transformKey(const std::string& s,
-                         bool capitalizeFirstLetter,
-                         const std::string& errorPrefix = "")
+std::string
+transformKey(const std::string& s, bool capitalizeFirstLetter, const std::string& errorPrefix = "")
 {
     std::string result;
 
@@ -323,14 +323,13 @@ std::string transformKey(const std::string& s,
     }
 
     if (!std::isalpha(s[0])) {
-        throw std::runtime_error(errorPrefix +" Parameter name '" + s +
-                                 "' is invalid: First character must be a letter");
+        throw std::runtime_error(errorPrefix + " Parameter name '" + s
+                                 + "' is invalid: First character must be a letter");
     }
 
     if (capitalizeFirstLetter) {
         result += static_cast<char>(std::toupper(s[0]));
-    }
-    else {
+    } else {
         result += s[0];
     }
 
@@ -341,11 +340,9 @@ std::string transformKey(const std::string& s,
                 throw std::runtime_error(errorPrefix + "Invalid parameter name '" + s + "'");
             }
             result += static_cast<char>(std::toupper(s[i]));
-        }
-        else if (!std::isalnum(s[i])) {
+        } else if (!std::isalnum(s[i])) {
             throw std::runtime_error(errorPrefix + "Invalid parameter name '" + s + "'");
-        }
-        else {
+        } else {
             result += s[i];
         }
     }
@@ -355,144 +352,146 @@ std::string transformKey(const std::string& s,
 
 } // anonymous namespace
 
-namespace Opm::Parameters {
-
-namespace detail {
-
-template<class ParamType>
-ParamType Get_(const std::string& paramName, ParamType defaultValue,
-               bool errorIfNotRegistered)
+namespace Opm::Parameters
 {
-    if (errorIfNotRegistered) {
-        if (MetaData::registrationOpen()) {
-            throw std::runtime_error("Parameters can only be retrieved after _all_ of them have "
-                                     "been registered.");
+
+namespace detail
+{
+
+    template <class ParamType>
+    ParamType Get_(const std::string& paramName, ParamType defaultValue, bool errorIfNotRegistered)
+    {
+        if (errorIfNotRegistered) {
+            if (MetaData::registrationOpen()) {
+                throw std::runtime_error("Parameters can only be retrieved after _all_ of them have "
+                                         "been registered.");
+            }
+
+            if (MetaData::registry().find(paramName) == MetaData::registry().end()) {
+                throw std::runtime_error("Accessing parameter " + paramName
+                                         + " without prior registration is not allowed.");
+            }
         }
 
-        if (MetaData::registry().find(paramName) == MetaData::registry().end()) {
-            throw std::runtime_error("Accessing parameter " + paramName +
-                                     " without prior registration is not allowed.");
+        const std::string& defVal = MetaData::mutableRegistry()[paramName].defaultValue;
+        if constexpr (std::is_same_v<ParamType, std::string>) {
+            defaultValue = defVal;
+        } else if constexpr (std::is_same_v<ParamType, bool>) {
+            defaultValue = defVal == "1";
         }
-    }
-
-    const std::string& defVal = MetaData::mutableRegistry()[paramName].defaultValue;
-    if constexpr (std::is_same_v<ParamType, std::string>) {
-        defaultValue = defVal;
-    }
-    else if constexpr (std::is_same_v<ParamType, bool>) {
-        defaultValue = defVal == "1";
-    }
 #if HAVE_QUAD
-    else if constexpr (std::is_same_v<ParamType, quad>) {
-        defaultValue = std::strtold(defVal.data(), nullptr);
-    }
+        else if constexpr (std::is_same_v<ParamType, quad>) {
+            defaultValue = std::strtold(defVal.data(), nullptr);
+        }
 #endif
 #if !HAVE_FLOATING_POINT_FROM_CHARS
-    else if constexpr (std::is_floating_point_v<ParamType>) {
-        defaultValue = std::strtod(defVal.c_str(), nullptr);
-    }
+        else if constexpr (std::is_floating_point_v<ParamType>) {
+            defaultValue = std::strtod(defVal.c_str(), nullptr);
+        }
 #endif // !HAVE_FLOATING_POINT_FROM_CHARS
-    else {
-        std::from_chars(defVal.data(), defVal.data() + defVal.size(), defaultValue);
-    }
-
-    // prefix the parameter name by the model's GroupName. E.g. If
-    // the model specifies its group name to be 'Stokes', in an
-    // INI file this would result in something like:
-    //
-    // [Stokes]
-    // NewtonWriteConvergence = true
-    // retrieve actual parameter from the parameter tree
-    return MetaData::tree().template get<ParamType>(paramName, defaultValue);
-}
-
-void Hide_(const std::string& paramName)
-{
-    if (!MetaData::registrationOpen()) {
-        throw std::logic_error("Parameter '" + paramName + "' declared as hidden"
-                               " when parameter registration was already closed.");
-    }
-
-    auto paramInfoIt = MetaData::mutableRegistry().find(paramName);
-    if (paramInfoIt == MetaData::mutableRegistry().end()) {
-        throw std::logic_error("Tried to declare unknown parameter '" +
-                               paramName + "' hidden.");
-    }
-
-    auto& paramInfo = paramInfoIt->second;
-    paramInfo.isHidden = true;
-}
-
-bool IsSet_(const std::string& paramName, bool errorIfNotRegistered)
-{
-    if (errorIfNotRegistered) {
-        if (MetaData::registrationOpen()) {
-            throw std::runtime_error("Parameters can only be checked after _all_ of them have "
-                                     "been registered.");
+        else {
+            std::from_chars(defVal.data(), defVal.data() + defVal.size(), defaultValue);
         }
 
+        // prefix the parameter name by the model's GroupName. E.g. If
+        // the model specifies its group name to be 'Stokes', in an
+        // INI file this would result in something like:
+        //
+        // [Stokes]
+        // NewtonWriteConvergence = true
+        // retrieve actual parameter from the parameter tree
+        return MetaData::tree().template get<ParamType>(paramName, defaultValue);
+    }
+
+    void Hide_(const std::string& paramName)
+    {
+        if (!MetaData::registrationOpen()) {
+            throw std::logic_error("Parameter '" + paramName
+                                   + "' declared as hidden"
+                                     " when parameter registration was already closed.");
+        }
+
+        auto paramInfoIt = MetaData::mutableRegistry().find(paramName);
+        if (paramInfoIt == MetaData::mutableRegistry().end()) {
+            throw std::logic_error("Tried to declare unknown parameter '" + paramName + "' hidden.");
+        }
+
+        auto& paramInfo = paramInfoIt->second;
+        paramInfo.isHidden = true;
+    }
+
+    bool IsSet_(const std::string& paramName, bool errorIfNotRegistered)
+    {
+        if (errorIfNotRegistered) {
+            if (MetaData::registrationOpen()) {
+                throw std::runtime_error("Parameters can only be checked after _all_ of them have "
+                                         "been registered.");
+            }
+
+            if (MetaData::registry().find(paramName) == MetaData::registry().end()) {
+                throw std::runtime_error("Accessing parameter " + std::string(paramName)
+                                         + " without prior registration is not allowed.");
+            }
+        }
+
+        // check whether the parameter is in the parameter tree
+        return MetaData::tree().hasKey(paramName);
+    }
+
+    void Register_(const std::string& paramName,
+                   const std::string& paramTypeName,
+                   const std::string& defaultValue,
+                   const char* usageString)
+    {
+        if (!MetaData::registrationOpen()) {
+            throw std::logic_error("Parameter registration was already closed before "
+                                   "the parameter '"
+                                   + paramName + "' was registered.");
+        }
+
+        ParamInfo paramInfo;
+        paramInfo.paramName = paramName;
+        paramInfo.paramTypeName = paramTypeName;
+        paramInfo.usageString = usageString;
+        paramInfo.defaultValue = defaultValue;
+        paramInfo.isHidden = false;
+        if (MetaData::registry().find(paramName) != MetaData::registry().end()) {
+            // allow to register a parameter twice, but only if the
+            // parameter name, type and usage string are exactly the same.
+            if (MetaData::registry().at(paramName) == paramInfo) {
+                return;
+            }
+            throw std::logic_error("Parameter " + paramName + " registered twice with non-matching characteristics.");
+        }
+
+        MetaData::mutableRegistry()[paramName] = paramInfo;
+    }
+
+    void SetDefault_(const std::string& paramName, const std::string& paramValue)
+    {
         if (MetaData::registry().find(paramName) == MetaData::registry().end()) {
-            throw std::runtime_error("Accessing parameter " + std::string(paramName) +
-                                     " without prior registration is not allowed.");
+            throw std::runtime_error("Accessing parameter " + paramName
+                                     + " without prior registration is not allowed.");
         }
+        MetaData::mutableRegistry()[paramName].defaultValue = paramValue;
     }
-
-    // check whether the parameter is in the parameter tree
-    return MetaData::tree().hasKey(paramName);
-}
-
-void Register_(const std::string& paramName,
-               const std::string& paramTypeName,
-               const std::string& defaultValue,
-               const char* usageString)
-{
-    if (!MetaData::registrationOpen()) {
-        throw std::logic_error("Parameter registration was already closed before "
-                               "the parameter '" + paramName + "' was registered.");
-    }
-
-    ParamInfo paramInfo;
-    paramInfo.paramName = paramName;
-    paramInfo.paramTypeName = paramTypeName;
-    paramInfo.usageString = usageString;
-    paramInfo.defaultValue = defaultValue;
-    paramInfo.isHidden = false;
-    if (MetaData::registry().find(paramName) != MetaData::registry().end()) {
-        // allow to register a parameter twice, but only if the
-        // parameter name, type and usage string are exactly the same.
-        if (MetaData::registry().at(paramName) == paramInfo) {
-            return;
-        }
-        throw std::logic_error("Parameter " + paramName +
-                               " registered twice with non-matching characteristics.");
-    }
-
-    MetaData::mutableRegistry()[paramName] = paramInfo;
-}
-
-void SetDefault_(const std::string& paramName,
-                 const std::string& paramValue)
-{
-    if (MetaData::registry().find(paramName) == MetaData::registry().end()) {
-        throw std::runtime_error("Accessing parameter " + paramName +
-                                 " without prior registration is not allowed.");
-    }
-    MetaData::mutableRegistry()[paramName].defaultValue = paramValue;
-}
 
 } // namespace detail
 
-void reset()
+void
+reset()
 {
     MetaData::clear();
 }
 
-bool IsRegistrationOpen()
+bool
+IsRegistrationOpen()
 {
     return MetaData::registrationOpen();
 }
 
-void endRegistration()
+void
+endRegistration()
 {
     if (!MetaData::registrationOpen()) {
         throw std::logic_error("Parameter registration was already closed. It is only possible "
@@ -502,8 +501,8 @@ void endRegistration()
     MetaData::registrationOpen() = false;
 }
 
-void getLists(std::vector<Parameter>& usedParams,
-              std::vector<Parameter>& unusedParams)
+void
+getLists(std::vector<Parameter>& usedParams, std::vector<Parameter>& unusedParams)
 {
     usedParams.clear();
     unusedParams.clear();
@@ -521,18 +520,15 @@ void getLists(std::vector<Parameter>& usedParams,
         if (MetaData::registry().find(key) == MetaData::registry().end()) {
             // key was not registered
             unusedParams.emplace_back(key, MetaData::tree()[key]);
-        }
-        else {
+        } else {
             // key was registered
             usedParams.emplace_back(key, MetaData::tree()[key]);
         }
     }
 }
 
-void printUsage(const std::string& helpPreamble,
-                std::ostream& os,
-                const std::string& errorMsg,
-                const bool showAll)
+void
+printUsage(const std::string& helpPreamble, std::ostream& os, const std::string& errorMsg, const bool showAll)
 {
     if (!errorMsg.empty()) {
         os << errorMsg << "\n\n";
@@ -560,7 +556,8 @@ void printUsage(const std::string& helpPreamble,
     }
 }
 
-bool parseParameterFile(const std::string& fileName, bool overwrite)
+bool
+parseParameterFile(const std::string& fileName, bool overwrite)
 {
     std::set<std::string> seenKeys;
     std::ifstream ifs(fileName);
@@ -591,30 +588,29 @@ bool parseParameterFile(const std::string& fileName, bool overwrite)
         std::string canonicalKey = transformKey(key, /*capitalizeFirst=*/true, errorPrefix);
 
         if (seenKeys.count(canonicalKey) > 0) {
-            throw std::runtime_error(errorPrefix + "Parameter '" + canonicalKey +
-                                     "' seen multiple times in the same file");
+            throw std::runtime_error(errorPrefix + "Parameter '" + canonicalKey
+                                     + "' seen multiple times in the same file");
         }
         seenKeys.insert(canonicalKey);
 
         // deal with the equals sign
         removeLeadingSpace(curLine);
         if (curLine.empty() || curLine[0] != '=') {
-            throw std::runtime_error(errorPrefix+"Syntax error, expecting 'key=value'");
+            throw std::runtime_error(errorPrefix + "Syntax error, expecting 'key=value'");
         }
 
         curLine = curLine.substr(1);
         removeLeadingSpace(curLine);
 
         if (curLine.empty() || curLine[0] == '#' || curLine[0] == ';') {
-            throw std::runtime_error(errorPrefix+"Syntax error, expecting 'key=value'");
+            throw std::runtime_error(errorPrefix + "Syntax error, expecting 'key=value'");
         }
 
         // get the value
         std::string value;
         if (curLine[0] == '"') {
             value = parseQuotedValue(curLine, errorPrefix);
-        }
-        else {
+        } else {
             value = parseUnquotedValue(curLine, errorPrefix);
         }
 
@@ -633,21 +629,21 @@ bool parseParameterFile(const std::string& fileName, bool overwrite)
     return true;
 }
 
-std::string parseCommandLineOptions(int argc,
-                                    const char **argv,
-                                    const PositionalArgumentCallback& posArgCallback,
-                                    const std::string& helpPreamble)
+std::string
+parseCommandLineOptions(int argc,
+                        const char** argv,
+                        const PositionalArgumentCallback& posArgCallback,
+                        const std::string& helpPreamble)
 {
     // handle the "--help" parameter
     if (!helpPreamble.empty()) {
         for (int i = 1; i < argc; ++i) {
-            if (std::string("-h") == argv[i] ||
-                std::string("--help") == argv[i]) {
+            if (std::string("-h") == argv[i] || std::string("--help") == argv[i]) {
                 printUsage(helpPreamble, std::cout, /*errorMsg=*/"");
                 return "Help called";
             }
             if (std::string("--help-all") == argv[i]) {
-                printUsage(helpPreamble, std::cout, /*errorMsg=*/"",  true);
+                printUsage(helpPreamble, std::cout, /*errorMsg=*/"", true);
                 return "Help called";
             }
         }
@@ -657,16 +653,15 @@ std::string parseCommandLineOptions(int argc,
     int numPositionalParams = 0;
     for (int i = 1; i < argc; ++i) {
         // All non-positional command line options need to start with '-'
-        if (strlen(argv[i]) < 4
-            || argv[i][0] != '-'
-            || argv[i][1] != '-')
-        {
+        if (strlen(argv[i]) < 4 || argv[i][0] != '-' || argv[i][1] != '-') {
             std::string errorMsg;
-            int numHandled = posArgCallback([](const std::string& k, const std::string& v)
-                                            {
-                                                MetaData::tree()[k] = v;
-                                            }, seenKeys, errorMsg,
-                                            argc, argv, i, numPositionalParams);
+            int numHandled = posArgCallback([](const std::string& k, const std::string& v) { MetaData::tree()[k] = v; },
+                                            seenKeys,
+                                            errorMsg,
+                                            argc,
+                                            argv,
+                                            i,
+                                            numPositionalParams);
 
             if (numHandled < 1) {
                 if (!helpPreamble.empty()) {
@@ -674,8 +669,7 @@ std::string parseCommandLineOptions(int argc,
                 }
 
                 return errorMsg;
-            }
-            else {
+            } else {
                 ++numPositionalParams;
                 i += numHandled - 1;
                 continue;
@@ -691,8 +685,7 @@ std::string parseCommandLineOptions(int argc,
         // There is nothing after the '-'
         if (argv[i][2] == 0 || !std::isalpha(argv[i][2])) {
             std::ostringstream oss;
-            oss << "Parameter name of argument " << i
-                << " ('" << argv[i] << "') "
+            oss << "Parameter name of argument " << i << " ('" << argv[i] << "') "
                 << "is invalid because it does not start with a letter.";
 
             if (!helpPreamble.empty()) {
@@ -708,9 +701,9 @@ std::string parseCommandLineOptions(int argc,
         // parse argument
         paramName = transformKey(parseKey(s), /*capitalizeFirst=*/true);
         if (seenKeys.count(paramName) > 0) {
-            const std::string msg = "Parameter '" + paramName +
-                                    "' specified multiple times as a "
-                                    "command line parameter";
+            const std::string msg = "Parameter '" + paramName
+                + "' specified multiple times as a "
+                  "command line parameter";
 
             if (!helpPreamble.empty()) {
                 printUsage(helpPreamble, std::cerr, msg);
@@ -720,9 +713,10 @@ std::string parseCommandLineOptions(int argc,
         seenKeys.insert(paramName);
 
         if (s.empty() || s[0] != '=') {
-            const std::string msg = "Parameter '" + paramName +
-                                    "' is missing a value. "
-                                    " Please use " + argv[i] + "=value.";
+            const std::string msg = "Parameter '" + paramName
+                + "' is missing a value. "
+                  " Please use "
+                + argv[i] + "=value.";
 
             if (!helpPreamble.empty()) {
                 printUsage(helpPreamble, std::cerr, msg);
@@ -738,7 +732,8 @@ std::string parseCommandLineOptions(int argc,
     return "";
 }
 
-void printValues(std::ostream& os)
+void
+printValues(std::ostream& os)
 {
     std::vector<std::string> runTimeAllKeyList;
     std::vector<std::string> runTimeKeyList;
@@ -749,8 +744,7 @@ void printValues(std::ostream& os)
         if (MetaData::registry().find(key) == MetaData::registry().end()) {
             // key was not registered by the program!
             unknownKeyList.push_back(key);
-        }
-        else {
+        } else {
             // the key was specified at run-time
             runTimeKeyList.push_back(key);
         }
@@ -787,42 +781,41 @@ void printValues(std::ostream& os)
     }
 }
 
-bool printUnused(std::ostream& os)
+bool
+printUnused(std::ostream& os)
 {
     std::vector<std::string> runTimeAllKeyList;
     std::vector<std::string> unknownKeyList;
 
     getFlattenedKeyList(runTimeAllKeyList, MetaData::tree());
-    std::copy_if(runTimeAllKeyList.begin(), runTimeAllKeyList.end(),
+    std::copy_if(runTimeAllKeyList.begin(),
+                 runTimeAllKeyList.end(),
                  std::back_inserter(unknownKeyList),
-                 [](const auto& key)
-                 {
-                    return MetaData::registry().find(key) == MetaData::registry().end();
-                 });
+                 [](const auto& key) { return MetaData::registry().find(key) == MetaData::registry().end(); });
 
     if (!unknownKeyList.empty()) {
         os << "# [unused run-time specified parameters]\n";
         for (const auto& unused : unknownKeyList) {
-            os << unused << "=\""
-               << MetaData::tree().get(unused, "") << "\"\n" << std::flush;
+            os << unused << "=\"" << MetaData::tree().get(unused, "") << "\"\n" << std::flush;
         }
         return true;
     }
     return false;
 }
 
-namespace detail {
+namespace detail
+{
 
-template bool Get_(const std::string&, bool, bool);
-template double Get_(const std::string&, double, bool);
-template float Get_(const std::string&, float, bool);
-template int Get_(const std::string&, int, bool);
-template long Get_(const std::string&, long, bool);
-template std::string Get_(const std::string&, std::string, bool);
-template unsigned Get_(const std::string&, unsigned, bool);
+    template bool Get_(const std::string&, bool, bool);
+    template double Get_(const std::string&, double, bool);
+    template float Get_(const std::string&, float, bool);
+    template int Get_(const std::string&, int, bool);
+    template long Get_(const std::string&, long, bool);
+    template std::string Get_(const std::string&, std::string, bool);
+    template unsigned Get_(const std::string&, unsigned, bool);
 
 #if HAVE_QUAD
-template quad Get_(const std::string&, quad, bool);
+    template quad Get_(const std::string&, quad, bool);
 #endif
 
 } // namespace detail

@@ -34,11 +34,12 @@
 #include <string>
 #include <tuple>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-void BioeffectsContainer<Scalar>::
-allocate(const unsigned bufferSize, const bool isMICP)
+template <class Scalar>
+void
+BioeffectsContainer<Scalar>::allocate(const unsigned bufferSize, const bool isMICP)
 {
     cMicrobes_.resize(bufferSize, 0.0);
     cBiofilm_.resize(bufferSize, 0.0);
@@ -50,96 +51,85 @@ allocate(const unsigned bufferSize, const bool isMICP)
     allocated_ = true;
 }
 
-template<class Scalar>
-void BioeffectsContainer<Scalar>::
-assign(const unsigned globalDofIdx,
-       const Scalar oxygenConcentration,
-       const Scalar ureaConcentration,
-       const Scalar calciteConcentration)
+template <class Scalar>
+void
+BioeffectsContainer<Scalar>::assign(const unsigned globalDofIdx,
+                                    const Scalar oxygenConcentration,
+                                    const Scalar ureaConcentration,
+                                    const Scalar calciteConcentration)
 {
     cOxygen_[globalDofIdx] = oxygenConcentration;
     cUrea_[globalDofIdx] = ureaConcentration;
     cCalcite_[globalDofIdx] = calciteConcentration;
 }
 
-template<class Scalar>
-void BioeffectsContainer<Scalar>::
-assign(const unsigned globalDofIdx,
-       const Scalar microbialConcentration,
-       const Scalar biofilmConcentration)
+template <class Scalar>
+void
+BioeffectsContainer<Scalar>::assign(const unsigned globalDofIdx,
+                                    const Scalar microbialConcentration,
+                                    const Scalar biofilmConcentration)
 {
     cMicrobes_[globalDofIdx] = microbialConcentration;
     cBiofilm_[globalDofIdx] = biofilmConcentration;
 }
 
-template<class Scalar>
+template <class Scalar>
 BioeffectsSolutionContainer<Scalar>
-BioeffectsContainer<Scalar>::
-getSolution() const
+BioeffectsContainer<Scalar>::getSolution() const
 {
-    return {
-        cMicrobes_,
-        cOxygen_,
-        cUrea_,
-        cBiofilm_,
-        cCalcite_
-    };
+    return {cMicrobes_, cOxygen_, cUrea_, cBiofilm_, cCalcite_};
 }
 
-template<class Scalar>
-void BioeffectsContainer<Scalar>::
-outputRestart(data::Solution& sol, const bool isMICP)
+template <class Scalar>
+void
+BioeffectsContainer<Scalar>::outputRestart(data::Solution& sol, const bool isMICP)
 {
     if (!this->allocated_) {
         return;
     }
 
-    using DataEntry =
-        std::tuple<std::string, UnitSystem::measure, std::vector<Scalar>&>;
+    using DataEntry = std::tuple<std::string, UnitSystem::measure, std::vector<Scalar>&>;
 
     auto insert = [&sol](auto& entry)
 
     {
         if (!std::get<2>(entry).empty()) {
             sol.insert(std::get<std::string>(entry),
-            std::get<UnitSystem::measure>(entry),
-            std::move(std::get<2>(entry)),
-            data::TargetType::RESTART_OPM_EXTENDED);
+                       std::get<UnitSystem::measure>(entry),
+                       std::move(std::get<2>(entry)),
+                       data::TargetType::RESTART_OPM_EXTENDED);
         }
     };
-    
-    auto solutionMicrobes = DataEntry{"MICROBES",  UnitSystem::measure::density, cMicrobes_};
+
+    auto solutionMicrobes = DataEntry {"MICROBES", UnitSystem::measure::density, cMicrobes_};
     insert(solutionMicrobes);
-    auto solutionBiofilm = DataEntry{"BIOFILM",  UnitSystem::measure::identity, cBiofilm_};
+    auto solutionBiofilm = DataEntry {"BIOFILM", UnitSystem::measure::identity, cBiofilm_};
     insert(solutionBiofilm);
 
     if (isMICP) {
         auto solutionVectors = std::array {
-            DataEntry{"CALCITE",  UnitSystem::measure::identity, cCalcite_},
-            DataEntry{"OXYGEN",   UnitSystem::measure::density,  cOxygen_},
-            DataEntry{"UREA",     UnitSystem::measure::density,  cUrea_},
+            DataEntry {"CALCITE", UnitSystem::measure::identity, cCalcite_},
+            DataEntry {"OXYGEN", UnitSystem::measure::density, cOxygen_},
+            DataEntry {"UREA", UnitSystem::measure::density, cUrea_},
         };
-        std::for_each(solutionVectors.begin(), solutionVectors.end(),
-            [&insert](auto& entry)
-            { insert(entry); });
+        std::for_each(solutionVectors.begin(), solutionVectors.end(), [&insert](auto& entry) { insert(entry); });
     }
 
     allocated_ = false;
 }
 
-template<class Scalar>
-void BioeffectsContainer<Scalar>::
-readRestart(const unsigned globalDofIdx,
-            const unsigned elemIdx,
-            const data::Solution& sol,
-            const bool isMICP)
+template <class Scalar>
+void
+BioeffectsContainer<Scalar>::readRestart(const unsigned globalDofIdx,
+                                         const unsigned elemIdx,
+                                         const data::Solution& sol,
+                                         const bool isMICP)
 {
     if (this->allocated_) {
         return;
     }
 
-    auto assign = [elemIdx, globalDofIdx, &sol](const std::string& name,
-                                                ScalarBuffer& data)
+    auto assign = [elemIdx, globalDofIdx, &sol](const std::string& name, ScalarBuffer& data)
 
     {
         if (!data.empty() && sol.has(name)) {
@@ -151,14 +141,12 @@ readRestart(const unsigned globalDofIdx,
     assign("BIOFILM", *&cBiofilm_);
 
     if (isMICP) {
-        const auto fields = std::array{
-            std::pair{"OXYGEN",   &cOxygen_},
-            std::pair{"UREA",     &cUrea_},
-            std::pair{"CALCITE",  &cCalcite_},
+        const auto fields = std::array {
+            std::pair {"OXYGEN", &cOxygen_},
+            std::pair {"UREA", &cUrea_},
+            std::pair {"CALCITE", &cCalcite_},
         };
-        std::for_each(fields.begin(), fields.end(),
-            [&assign](const auto& p)
-            { assign(p.first, *p.second); });
+        std::for_each(fields.begin(), fields.end(), [&assign](const auto& p) { assign(p.first, *p.second); });
     }
 }
 

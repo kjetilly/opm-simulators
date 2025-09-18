@@ -19,12 +19,12 @@
 
 #include <string>
 
-namespace Opm {
+namespace Opm
+{
 template <typename TypeTag>
-CompWellInterface<TypeTag>::
-CompWellInterface(const Well& well,
-                  const int index_of_well,
-                  const std::vector<CompConnectionData>& well_connection_data)
+CompWellInterface<TypeTag>::CompWellInterface(const Well& well,
+                                              const int index_of_well,
+                                              const std::vector<CompConnectionData>& well_connection_data)
     : well_ecl_(well)
     , index_of_well_(index_of_well)
     , number_of_connection_(well_connection_data.size())
@@ -48,29 +48,25 @@ CompWellInterface(const Well& well,
         }
         // TODO: saturation_table_number
     }
-
 }
 
 template <typename TypeTag>
 void
-CompWellInterface<TypeTag>::
-init()
+CompWellInterface<TypeTag>::init()
 {
     // more things to add here
 }
 
 template <typename TypeTag>
 const std::string&
-CompWellInterface<TypeTag>::
-name() const
+CompWellInterface<TypeTag>::name() const
 {
     return this->well_ecl_.name();
 }
 
 template <typename TypeTag>
 void
-CompWellInterface<TypeTag>::
-addCellRates(RateVector& rates, unsigned cellIdx) const
+CompWellInterface<TypeTag>::addCellRates(RateVector& rates, unsigned cellIdx) const
 {
     for (int con = 0; con < this->number_of_connection_; ++con) {
         if (this->well_cells_[con] == cellIdx) {

@@ -31,7 +31,8 @@
 #include <stdexcept>
 #include <thread>
 
-namespace Opm {
+namespace Opm
+{
 
 thread_local TaskletRunner* TaskletRunner::taskletRunner_ = nullptr;
 thread_local int TaskletRunner::workerThreadIndex_ = -1;
@@ -43,12 +44,14 @@ TaskletRunner::BarrierTasklet::BarrierTasklet(unsigned numWorkers)
     numWaiting_ = 0;
 }
 
-void TaskletRunner::BarrierTasklet::run()
+void
+TaskletRunner::BarrierTasklet::run()
 {
     wait();
 }
 
-void TaskletRunner::BarrierTasklet::wait()
+void
+TaskletRunner::BarrierTasklet::wait()
 {
     std::unique_lock<std::mutex> lock(barrierMutex_);
 
@@ -56,11 +59,8 @@ void TaskletRunner::BarrierTasklet::wait()
     if (numWaiting_ >= numWorkers_ + 1) {
         lock.unlock();
         barrierCondition_.notify_all();
-    }
-    else {
-        const auto& areAllWaiting =
-            [this]() -> bool
-            { return this->numWaiting_ >= this->numWorkers_ + 1; };
+    } else {
+        const auto& areAllWaiting = [this]() -> bool { return this->numWaiting_ >= this->numWorkers_ + 1; };
 
         barrierCondition_.wait(lock, /*predicate=*/areAllWaiting);
     }
@@ -86,19 +86,22 @@ TaskletRunner::~TaskletRunner()
     }
 }
 
-bool TaskletRunner::failure() const
+bool
+TaskletRunner::failure() const
 {
     return this->failureFlag_.load(std::memory_order_relaxed);
 }
 
-int TaskletRunner::workerThreadIndex() const
+int
+TaskletRunner::workerThreadIndex() const
 {
     if (TaskletRunner::taskletRunner_ != this)
         return -1;
     return TaskletRunner::workerThreadIndex_;
 }
 
-void TaskletRunner::dispatch(std::shared_ptr<TaskletInterface> tasklet)
+void
+TaskletRunner::dispatch(std::shared_ptr<TaskletInterface> tasklet)
 {
     if (threads_.empty()) {
         // run the tasklet immediately in synchronous mode.
@@ -106,19 +109,16 @@ void TaskletRunner::dispatch(std::shared_ptr<TaskletInterface> tasklet)
             tasklet->dereference();
             try {
                 tasklet->run();
-            }
-            catch (const std::exception& e) {
+            } catch (const std::exception& e) {
                 std::cerr << "ERROR: Uncaught std::exception when running tasklet: " << e.what()
                           << ". Trying to continue.\n";
                 failureFlag_.store(true, std::memory_order_relaxed);
-            }
-            catch (...) {
+            } catch (...) {
                 std::cerr << "ERROR: Uncaught exception (general type) when running tasklet. Trying to continue.\n";
                 failureFlag_.store(true, std::memory_order_relaxed);
             }
         }
-    }
-    else {
+    } else {
         // lock mutex for the tasklet queue to make sure that nobody messes with the
         // task queue
         taskletQueueMutex_.lock();
@@ -132,7 +132,8 @@ void TaskletRunner::dispatch(std::shared_ptr<TaskletInterface> tasklet)
     }
 }
 
-void TaskletRunner::barrier()
+void
+TaskletRunner::barrier()
 {
     unsigned numWorkers = threads_.size();
     if (numWorkers == 0)
@@ -146,7 +147,8 @@ void TaskletRunner::barrier()
     barrierTasklet->wait();
 }
 
-void TaskletRunner::startWorkerThread_(TaskletRunner* taskletRunner, int workerThreadIndex)
+void
+TaskletRunner::startWorkerThread_(TaskletRunner* taskletRunner, int workerThreadIndex)
 {
     TaskletRunner::taskletRunner_ = taskletRunner;
     TaskletRunner::workerThreadIndex_ = workerThreadIndex;
@@ -154,7 +156,8 @@ void TaskletRunner::startWorkerThread_(TaskletRunner* taskletRunner, int workerT
     taskletRunner->run_();
 }
 
-void TaskletRunner::run_()
+void
+TaskletRunner::run_()
 {
     while (true) {
 
@@ -162,9 +165,7 @@ void TaskletRunner::run_()
         // mutex for access to taskletQueue_
         std::unique_lock<std::mutex> lock(taskletQueueMutex_);
 
-        const auto& workIsAvailable =
-            [this]() -> bool
-            { return !taskletQueue_.empty(); };
+        const auto& workIsAvailable = [this]() -> bool { return !taskletQueue_.empty(); };
 
         if (!workIsAvailable())
             workAvailableCondition_.wait(lock, /*predicate=*/workIsAvailable);
@@ -175,7 +176,7 @@ void TaskletRunner::run_()
         // if tasklet is an end marker, terminate the thread and DO NOT remove the
         // tasklet.
         if (tasklet->isEndMarker()) {
-            if(taskletQueue_.size() > 1)
+            if (taskletQueue_.size() > 1)
                 throw std::logic_error("TaskletRunner: Not all queued tasklets were executed");
             taskletQueueMutex_.unlock();
             return;
@@ -191,12 +192,10 @@ void TaskletRunner::run_()
         // execute tasklet
         try {
             tasklet->run();
-        }
-        catch (const std::exception& e) {
+        } catch (const std::exception& e) {
             std::cerr << "ERROR: Uncaught std::exception when running tasklet: " << e.what() << ".\n";
             failureFlag_.store(true, std::memory_order_relaxed);
-        }
-        catch (...) {
+        } catch (...) {
             std::cerr << "ERROR: Uncaught exception when running tasklet.\n";
             failureFlag_.store(true, std::memory_order_relaxed);
         }

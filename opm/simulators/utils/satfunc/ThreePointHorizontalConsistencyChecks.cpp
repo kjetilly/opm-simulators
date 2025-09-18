@@ -28,30 +28,28 @@
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::ThreePointHorizontal::DisplacingOil_GO<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::ThreePointHorizontal::DisplacingOil_GO<Scalar>::testImpl(
+    const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // SGCR < 1-SOGCR-SWL <= SGU
 
-    this->swl_   = endPoints.Swl;
+    this->swl_ = endPoints.Swl;
     this->sogcr_ = endPoints.Sogcr;
-    this->sgcr_  = endPoints.Sgcr;
-    this->sgu_   = endPoints.Sgu;
+    this->sgcr_ = endPoints.Sgcr;
+    this->sgu_ = endPoints.Sgu;
 
-    if (! std::isfinite(this->swl_) ||
-        ! std::isfinite(this->sogcr_) ||
-        ! std::isfinite(this->sgcr_) ||
-        ! std::isfinite(this->sgu_))
-    {
+    if (!std::isfinite(this->swl_) || !std::isfinite(this->sogcr_) || !std::isfinite(this->sgcr_)
+        || !std::isfinite(this->sgu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto sr = Scalar{1} - (this->sogcr_ + this->swl_);
+    const auto sr = Scalar {1} - (this->sogcr_ + this->swl_);
 
-    const auto low = ! (this->sgcr_ < sr);
+    const auto low = !(this->sgcr_ < sr);
     const auto high = sr > this->sgu_;
 
     if (low || high) {
@@ -63,30 +61,28 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::ThreePointHorizontal::DisplacingOil_OW<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::ThreePointHorizontal::DisplacingOil_OW<Scalar>::testImpl(
+    const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // SWCR < 1-SOWCR-SGL <= SWU
 
-    this->sgl_   = endPoints.Sgl;
+    this->sgl_ = endPoints.Sgl;
     this->sowcr_ = endPoints.Sowcr;
-    this->swcr_  = endPoints.Swcr;
-    this->swu_   = endPoints.Swu;
+    this->swcr_ = endPoints.Swcr;
+    this->swu_ = endPoints.Swu;
 
-    if (! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->sowcr_) ||
-        ! std::isfinite(this->swcr_) ||
-        ! std::isfinite(this->swu_))
-    {
+    if (!std::isfinite(this->sgl_) || !std::isfinite(this->sowcr_) || !std::isfinite(this->swcr_)
+        || !std::isfinite(this->swu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto sr = Scalar{1} - (this->sowcr_ + this->sgl_);
+    const auto sr = Scalar {1} - (this->sowcr_ + this->sgl_);
 
-    const auto low = ! (this->swcr_ < sr);
+    const auto low = !(this->swcr_ < sr);
     const auto high = sr > this->swu_;
 
     if (low || high) {

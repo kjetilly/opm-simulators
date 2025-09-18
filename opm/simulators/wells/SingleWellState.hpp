@@ -23,24 +23,27 @@
 #include <functional>
 #include <vector>
 
-#include <opm/input/eclipse/Schedule/Well/WellEnums.hpp>
 #include <opm/input/eclipse/Schedule/Events.hpp>
+#include <opm/input/eclipse/Schedule/Well/WellEnums.hpp>
 
 #include <opm/material/fluidsystems/PhaseUsageInfo.hpp>
 
-#include <opm/simulators/wells/SegmentState.hpp>
-#include <opm/simulators/wells/PerfData.hpp>
-#include <opm/simulators/wells/ParallelWellInfo.hpp>
 #include <opm/simulators/wells/ALQState.hpp>
+#include <opm/simulators/wells/ParallelWellInfo.hpp>
+#include <opm/simulators/wells/PerfData.hpp>
+#include <opm/simulators/wells/SegmentState.hpp>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> struct PerforationData;
+template <class Scalar>
+struct PerforationData;
 class SummaryState;
 class Well;
 
-template<typename Scalar, typename IndexTraits>
-class SingleWellState {
+template <typename Scalar, typename IndexTraits>
+class SingleWellState
+{
 public:
     static const int waterPhaseIdx = PhaseUsageInfo<IndexTraits>::waterPhaseIdx;
     static const int oilPhaseIdx = PhaseUsageInfo<IndexTraits>::oilPhaseIdx;
@@ -56,7 +59,7 @@ public:
 
     static SingleWellState serializationTestObject(const ParallelWellInfo<Scalar>& pinfo);
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(name);
@@ -91,24 +94,19 @@ public:
     std::string name;
     std::reference_wrapper<const ParallelWellInfo<Scalar>> parallel_info;
 
-    WellStatus status{WellStatus::OPEN};
+    WellStatus status {WellStatus::OPEN};
     bool producer;
     PhaseUsageInfo<IndexTraits> pu;
-    Scalar bhp{0};
-    Scalar thp{0};
-    Scalar temperature{0};
-    Scalar efficiency_scaling_factor{1.0};
+    Scalar bhp {0};
+    Scalar thp {0};
+    Scalar temperature {0};
+    Scalar efficiency_scaling_factor {1.0};
 
     // filtration injection concentration
-    Scalar filtrate_conc{0};
+    Scalar filtrate_conc {0};
 
-    std::array<Scalar,4> phase_mixing_rates{};
-    enum RateIndices {
-      dissolved_gas = 0,
-      dissolved_gas_in_water = 1,
-      vaporized_oil = 2,
-      vaporized_water = 3
-    };
+    std::array<Scalar, 4> phase_mixing_rates {};
+    enum RateIndices { dissolved_gas = 0, dissolved_gas_in_water = 1, vaporized_oil = 2, vaporized_water = 3 };
 
     std::vector<Scalar> well_potentials;
     std::vector<Scalar> productivity_index;
@@ -122,8 +120,8 @@ public:
     std::optional<Scalar> group_target;
     SegmentState<Scalar> segments;
     Events events;
-    WellInjectorCMode injection_cmode{WellInjectorCMode::CMODE_UNDEFINED};
-    WellProducerCMode production_cmode{WellProducerCMode::CMODE_UNDEFINED};
+    WellInjectorCMode injection_cmode {WellInjectorCMode::CMODE_UNDEFINED};
+    WellProducerCMode production_cmode {WellProducerCMode::CMODE_UNDEFINED};
     std::vector<Scalar> primaryvar;
     ALQState<Scalar> alq_state;
 
@@ -166,6 +164,6 @@ private:
     Scalar sum_connection_rates(const std::vector<Scalar>& connection_rates) const;
 };
 
-}
+} // namespace Opm
 
 #endif

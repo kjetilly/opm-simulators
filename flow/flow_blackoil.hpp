@@ -21,12 +21,14 @@
 
 #include <memory>
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowBlackoilTpfaMain(int argc, char** argv, bool outputCout, bool outputFiles);
 
-template<class TypeTag> class FlowMain;
+template <class TypeTag>
+class FlowMain;
 
 //! \brief Initialization function used in flow binary and python simulator.
 std::unique_ptr<FlowMain<Properties::TTag::FlowProblemTPFA>>
@@ -35,6 +37,6 @@ flowBlackoilTpfaMainInit(int argc, char** argv, bool outputCout, bool outputFile
 //! \brief Main function used in flow_brine binary.
 int flowBlackoilTpfaMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_BLACKOIL_TPFA_HPP

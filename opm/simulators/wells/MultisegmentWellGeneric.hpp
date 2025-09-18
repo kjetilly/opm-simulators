@@ -29,12 +29,14 @@ namespace Opm
 
 class DeferredLogger;
 class SummaryState;
-template<typename Scalar, typename IndexTraits> class WellInterfaceGeneric;
+template <typename Scalar, typename IndexTraits>
+class WellInterfaceGeneric;
 enum class WellSegmentCompPressureDrop;
 class WellSegments;
-template<typename Scalar, typename IndexTraits> class WellState;
+template <typename Scalar, typename IndexTraits>
+class WellState;
 
-template<typename Scalar, typename IndexTraits>
+template <typename Scalar, typename IndexTraits>
 class MultisegmentWellGeneric
 {
 public:
@@ -61,19 +63,22 @@ protected:
     WellSegmentCompPressureDrop compPressureDrop() const;
 
     /// Detect oscillation or stagnation based on the residual measure history
-    bool update_relaxation_factor(const std::vector<Scalar>& measure_history, Scalar& relaxation_factor, bool& regularize, DeferredLogger& deferred_logger) const;    
-    bool repeatedStagnation(const std::vector<Scalar>& measure_history, bool& regularize, DeferredLogger& deferred_logger) const;
+    bool update_relaxation_factor(const std::vector<Scalar>& measure_history,
+                                  Scalar& relaxation_factor,
+                                  bool& regularize,
+                                  DeferredLogger& deferred_logger) const;
+    bool repeatedStagnation(const std::vector<Scalar>& measure_history,
+                            bool& regularize,
+                            DeferredLogger& deferred_logger) const;
 
     bool accelerationalPressureLossConsidered() const;
     bool frictionalPressureLossConsidered() const;
 
-    Scalar getSegmentDp(const int seg,
-                        const Scalar density,
-                        const std::vector<Scalar>& seg_dp) const;
+    Scalar getSegmentDp(const int seg, const Scalar density, const std::vector<Scalar>& seg_dp) const;
 
     const WellInterfaceGeneric<Scalar, IndexTraits>& baseif_;
 };
 
-}
+} // namespace Opm
 
 #endif // OPM_MULTISEGMENTWELL_GENERIC_HEADER_INCLUDED

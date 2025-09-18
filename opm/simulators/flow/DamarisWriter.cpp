@@ -36,35 +36,41 @@
 #include <limits>
 #include <stdexcept>
 
-namespace Opm::DamarisOutput {
+namespace Opm::DamarisOutput
+{
 
-int setPosition(const char* field, int64_t pos)
+int
+setPosition(const char* field, int64_t pos)
 {
     int dam_err = damaris_set_position(field, &pos);
     return dam_err;
 }
 
-int setParameter(const char* field, int value)
+int
+setParameter(const char* field, int value)
 {
     int dam_err = damaris_parameter_set(field, &value, sizeof(int));
     return dam_err;
 }
 
-int write(const char* field, const void* data)
+int
+write(const char* field, const void* data)
 {
     int dam_err = damaris_write(field, data);
     return dam_err;
 }
 
-int endIteration()
+int
+endIteration()
 {
-    int dam_err =  damaris_end_iteration();
+    int dam_err = damaris_end_iteration();
     return dam_err;
 }
 
-int setupWritingPars(Parallel::Communication comm,
-                     const int n_elements_local_grid,
-                     std::vector<unsigned long long>& elements_rank_offsets)
+int
+setupWritingPars(Parallel::Communication comm,
+                 const int n_elements_local_grid,
+                 std::vector<unsigned long long>& elements_rank_offsets)
 {
     // one for each rank -- to be gathered from each client rank
     std::vector<unsigned long long> elements_rank_sizes(comm.size());
@@ -78,17 +84,16 @@ int setupWritingPars(Parallel::Communication comm,
     // This scan makes the offsets to the start of each ranks grid section if each local grid data was concatenated (in
     // rank order)
 
-    std::partial_sum(elements_rank_sizes.begin(),
-                     std::prev(elements_rank_sizes.end()),
-                     elements_rank_offsets.begin() + 1);
+    std::partial_sum(
+        elements_rank_sizes.begin(), std::prev(elements_rank_sizes.end()), elements_rank_offsets.begin() + 1);
 
     // find the global/total size
     unsigned long long n_elements_global_max = elements_rank_offsets[comm.size() - 1];
-    n_elements_global_max += elements_rank_sizes[comm.size() - 1]; // add the last ranks size to the already accumulated offset values
+    n_elements_global_max
+        += elements_rank_sizes[comm.size() - 1]; // add the last ranks size to the already accumulated offset values
 
     if (comm.rank() == 0) {
-        OpmLog::debug(fmt::format("In setupDamarisWritingPars(): n_elements_global_max = {}",
-                                  n_elements_global_max));
+        OpmLog::debug(fmt::format("In setupDamarisWritingPars(): n_elements_global_max = {}", n_elements_global_max));
     }
 
     // Set the paramater so that the Damaris servers can allocate the correct amount of memory for the variabe
@@ -97,16 +102,19 @@ int setupWritingPars(Parallel::Communication comm,
     int dam_err = setParameter("n_elements_local", elements_rank_sizes[comm.rank()]);
     // Damaris parameters only support int data types. This will limit models to be under size of 2^32-1 elements
     // ToDo: Do we need to check that n_elements_global_max will fit in a C int type (INT_MAX)
-    if ( n_elements_global_max <= std::numeric_limits<int>::max() ) {
+    if (n_elements_global_max <= std::numeric_limits<int>::max()) {
         setParameter("n_elements_total", n_elements_global_max);
     } else {
         if (comm.rank() == 0) {
             OpmLog::error(fmt::format("The size of the global array ({}) is"
                                       "greater than what a Damaris paramater type supports ({}).  ",
-                                      n_elements_global_max, std::numeric_limits<int>::max() ));
+                                      n_elements_global_max,
+                                      std::numeric_limits<int>::max()));
         }
-        OPM_THROW(std::runtime_error, "setupDamarisWritingPars() n_elements_global_max "
-                                      "> std::numeric_limits<int>::max() " + std::to_string(dam_err));
+        OPM_THROW(std::runtime_error,
+                  "setupDamarisWritingPars() n_elements_global_max "
+                  "> std::numeric_limits<int>::max() "
+                      + std::to_string(dam_err));
     }
 
     return dam_err;
@@ -138,4 +146,4 @@ handleError(const int dam_err, Parallel::Communication comm, const std::string& 
         }
     }
 }
-}
+} // namespace Opm::DamarisOutput

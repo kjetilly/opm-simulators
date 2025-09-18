@@ -35,95 +35,87 @@
 #include <algorithm>
 #include <tuple>
 
-namespace {
+namespace
+{
 
-    template<class Scalar>
-    using DataEntry = std::tuple<std::string,
-                                 Opm::UnitSystem::measure,
-                                 std::array<std::vector<Scalar>,6>&>;
+template <class Scalar>
+using DataEntry = std::tuple<std::string, Opm::UnitSystem::measure, std::array<std::vector<Scalar>, 6>&>;
 
-    template<int idx, class Array, class Scalar>
-    void addEntry(std::vector<DataEntry<Scalar>>& container,
-                  const std::string& name,
-                  Opm::UnitSystem::measure measure,
-                  Array& flowArray)
-    {
-        if constexpr (idx >= 0) {  // Only add if index is valid
-            container.emplace_back(name, measure, flowArray[idx]);
-        }
+template <int idx, class Array, class Scalar>
+void
+addEntry(std::vector<DataEntry<Scalar>>& container,
+         const std::string& name,
+         Opm::UnitSystem::measure measure,
+         Array& flowArray)
+{
+    if constexpr (idx >= 0) { // Only add if index is valid
+        container.emplace_back(name, measure, flowArray[idx]);
     }
-
-    template<int idx, class Array, class Scalar>
-    void assignToVec(Array& array,
-                     const unsigned faceId,
-                     const unsigned globalDofIdx,
-                     const Scalar value)
-    {
-        if constexpr (idx != -1) {
-            if (!array[idx][faceId].empty()) {
-                array[idx][faceId][globalDofIdx] = value;
-            }
-        }
-    }
-
-    template<int idx, class Array, class Scalar>
-    void assignToNnc(Array& array,
-                     unsigned nncId,
-                     const Scalar value)
-    {
-        if constexpr (idx != -1) {
-            if (!array[idx].indices.empty()) {
-                array[idx].indices[nncId] = nncId;
-                array[idx].values[nncId] = value;
-            }
-        }
-    }
-
 }
 
-namespace Opm {
+template <int idx, class Array, class Scalar>
+void
+assignToVec(Array& array, const unsigned faceId, const unsigned globalDofIdx, const Scalar value)
+{
+    if constexpr (idx != -1) {
+        if (!array[idx][faceId].empty()) {
+            array[idx][faceId][globalDofIdx] = value;
+        }
+    }
+}
 
-template<class FluidSystem>
-FlowsContainer<FluidSystem>::
-FlowsContainer(const Schedule& schedule,
-               const SummaryConfig& summaryConfig)
+template <int idx, class Array, class Scalar>
+void
+assignToNnc(Array& array, unsigned nncId, const Scalar value)
+{
+    if constexpr (idx != -1) {
+        if (!array[idx].indices.empty()) {
+            array[idx].indices[nncId] = nncId;
+            array[idx].values[nncId] = value;
+        }
+    }
+}
+
+} // namespace
+
+namespace Opm
+{
+
+template <class FluidSystem>
+FlowsContainer<FluidSystem>::FlowsContainer(const Schedule& schedule, const SummaryConfig& summaryConfig)
 {
     // Check for any BFLOW[I|J|K] summary keys
     blockFlows_ = summaryConfig.keywords("BFLOW*").size() > 0;
 
     // Check if FLORES/FLOWS is set in any RPTRST in the schedule
-    enableFlores_ = false;  // Used for the output of i+, j+, k+
+    enableFlores_ = false; // Used for the output of i+, j+, k+
     enableFloresn_ = false; // Used for the special case of nnc
     enableFlows_ = false;
     enableFlowsn_ = false;
 
-    anyFlores_ = std::any_of(schedule.begin(), schedule.end(),
-                             [](const auto& block)
-                             {
-                                const auto& rstkw = block.rst_config().keywords;
-                                return rstkw.find("FLORES") != rstkw.end();
-                             });
-    anyFlows_ = std::any_of(schedule.begin(), schedule.end(),
-                            [](const auto& block)
-                            {
-                                const auto& rstkw = block.rst_config().keywords;
-                                return rstkw.find("FLOWS") != rstkw.end();
-                            });
+    anyFlores_ = std::any_of(schedule.begin(), schedule.end(), [](const auto& block) {
+        const auto& rstkw = block.rst_config().keywords;
+        return rstkw.find("FLORES") != rstkw.end();
+    });
+    anyFlows_ = std::any_of(schedule.begin(), schedule.end(), [](const auto& block) {
+        const auto& rstkw = block.rst_config().keywords;
+        return rstkw.find("FLOWS") != rstkw.end();
+    });
 }
 
-template<class FluidSystem>
-void FlowsContainer<FluidSystem>::
-allocate(const std::size_t bufferSize,
-         const unsigned numOutputNnc,
-         const bool allocRestart,
-         std::map<std::string, int>& rstKeywords)
+template <class FluidSystem>
+void
+FlowsContainer<FluidSystem>::allocate(const std::size_t bufferSize,
+                                      const unsigned numOutputNnc,
+                                      const bool allocRestart,
+                                      std::map<std::string, int>& rstKeywords)
 {
     using Dir = FaceDir::DirEnum;
 
     // Flows may need to be allocated even when there is no restart due to BFLOW* summary keywords
-    if (blockFlows_ ) {
-        const std::array<int, 3> phaseIdxs { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs { gasCompIdx, oilCompIdx, waterCompIdx };
+    if (blockFlows_) {
+        const std::array<int, 3> phaseIdxs {gasPhaseIdx, oilPhaseIdx, waterPhaseIdx};
+        const std::array<int, 3> compIdxs {gasCompIdx, oilCompIdx, waterCompIdx};
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
             if (FluidSystem::phaseIsActive(phaseIdxs[ii])) {
@@ -135,7 +127,7 @@ allocate(const std::size_t bufferSize,
     }
 
     if (!allocRestart) {
-        return ;
+        return;
     }
 
     enableFlows_ = false;
@@ -145,9 +137,9 @@ allocate(const std::size_t bufferSize,
         rstKeywords["FLOWS"] = 0;
         enableFlows_ = true;
 
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
-        const auto rstName = std::array { "FLOGASN+", "FLOOILN+", "FLOWATN+" };
+        const std::array<int, 3> phaseIdxs = {gasPhaseIdx, oilPhaseIdx, waterPhaseIdx};
+        const std::array<int, 3> compIdxs = {gasCompIdx, oilCompIdx, waterCompIdx};
+        const auto rstName = std::array {"FLOGASN+", "FLOOILN+", "FLOWATN+"};
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
             if (FluidSystem::phaseIsActive(phaseIdxs[ii])) {
@@ -183,9 +175,9 @@ allocate(const std::size_t bufferSize,
         rstKeywords["FLORES"] = 0;
         enableFlores_ = true;
 
-        const std::array<int, 3> phaseIdxs = { gasPhaseIdx, oilPhaseIdx, waterPhaseIdx };
-        const std::array<int, 3> compIdxs = { gasCompIdx, oilCompIdx, waterCompIdx };
-        const auto rstName = std::array{ "FLRGASN+", "FLROILN+", "FLRWATN+" };
+        const std::array<int, 3> phaseIdxs = {gasPhaseIdx, oilPhaseIdx, waterPhaseIdx};
+        const std::array<int, 3> compIdxs = {gasCompIdx, oilCompIdx, waterCompIdx};
+        const auto rstName = std::array {"FLRGASN+", "FLROILN+", "FLRWATN+"};
 
         for (unsigned ii = 0; ii < phaseIdxs.size(); ++ii) {
             if (FluidSystem::phaseIsActive(phaseIdxs[ii])) {
@@ -214,99 +206,91 @@ allocate(const std::size_t bufferSize,
     }
 }
 
-template<class FluidSystem>
-void FlowsContainer<FluidSystem>::
-assignFlores(const unsigned globalDofIdx,
-             const int faceId,
-             const unsigned nncId,
-             const Scalar gas,
-             const Scalar oil,
-             const Scalar water)
+template <class FluidSystem>
+void
+FlowsContainer<FluidSystem>::assignFlores(const unsigned globalDofIdx,
+                                          const int faceId,
+                                          const unsigned nncId,
+                                          const Scalar gas,
+                                          const Scalar oil,
+                                          const Scalar water)
 {
     if (faceId >= 0) {
         assignToVec<gasCompIdx>(this->flores_, faceId, globalDofIdx, gas);
         assignToVec<oilCompIdx>(this->flores_, faceId, globalDofIdx, oil);
         assignToVec<waterCompIdx>(this->flores_, faceId, globalDofIdx, water);
-    }
-    else if (faceId == -2) {
+    } else if (faceId == -2) {
         assignToNnc<gasCompIdx>(this->floresn_, nncId, gas);
         assignToNnc<oilCompIdx>(this->floresn_, nncId, oil);
         assignToNnc<waterCompIdx>(this->floresn_, nncId, water);
     }
 }
 
-template<class FluidSystem>
-void FlowsContainer<FluidSystem>::
-assignFlows(const unsigned globalDofIdx,
-            const int faceId,
-            const unsigned nncId,
-            const Scalar gas,
-            const Scalar oil,
-            const Scalar water)
+template <class FluidSystem>
+void
+FlowsContainer<FluidSystem>::assignFlows(const unsigned globalDofIdx,
+                                         const int faceId,
+                                         const unsigned nncId,
+                                         const Scalar gas,
+                                         const Scalar oil,
+                                         const Scalar water)
 {
     if (faceId >= 0) {
         assignToVec<gasCompIdx>(this->flows_, faceId, globalDofIdx, gas);
         assignToVec<oilCompIdx>(this->flows_, faceId, globalDofIdx, oil);
         assignToVec<waterCompIdx>(this->flows_, faceId, globalDofIdx, water);
-    }
-    else if (faceId == -2) {
+    } else if (faceId == -2) {
         assignToNnc<gasCompIdx>(this->flowsn_, nncId, gas);
         assignToNnc<oilCompIdx>(this->flowsn_, nncId, oil);
         assignToNnc<waterCompIdx>(this->flowsn_, nncId, water);
     }
 }
 
-template<class FluidSystem>
-void FlowsContainer<FluidSystem>::
-outputRestart(data::Solution& sol)
+template <class FluidSystem>
+void
+FlowsContainer<FluidSystem>::outputRestart(data::Solution& sol)
 {
-    auto doInsert = [&sol](ScalarBuffer& value,
-                           const std::string& name,
-                           UnitSystem::measure measure)
-    {
+    auto doInsert = [&sol](ScalarBuffer& value, const std::string& name, UnitSystem::measure measure) {
         if (!value.empty()) {
-            sol.insert(name, measure, std::move(value),
-                       data::TargetType::RESTART_SOLUTION);
+            sol.insert(name, measure, std::move(value), data::TargetType::RESTART_SOLUTION);
         }
     };
 
     using Dir = FaceDir::DirEnum;
     std::vector<DataEntry<Scalar>> entries;
     if (this->enableFlores_) {
-        addEntry<gasCompIdx>  (entries, "FLRGAS", UnitSystem::measure::rate,                flores_);
-        addEntry<oilCompIdx>  (entries, "FLROIL", UnitSystem::measure::rate,                flores_);
-        addEntry<waterCompIdx>(entries, "FLRWAT", UnitSystem::measure::rate,                flores_);
+        addEntry<gasCompIdx>(entries, "FLRGAS", UnitSystem::measure::rate, flores_);
+        addEntry<oilCompIdx>(entries, "FLROIL", UnitSystem::measure::rate, flores_);
+        addEntry<waterCompIdx>(entries, "FLRWAT", UnitSystem::measure::rate, flores_);
     }
     if (this->enableFlows_) {
-        addEntry<gasCompIdx>  (entries, "FLOGAS", UnitSystem::measure::gas_surface_rate,    flows_);
-        addEntry<oilCompIdx>  (entries, "FLOOIL", UnitSystem::measure::liquid_surface_rate, flows_);
+        addEntry<gasCompIdx>(entries, "FLOGAS", UnitSystem::measure::gas_surface_rate, flows_);
+        addEntry<oilCompIdx>(entries, "FLOOIL", UnitSystem::measure::liquid_surface_rate, flows_);
         addEntry<waterCompIdx>(entries, "FLOWAT", UnitSystem::measure::liquid_surface_rate, flows_);
     }
 
-    std::for_each(entries.begin(), entries.end(),
-                  [&doInsert](auto& array)
-                  {
-                      static const auto dirs = std::array{
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::XMinus), "I-"},
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::XPlus), "I+"},
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::YMinus), "J-"},
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::YPlus), "J+"},
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::ZMinus), "K-"},
-                          std::pair{FaceDir::ToIntersectionIndex(Dir::ZPlus), "K+"},
-                      };
-                      const auto& name = std::get<0>(array);
-                      const auto& measure = std::get<1>(array);
-                      auto& value = std::get<2>(array);
-                      for (const auto& [index, postfix] : dirs) {
-                          doInsert(value[index], name + postfix, measure);
-                      }
-                  });
+    std::for_each(entries.begin(), entries.end(), [&doInsert](auto& array) {
+        static const auto dirs = std::array {
+            std::pair {FaceDir::ToIntersectionIndex(Dir::XMinus), "I-"},
+            std::pair {FaceDir::ToIntersectionIndex(Dir::XPlus), "I+"},
+            std::pair {FaceDir::ToIntersectionIndex(Dir::YMinus), "J-"},
+            std::pair {FaceDir::ToIntersectionIndex(Dir::YPlus), "J+"},
+            std::pair {FaceDir::ToIntersectionIndex(Dir::ZMinus), "K-"},
+            std::pair {FaceDir::ToIntersectionIndex(Dir::ZPlus), "K+"},
+        };
+        const auto& name = std::get<0>(array);
+        const auto& measure = std::get<1>(array);
+        auto& value = std::get<2>(array);
+        for (const auto& [index, postfix] : dirs) {
+            doInsert(value[index], name + postfix, measure);
+        }
+    });
 }
 
-template<class T> using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
+template <class T>
+using FS = BlackOilFluidSystem<T, BlackOilDefaultFluidSystemIndices>;
 
-#define INSTANTIATE_TYPE(T) \
-    template class FlowsContainer<FS<T>>;
+#define INSTANTIATE_TYPE(T) template class FlowsContainer<FS<T>>;
 
 INSTANTIATE_TYPE(double)
 
@@ -314,19 +298,21 @@ INSTANTIATE_TYPE(double)
 INSTANTIATE_TYPE(float)
 #endif
 
-#define INSTANTIATE_COMP_THREEPHASE(NUM) \
-    template<class T> using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>; \
+#define INSTANTIATE_COMP_THREEPHASE(NUM)                                                                               \
+    template <class T>                                                                                                 \
+    using FS##NUM = GenericOilGasWaterFluidSystem<T, NUM, true>;                                                       \
     template class FlowsContainer<FS##NUM<double>>;
 
-#define INSTANTIATE_COMP_TWOPHASE(NUM) \
-    template<class T> using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>; \
+#define INSTANTIATE_COMP_TWOPHASE(NUM)                                                                                 \
+    template <class T>                                                                                                 \
+    using GFS##NUM = GenericOilGasWaterFluidSystem<T, NUM, false>;                                                     \
     template class FlowsContainer<GFS##NUM<double>>;
 
-#define INSTANTIATE_COMP(NUM) \
-    INSTANTIATE_COMP_THREEPHASE(NUM) \
+#define INSTANTIATE_COMP(NUM)                                                                                          \
+    INSTANTIATE_COMP_THREEPHASE(NUM)                                                                                   \
     INSTANTIATE_COMP_TWOPHASE(NUM)
 
-INSTANTIATE_COMP_THREEPHASE(0)  // \Note: to register the parameter ForceDisableFluidInPlaceOutput
+INSTANTIATE_COMP_THREEPHASE(0) // \Note: to register the parameter ForceDisableFluidInPlaceOutput
 INSTANTIATE_COMP(2)
 INSTANTIATE_COMP(3)
 INSTANTIATE_COMP(4)

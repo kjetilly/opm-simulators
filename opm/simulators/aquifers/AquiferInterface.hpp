@@ -40,8 +40,7 @@ public:
     using Scalar = GetPropType<TypeTag, Properties::Scalar>;
 
     // Constructor
-    AquiferInterface(int aqID,
-                     const Simulator& simulator)
+    AquiferInterface(int aqID, const Simulator& simulator)
         : aquiferID_(aqID)
         , simulator_(simulator)
     {
@@ -63,20 +62,18 @@ public:
     virtual Scalar totalFaceArea() const = 0;
 
     template <class Context>
-    void addToSource(RateVector& rates,
-                     const Context& context,
-                     const unsigned spaceIdx,
-                     const unsigned timeIdx)
+    void addToSource(RateVector& rates, const Context& context, const unsigned spaceIdx, const unsigned timeIdx)
     {
         const unsigned cellIdx = context.globalSpaceIndex(spaceIdx, timeIdx);
         addToSource(rates, cellIdx, timeIdx);
     }
 
-    virtual void addToSource(RateVector& rates,
-                             const unsigned cellIdx,
-                             const unsigned timeIdx) = 0;
+    virtual void addToSource(RateVector& rates, const unsigned cellIdx, const unsigned timeIdx) = 0;
 
-    int aquiferID() const { return this->aquiferID_; }
+    int aquiferID() const
+    {
+        return this->aquiferID_;
+    }
 
 protected:
     bool co2store_or_h2store_() const
@@ -94,7 +91,7 @@ protected:
         return FluidSystem::waterPhaseIdx;
     }
 
-    const int aquiferID_{};
+    const int aquiferID_ {};
     const Simulator& simulator_;
 };
 

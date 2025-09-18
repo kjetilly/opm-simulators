@@ -24,8 +24,8 @@
 
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
 
-#include <dune/istl/solver.hh>
 #include <dune/istl/paamg/pinfo.hh>
+#include <dune/istl/solver.hh>
 
 namespace Opm
 {
@@ -40,8 +40,7 @@ namespace Dune
 /// them up based on runtime parameters, using the PreconditionerFactory for
 /// setting up preconditioners.
 template <class Operator>
-class FlexibleSolver : public Dune::InverseOperator<typename Operator::domain_type,
-                                                    typename Operator::range_type>
+class FlexibleSolver : public Dune::InverseOperator<typename Operator::domain_type, typename Operator::range_type>
 {
 public:
     using VectorType = typename Operator::domain_type; // Assuming symmetry: domain == range
@@ -78,12 +77,16 @@ private:
 
     // Machinery for making sequential or parallel operators/preconditioners/scalar products.
     template <class Comm>
-    void initOpPrecSp(Operator& op, const Opm::PropertyTree& prm,
-                      const std::function<VectorType()> weightsCalculator, const Comm& comm,
+    void initOpPrecSp(Operator& op,
+                      const Opm::PropertyTree& prm,
+                      const std::function<VectorType()> weightsCalculator,
+                      const Comm& comm,
                       std::size_t pressureIndex);
 
-    void initOpPrecSp(Operator& op, const Opm::PropertyTree& prm,
-                      const std::function<VectorType()> weightsCalculator, const Dune::Amg::SequentialInformation&,
+    void initOpPrecSp(Operator& op,
+                      const Opm::PropertyTree& prm,
+                      const std::function<VectorType()> weightsCalculator,
+                      const Dune::Amg::SequentialInformation&,
                       std::size_t pressureIndex);
 
     template <class Comm>
@@ -109,7 +112,7 @@ private:
 
 } // namespace Dune
 
-//#include <opm/simulators/linalg/FlexibleSolver_impl.hpp>
+// #include <opm/simulators/linalg/FlexibleSolver_impl.hpp>
 
 
 #endif // OPM_FLEXIBLE_SOLVER_HEADER_INCLUDED

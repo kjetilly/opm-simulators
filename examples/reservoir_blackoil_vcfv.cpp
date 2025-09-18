@@ -27,32 +27,37 @@
  */
 #include "config.h"
 
-#include <opm/models/io/dgfvanguard.hh>
-#include <opm/models/utils/start.hh>
 #include <opm/models/blackoil/blackoilmodel.hh>
 #include <opm/models/discretization/vcfv/vcfvdiscretization.hh>
+#include <opm/models/io/dgfvanguard.hh>
+#include <opm/models/utils/start.hh>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 
 #include "problems/reservoirproblem.hh"
 
-namespace Opm::Properties {
+namespace Opm::Properties
+{
 
 // Create new type tags
-namespace TTag {
+namespace TTag
+{
 
-struct ReservoirBlackOilVcfvProblem
-{ using InheritsFrom = std::tuple<ReservoirBaseProblem, BlackOilModel>; };
+    struct ReservoirBlackOilVcfvProblem {
+        using InheritsFrom = std::tuple<ReservoirBaseProblem, BlackOilModel>;
+    };
 
 } // end namespace TTag
 
 // Select the vertex centered finite volume method as spatial discretization
-template<class TypeTag>
-struct SpatialDiscretizationSplice<TypeTag, TTag::ReservoirBlackOilVcfvProblem>
-{ using type = TTag::VcfvDiscretization; };
+template <class TypeTag>
+struct SpatialDiscretizationSplice<TypeTag, TTag::ReservoirBlackOilVcfvProblem> {
+    using type = TTag::VcfvDiscretization;
+};
 
 } // namespace Opm::Properties
 
-int main(int argc, char **argv)
+int
+main(int argc, char** argv)
 {
     using ProblemTypeTag = Opm::Properties::TTag::ReservoirBlackOilVcfvProblem;
     return Opm::start<ProblemTypeTag>(argc, argv, true);

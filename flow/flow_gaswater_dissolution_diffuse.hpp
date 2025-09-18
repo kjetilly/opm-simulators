@@ -17,7 +17,8 @@
 #ifndef FLOW_GASWATER_DISSOLUTION_DIFFUSE_HPP
 #define FLOW_GASWATER_DISSOLUTION_DIFFUSE_HPP
 
-namespace Opm {
+namespace Opm
+{
 
 //! \brief Main function used in flow binary.
 int flowGasWaterDissolutionDiffuseMain(int argc, char** argv, bool outputCout, bool outputFiles);
@@ -25,6 +26,6 @@ int flowGasWaterDissolutionDiffuseMain(int argc, char** argv, bool outputCout, b
 //! \brief Main function used in flow_gaswater_dissolution binary.
 int flowGasWaterDissolutionDiffuseMainStandalone(int argc, char** argv);
 
-}
+} // namespace Opm
 
 #endif // FLOW_GASWATER_DISSOLUTION_DIFFUSE_HPP

@@ -42,21 +42,19 @@ BOOST_AUTO_TEST_CASE(Header)
 #if HAVE_MPI
     Parallel::Communication comm(MPI_COMM_SELF);
 #else
-    Parallel::Communication comm{};
+    Parallel::Communication comm {};
 #endif
-    std::array<std::string,5> output{"foo", "bar", "foobar", "bob", "bobbar"};
+    std::array<std::string, 5> output {"foo", "bar", "foobar", "bob", "bobbar"};
     {
         HDF5Serializer ser(rwpath, HDF5File::OpenMode::OVERWRITE, comm);
         ser.writeHeader(output[0], output[1], output[2], output[3], output[4], 5);
     }
     {
         HDF5Serializer ser(rwpath, HDF5File::OpenMode::READ, comm);
-        std::tuple<std::array<std::string,5>,int> input;
-        ser.read(input, "/", "simulator_info",
-                 Opm::HDF5File::DataSetMode::ROOT_ONLY);
+        std::tuple<std::array<std::string, 5>, int> input;
+        ser.read(input, "/", "simulator_info", Opm::HDF5File::DataSetMode::ROOT_ONLY);
         const auto& [strings, num_procs] = input;
-        BOOST_CHECK_EQUAL_COLLECTIONS(strings.begin(), strings.end(),
-                                      output.begin(), output.end());
+        BOOST_CHECK_EQUAL_COLLECTIONS(strings.begin(), strings.end(), output.begin(), output.end());
         BOOST_CHECK_EQUAL(num_procs, 5);
     }
 
@@ -72,7 +70,7 @@ BOOST_AUTO_TEST_CASE(WriteRead)
 #if HAVE_MPI
     Parallel::Communication comm(MPI_COMM_SELF);
 #else
-    Parallel::Communication comm{};
+    Parallel::Communication comm {};
 #endif
     auto output = Group::serializationTestObject();
     {
@@ -94,12 +92,14 @@ BOOST_AUTO_TEST_CASE(WriteRead)
     std::filesystem::remove(path);
 }
 
-bool init_unit_test_func()
+bool
+init_unit_test_func()
 {
     return true;
 }
 
-int main(int argc, char** argv)
+int
+main(int argc, char** argv)
 {
     Dune::MPIHelper::instance(argc, argv);
     return boost::unit_test::unit_test_main(&init_unit_test_func, argc, argv);

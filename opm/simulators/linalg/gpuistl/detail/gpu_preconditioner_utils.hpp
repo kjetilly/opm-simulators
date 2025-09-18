@@ -25,7 +25,8 @@
 #include <dune/istl/bcrsmatrix.hh>
 
 
-namespace Opm::gpuistl::detail {
+namespace Opm::gpuistl::detail
+{
 
 /**
  * @brief Utility functions for GPU preconditioner creation
@@ -39,12 +40,14 @@ namespace Opm::gpuistl::detail {
 /**
  * This function creates a CPU matrix from the operator holding a GPU matrix.
  *
- * This is a workaround for now since some of the GPU preconditioners need a 
+ * This is a workaround for now since some of the GPU preconditioners need a
  * CPU matrix for the initial setup (graph coloring). The CPU matrix is only
  * used in the constructor, **not** in the update function or the apply function.
  */
-template<class Operator, class BlockType>
-Dune::BCRSMatrix<BlockType> makeCPUMatrix(const Operator& op) {
+template <class Operator, class BlockType>
+Dune::BCRSMatrix<BlockType>
+makeCPUMatrix(const Operator& op)
+{
     // TODO: Make this more efficient. Maybe we can simply copy the memory areas directly?
     //       Do note that this function is anyway going away when we have a GPU
     //       constructor for the preconditioners, so it is not a priority.

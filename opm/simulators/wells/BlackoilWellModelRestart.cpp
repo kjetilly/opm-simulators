@@ -35,57 +35,61 @@
 #include <opm/simulators/wells/PerforationData.hpp>
 #include <opm/simulators/wells/SingleWellState.hpp>
 
-namespace {
-    Opm::data::GuideRateValue::Item
-    guideRateRestartItem(const Opm::GuideRateModel::Target target)
-    {
-        using Item = Opm::data::GuideRateValue::Item;
-        using Target = Opm::GuideRateModel::Target;
-
-        static const auto items = std::unordered_map<Target, Item> {
-            { Target::OIL, Item::Oil   },
-            { Target::GAS, Item::Gas   },
-            { Target::WAT, Item::Water },
-            { Target::RES, Item::ResV  },
-        };
-
-        auto i = items.find(target);
-        return (i == items.end()) ? Item::NumItems : i->second;
-    }
-
-    Opm::GuideRate::GuideRateValue
-    makeGuideRateValue(const Opm::data::GuideRateValue&  restart,
-                       const Opm::GuideRateModel::Target target)
-    {
-        const auto item = guideRateRestartItem(target);
-
-        if (! restart.has(item)) {
-            return {};
-        }
-
-        return { 0.0, restart.get(item), target };
-    }
-} // Anonymous
-
-namespace Opm {
-
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartConnectionData(const std::vector<data::Rates::opt>& phs,
-                          const data::Well&                    rst_well,
-                          const std::vector<PerforationData<Scalar>>&  old_perf_data,
-                          SingleWellState<Scalar, IndexTraits>&             ws) const
+namespace
 {
-    auto& perf_data        = ws.perf_data;
-    auto  perf_pressure    = perf_data.pressure.begin();
-    auto  perf_rates       = perf_data.rates.begin();
-    auto  perf_phase_rates = perf_data.phase_rates.begin();
+Opm::data::GuideRateValue::Item
+guideRateRestartItem(const Opm::GuideRateModel::Target target)
+{
+    using Item = Opm::data::GuideRateValue::Item;
+    using Target = Opm::GuideRateModel::Target;
+
+    static const auto items = std::unordered_map<Target, Item> {
+        {Target::OIL, Item::Oil},
+        {Target::GAS, Item::Gas},
+        {Target::WAT, Item::Water},
+        {Target::RES, Item::ResV},
+    };
+
+    auto i = items.find(target);
+    return (i == items.end()) ? Item::NumItems : i->second;
+}
+
+Opm::GuideRate::GuideRateValue
+makeGuideRateValue(const Opm::data::GuideRateValue& restart, const Opm::GuideRateModel::Target target)
+{
+    const auto item = guideRateRestartItem(target);
+
+    if (!restart.has(item)) {
+        return {};
+    }
+
+    return {0.0, restart.get(item), target};
+}
+} // namespace
+
+namespace Opm
+{
+
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartConnectionData(
+    const std::vector<data::Rates::opt>& phs,
+    const data::Well& rst_well,
+    const std::vector<PerforationData<Scalar>>& old_perf_data,
+    SingleWellState<Scalar, IndexTraits>& ws) const
+{
+    auto& perf_data = ws.perf_data;
+    auto perf_pressure = perf_data.pressure.begin();
+    auto perf_rates = perf_data.rates.begin();
+    auto perf_phase_rates = perf_data.phase_rates.begin();
 
     for (const auto& pd : old_perf_data) {
         const auto& rst_connection = rst_well.connections[pd.ecl_index];
 
-        *perf_pressure = rst_connection.pressure;       ++perf_pressure;
-        *perf_rates    = rst_connection.reservoir_rate; ++perf_rates;
+        *perf_pressure = rst_connection.pressure;
+        ++perf_pressure;
+        *perf_rates = rst_connection.reservoir_rate;
+        ++perf_rates;
 
         for (const auto& phase : phs) {
             *perf_phase_rates = rst_connection.rates.get(phase);
@@ -94,12 +98,12 @@ loadRestartConnectionData(const std::vector<data::Rates::opt>& phs,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartSegmentData(const std::string&                   well_name,
-                       const std::vector<data::Rates::opt>& phs,
-                       const data::Well&                    rst_well,
-                       SingleWellState<Scalar, IndexTraits>&             ws) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartSegmentData(const std::string& well_name,
+                                                                      const std::vector<data::Rates::opt>& phs,
+                                                                      const data::Well& rst_well,
+                                                                      SingleWellState<Scalar, IndexTraits>& ws) const
 {
     const auto& segment_set = wellModel_.getWellEcl(well_name).getSegments();
     const auto& rst_segments = rst_well.segments;
@@ -120,20 +124,21 @@ loadRestartSegmentData(const std::string&                   well_name,
         segment_pressure[segment_index] = rst_segment.pressures[pres_idx];
 
         const auto& rst_segment_rates = rst_segment.rates;
-        for (auto p = 0*np; p < np; ++p) {
-            segment_rates[segment_index*np + p] = rst_segment_rates.get(phs[p]);
+        for (auto p = 0 * np; p < np; ++p) {
+            segment_rates[segment_index * np + p] = rst_segment_rates.get(phs[p]);
         }
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartWellData(const std::string&                   well_name,
-                    const bool                           handle_ms_well,
-                    const std::vector<data::Rates::opt>& phs,
-                    const data::Well&                    rst_well,
-                    const std::vector<PerforationData<Scalar>>&  old_perf_data,
-                    SingleWellState<Scalar, IndexTraits>&             ws) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartWellData(
+    const std::string& well_name,
+    const bool handle_ms_well,
+    const std::vector<data::Rates::opt>& phs,
+    const data::Well& rst_well,
+    const std::vector<PerforationData<Scalar>>& old_perf_data,
+    SingleWellState<Scalar, IndexTraits>& ws) const
 {
     const auto np = phs.size();
 
@@ -143,13 +148,12 @@ loadRestartWellData(const std::string&                   well_name,
 
     if (rst_well.current_control.isProducer) {
         ws.production_cmode = rst_well.current_control.prod;
-    }
-    else {
+    } else {
         ws.injection_cmode = rst_well.current_control.inj;
     }
 
-    for (auto i = 0*np; i < np; ++i) {
-        assert( rst_well.rates.has( phs[ i ] ) );
+    for (auto i = 0 * np; i < np; ++i) {
+        assert(rst_well.rates.has(phs[i]));
         ws.surface_rates[i] = rst_well.rates.get(phs[i]);
     }
 
@@ -160,11 +164,11 @@ loadRestartWellData(const std::string&                   well_name,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartGroupData(const std::string&     group,
-                     const data::GroupData& value,
-                     GroupState<Scalar>&    grpState) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartGroupData(const std::string& group,
+                                                                    const data::GroupData& value,
+                                                                    GroupState<Scalar>& grpState) const
 {
     using GPMode = Group::ProductionCMode;
     using GIMode = Group::InjectionCMode;
@@ -186,31 +190,29 @@ loadRestartGroupData(const std::string&     group,
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartGuideRates(const int                    report_step,
-                      const GuideRateModel::Target target,
-                      const data::Wells&           rst_wells,
-                      GuideRate&                   guide_rate) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartGuideRates(const int report_step,
+                                                                     const GuideRateModel::Target target,
+                                                                     const data::Wells& rst_wells,
+                                                                     GuideRate& guide_rate) const
 {
     for (const auto& [well_name, rst_well] : rst_wells) {
-        if (!wellModel_.hasLocalWell(well_name) ||
-            wellModel_.getWellEcl(well_name).isInjector())
-        {
+        if (!wellModel_.hasLocalWell(well_name) || wellModel_.getWellEcl(well_name).isInjector()) {
             continue;
         }
 
-        guide_rate.init_grvalue_SI(report_step, well_name,
-                                   makeGuideRateValue(rst_well.guide_rates, target));
+        guide_rate.init_grvalue_SI(report_step, well_name, makeGuideRateValue(rst_well.guide_rates, target));
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartGuideRates(const int                                     report_step,
-                      const GuideRateConfig&                        config,
-                      const std::map<std::string, data::GroupData>& rst_groups,
-                      GuideRate&                                    guide_rate) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartGuideRates(
+    const int report_step,
+    const GuideRateConfig& config,
+    const std::map<std::string, data::GroupData>& rst_groups,
+    GuideRate& guide_rate) const
 {
     const auto target = config.model().target();
 
@@ -224,18 +226,18 @@ loadRestartGuideRates(const int                                     report_step,
             continue;
         }
 
-        guide_rate.init_grvalue_SI(report_step, group_name,
-                                   makeGuideRateValue(rst_group.guideRates.production, target));
+        guide_rate.init_grvalue_SI(
+            report_step, group_name, makeGuideRateValue(rst_group.guideRates.production, target));
     }
 }
 
-template<typename Scalar, typename IndexTraits>
-void BlackoilWellModelRestart<Scalar, IndexTraits>::
-loadRestartData(const data::Wells&                 rst_wells,
-                const data::GroupAndNetworkValues& grpNwrkValues,
-                const bool                         handle_ms_well,
-                WellState<Scalar, IndexTraits>&    well_state,
-                GroupState<Scalar>&                grpState) const
+template <typename Scalar, typename IndexTraits>
+void
+BlackoilWellModelRestart<Scalar, IndexTraits>::loadRestartData(const data::Wells& rst_wells,
+                                                               const data::GroupAndNetworkValues& grpNwrkValues,
+                                                               const bool handle_ms_well,
+                                                               WellState<Scalar, IndexTraits>& well_state,
+                                                               GroupState<Scalar>& grpState) const
 {
     using rt = data::Rates::opt;
     // const auto& phases = wellModel_.phaseUsage();
@@ -255,13 +257,12 @@ loadRestartData(const data::Wells&                 rst_wells,
         phs.at(pu.canonicalToActivePhaseIdx(IndexTraits::gasPhaseIdx)) = rt::gas;
     }
 
-    for (auto well_index = 0*well_state.size();
-         well_index < well_state.size();
-         ++well_index)
-    {
+    for (auto well_index = 0 * well_state.size(); well_index < well_state.size(); ++well_index) {
         const auto& well_name = well_state.name(well_index);
 
-        this->loadRestartWellData(well_name, handle_ms_well && !well_state.is_permanently_inactive_well(well_name), phs,
+        this->loadRestartWellData(well_name,
+                                  handle_ms_well && !well_state.is_permanently_inactive_well(well_name),
+                                  phs,
                                   rst_wells.at(well_name),
                                   wellModel_.perfData(well_index),
                                   well_state.well(well_index));

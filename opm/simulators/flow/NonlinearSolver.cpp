@@ -28,13 +28,18 @@
 #include <cmath>
 #include <stdexcept>
 
-namespace Opm::detail {
+namespace Opm::detail
+{
 
-template<class Scalar>
-void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
-                        const int it, const int numPhases, const Scalar relaxRelTol,
-                        const int minimumOscillatingPhases,
-                        bool& oscillate, bool& stagnate)
+template <class Scalar>
+void
+detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
+                   const int it,
+                   const int numPhases,
+                   const Scalar relaxRelTol,
+                   const int minimumOscillatingPhases,
+                   bool& oscillate,
+                   bool& stagnate)
 {
     // The detection of oscillation in two primary variable results in the report of the detection
     // of oscillation for the solver.
@@ -67,9 +72,8 @@ void detectOscillations(const std::vector<std::vector<Scalar>>& residualHistory,
 }
 
 template <class BVector, class Scalar>
-void stabilizeNonlinearUpdate(BVector& dx, BVector& dxOld,
-                              const Scalar omega,
-                              NonlinearRelaxType relaxType)
+void
+stabilizeNonlinearUpdate(BVector& dx, BVector& dxOld, const Scalar omega, NonlinearRelaxType relaxType)
 {
     // The dxOld is updated with dx.
     // If omega is equal to 1., no relaxtion will be appiled.
@@ -82,17 +86,16 @@ void stabilizeNonlinearUpdate(BVector& dx, BVector& dxOld,
         if (omega == 1.) {
             return;
         }
-        std::transform(dx.begin(), dx.end(), dx.begin(),
-                       [omega](const auto d) { return d*omega; });
+        std::transform(dx.begin(), dx.end(), dx.begin(), [omega](const auto d) { return d * omega; });
         return;
     }
     case NonlinearRelaxType::SOR: {
         if (omega == 1.) {
             return;
         }
-        for (auto i = 0*dx.size(); i < dx.size(); ++i) {
+        for (auto i = 0 * dx.size(); i < dx.size(); ++i) {
             dx[i] *= omega;
-            tempDxOld[i] *= (1.-omega);
+            tempDxOld[i] *= (1. - omega);
             dx[i] += tempDxOld[i];
         }
         return;
@@ -104,23 +107,21 @@ void stabilizeNonlinearUpdate(BVector& dx, BVector& dxOld,
     return;
 }
 
-template<class Scalar, int Size>
-using BV = Dune::BlockVector<Dune::FieldVector<Scalar,Size>>;
+template <class Scalar, int Size>
+using BV = Dune::BlockVector<Dune::FieldVector<Scalar, Size>>;
 
-#define INSTANTIATE(T,Size)                                                 \
-    template void stabilizeNonlinearUpdate(BV<T,Size>&, BV<T,Size>&,        \
-                                           const T, NonlinearRelaxType);
+#define INSTANTIATE(T, Size)                                                                                           \
+    template void stabilizeNonlinearUpdate(BV<T, Size>&, BV<T, Size>&, const T, NonlinearRelaxType);
 
-#define INSTANTIATE_TYPE(T)                                                 \
-    template void detectOscillations(const std::vector<std::vector<T>>&,    \
-                                     const int, const int, const T,         \
-                                     const int, bool&, bool&);              \
-    INSTANTIATE(T,1)                                                        \
-    INSTANTIATE(T,2)                                                        \
-    INSTANTIATE(T,3)                                                        \
-    INSTANTIATE(T,4)                                                        \
-    INSTANTIATE(T,5)                                                        \
-    INSTANTIATE(T,6)
+#define INSTANTIATE_TYPE(T)                                                                                            \
+    template void detectOscillations(                                                                                  \
+        const std::vector<std::vector<T>>&, const int, const int, const T, const int, bool&, bool&);                   \
+    INSTANTIATE(T, 1)                                                                                                  \
+    INSTANTIATE(T, 2)                                                                                                  \
+    INSTANTIATE(T, 3)                                                                                                  \
+    INSTANTIATE(T, 4)                                                                                                  \
+    INSTANTIATE(T, 5)                                                                                                  \
+    INSTANTIATE(T, 6)
 
 INSTANTIATE_TYPE(double)
 
@@ -130,11 +131,11 @@ INSTANTIATE_TYPE(float)
 
 } // namespace Opm::detail
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar>
-NonlinearSolverParameters<Scalar>::
-NonlinearSolverParameters()
+template <class Scalar>
+NonlinearSolverParameters<Scalar>::NonlinearSolverParameters()
 {
     // set default values
     reset();
@@ -148,14 +149,13 @@ NonlinearSolverParameters()
     } else if (relaxationTypeString == "sor") {
         relaxType_ = NonlinearRelaxType::SOR;
     } else {
-        OPM_THROW(std::runtime_error,
-                  "Unknown Relaxtion Type " + relaxationTypeString);
+        OPM_THROW(std::runtime_error, "Unknown Relaxtion Type " + relaxationTypeString);
     }
 }
 
-template<class Scalar>
-void NonlinearSolverParameters<Scalar>::
-reset()
+template <class Scalar>
+void
+NonlinearSolverParameters<Scalar>::reset()
 {
     // default values for the solver parameters
     relaxType_ = NonlinearRelaxType::Dampen;
@@ -164,14 +164,12 @@ reset()
     relaxRelTol_ = 0.2;
 }
 
-template<class Scalar>
-void NonlinearSolverParameters<Scalar>::
-registerParameters()
+template <class Scalar>
+void
+NonlinearSolverParameters<Scalar>::registerParameters()
 {
-    Parameters::Register<Parameters::NewtonMaxRelax<Scalar>>
-        ("The maximum relaxation factor of a Newton iteration");
-    Parameters::Register<Parameters::NewtonRelaxationType>
-        ("The type of relaxation used by Newton method");
+    Parameters::Register<Parameters::NewtonMaxRelax<Scalar>>("The maximum relaxation factor of a Newton iteration");
+    Parameters::Register<Parameters::NewtonRelaxationType>("The type of relaxation used by Newton method");
 }
 
 template struct NonlinearSolverParameters<double>;
@@ -180,4 +178,4 @@ template struct NonlinearSolverParameters<double>;
 template struct NonlinearSolverParameters<float>;
 #endif
 
-}
+} // namespace Opm

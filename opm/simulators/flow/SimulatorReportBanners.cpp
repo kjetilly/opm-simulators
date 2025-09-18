@@ -31,19 +31,20 @@
 
 #include <sstream>
 
-namespace Opm::details {
+namespace Opm::details
+{
 
-void outputReportStep(const SimulatorTimer& timer)
+void
+outputReportStep(const SimulatorTimer& timer)
 {
     std::ostringstream stepMsg;
     boost::posix_time::time_facet* facet = new boost::posix_time::time_facet("%d-%b-%Y");
     stepMsg.imbue(std::locale(std::locale::classic(), facet));
-    stepMsg << "\nReport step " << std::setw(2) << timer.currentStepNum()
-            << "/" << timer.numSteps()
-            << " at day " << unit::convert::to(timer.simulationTimeElapsed(), unit::day)
-            << "/" << unit::convert::to(timer.totalTime(), unit::day);
-    if ((timer.currentDateTime() <= boost::posix_time::ptime(boost::posix_time::max_date_time)) &&
-        (boost::posix_time::ptime(boost::posix_time::min_date_time) <= timer.currentDateTime())) {
+    stepMsg << "\nReport step " << std::setw(2) << timer.currentStepNum() << "/" << timer.numSteps() << " at day "
+            << unit::convert::to(timer.simulationTimeElapsed(), unit::day) << "/"
+            << unit::convert::to(timer.totalTime(), unit::day);
+    if ((timer.currentDateTime() <= boost::posix_time::ptime(boost::posix_time::max_date_time))
+        && (boost::posix_time::ptime(boost::posix_time::min_date_time) <= timer.currentDateTime())) {
         stepMsg << ", date = " << timer.currentDateTime();
     }
     OpmLog::info(stepMsg.str());

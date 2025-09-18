@@ -44,8 +44,8 @@
 
 #include <opm/material/densead/Math.hpp>
 
-#include <opm/simulators/flow/countGlobalCells.hpp>
 #include <opm/simulators/flow/FlowBaseVanguard.hpp>
+#include <opm/simulators/flow/countGlobalCells.hpp>
 
 #include <opm/simulators/linalg/matrixblock.hh>
 
@@ -71,12 +71,12 @@
 #include <opm/simulators/wells/StandardWell.hpp>
 #include <opm/simulators/wells/VFPInjProperties.hpp>
 #include <opm/simulators/wells/VFPProdProperties.hpp>
+#include <opm/simulators/wells/WGState.hpp>
 #include <opm/simulators/wells/WellConnectionAuxiliaryModule.hpp>
 #include <opm/simulators/wells/WellGroupHelpers.hpp>
 #include <opm/simulators/wells/WellInterface.hpp>
 #include <opm/simulators/wells/WellProdIndexCalculator.hpp>
 #include <opm/simulators/wells/WellState.hpp>
-#include <opm/simulators/wells/WGState.hpp>
 
 #include <cstddef>
 #include <map>
@@ -85,479 +85,484 @@
 #include <tuple>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
-template<class Scalar> class BlackoilWellModelNldd;
-template<class T> class SparseTable;
-
-#if COMPILE_GPU_BRIDGE
-template<class Scalar> class WellContributions;
-#endif
-
-        /// Class for handling the blackoil well model.
-        template<typename TypeTag>
-        class BlackoilWellModel : public WellConnectionAuxiliaryModule<TypeTag, BlackoilWellModel<TypeTag>>
-                                , public BlackoilWellModelGeneric<GetPropType<TypeTag, Properties::Scalar>,
-                                                                  typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
-        {
-        public:
-            // ---------      Types      ---------
-            using Grid = GetPropType<TypeTag, Properties::Grid>;
-            using EquilGrid = GetPropType<TypeTag, Properties::EquilGrid>;
-            using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
-            using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
-            using Indices = GetPropType<TypeTag, Properties::Indices>;
-            using Simulator = GetPropType<TypeTag, Properties::Simulator>;
-            using Scalar = GetPropType<TypeTag, Properties::Scalar>;
-            using RateVector = GetPropType<TypeTag, Properties::RateVector>;
-            using GlobalEqVector = GetPropType<TypeTag, Properties::GlobalEqVector>;
-            using SparseMatrixAdapter = GetPropType<TypeTag, Properties::SparseMatrixAdapter>;
-            using ModelParameters = BlackoilModelParameters<Scalar>;
-
-            using WellConnectionModule = WellConnectionAuxiliaryModule<TypeTag, BlackoilWellModel<TypeTag>>;
-
-            using IndexTraits = typename FluidSystem::IndexTraitsType;
-
-            constexpr static std::size_t pressureVarIndex = GetPropType<TypeTag, Properties::Indices>::pressureSwitchIdx;
-
-            static const int numEq = Indices::numEq;
-            static const int solventSaturationIdx = Indices::solventSaturationIdx;
-            static constexpr bool has_solvent_ = getPropValue<TypeTag, Properties::EnableSolvent>();
-            static constexpr bool has_polymer_ = getPropValue<TypeTag, Properties::EnablePolymer>();
-            static constexpr bool has_energy_ = getPropValue<TypeTag, Properties::EnableEnergy>();
-            static constexpr bool has_micp_ = Indices::enableMICP;
-
-            // TODO: where we should put these types, WellInterface or Well Model?
-            // or there is some other strategy, like TypeTag
-            using VectorBlockType = Dune::FieldVector<Scalar, numEq>;
-            using BVector = Dune::BlockVector<VectorBlockType>;
-
-            using PolymerModule = BlackOilPolymerModule<TypeTag>;
-            using BioeffectsModule = BlackOilBioeffectsModule<TypeTag>;
-
-            // For the conversion between the surface volume rate and reservoir voidage rate
-            using RateConverterType = RateConverter::
-                SurfaceToReservoirVoidage<FluidSystem, std::vector<int> >;
-
-            // For computing average pressured used by gpmaint
-            using AverageRegionalPressureType = RegionAverageCalculator::
-                AverageRegionalPressure<FluidSystem, std::vector<int> >;
-
-            using WellGroupHelpersType = WellGroupHelpers<Scalar, IndexTraits>;
-
-            explicit BlackoilWellModel(Simulator& simulator);
-
-            void init();
-            void initWellContainer(const int reportStepIdx) override;
-
-            void beginEpisode()
-            {
-                OPM_TIMEBLOCK(beginEpsiode);
-                beginReportStep(simulator_.episodeIndex());
-            }
-
-            void beginTimeStep();
-
-            void beginIteration()
-            {
-                OPM_TIMEBLOCK(beginIteration);
-                assemble(simulator_.model().newtonMethod().numIterations(),
-                         simulator_.timeStepSize());
-            }
-
-            void endIteration()
-            { }
-
-            void endTimeStep()
-            {
-                OPM_TIMEBLOCK(endTimeStep);
-                timeStepSucceeded(simulator_.time(), simulator_.timeStepSize());
-            }
-
-            void endEpisode()
-            {
-                endReportStep();
-            }
-
-            void computeTotalRatesForDof(RateVector& rate,
-                                         unsigned globalIdx) const;
-
-            template <class Context>
-            void computeTotalRatesForDof(RateVector& rate,
-                                         const Context& context,
-                                         unsigned spaceIdx,
-                                         unsigned timeIdx) const;
-
-
-            using WellInterfacePtr = std::shared_ptr<WellInterface<TypeTag> >;
-
-            using BlackoilWellModelGeneric<Scalar, IndexTraits>::initFromRestartFile;
-            void initFromRestartFile(const RestartValue& restartValues)
-            {
-                initFromRestartFile(restartValues,
-                                    this->simulator_.vanguard().transferWTestState(),
-                                    grid().size(0),
-                                    param_.use_multisegment_well_,
-                                    this->simulator_.vanguard().enableDistributedWells());
-            }
-
-            using BlackoilWellModelGeneric<Scalar, IndexTraits>::prepareDeserialize;
-            void prepareDeserialize(const int report_step)
-            {
-                prepareDeserialize(report_step, grid().size(0),
-                                   param_.use_multisegment_well_,
-                                   this->simulator_.vanguard().enableDistributedWells());
-            }
-
-            data::Wells wellData() const
-            {
-                auto wsrpt = this->wellState()
-                    .report(this->simulator_.vanguard().globalCell().data(),
-                            [this](const int well_index)
-                {
-                    return this->wasDynamicallyShutThisTimeStep(well_index);
-                });
-
-                BlackoilWellModelGuideRates(*this)
-                    .assignWellGuideRates(wsrpt, this->reportStepIndex());
-
-                this->assignWellTracerRates(wsrpt);
-
-                if (const auto& rspec = eclState().runspec();
-                    rspec.co2Storage() || rspec.h2Storage())
-                {
-                    // The gas reference density (surface condition) is the
-                    // same for all PVT regions in CO2STORE/H2STORE runs so,
-                    // for simplicity, we use region zero (0) here.
-
-                    this->assignMassGasRate(wsrpt, FluidSystem::referenceDensity(FluidSystem::gasPhaseIdx, 0));
-                }
-
-                this->assignWellTargets(wsrpt);
-
-                this->assignDynamicWellStatus(wsrpt);
-
-                // Assigning (a subset of the) property values in shut
-                // connections should be the last step of wellData().
-                this->assignShutConnections(wsrpt, this->reportStepIndex());
-
-                return wsrpt;
-            }
-
-            data::WellBlockAveragePressures wellBlockAveragePressures() const
-            {
-                return this->wbp_.computeWellBlockAveragePressures(this->gravity_);
-            }
+template <class Scalar>
+class BlackoilWellModelNldd;
+template <class T>
+class SparseTable;
 
 #if COMPILE_GPU_BRIDGE
-            // accumulate the contributions of all Wells in the WellContributions object
-            void getWellContributions(WellContributions<Scalar>& x) const;
+template <class Scalar>
+class WellContributions;
 #endif
 
-            // Check if well equations is converged.
-            ConvergenceReport getWellConvergence(const std::vector<Scalar>& B_avg, const bool checkWellGroupControlsAndNetwork = false) const;
+/// Class for handling the blackoil well model.
+template <typename TypeTag>
+class BlackoilWellModel
+    : public WellConnectionAuxiliaryModule<TypeTag, BlackoilWellModel<TypeTag>>,
+      public BlackoilWellModelGeneric<GetPropType<TypeTag, Properties::Scalar>,
+                                      typename GetPropType<TypeTag, Properties::FluidSystem>::IndexTraitsType>
+{
+public:
+    // ---------      Types      ---------
+    using Grid = GetPropType<TypeTag, Properties::Grid>;
+    using EquilGrid = GetPropType<TypeTag, Properties::EquilGrid>;
+    using FluidSystem = GetPropType<TypeTag, Properties::FluidSystem>;
+    using ElementContext = GetPropType<TypeTag, Properties::ElementContext>;
+    using Indices = GetPropType<TypeTag, Properties::Indices>;
+    using Simulator = GetPropType<TypeTag, Properties::Simulator>;
+    using Scalar = GetPropType<TypeTag, Properties::Scalar>;
+    using RateVector = GetPropType<TypeTag, Properties::RateVector>;
+    using GlobalEqVector = GetPropType<TypeTag, Properties::GlobalEqVector>;
+    using SparseMatrixAdapter = GetPropType<TypeTag, Properties::SparseMatrixAdapter>;
+    using ModelParameters = BlackoilModelParameters<Scalar>;
 
-            const SimulatorReportSingle& lastReport() const;
+    using WellConnectionModule = WellConnectionAuxiliaryModule<TypeTag, BlackoilWellModel<TypeTag>>;
 
-            void addWellContributions(SparseMatrixAdapter& jacobian) const;
+    using IndexTraits = typename FluidSystem::IndexTraitsType;
 
-            // add source from wells to the reservoir matrix
-            void addReservoirSourceTerms(GlobalEqVector& residual,
-                                         const std::vector<typename SparseMatrixAdapter::MatrixBlock*>& diagMatAddress) const;
+    constexpr static std::size_t pressureVarIndex = GetPropType<TypeTag, Properties::Indices>::pressureSwitchIdx;
 
-            // called at the beginning of a report step
-            void beginReportStep(const int time_step);
+    static const int numEq = Indices::numEq;
+    static const int solventSaturationIdx = Indices::solventSaturationIdx;
+    static constexpr bool has_solvent_ = getPropValue<TypeTag, Properties::EnableSolvent>();
+    static constexpr bool has_polymer_ = getPropValue<TypeTag, Properties::EnablePolymer>();
+    static constexpr bool has_energy_ = getPropValue<TypeTag, Properties::EnableEnergy>();
+    static constexpr bool has_micp_ = Indices::enableMICP;
 
-            // it should be able to go to prepareTimeStep(), however, the updateWellControls()
-            // makes it a little more difficult. unless we introduce if (iterationIdx != 0) to avoid doing the above function
-            // twice at the beginning of the time step
-            /// Calculating the explict quantities used in the well calculation. By explicit, we mean they are cacluated
-            /// at the beginning of the time step and no derivatives are included in these quantities
-            void calculateExplicitQuantities(DeferredLogger& deferred_logger) const;
-            // some preparation work, mostly related to group control and RESV,
-            // at the beginning of each time step (Not report step)
-            void prepareTimeStep(DeferredLogger& deferred_logger);
+    // TODO: where we should put these types, WellInterface or Well Model?
+    // or there is some other strategy, like TypeTag
+    using VectorBlockType = Dune::FieldVector<Scalar, numEq>;
+    using BVector = Dune::BlockVector<VectorBlockType>;
 
-            bool
-            updateWellControls(DeferredLogger& deferred_logger);
+    using PolymerModule = BlackOilPolymerModule<TypeTag>;
+    using BioeffectsModule = BlackOilBioeffectsModule<TypeTag>;
 
-            std::tuple<bool, Scalar>
-            updateNetworks(const bool mandatory_network_balance, DeferredLogger& deferred_logger, const bool relax_network_tolerance = false);
+    // For the conversion between the surface volume rate and reservoir voidage rate
+    using RateConverterType = RateConverter::SurfaceToReservoirVoidage<FluidSystem, std::vector<int>>;
+
+    // For computing average pressured used by gpmaint
+    using AverageRegionalPressureType = RegionAverageCalculator::AverageRegionalPressure<FluidSystem, std::vector<int>>;
+
+    using WellGroupHelpersType = WellGroupHelpers<Scalar, IndexTraits>;
+
+    explicit BlackoilWellModel(Simulator& simulator);
+
+    void init();
+    void initWellContainer(const int reportStepIdx) override;
+
+    void beginEpisode()
+    {
+        OPM_TIMEBLOCK(beginEpsiode);
+        beginReportStep(simulator_.episodeIndex());
+    }
+
+    void beginTimeStep();
+
+    void beginIteration()
+    {
+        OPM_TIMEBLOCK(beginIteration);
+        assemble(simulator_.model().newtonMethod().numIterations(), simulator_.timeStepSize());
+    }
+
+    void endIteration()
+    {
+    }
+
+    void endTimeStep()
+    {
+        OPM_TIMEBLOCK(endTimeStep);
+        timeStepSucceeded(simulator_.time(), simulator_.timeStepSize());
+    }
+
+    void endEpisode()
+    {
+        endReportStep();
+    }
+
+    void computeTotalRatesForDof(RateVector& rate, unsigned globalIdx) const;
+
+    template <class Context>
+    void computeTotalRatesForDof(RateVector& rate, const Context& context, unsigned spaceIdx, unsigned timeIdx) const;
 
 
-            void updateAndCommunicate(const int reportStepIdx,
-                                      const int iterationIdx,
-                                      DeferredLogger& deferred_logger);
+    using WellInterfacePtr = std::shared_ptr<WellInterface<TypeTag>>;
 
-            bool updateGroupControls(const Group& group,
-                                    DeferredLogger& deferred_logger,
-                                    const int reportStepIdx,
-                                    const int iterationIdx);
+    using BlackoilWellModelGeneric<Scalar, IndexTraits>::initFromRestartFile;
+    void initFromRestartFile(const RestartValue& restartValues)
+    {
+        initFromRestartFile(restartValues,
+                            this->simulator_.vanguard().transferWTestState(),
+                            grid().size(0),
+                            param_.use_multisegment_well_,
+                            this->simulator_.vanguard().enableDistributedWells());
+    }
 
-            WellInterfacePtr getWell(const std::string& well_name) const;
+    using BlackoilWellModelGeneric<Scalar, IndexTraits>::prepareDeserialize;
+    void prepareDeserialize(const int report_step)
+    {
+        prepareDeserialize(report_step,
+                           grid().size(0),
+                           param_.use_multisegment_well_,
+                           this->simulator_.vanguard().enableDistributedWells());
+    }
 
-            using PressureMatrix = Dune::BCRSMatrix<Opm::MatrixBlock<Scalar, 1, 1>>;
+    data::Wells wellData() const
+    {
+        auto wsrpt
+            = this->wellState().report(this->simulator_.vanguard().globalCell().data(), [this](const int well_index) {
+                  return this->wasDynamicallyShutThisTimeStep(well_index);
+              });
 
-            void addWellPressureEquations(PressureMatrix& jacobian,
-                                          const BVector& weights,
-                                          const bool use_well_weights) const;
-            void addWellPressureEquationsStruct(PressureMatrix& jacobian) const;
-            void addWellPressureEquationsDomain(PressureMatrix& jacobian,
-                                                const BVector& weights,
-                                                const bool use_well_weights,
-                                                const int domainIndex) const
-            {
-                if (!nldd_) {
-                    OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
-                }
-                return nldd_->addWellPressureEquations(jacobian,
-                                                       weights,
-                                                       use_well_weights,
-                                                       domainIndex);
-            }
+        BlackoilWellModelGuideRates(*this).assignWellGuideRates(wsrpt, this->reportStepIndex());
 
-            /// \brief Get list of local nonshut wells
-            const std::vector<WellInterfacePtr>& localNonshutWells() const
-            {
-                return well_container_;
-            }
+        this->assignWellTracerRates(wsrpt);
 
-            const SparseTable<int>& well_local_cells() const
-            {
-                if (!nldd_) {
-                    OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
-                }
-                return nldd_->well_local_cells();
-            }
+        if (const auto& rspec = eclState().runspec(); rspec.co2Storage() || rspec.h2Storage()) {
+            // The gas reference density (surface condition) is the
+            // same for all PVT regions in CO2STORE/H2STORE runs so,
+            // for simplicity, we use region zero (0) here.
 
-            const std::map<std::string, int>& well_domain() const
-            {
-                if (!nldd_) {
-                    OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
-                }
+            this->assignMassGasRate(wsrpt, FluidSystem::referenceDensity(FluidSystem::gasPhaseIdx, 0));
+        }
 
-                return nldd_->well_domain();
-            }
+        this->assignWellTargets(wsrpt);
 
-            auto begin() const { return well_container_.begin(); }
-            auto end() const { return well_container_.end(); }
-            bool empty() const { return well_container_.empty(); }
+        this->assignDynamicWellStatus(wsrpt);
 
-            bool addMatrixContributions() const
-            { return param_.matrix_add_well_contributions_; }
+        // Assigning (a subset of the) property values in shut
+        // connections should be the last step of wellData().
+        this->assignShutConnections(wsrpt, this->reportStepIndex());
 
-            int numStrictIterations() const
-            { return param_.strict_outer_iter_wells_; }
+        return wsrpt;
+    }
 
-            int compressedIndexForInterior(int cartesian_cell_idx) const override
-            {
-                return simulator_.vanguard().compressedIndexForInterior(cartesian_cell_idx);
-            }
+    data::WellBlockAveragePressures wellBlockAveragePressures() const
+    {
+        return this->wbp_.computeWellBlockAveragePressures(this->gravity_);
+    }
 
-            int compressedIndexForInteriorLGR(const std::string& lgr_tag, const Connection& conn) const override
-            {
-                return simulator_.vanguard().compressedIndexForInteriorLGR(lgr_tag, conn);
-            }            
+#if COMPILE_GPU_BRIDGE
+    // accumulate the contributions of all Wells in the WellContributions object
+    void getWellContributions(WellContributions<Scalar>& x) const;
+#endif
 
-            // using the solution x to recover the solution xw for wells and applying
-            // xw to update Well State
-            void recoverWellSolutionAndUpdateWellState(const BVector& x);
+    // Check if well equations is converged.
+    ConvergenceReport getWellConvergence(const std::vector<Scalar>& B_avg,
+                                         const bool checkWellGroupControlsAndNetwork = false) const;
 
-            // using the solution x to recover the solution xw for wells and applying
-            // xw to update Well State
-            void recoverWellSolutionAndUpdateWellStateDomain(const BVector& x,
-                                                             const int domainIdx);
+    const SimulatorReportSingle& lastReport() const;
 
-            const Grid& grid() const
-            { return simulator_.vanguard().grid(); }
+    void addWellContributions(SparseMatrixAdapter& jacobian) const;
 
-            const Simulator& simulator() const
-            { return simulator_; }
+    // add source from wells to the reservoir matrix
+    void addReservoirSourceTerms(GlobalEqVector& residual,
+                                 const std::vector<typename SparseMatrixAdapter::MatrixBlock*>& diagMatAddress) const;
 
-            void setNlddAdapter(BlackoilWellModelNldd<TypeTag>* mod)
-            { nldd_ = mod; }
+    // called at the beginning of a report step
+    void beginReportStep(const int time_step);
+
+    // it should be able to go to prepareTimeStep(), however, the updateWellControls()
+    // makes it a little more difficult. unless we introduce if (iterationIdx != 0) to avoid doing the above function
+    // twice at the beginning of the time step
+    /// Calculating the explict quantities used in the well calculation. By explicit, we mean they are cacluated
+    /// at the beginning of the time step and no derivatives are included in these quantities
+    void calculateExplicitQuantities(DeferredLogger& deferred_logger) const;
+    // some preparation work, mostly related to group control and RESV,
+    // at the beginning of each time step (Not report step)
+    void prepareTimeStep(DeferredLogger& deferred_logger);
+
+    bool updateWellControls(DeferredLogger& deferred_logger);
+
+    std::tuple<bool, Scalar> updateNetworks(const bool mandatory_network_balance,
+                                            DeferredLogger& deferred_logger,
+                                            const bool relax_network_tolerance = false);
+
+
+    void updateAndCommunicate(const int reportStepIdx, const int iterationIdx, DeferredLogger& deferred_logger);
+
+    bool updateGroupControls(const Group& group,
+                             DeferredLogger& deferred_logger,
+                             const int reportStepIdx,
+                             const int iterationIdx);
+
+    WellInterfacePtr getWell(const std::string& well_name) const;
+
+    using PressureMatrix = Dune::BCRSMatrix<Opm::MatrixBlock<Scalar, 1, 1>>;
+
+    void addWellPressureEquations(PressureMatrix& jacobian, const BVector& weights, const bool use_well_weights) const;
+    void addWellPressureEquationsStruct(PressureMatrix& jacobian) const;
+    void addWellPressureEquationsDomain(PressureMatrix& jacobian,
+                                        const BVector& weights,
+                                        const bool use_well_weights,
+                                        const int domainIndex) const
+    {
+        if (!nldd_) {
+            OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
+        }
+        return nldd_->addWellPressureEquations(jacobian, weights, use_well_weights, domainIndex);
+    }
+
+    /// \brief Get list of local nonshut wells
+    const std::vector<WellInterfacePtr>& localNonshutWells() const
+    {
+        return well_container_;
+    }
+
+    const SparseTable<int>& well_local_cells() const
+    {
+        if (!nldd_) {
+            OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
+        }
+        return nldd_->well_local_cells();
+    }
+
+    const std::map<std::string, int>& well_domain() const
+    {
+        if (!nldd_) {
+            OPM_THROW(std::logic_error, "Attempt to access NLDD data without a NLDD solver");
+        }
+
+        return nldd_->well_domain();
+    }
+
+    auto begin() const
+    {
+        return well_container_.begin();
+    }
+    auto end() const
+    {
+        return well_container_.end();
+    }
+    bool empty() const
+    {
+        return well_container_.empty();
+    }
+
+    bool addMatrixContributions() const
+    {
+        return param_.matrix_add_well_contributions_;
+    }
+
+    int numStrictIterations() const
+    {
+        return param_.strict_outer_iter_wells_;
+    }
+
+    int compressedIndexForInterior(int cartesian_cell_idx) const override
+    {
+        return simulator_.vanguard().compressedIndexForInterior(cartesian_cell_idx);
+    }
+
+    int compressedIndexForInteriorLGR(const std::string& lgr_tag, const Connection& conn) const override
+    {
+        return simulator_.vanguard().compressedIndexForInteriorLGR(lgr_tag, conn);
+    }
+
+    // using the solution x to recover the solution xw for wells and applying
+    // xw to update Well State
+    void recoverWellSolutionAndUpdateWellState(const BVector& x);
+
+    // using the solution x to recover the solution xw for wells and applying
+    // xw to update Well State
+    void recoverWellSolutionAndUpdateWellStateDomain(const BVector& x, const int domainIdx);
+
+    const Grid& grid() const
+    {
+        return simulator_.vanguard().grid();
+    }
+
+    const Simulator& simulator() const
+    {
+        return simulator_;
+    }
+
+    void setNlddAdapter(BlackoilWellModelNldd<TypeTag>* mod)
+    {
+        nldd_ = mod;
+    }
 
 #ifdef RESERVOIR_COUPLING_ENABLED
-            ReservoirCouplingMaster& reservoirCouplingMaster() {
-                return *(this->simulator_.reservoirCouplingMaster());
-            }
-            ReservoirCouplingSlave& reservoirCouplingSlave() {
-                return *(this->simulator_.reservoirCouplingSlave());
-            }
-            bool isReservoirCouplingMaster() const {
-                return this->simulator_.reservoirCouplingMaster() != nullptr;
-            }
-            bool isReservoirCouplingSlave() const {
-                return this->simulator_.reservoirCouplingSlave() != nullptr;
-            }
-            void setReservoirCouplingMaster(ReservoirCouplingMaster *master)
-            {
-                this->guide_rate_handler_.setReservoirCouplingMaster(master);
-            }
-            void setReservoirCouplingSlave(ReservoirCouplingSlave *slave)
-            {
-                this->guide_rate_handler_.setReservoirCouplingSlave(slave);
-            }
-        #endif
-        protected:
-            Simulator& simulator_;
+    ReservoirCouplingMaster& reservoirCouplingMaster()
+    {
+        return *(this->simulator_.reservoirCouplingMaster());
+    }
+    ReservoirCouplingSlave& reservoirCouplingSlave()
+    {
+        return *(this->simulator_.reservoirCouplingSlave());
+    }
+    bool isReservoirCouplingMaster() const
+    {
+        return this->simulator_.reservoirCouplingMaster() != nullptr;
+    }
+    bool isReservoirCouplingSlave() const
+    {
+        return this->simulator_.reservoirCouplingSlave() != nullptr;
+    }
+    void setReservoirCouplingMaster(ReservoirCouplingMaster* master)
+    {
+        this->guide_rate_handler_.setReservoirCouplingMaster(master);
+    }
+    void setReservoirCouplingSlave(ReservoirCouplingSlave* slave)
+    {
+        this->guide_rate_handler_.setReservoirCouplingSlave(slave);
+    }
+#endif
+protected:
+    Simulator& simulator_;
 
-            // a vector of all the wells.
-            std::vector<WellInterfacePtr> well_container_{};
+    // a vector of all the wells.
+    std::vector<WellInterfacePtr> well_container_ {};
 
-            std::vector<bool> is_cell_perforated_{};
+    std::vector<bool> is_cell_perforated_ {};
 
-            void initializeWellState(const int timeStepIdx);
+    void initializeWellState(const int timeStepIdx);
 
-            // create the well container
-            void createWellContainer(const int report_step) override;
+    // create the well container
+    void createWellContainer(const int report_step) override;
 
-            WellInterfacePtr
-            createWellPointer(const int wellID,
-                              const int report_step) const;
+    WellInterfacePtr createWellPointer(const int wellID, const int report_step) const;
 
-            template <typename WellType>
-            std::unique_ptr<WellType>
-            createTypedWellPointer(const int wellID,
-                                   const int time_step) const;
+    template <typename WellType>
+    std::unique_ptr<WellType> createTypedWellPointer(const int wellID, const int time_step) const;
 
-            WellInterfacePtr createWellForWellTest(const std::string& well_name,
-                                                   const int report_step,
-                                                   DeferredLogger& deferred_logger) const;
+    WellInterfacePtr
+    createWellForWellTest(const std::string& well_name, const int report_step, DeferredLogger& deferred_logger) const;
 
-            const ModelParameters param_;
-            std::size_t global_num_cells_{};
-            // the number of the cells in the local grid
-            std::size_t local_num_cells_{};
-            Scalar gravity_{};
-            std::vector<Scalar> depth_{};
-            bool alternative_well_rate_init_{};
-            std::map<std::string, Scalar> well_group_thp_calc_;
-            std::unique_ptr<RateConverterType> rateConverter_{};
-            std::map<std::string, std::unique_ptr<AverageRegionalPressureType>> regionalAveragePressureCalculator_{};
+    const ModelParameters param_;
+    std::size_t global_num_cells_ {};
+    // the number of the cells in the local grid
+    std::size_t local_num_cells_ {};
+    Scalar gravity_ {};
+    std::vector<Scalar> depth_ {};
+    bool alternative_well_rate_init_ {};
+    std::map<std::string, Scalar> well_group_thp_calc_;
+    std::unique_ptr<RateConverterType> rateConverter_ {};
+    std::map<std::string, std::unique_ptr<AverageRegionalPressureType>> regionalAveragePressureCalculator_ {};
 
-            SimulatorReportSingle last_report_{};
-            GuideRateHandler<Scalar, IndexTraits> guide_rate_handler_{};
+    SimulatorReportSingle last_report_ {};
+    GuideRateHandler<Scalar, IndexTraits> guide_rate_handler_ {};
 
-            // A flag to tell the convergence report whether we need to take another newton step
-            bool network_needs_more_balancing_force_another_newton_iteration_{false};
+    // A flag to tell the convergence report whether we need to take another newton step
+    bool network_needs_more_balancing_force_another_newton_iteration_ {false};
 
-            // Pre-step network solve at static reservoir conditions (group and well states might be updated)
-            void doPreStepNetworkRebalance(DeferredLogger& deferred_logger);
+    // Pre-step network solve at static reservoir conditions (group and well states might be updated)
+    void doPreStepNetworkRebalance(DeferredLogger& deferred_logger);
 
-            std::vector<Scalar> B_avg_{};
+    std::vector<Scalar> B_avg_ {};
 
-            const EquilGrid& equilGrid() const
-            { return simulator_.vanguard().equilGrid(); }
+    const EquilGrid& equilGrid() const
+    {
+        return simulator_.vanguard().equilGrid();
+    }
 
-            const EclipseState& eclState() const
-            { return simulator_.vanguard().eclState(); }
+    const EclipseState& eclState() const
+    {
+        return simulator_.vanguard().eclState();
+    }
 
-            // compute the well fluxes and assemble them in to the reservoir equations as source terms
-            // and in the well equations.
-            void assemble(const int iterationIdx,
-                          const double dt);
+    // compute the well fluxes and assemble them in to the reservoir equations as source terms
+    // and in the well equations.
+    void assemble(const int iterationIdx, const double dt);
 
-            // well controls and network pressures affect each other and are solved in an iterative manner.
-            // the function handles one iteration of updating well controls and network pressures.
-            // it is possible to decouple the update of well controls and network pressures further.
-            // the returned two booleans are {continue_due_to_network, well_group_control_changed}, respectively
-            std::tuple<bool, bool, Scalar> updateWellControlsAndNetworkIteration(const bool mandatory_network_balance,
-                                                                        const bool relax_network_tolerance,
-                                                                        const bool optimize_gas_lift,
-                                                                        const double dt,
-                                                                        DeferredLogger& local_deferredLogger);
+    // well controls and network pressures affect each other and are solved in an iterative manner.
+    // the function handles one iteration of updating well controls and network pressures.
+    // it is possible to decouple the update of well controls and network pressures further.
+    // the returned two booleans are {continue_due_to_network, well_group_control_changed}, respectively
+    std::tuple<bool, bool, Scalar> updateWellControlsAndNetworkIteration(const bool mandatory_network_balance,
+                                                                         const bool relax_network_tolerance,
+                                                                         const bool optimize_gas_lift,
+                                                                         const double dt,
+                                                                         DeferredLogger& local_deferredLogger);
 
-            bool updateWellControlsAndNetwork(const bool mandatory_network_balance,
-                                              const double dt,
-                                              DeferredLogger& local_deferredLogger);
+    bool updateWellControlsAndNetwork(const bool mandatory_network_balance,
+                                      const double dt,
+                                      DeferredLogger& local_deferredLogger);
 
-            bool computeWellGroupThp(const double dt, DeferredLogger& local_deferredLogger);
+    bool computeWellGroupThp(const double dt, DeferredLogger& local_deferredLogger);
 
-            /// Update rank's notion of intersecting wells and their
-            /// associate solution variables.
-            ///
-            /// \param[in] reportStepIdx Report step.
-            ///
-            /// \param[in] enableWellPIScaling Whether or not to enable WELPI
-            ///   scaling.  Typically enabled (i.e., true) only at the start
-            ///   of a report step.
-            void initializeLocalWellStructure(const int  reportStepIdx,
-                                              const bool enableWellPIScaling);
+    /// Update rank's notion of intersecting wells and their
+    /// associate solution variables.
+    ///
+    /// \param[in] reportStepIdx Report step.
+    ///
+    /// \param[in] enableWellPIScaling Whether or not to enable WELPI
+    ///   scaling.  Typically enabled (i.e., true) only at the start
+    ///   of a report step.
+    void initializeLocalWellStructure(const int reportStepIdx, const bool enableWellPIScaling);
 
-            /// Initialize group control modes/constraints and group solution state.
-            ///
-            /// \param[in] reportStepIdx Report step.
-            void initializeGroupStructure(const int reportStepIdx);
+    /// Initialize group control modes/constraints and group solution state.
+    ///
+    /// \param[in] reportStepIdx Report step.
+    void initializeGroupStructure(const int reportStepIdx);
 
-            // called at the end of a time step
-            void timeStepSucceeded(const double simulationTime, const double dt);
+    // called at the end of a time step
+    void timeStepSucceeded(const double simulationTime, const double dt);
 
-            // called at the end of a report step
-            void endReportStep();
+    // called at the end of a report step
+    void endReportStep();
 
-            // setting the well_solutions_ based on well_state.
-            void updatePrimaryVariables(DeferredLogger& deferred_logger);
+    // setting the well_solutions_ based on well_state.
+    void updatePrimaryVariables(DeferredLogger& deferred_logger);
 
-            void updateAverageFormationFactor();
+    void updateAverageFormationFactor();
 
-            void computePotentials(const std::size_t widx,
-                                   const WellState<Scalar, IndexTraits>& well_state_copy,
-                                   std::string& exc_msg,
-                                   ExceptionType::ExcEnum& exc_type,
-                                   DeferredLogger& deferred_logger) override;
+    void computePotentials(const std::size_t widx,
+                           const WellState<Scalar, IndexTraits>& well_state_copy,
+                           std::string& exc_msg,
+                           ExceptionType::ExcEnum& exc_type,
+                           DeferredLogger& deferred_logger) override;
 
-            const std::vector<Scalar>& wellPerfEfficiencyFactors() const;
+    const std::vector<Scalar>& wellPerfEfficiencyFactors() const;
 
-            void calculateProductivityIndexValuesShutWells(const int reportStepIdx, DeferredLogger& deferred_logger) override;
-            void calculateProductivityIndexValues(DeferredLogger& deferred_logger) override;
-            void calculateProductivityIndexValues(const WellInterface<TypeTag>* wellPtr,
-                                                  DeferredLogger& deferred_logger);
+    void calculateProductivityIndexValuesShutWells(const int reportStepIdx, DeferredLogger& deferred_logger) override;
+    void calculateProductivityIndexValues(DeferredLogger& deferred_logger) override;
+    void calculateProductivityIndexValues(const WellInterface<TypeTag>* wellPtr, DeferredLogger& deferred_logger);
 
-            // The number of conservation quantities.
-            int numConservationQuantities() const;
+    // The number of conservation quantities.
+    int numConservationQuantities() const;
 
-            int reportStepIndex() const;
+    int reportStepIndex() const;
 
-            void assembleWellEq(const double dt, DeferredLogger& deferred_logger);
+    void assembleWellEq(const double dt, DeferredLogger& deferred_logger);
 
-            void prepareWellsBeforeAssembling(const double dt, DeferredLogger& deferred_logger);
+    void prepareWellsBeforeAssembling(const double dt, DeferredLogger& deferred_logger);
 
-            // TODO: finding a better naming
-            void assembleWellEqWithoutIteration(const double dt, DeferredLogger& deferred_logger);
+    // TODO: finding a better naming
+    void assembleWellEqWithoutIteration(const double dt, DeferredLogger& deferred_logger);
 
-            void extractLegacyCellPvtRegionIndex_();
+    void extractLegacyCellPvtRegionIndex_();
 
-            void extractLegacyDepth_();
+    void extractLegacyDepth_();
 
-            /// upate the wellTestState related to economic limits
-            void updateWellTestState(const double simulationTime, WellTestState& wellTestState);
+    /// upate the wellTestState related to economic limits
+    void updateWellTestState(const double simulationTime, WellTestState& wellTestState);
 
-            void wellTesting(const int timeStepIdx, const double simulationTime, DeferredLogger& deferred_logger);
+    void wellTesting(const int timeStepIdx, const double simulationTime, DeferredLogger& deferred_logger);
 
-            void calcResvCoeff(const int fipnum,
-                               const int pvtreg,
-                               const std::vector<Scalar>& production_rates,
-                               std::vector<Scalar>& resv_coeff) override;
+    void calcResvCoeff(const int fipnum,
+                       const int pvtreg,
+                       const std::vector<Scalar>& production_rates,
+                       std::vector<Scalar>& resv_coeff) override;
 
-            void calcInjResvCoeff(const int fipnum,
-                                  const int pvtreg,
-                                  std::vector<Scalar>& resv_coeff) override;
+    void calcInjResvCoeff(const int fipnum, const int pvtreg, std::vector<Scalar>& resv_coeff) override;
 
-            void computeWellTemperature();
+    void computeWellTemperature();
 
-        private:
-            BlackoilWellModelGasLift<TypeTag> gaslift_;
-            BlackoilWellModelNldd<TypeTag>* nldd_ = nullptr; //!< NLDD well model adapter (not owned)
+private:
+    BlackoilWellModelGasLift<TypeTag> gaslift_;
+    BlackoilWellModelNldd<TypeTag>* nldd_ = nullptr; //!< NLDD well model adapter (not owned)
 
-            // These members are used to avoid reallocation in specific functions
-            // instead of using local variables.
-            // Their state is not relevant between function calls, so they can
-            // (and must) be mutable, as the functions using them are const.
-            mutable BVector x_local_;
+    // These members are used to avoid reallocation in specific functions
+    // instead of using local variables.
+    // Their state is not relevant between function calls, so they can
+    // (and must) be mutable, as the functions using them are const.
+    mutable BVector x_local_;
 
-            void assignWellTracerRates(data::Wells& wsrpt) const;
-        };
+    void assignWellTracerRates(data::Wells& wsrpt) const;
+};
 
 } // namespace Opm
 

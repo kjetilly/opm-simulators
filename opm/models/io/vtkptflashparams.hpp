@@ -27,21 +27,26 @@
 #ifndef OPM_VTK_PTFLASH_PARAMS_HPP
 #define OPM_VTK_PTFLASH_PARAMS_HPP
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
 // set default values for what quantities to output
-struct VtkWriteLiquidMoleFractions { static constexpr bool value = false; };
-struct VtkWriteEquilibriumConstants { static constexpr bool value = false; };
+struct VtkWriteLiquidMoleFractions {
+    static constexpr bool value = false;
+};
+struct VtkWriteEquilibriumConstants {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for VtkPtFlashModule.
  */
-struct VtkPtFlashParams
-{
+struct VtkPtFlashParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

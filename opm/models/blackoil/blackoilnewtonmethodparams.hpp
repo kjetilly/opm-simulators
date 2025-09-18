@@ -28,50 +28,73 @@
 #ifndef EWOMS_BLACK_OIL_NEWTON_METHOD_PARAMETERS_HH
 #define EWOMS_BLACK_OIL_NEWTON_METHOD_PARAMETERS_HH
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-template<class Scalar>
-struct DpMaxRel { static constexpr Scalar value = 0.3; };
+template <class Scalar>
+struct DpMaxRel {
+    static constexpr Scalar value = 0.3;
+};
 
-template<class Scalar>
-struct DsMax { static constexpr Scalar value = 0.2; };
+template <class Scalar>
+struct DsMax {
+    static constexpr Scalar value = 0.2;
+};
 
-template<class Scalar>
-struct PriVarOscilationThreshold { static constexpr Scalar value = 1e-5; };
+template <class Scalar>
+struct PriVarOscilationThreshold {
+    static constexpr Scalar value = 1e-5;
+};
 
-struct ProjectSaturations { static constexpr bool value = false; };
+struct ProjectSaturations {
+    static constexpr bool value = false;
+};
 
-template<class Scalar>
-struct MaxTemperatureChange { static constexpr Scalar value = 5.0; }; // Kelvin
+template <class Scalar>
+struct MaxTemperatureChange {
+    static constexpr Scalar value = 5.0;
+}; // Kelvin
 
-template<class Scalar>
-struct TemperatureMax { static constexpr Scalar value = 1e9; }; // Kelvin
+template <class Scalar>
+struct TemperatureMax {
+    static constexpr Scalar value = 1e9;
+}; // Kelvin
 
-template<class Scalar>
-struct TemperatureMin { static constexpr Scalar value = 0.0; }; // Kelvin
+template <class Scalar>
+struct TemperatureMin {
+    static constexpr Scalar value = 0.0;
+}; // Kelvin
 
-template<class Scalar>
-struct PressureMax { static constexpr Scalar value = 1e99; };
+template <class Scalar>
+struct PressureMax {
+    static constexpr Scalar value = 1e99;
+};
 
-template<class Scalar>
-struct PressureMin { static constexpr Scalar value = -1e99; };
+template <class Scalar>
+struct PressureMin {
+    static constexpr Scalar value = -1e99;
+};
 
-template<class Scalar>
-struct MaximumWaterSaturation { static constexpr Scalar value = 1.0; };
+template <class Scalar>
+struct MaximumWaterSaturation {
+    static constexpr Scalar value = 1.0;
+};
 
-template<class Scalar>
-struct WaterOnlyThreshold { static constexpr Scalar value = 1.0; };
+template <class Scalar>
+struct WaterOnlyThreshold {
+    static constexpr Scalar value = 1.0;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
 /*!
  * \brief Struct holding the parameters for BlackoilNewtonMethod.
  */
-template<class Scalar>
-struct BlackoilNewtonParams
-{
+template <class Scalar>
+struct BlackoilNewtonParams {
     //! \brief Registers the parameters in parameter system.
     static void registerParameters();
 

@@ -28,20 +28,20 @@
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Gas::SGmin<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Gas::SGmin<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     this->sgl_ = endPoints.Sgl;
 
-    if (! std::isfinite(this->sgl_)) {
+    if (!std::isfinite(this->sgl_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = this->sgl_ < Scalar{0};
-    const auto high = ! (this->sgl_ < Scalar{1});
+    const auto low = this->sgl_ < Scalar {0};
+    const auto high = !(this->sgl_ < Scalar {1});
 
     if (low || high) {
         this->setViolated();
@@ -52,22 +52,22 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Gas::SGmax<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Gas::SGmax<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
     // 0 < SGU <= 1
 
     this->sgu_ = endPoints.Sgu;
 
-    if (! std::isfinite(this->sgu_)) {
+    if (!std::isfinite(this->sgu_)) {
         this->setViolated();
         this->setCritical();
 
         return;
     }
 
-    const auto low = ! (this->sgu_ > Scalar{0});
-    const auto high = this->sgu_ > Scalar{1};
+    const auto low = !(this->sgu_ > Scalar {0});
+    const auto high = this->sgu_ > Scalar {1};
 
     if (low || high) {
         this->setViolated();
@@ -78,17 +78,14 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 // ---------------------------------------------------------------------------
 
 template <typename Scalar>
-void Opm::Satfunc::PhaseChecks::Gas::SGcr<Scalar>::
-testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
+void
+Opm::Satfunc::PhaseChecks::Gas::SGcr<Scalar>::testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
 {
-    this->sgl_  = endPoints.Sgl;
+    this->sgl_ = endPoints.Sgl;
     this->sgcr_ = endPoints.Sgcr;
-    this->sgu_  = endPoints.Sgu;
+    this->sgu_ = endPoints.Sgu;
 
-    if (! std::isfinite(this->sgl_) ||
-        ! std::isfinite(this->sgcr_) ||
-        ! std::isfinite(this->sgu_))
-    {
+    if (!std::isfinite(this->sgl_) || !std::isfinite(this->sgcr_) || !std::isfinite(this->sgu_)) {
         this->setViolated();
         this->setCritical();
 
@@ -96,7 +93,7 @@ testImpl(const EclEpsScalingPointsInfo<Scalar>& endPoints)
     }
 
     const auto low = this->sgcr_ < this->sgl_;
-    const auto high = ! (this->sgcr_ < this->sgu_);
+    const auto high = !(this->sgcr_ < this->sgu_);
 
     if (low || high) {
         this->setViolated();

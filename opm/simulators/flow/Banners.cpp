@@ -37,31 +37,36 @@
 #include <thread>
 #include <unistd.h>
 
-namespace {
+namespace
+{
 
-unsigned long long getTotalSystemMemory()
+unsigned long long
+getTotalSystemMemory()
 {
     long pages = sysconf(_SC_PHYS_PAGES);
     long page_size = sysconf(_SC_PAGE_SIZE);
     return pages * page_size;
 }
 
-}
+} // namespace
 
-namespace Opm {
+namespace Opm
+{
 
-void printPRTHeader(const int nprocs, const int nthreads,
-                    const std::string& parameters,
-                    std::string_view moduleVersion,
-                    std::string_view compileTimestamp)
+void
+printPRTHeader(const int nprocs,
+               const int nthreads,
+               const std::string& parameters,
+               std::string_view moduleVersion,
+               std::string_view compileTimestamp)
 {
     const double megabyte = 1024 * 1024;
     unsigned num_cpu = std::thread::hardware_concurrency();
     struct utsname arch;
     const char* user = getlogin();
     std::time_t now = std::time(0);
-    struct std::tm  tstruct;
-    char      tmstr[80];
+    struct std::tm tstruct;
+    char tmstr[80];
     tstruct = *std::localtime(&now);
     std::strftime(tmstr, sizeof(tmstr), "%d-%m-%Y at %X", &tstruct);
     const double mem_size = getTotalSystemMemory() / megabyte;
@@ -76,29 +81,30 @@ void printPRTHeader(const int nprocs, const int nthreads,
     ss << " and is part of OPM.\nFor more information visit: https://opm-project.org \n\n";
     ss << "Flow Version     =  " << moduleVersion << "\n";
     if (uname(&arch) == 0) {
-       ss << "Machine name     =  " << arch.nodename << " (Number of logical cores: " << num_cpu;
-       ss << ", Memory size: " << std::fixed << std::setprecision (2) << mem_size << " MB) \n";
-       ss << "Operating system =  " << arch.sysname << " " << arch.machine << " (Kernel: " << arch.release;
-       ss << ", " << arch.version << " )\n";
-       ss << "Build time       =  " << compileTimestamp << "\n";
+        ss << "Machine name     =  " << arch.nodename << " (Number of logical cores: " << num_cpu;
+        ss << ", Memory size: " << std::fixed << std::setprecision(2) << mem_size << " MB) \n";
+        ss << "Operating system =  " << arch.sysname << " " << arch.machine << " (Kernel: " << arch.release;
+        ss << ", " << arch.version << " )\n";
+        ss << "Build time       =  " << compileTimestamp << "\n";
     }
     if (user) {
-       ss << "User             =  " << user << std::endl;
+        ss << "User             =  " << user << std::endl;
     }
     ss << "Simulation started on " << tmstr << " hrs\n";
-    ss << "Using "<< nprocs << " MPI processes with "<< nthreads <<" OMP threads on each \n";
+    ss << "Using " << nprocs << " MPI processes with " << nthreads << " OMP threads on each \n";
     ss << "Parameters used by Flow:\n" << parameters;
 
     OpmLog::note(ss.str());
 }
 
-void printFlowBanner(int nprocs, int nthreads, std::string_view moduleVersionName)
+void
+printFlowBanner(int nprocs, int nthreads, std::string_view moduleVersionName)
 {
     const int lineLen = 70;
     std::string banner = "This is flow ";
     banner += moduleVersionName;
-    const int bannerPreLen = (lineLen - 2 - banner.size())/2;
-    const int bannerPostLen = bannerPreLen + (lineLen - 2 - banner.size())%2;
+    const int bannerPreLen = (lineLen - 2 - banner.size()) / 2;
+    const int bannerPostLen = bannerPreLen + (lineLen - 2 - banner.size()) % 2;
     std::cout << "**********************************************************************\n";
     std::cout << "*                                                                    *\n";
     std::cout << "*" << std::string(bannerPreLen, ' ') << banner << std::string(bannerPostLen, ' ') << "*\n";
@@ -109,14 +115,12 @@ void printFlowBanner(int nprocs, int nthreads, std::string_view moduleVersionNam
     std::cout << "*                                                                    *\n";
     std::cout << "**********************************************************************\n\n";
 
-    std::cout << "Using "<< nprocs << " MPI processes with "<< nthreads <<" OMP threads on each \n\n";
+    std::cout << "Using " << nprocs << " MPI processes with " << nthreads << " OMP threads on each \n\n";
 }
 
-void printFlowTrailer(int nprocs,
-                      int nthreads,
-                      const double total_setup_time,
-                      const double deck_read_time,
-                      const SimulatorReport& report)
+void
+printFlowTrailer(
+    int nprocs, int nthreads, const double total_setup_time, const double deck_read_time, const SimulatorReport& report)
 {
     std::ostringstream ss;
     ss << "\n\n================    End of simulation     ===============\n\n";

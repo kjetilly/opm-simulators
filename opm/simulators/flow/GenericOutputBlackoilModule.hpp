@@ -39,9 +39,9 @@
 #include <opm/simulators/flow/InterRegFlows.hpp>
 #include <opm/simulators/flow/LogOutputHelper.hpp>
 #include <opm/simulators/flow/MechContainer.hpp>
-#include <opm/simulators/flow/RegionPhasePVAverage.hpp>
 #include <opm/simulators/flow/RFTContainer.hpp>
 #include <opm/simulators/flow/RSTConv.hpp>
+#include <opm/simulators/flow/RegionPhasePVAverage.hpp>
 #include <opm/simulators/flow/TracerContainer.hpp>
 
 #include <opm/simulators/utils/ParallelCommunication.hpp>
@@ -55,16 +55,25 @@
 #include <utility>
 #include <vector>
 
-namespace Opm::Parameters {
+namespace Opm::Parameters
+{
 
-struct ForceDisableFluidInPlaceOutput { static constexpr bool value = false; };
-struct ForceDisableResvFluidInPlaceOutput { static constexpr bool value = false; };
+struct ForceDisableFluidInPlaceOutput {
+    static constexpr bool value = false;
+};
+struct ForceDisableResvFluidInPlaceOutput {
+    static constexpr bool value = false;
+};
 
 } // namespace Opm::Parameters
 
-namespace Opm {
+namespace Opm
+{
 
-namespace data { class Solution; }
+namespace data
+{
+    class Solution;
+}
 class EclHysteresisConfig;
 class EclipseState;
 class Schedule;
@@ -72,8 +81,9 @@ class SummaryConfig;
 class SummaryConfigNode;
 class SummaryState;
 
-template<class FluidSystem>
-class GenericOutputBlackoilModule {
+template <class FluidSystem>
+class GenericOutputBlackoilModule
+{
 public:
     using Scalar = typename FluidSystem::Scalar;
 
@@ -85,10 +95,7 @@ public:
      */
     static void registerParameters();
 
-    void outputTimeStamp(const std::string& lbl,
-                         double elapsed,
-                         int rstep,
-                         boost::posix_time::ptime currentDate);
+    void outputTimeStamp(const std::string& lbl, double elapsed, int rstep, boost::posix_time::ptime currentDate);
 
     /// Clear internal arrays for parallel accumulation of per-region phase
     /// density averages.
@@ -99,16 +106,13 @@ public:
     void accumulateDensityParallel();
 
     // write cumulative production and injection reports to output
-    void outputCumLog(std::size_t reportStepNum,
-                      const bool connData);
+    void outputCumLog(std::size_t reportStepNum, const bool connData);
 
     // write production report to output
-    void outputProdLog(std::size_t reportStepNum,
-                       const bool connData);
+    void outputProdLog(std::size_t reportStepNum, const bool connData);
 
     // write injection report to output
-    void outputInjLog(std::size_t reportStepNum,
-                      const bool connData);
+    void outputInjLog(std::size_t reportStepNum, const bool connData);
 
     // write msw report to output
     void outputMSWLog(std::size_t reportStepNum);
@@ -128,19 +132,17 @@ public:
 
     void outputErrorLog(const Parallel::Communication& comm) const;
 
-    void addRftDataToWells(data::Wells& wellDatas,
-                           std::size_t reportStepNum,
-                           const Parallel::Communication& comm)
-    { this->rftC_.addToWells(wellDatas, reportStepNum, comm); }
+    void addRftDataToWells(data::Wells& wellDatas, std::size_t reportStepNum, const Parallel::Communication& comm)
+    {
+        this->rftC_.addToWells(wellDatas, reportStepNum, comm);
+    }
 
     /*!
      * \brief Move all buffers to data::Solution.
      */
     void assignToSolution(data::Solution& sol);
 
-    void setRestart(const data::Solution& sol,
-                    unsigned elemIdx,
-                    unsigned globalDofIndex);
+    void setRestart(const data::Solution& sol, unsigned elemIdx, unsigned globalDofIndex);
 
     Scalar getSolventSaturation(unsigned elemIdx) const
     {
@@ -199,13 +201,19 @@ public:
     }
 
     const std::vector<Scalar>& getFluidPressure() const
-    { return fluidPressure_; }
+    {
+        return fluidPressure_;
+    }
 
     const BioeffectsContainer<Scalar>& getBioeffects() const
-    { return this->bioeffectsC_; }
+    {
+        return this->bioeffectsC_;
+    }
 
     const FlowsContainer<FluidSystem>& getFlows() const
-    { return this->flowsC_; }
+    {
+        return this->flowsC_;
+    }
 
     bool needInterfaceFluxes([[maybe_unused]] const bool isSubStep) const
     {
@@ -227,29 +235,36 @@ public:
         return this->initialInplace_;
     }
 
-    bool localDataValid() const{
+    bool localDataValid() const
+    {
         return local_data_valid_;
     }
 
-    void invalidateLocalData(){
+    void invalidateLocalData()
+    {
         local_data_valid_ = false;
     }
 
-    void validateLocalData(){
+    void validateLocalData()
+    {
         local_data_valid_ = true;
     }
 
-    template<class Serializer>
+    template <class Serializer>
     void serializeOp(Serializer& serializer)
     {
         serializer(initialInplace_);
     }
 
     RSTConv& getConv()
-    { return this->rst_conv_; }
+    {
+        return this->rst_conv_;
+    }
 
     const RSTConv& getConv() const
-    { return this->rst_conv_; }
+    {
+        return this->rst_conv_;
+    }
 
     //! \brief Assign fields that are in global numbering to the solution.
     //! \detail This is used to add fields that for some reason cannot be collected
@@ -297,9 +312,7 @@ protected:
                         unsigned numOutputNnc = 0,
                         std::map<std::string, int> rstKeywords = {});
 
-    void makeRegionSum(Inplace& inplace,
-                       const std::string& region_name,
-                       const Parallel::Communication& comm) const;
+    void makeRegionSum(Inplace& inplace, const std::string& region_name, const Parallel::Communication& comm) const;
 
     Inplace accumulateRegionSums(const Parallel::Communication& comm);
 
@@ -315,8 +328,7 @@ protected:
                                   const std::size_t maxNumberOfRegions,
                                   const Parallel::Communication& comm);
 
-    static int regionMax(const std::vector<int>& region,
-                         const Parallel::Communication& comm);
+    static int regionMax(const std::vector<int>& region, const Parallel::Communication& comm);
 
     static void update(Inplace& inplace,
                        const std::string& region_name,
@@ -327,8 +339,7 @@ protected:
     static Scalar sum(const ScalarBuffer& v);
 
     void setupBlockData(std::function<bool(int)> isCartIdxOnThisRank);
-    void setupExtraBlockData(const std::size_t        reportStepNum,
-                             std::function<bool(int)> isCartIdxOnThisRank);
+    void setupExtraBlockData(const std::size_t reportStepNum, std::function<bool(int)> isCartIdxOnThisRank);
 
     virtual bool isDefunctParallelWell(const std::string& wname) const = 0;
     virtual bool isOwnedByCurrentRank(const std::string& wname) const = 0;
@@ -343,21 +354,21 @@ protected:
     InterRegFlowMap interRegionFlows_;
     LogOutputHelper<Scalar> logOutput_;
 
-    bool enableEnergy_{false};
-    bool enableTemperature_{false};
-    bool enableMech_{false};
+    bool enableEnergy_ {false};
+    bool enableTemperature_ {false};
+    bool enableMech_ {false};
 
-    bool enableSolvent_{false};
-    bool enablePolymer_{false};
-    bool enableFoam_{false};
-    bool enableBrine_{false};
-    bool enableSaltPrecipitation_{false};
-    bool enableExtbo_{false};
-    bool enableBioeffects_{false};
+    bool enableSolvent_ {false};
+    bool enablePolymer_ {false};
+    bool enableFoam_ {false};
+    bool enableBrine_ {false};
+    bool enableSaltPrecipitation_ {false};
+    bool enableExtbo_ {false};
+    bool enableBioeffects_ {false};
 
-    bool forceDisableFipOutput_{false};
-    bool forceDisableFipresvOutput_{false};
-    bool computeFip_{false};
+    bool forceDisableFipOutput_ {false};
+    bool forceDisableFipresvOutput_ {false};
+    bool computeFip_ {false};
 
     FIPContainer<FluidSystem> fipC_;
     std::unordered_map<std::string, std::vector<int>> regions_;
@@ -438,7 +449,7 @@ protected:
     std::map<std::pair<std::string, int>, double> extraBlockData_;
 
     std::optional<Inplace> initialInplace_;
-    bool local_data_valid_{false};
+    bool local_data_valid_ {false};
 
     std::optional<RegionPhasePoreVolAverage> regionAvgDensity_;
 };

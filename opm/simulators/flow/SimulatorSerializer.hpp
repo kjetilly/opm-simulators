@@ -26,7 +26,8 @@
 #include <string>
 #include <vector>
 
-namespace Opm {
+namespace Opm
+{
 
 class HDF5Serializer;
 class IOConfig;
@@ -37,22 +38,21 @@ struct SerializableSim {
     virtual ~SerializableSim() = default;
 
     //! \brief Load simulator state from file.
-    virtual void loadState(HDF5Serializer& serializer,
-                           const std::string& groupName) = 0;
+    virtual void loadState(HDF5Serializer& serializer, const std::string& groupName) = 0;
 
     //! \brief Save simulator state to file.
-    virtual void saveState(HDF5Serializer& serializer,
-                           const std::string& groupName) const = 0;
+    virtual void saveState(HDF5Serializer& serializer, const std::string& groupName) const = 0;
 
     //! \brief Get header info to save to file.
-    virtual std::array<std::string,5> getHeader() const = 0;
+    virtual std::array<std::string, 5> getHeader() const = 0;
 
     //! \brief Obtain local-to-global cell mapping.
     virtual const std::vector<int>& getCellMapping() const = 0;
 };
 
 //! \brief Class handling simulator serialization.
-class SimulatorSerializer {
+class SimulatorSerializer
+{
 public:
     //! \brief Constructor inits parameters.
     //! \param simulator Reference to a serializable simulator
@@ -71,10 +71,16 @@ public:
                         const std::string& loadFile);
 
     //! \brief Returns whether or not a state should be loaded.
-    bool shouldLoad() const { return loadStep_ > -1; }
+    bool shouldLoad() const
+    {
+        return loadStep_ > -1;
+    }
 
     //! \brief Returns step to load.
-    int loadStep() const { return loadStep_; }
+    int loadStep() const
+    {
+        return loadStep_;
+    }
 
     //! \brief Save data to file if appropriate.
     void save(SimulatorTimer& timer);
@@ -87,8 +93,7 @@ public:
 
 private:
     //! \brief Checks for differences between command line parameters.
-    void checkSerializedCmdLine(const std::string& current,
-                                const std::string& stored);
+    void checkSerializedCmdLine(const std::string& current, const std::string& stored);
 
 #if HAVE_HDF5
     SerializableSim& simulator_; //!< Reference to simulator to be use

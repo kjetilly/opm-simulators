@@ -22,17 +22,17 @@
 #define BOOST_TEST_MODULE OPM_test_PreconditionerFactory
 #include <boost/test/unit_test.hpp>
 
-#include <opm/simulators/linalg/matrixblock.hh>
 #include <opm/simulators/linalg/ilufirstelement.hh>
+#include <opm/simulators/linalg/matrixblock.hh>
 
+#include <opm/simulators/linalg/FlexibleSolver.hpp>
 #include <opm/simulators/linalg/PreconditionerFactory_impl.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
-#include <opm/simulators/linalg/FlexibleSolver.hpp>
 #include <opm/simulators/linalg/getQuasiImpesWeights.hpp>
 
 #include <dune/common/fvector.hh>
-#include <dune/istl/bvector.hh>
 #include <dune/istl/bcrsmatrix.hh>
+#include <dune/istl/bvector.hh>
 #include <dune/istl/matrixmarket.hh>
 #include <dune/istl/solvers.hh>
 
@@ -89,38 +89,30 @@ testPrec(const Opm::PropertyTree& prm, const std::string& matrix_filename, const
     }
     using Operator = Dune::MatrixAdapter<Matrix, Vector, Vector>;
     Operator op(matrix);
-    using PrecFactory = Opm::PreconditionerFactory<Operator,Dune::Amg::SequentialInformation>;
+    using PrecFactory = Opm::PreconditionerFactory<Operator, Dune::Amg::SequentialInformation>;
     bool transpose = false;
 
-    if(prm.get<std::string>("preconditioner.type") == "cprt"){
+    if (prm.get<std::string>("preconditioner.type") == "cprt") {
         transpose = true;
     }
-    auto wc = [&matrix, transpose]()
-    {
-        return Opm::Amg::getQuasiImpesWeights<Matrix, Vector>(matrix, 1, transpose);
-    };
+    auto wc = [&matrix, transpose]() { return Opm::Amg::getQuasiImpesWeights<Matrix, Vector>(matrix, 1, transpose); };
 
     auto prec = PrecFactory::create(op, prm.get_child("preconditioner"), wc, 1);
-    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
+    Dune::BiCGSTABSolver<Vector> solver(
+        op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
     Vector x(rhs.size());
     Dune::InverseOperatorResult res;
     solver.apply(x, rhs, res);
     return x;
 }
 
-void test1(const Opm::PropertyTree& prm)
+void
+test1(const Opm::PropertyTree& prm)
 {
     constexpr int bz = 1;
     auto sol = testPrec<bz>(prm, "matr33.txt", "rhs3.txt");
-    Dune::BlockVector<Dune::FieldVector<double, bz>> expected {-1.62493,
-            -1.76435e-06,
-            1.86991e-10,
-            -458.542,
-            2.28308e-06,
-            -2.45341e-07,
-            -1.48005,
-            -5.02264e-07,
-            -1.049e-05};
+    Dune::BlockVector<Dune::FieldVector<double, bz>> expected {
+        -1.62493, -1.76435e-06, 1.86991e-10, -458.542, 2.28308e-06, -2.45341e-07, -1.48005, -5.02264e-07, -1.049e-05};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
         for (int row = 0; row < bz; ++row) {
@@ -129,13 +121,14 @@ void test1(const Opm::PropertyTree& prm)
     }
 }
 
-void test3(const Opm::PropertyTree& prm)
+void
+test3(const Opm::PropertyTree& prm)
 {
     constexpr int bz = 3;
     auto sol = testPrec<bz>(prm, "matr33.txt", "rhs3.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {{-1.62493, -1.76435e-06, 1.86991e-10},
-            {-458.542, 2.28308e-06, -2.45341e-07},
-                {-1.48005, -5.02264e-07, -1.049e-05}};
+                                                               {-458.542, 2.28308e-06, -2.45341e-07},
+                                                               {-1.48005, -5.02264e-07, -1.049e-05}};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
         for (int row = 0; row < bz; ++row) {
@@ -166,7 +159,7 @@ using V = Dune::BlockVector<Dune::FieldVector<double, bz>>;
 template <int bz>
 using O = Dune::MatrixAdapter<M<bz>, V<bz>, V<bz>>;
 template <int bz>
-using PF = Opm::PreconditionerFactory<O<bz>,Dune::Amg::SequentialInformation>;
+using PF = Opm::PreconditionerFactory<O<bz>, Dune::Amg::SequentialInformation>;
 
 
 BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
@@ -188,10 +181,9 @@ BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
 
 
     // Add preconditioner to factory for block size 1.
-    PF<1>::addCreator("nothing", [](const O<1>&, const Opm::PropertyTree&, const std::function<V<1>()>&,
-                                    std::size_t) {
-            return Dune::getDummyUpdateWrapper<NothingPreconditioner<V<1>>>();
-        });
+    PF<1>::addCreator("nothing", [](const O<1>&, const Opm::PropertyTree&, const std::function<V<1>()>&, std::size_t) {
+        return Dune::getDummyUpdateWrapper<NothingPreconditioner<V<1>>>();
+    });
 
 
     // Test with 1x1 block solvers.
@@ -204,10 +196,9 @@ BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
     }
 
     // Add preconditioner to factory for block size 3.
-    PF<3>::addCreator("nothing", [](const O<3>&, const Opm::PropertyTree&, const std::function<V<3>()>&,
-                                    std::size_t) {
-            return Dune::getDummyUpdateWrapper<NothingPreconditioner<V<3>>>();
-        });
+    PF<3>::addCreator("nothing", [](const O<3>&, const Opm::PropertyTree&, const std::function<V<3>()>&, std::size_t) {
+        return Dune::getDummyUpdateWrapper<NothingPreconditioner<V<3>>>();
+    });
 
     // Test with 1x1 block solvers.
     test1(prm);
@@ -217,7 +208,7 @@ BOOST_AUTO_TEST_CASE(TestAddingPreconditioner)
 }
 
 
-template<class Mat, class Vec>
+template <class Mat, class Vec>
 class RepeatingOperator : public Dune::AssembledLinearOperator<Mat, Vec, Vec>
 {
 public:
@@ -298,23 +289,25 @@ testPrecRepeating(const Opm::PropertyTree& prm, const std::string& matrix_filena
     }
     using Operator = RepeatingOperator<Matrix, Vector>;
     Operator op(matrix, 2);
-    using PrecFactory = Opm::PreconditionerFactory<Operator,Dune::Amg::SequentialInformation>;
+    using PrecFactory = Opm::PreconditionerFactory<Operator, Dune::Amg::SequentialInformation>;
 
     // Add no-oppreconditioner to factory for block size 1.
-    PrecFactory::addCreator("nothing", [](const Operator&, const Opm::PropertyTree&, const std::function<Vector()>&,
-                                          std::size_t) {
-        return Dune::getDummyUpdateWrapper<NothingPreconditioner<Vector>>();
-    });
+    PrecFactory::addCreator("nothing",
+                            [](const Operator&, const Opm::PropertyTree&, const std::function<Vector()>&, std::size_t) {
+                                return Dune::getDummyUpdateWrapper<NothingPreconditioner<Vector>>();
+                            });
 
     auto prec = PrecFactory::create(op, prm.get_child("preconditioner"));
-    Dune::BiCGSTABSolver<Vector> solver(op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
+    Dune::BiCGSTABSolver<Vector> solver(
+        op, *prec, prm.get<double>("tol"), prm.get<int>("maxiter"), prm.get<int>("verbosity"));
     Vector x(rhs.size());
     Dune::InverseOperatorResult res;
     solver.apply(x, rhs, res);
     return x;
 }
 
-void test1rep(const Opm::PropertyTree& prm)
+void
+test1rep(const Opm::PropertyTree& prm)
 {
     constexpr int bz = 1;
     auto sol = testPrecRepeating<bz>(prm, "matr33rep.txt", "rhs3rep.txt");
@@ -335,15 +328,15 @@ void test1rep(const Opm::PropertyTree& prm)
     }
 }
 
-void test3rep(const Opm::PropertyTree& prm)
+void
+test3rep(const Opm::PropertyTree& prm)
 {
     constexpr int bz = 3;
     auto sol = testPrecRepeating<bz>(prm, "matr33rep.txt", "rhs3rep.txt");
     Dune::BlockVector<Dune::FieldVector<double, bz>> expected {
         {0.285714285714286, 0.285714285714286, 0.285714285714286},
         {-0.214285714285714, -0.214285714285714, -0.214285714285714},
-        {-0.214285714285714, -0.214285714285714, -0.214285714285714}
-    };
+        {-0.214285714285714, -0.214285714285714, -0.214285714285714}};
     BOOST_REQUIRE_EQUAL(sol.size(), expected.size());
     for (size_t i = 0; i < sol.size(); ++i) {
         for (int row = 0; row < bz; ++row) {
