@@ -9,7 +9,6 @@
 #include <stdlib.h>
 
 #pragma GCC push_options
-#pragma GCC target("avx2")
 
 bslv_memory *bslv_alloc()
 {
@@ -100,12 +99,12 @@ double __attribute__((noinline)) vec_inner2(const double *a, const double *b, in
     for(int i=0;i<N;i++) agg[i]=0.0;
     for(int i=0;i<n;i+=N)
     {
-        for(int j=0;j<N;j++) agg[j]+=x[i+j]*y[i+j];
+        for(int j=0;j<N;j++) agg[j] += x[i+j]*y[i+j];
     }
-    //for(int j=0;j<8;j++) agg[j]+=agg[j+8];
-    for(int j=0;j<4;j++) agg[j]+=agg[j+4];
-    for(int j=0;j<2;j++) agg[j]+=agg[j+2];
-    for(int j=0;j<1;j++) agg[j]+=agg[j+1];
+    // Reduction
+    for(int j=0;j<4;j++) agg[j] += agg[j+4];
+    for(int j=0;j<2;j++) agg[j] += agg[j+2];
+    for(int j=0;j<1;j++) agg[j] += agg[j+1];
 
     return agg[0];
 

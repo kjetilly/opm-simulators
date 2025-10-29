@@ -1,13 +1,11 @@
+#define _POSIX_C_SOURCE 200112L
 #include "bsr.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 
-#include <immintrin.h>
-
 #pragma GCC push_options
-#pragma GCC target("avx2")
 
 bsr_matrix* bsr_alloc()
 {
@@ -74,31 +72,26 @@ void bsr_vmspmv3(bsr_matrix *A, const double *x, double *y)
 
     const int b=3;
 
-    __m256d mm_zeros =_mm256_setzero_pd();
     for(int i=0;i<nrows;i++)
     {
-        __m256d vA[3];
-        for(int k=0;k<3;k++) vA[k] = mm_zeros;
+        double result[3] = {0.0, 0.0, 0.0};
+        
         for(int k=rowptr[i];k<rowptr[i+1];k++)
         {
             const float *AA=data+9*k;
-
             int j = colidx[k];
-            __m256d vx = _mm256_loadu_pd(x+b*j);
-
-            vA[0] += _mm256_cvtps_pd(_mm_loadu_ps(AA+0))*_mm256_permute4x64_pd(vx,0b00000000); //0b01010101
-            vA[1] += _mm256_cvtps_pd(_mm_loadu_ps(AA+3))*_mm256_permute4x64_pd(vx,0b01010101); //0b01010101
-            vA[2] += _mm256_cvtps_pd(_mm_loadu_ps(AA+6))*_mm256_permute4x64_pd(vx,0b10101010); //0b01010101
+            const double *xj = x+b*j;
+            
+            // Matrix-vector multiply: result += AA * xj (with float to double conversion)
+            for(int row=0;row<3;row++)
+            {
+                result[row] += (double)AA[row] * xj[0] + (double)AA[3+row] * xj[1] + (double)AA[6+row] * xj[2];
+            }
         }
 
-        // sum over columns
-        __m256d vy, vz;
-        vz = vA[0] + vA[1] + vA[2];
-
+        // Store result
         double *y_i = y+b*i;
-        vy = _mm256_loadu_pd(y_i);       // optional blend to keep
-        vz =_mm256_blend_pd(vy,vz,0x7);  // 4th element unchanged
-        _mm256_storeu_pd(y_i,vz);
+        for(int m=0;m<3;m++) y_i[m] = result[m];
     }
 }
 
@@ -111,31 +104,26 @@ void bsr_vdspmv3(bsr_matrix *A, const double *x, double *y)
 
     const int b=3;
 
-    __m256d mm_zeros =_mm256_setzero_pd();
     for(int i=0;i<nrows;i++)
     {
-        __m256d vA[3];
-        for(int k=0;k<3;k++) vA[k] = mm_zeros;
+        double result[3] = {0.0, 0.0, 0.0};
+        
         for(int k=rowptr[i];k<rowptr[i+1];k++)
         {
             const double *AA=data+9*k;
-
             int j = colidx[k];
-            __m256d vx = _mm256_loadu_pd(x+b*j);
-
-            vA[0] += _mm256_loadu_pd(AA+0)*_mm256_permute4x64_pd(vx,0b00000000); //0b01010101
-            vA[1] += _mm256_loadu_pd(AA+3)*_mm256_permute4x64_pd(vx,0b01010101); //0b01010101
-            vA[2] += _mm256_loadu_pd(AA+6)*_mm256_permute4x64_pd(vx,0b10101010); //0b01010101
+            const double *xj = x+b*j;
+            
+            // Matrix-vector multiply: result += AA * xj
+            for(int row=0;row<3;row++)
+            {
+                result[row] += AA[row] * xj[0] + AA[3+row] * xj[1] + AA[6+row] * xj[2];
+            }
         }
 
-        // sum over columns
-        __m256d vy, vz;
-        vz = vA[0] + vA[1] + vA[2];
-
+        // Store result
         double *y_i = y+b*i;
-        vy = _mm256_loadu_pd(y_i);       // optional blend to keep
-        vz =_mm256_blend_pd(vy,vz,0x7);  // 4th element unchanged
-        _mm256_storeu_pd(y_i,vz);
+        for(int m=0;m<3;m++) y_i[m] = result[m];
     }
 }
 

@@ -1,10 +1,9 @@
 #include "prec.h"
 
 #include <stdio.h>
-#include <immintrin.h>
+#include <stdlib.h>
 
 #pragma GCC push_options
-#pragma GCC target("avx2")
 
 
 prec_t *prec_alloc()
@@ -207,85 +206,53 @@ inline void vec_copy9(double *y, double const *x)
 
 void mat3_rmul(double *A, double const *B)
 {
-    // load left hand matrix
-    __m256d vA[3];
-    vA[0] = _mm256_loadu_pd(A+0);
-    vA[1] = _mm256_loadu_pd(A+3);
-    vA[2] = _mm256_loadu_pd(A+6);
-
+    // Compute A = A * B (right multiplication)
+    // Both matrices are 3x3 in column-major format
+    double temp[9];
+    
     for(int j=0;j<3;j++)
     {
-        // load column j of B matrix
-        __m256d vbj   = _mm256_loadu_pd(B+3*j);
-
-        // multiply matrix A with column j of matrix B
-        __m256d vAB[3];
-        vAB[0] = vA[0]*_mm256_permute4x64_pd(vbj,0b00000000); //0b01010101
-        vAB[1] = vA[1]*_mm256_permute4x64_pd(vbj,0b01010101); //0b01010101
-        vAB[2] = vA[2]*_mm256_permute4x64_pd(vbj,0b10101010); //0b01010101
-
-        __m256d vz = vAB[0] + vAB[1] + vAB[2];
-
-        // Store result in  column j of matrix A
-        double z[4];
-        _mm256_store_pd(z,vz);
-        for(int k=0;k<3;k++) A[3*j+k]=z[k];
+        // Compute column j of result
+        for(int i=0;i<3;i++)
+        {
+            temp[3*j+i] = A[i]*B[3*j] + A[3+i]*B[3*j+1] + A[6+i]*B[3*j+2];
+        }
     }
+    
+    // Copy result back to A
+    for(int k=0;k<9;k++) A[k] = temp[k];
 }
 
 void mat3_lmul(double const *A, double *B)
 {
-    // load left hand matrix
-    __m256d vA[3];
-    vA[0] = _mm256_loadu_pd(A+0);
-    vA[1] = _mm256_loadu_pd(A+3);
-    vA[2] = _mm256_loadu_pd(A+6);
-
+    // Compute B = A * B (left multiplication)
+    // Both matrices are 3x3 in column-major format
+    double temp[9];
+    
     for(int j=0;j<3;j++)
     {
-        // load column j of B matrix
-        __m256d vbj   = _mm256_loadu_pd(B+3*j);
-
-        // multiply matrix A with column j of matrix B
-        __m256d vAB[3];
-        vAB[0] = vA[0]*_mm256_permute4x64_pd(vbj,0b00000000); //0b01010101
-        vAB[1] = vA[1]*_mm256_permute4x64_pd(vbj,0b01010101); //0b01010101
-        vAB[2] = vA[2]*_mm256_permute4x64_pd(vbj,0b10101010); //0b01010101
-
-        __m256d vz = vAB[0] + vAB[1] + vAB[2];
-
-        // Store result in  column j of matrix B
-        double z[4];
-        _mm256_store_pd(z,vz);
-        for(int k=0;k<3;k++) B[3*j+k]=z[k];
+        // Compute column j of result
+        for(int i=0;i<3;i++)
+        {
+            temp[3*j+i] = A[i]*B[3*j] + A[3+i]*B[3*j+1] + A[6+i]*B[3*j+2];
+        }
     }
+    
+    // Copy result back to B
+    for(int k=0;k<9;k++) B[k] = temp[k];
 }
 
 void mat3_vfms(double *C, double const *A, double const *B)
 {
-    // load left hand matrix
-    __m256d vA[3];
-    vA[0] = _mm256_loadu_pd(A+0);
-    vA[1] = _mm256_loadu_pd(A+3);
-    vA[2] = _mm256_loadu_pd(A+6);
-
+    // Compute C -= A * B (fused multiply-subtract)
+    // A is 3x3 matrix, B is 3x3 matrix (column-major)
     for(int j=0;j<3;j++)
     {
-        // load column j of B matrix
-        __m256d vbj   = _mm256_loadu_pd(B+3*j);
-
-        // multiply matrix A with column j of matrix B
-        __m256d vAB[3];
-        vAB[0] = vA[0]*_mm256_permute4x64_pd(vbj,0b00000000); //0b01010101
-        vAB[1] = vA[1]*_mm256_permute4x64_pd(vbj,0b01010101); //0b01010101
-        vAB[2] = vA[2]*_mm256_permute4x64_pd(vbj,0b10101010); //0b01010101
-
-        __m256d vz = vAB[0] + vAB[1] + vAB[2];
-
-        // Store result in  column j of matrix A
-        double z[4];
-        _mm256_store_pd(z,vz);
-        for(int k=0;k<3;k++) C[3*j+k]-=z[k];
+        // Compute column j of A*B and subtract from C
+        for(int i=0;i<3;i++)
+        {
+            C[3*j+i] -= A[i]*B[3*j] + A[3+i]*B[3*j+1] + A[6+i]*B[3*j+2];
+        }
     }
 }
 
@@ -517,75 +484,59 @@ void prec_mapply3c(prec_t *restrict P, double *x)
     int b=L->b;
     int bb=b*b;
 
-    __m256d mm256_zero_pd =_mm256_setzero_pd();
-
     // Lower triangular solve assuming ones on diagonal
     for(int i=0;i<L->ncols;i++)
     {
-        __m256d vA[3], vx[3];
-
-        double *xi = x+b*i;
-        __m256d vxi = _mm256_loadu_pd(xi);
-
-        vx[0] = _mm256_permute4x64_pd(vxi,0b00000000); //0b01010101
-        vx[1] = _mm256_permute4x64_pd(vxi,0b01010101); //0b01010101
-        vx[2] = _mm256_permute4x64_pd(vxi,0b10101010); //0b01010101
+        double xi[3];
+        for(int m=0;m<3;m++) xi[m] = x[b*i+m];
+        
         for(int k=L->rowptr[i];k<L->rowptr[i+1];k++)
         {
             const float *A = L->flt+k*bb;
-            int j=U->colidx[k]; // should be L, but does not matter die to structural symmetry?
-            vA[0] = _mm256_cvtps_pd(_mm_loadu_ps(A+0))*vx[0];
-            vA[1] = _mm256_cvtps_pd(_mm_loadu_ps(A+3))*vx[1];
-            vA[2] = _mm256_cvtps_pd(_mm_loadu_ps(A+6))*vx[2];
-
+            int j=U->colidx[k]; // should be L, but does not matter due to structural symmetry
+            
+            // Matrix-vector multiply: result = A * xi (converted to double)
+            double result[3];
+            for(int row=0;row<3;row++)
+            {
+                result[row] = (double)A[row] * xi[0] + (double)A[3+row] * xi[1] + (double)A[6+row] * xi[2];
+            }
+            
+            // xj -= result
             double *xj = x+b*j;
-            __m256d vxj = _mm256_loadu_pd(xj);
-            __m256d vz = (vxj - vA[0]) - (vA[1] + vA[2]);
-
-            //vz =_mm256_blend_pd(vxj,vz,0x7);  // 4th element unchanged
-            //_mm256_storeu_pd(xj,vz);
-            double z[4];
-            _mm256_store_pd(z,vz);
-            for(int n=0;n<3;n++) xj[n]=z[n];
+            for(int n=0;n<3;n++) xj[n] -= result[n];
         }
 
-        // Muliply by (inverse) diagonal block
+        // Multiply by (inverse) diagonal block
         const float *A = D->flt+i*bb;
-        vA[0] = _mm256_cvtps_pd(_mm_loadu_ps(A+0))*vx[0]; //0b01010101
-        vA[1] = _mm256_cvtps_pd(_mm_loadu_ps(A+3))*vx[1]; //0b01010101
-        vA[2] = _mm256_cvtps_pd(_mm_loadu_ps(A+6))*vx[2]; //0b01010101
-        __m256d vz = vA[0] + vA[1] + vA[2];
-
-        //vz =_mm256_blend_pd(vxi,vz,0x7);  // 4th element unchanged
-        //_mm256_storeu_pd(xi,vz);
-        double z[4];
-        _mm256_store_pd(z,vz);
-        for(int k=0;k<3;k++) xi[k]=z[k];
+        double result[3];
+        for(int row=0;row<3;row++)
+        {
+            result[row] = (double)A[row] * xi[0] + (double)A[3+row] * xi[1] + (double)A[6+row] * xi[2];
+        }
+        for(int m=0;m<3;m++) x[b*i+m] = result[m];
     }
 
     // Upper triangular solve assuming nonzeros stored in original order
     for(int i=U->ncols;i>0;i--)
     {
-        __m256d vA[3];
-        for(int k=0;k<3;k++) vA[k]=mm256_zero_pd;
+        double result[3] = {0.0, 0.0, 0.0};
+        
         for(int k=U->rowptr[i]-1;k>U->rowptr[i-1]-1;k--)
         {
             const float *A = U->flt+k*bb;
             int j=U->colidx[k];
-            __m256d vxj = _mm256_loadu_pd(x+b*j);
-            vA[0] += _mm256_cvtps_pd(_mm_loadu_ps(A+0))*_mm256_permute4x64_pd(vxj,0b00000000); //0b01010101
-            vA[1] += _mm256_cvtps_pd(_mm_loadu_ps(A+3))*_mm256_permute4x64_pd(vxj,0b01010101); //0b01010101
-            vA[2] += _mm256_cvtps_pd(_mm_loadu_ps(A+6))*_mm256_permute4x64_pd(vxj,0b10101010); //0b01010101
+            double *xj = x+b*j;
+            
+            // Accumulate A * xj
+            for(int row=0;row<3;row++)
+            {
+                result[row] += (double)A[row] * xj[0] + (double)A[3+row] * xj[1] + (double)A[6+row] * xj[2];
+            }
         }
+        
         double *xi = x+b*(i-1);
-        __m256d vxi = _mm256_loadu_pd(xi);
-        __m256d vz = (vxi - vA[0]) - (vA[1] + vA[2]);
-        vz =_mm256_blend_pd(vxi,vz,0x7);  // 4th element unchanged
-        _mm256_storeu_pd(xi,vz);
-
-        //double z[4];
-        //_mm256_store_pd(z,vz);
-        //for(int k=0;k<3;k++) xi[k]=z[k];
+        for(int m=0;m<3;m++) xi[m] -= result[m];
     }
 }
 
@@ -598,75 +549,59 @@ void prec_dapply3c(prec_t *restrict P, double *x)
     int b=L->b;
     int bb=b*b;
 
-    __m256d mm256_zero_pd =_mm256_setzero_pd();
-
     // Lower triangular solve assuming ones on diagonal
     for(int i=0;i<L->ncols;i++)
     {
-        __m256d vA[3], vx[3];
-
-        double *xi = x+b*i;
-        __m256d vxi = _mm256_loadu_pd(xi);
-
-        vx[0] = _mm256_permute4x64_pd(vxi,0b00000000); //0b01010101
-        vx[1] = _mm256_permute4x64_pd(vxi,0b01010101); //0b01010101
-        vx[2] = _mm256_permute4x64_pd(vxi,0b10101010); //0b01010101
+        double xi[3];
+        for(int m=0;m<3;m++) xi[m] = x[b*i+m];
+        
         for(int k=L->rowptr[i];k<L->rowptr[i+1];k++)
         {
             const double *A = L->dbl+k*bb;
             int j=U->colidx[k];
-            vA[0] = _mm256_loadu_pd(A+0)*vx[0];
-            vA[1] = _mm256_loadu_pd(A+3)*vx[1];
-            vA[2] = _mm256_loadu_pd(A+6)*vx[2];
-
+            
+            // Matrix-vector multiply: result = A * xi
+            double result[3];
+            for(int row=0;row<3;row++)
+            {
+                result[row] = A[row] * xi[0] + A[3+row] * xi[1] + A[6+row] * xi[2];
+            }
+            
+            // xj -= result
             double *xj = x+b*j;
-            __m256d vxj = _mm256_loadu_pd(xj);
-            __m256d vz = (vxj - vA[0]) - (vA[1] + vA[2]);
-
-            //vz =_mm256_blend_pd(vxj,vz,0x7);  // 4th element unchanged
-            //_mm256_storeu_pd(xj,vz);
-            double z[4];
-            _mm256_store_pd(z,vz);
-            for(int kk=0;kk<3;kk++) xj[kk]=z[kk];
+            for(int kk=0;kk<3;kk++) xj[kk] -= result[kk];
         }
 
-        // Muliply by (inverse) diagonal block
+        // Multiply by (inverse) diagonal block
         const double *A = D->dbl+i*bb;
-        vA[0] = _mm256_loadu_pd(A+0)*vx[0]; //0b01010101
-        vA[1] = _mm256_loadu_pd(A+3)*vx[1]; //0b01010101
-        vA[2] = _mm256_loadu_pd(A+6)*vx[2]; //0b01010101
-        __m256d vz = vA[0] + vA[1] + vA[2];
-
-        //vz =_mm256_blend_pd(vxi,vz,0x7);  // 4th element unchanged
-        //_mm256_storeu_pd(xi,vz);
-        double z[4];
-        _mm256_store_pd(z,vz);
-        for(int k=0;k<3;k++) xi[k]=z[k];
+        double result[3];
+        for(int row=0;row<3;row++)
+        {
+            result[row] = A[row] * xi[0] + A[3+row] * xi[1] + A[6+row] * xi[2];
+        }
+        for(int m=0;m<3;m++) x[b*i+m] = result[m];
     }
 
     // Upper triangular solve assuming nonzeros stored in original order
     for(int i=U->ncols;i>0;i--)
     {
-        __m256d vA[3];
-        for(int k=0;k<3;k++) vA[k]=mm256_zero_pd;
+        double result[3] = {0.0, 0.0, 0.0};
+        
         for(int k=U->rowptr[i]-1;k>U->rowptr[i-1]-1;k--)
         {
             const double *A = U->dbl+k*bb;
             int j=U->colidx[k];
-            __m256d vxj = _mm256_loadu_pd(x+b*j);
-            vA[0] += _mm256_loadu_pd(A+0)*_mm256_permute4x64_pd(vxj,0b00000000); //0b01010101
-            vA[1] += _mm256_loadu_pd(A+3)*_mm256_permute4x64_pd(vxj,0b01010101); //0b01010101
-            vA[2] += _mm256_loadu_pd(A+6)*_mm256_permute4x64_pd(vxj,0b10101010); //0b01010101
+            double *xj = x+b*j;
+            
+            // Accumulate A * xj
+            for(int row=0;row<3;row++)
+            {
+                result[row] += A[row] * xj[0] + A[3+row] * xj[1] + A[6+row] * xj[2];
+            }
         }
+        
         double *xi = x+b*(i-1);
-        __m256d vxi = _mm256_loadu_pd(xi);
-        __m256d vz = (vxi - vA[0]) - (vA[1] + vA[2]);
-        vz =_mm256_blend_pd(vxi,vz,0x7);  // 4th element unchanged
-        _mm256_storeu_pd(xi,vz);
-
-        //double z[4];
-        //_mm256_store_pd(z,vz);
-        //for(int k=0;k<3;k++) xi[k]=z[k];
+        for(int m=0;m<3;m++) xi[m] -= result[m];
     }
 }
 
