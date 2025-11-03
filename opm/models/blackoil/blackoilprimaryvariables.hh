@@ -435,7 +435,7 @@ public:
         case WaterMeaning::Disabled:
             break;
         default:
-            throw std::logic_error("No valid primary variable selected for water");
+            OPM_THROW(std::logic_error, "No valid primary variable selected for water");
         }
         switch (primaryVarsMeaningGas()) {
         case GasMeaning::Sg:
