@@ -808,6 +808,7 @@ if(CUDA_FOUND)
                        MiniVector
                        MiniMatrix
                        GpuSparseTable
+		       blackoilintensivequantities_gpu
                        PROPERTIES LABELS ${gpu_label})
   if(MPI_FOUND)
     set_tests_properties(GpuOwnerOverlapCopy PROPERTIES LABELS ${gpu_label})
