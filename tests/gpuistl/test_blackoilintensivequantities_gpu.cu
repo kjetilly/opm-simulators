@@ -456,7 +456,6 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCreationGPU)
 
 BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 {
-    #if 0
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
     // FIXTURE FROM TEST EQUIL
     int argc1 = boost::unit_test::framework::master_test_suite().argc;
@@ -496,7 +495,7 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
     Opm::FlowGenericVanguard::readDeck(filename);
 
     auto sim = std::make_unique<Simulator>();
-
+    #if 0
     auto problemGpuBuf
         = Opm::gpuistl::copy_to_gpu<ScalarToUse, Opm::gpuistl::GpuBuffer, TypeTag, TypeTagGPU>(sim->problem());
     auto problemGpuView = Opm::gpuistl::make_view<Opm::gpuistl::GpuView>(problemGpuBuf);
@@ -507,7 +506,6 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
         = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, ScalarToUse>(dynamicFluidSystem);
     auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(
         dynamicGpuFluidSystemBuffer);
-
     testCreationGPUWithProblem<<<1, 1>>>(dynamicGpuFluidSystemView, problemGpuView);
     #endif
 }
