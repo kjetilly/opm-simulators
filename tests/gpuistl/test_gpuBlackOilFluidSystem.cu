@@ -175,6 +175,7 @@ BOOST_AUTO_TEST_CASE(BlackOilFluidSystemOnGpu)
     OPM_GPU_SAFE_CALL(cudaMemcpy(&GpuComputedVal, gpuComputedValPtr, sizeof(double), cudaMemcpyDeviceToHost));
     BOOST_CHECK_CLOSE(FluidSystem::gasPvt().gasReferenceDensity(0), GpuComputedVal, 1e-10);
 
+    std::cout << typeid(decltype(dynamicGpuFluidSystemView)).name() << std::endl;
     getReferenceDensity<<<1, 1>>>(dynamicGpuFluidSystemView, gpuComputedValPtr);
     OPM_GPU_SAFE_CALL(cudaMemcpy(&GpuComputedVal, gpuComputedValPtr, sizeof(double), cudaMemcpyDeviceToHost));
     BOOST_CHECK_CLOSE(FluidSystem::referenceDensity(0, 0), GpuComputedVal, 1e-10);

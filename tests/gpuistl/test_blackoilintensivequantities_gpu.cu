@@ -13,9 +13,10 @@
   You should have received a copy of the GNU General Public License
   along with OPM.  If not, see <http://www.gnu.org/licenses/>.
 */
-#include "opm/simulators/linalg/gpuistl_hip/MiniVector.hpp"
-#define HAVE_ECL_INPUT 1
 #include <config.h>
+#include <opm/material/common/ResetLocale.hpp>
+#define HAVE_ECL_INPUT 1
+
 
 
 #include <stdexcept>
@@ -34,8 +35,8 @@
 #include <opm/models/io/dgfvanguard.hh>
 #include <opm/models/utils/start.hh>
 #include <opm/simulators/flow/Main.hpp>
-//#include <opm/simulators/linalg/gpuistl/dense/DenseVector.hpp>
-//#include <opm/simulators/linalg/gpuistl/dense/FieldVector.hpp>
+// #include <opm/simulators/linalg/gpuistl/dense/DenseVector.hpp>
+// #include <opm/simulators/linalg/gpuistl/dense/FieldVector.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
 #include <opm/simulators/linalg/gpuistl/gpu_smart_pointer.hpp>
 // do I need these?
@@ -47,6 +48,7 @@
 #include <opm/material/fluidsystems/BlackOilFluidSystem.hpp>
 #include <opm/material/fluidsystems/BlackOilFluidSystemNonStatic.hpp>
 #include <opm/models/blackoil/blackoilintensivequantities.hh>
+#include <opm/models/nonlinear/newtonmethodparams.hpp>
 #include <opm/simulators/flow/equil/EquilibrationHelpers.hpp>
 #include <opm/simulators/flow/equil/InitStateEquil.hpp>
 
@@ -75,6 +77,7 @@
 #include <opm/simulators/linalg/gpuistl/gpu_smart_pointer.hpp>
 #include <opm/simulators/linalg/parallelbicgstabbackend.hh>
 #include <opm/simulators/wells/BlackoilWellModel.hpp>
+#include <opm/models/discretization/common/fvbaseelementcontextgpu.hh>
 
 #include <opm/material/fluidmatrixinteractions/EclMaterialLawTwoPhaseTypes.hpp>
 #include <opm/models/blackoil/blackoillocalresidualtpfa.hh>
@@ -135,19 +138,22 @@ using ScalarToUse = Opm::GetPropType<Opm::Properties::TTag::FlowProblem, Opm::Pr
 
 using GpuB = Opm::gpuistl::GpuBuffer<double>;
 using GpuV = Opm::gpuistl::GpuView<double>;
-//using GpuBufCo2Tables = Opm::CO2Tables<double, GpuB>;
-//using GpuBufBrineCo2Pvt = Opm::BrineCo2Pvt<double, GpuBufCo2Tables, GpuB>;
+// using GpuBufCo2Tables = Opm::CO2Tables<double, GpuB>;
+// using GpuBufBrineCo2Pvt = Opm::BrineCo2Pvt<double, GpuBufCo2Tables, GpuB>;
 using FluidSystem = Opm::BlackOilFluidSystem<ScalarToUse>;
 using Evaluation = Opm::DenseAd::Evaluation<double, 2>;
-//using Scalar = typename Opm::MathToolbox<Evaluation>::Scalar;
-using BlackOilFluidSystemView = Opm::BlackOilFluidSystemNonStatic<ScalarToUse,
-                                                                  Opm::BlackOilDefaultFluidSystemIndices,
-                                                                  Opm::gpuistl::GpuView>;
+// using Scalar = typename Opm::MathToolbox<Evaluation>::Scalar;
+using BlackOilFluidSystemView
+    = Opm::BlackOilFluidSystemNonStatic<ScalarToUse,
+                                        Opm::BlackOilDefaultFluidSystemIndices,
+                                        Opm::gpuistl::GpuView>;
 
 template <class TypeTag>
 struct DummyProblem {
-    using EclMaterialLawManager = typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>::EclMaterialLawManager;
-    using EclThermalLawManager = typename Opm::GetProp<TypeTag, Opm::Properties::SolidEnergyLaw>::EclThermalLawManager;
+    using EclMaterialLawManager =
+        typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>::EclMaterialLawManager;
+    using EclThermalLawManager =
+        typename Opm::GetProp<TypeTag, Opm::Properties::SolidEnergyLaw>::EclThermalLawManager;
     using MaterialLawParams = typename EclMaterialLawManager::MaterialLawParams;
     struct {
         struct {
@@ -234,7 +240,7 @@ namespace Properties
         };
 
         struct FlowSimpleDummyProblemGPU {
-            using InheritsFrom = std::tuple<FlowSimpleProblem>;
+            using InheritsFrom = std::tuple<FlowSimpleProblemGPU>;
         };
 
     } // namespace TTag
@@ -270,7 +276,7 @@ namespace Properties
     // SPE11C requires dispersion
     template <class TypeTag>
     struct EnableDispersion<TypeTag, TTag::FlowSimpleProblem> {
-        static constexpr bool value = true;
+        static constexpr bool value = false;
     };
 
     // Use the simple material law.
@@ -283,9 +289,9 @@ namespace Properties
         using Traits = ThreePhaseMaterialTraits<Scalar,
                                                 /*wettingPhaseIdx=*/FluidSystem::waterPhaseIdx,
                                                 /*nonWettingPhaseIdx=*/FluidSystem::oilPhaseIdx,
-                                                /*gasPhaseIdx=*/FluidSystem::gasPhaseIdx, 
+                                                /*gasPhaseIdx=*/FluidSystem::gasPhaseIdx,
                                                 /*hysteresis=*/false,
-                                                /*enableEndPointScaling=*/false>;
+                                                /*enableEndPointScaling=*/true>;
 
     public:
         using EclMaterialLawManager = ::Opm::EclMaterialLaw::Manager<Traits>;
@@ -306,7 +312,7 @@ namespace Properties
     // Diffusion.
     template <class TypeTag>
     struct EnableDiffusion<TypeTag, TTag::FlowSimpleProblem> {
-        static constexpr bool value = true;
+        static constexpr bool value = false;
     };
 
     template <class TypeTag>
@@ -321,8 +327,14 @@ namespace Properties
 
     template <class TypeTag>
     struct PrimaryVariables<TypeTag, TTag::FlowSimpleProblem> {
-        using type = BlackOilPrimaryVariables<TypeTag/*, Opm::gpuistl::MiniVector*/>;
+        using type = BlackOilPrimaryVariables<TypeTag>;
     };
+
+    template <class TypeTag>
+    struct PrimaryVariables<TypeTag, TTag::FlowSimpleProblemGPU> {
+        using type = BlackOilPrimaryVariables<TypeTag, Opm::gpuistl::MiniVector>;
+    };
+
     template <class TypeTag>
     struct IntensiveQuantities<TypeTag, TTag::FlowSimpleProblem> {
         using type = BlackOilIntensiveQuantities<TypeTag>;
@@ -343,10 +355,14 @@ namespace Properties
     //     using type = FlowProblemView<TypeTag>;
     // };
 
-    // template <class TypeTag>
-    // struct FluidSystem<TypeTag, TTag::FlowSimpleProblemGPU> {
-    //     using type = BlackOilFluidSystemView;
-    // };
+    template <class TypeTag>
+    struct FluidSystem<TypeTag, TTag::FlowSimpleProblemGPU> {
+        using type = BlackOilFluidSystemView;
+    };
+
+    template<class TypeTag>
+    struct ElementContext<TypeTag, TTag::FlowSimpleDummyProblemGPU>
+    { using type = FvBaseElementContextGpu<TypeTag>; };
 
 }; // namespace Properties
 
@@ -359,34 +375,39 @@ using TypeTagGPU = Opm::Properties::TTag::FlowSimpleProblemGPU;
 #if 1
 
 #endif
-//namespace
-//{ 
-#if 0
+// namespace
+//{
+
+template<class IndexTraits>
 __global__ void
-testCreationGPU(BlackOilFluidSystemView fs)
+testCreationGPU(Opm::BlackOilFluidSystemNonStatic<double, IndexTraits, Opm::gpuistl::GpuView> fs, Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::MiniVector> primaryVariables)
 {
 
     DummyProblem<TypeNacht> problem;
-    Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::dense::FieldVector> primaryVariables(fs);
+    printf("Hello\n");    
 
+    auto refDensity = fs.referenceDensity(0, 0);
+    //printf("isIdealMixture: %f\n", fs.referenceDensity(0, 0));
     printf("fs.phaseIsActive(0): %d\n", fs.phaseIsActive(0));
     printf("fs.phaseIsActive(1): %d\n", fs.phaseIsActive(1));
     printf("fs.phaseIsActive(2): %d\n", fs.phaseIsActive(2));
-    Opm::BlackOilIntensiveQuantities<TypeNacht> intensiveQuantities(&fs);
+    Opm::BlackOilIntensiveQuantities<TypeNacht> intensiveQuantities(fs);
     auto& state = intensiveQuantities.fluidState();
+    printf("BlackOilState density before update: %f\n", state.density(0).value());
     using ScalarFluidState = typename Opm::BlackOilIntensiveQuantities<TypeTagGPU>::ScalarFluidState;
 
     ScalarFluidState state2(fs);
-    primaryVariables.assignNaive(state2);
-    printf("BlackOilState density before update: %f\n", state.density(0));
+     primaryVariables.assignNaive(state2);
+     printf("BlackOilState density before update: %f\n", state.density(0).value());
     //intensiveQuantities.updatePhaseDensities();
-    printf("BlackOilState density after update: %f\n", state.density(0));
+    intensiveQuantities.update(problem, primaryVariables, 0, 0);
+    printf("BlackOilState density after update: %f\n", state.density(0).value());
 
-    //intensiveQuantities.update(problem, primaryVariables, 0, 0);
-    printf("Updating succeeded");
+    // //intensiveQuantities.update(problem, primaryVariables, 0, 0);
+    // printf("Updating succeeded");
 }
-
 #if 0
+
 template <class ProblemType>
 __global__ void
 testCreationGPUWithProblem(BlackOilFluidSystemView fs, ProblemType problem)
@@ -409,7 +430,11 @@ testCreationGPUWithProblem(BlackOilFluidSystemView fs, ProblemType problem)
 }
 #endif
 //} // namespace
-#endif
+
+__global__ void dummykernel()
+{
+    printf("Hello from dummy kernel!\n");
+}
 
 BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCreationGPU)
 {
@@ -423,18 +448,18 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCreationGPU)
     FluidSystem::initFromState(eclState, schedule);
 
     auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
-    
-    auto dynamicGpuFluidSystemBuffer
-        = ::Opm::gpuistl::copy_to_gpu(dynamicFluidSystem);
-    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view(
-        dynamicGpuFluidSystemBuffer);
-    std::cout << "phaseIsActive: " << dynamicFluidSystem.phaseIsActive(0) << ", " << dynamicFluidSystem.phaseIsActive(1)
-              << ", " << dynamicFluidSystem.phaseIsActive(2) << std::endl;
-    std::cout << "blackoil is active" << dynamicFluidSystem.phaseIsActive(FluidSystem::oilPhaseIdx) << std::endl;
+
+    auto dynamicGpuFluidSystemBuffer = ::Opm::gpuistl::copy_to_gpu(dynamicFluidSystem);
+    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view(dynamicGpuFluidSystemBuffer);
+    std::cout << "phaseIsActive: " << dynamicFluidSystem.phaseIsActive(0) << ", "
+              << dynamicFluidSystem.phaseIsActive(1) << ", " << dynamicFluidSystem.phaseIsActive(2)
+              << std::endl;
+    std::cout << "blackoil is active" << dynamicFluidSystem.phaseIsActive(FluidSystem::oilPhaseIdx)
+              << std::endl;
     Opm::BlackOilIntensiveQuantities<TypeTag> intensiveQuantities;
 
     auto& state = intensiveQuantities.fluidState();
-    
+
 
     printf("(CPU) BlackOilState density before update: %f\n", state.density(0));
     intensiveQuantities.updatePhaseDensities();
@@ -442,42 +467,57 @@ BOOST_AUTO_TEST_CASE(TestPrimaryVariablesCreationGPU)
 
     std::cout << "Scalar to use: " << typeid(ScalarToUse).name() << std::endl;
     // std::cout << "Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::dense::FieldVector> : "
-    //           << typeid(Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::MiniVector>).name() << std::endl;
-    //               //std::cout << "Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::dense::FieldVector>::Scalar : "
-    //          << typeid(Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::dense::FieldVector>::Scalar).name() << std::endl;
-    //std::cout << "BlackOilIntensiveQuantities<TypeTag>::Scalar : " << typeid(Opm::BlackOilIntensiveQuantities<TypeTag>::Scalar).name() << std::endl;
+    //           << typeid(Opm::BlackOilPrimaryVariables<TypeNacht,
+    //           Opm::gpuistl::MiniVector>).name() << std::endl;
+    //               //std::cout << "Opm::BlackOilPrimaryVariables<TypeNacht,
+    //               Opm::gpuistl::dense::FieldVector>::Scalar : "
+    //          << typeid(Opm::BlackOilPrimaryVariables<TypeNacht,
+    //          Opm::gpuistl::dense::FieldVector>::Scalar).name() << std::endl;
+    // std::cout << "BlackOilIntensiveQuantities<TypeTag>::Scalar : " <<
+    // typeid(Opm::BlackOilIntensiveQuantities<TypeTag>::Scalar).name() << std::endl;
 
-    fmt::println("state::Scalar: {}", typeid(std::remove_reference_t<std::remove_const_t<decltype(state)>>::Scalar).name());
+    fmt::println(
+        "state::Scalar: {}",
+        typeid(std::remove_reference_t<std::remove_const_t<decltype(state)>>::Scalar).name());
     using PrimaryVariables = Opm::GetPropType<TypeTag, Opm::Properties::PrimaryVariables>;
+    //using PrimaryVariablesGPU = Opm::GetPropType<TypeTagGPU, Opm::Properties::PrimaryVariables>;
     std::cout << typeid(PrimaryVariables).name() << std::endl;
-    // testCreationGPU<<<1, 1>>>(dynamicGpuFluidSystemView);
+    PrimaryVariables primaryVariablesCPU;
+    Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::MiniVector> primaryVariablesGPU(primaryVariablesCPU);
+    std::cout << typeid(decltype(dynamicGpuFluidSystemView)).name() << std::endl;
+    testCreationGPU<<<1, 1>>>(dynamicGpuFluidSystemView, primaryVariablesGPU);
+    dummykernel<<<1,1>>>();
     OPM_GPU_SAFE_CALL(cudaDeviceSynchronize());
     OPM_GPU_SAFE_CALL(cudaGetLastError());
-    
 }
 
 
 BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
 {
-    
+    Opm::resetLocale();
     using TypeTag = Opm::Properties::TTag::FlowSimpleProblem;
     // FIXTURE FROM TEST EQUIL
     int argc1 = boost::unit_test::framework::master_test_suite().argc;
     char** argv1 = boost::unit_test::framework::master_test_suite().argv;
-
+    std::cout << __LINE__ << ": Initializing MPI..." << std::endl;
 #if HAVE_DUNE_FEM
     Dune::Fem::MPIManager::initialize(argc1, argv1);
 #else
     Dune::MPIHelper::instance(argc1, argv1);
 #endif
+    std::cout << __LINE__ << ": Initialized MPI..." << std::endl;
 
     using namespace Opm;
     FlowGenericVanguard::setCommunication(std::make_unique<Opm::Parallel::Communication>());
     Opm::ThreadManager::registerParameters();
+    Opm::NewtonMethodParams<double>::registerParameters();
+    std::cout << "Registered ThreadManager parameters." << std::endl;
     BlackoilModelParameters<ScalarToUse>::registerParameters();
     AdaptiveTimeStepping<TypeTag>::registerParameters();
-    Parameters::Register<Parameters::EnableTerminalOutput>("Dummy added for the well model to compile.");
-    registerAllParameters_<TypeTag>(true);
+    Parameters::Register<Parameters::EnableTerminalOutput>(
+        "Dummy added for the well model to compile.");
+
+
 
     // END OF FIXTURE FROM TEST EQUIL
     using Simulator = Opm::GetPropType<TypeTag, Opm::Properties::Simulator>;
@@ -492,32 +532,56 @@ BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)
         filenameArg.c_str(),
         "--check-satfunc-consistency=false",
     };
+    registerAllParameters_<TypeTag>(true);
+    Opm::setupParameters_<TypeTag>(/*argc=*/sizeof(argv2) / sizeof(argv2[0]),
+                                   argv2,
+                                   /*registerParams=*/false,
+                                   /*allowUnused=*/true,
+                                   /*handleHelp=*/false,
+                                   /*myRank=*/0);
+    // Opm::setupParameters_<TypeTag>(3, argv2, true, true, true, 1);
 
-    //Opm::setupParameters_<TypeTag>(/*argc=*/sizeof(argv2) / sizeof(argv2[0]), argv2, /*registerParams=*/false, /*allowUnused=*/true, /*handleHelp=*/false, /*myRank=*/0);
+    std::cout << "Registered all parameters." << std::endl;
+    std::cout << "Reading deck" << std::endl;
+
+    if (!std::filesystem::exists(filename)) {
+        throw std::runtime_error(std::format("Missing file {}.", filename));
+    }
+
 
     Opm::FlowGenericVanguard::readDeck(filename);
-
-
+    std::cout << "Read deck." << std::endl;
+    std::cout << "Initializing simulator..." << std::endl;
     auto sim = std::make_unique<Simulator>();
-    #if 0
-
+    std::cout << "Created simulator." << std::endl;
+#if 0
+    std::cout << "Copying problem to GPU..." << std::endl;
     auto problemGpuBuf
-        = Opm::gpuistl::copy_to_gpu<ScalarToUse, Opm::gpuistl::GpuBuffer, TypeTag, TypeTagGPU>(sim->problem());
-    auto problemGpuView = Opm::gpuistl::make_view<Opm::gpuistl::GpuView>(problemGpuBuf);
+        = Opm::gpuistl::copy_to_gpu(sim->problem());
+    std::cout << "Copied problem to GPU." << std::endl;
+    auto problemGpuView = Opm::gpuistl::make_view(problemGpuBuf);
+    std::cout << "Created GPU view of problem." << std::endl;
+#endif
     auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
+    std::cout << "Initialized dynamic fluid system." << std::endl;
+
+    
     std::cout << "phaseIsActive: " << dynamicFluidSystem.phaseIsActive(0) << ", " << dynamicFluidSystem.phaseIsActive(1)
               << ", " << dynamicFluidSystem.phaseIsActive(2) << std::endl;
     auto dynamicGpuFluidSystemBuffer
-        = ::Opm::gpuistl::copy_to_gpu<::Opm::gpuistl::GpuBuffer, ScalarToUse>(dynamicFluidSystem);
-    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view<::Opm::gpuistl::GpuView, ::Opm::gpuistl::ValueAsPointer>(
+        = ::Opm::gpuistl::copy_to_gpu(dynamicFluidSystem);
+    std::cout << "Copied dynamic fluid system to GPU." << std::endl;
+    auto dynamicGpuFluidSystemView = ::Opm::gpuistl::make_view(
         dynamicGpuFluidSystemBuffer);
+    std::cout << "Created GPU view of dynamic fluid system." << std::endl;
+    
+    //testCreationGPUWithProblem<<<1, 1>>>(dynamicGpuFluidSystemView, problemGpuView);
 
-    testCreationGPUWithProblem<<<1, 1>>>(dynamicGpuFluidSystemView, problemGpuView);
-    #endif
 }
 BOOST_AUTO_TEST_CASE(TestIntensiveQuantitiesCreationGPU)
 {
-    // This test is currently just to check that the code compiles and can be launched on the GPU without errors.
-    // It does not actually check that the intensive quantities are correct. Adding such checks would require
-    // implementing a CPU version of the intensive quantities, which is non-trivial and currently not available.
+    // This test is currently just to check that the code compiles and can be launched on the GPU
+    // without errors. It does not actually check that the intensive quantities are correct. Adding
+    // such checks would require implementing a CPU version of the intensive quantities, which is
+    // non-trivial and currently not available.
 }
