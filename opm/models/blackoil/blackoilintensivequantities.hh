@@ -288,15 +288,25 @@ public:
         if constexpr (enableSolvent) {
             asImp_().solventPreSatFuncUpdate_(priVars, timeIdx, lintype);
         }
-        #if 0
+        #if 1
         // Phase relperms.
         problem.template updateRelperms<FluidState, Args...>(mobility_, dirMob_, fluidState_, globalSpaceIdx);
 
         // now we compute all phase pressures
         using EvalArr = std::array<Evaluation, numPhases>;
         EvalArr pC;
-        const auto& materialParams = problem.materialLawParams(globalSpaceIdx);
-        MaterialLaw::template capillaryPressures<EvalArr, FluidState, Args...>(pC, materialParams, fluidState_);
+        if constexpr (requires { Problem::skipMaterialLaw; }) {
+            if constexpr (Problem::skipMaterialLaw) {
+                for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+                    pC[phaseIdx] = 0.0;
+            } else {
+                const auto& materialParams = problem.materialLawParams(globalSpaceIdx);
+                MaterialLaw::template capillaryPressures<EvalArr, FluidState, Args...>(pC, materialParams, fluidState_);
+            }
+        } else {
+            const auto& materialParams = problem.materialLawParams(globalSpaceIdx);
+            MaterialLaw::template capillaryPressures<EvalArr, FluidState, Args...>(pC, materialParams, fluidState_);
+        }
 
         // scaling the capillary pressure due to porosity changes
         if constexpr (enableBrine) {
@@ -367,7 +377,7 @@ public:
         #endif
     }
 
-    void updateRsRvRsw(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updateRsRvRsw(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         const unsigned pvtRegionIdx = priVars.pvtRegionIndex();
 
@@ -459,7 +469,7 @@ public:
         }
     }
 
-    void updateMobilityAndInvB()
+    OPM_HOST_DEVICE void updateMobilityAndInvB()
     {
         OPM_TIMEBLOCK_LOCAL(updateMobilityAndInvB, Subsystem::PvtProps);
         const unsigned pvtRegionIdx = fluidState_.pvtRegionIndex();
@@ -481,11 +491,16 @@ public:
             const auto [b, mu] = getFluidSystem().inverseFormationVolumeFactorAndViscosity(fluidState_, phaseIdx, pvtRegionIdx);
             fluidState_.setInvB(phaseIdx, b);
             for (int i = 0; i < nmobilities; ++i) {
-                if (enableExtbo && phaseIdx == oilPhaseIdx) {
-                    (*mobilities[i])[phaseIdx] /= asImp_().oilViscosity();
-                }
-                else if (enableExtbo && phaseIdx == gasPhaseIdx) {
-                    (*mobilities[i])[phaseIdx] /= asImp_().gasViscosity();
+                if constexpr (enableExtbo) {
+                    if (phaseIdx == oilPhaseIdx) {
+                        (*mobilities[i])[phaseIdx] /= asImp_().oilViscosity();
+                    }
+                    else if (phaseIdx == gasPhaseIdx) {
+                        (*mobilities[i])[phaseIdx] /= asImp_().gasViscosity();
+                    }
+                    else {
+                        (*mobilities[i])[phaseIdx] /= mu;
+                    }
                 }
                 else {
                     (*mobilities[i])[phaseIdx] /= mu;
@@ -495,7 +510,7 @@ public:
         Valgrind::CheckDefined(mobility_);
     }
 
-    void updatePhaseDensities()
+    OPM_HOST_DEVICE void updatePhaseDensities()
     {
         const unsigned pvtRegionIdx = fluidState_.pvtRegionIndex();
 
@@ -551,7 +566,7 @@ public:
         this->updatePorosityImpl(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void updatePorosity(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updatePorosity(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         // Retrieve the reference porosity from the problem.
         referencePorosity_ = problem.porosity(globalSpaceIdx, timeIdx);
@@ -559,7 +574,7 @@ public:
         this->updatePorosityImpl(problem, priVars, globalSpaceIdx, timeIdx);
     }
 
-    void updatePorosityImpl(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
+    OPM_HOST_DEVICE void updatePorosityImpl(const Problem& problem, const PrimaryVariables& priVars, const unsigned globalSpaceIdx, const unsigned timeIdx)
     {
         const auto& linearizationType = problem.model().linearizer().getLinearizationType();
 
@@ -605,7 +620,7 @@ public:
         }
     }
 
-    void assertFiniteMembers()
+    OPM_HOST_DEVICE void assertFiniteMembers()
     {
         // some safety checks in debug mode
         for (unsigned phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -704,7 +719,7 @@ public:
 
         this->extrusionFactor_ = 1.0;// to avoid fixing parent update
         updateCommonPart<Args...>(problem, priVars, globalSpaceIdx, timeIdx);
-#if 0
+#if 1
         // Porosity requires separate calls so this can be instantiated with ReservoirProblem from the examples/ directory.
         updatePorosity(problem, priVars, globalSpaceIdx, timeIdx);
 #endif
@@ -726,7 +741,7 @@ public:
         updateSaturations(priVars, timeIdx, linearizationType);
         
         updateRelpermAndPressures<Args...>(problem, priVars, globalSpaceIdx, timeIdx, linearizationType);
-        #if 0
+        #if 1
         // update extBO parameters
         if constexpr (enableExtbo) {
             asImp_().zFractionUpdate_(priVars, timeIdx);

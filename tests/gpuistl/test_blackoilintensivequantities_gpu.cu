@@ -15,6 +15,7 @@
 */
 #include <config.h>
 #include <opm/material/common/ResetLocale.hpp>
+#include <opm/material/fluidmatrixinteractions/EclDefaultMaterial.hpp>
 #define HAVE_ECL_INPUT 1
 
 
@@ -155,6 +156,8 @@ struct DummyProblem {
     using EclThermalLawManager =
         typename Opm::GetProp<TypeTag, Opm::Properties::SolidEnergyLaw>::EclThermalLawManager;
     using MaterialLawParams = typename EclMaterialLawManager::MaterialLawParams;
+
+    static constexpr bool skipMaterialLaw = true;
     struct {
         struct {
             OPM_HOST_DEVICE Opm::LinearizationType getLinearizationType() const
@@ -178,10 +181,11 @@ struct DummyProblem {
     {
         return 0;
     }
-    OPM_HOST_DEVICE MaterialLawParams materialLawParams(std::size_t) const
+    OPM_HOST_DEVICE const MaterialLawParams& materialLawParams(std::size_t) const
     {
-        return MaterialLawParams();
+        return materialLawParams_;
     }
+    MaterialLawParams materialLawParams_;
     OPM_HOST_DEVICE double rockCompressibility(std::size_t) const
     {
         return 0.0;
@@ -213,8 +217,8 @@ struct DummyProblem {
         return Evaluation(0.0);
     }
 
-    template <class A, class B, class C>
-    OPM_HOST_DEVICE void updateRelperms(A&, B&, const C&, std::size_t) const
+    template <class FluidState, class ...Args>
+    OPM_HOST_DEVICE void updateRelperms(auto& mobility, auto& dirMob, FluidState& fluidState, unsigned globalSpaceIdx) const
     {
     }
 
