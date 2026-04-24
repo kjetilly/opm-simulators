@@ -263,95 +263,6 @@ void checkValueAndDerivatives(const CpuValue& cpuValue,
     }
 }
 
-template <class TypeTag>
-struct DummyProblem {
- 
-
-    OPM_HOST_DEVICE DummyProblem() {
-        // empty
-    }
-
-    OPM_HOST_DEVICE ~DummyProblem() {
-        // empty
-    }
-     
-    using EclMaterialLawManager =
-        typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>::EclMaterialLawManager;
-    using EclThermalLawManager =
-        typename Opm::GetProp<TypeTag, Opm::Properties::SolidEnergyLaw>::EclThermalLawManager;
-    struct MaterialLawParams {};
-
-    struct {
-        struct {
-            OPM_HOST_DEVICE Opm::LinearizationType getLinearizationType() const
-            {
-                return Opm::LinearizationType();
-            }
-        } lin_;
-
-        OPM_HOST_DEVICE auto linearizer() const
-        {
-            return lin_;
-        }
-    } model_;
-
-    OPM_HOST_DEVICE auto model() const
-    {
-        return model_;
-    }
-
-    OPM_HOST_DEVICE int satnumRegionIndex(std::size_t) const
-    {
-        return 0;
-    }
-    OPM_HOST_DEVICE const MaterialLawParams& materialLawParams(std::size_t) const
-    {
-        return materialLawParams_;
-    }
-    MaterialLawParams materialLawParams_;
-    OPM_HOST_DEVICE double rockCompressibility(std::size_t) const
-    {
-        return 0.0;
-    }
-    OPM_HOST_DEVICE double rockReferencePressure(std::size_t) const
-    {
-        return 0.0;
-    }
-    OPM_HOST_DEVICE double porosity(std::size_t, unsigned int) const
-    {
-        return 0.0;
-    }
-    OPM_HOST_DEVICE double maxOilVaporizationFactor(unsigned int, std::size_t) const
-    {
-        return 0.0;
-    }
-    OPM_HOST_DEVICE double maxGasDissolutionFactor(unsigned int, std::size_t) const
-    {
-        return 0.0;
-    }
-    OPM_HOST_DEVICE double maxOilSaturation(std::size_t) const
-    {
-        return 0.0;
-    }
-
-    template <class Evaluation>
-    OPM_HOST_DEVICE Evaluation rockCompPoroMultiplier(const auto&, std::size_t) const
-    {
-        return Evaluation(0.0);
-    }
-
-    template <class FluidState, class ...Args>
-    OPM_HOST_DEVICE void updateRelperms(auto& mobility, auto& dirMob, FluidState& fluidState, unsigned globalSpaceIdx) const
-    {
-    }
-
-    template <class Evaluation>
-    OPM_HOST_DEVICE Evaluation rockCompTransMultiplier(const auto&, std::size_t) const
-    {
-        return Evaluation(0.0);
-    }
-};
-
 namespace Opm
 {
 namespace Properties
@@ -393,34 +304,6 @@ struct EnableDispersion<TypeTag, TTag::FlowGasWaterEnergyProblemTest>
 using TypeTag = Opm::Properties::TTag::FlowGasWaterEnergyProblemTest;
 using TypeNacht = Opm::Properties::TTag::FlowGasWaterEnergyDummyProblemGPU;
 using TypeTagGPU = Opm::Properties::TTag::FlowGasWaterEnergyProblemGPU;
-
-template<class IndexTraits, class GpuProblem>
-__global__ void
-testUsingOnGPU(Opm::BlackOilFluidSystemNonStatic<double, IndexTraits, Opm::gpuistl::GpuView> fluidSystem,
-               Opm::BlackOilIntensiveQuantities<TypeNacht> intensiveQuantities,
-               Opm::BlackOilPrimaryVariables<TypeNacht, Opm::gpuistl::MiniVector> primaryVariables,
-               GpuProblem problem)
-{
-    printf("fluidSystem.phaseIsActive(0): %d\n", fluidSystem.phaseIsActive(0));
-    printf("fluidSystem.phaseIsActive(1): %d\n", fluidSystem.phaseIsActive(1));
-    printf("fluidSystem.phaseIsActive(2): %d\n", fluidSystem.phaseIsActive(2));
-    using ScalarFluidState = typename Opm::BlackOilIntensiveQuantities<TypeTagGPU>::ScalarFluidState;
-    ScalarFluidState state(fluidSystem);
-    printf("BlackOilState density before update: %f\n", asDouble(state.density(0)));
-
-    ScalarFluidState state2(fluidSystem);
-    primaryVariables.assignNaive(state2);
-    printf("BlackOilState density before update: %f\n", asDouble(state.density(0)));
-    intensiveQuantities.updateSaturations(primaryVariables, 0, Opm::LinearizationType{});
-    intensiveQuantities.update(problem, primaryVariables, 0, 0);
-
-    printf("BlackOilState density after update: %f\n", asDouble(state.density(0)));
-}
-
-__global__ void dummykernel()
-{
-    printf("Hello from dummy kernel!\n");
-}
 
 template <class GpuProblem, class PrimaryVariables, class IntensiveQuantities>
 __global__ void
@@ -515,6 +398,14 @@ static void runIntensiveQuantitiesTestForDeck(const std::string& deckPath,
     Opm::FlowGenericVanguard::readDeck(deckPath);
     auto sim = std::make_unique<Simulator>();
 
+    // The Simulator constructor only calls finishInit; the solution vector
+    // is not yet EQUIL-populated. Trigger initial-solution application so
+    // model().solution(0)[i] holds the real per-cell primary variables
+    // (otherwise zero-initialized PVs make the GPU update produce
+    // non-finite densities and trip the assertion in
+    // BlackOilIntensiveQuantities::assertFiniteMembers()).
+    sim->model().applyInitialSolution();
+
     auto& cpuProblem = sim->problem();
     auto& dynamicFluidSystem = FluidSystem::getNonStaticInstance();
 
@@ -563,10 +454,20 @@ static void runIntensiveQuantitiesTestForDeck(const std::string& deckPath,
     using IntensiveQuantitiesCpu = Opm::BlackOilIntensiveQuantities<TypeTag>;
     using IntensiveQuantitiesGpu = Opm::BlackOilIntensiveQuantities<TypeNacht>;
 
-    PrimaryVariablesCpu primaryVariablesCpu;
-    primaryVariablesCpu.setPrimaryVarsMeaningPressure(Opm::BlackOil::PressureMeaning::Pg);
-    PrimaryVariablesGpu primaryVariablesGpu(primaryVariablesCpu);
-    std::vector<PrimaryVariablesGpu> hostPrimaryVariablesGpu(numCells, primaryVariablesGpu);
+    // Pull the EQUIL-initialized per-cell primary variables straight from
+    // the simulator's solution vector. Using zero-initialized PVs makes the
+    // GPU update produce non-finite densities (e.g. for CO2STORE the PVT
+    // tables are not defined at p=0), which trips the assertion in
+    // BlackOilIntensiveQuantities::assertFiniteMembers().
+    const auto& cpuSolution = cpuProblem.model().solution(/*timeIdx=*/0);
+    BOOST_REQUIRE_EQUAL(cpuSolution.size(), numCells);
+    std::vector<PrimaryVariablesCpu> cpuPrimaryVariables(numCells);
+    std::vector<PrimaryVariablesGpu> hostPrimaryVariablesGpu;
+    hostPrimaryVariablesGpu.reserve(numCells);
+    for (std::size_t i = 0; i < numCells; ++i) {
+        cpuPrimaryVariables[i] = cpuSolution[i];
+        hostPrimaryVariablesGpu.emplace_back(cpuPrimaryVariables[i]);
+    }
     Opm::gpuistl::GpuBuffer<PrimaryVariablesGpu> primaryVariablesBuffer(hostPrimaryVariablesGpu);
 
     IntensiveQuantitiesCpu cpuIntensiveQuantitiesPrototype;
@@ -604,13 +505,18 @@ static void runIntensiveQuantitiesTestForDeck(const std::string& deckPath,
     OPM_GPU_SAFE_CALL(cudaEventDestroy(eventStart));
     OPM_GPU_SAFE_CALL(cudaEventDestroy(eventStop));
 
-    // CPU reference: same per-cell update on the host side using the full
-    // CPU problem; time it with std::chrono.
+    // CPU reference: use the IntensiveQuantities the simulator itself
+    // computed during invalidateAndUpdateIntensiveQuantities(0). This keeps
+    // the CPU side consistent with the static FluidSystem state of the
+    // current simulator instance (which may otherwise diverge from the
+    // dynamic GPU FluidSystem when other tests have run before this one).
     std::vector<IntensiveQuantitiesCpu> cpuIntensiveQuantities(numCells);
     const auto cpuT0 = std::chrono::steady_clock::now();
+    sim->model().invalidateAndUpdateIntensiveQuantities(/*timeIdx=*/0);
     for (std::size_t i = 0; i < numCells; ++i) {
-        cpuIntensiveQuantities[i].updateSaturations(primaryVariablesCpu, 0, Opm::LinearizationType{});
-        cpuIntensiveQuantities[i].update(cpuProblem, primaryVariablesCpu, static_cast<unsigned>(i), 0);
+        const auto* cached = sim->model().cachedIntensiveQuantities(static_cast<unsigned>(i), 0);
+        BOOST_REQUIRE(cached != nullptr);
+        cpuIntensiveQuantities[i] = *cached;
     }
     const auto cpuT1 = std::chrono::steady_clock::now();
     const double cpuMilliseconds =
