@@ -21,7 +21,21 @@
 #ifndef OPM_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER_HPP
 #define OPM_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER_HPP
 
-#if HAVE_CUDA
+// The dispatcher (and its underlying CUDA/HIP translation unit) requires
+// either HIP (any version) or CUDA >= 13.1; older CUDA toolkits cannot
+// compile the kernel translation unit. The build system gates inclusion of
+// the .cu file (and the explicit instantiations therein) on the same
+// condition, and exports the
+// \c OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER compile
+// definition iff the dispatcher is available. Callers should gate uses of
+// the dispatcher on that macro (or, equivalently, on
+// \c GpuBlackoilIntensiveQuantitiesDispatcherSupport, which is only
+// specialized to \c true when the dispatcher is available).
+#ifndef OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
+#define OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER 0
+#endif
+
+#if OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
 
 #include <opm/models/utils/propertysystem.hh>
 
@@ -101,6 +115,6 @@ private:
 
 } // namespace Opm::gpuistl
 
-#endif // HAVE_CUDA
+#endif // OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
 
 #endif // OPM_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER_HPP

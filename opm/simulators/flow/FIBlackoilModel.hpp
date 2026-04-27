@@ -91,7 +91,7 @@ public:
                           Dune::Partitions::all,
                           ThreadManager::maxThreads())
     {
-#if HAVE_CUDA
+#if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
         useGpuIntensiveQuantitiesDispatcher_ =
             Parameters::Get<Parameters::ExperimentalComputePropertiesOnGpu>();
 #endif
@@ -122,7 +122,7 @@ public:
             const auto timeEnd = std::chrono::steady_clock::now();
             const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(timeEnd - timeBegin).count();
             OpmLog::info(std::format("Updated intensive quantities for {} elements in {} ms", this->gridView_.size(0), duration));
-#if HAVE_CUDA
+#if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
             // After all cells are CPU-updated and written into the cache,
             // overlay the GPU-computed BlackOil fields in one batched call.
             if constexpr (Opm::gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value)
@@ -299,7 +299,7 @@ protected:
         Opm::OpmLog::info(std::format("updateCachedIntQuantsLoop CPU loop took {} ms",
                                       cpuDuration.count()));
 
-#if HAVE_CUDA
+#if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
         // After the CPU per-cell update has populated all fields, optionally
         // overlay the BlackOil intensive-quantities fields with their GPU
         // counterparts via the experimental dispatcher. The dispatcher only
@@ -334,7 +334,7 @@ protected:
 
     ElementChunks<GridView, Dune::Partitions::All> element_chunks_;
 
-#if HAVE_CUDA
+#if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
     bool useGpuIntensiveQuantitiesDispatcher_{false};
     using GpuDispatcherStorage = std::conditional_t<
         Opm::gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value,
