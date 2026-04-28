@@ -963,7 +963,7 @@ public:
                     case Dir::ZPlus:
                         return dirMob_->getArray(2)[phaseIdx];
                     default:
-                        throw std::runtime_error("Unexpected face direction");
+                        OPM_THROW(std::runtime_error, "Unexpected face direction");
                 }
             }
             else{
@@ -1024,7 +1024,7 @@ public:
             return BrineIntQua::permFactor();
         }
         else {
-            throw std::logic_error("permFactor() called but salt precipitation or bioeffects are disabled");
+            OPM_THROW(std::logic_error, "permFactor() called but salt precipitation or bioeffects are disabled");
         }
     }
 
