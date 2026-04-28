@@ -930,6 +930,13 @@ public:
      */
     bool recycleFirstIterationStorage() const
     {
+        // The GPU assembly path needs the previous time step's intensive
+        // quantities (allIntensiveQuantities1()), which requires an
+        // intensive-quantity cache history of size 2. Disable storage
+        // recycling so FvBaseProblem::intensiveQuantityHistorySize() returns 2.
+        if constexpr (getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
+            return false;
+        }
         int episodeIdx = this->episodeIndex();
         return !this->mixControls_.drsdtActive(episodeIdx) &&
                !this->mixControls_.drvdtActive(episodeIdx) &&

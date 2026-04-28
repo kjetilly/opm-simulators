@@ -770,6 +770,25 @@ macro(opm-simulators_targets_hook)
     set(SOURCE_FILE "flow/flow_${OBJ}.cpp")
     if(OBJ STREQUAL "gpu")
       set(SOURCE_FILE "flow/flow_${OBJ}.cu")
+      if(CONVERT_CUDA_TO_HIP)
+        # Hipify flow_gpu.cu manually since it is not under gpuistl/ and
+        # therefore not picked up by the ADD_CUDA_OR_HIP_FILE macro.
+        set(_flow_gpu_cu "${PROJECT_SOURCE_DIR}/flow/flow_gpu.cu")
+        set(_flow_gpu_hip "${PROJECT_BINARY_DIR}/flow/flow_gpu.hip")
+        add_custom_command(
+          OUTPUT ${_flow_gpu_hip}
+          COMMAND bash
+                  ${PROJECT_SOURCE_DIR}/bin/hipify_file.sh
+                  ${_flow_gpu_cu}
+                  ${_flow_gpu_hip}
+                  $<TARGET_FILE:hipify-perl>
+                  ${SUPPRESS_HIPIFY_WARNINGS}
+          DEPENDS ${_flow_gpu_cu}
+          COMMENT "Hipifying ${_flow_gpu_cu}"
+        )
+        file(RELATIVE_PATH SOURCE_FILE ${PROJECT_SOURCE_DIR} ${_flow_gpu_hip})
+        set(SOURCE_FILE ${_flow_gpu_hip})
+      endif()
     endif()
     
     add_library(flow_lib${OBJ} OBJECT ${SOURCE_FILE})

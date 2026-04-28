@@ -105,6 +105,56 @@ namespace Opm {
 template<class TypeTag>
 class EcfvDiscretization;
 
+#if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
+// Forward declarations for the free __global__ kernels that are defined
+// at the bottom of this file. They are needed here so that the HIP
+// (clang-based) front-end can parse the call sites inside TpfaLinearizer
+// member templates as template-ids rather than less-than expressions.
+template<class TypeTag,
+         class LocalIntensiveQuantities,
+         class LocalModelClass,
+         class LocalResidualKernel,
+         class VectorBlockType,
+         class MatrixBlockType,
+         class ADVectorBlockType,
+         class DiagPtrType,
+         class DomainType,
+         class NeighborSparseTable,
+         class GpuResidualView,
+         class LocalGpuProblemType>
+__global__ __launch_bounds__(256) void gpu_parallelize_linearization_kernel(
+    const unsigned int numCells,
+    const DomainType GPU_LOCAL_domain,
+    const NeighborSparseTable GPU_LOCAL_neighborInfo,
+    DiagPtrType GPU_LOCAL_diagMatAddress,
+    GpuResidualView GPU_LOCAL_residualView,
+    LocalModelClass localModel,
+    GetPropType<TypeTag, Properties::Scalar> invLocDT,
+    bool dispersionActive,
+    bool enableBioeffects,
+    bool onFullDomain,
+    const gpuistl::GpuView<GetPropType<TypeTag, Properties::Scalar>> GPU_LOCAL_volumes,
+    LocalGpuProblemType localGpuProblem);
+
+template<class TypeTag,
+         class LocalIntensiveQuantities,
+         class LocalModelClass,
+         class LocalResidualKernel,
+         class VectorBlockType,
+         class MatrixBlockType,
+         class ADVectorBlockType,
+         class DiagPtrType,
+         class GpuResidualView,
+         class GpuBoundaryInfoView,
+         class GpuProblem>
+__global__ void linearize_kernel_bc(
+    DiagPtrType GPU_LOCAL_diagMatAddress,
+    GpuResidualView GPU_LOCAL_residualView,
+    const GpuBoundaryInfoView GPU_LOCAL_boundaryInfo,
+    LocalModelClass localModel,
+    GpuProblem gpuProblem);
+#endif
+
 // Moved these structs out of the class to make them visible in the GPU code.
 template<class Storage = std::vector<int>>
 struct FullDomain
@@ -1143,7 +1193,11 @@ private:
                 using GpuProblem = decltype(gpuFlowProblemView);
 
                 int constexpr blockSize = 256;
+#if USE_HIP
+                hipDeviceSynchronize();
+#else
                 cudaDeviceSynchronize();
+#endif
                 auto linearizeStartTime = std::chrono::high_resolution_clock::now();
 
                 linearize_parallelization_wrapper<run_assembly_on_gpu, GPUBOIQ, decltype(gpuModelView), LocalResidualGPU, VectorBlockGPU, MatrixBlockGPU, ADVectorBlockGPU>(
@@ -1168,7 +1222,11 @@ private:
                         gpuFlowProblemView);
                 }
 
+#if USE_HIP
+                hipDeviceSynchronize();
+#else
                 cudaDeviceSynchronize();
+#endif
                 auto linearizeEndTime = std::chrono::high_resolution_clock::now();
                 auto linearizeDuration = std::chrono::duration_cast<std::chrono::milliseconds>(linearizeEndTime - linearizeStartTime).count();
                 std::cout << fmt::format("GPU linearization took {:.3f} ms\n", static_cast<double>(linearizeDuration));

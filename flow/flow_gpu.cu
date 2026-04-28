@@ -77,23 +77,9 @@ namespace Properties
         using type = double;
     };
 
-    // Dispersion is not yet supported on the GPU assembly path; disable it
-    // even though the CPU parent TypeTag enables it.
-    template <class TypeTag>
-    struct EnableDispersion<TypeTag, TTag::FlowGasWaterEnergyProblemGPU> {
-        static constexpr bool value = false;
-    };
-
-    template <class TypeTag>
-    struct EnableEnergy<TypeTag, TTag::FlowGasWaterEnergyProblemGPU> {
-        static constexpr bool value = true;
-    };
-
-    // After a rebase the lines above were not sufficient to run a simulation with thermal effects
-    template <class TypeTag>
-    struct EnergyModuleType<TypeTag, TTag::FlowGasWaterEnergyProblemGPU> {
-        static constexpr EnergyModules value = EnergyModules::FullyImplicitThermal;
-    };
+    // Dispersion / energy / EnergyModuleType overrides for
+    // FlowGasWaterEnergyProblemGPU live in FlowGasWaterEnergyTypeTag.hpp so
+    // every TU sees the same IntensiveQuantities layout (avoid ODR drift).
 
     template <class TypeTag>
     struct GpuFIBlackOilModel<TypeTag, TTag::FlowGasWaterEnergyProblemGPU> {

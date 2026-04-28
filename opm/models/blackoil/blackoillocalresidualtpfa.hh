@@ -578,24 +578,46 @@ public:
                                     unsigned globalSpaceIdx)
     {
 #if OPM_IS_INSIDE_HOST_FUNCTION
-        switch (bdyInfo.type) {
-        case BCType::NONE:
-            bdyFlux = 0.0;
-            break;
-        case BCType::RATE:
-            computeBoundaryFluxRate(bdyFlux, bdyInfo);
-            break;
-        case BCType::FREE:
-        case BCType::DIRICHLET:
-            computeBoundaryFluxFree(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
-            break;
-        case BCType::THERMAL:
-            computeBoundaryThermal(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
-            break;
-        default:
-            throw std::logic_error("Unknown boundary condition type "
-                                   + std::to_string(static_cast<int>(bdyInfo.type))
-                                   + " in computeBoundaryFlux().");
+        // The non-templated host helpers (computeBoundaryFluxRate / computeBoundaryFluxFree)
+        // require the class member types Problem / RateVector. When this template is
+        // instantiated from a __global__ kernel body during the hipcc/clang host pass with
+        // GPU-side types (e.g. MiniVector / SimplifiedFlowProblemGPU), those calls do not
+        // type-check. Guard the host branch with an if constexpr so that for GPU template
+        // arguments we fall through to the GPU-style limited switch.
+        if constexpr (std::is_same_v<RateVectorLocal, RateVector>
+                      && std::is_same_v<LocalProblem, Problem>) {
+            switch (bdyInfo.type) {
+            case BCType::NONE:
+                bdyFlux = 0.0;
+                break;
+            case BCType::RATE:
+                computeBoundaryFluxRate(bdyFlux, bdyInfo);
+                break;
+            case BCType::FREE:
+            case BCType::DIRICHLET:
+                computeBoundaryFluxFree(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
+                break;
+            case BCType::THERMAL:
+                computeBoundaryThermal(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
+                break;
+            default:
+                throw std::logic_error("Unknown boundary condition type "
+                                       + std::to_string(static_cast<int>(bdyInfo.type))
+                                       + " in computeBoundaryFlux().");
+            }
+        } else {
+            switch (bdyInfo.type) {
+            case BCType::NONE:
+                bdyFlux = 0.0;
+                break;
+            case BCType::THERMAL:
+                computeBoundaryThermal(problem, bdyFlux, bdyInfo, insideIntQuants, globalSpaceIdx);
+                break;
+            default:
+                OPM_THROW(std::logic_error,
+                          "Boundary condition type " + std::to_string(static_cast<int>(bdyInfo.type))
+                              + " is not supported for GPU fluid systems in computeBoundaryFlux().");
+            }
         }
 #else // TODO: support all boundary conditions on GPU as well to unify this code
         switch (bdyInfo.type) {
