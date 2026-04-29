@@ -98,9 +98,24 @@ public:
     void invalidateAndUpdateIntensiveQuantities(unsigned timeIdx) const
     {
         this->invalidateIntensiveQuantitiesCache(timeIdx);
+
+        // When the experimental GPU dispatcher is active and the CPU has
+        // already populated the cache once (including the fields the GPU
+        // dispatcher does not overlay, e.g. mobility / energy), skip the
+        // expensive CPU loop and rely solely on the GPU dispatcher to
+        // refresh the BlackOil intensive-quantities fields. The remaining
+        // cached fields keep their previously computed values, which is
+        // the intended behaviour for this experimental GPU-only path.
+        if (gpuDispatcherActiveAndInitialized_()) {
+            markIntensiveQuantitiesCacheValid_(timeIdx);
+            maybeRunGpuIntensiveQuantitiesDispatcher_(timeIdx);
+            return;
+        }
+
         if constexpr (gridIsUnchanging) {
             if constexpr (avoidElementContext) {
                 updateCachedIntQuants(timeIdx);
+                cpuIntensiveQuantitiesInitialized_ = true;
                 return;
             }
             const auto timeBegin = std::chrono::steady_clock::now();
@@ -124,6 +139,7 @@ public:
             // overlay the GPU-computed BlackOil fields in one batched call
             // (no-op when the GPU dispatcher is unavailable or disabled).
             maybeRunGpuIntensiveQuantitiesDispatcher_(timeIdx);
+            cpuIntensiveQuantitiesInitialized_ = true;
         } else {
             // Grid is possibly refined or otherwise changed between calls.
             ElementContext elemCtx(this->simulator_);
@@ -342,6 +358,38 @@ protected:
 #endif
 
     bool useGpuIntensiveQuantitiesDispatcher_{false};
+
+    // Tracks whether the CPU intensive-quantities update has been run at
+    // least once. Used to ensure non-BlackOil cached fields (mobility,
+    // energy, ...) are populated before we switch to the GPU-only path
+    // when the experimental dispatcher is enabled.
+    mutable bool cpuIntensiveQuantitiesInitialized_{false};
+
+    // True iff the GPU dispatcher is compiled in, supported for the
+    // current TypeTag, enabled at runtime, and the CPU has already been
+    // run once to populate the cached non-BlackOil fields.
+    bool gpuDispatcherActiveAndInitialized_() const noexcept
+    {
+        if constexpr (gpuDispatcherCompiledIn_ && gpuDispatcherSupportsTypeTag_) {
+            return useGpuIntensiveQuantitiesDispatcher_
+                && cpuIntensiveQuantitiesInitialized_;
+        } else {
+            return false;
+        }
+    }
+
+    // Mark every entry of the intensive-quantity cache for the given time
+    // index as valid. Used on the GPU-only path where we skip the CPU
+    // update loop (which would normally mark each entry valid as a
+    // side-effect) and rely on the GPU dispatcher to refresh the
+    // BlackOil fields in-place.
+    void markIntensiveQuantitiesCacheValid_(const unsigned timeIdx) const
+    {
+        const std::size_t numCells = this->intensiveQuantityCache_[timeIdx].size();
+        for (std::size_t i = 0; i < numCells; ++i) {
+            this->setIntensiveQuantitiesCacheEntryValidity(i, timeIdx, true);
+        }
+    }
 
 #if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
     using GpuDispatcherStorage = std::conditional_t<
