@@ -443,7 +443,7 @@ protected:
         if constexpr (gpuDispatcherCompiledIn_ && gpuDispatcherSupportsTypeTag_) {
             if (useGpuIntensiveQuantitiesDispatcher_) {
                 const auto gpuStartTime = std::chrono::steady_clock::now();
-                runGpuIntensiveQuantitiesDispatcher_(timeIdx);
+                this->runGpuIntensiveQuantitiesDispatcher_(timeIdx);
                 const auto gpuDuration =
                     std::chrono::duration_cast<std::chrono::milliseconds>(
                         std::chrono::steady_clock::now() - gpuStartTime);
