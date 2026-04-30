@@ -343,6 +343,10 @@ if(CUDA_FOUND OR hip_FOUND)
 
 
   # HEADERS
+  list(APPEND PUBLIC_HEADER_FILES opm/models/discretization/common/fvbaseelementcontextgpu.hh)
+  list(APPEND PUBLIC_HEADER_FILES opm/simulators/flow/GpuEclMaterialLawManager.hpp)
+  list(APPEND PUBLIC_HEADER_FILES opm/simulators/flow/GpuEclThermalLawManager.hpp)
+  list(APPEND PUBLIC_HEADER_FILES opm/simulators/flow/GpuFlowProblem.hpp)
   ADD_CUDA_OR_HIP_FILE(PUBLIC_HEADER_FILES opm/simulators/linalg GpuBlackoilIntensiveQuantitiesDispatcher.hpp)
   ADD_CUDA_OR_HIP_FILE(PUBLIC_HEADER_FILES opm/simulators/linalg GpuFlowGasWaterEnergyTypeTags.hpp)
   ADD_CUDA_OR_HIP_FILE(PUBLIC_HEADER_FILES opm/simulators/linalg detail/autotuner.hpp)
@@ -982,6 +986,7 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/simulators/flow/FIPContainer.hpp
   opm/simulators/flow/FlowBaseProblemProperties.hpp
   opm/simulators/flow/FlowBaseVanguard.hpp
+  opm/simulators/flow/FlowGasWaterEnergyTypeTag.hpp
   opm/simulators/flow/FlowGenericProblem.hpp
   opm/simulators/flow/FlowGenericProblem_impl.hpp
   opm/simulators/flow/FlowGenericVanguard.hpp
