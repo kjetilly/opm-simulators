@@ -301,7 +301,7 @@ public:
      */
     template<class OtherTypeTag>
     OPM_HOST_DEVICE void overlayBlackOilFieldsFrom(
-        const BlackOilIntensiveQuantities<OtherTypeTag>& other)
+                                                   const BlackOilIntensiveQuantities<OtherTypeTag>& other)
     {
         // Full fluid-state copy (handles every stored field, including
         // Rs/Rv/Rsw/Rvw, salt concentration, solvent fields, ...). This

@@ -154,7 +154,7 @@ public:
     { return intensiveQuantitiesStashed_; }
 
     OPM_HOST_DEVICE const IntensiveQuantities* thermodynamicHint(unsigned /*dofIdx*/,
-                                                                  unsigned /*timeIdx*/) const
+                                                                 unsigned /*timeIdx*/) const
     { return nullptr; }
 
     // -----------------------------------------------------------------------

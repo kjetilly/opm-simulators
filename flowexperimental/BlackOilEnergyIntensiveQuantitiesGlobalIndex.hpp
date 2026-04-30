@@ -132,10 +132,10 @@ public:
     }
 
     OPM_HOST_DEVICE void updateEnergyQuantities_([[maybe_unused]] const Problem& problem,
-                                 [[maybe_unused]] const PrimaryVariables& priVars,
-                                 [[maybe_unused]] unsigned globalSpaceIndex,
-                                 [[maybe_unused]] unsigned timeIdx,
-                                 [[maybe_unused]] const ParamCache& paramCache)
+                                                 [[maybe_unused]] const PrimaryVariables& priVars,
+                                                 [[maybe_unused]] unsigned globalSpaceIndex,
+                                                 [[maybe_unused]] unsigned timeIdx,
+                                                 [[maybe_unused]] const ParamCache& paramCache)
     {
         OPM_THROW(std::logic_error,
                   "updateEnergyQuantities_ not implemented "

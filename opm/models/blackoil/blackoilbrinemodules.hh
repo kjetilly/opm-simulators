@@ -406,8 +406,8 @@ public:
      *
      */
     OPM_HOST_DEVICE void updateSaltConcentration_(const ElementContext& elemCtx,
-                                  unsigned dofIdx,
-                                  unsigned timeIdx)
+                                                  unsigned dofIdx,
+                                                  unsigned timeIdx)
     {
         const PrimaryVariables& priVars = elemCtx.primaryVars(dofIdx, timeIdx);
         const LinearizationType lintype = elemCtx.linearizationType();
@@ -415,8 +415,8 @@ public:
     }
 
     OPM_HOST_DEVICE void updateSaltConcentration_(const PrimaryVariables& priVars,
-                                  const unsigned timeIdx,
-                                  const LinearizationType lintype)
+                                                  const unsigned timeIdx,
+                                                  const LinearizationType lintype)
     {
         const unsigned pvtnumRegionIdx = priVars.pvtRegionIndex();
         auto& fs = asImp_().fluidState_;
@@ -443,8 +443,8 @@ public:
     }
 
     OPM_HOST_DEVICE void saltPropertiesUpdate_([[maybe_unused]] const ElementContext& elemCtx,
-                                                  [[maybe_unused]] unsigned dofIdx,
-                                                  [[maybe_unused]] unsigned timeIdx)
+                                               [[maybe_unused]] unsigned dofIdx,
+                                               [[maybe_unused]] unsigned timeIdx)
     {
         if constexpr (enableSaltPrecipitation) {
             const Evaluation porosityFactor  = min(1.0 - asImp_().fluidState_.saltSaturation(), 1.0); //phi/phi_0

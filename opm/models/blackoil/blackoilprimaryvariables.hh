@@ -1024,10 +1024,10 @@ private:
 
     template <class Container>
     OPM_HOST_DEVICE void computeCapillaryPressures_(Container& result,
-                                    Scalar so,
-                                    Scalar sg,
-                                    Scalar sw,
-                                    const MaterialLawParams& matParams) const
+                                                    Scalar so,
+                                                    Scalar sg,
+                                                    Scalar sw,
+                                                    const MaterialLawParams& matParams) const
     {
         using SatOnlyFluidState = SimpleModularFluidState<Scalar,
                                                           numPhases,
