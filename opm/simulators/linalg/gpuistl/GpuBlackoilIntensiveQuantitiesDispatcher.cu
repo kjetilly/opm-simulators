@@ -56,6 +56,7 @@
 #include <opm/simulators/linalg/gpuistl/GpuBuffer.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuView.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
+#include <opm/simulators/linalg/gpuistl/gpu_smart_pointer.hpp>
 
 #include <opm/simulators/linalg/gpuistl/GpuBlackoilIntensiveQuantitiesDispatcher.hpp>
 
@@ -173,10 +174,14 @@ dispatcherUpdateAllCellsKernel(GpuProblem problem,
 // =============================================================================
 template <class CpuTypeTag>
 struct GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Impl {
+    using ManagedFluidSystemViewPtr =
+        std::unique_ptr<DispatcherFluidSystemView,
+                        Opm::gpuistl::GpuManagedDeleter<DispatcherFluidSystemView>>;
+
     bool initialized = false;
     std::unique_ptr<DispatcherGpuFlowProblemBuf> problemBuf;
     DispatcherGpuFlowProblemView problemView{};
-    DispatcherFluidSystemView* managedFluidSystemView = nullptr;
+    ManagedFluidSystemViewPtr managedFluidSystemView{};
     std::optional<DispatcherGpuIntensiveQuantities> prototype;
     std::size_t callCount = 0;
 
@@ -190,11 +195,6 @@ struct GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Impl {
 
     ~Impl()
     {
-        if (managedFluidSystemView != nullptr) {
-            managedFluidSystemView->~DispatcherFluidSystemView();
-            (void)cudaFree(managedFluidSystemView);
-            managedFluidSystemView = nullptr;
-        }
         if (callCount > 0u) {
             const double totalMs =
                 totalConvertMs + totalH2DMs + totalKernelMs + totalD2HMs + totalOverlayMs;
@@ -257,14 +257,14 @@ void GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::update(
         auto fsView = Opm::gpuistl::make_view(s_fsBuffer);
 
         DispatcherFluidSystemView* managed = nullptr;
-        OPM_GPU_SAFE_CALL(cudaMallocManaged(&managed, sizeof(DispatcherFluidSystemView)));
-        new (managed) DispatcherFluidSystemView(fsView);
-        impl_->managedFluidSystemView = managed;
+        impl_->managedFluidSystemView =
+            Opm::gpuistl::make_gpu_managed_unique_ptr<DispatcherFluidSystemView>(fsView);
+        managed = impl_->managedFluidSystemView.get();
 
         // Build a default IntensiveQuantities prototype for the GPU side.
         Opm::BlackOilIntensiveQuantities<DispatcherCpuTag> cpuPrototype;
         impl_->prototype = cpuPrototype.template withOtherFluidSystem<DispatcherGpuTag>(
-            *impl_->managedFluidSystemView);
+            *managed);
 
         impl_->initialized = true;
         Opm::OpmLog::info(std::format(

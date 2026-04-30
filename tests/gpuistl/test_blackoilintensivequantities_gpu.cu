@@ -417,8 +417,9 @@ static void runIntensiveQuantitiesTestForDeck(const std::string& deckPath,
     // device.
     using FluidSystemViewType = std::decay_t<decltype(dynamicGpuFluidSystemView)>;
     FluidSystemViewType* managedFluidSystemView = nullptr;
-    OPM_GPU_SAFE_CALL(cudaMallocManaged(&managedFluidSystemView, sizeof(FluidSystemViewType)));
-    new (managedFluidSystemView) FluidSystemViewType(dynamicGpuFluidSystemView);
+    auto managedFluidSystemViewOwner =
+        Opm::gpuistl::make_gpu_managed_unique_ptr<FluidSystemViewType>(dynamicGpuFluidSystemView);
+    managedFluidSystemView = managedFluidSystemViewOwner.get();
 
     using CpuMaterialLawManager = typename Opm::GetProp<TypeTag, Opm::Properties::MaterialLaw>::EclMaterialLawManager;
     using Traits = typename CpuMaterialLawManager::MaterialLaw::Traits;
@@ -690,8 +691,9 @@ static void runIntensiveQuantitiesTestFromSimulatorSolution(const std::string& d
 
     using FluidSystemViewType = std::decay_t<decltype(dynamicGpuFluidSystemView)>;
     FluidSystemViewType* managedFluidSystemView = nullptr;
-    OPM_GPU_SAFE_CALL(cudaMallocManaged(&managedFluidSystemView, sizeof(FluidSystemViewType)));
-    new (managedFluidSystemView) FluidSystemViewType(dynamicGpuFluidSystemView);
+    auto managedFluidSystemViewOwner =
+        Opm::gpuistl::make_gpu_managed_unique_ptr<FluidSystemViewType>(dynamicGpuFluidSystemView);
+    managedFluidSystemView = managedFluidSystemViewOwner.get();
 
     BOOST_TEST_MESSAGE(std::format(
         "GPU fluid-system view phase activation: O={} W={} G={}",
