@@ -428,7 +428,7 @@ public:
 
     OPM_HOST_DEVICE ValueAsPointer() = default;
 
-    OPM_HOST_DEVICE ValueAsPointer(const T& t) : value(t) {}
+    OPM_HOST_DEVICE explicit ValueAsPointer(const T& t) : value(t) {}
 
     OPM_HOST_DEVICE T* operator->() {
         return &value;

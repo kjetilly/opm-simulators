@@ -627,6 +627,8 @@ struct TemporaryFile {
     ~TemporaryFile() { std::filesystem::remove(path); }
     TemporaryFile(const TemporaryFile&) = delete;
     TemporaryFile& operator=(const TemporaryFile&) = delete;
+    TemporaryFile(TemporaryFile&&) = delete;
+    TemporaryFile& operator=(TemporaryFile&&) = delete;
 };
 
 /// Variant of \c runIntensiveQuantitiesTestForDeck that takes the per-cell

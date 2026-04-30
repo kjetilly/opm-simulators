@@ -72,8 +72,11 @@ public:
     // -----------------------------------------------------------------------
 
     OPM_HOST_DEVICE FvBaseElementContextGpu() = default;
+    OPM_HOST_DEVICE ~FvBaseElementContextGpu() = default;
     OPM_HOST_DEVICE FvBaseElementContextGpu(const FvBaseElementContextGpu&) = default;
+    OPM_HOST_DEVICE FvBaseElementContextGpu(FvBaseElementContextGpu&&) noexcept = default;
     OPM_HOST_DEVICE FvBaseElementContextGpu& operator=(const FvBaseElementContextGpu&) = default;
+    OPM_HOST_DEVICE FvBaseElementContextGpu& operator=(FvBaseElementContextGpu&&) noexcept = default;
 
     // -----------------------------------------------------------------------
     // Stencil / element update stubs
@@ -96,7 +99,7 @@ public:
     // Focus DOF
     // -----------------------------------------------------------------------
 
-    OPM_HOST_DEVICE void setFocusDofIndex(unsigned dofIdx) { focusDofIdx_ = dofIdx; }
+    OPM_HOST_DEVICE void setFocusDofIndex(unsigned dofIdx) { focusDofIdx_ = static_cast<int>(dofIdx); }
     OPM_HOST_DEVICE unsigned focusDofIndex() const { return focusDofIdx_; }
 
     // -----------------------------------------------------------------------

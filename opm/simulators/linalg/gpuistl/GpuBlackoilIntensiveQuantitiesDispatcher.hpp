@@ -91,6 +91,9 @@ public:
     GpuBlackoilIntensiveQuantitiesDispatcher(const GpuBlackoilIntensiveQuantitiesDispatcher&) = delete;
     GpuBlackoilIntensiveQuantitiesDispatcher&
     operator=(const GpuBlackoilIntensiveQuantitiesDispatcher&) = delete;
+    GpuBlackoilIntensiveQuantitiesDispatcher(GpuBlackoilIntensiveQuantitiesDispatcher&&) = delete;
+    GpuBlackoilIntensiveQuantitiesDispatcher&
+    operator=(GpuBlackoilIntensiveQuantitiesDispatcher&&) = delete;
 
     /// Run the per-cell intensive-quantities update kernel on \p numDof
     /// DoFs. \p cpuPriVars[i] points at the CPU primary variables for DoF
