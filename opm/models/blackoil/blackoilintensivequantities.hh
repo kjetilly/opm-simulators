@@ -294,10 +294,10 @@ public:
      * Used by the experimental GPU intensive-quantities dispatcher to write the
      * GPU-computed result onto a CPU-side \c IntensiveQuantities even when the
      * two TypeTags are not value-compatible (e.g. when the CPU TypeTag enables
-     * dispersion or other modules that the GPU TypeTag does not). Only stored
-     * fields that the dispatcher actually computes are copied; the
-     * \c mobility_ field is left untouched (the GPU relperm path is currently
-     * known to return zero, see \c GpuBlackoilIntensiveQuantitiesDispatcher).
+     * dispersion or other modules that the GPU TypeTag does not). The fields
+     * actually computed by the dispatcher are copied here, including the
+     * \c mobility_ array which the GPU relperm path now populates correctly
+     * via \c iq.update() (see \c GpuBlackoilIntensiveQuantitiesDispatcher).
      */
     template<class OtherTypeTag>
     OPM_HOST_DEVICE void overlayBlackOilFieldsFrom(

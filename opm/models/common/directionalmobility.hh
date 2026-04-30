@@ -35,6 +35,7 @@
 
 #include <array>
 #include <stdexcept>
+#include <utility>
 
 namespace Opm {
 

@@ -81,7 +81,7 @@ void registerFlowProblemParameters()
         ("Conserve inner energy and not enthalpy "
          "even if THERMAL is used.");
 
-#if HAVE_CUDA
+#if HAVE_CUDA && OPM_HAVE_GPU_BLACKOIL_INTENSIVE_QUANTITIES_DISPATCHER
     Parameters::Register<Parameters::ExperimentalComputePropertiesOnGpu>
         ("Experimental: compute BlackOilIntensiveQuantities on the GPU "
          "via the GpuBlackoilIntensiveQuantitiesDispatcher. Only takes "
@@ -89,11 +89,13 @@ void registerFlowProblemParameters()
 #else
     // Always register so that the run fails with an explanatory error
     // message (rather than an "unknown parameter" message) when this binary
-    // has been built without CUDA/HIP support but the user still requests
-    // the GPU dispatcher.
+    // has been built without the GPU intensive-quantities dispatcher (i.e.
+    // without CUDA/HIP support, or with a CUDA toolkit older than 13.1)
+    // but the user still requests the GPU dispatcher.
     Parameters::Register<Parameters::ExperimentalComputePropertiesOnGpu>
         ("Experimental: compute BlackOilIntensiveQuantities on the GPU. "
-         "This binary was built without CUDA/HIP support, so enabling "
+         "This binary was built without the GPU intensive-quantities "
+         "dispatcher (no CUDA/HIP support, or CUDA<13.1), so enabling "
          "this option will cause the run to fail at start-up.");
 #endif
 

@@ -288,7 +288,6 @@ protected:
     void updateCachedIntQuantsLoop(const unsigned timeIdx) const
     {
         const auto& elementMapper = this->simulator_.model().elementMapper();
-        const auto cpuStartTime = std::chrono::steady_clock::now();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
@@ -297,18 +296,13 @@ protected:
                 this->template updateSingleCachedIntQuantUnchecked<Args...>(elementMapper.index(elem), timeIdx);
             }
         }
-        const auto cpuDuration =
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::steady_clock::now() - cpuStartTime);
-        Opm::OpmLog::info(std::format("updateCachedIntQuantsLoop CPU loop took {} ms",
-                                      cpuDuration.count()));
 
         // After the CPU per-cell update has populated all fields, optionally
         // overlay the BlackOil intensive-quantities fields with their GPU
-        // counterparts via the experimental dispatcher. The dispatcher only
+        // counterparts via the experimental dispatcher. The dispatcher
         // overwrites the subset of fields covered by
-        // BlackOilIntensiveQuantities::overlayBlackOilFieldsFrom; everything
-        // else (mobility, energy, ...) keeps the CPU-computed value.
+        // BlackOilIntensiveQuantities::overlayBlackOilFieldsFrom; any field
+        // not handled there keeps the CPU-computed value.
         // The call is a no-op when the GPU dispatcher is unavailable or the
         // user has not enabled it.
         maybeRunGpuIntensiveQuantitiesDispatcher_(timeIdx);

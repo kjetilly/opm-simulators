@@ -99,12 +99,12 @@ public:
     /// DoFs. \p cpuPriVars[i] points at the CPU primary variables for DoF
     /// \c i. The GPU-computed BlackOil intensive quantities are written
     /// onto \p outIQ[i] field-by-field via
-    /// \c BlackOilIntensiveQuantities::overlayBlackOilFieldsFrom (so the
-    /// caller is expected to have run the CPU update first to fill in any
-    /// fields the dispatcher does not overwrite, e.g. \c mobility_).
+    /// \c BlackOilIntensiveQuantities::overlayBlackOilFieldsFrom, which
+    /// includes \c mobility_ (the GPU relperm path now populates it via
+    /// \c iq.update()).
     ///
     /// Per-call host/device timings are accumulated and printed every call
-    /// to \c std::cout, prefixed with
+    /// via \c Opm::OpmLog::info, prefixed with
     /// \c "[GpuBlackoilIntensiveQuantitiesDispatcher]".
     void update(const Problem& cpuProblem,
                 const PrimaryVariables* const* cpuPriVars,
