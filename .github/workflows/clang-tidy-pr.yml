@@ -1,0 +1,283 @@
+name: clang-tidy (PR diff)
+
+# Runs clang-tidy on the C/C++/CUDA files modified by a pull request and
+# reports the diagnostics that fall on the changed lines as PR annotations.
+#
+# This workflow never fails the build: missing headers and clang-tidy errors
+# are reported as warnings so they do not block merging the pull request.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write
+
+concurrency:
+  group: clang-tidy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  clang-tidy:
+    runs-on: ubuntu-24.04
+    env:
+      gcc_version: 13
+      clang_version: 18
+      # Where the super build tree lives.
+      SUPER_DIR: ${{ github.workspace }}/super
+      BUILD_DIR: ${{ github.workspace }}/super/build
+
+    steps:
+      - name: Install build / clang-tidy dependencies
+        run: |
+          set -eux
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential \
+            cmake \
+            curl \
+            doxygen \
+            gfortran \
+            git \
+            gcc-${gcc_version} \
+            g++-${gcc_version} \
+            clang-${clang_version} \
+            clangd-${clang_version} \
+            clang-tools-${clang_version} \
+            clang-format-${clang_version} \
+            clang-tidy-${clang_version} \
+            llvm-${clang_version} \
+            libboost-all-dev \
+            libmetis-dev \
+            libomp-dev \
+            libopenblas-dev \
+            libopenmpi-dev \
+            libsuitesparse-dev \
+            libtrilinos-zoltan-dev \
+            libxml2-dev \
+            m4 \
+            mold \
+            ninja-build \
+            ccache \
+            python3-dev \
+            python3-venv \
+            python3-pip \
+            python3-setuptools \
+            python3-wheel \
+            unzip
+          # Make versioned tools the default.
+          sudo update-alternatives --install /usr/bin/clang        clang        /usr/bin/clang-${clang_version}        100
+          sudo update-alternatives --install /usr/bin/clang++      clang++      /usr/bin/clang++-${clang_version}      100
+          sudo update-alternatives --install /usr/bin/clang-tidy   clang-tidy   /usr/bin/clang-tidy-${clang_version}   100
+
+      - name: Create super build directory
+        run: mkdir -p "${SUPER_DIR}"
+
+      - name: Checkout opm-simulators (PR head)
+        uses: actions/checkout@v4
+        with:
+          path: super/opm-simulators
+          fetch-depth: 0
+
+      - name: Checkout opm-common
+        uses: actions/checkout@v4
+        with:
+          repository: OPM/opm-common
+          path: super/opm-common
+
+      - name: Checkout opm-grid
+        uses: actions/checkout@v4
+        with:
+          repository: OPM/opm-grid
+          path: super/opm-grid
+
+      - name: Fetch super CMakeLists.txt from opm-utilities
+        working-directory: ${{ env.SUPER_DIR }}
+        run: |
+          curl -fsSLo CMakeLists.txt \
+            https://raw.githubusercontent.com/OPM/opm-utilities/master/opm-super/CMakeLists.txt
+          # Strip the opm-upscaling targets since we don't check it out.
+          sed -i '/opm-upscaling/d' CMakeLists.txt
+          cat CMakeLists.txt
+
+      - name: Configure (CMake / Ninja, generate compile_commands.json)
+        working-directory: ${{ env.SUPER_DIR }}
+        run: |
+          set -eux
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DCMAKE_C_COMPILER=clang-${clang_version} \
+            -DCMAKE_CXX_COMPILER=clang++-${clang_version} \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DBUILD_TESTING=OFF \
+            -DUSE_MPI=ON
+
+      - name: Build generated headers (so clang-tidy can resolve includes)
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          set -eux
+          # Generated config / version / parser headers are required for
+          # clang-tidy to parse most translation units.  We only build the
+          # things that produce headers, not full libraries.
+          ninja -t targets all | awk -F: '/_generated|config\.h|version\.h|ParserKeywords|generated_/ { print $1 }' | sort -u > /tmp/gen_targets || true
+          if [ -s /tmp/gen_targets ]; then
+            xargs -a /tmp/gen_targets ninja -k 0 || true
+          fi
+
+      - name: Locate clang-tidy-diff helper
+        id: tidy_diff
+        run: |
+          set -eux
+          for c in \
+              /usr/bin/clang-tidy-diff-${clang_version}.py \
+              /usr/lib/llvm-${clang_version}/share/clang/clang-tidy-diff.py \
+              /usr/share/clang/clang-tidy-diff-${clang_version}.py \
+              /usr/share/clang/clang-tidy-diff.py; do
+            if [ -f "$c" ]; then
+              echo "path=$c" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+          done
+          echo "Could not find clang-tidy-diff.py" >&2
+          exit 1
+
+      - name: Run clang-tidy on lines changed by this PR
+        id: tidy
+        working-directory: ${{ env.SUPER_DIR }}/opm-simulators
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          TIDY_DIFF: ${{ steps.tidy_diff.outputs.path }}
+        run: |
+          set -u
+          # Make sure we have the base commit available locally.
+          git fetch --no-tags --depth=200 origin "$BASE_SHA" || true
+
+          # Diff restricted to C/C++/CUDA source and header files.
+          DIFF=$(git diff -U0 "$BASE_SHA"..."$HEAD_SHA" -- \
+                  '*.cpp' '*.cc' '*.cxx' '*.c' \
+                  '*.hpp' '*.hh' '*.h' '*.hxx' \
+                  '*.cu' '*.cuh' \
+                || true)
+
+          if [ -z "$DIFF" ]; then
+            echo "No C/C++/CUDA file changes in this PR."
+            : > "${GITHUB_WORKSPACE}/tidy.log"
+            exit 0
+          fi
+
+          # The compile-commands DB lives in the super build tree and refers
+          # to files as "<super>/opm-simulators/<rel>". The diff paths from
+          # this repo are "<rel>", so prefix them with "opm-simulators/" and
+          # invoke clang-tidy-diff from the super source root.
+          PREFIXED=$(printf '%s\n' "$DIFF" | sed -E 's|^(--- |\+\+\+ )([ab])/|\1\2/opm-simulators/|')
+
+          cd "${SUPER_DIR}"
+          # -p1   : strip the leading "a/"/"b/" component of the diff paths.
+          # -path : where the compile_commands.json lives.
+          # We never want this step to fail the workflow.
+          set +e
+          printf '%s\n' "$PREFIXED" | python3 "$TIDY_DIFF" \
+              -p1 \
+              -path build \
+              -j "$(nproc)" \
+              -extra-arg=-Wno-unknown-warning-option \
+              -extra-arg=-Wno-error \
+              > "${GITHUB_WORKSPACE}/tidy.log" 2>&1
+          status=$?
+          echo "clang-tidy-diff exit status: $status"
+          exit 0
+
+      - name: Emit PR annotations from clang-tidy output
+        if: always()
+        env:
+          TIDY_LOG: ${{ github.workspace }}/tidy.log
+          SUPER_DIR: ${{ env.SUPER_DIR }}
+        run: |
+          set -u
+          if [ ! -s "$TIDY_LOG" ]; then
+            echo "No clang-tidy output."
+            exit 0
+          fi
+          echo "::group::Raw clang-tidy output"
+          cat "$TIDY_LOG"
+          echo "::endgroup::"
+
+          python3 - "$TIDY_LOG" "$SUPER_DIR" <<'PY'
+          import os, re, sys
+
+          log_path, super_dir = sys.argv[1], sys.argv[2]
+          # Path inside the workflow workspace where the PR repository was
+          # checked out -- annotation paths must be repo-relative.
+          repo_prefix = os.path.join(super_dir, "opm-simulators") + os.sep
+
+          # clang / clang-tidy diagnostic line:
+          #   <file>:<line>:<col>: <severity>: <message> [<check>]
+          diag_re = re.compile(
+              r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+):\s+'
+              r'(?P<sev>warning|error|fatal error|note):\s+(?P<msg>.*)$'
+          )
+          # "fatal error: 'foo.hpp' file not found"
+          missing_hdr_re = re.compile(r"'([^']+)' file not found")
+
+          seen = set()
+          n_warn = n_err = n_missing = 0
+
+          with open(log_path, errors='replace') as f:
+              for raw in f:
+                  m = diag_re.match(raw.rstrip('\n'))
+                  if not m:
+                      continue
+                  sev = m['sev']
+                  if sev == 'note':
+                      continue
+                  file_ = m['file']
+                  # Normalise to a path relative to the PR repo root.
+                  abs_file = os.path.realpath(file_)
+                  if abs_file.startswith(repo_prefix):
+                      rel = abs_file[len(repo_prefix):]
+                  elif file_.startswith('opm-simulators' + os.sep):
+                      rel = file_[len('opm-simulators' + os.sep):]
+                  else:
+                      # File outside the PR repo (e.g. a header from
+                      # opm-common) -- skip; we only annotate this repo.
+                      continue
+
+                  key = (rel, m['line'], m['col'], m['msg'])
+                  if key in seen:
+                      continue
+                  seen.add(key)
+
+                  msg = m['msg']
+                  if missing_hdr_re.search(msg):
+                      n_missing += 1
+                      title = "clang-tidy: missing header"
+                  elif sev.endswith('error'):
+                      n_err += 1
+                      title = "clang-tidy: error (reported as warning)"
+                  else:
+                      n_warn += 1
+                      title = "clang-tidy"
+
+                  # Always emit as ::warning so the PR is never blocked.
+                  print(
+                      f"::warning file={rel},line={m['line']},col={m['col']},"
+                      f"title={title}::{msg}"
+                  )
+
+          print(
+              f"clang-tidy summary: {n_warn} warnings, {n_err} errors, "
+              f"{n_missing} missing-header diagnostics on changed lines.",
+              file=sys.stderr,
+          )
+          PY
+
+      - name: Upload full clang-tidy log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-log
+          path: ${{ github.workspace }}/tidy.log
+          if-no-files-found: ignore
