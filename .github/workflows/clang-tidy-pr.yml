@@ -57,6 +57,11 @@ jobs:
             libsuitesparse-dev \
             libtrilinos-zoltan-dev \
             libxml2-dev \
+            libdune-common-dev \
+            libdune-geometry-dev \
+            libdune-grid-dev \
+            libdune-istl-dev \
+            libdune-localfunctions-dev \
             m4 \
             mold \
             ninja-build \
