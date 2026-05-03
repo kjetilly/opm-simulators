@@ -93,13 +93,28 @@ jobs:
           repository: OPM/opm-grid
           path: super/opm-grid
 
-      - name: Fetch super CMakeLists.txt from opm-utilities
+      - name: Write super CMakeLists.txt (based on opm-utilities/opm-super)
         working-directory: ${{ env.SUPER_DIR }}
         run: |
-          curl -fsSLo CMakeLists.txt \
-            https://raw.githubusercontent.com/OPM/opm-utilities/master/opm-super/CMakeLists.txt
-          # Strip the opm-upscaling targets since we don't check it out.
-          sed -i '/opm-upscaling/d' CMakeLists.txt
+          cat > CMakeLists.txt <<'EOF'
+          project(opm)
+          cmake_minimum_required(VERSION 3.5)
+
+          foreach(TARGET opm-common opm-grid opm-simulators)
+            set(${TARGET}_DIR ${CMAKE_BINARY_DIR}/${TARGET})
+          endforeach()
+
+          set(SIBLING_SEARCH 0)
+          # Necessary, sadly this means no IDE project generation
+          set_property(GLOBAL PROPERTY ALLOW_DUPLICATE_CUSTOM_TARGETS 1)
+
+          enable_testing()
+          add_subdirectory(opm-common)
+          add_subdirectory(opm-grid)
+          add_dependencies(opmgrid opmcommon)
+          add_subdirectory(opm-simulators)
+          add_dependencies(opmsimulators opmgrid)
+          EOF
           cat CMakeLists.txt
 
       - name: Configure (CMake / Ninja, generate compile_commands.json)
