@@ -192,7 +192,9 @@ jobs:
           # to files as "<super>/opm-simulators/<rel>". The diff paths from
           # this repo are "<rel>", so prefix them with "opm-simulators/" and
           # invoke clang-tidy-diff from the super source root.
-          PREFIXED=$(printf '%s\n' "$DIFF" | sed -E 's|^(--- |\+\+\+ )([ab])/|\1\2/opm-simulators/|')
+          PREFIXED=$(printf '%s\n' "$DIFF" \
+            | sed -E 's|^(--- [ab])/|\1/opm-simulators/|' \
+            | sed -E 's|^(\+\+\+ [ab])/|\1/opm-simulators/|')
 
           cd "${SUPER_DIR}"
           # -p1   : strip the leading "a/"/"b/" component of the diff paths.
