@@ -533,6 +533,7 @@ list (APPEND TEST_SOURCE_FILES
   tests/test_wellmodel.cpp
   tests/test_wellprodindexcalculator.cpp
   tests/test_wellstate.cpp
+  tests/test_wontpass.cpp
 )
 
 if(MPI_FOUND)
