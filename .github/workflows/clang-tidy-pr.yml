@@ -128,10 +128,10 @@ jobs:
           set -eux
           cmake -S . -B build -G Ninja \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DCMAKE_C_COMPILER=clang-${clang_version} \
-            -DCMAKE_CXX_COMPILER=clang++-${clang_version} \
+            -DCMAKE_C_COMPILER=clang \
+            -DCMAKE_CXX_COMPILER=clang++ \
             -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-            -DBUILD_TESTING=OFF \
+            -DBUILD_TESTING=ON \
             -DUSE_MPI=ON
 
       - name: Build generated headers (so clang-tidy can resolve includes)
@@ -296,10 +296,151 @@ jobs:
           )
           PY
 
+      - name: Build Markdown report (job summary + PR-comment payload)
+        if: always()
+        env:
+          TIDY_LOG: ${{ github.workspace }}/tidy.log
+          SUPER_DIR: ${{ env.SUPER_DIR }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -u
+          mkdir -p "${GITHUB_WORKSPACE}/tidy-report"
+          REPORT="${GITHUB_WORKSPACE}/tidy-report/report.md"
+          # Persist the PR number so the follow-up workflow_run job knows
+          # which PR to comment on (the workflow_run event itself does not
+          # carry the PR number).
+          echo "${PR_NUMBER}" > "${GITHUB_WORKSPACE}/tidy-report/pr-number.txt"
+          echo "${PR_HEAD_SHA}" > "${GITHUB_WORKSPACE}/tidy-report/pr-head-sha.txt"
+
+          python3 - "$TIDY_LOG" "$SUPER_DIR" "$REPORT" <<'PY'
+          import os, re, sys, html
+
+          log_path, super_dir, out_path = sys.argv[1], sys.argv[2], sys.argv[3]
+          repo_prefix = os.path.join(super_dir, "opm-simulators") + os.sep
+
+          diag_re = re.compile(
+              r'^(?P<file>[^:\n]+):(?P<line>\d+):(?P<col>\d+):\s+'
+              r'(?P<sev>warning|error|fatal error|note):\s+(?P<msg>.*)$'
+          )
+          missing_hdr_re = re.compile(r"'([^']+)' file not found")
+
+          # Group diagnostics by file. Each entry: (line, col, sev, msg, kind)
+          per_file = {}
+          n_warn = n_err = n_missing = 0
+          seen = set()
+
+          if os.path.exists(log_path):
+              with open(log_path, errors='replace') as f:
+                  for raw in f:
+                      m = diag_re.match(raw.rstrip('\n'))
+                      if not m:
+                          continue
+                      sev = m['sev']
+                      if sev == 'note':
+                          continue
+                      file_ = m['file']
+                      abs_file = os.path.realpath(file_)
+                      if abs_file.startswith(repo_prefix):
+                          rel = abs_file[len(repo_prefix):]
+                      elif file_.startswith('opm-simulators' + os.sep):
+                          rel = file_[len('opm-simulators' + os.sep):]
+                      else:
+                          continue
+                      key = (rel, m['line'], m['col'], m['msg'])
+                      if key in seen:
+                          continue
+                      seen.add(key)
+                      msg = m['msg']
+                      if missing_hdr_re.search(msg):
+                          kind = 'missing'
+                          n_missing += 1
+                      elif sev.endswith('error'):
+                          kind = 'error'
+                          n_err += 1
+                      else:
+                          kind = 'warning'
+                          n_warn += 1
+                      per_file.setdefault(rel, []).append(
+                          (int(m['line']), int(m['col']), sev, msg, kind)
+                      )
+
+          total = n_warn + n_err + n_missing
+          lines = []
+          lines.append("## clang-tidy report (PR diff)")
+          lines.append("")
+          if total == 0:
+              lines.append("No clang-tidy diagnostics on the lines changed by this PR. :tada:")
+          else:
+              lines.append(
+                  f"**{total}** diagnostic(s) on changed lines: "
+                  f"{n_warn} warning(s), {n_err} error(s), "
+                  f"{n_missing} missing-header note(s)."
+              )
+              lines.append("")
+              lines.append("| File | Line | Severity | Message |")
+              lines.append("| --- | ---: | --- | --- |")
+              MAX_ROWS = 200
+              row_count = 0
+              truncated = False
+              for rel in sorted(per_file):
+                  for ln, col, sev, msg, kind in sorted(per_file[rel]):
+                      if row_count >= MAX_ROWS:
+                          truncated = True
+                          break
+                      icon = {
+                          'warning': ':warning:',
+                          'error':   ':x:',
+                          'missing': ':grey_question:',
+                      }[kind]
+                      safe_msg = msg.replace('|', '\\|')
+                      # GitHub renders relative paths as links from the PR
+                      # files view when accessed via the comment, but on the
+                      # job summary we just show the path.
+                      lines.append(
+                          f"| `{rel}` | {ln} | {icon} {sev} | {safe_msg} |"
+                      )
+                      row_count += 1
+                  if row_count >= MAX_ROWS:
+                      truncated = True
+                      break
+              if truncated:
+                  lines.append("")
+                  lines.append(
+                      f"_Output truncated to the first {MAX_ROWS} rows. "
+                      "Download the `clang-tidy-log` artifact for the full log._"
+                  )
+
+          lines.append("")
+          lines.append(
+              "<sub>Produced by the `clang-tidy (PR diff)` workflow. "
+              "Only diagnostics on lines changed by this PR are shown.</sub>"
+          )
+
+          body = "\n".join(lines) + "\n"
+          with open(out_path, "w") as f:
+              f.write(body)
+
+          # Also append to the GitHub Actions job summary so the report
+          # shows up when the user clicks on the workflow run.
+          step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+          if step_summary:
+              with open(step_summary, "a") as f:
+                  f.write(body)
+          PY
+
       - name: Upload full clang-tidy log
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: clang-tidy-log
           path: ${{ github.workspace }}/tidy.log
+          if-no-files-found: ignore
+
+      - name: Upload clang-tidy report (for PR-comment workflow)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: clang-tidy-report
+          path: ${{ github.workspace }}/tidy-report
           if-no-files-found: ignore
