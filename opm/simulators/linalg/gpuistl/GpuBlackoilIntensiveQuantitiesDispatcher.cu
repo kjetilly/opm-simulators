@@ -93,6 +93,34 @@ void validateDispatcherInputs(const ProblemT& problem, const SolutionVectorT& so
     }
 }
 
+// The GPU view intentionally does not implement these modules
+static_assert(!Opm::getPropValue<DispatcherGpuTag, Opm::Properties::EnableDiffusion>());
+static_assert(!Opm::getPropValue<DispatcherGpuTag, Opm::Properties::EnableDispersion>());
+
+template <class ProblemT, class PrimaryVariablesT, class IntensiveQuantitiesT>
+void validateDispatcherInputs(const ProblemT& problem,
+                              const PrimaryVariablesT* const* primaryVariables,
+                              IntensiveQuantitiesT* const* intensiveQuantities,
+                              std::size_t numDof)
+{
+    if (primaryVariables == nullptr || intensiveQuantities == nullptr) {
+        OPM_THROW(std::invalid_argument,
+                  "GPU intensive-quantities dispatcher received a null pointer array");
+    }
+
+    if (numDof != static_cast<std::size_t>(problem.model().numGridDof())) {
+        OPM_THROW(std::invalid_argument,
+                  "GPU intensive-quantities dispatcher requires one entry per grid DoF");
+    }
+
+    for (std::size_t i = 0; i < numDof; ++i) {
+        if (primaryVariables[i] == nullptr || intensiveQuantities[i] == nullptr) {
+            OPM_THROW(std::invalid_argument,
+                      "GPU intensive-quantities dispatcher received a null DoF entry");
+        }
+    }
+}
+
 template <class ProblemT>
 void validateGpuPropertyInputs(const ProblemT& problem)
 {
@@ -123,19 +151,19 @@ void validateGpuPropertyInputs(const ProblemT& problem)
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires the gas-water two-phase approach");
     }
-    if (materialLawManager.hasOil() || !materialLawManager.hasGas()
-        || !materialLawManager.hasWater()) {
+    if (materialLawManager->hasOil() || !materialLawManager->hasGas()
+        || !materialLawManager->hasWater()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires water and gas without an active oil phase");
     }
-    if (!materialLawManager.satCurveIsAllPiecewiseLinear()) {
+    if (!materialLawManager->satCurveIsAllPiecewiseLinear()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires piecewise-linear saturation tables");
     }
-    if (materialLawManager.enableHysteresis()
-        || materialLawManager.enableEndPointScaling()
-        || materialLawManager.hasDirectionalRelperms()
-        || materialLawManager.hasDirectionalImbnum()) {
+    if (materialLawManager->enableHysteresis()
+        || materialLawManager->enableEndPointScaling()
+        || materialLawManager->hasDirectionalRelperms()
+        || materialLawManager->hasDirectionalImbnum()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation does not support hysteresis, endpoint scaling, "
                   "or directional saturation functions");
