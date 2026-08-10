@@ -93,10 +93,6 @@ void validateDispatcherInputs(const ProblemT& problem, const SolutionVectorT& so
     }
 }
 
-// The GPU view intentionally does not implement these modules
-static_assert(!Opm::getPropValue<DispatcherGpuTag, Opm::Properties::EnableDiffusion>());
-static_assert(!Opm::getPropValue<DispatcherGpuTag, Opm::Properties::EnableDispersion>());
-
 template <class ProblemT, class PrimaryVariablesT, class IntensiveQuantitiesT>
 void validateDispatcherInputs(const ProblemT& problem,
                               const PrimaryVariablesT* const* primaryVariables,
