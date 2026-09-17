@@ -420,7 +420,7 @@ solveJacobianSystem(BVector& x)
     auto& linSolver = this->simulator_.model().newtonMethod().linearSolver();
 
     const int numSolvers = linSolver.numAvailableSolvers();
-    if (numSolvers > 1 && (linSolver.getSolveCount() % 100 == 0)) {
+    if (numSolvers > 1 && linSolver.autoSelectSolver() && (linSolver.getSolveCount() % 100 == 0)) {
         if (this->terminal_output_) {
             OpmLog::debug("\nRunning speed test for comparing available linear solvers.");
         }

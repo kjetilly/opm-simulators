@@ -102,6 +102,26 @@ public:
         return istlSolver_->numAvailableSolvers();
     }
 
+    int activeSolver() const override
+    {
+        return istlSolver_->activeSolver();
+    }
+
+    std::vector<std::string> availableSolverNames() const override
+    {
+        return istlSolver_->availableSolverNames();
+    }
+
+    void setRuntimeParameters(const LinearSolverRuntimeParameters& parameters) override
+    {
+        istlSolver_->setRuntimeParameters(parameters);
+    }
+
+    LinearSolverRuntimeParameters runtimeParameters() const override
+    {
+        return istlSolver_->runtimeParameters();
+    }
+
     void prepare(const SparseMatrixAdapter& M, Vector& b) override
     {
         istlSolver_->prepare(M, b);

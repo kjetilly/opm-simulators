@@ -49,8 +49,13 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
+#include <concepts>
 #include <sstream>
 #include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <vector>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <fmt/format.h>
@@ -251,6 +256,30 @@ AdaptiveTimeStepping<TypeTag>::
 report()
 {
     return report_;
+}
+
+template<class TypeTag>
+void
+AdaptiveTimeStepping<TypeTag>::
+setSubStepCallback(SubStepCallback callback)
+{
+    this->sub_step_callback_ = std::move(callback);
+}
+
+template<class TypeTag>
+bool
+AdaptiveTimeStepping<TypeTag>::
+hasSubStepCallback() const
+{
+    return static_cast<bool>(this->sub_step_callback_);
+}
+
+template<class TypeTag>
+const typename AdaptiveTimeStepping<TypeTag>::SubStepTotals&
+AdaptiveTimeStepping<TypeTag>::
+subStepTotals() const
+{
+    return this->sub_step_totals_;
 }
 
 template<class TypeTag>
@@ -932,14 +961,18 @@ run()
         if (restarts == 0) {
             maybeUpdateTuningAndTimeStep_();
         }
+        maybeInvokeSubStepCallback_(restarts);
         const double dt = this->substep_timer_.currentStepLength();
         if (timeStepVerbose_()) {
             detail::logTimer(this->substep_timer_);
         }
 
         maybeUpdateLastSubstepOfSyncTimestep_(dt);  // Needed for reservoir coupling
+        Dune::Timer attemptTimer;
+        attemptTimer.start();
         auto substep_report = runSubStep_();
         markFirstSubStepAsFinished_();  // Needed for reservoir coupling
+        recordSubStepAttempt_(substep_report, attemptTimer.stop());
 
         if (substep_report.converged || checkContinueOnUnconvergedSolution_(dt)) {
             Dune::Timer perfTimer;
@@ -1507,6 +1540,186 @@ AdaptiveTimeStepping<TypeTag>::SubStepIteration<Solver>::
 solver_() const
 {
     return this->substepper_.solver_;
+}
+
+namespace detail {
+
+template<class LinearSolver>
+concept HasRuntimeLinearSolverControl = requires(LinearSolver& solver, const LinearSolverRuntimeParameters& parameters)
+{
+    solver.setRuntimeParameters(parameters);
+    { solver.runtimeParameters() } -> std::same_as<LinearSolverRuntimeParameters>;
+    { solver.availableSolverNames() } -> std::same_as<std::vector<std::string>>;
+    { solver.activeSolver() } -> std::same_as<int>;
+    solver.setActiveSolver(0);
+    solver.setAutoSelectSolver(false);
+};
+
+template<class Model>
+concept HasNewtonIterationLimits = requires(Model& model)
+{
+    model.setNewtonIterationLimits(1, 1);
+    { model.param().newton_max_iter_ } -> std::convertible_to<int>;
+    { model.param().newton_min_iter_ } -> std::convertible_to<int>;
+};
+
+} // namespace detail
+
+template<class TypeTag>
+template<class Solver>
+void
+AdaptiveTimeStepping<TypeTag>::SubStepIteration<Solver>::
+maybeInvokeSubStepCallback_(const int restarts)
+{
+    if (!this->adaptive_time_stepping_.sub_step_callback_) {
+        return;
+    }
+    const auto decision = this->adaptive_time_stepping_.sub_step_callback_(collectSubStepCallbackInfo_(restarts));
+    applySubStepCallbackDecision_(decision);
+}
+
+template<class TypeTag>
+template<class Solver>
+SubStepCallbackInfo
+AdaptiveTimeStepping<TypeTag>::SubStepIteration<Solver>::
+collectSubStepCallbackInfo_(const int restarts) const
+{
+    SubStepCallbackInfo info;
+    const auto& timer = this->simulatorTimer_();
+    info.reportStep = timer.currentStepNum();
+    info.subStep = this->sub_step_attempts_;
+    info.restarts = restarts;
+    info.time = this->substep_timer_.simulationTimeElapsed();
+    info.reportStepStart = timer.simulationTimeElapsed();
+    info.reportStepEnd = timer.simulationTimeElapsed() + timer.currentStepLength();
+    info.totalTime = timer.totalTime();
+    info.proposedDt = this->substep_timer_.currentStepLength();
+    info.suggestedNextDt = suggestedNextTimestep_();
+
+    if (this->has_last_report_) {
+        const auto& last = this->last_report_;
+        info.lastConverged = last.converged;
+        info.lastTimeStepRejected = last.time_step_rejected;
+        info.lastDt = last.timestep_length;
+        info.lastNewtonIterations = static_cast<int>(last.total_newton_iterations);
+        info.lastLinearIterations = static_cast<int>(last.total_linear_iterations);
+        info.lastWellIterations = static_cast<int>(last.total_well_iterations);
+        info.lastSolverTime = last.solver_time;
+        info.lastAssembleTime = last.assemble_time;
+        info.lastLinearSolveTime = last.linear_solve_time;
+        info.lastLinearSolveSetupTime = last.linear_solve_setup_time;
+        info.lastUpdateTime = last.update_time;
+        info.lastFailureCause = this->last_failure_cause_;
+    }
+
+    const auto& totals = this->adaptive_time_stepping_.sub_step_totals_;
+    info.totalNewtonIterations = totals.newtonIterations;
+    info.totalLinearIterations = totals.linearIterations;
+    info.totalWastedNewtonIterations = totals.wastedNewtonIterations;
+    info.totalWastedLinearIterations = totals.wastedLinearIterations;
+    info.totalSubSteps = totals.subSteps;
+    info.totalFailedSubSteps = totals.failedSubSteps;
+    info.totalSolverTime = totals.solverTime;
+
+    auto& model = solver_().model();
+    if constexpr (detail::HasNewtonIterationLimits<std::remove_reference_t<decltype(model)>>) {
+        info.newtonMaxIterations = model.param().newton_max_iter_;
+        info.newtonMinIterations = model.param().newton_min_iter_;
+    }
+    auto& linearSolver = model.simulator().model().newtonMethod().linearSolver();
+    if constexpr (detail::HasRuntimeLinearSolverControl<std::remove_reference_t<decltype(linearSolver)>>) {
+        info.activeLinearSolver = linearSolver.activeSolver();
+        info.linearSolvers = linearSolver.availableSolverNames();
+        const auto runtime = linearSolver.runtimeParameters();
+        info.linearSolverTolerance = runtime.tolerance.value_or(0.0);
+        info.linearSolverMaxIterations = runtime.maxIterations.value_or(0);
+    }
+
+    info.growthFactor = growthFactor_();
+    info.maxGrowth = maxGrowth_();
+    info.restartFactor = restartFactor_();
+    info.maxTimeStep = this->adaptive_time_stepping_.max_time_step_;
+    return info;
+}
+
+template<class TypeTag>
+template<class Solver>
+void
+AdaptiveTimeStepping<TypeTag>::SubStepIteration<Solver>::
+applySubStepCallbackDecision_(const SubStepCallbackDecision& decision)
+{
+    if (decision.empty()) {
+        return;
+    }
+    auto& ats = this->adaptive_time_stepping_;
+    if (decision.growthFactor && *decision.growthFactor > 0.0) {
+        ats.growth_factor_ = *decision.growthFactor;
+    }
+    if (decision.maxGrowth && *decision.maxGrowth > 0.0) {
+        ats.max_growth_ = *decision.maxGrowth;
+    }
+    if (decision.restartFactor && *decision.restartFactor > 0.0 && *decision.restartFactor < 1.0) {
+        ats.restart_factor_ = *decision.restartFactor;
+    }
+    if (decision.maxTimeStep && *decision.maxTimeStep > 0.0) {
+        ats.max_time_step_ = *decision.maxTimeStep;
+    }
+    if (decision.dt && *decision.dt > 0.0) {
+        // provideTimeStepEstimate() clamps to the remaining time of the report step
+        const double dt = std::min(*decision.dt, ats.max_time_step_ > 0.0 ? ats.max_time_step_ : *decision.dt);
+        setTimeStep_(dt);
+    }
+
+    auto& model = solver_().model();
+    if constexpr (detail::HasNewtonIterationLimits<std::remove_reference_t<decltype(model)>>) {
+        if (decision.newtonMinIterations || decision.newtonMaxIterations) {
+            model.setNewtonIterationLimits(decision.newtonMinIterations.value_or(0),
+                                           decision.newtonMaxIterations.value_or(0));
+        }
+    }
+    auto& linearSolver = model.simulator().model().newtonMethod().linearSolver();
+    if constexpr (detail::HasRuntimeLinearSolverControl<std::remove_reference_t<decltype(linearSolver)>>) {
+        if (decision.linearSolverIndex) {
+            const int index = *decision.linearSolverIndex;
+            if (index < 0 || index >= linearSolver.numAvailableSolvers()) {
+                OPM_THROW(std::invalid_argument,
+                          fmt::format("Substep callback selected linear solver {} but only {} are available",
+                                      index, linearSolver.numAvailableSolvers()));
+            }
+            linearSolver.setAutoSelectSolver(false);
+            linearSolver.setActiveSolver(index);
+        }
+        if (!decision.linearSolver.empty()) {
+            linearSolver.setRuntimeParameters(decision.linearSolver);
+        }
+    }
+}
+
+template<class TypeTag>
+template<class Solver>
+void
+AdaptiveTimeStepping<TypeTag>::SubStepIteration<Solver>::
+recordSubStepAttempt_(const SimulatorReportSingle& substep_report, const double attempt_seconds)
+{
+    ++this->sub_step_attempts_;
+    this->has_last_report_ = true;
+    this->last_report_ = substep_report;
+    // substep reports do not carry a solver_time; keep the measured wall time of the attempt
+    this->last_report_.solver_time = attempt_seconds;
+    this->last_failure_cause_ = substep_report.converged ? std::string {} : this->cause_of_failure_;
+
+    auto& totals = this->adaptive_time_stepping_.sub_step_totals_;
+    totals.solverTime += attempt_seconds;
+    if (substep_report.converged) {
+        totals.newtonIterations += substep_report.total_newton_iterations;
+        totals.linearIterations += substep_report.total_linear_iterations;
+        ++totals.subSteps;
+    }
+    else {
+        totals.wastedNewtonIterations += substep_report.total_newton_iterations;
+        totals.wastedLinearIterations += substep_report.total_linear_iterations;
+        ++totals.failedSubSteps;
+    }
 }
 
 

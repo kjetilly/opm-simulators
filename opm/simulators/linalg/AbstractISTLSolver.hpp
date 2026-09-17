@@ -19,7 +19,11 @@
 
 #include <opm/common/Exceptions.hpp>
 #include <opm/simulators/linalg/FlowLinearSolverParameters.hpp>
+#include <opm/simulators/linalg/LinearSolverRuntimeParameters.hpp>
 #include <opm/simulators/linalg/PropertyTree.hpp>
+
+#include <string>
+#include <vector>
 
 namespace Opm
 {
@@ -77,6 +81,59 @@ public:
      * \return The number of solvers that can be used.
      */
     virtual int numAvailableSolvers() const = 0;
+
+    /**
+     * \brief Index of the currently active solver setup.
+     */
+    virtual int activeSolver() const
+    {
+        return 0;
+    }
+
+    /**
+     * \brief Names of the available solver setups (same order as the indices used by setActiveSolver()).
+     */
+    virtual std::vector<std::string> availableSolverNames() const
+    {
+        return std::vector<std::string>(static_cast<std::size_t>(this->numAvailableSolvers()), "unknown");
+    }
+
+    /**
+     * \brief Change solver settings of the active solver setup while the simulation is running.
+     *
+     * The default implementation ignores the request; solvers that support runtime changes
+     * override it.
+     */
+    virtual void setRuntimeParameters(const LinearSolverRuntimeParameters& /*parameters*/)
+    {
+    }
+
+    /**
+     * \brief Current runtime-relevant settings of the active solver setup.
+     *
+     * \return Tolerance, relaxed tolerance, max iterations and CPR reuse settings currently in
+     *         effect; all fields are set when the solver supports runtime parameters.
+     */
+    virtual LinearSolverRuntimeParameters runtimeParameters() const
+    {
+        return {};
+    }
+
+    /**
+     * \brief Whether the nonlinear solver may pick the active solver itself by timing all setups.
+     *
+     * Disabled automatically once an external controller selects the active solver through
+     * setActiveSolver() with autoSelect = false; see setAutoSelectSolver().
+     */
+    [[nodiscard]] bool autoSelectSolver() const
+    {
+        return autoSelectSolver_;
+    }
+
+    void setAutoSelectSolver(const bool autoSelect)
+    {
+        autoSelectSolver_ = autoSelect;
+    }
 
     /**
      * \brief Prepare the solver with the given matrix and right-hand side vector.
@@ -179,6 +236,7 @@ public:
     virtual int getSolveCount() const = 0;
 
 protected:
+    bool autoSelectSolver_ = true;
 
     /**
      * \brief Check the convergence of the linear solver.

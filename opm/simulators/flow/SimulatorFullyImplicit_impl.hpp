@@ -467,6 +467,7 @@ runStep(SimulatorTimer& timer)
             events.hasEvent(ScheduleEvents::PRODUCTION_UPDATE) ||
             events.hasEvent(ScheduleEvents::INJECTION_UPDATE) ||
             events.hasEvent(ScheduleEvents::WELL_STATUS_CHANGE);
+        adaptiveTimeStepping_->setSubStepCallback(subStepCallback_);
         auto stepReport = adaptiveTimeStepping_->step(timer, *solver_, event, tuningUpdater);
         report_ += stepReport;
 #ifdef RESERVOIR_COUPLING_ENABLED

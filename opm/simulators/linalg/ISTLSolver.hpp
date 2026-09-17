@@ -41,6 +41,7 @@
 #include <opm/simulators/flow/FlowBaseProblemProperties.hpp>
 #include <opm/simulators/linalg/ExtractParallelGridInformationToISTL.hpp>
 #include <opm/simulators/linalg/FlowLinearSolverParameters.hpp>
+#include <opm/simulators/linalg/LinearSolverRuntimeParameters.hpp>
 #include <opm/simulators/linalg/matrixblock.hh>
 #include <opm/simulators/linalg/istlsparsematrixadapter.hh>
 #include <opm/simulators/linalg/PreconditionerWithUpdate.hpp>
@@ -54,6 +55,7 @@
 
 #include <fmt/format.h>
 
+#include <algorithm>
 #include <any>
 #include <cstddef>
 #include <functional>
@@ -240,32 +242,25 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
                 }
             }
 
-            if (parameters_[0].linsolver_ == "hybrid") {
-                // Experimental hybrid configuration.
-                // When chosen, will set up two solvers, one with CPRW
-                // and the other with ILU0 preconditioner. More general
-                // options may be added later.
+            // A comma separated --linear-solver value (or the legacy "hybrid" alias for
+            // "cprw,ilu0") sets up several solver configurations that share all other
+            // parameters.  The active one is chosen with setActiveSolver().
+            auto solverNames = splitLinearSolverNames(parameters_[0].linsolver_);
+            if (solverNames.size() == 1 && solverNames[0] == "hybrid") {
+                solverNames = {"cprw", "ilu0"};
+            }
+            if (solverNames.size() > 1) {
                 prm_.clear();
+                const FlowLinearSolverParameters shared = parameters_[0];
                 parameters_.clear();
-                {
-                    FlowLinearSolverParameters para;
-                    para.init(false);
-                    para.linsolver_ = "cprw";
+                for (const auto& name : solverNames) {
+                    FlowLinearSolverParameters para = shared;
+                    para.linsolver_ = name;
                     parameters_.push_back(para);
-                    prm_.push_back(setupPropertyTree(parameters_[0],
+                    prm_.push_back(setupPropertyTree(parameters_.back(),
                                                      Parameters::IsSet<Parameters::LinearSolverMaxIter>(),
                                                      Parameters::IsSet<Parameters::LinearSolverReduction>()));
                 }
-                {
-                    FlowLinearSolverParameters para;
-                    para.init(false);
-                    para.linsolver_ = "ilu0";
-                    parameters_.push_back(para);
-                    prm_.push_back(setupPropertyTree(parameters_[1],
-                                                     Parameters::IsSet<Parameters::LinearSolverMaxIter>(),
-                                                     Parameters::IsSet<Parameters::LinearSolverReduction>()));
-                }
-                // ------------
             } else {
                 assert(parameters_.size() == 1);
                 assert(prm_.empty());
@@ -347,6 +342,61 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         int numAvailableSolvers() const override
         {
             return flexibleSolver_.size();
+        }
+
+        int activeSolver() const override
+        {
+            return activeSolverNum_;
+        }
+
+        std::vector<std::string> availableSolverNames() const override
+        {
+            std::vector<std::string> names;
+            names.reserve(parameters_.size());
+            for (const auto& para : parameters_) {
+                names.push_back(para.linsolver_);
+            }
+            return names;
+        }
+
+        /// Change settings of the active solver setup between solves.  Tolerances and CPR
+        /// reuse settings take effect immediately; a new iteration limit forces the flexible
+        /// solver (including its preconditioner) to be rebuilt in the next prepare() call.
+        void setRuntimeParameters(const LinearSolverRuntimeParameters& runtime) override
+        {
+            auto& para = parameters_[activeSolverNum_];
+            auto& prm = prm_[activeSolverNum_];
+            if (runtime.tolerance) {
+                para.linear_solver_reduction_ = *runtime.tolerance;
+                prm.put("tol", *runtime.tolerance);
+                useRuntimeTolerance_ = true;
+            }
+            if (runtime.relaxedTolerance) {
+                para.relaxed_linear_solver_reduction_ = *runtime.relaxedTolerance;
+            }
+            if (runtime.maxIterations && *runtime.maxIterations != para.linear_solver_maxiter_) {
+                para.linear_solver_maxiter_ = *runtime.maxIterations;
+                prm.put("maxiter", *runtime.maxIterations);
+                flexibleSolver_[activeSolverNum_].solver_.reset();
+            }
+            if (runtime.cprReuseSetup) {
+                para.cpr_reuse_setup_ = *runtime.cprReuseSetup;
+            }
+            if (runtime.cprReuseInterval) {
+                para.cpr_reuse_interval_ = std::max(1, *runtime.cprReuseInterval);
+            }
+        }
+
+        LinearSolverRuntimeParameters runtimeParameters() const override
+        {
+            const auto& para = parameters_[activeSolverNum_];
+            LinearSolverRuntimeParameters runtime;
+            runtime.tolerance = para.linear_solver_reduction_;
+            runtime.relaxedTolerance = para.relaxed_linear_solver_reduction_;
+            runtime.maxIterations = para.linear_solver_maxiter_;
+            runtime.cprReuseSetup = para.cpr_reuse_setup_;
+            runtime.cprReuseInterval = para.cpr_reuse_interval_;
+            return runtime;
         }
 
         void initPrepare(const Matrix& M, Vector& b)
@@ -444,7 +494,14 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
             {
                 OPM_TIMEBLOCK(flexibleSolverApply);
                 assert(flexibleSolver_[activeSolverNum_].solver_);
-                flexibleSolver_[activeSolverNum_].solver_->apply(x, *rhs_, result);
+                if (useRuntimeTolerance_) {
+                    flexibleSolver_[activeSolverNum_].solver_->apply(x, *rhs_,
+                                                                     parameters_[activeSolverNum_].linear_solver_reduction_,
+                                                                     result);
+                }
+                else {
+                    flexibleSolver_[activeSolverNum_].solver_->apply(x, *rhs_, result);
+                }
             }
 
             iterations_ = result.iterations;
@@ -696,6 +753,9 @@ std::unique_ptr<Matrix> blockJacobiAdjacency(const Grid& grid,
         Vector *rhs_;
 
         int activeSolverNum_ = 0;
+        // set once a tolerance was changed through setRuntimeParameters(); the flexible solver
+        // is then always applied with the current reduction instead of the one it was built with
+        bool useRuntimeTolerance_ = false;
         std::vector<detail::FlexibleSolverInfo<Matrix,Vector,CommunicationType>> flexibleSolver_;
         std::vector<int> overlapRows_;
         std::vector<int> interiorRows_;

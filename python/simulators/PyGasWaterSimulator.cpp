@@ -23,6 +23,7 @@
 #include <opm/models/blackoil/blackoildiffusionmodule.hh>
 
 #include <opm/simulators/flow/python/PyGasWaterSimulator.hpp>
+#include <opm/simulators/flow/python/PySubStepCallback.hpp>
 // NOTE: This file will be generated at compile time and placed in the build directory
 // See python/generate_docstring_hpp.py, and python/simulators/CMakeLists.txt for details
 #include <PyGasWaterSimulatorDoc.hpp>
@@ -86,6 +87,7 @@ void export_PyGasWaterSimulator(py::module& m)
     using namespace Opm::Pybind::DocStrings;
     using TypeTag = Opm::Properties::TTag::FlowGasWaterProblem;
 
+    exportSubStepCallbackTypes(m);
     py::class_<PyBaseSimulator<TypeTag>>(
         m,
         "_BaseSimulatorGW",
@@ -127,7 +129,10 @@ void export_PyGasWaterSimulator(py::module& m)
         .def("setup_mpi", &PyBaseSimulator<TypeTag>::setupMpi, setupMpi_docstring, py::arg("init"), py::arg("finalize"))
         .def("step", &PyBaseSimulator<TypeTag>::step, step_docstring)
         .def("step_cleanup", &PyBaseSimulator<TypeTag>::stepCleanup, stepCleanup_docstring)
-        .def("step_init", &PyBaseSimulator<TypeTag>::stepInit, stepInit_docstring);
+        .def("step_init", &PyBaseSimulator<TypeTag>::stepInit, stepInit_docstring)
+        .def("set_substep_callback", &PyBaseSimulator<TypeTag>::setSubStepCallback, setSubStepCallback_docstring, py::arg("callback"))
+        .def("clear_substep_callback", &PyBaseSimulator<TypeTag>::clearSubStepCallback, clearSubStepCallback_docstring)
+        .def("get_substep_totals", &PyBaseSimulator<TypeTag>::getSubStepTotals, getSubStepTotals_docstring);
 }
 
 PYBIND11_MODULE(GasWater, m)

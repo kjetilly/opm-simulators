@@ -94,7 +94,18 @@
         },
         "stepInit": {
             "signature_template": "opm.simulators.{{name}}.step_init() -> int",
-            "doc": "Initializes the simulation before taking the first report step. This method should be called before the first call to ``step()``\n\n:return: EXIT_SUCCESS if the initialization is successful."
+            "doc": "Initializes the simulation before taking the first report step. This method should be called before the first call to ``step()``\n\n:return: EXIT_SUCCESS if the initialization is successful."},
+        "setSubStepCallback": {
+            "signature_template": "opm.simulators.{{name}}.set_substep_callback(callback: Callable[[SubStepInfo], Optional[SubStepDecision | dict]]) -> None",
+            "doc": "Installs a callback that is invoked before every adaptive substep attempt (also for retries after a convergence failure). The callback receives a ``SubStepInfo`` describing the time stepper state, the statistics of the previous attempt and the cumulative totals, and returns ``None`` (keep everything), a ``SubStepDecision`` or a ``dict`` with the same keys as the ``SubStepDecision`` attributes (``dt``, ``linear_solver_index``, ``linear_solver_tolerance``, ``linear_solver_max_iterations``, ``cpr_reuse_setup``, ``cpr_reuse_interval``, ``newton_max_iterations``, ``newton_min_iterations``, ``growth_factor``, ``max_growth``, ``restart_factor``, ``max_time_step``). Several linear solver setups can be made available with ``--linear-solver=cprw,ilu0``; choosing one through ``linear_solver_index`` disables the automatic solver speed test. Requires adaptive time stepping (the default). Pass ``None`` to remove the callback.\n\n:param callback: Callable or None.\n\n:return: None"
+        },
+        "clearSubStepCallback": {
+            "signature_template": "opm.simulators.{{name}}.clear_substep_callback() -> None",
+            "doc": "Removes a callback installed with ``set_substep_callback()``.\n\n:return: None"
+        },
+        "getSubStepTotals": {
+            "signature_template": "opm.simulators.{{name}}.get_substep_totals() -> dict[str, float]",
+            "doc": "Cumulative adaptive substep statistics of the run so far: ``newton_iterations``, ``linear_iterations`` (of converged substeps), ``wasted_newton_iterations``, ``wasted_linear_iterations`` (of failed attempts), ``sub_steps``, ``failed_sub_steps`` and ``solver_time`` (seconds).\n\n:return: Dictionary with the totals; empty before ``step_init()``."
         }
     }
 }

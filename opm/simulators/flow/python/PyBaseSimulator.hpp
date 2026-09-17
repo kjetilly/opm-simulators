@@ -27,6 +27,7 @@
 #include <opm/simulators/flow/python/PyFluidState.hpp>
 #include <opm/simulators/flow/python/PyMaterialState.hpp>
 #include <opm/simulators/flow/python/Pybind11Exporter.hpp>
+#include <opm/simulators/timestepping/SubStepCallback.hpp>
 
 #include <opm/input/eclipse/EclipseState/EclipseState.hpp>
 #include <opm/input/eclipse/EclipseState/SummaryConfig/SummaryConfig.hpp>
@@ -96,6 +97,12 @@ public:
     int stepCleanup();
     int stepInit();
 
+    /// Install a Python callable invoked before every adaptive substep attempt with a
+    /// SubStepInfo argument; it returns None, a SubStepDecision or a dict of overrides.
+    void setSubStepCallback(py::object callback);
+    void clearSubStepCallback();
+    std::map<std::string, double> getSubStepTotals() const;
+
 protected:
     FlowMain<TypeTag>& getFlowMain() const;
     PyFluidState<TypeTag>& getFluidState() const;
@@ -121,6 +128,10 @@ protected:
     std::shared_ptr<Schedule> schedule_{};
     std::shared_ptr<SummaryConfig> summary_config_{};
     std::vector<std::string> args_{};
+    py::object sub_step_callback_{py::none()};
+
+private:
+    void installSubStepCallback_();
 };  // class PyBaseSimulator
 
 }  // namespace Opm::Pybind

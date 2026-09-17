@@ -10,6 +10,7 @@
 #include <opm/simulators/timestepping/AdaptiveSimulatorTimer.hpp>
 #include <opm/simulators/timestepping/SimulatorReport.hpp>
 #include <opm/simulators/timestepping/SimulatorTimer.hpp>
+#include <opm/simulators/timestepping/SubStepCallback.hpp>
 #include <opm/simulators/timestepping/TimeStepControl.hpp>
 #include <opm/simulators/timestepping/TimeStepControlInterface.hpp>
 
@@ -318,12 +319,24 @@ private:
         bool useNewtonIteration_() const;
         double writeOutput_() const;
 
+        /// Invoke the \ref SubStepCallback (if installed) before a substep attempt and apply
+        /// the returned decision to the substep length, the time stepping parameters, the
+        /// Newton limits and the linear solver.
+        void maybeInvokeSubStepCallback_(const int restarts);
+        SubStepCallbackInfo collectSubStepCallbackInfo_(const int restarts) const;
+        void applySubStepCallbackDecision_(const SubStepCallbackDecision& decision);
+        void recordSubStepAttempt_(const SimulatorReportSingle& substep_report, double attempt_seconds);
+
         SubStepper<Solver>& substepper_;
         AdaptiveSimulatorTimer& substep_timer_;
         const double original_time_step_;
         const bool final_step_;
         std::string cause_of_failure_;
         AdaptiveTimeStepping<TypeTag>& adaptive_time_stepping_;
+        int sub_step_attempts_ = 0;                 //!< substep attempts in this report step
+        bool has_last_report_ = false;
+        SimulatorReportSingle last_report_{};       //!< result of the previous attempt
+        std::string last_failure_cause_;
     };
 
 public:
@@ -403,6 +416,24 @@ public:
 
     SimulatorReport& report();
 
+    /// Install (or with an empty function remove) a callback invoked before every substep
+    /// attempt; see \ref SubStepCallback.
+    void setSubStepCallback(SubStepCallback callback);
+    [[nodiscard]] bool hasSubStepCallback() const;
+
+    /// Cumulative substep statistics reported to the \ref SubStepCallback.
+    struct SubStepTotals
+    {
+        long newtonIterations = 0;
+        long linearIterations = 0;
+        long wastedNewtonIterations = 0;
+        long wastedLinearIterations = 0;
+        long subSteps = 0;
+        long failedSubSteps = 0;
+        double solverTime = 0.0;
+    };
+    [[nodiscard]] const SubStepTotals& subStepTotals() const;
+
     static AdaptiveTimeStepping<TypeTag> serializationTestObjectHardcoded();
     static AdaptiveTimeStepping<TypeTag> serializationTestObjectPID();
     static AdaptiveTimeStepping<TypeTag> serializationTestObjectPIDIt();
@@ -450,6 +481,9 @@ protected:
     // so it can be updated and passed to the summary writing code every
     // substep (not just every report step).
     SimulatorReport report_{};
+
+    SubStepCallback sub_step_callback_{};   //!< optional external per-substep controller
+    SubStepTotals sub_step_totals_{};
 };
 
 } // namespace Opm

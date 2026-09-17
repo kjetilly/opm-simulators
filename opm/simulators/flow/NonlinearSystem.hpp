@@ -102,6 +102,18 @@ public:
 
     void updateTUNINGDP(const TuningDp& tuning_dp);
 
+    /// Override the Newton iteration limits (e.g. from a substep callback).  Non-positive values
+    /// leave the respective limit unchanged.
+    void setNewtonIterationLimits(const int minIter, const int maxIter)
+    {
+        if (minIter > 0) {
+            param_.newton_min_iter_ = minIter;
+        }
+        if (maxIter > 0) {
+            param_.newton_max_iter_ = maxIter;
+        }
+    }
+
     void updateSolution(const GlobalEqVector& dx);
 
     template <class LogFailure>

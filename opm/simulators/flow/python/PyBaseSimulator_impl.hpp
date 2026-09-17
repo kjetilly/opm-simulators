@@ -25,7 +25,12 @@
 #include <opm/simulators/flow/python/PyBaseSimulator.hpp>
 #endif
 
+#include <opm/simulators/flow/python/PySubStepCallback.hpp>
+
+#include <map>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace py = pybind11;
 
@@ -231,6 +236,7 @@ int PyBaseSimulator<TypeTag>::stepInit()
         this->simulator_ = this->flow_main_->getSimulatorPtr();
         this->fluid_state_ = std::make_unique<PyFluidState<TypeTag>>(this->simulator_);
         this->material_state_ = std::make_unique<PyMaterialState<TypeTag>>(this->simulator_);
+        installSubStepCallback_();
         return result;
     }
     else {
@@ -290,6 +296,60 @@ PyBaseSimulator<TypeTag>::getMaterialState() const
             "Cannot get reference to material state object"
         );
     }
+}
+
+template<class TypeTag>
+void PyBaseSimulator<TypeTag>::setSubStepCallback(py::object callback)
+{
+    if (!callback.is_none() && !py::isinstance<py::function>(callback) && !py::hasattr(callback, "__call__")) {
+        throw py::type_error("substep callback must be callable or None");
+    }
+    this->sub_step_callback_ = std::move(callback);
+    if (this->has_run_init_) {
+        installSubStepCallback_();
+    }
+}
+
+template<class TypeTag>
+void PyBaseSimulator<TypeTag>::clearSubStepCallback()
+{
+    setSubStepCallback(py::none());
+}
+
+template<class TypeTag>
+std::map<std::string, double> PyBaseSimulator<TypeTag>::getSubStepTotals() const
+{
+    std::map<std::string, double> totals;
+    if (!this->flow_main_ || !this->flow_main_->getStepDriverPtr()) {
+        return totals;
+    }
+    const auto t = this->flow_main_->getStepDriverPtr()->subStepTotals();
+    totals["newton_iterations"] = static_cast<double>(t.newtonIterations);
+    totals["linear_iterations"] = static_cast<double>(t.linearIterations);
+    totals["wasted_newton_iterations"] = static_cast<double>(t.wastedNewtonIterations);
+    totals["wasted_linear_iterations"] = static_cast<double>(t.wastedLinearIterations);
+    totals["sub_steps"] = static_cast<double>(t.subSteps);
+    totals["failed_sub_steps"] = static_cast<double>(t.failedSubSteps);
+    totals["solver_time"] = t.solverTime;
+    return totals;
+}
+
+template<class TypeTag>
+void PyBaseSimulator<TypeTag>::installSubStepCallback_()
+{
+    auto* driver = this->flow_main_ ? this->flow_main_->getStepDriverPtr() : nullptr;
+    if (!driver) {
+        return;
+    }
+    if (this->sub_step_callback_.is_none()) {
+        driver->setSubStepCallback(SubStepCallback {});
+        return;
+    }
+    // The GIL is held while step() executes, so calling back into Python here is safe.
+    py::object callback = this->sub_step_callback_;
+    driver->setSubStepCallback([callback](const SubStepCallbackInfo& info) {
+        return subStepDecisionFromPython(callback(info));
+    });
 }
 
 }  // namespace Opm::Pybind

@@ -160,6 +160,7 @@ list (APPEND MAIN_SOURCE_FILES
   opm/simulators/linalg/FlexibleSolver7.cpp
   opm/simulators/linalg/FlowLinearSolverParameters.cpp
   opm/simulators/linalg/ISTLSolver.cpp
+  opm/simulators/linalg/LinearSolverRuntimeParameters.cpp
   opm/simulators/linalg/MILU.cpp
   opm/simulators/linalg/ParallelIstlInformation.cpp
   opm/simulators/linalg/ParallelOverlappingILU0.cpp
@@ -480,6 +481,7 @@ list (APPEND TEST_SOURCE_FILES
   tests/test_extraconvergenceoutputthread.cpp
   tests/test_extractMatrix.cpp
   tests/test_flexiblesolver.cpp
+  tests/test_linearsolverruntimeparameters.cpp
   tests/test_GasSatfuncConsistencyChecks.cpp
   tests/test_gconsump.cpp
   tests/test_glift1.cpp
@@ -1125,6 +1127,7 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/simulators/linalg/FlexibleSolver.hpp
   opm/simulators/linalg/FlexibleSolver_impl.hpp
   opm/simulators/linalg/FlowLinearSolverParameters.hpp
+  opm/simulators/linalg/LinearSolverRuntimeParameters.hpp
   opm/simulators/linalg/foreignoverlapfrombcrsmatrix.hh
   opm/simulators/linalg/getQuasiImpesWeights.hpp
   opm/simulators/linalg/globalindices.hh
@@ -1205,6 +1208,7 @@ list (APPEND PUBLIC_HEADER_FILES
   opm/simulators/timestepping/SimulatorTimer.hpp
   opm/simulators/timestepping/SimulatorReport.hpp
   opm/simulators/timestepping/SimulatorTimerInterface.hpp
+  opm/simulators/timestepping/SubStepCallback.hpp
   opm/simulators/timestepping/gatherConvergenceReport.hpp
   opm/simulators/utils/ComponentName.hpp
   opm/simulators/utils/ComponentName_impl.hpp

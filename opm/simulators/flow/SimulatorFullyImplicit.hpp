@@ -47,6 +47,7 @@
 #include <opm/simulators/flow/SimulatorSerializer.hpp>
 #include <opm/simulators/timestepping/AdaptiveTimeStepping.hpp>
 #include <opm/simulators/timestepping/ConvergenceReport.hpp>
+#include <opm/simulators/timestepping/SubStepCallback.hpp>
 #include <opm/simulators/wells/WellState.hpp>
 
 #if HAVE_HDF5
@@ -290,6 +291,26 @@ public:
     void setRestoreStateHook(std::function<void(int)> hook)
     { restoreStateHook_ = std::move(hook); }
 
+    /** \brief Install a callback invoked before every adaptive substep attempt.
+     *
+     * The callback observes the state of the time stepper and the solver statistics of the
+     * previous attempt and may override the substep length, time stepping factors, Newton
+     * iteration limits and linear solver settings for the attempt about to start; see
+     * \ref SubStepCallback.  It is forwarded to the adaptive time stepper at the start of
+     * every report step, so it can be (re)installed at any time between steps.  Pass an empty
+     * function to disable.  Has no effect without adaptive time stepping.
+     */
+    void setSubStepCallback(SubStepCallback callback)
+    { subStepCallback_ = std::move(callback); }
+
+    /// Cumulative substep statistics (converged/failed attempts, iterations); zero unless
+    /// adaptive time stepping is active.
+    [[nodiscard]] typename TimeStepper::SubStepTotals subStepTotals() const
+    {
+        return adaptiveTimeStepping_ ? adaptiveTimeStepping_->subStepTotals()
+                                     : typename TimeStepper::SubStepTotals {};
+    }
+
     /** \brief Stop the timers and emit the final OPMRST output.
      *
      * Called by \ref run after the report-step loop finishes.  Stops
@@ -407,6 +428,9 @@ protected:
     /// Caller-supplied per-report-step state restore; see
     /// \ref setRestoreStateHook. Empty (inactive) unless installed.
     std::function<void(int)> restoreStateHook_{};
+
+    /// Caller-supplied per-substep controller; see \ref setSubStepCallback.
+    SubStepCallback subStepCallback_{};
 };
 
 } // namespace Opm
