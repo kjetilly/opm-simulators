@@ -27,8 +27,10 @@
 #include <fmt/chrono.h>
 #include <fmt/format.h>
 
+#include <array>
 #include <ctime>
 #include <string>
+#include <string_view>
 
 namespace Opm {
 
@@ -41,7 +43,15 @@ namespace Opm {
 inline std::string economicLimitDateString(const std::time_t start_time, const double sim_time)
 {
     const std::time_t cur_time = TimeService::advance(start_time, sim_time);
-    return fmt::format("{:%d-%b-%Y}", fmt::gmtime(cur_time));
+    const auto utc_time = fmt::gmtime(cur_time);
+    static constexpr std::array<std::string_view, 12> month_names = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    };
+
+    return fmt::format(fmt::runtime("{:02}-{}-{:04}"),
+                       utc_time.tm_mday,
+                       month_names[utc_time.tm_mon],
+                       utc_time.tm_year + 1900);
 }
 
 //! \brief The "at time ... (date = ...)" clause shared by the well (WECON) and
