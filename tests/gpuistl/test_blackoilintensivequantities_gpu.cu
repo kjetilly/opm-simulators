@@ -657,6 +657,91 @@ struct TemporaryFile {
     TemporaryFile& operator=(const TemporaryFile&) = delete;
 };
 
+static void checkProductionDownloads(auto& dispatcher,
+                                     const auto& intensiveQuantities,
+                                     const std::vector<double>& mobilityBefore,
+                                     const std::vector<double>& waterDensityBefore)
+{
+    const auto numCells = intensiveQuantities.size();
+    constexpr auto activePhases = std::array{FluidSystem::waterPhaseIdx,
+                                             FluidSystem::gasPhaseIdx};
+    for (std::size_t i = 0; i < numCells; ++i) {
+        for (unsigned phaseOffset = 0; phaseOffset < 2u; ++phaseOffset) {
+            BOOST_CHECK_CLOSE(mobilityBefore[2u * i + phaseOffset],
+                              asDouble(intensiveQuantities[i]->mobility(
+                                  activePhases[phaseOffset])),
+                              1e-6);
+        }
+        BOOST_CHECK_CLOSE(waterDensityBefore[i],
+                          asDouble(intensiveQuantities[i]->fluidState().density(
+                              FluidSystem::waterPhaseIdx)),
+                          1e-6);
+    }
+
+    constexpr auto numEquations =
+        Opm::getPropValue<Opm::Properties::TTag::FlowGasWaterEnergyProblem, Opm::Properties::NumEq>();
+    const auto factors = dispatcher.compactConvergenceFactors();
+    BOOST_REQUIRE_EQUAL(factors.size(), numCells * numEquations);
+    for (auto i = std::size_t{0}; i < numCells; ++i) {
+        const auto& state = intensiveQuantities[i]->fluidState();
+        for (const auto phase : activePhases) {
+            const auto component = FluidSystem::canonicalToActiveCompIdx(
+                FluidSystem::solventComponentIndex(phase));
+            BOOST_CHECK_CLOSE(factors[i * numEquations + component],
+                              1.0 / asDouble(state.invB(phase)), 1e-6);
+        }
+    }
+    // This query reuses the compact storage with a different layout.
+    const auto rockState = dispatcher.compactRockCompactionState();
+    BOOST_REQUIRE_EQUAL(rockState.size(), numCells * 2);
+    for (auto i = std::size_t{0}; i < numCells; ++i) {
+        const auto& state = intensiveQuantities[i]->fluidState();
+        BOOST_CHECK_CLOSE(rockState[2 * i],
+                          asDouble(state.pressure(FluidSystem::gasPhaseIdx)), 1e-6);
+        BOOST_CHECK_CLOSE(rockState[2 * i + 1],
+                          asDouble(state.saturation(FluidSystem::waterPhaseIdx)), 1e-6);
+    }
+}
+
+static void checkPrimaryVariablesEqual(const auto& downloaded, const auto& expected)
+{
+    BOOST_REQUIRE_EQUAL(downloaded.size(), expected.size());
+    for (auto cell = std::size_t{0}; cell < expected.size(); ++cell) {
+        for (auto component = std::size_t{0}; component < expected[cell].size(); ++component) {
+            BOOST_CHECK_EQUAL(downloaded[cell][component], expected[cell][component]);
+        }
+        BOOST_CHECK(downloaded[cell].primaryVarsMeaningWater() == expected[cell].primaryVarsMeaningWater());
+        BOOST_CHECK(downloaded[cell].primaryVarsMeaningGas() == expected[cell].primaryVarsMeaningGas());
+        BOOST_CHECK_EQUAL(downloaded[cell].pvtRegionIndex(), expected[cell].pvtRegionIndex());
+    }
+}
+
+static void checkProductionPrimaryDownloads(auto& dispatcher, const auto& expected)
+{
+    auto& bridge = dispatcher.bridge();
+    auto downloaded = expected;
+    // Make each host slot stale in turn, then poison its destination. This
+    // exercises both registrations and the last partial transfer chunk.
+    bridge.advanceTimeLevel();
+    for (const auto timeIndex : std::array{1u, 0u}) {
+        if (timeIndex == 0) {
+            bridge.restorePreviousSolution();
+        }
+        for (auto& variables : downloaded) {
+            for (auto& value : variables) {
+                value = -1.0;
+            }
+        }
+        const auto downloadsBefore = bridge.transferCounters().primaryVariableDownloads;
+        bridge.materializeHostPrimaryVariables(timeIndex, downloaded);
+        BOOST_CHECK_EQUAL(bridge.transferCounters().primaryVariableDownloads, downloadsBefore + 1);
+        checkPrimaryVariablesEqual(downloaded, expected);
+        // A current mirror must not trigger another transfer.
+        bridge.materializeHostPrimaryVariables(timeIndex, downloaded);
+        BOOST_CHECK_EQUAL(bridge.transferCounters().primaryVariableDownloads, downloadsBefore + 1);
+    }
+}
+
 static void runProductionDispatcherTest(const std::string& deckPath)
 {
     using ProductionTypeTag = Opm::Properties::TTag::FlowGasWaterEnergyProblem;
@@ -670,12 +755,12 @@ static void runProductionDispatcherTest(const std::string& deckPath)
     initSimulatorOnce();
 
     const auto filenameArg = std::string{"--ecl-deck-file-name="} + deckPath;
-    const char* argv[] = {
+    auto arguments = std::array{
         "test_gpu_blackoil_dispatcher",
         filenameArg.c_str(),
     };
-    Opm::setupParameters_<ProductionTypeTag>(sizeof(argv) / sizeof(argv[0]),
-                                              argv,
+    Opm::setupParameters_<ProductionTypeTag>(static_cast<int>(arguments.size()),
+                                              arguments.data(),
                                               /*registerParams=*/false,
                                               /*allowUnused=*/true,
                                               /*handleHelp=*/false,
@@ -695,7 +780,7 @@ static void runProductionDispatcherTest(const std::string& deckPath)
     std::vector<IntensiveQuantities*> intensiveQuantities(numCells);
     std::vector<double> mobilityBefore(numCells * 2u);
     std::vector<double> waterDensityBefore(numCells);
-    constexpr unsigned activePhases[] = {FluidSystem::waterPhaseIdx,
+    constexpr auto activePhases = std::array{FluidSystem::waterPhaseIdx,
                                          FluidSystem::gasPhaseIdx};
     for (std::size_t i = 0; i < numCells; ++i) {
         primaryVariables[i] = &solution[i];
@@ -709,30 +794,23 @@ static void runProductionDispatcherTest(const std::string& deckPath)
         }
         waterDensityBefore[i]
             = asDouble(intensiveQuantities[i]->fluidState().density(FluidSystem::waterPhaseIdx));
-
-        // Ensure the density assertion below proves that the dispatcher
-        // writes the GPU result instead of merely leaving the cache alone.
-        intensiveQuantities[i]->fluidState().setDensity(FluidSystem::waterPhaseIdx, -1.0);
     }
 
     Opm::gpuistl::GpuBlackoilIntensiveQuantitiesDispatcher<ProductionTypeTag> dispatcher;
     dispatcher.update(problem, solution, /*timeIdx=*/0);
     BOOST_CHECK(dispatcher.bridge().hasIntensiveQuantities(/*timeIdx=*/0));
-    dispatcher.materializeHostIntensiveQuantities(
-        /*timeIdx=*/0, intensiveQuantities.data(), numCells);
-
-    for (std::size_t i = 0; i < numCells; ++i) {
-        for (unsigned phaseOffset = 0; phaseOffset < 2u; ++phaseOffset) {
-            BOOST_CHECK_CLOSE(mobilityBefore[2u * i + phaseOffset],
-                              asDouble(intensiveQuantities[i]->mobility(
-                                  activePhases[phaseOffset])),
-                              1e-6);
+    // Repeat the download to exercise reuse of the pinned staging regions.
+    for (auto pass = 0; pass < 2; ++pass) {
+        // Prove that each download overwrites every host cache entry.
+        for (auto* quantities : intensiveQuantities) {
+            quantities->fluidState().setDensity(FluidSystem::waterPhaseIdx, -1.0);
         }
-        BOOST_CHECK_CLOSE(waterDensityBefore[i],
-                          asDouble(intensiveQuantities[i]->fluidState().density(
-                              FluidSystem::waterPhaseIdx)),
-                          1e-6);
+        dispatcher.materializeHostIntensiveQuantities(
+            /*timeIdx=*/0, intensiveQuantities.data(), numCells);
+
+        checkProductionDownloads(dispatcher, intensiveQuantities, mobilityBefore, waterDensityBefore);
     }
+    checkProductionPrimaryDownloads(dispatcher, solution);
 }
 
 /// Variant of \c runIntensiveQuantitiesTestForDeck that takes the per-cell
@@ -1044,6 +1122,18 @@ BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherContract)
     {
         std::ofstream f(tempFile.path);
         f << deckString1;
+    }
+    runProductionDispatcherTest(tempFile.path.string());
+}
+
+BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherChunkedDownload)
+{
+    // More than two property and primary-variable chunks, with a partial
+    // final chunk and depth-dependent values to detect misplaced data.
+    const TemporaryFile tempFile("test_blackoil_dispatcher_chunked.DATA");
+    {
+        auto file = std::ofstream(tempFile.path);
+        file << makeDeckString(53, 53, 53);
     }
     runProductionDispatcherTest(tempFile.path.string());
 }

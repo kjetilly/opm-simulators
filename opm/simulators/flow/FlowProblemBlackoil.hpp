@@ -642,6 +642,15 @@ public:
                     if (source_hrate) {
                         rate[Indices::contiEnergyEqIdx] += source_hrate.value() / this->model().dofTotalVolume(globalDofIdx);
                     } else {
+                        const auto massRate = static_cast<Scalar>(
+                            source.rate(ijk, sourceComp) / this->model().dofTotalVolume(globalDofIdx));
+                        // A shut-in source contributes no advective energy.
+                        // Avoid materializing its GPU properties just to
+                        // multiply the enthalpy by zero. Explicit heat rates
+                        // above remain independent of the mass rate.
+                        if (massRate == 0.0) {
+                            continue;
+                        }
                         const auto& intQuants = [&]() -> const auto& {
                             const auto& model = this->simulator().model();
                             if constexpr (requires { model.intensiveQuantitiesForSource(globalDofIdx, /*timeIdx=*/0); }) {
@@ -658,9 +667,8 @@ public:
                             fs.setTemperature(temperature);
                         }
                         const auto& h = FluidSystem::enthalpy(fs, phaseIdx, pvtRegionIdx);
-                        Scalar mass_rate = source.rate(ijk, sourceComp)/ this->model().dofTotalVolume(globalDofIdx);
-                        Scalar energy_rate = getValue(h)*mass_rate;
-                        rate[Indices::contiEnergyEqIdx] += energy_rate;
+                        const auto energyRate = static_cast<Scalar>(getValue(h)*massRate);
+                        rate[Indices::contiEnergyEqIdx] += energyRate;
                     }
                 }
             }

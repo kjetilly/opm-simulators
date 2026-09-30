@@ -299,15 +299,20 @@ public:
             initFirstIteration_();
         }
 
+        const auto useAssemblyLinearsolveBridge = useGpuLinearSystem_();
         // Called here because it is no longer called from linearize_().
         if (problem_().iterationContext().inLocalSolve()) {
             resetSystem_(domain);
         }
         else {
-            resetSystem_();
+            // The resident solver consumes the device matrix, and assembly
+            // overwrites the complete host residual before any CPU consumer.
+            // Other auxiliary modules still require a cleared host matrix;
+            // the well module is empty on this bridge path.
+            resetSystem_(!useAssemblyLinearsolveBridge || hasHostAuxiliaryContributions_());
         }
 
-        linearize_(domain);
+        linearize_(domain, useAssemblyLinearsolveBridge);
     }
 
     void finalize()
@@ -647,11 +652,12 @@ private:
     }
 
     // reset the global linear system of equations.
-    void resetSystem_()
+    void resetSystem_(bool clearHost = true)
     {
-        residual_ = 0.0;
-        // zero all matrix entries
-        jacobian_->clear();
+        if (clearHost) {
+            residual_ = 0.0;
+            jacobian_->clear();
+        }
 
 #if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
         gpuJacobian_->setToZero();
@@ -884,22 +890,39 @@ public:
     }
 
 private:
+    bool hasHostAuxiliaryContributions_() const
+    {
+#if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
+        if constexpr (getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
+            for (auto module = 0u; module < model_().numAuxiliaryModules(); ++module) {
+                if (model_().auxiliaryModule(module) != &problem_().wellModel()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+#endif
+        return true;
+    }
+
+    bool useGpuLinearSystem_() const
+    {
+#if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
+        if constexpr (getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
+            const auto globalWells = simulator_().gridView().comm().sum(
+                problem_().wellModel().numLocalWellsEnd());
+            return Parameters::linearSolverAcceleratorTypeFromCLI()
+                       == Parameters::LinearSolverAcceleratorType::GPU
+                && globalWells == 0;
+        }
+#endif
+        return false;
+    }
+
     template <class SubDomainType>
-    void linearize_(const SubDomainType& domain)
+    void linearize_(const SubDomainType& domain, bool useAssemblyLinearsolveBridge)
     {
         constexpr bool run_assembly_on_gpu = getPropValue<TypeTag, Properties::RunAssemblyOnGpu>();
-        const bool useAssemblyLinearsolveBridge = [&] {
-#if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
-            if constexpr (run_assembly_on_gpu) {
-                const auto globalWells = simulator_().gridView().comm().sum(
-                    problem_().wellModel().numLocalWellsEnd());
-                return Parameters::linearSolverAcceleratorTypeFromCLI()
-                           == Parameters::LinearSolverAcceleratorType::GPU
-                    && globalWells == 0;
-            }
-#endif
-            return false;
-        }();
 
         // This check should be removed once this is addressed by
         // for example storing the previous timesteps' values for

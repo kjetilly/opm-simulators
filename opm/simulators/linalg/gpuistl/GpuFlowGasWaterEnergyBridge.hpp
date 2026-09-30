@@ -34,10 +34,12 @@
 #include <opm/simulators/linalg/gpuistl/PinnedMemoryHolder.hpp>
 #endif
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <type_traits>
@@ -127,6 +129,8 @@ public:
 
     GpuFlowGasWaterEnergyBridge(const GpuFlowGasWaterEnergyBridge&) = delete;
     GpuFlowGasWaterEnergyBridge& operator=(const GpuFlowGasWaterEnergyBridge&) = delete;
+    GpuFlowGasWaterEnergyBridge(GpuFlowGasWaterEnergyBridge&&) = delete;
+    GpuFlowGasWaterEnergyBridge& operator=(GpuFlowGasWaterEnergyBridge&&) = delete;
 
     ~GpuFlowGasWaterEnergyBridge()
     {
@@ -220,11 +224,25 @@ public:
             return;
         }
         auto& mirror = hostPrimaryVariables_[timeIdx];
+        // The persistent import mirror is pinned in both directions. Publish
+        // one completed chunk while the next is downloaded into disjoint cells.
+        constexpr auto chunkCapacity = std::size_t{64 * 1024};
+        const auto chunkSize = std::min(numDof_, chunkCapacity);
         copyDeviceToHost_(mirror.data(), primaryVariablesBuffer_[timeIdx]->data(),
-                          numDof_ * sizeof(DevicePrimaryVariables));
-        synchronizeStream_();
-        for (std::size_t i = 0; i < numDof_; ++i) {
-            destination[i] = HostPrimaryVariables(mirror[i]);
+                          chunkSize * sizeof(DevicePrimaryVariables));
+        for (auto offset = std::size_t{0}; offset < numDof_; offset += chunkSize) {
+            synchronizeStream_();
+            const auto count = std::min(chunkSize, numDof_ - offset);
+            const auto nextOffset = offset + count;
+            if (nextOffset < numDof_) {
+                const auto nextCount = std::min(chunkSize, numDof_ - nextOffset);
+                copyDeviceToHost_(mirror.data() + nextOffset,
+                                  primaryVariablesBuffer_[timeIdx]->data() + nextOffset,
+                                  nextCount * sizeof(DevicePrimaryVariables));
+            }
+            for (auto i = std::size_t{0}; i < count; ++i) {
+                destination[offset + i] = HostPrimaryVariables(mirror[offset + i]);
+            }
         }
         hostPrimaryGeneration_[timeIdx] = primaryGeneration_[timeIdx];
         ++counters_.primaryVariableDownloads;
@@ -412,12 +430,9 @@ public:
         return {compactConvergenceBuffer_->data(), compactConvergenceBuffer_->size()};
     }
 
-    std::vector<Scalar> downloadCompactConvergence()
+    [[nodiscard]] std::span<const Scalar> downloadCompactConvergence()
     {
-        std::vector<Scalar> result(compactConvergenceBuffer_->size());
-        copyDeviceToHost_(result.data(), compactConvergenceBuffer_->data(),
-                          result.size() * sizeof(Scalar));
-        synchronizeStream_();
+        const auto result = downloadCompactBuffer_(*compactConvergenceBuffer_);
         ++counters_.compactConvergenceDownloads;
         counters_.compactConvergenceDownloadBytes += result.size() * sizeof(Scalar);
         return result;
@@ -430,12 +445,9 @@ public:
         return {relativeChangeBuffer_->data(), relativeChangeBuffer_->size()};
     }
 
-    std::vector<Scalar> downloadRelativeChange()
+    [[nodiscard]] std::span<const Scalar> downloadRelativeChange()
     {
-        std::vector<Scalar> result(relativeChangeBuffer_->size());
-        copyDeviceToHost_(result.data(), relativeChangeBuffer_->data(),
-                          result.size() * sizeof(Scalar));
-        synchronizeStream_();
+        const auto result = downloadCompactBuffer_(*relativeChangeBuffer_);
         ++counters_.relativeChangeDownloads;
         counters_.relativeChangeDownloadBytes += result.size() * sizeof(Scalar);
         return result;
@@ -552,28 +564,49 @@ public:
             }
         }
 
-        if (hostIntensiveQuantities_.size() != numDof_) {
+        // Two bounded staging regions let the CPU publish one chunk while
+        // the next is downloaded. Keep the staging footprint independent of
+        // the grid size (a full IQ slot can occupy several gigabytes).
+        constexpr auto chunkCapacity = std::size_t{16 * 1024};
+        const auto chunkSize = std::min(numDof_, chunkCapacity);
+        const auto stagingSize = std::min(numDof_, 2 * chunkSize);
+        if (hostIntensiveQuantities_.size() != stagingSize) {
             // Unregister before resize can release the previous allocation.
             pinnedHostIntensiveQuantities_.reset();
-            hostIntensiveQuantities_.resize(numDof_, *prototype_);
+            hostIntensiveQuantities_.resize(stagingSize, *prototype_);
         }
         if (!pinnedHostIntensiveQuantities_) {
             pinnedHostIntensiveQuantities_ =
                 std::make_unique<gpuistl::PinnedMemoryHolder<DeviceIntensiveQuantities>>(
-                    hostIntensiveQuantities_.data(), numDof_);
+                    hostIntensiveQuantities_.data(), stagingSize);
         }
-        // Property writes and this download use the same stream. Wait once at
-        // the CPU consumption boundary, without an intermediate event wait or
-        // a pageable staging copy inside the runtime.
+        // Property writes and downloads use the same stream. Synchronize a
+        // chunk before reading it, then enqueue the next into the other region
+        // before overlaying the completed chunk. A region is reused only after
+        // its previous overlay has finished; no transfer outlives this call.
         copyDeviceToHost_(hostIntensiveQuantities_.data(),
                           intensiveQuantitiesBuffer_[timeIdx]->data(),
-                          numDof_ * sizeof(DeviceIntensiveQuantities));
-        synchronizeStream_();
+                          chunkSize * sizeof(DeviceIntensiveQuantities));
+        auto stagingOffset = std::size_t{0};
+        for (auto offset = std::size_t{0}; offset < numDof_; offset += chunkSize) {
+            synchronizeStream_();
+            const auto count = std::min(chunkSize, numDof_ - offset);
+            const auto nextOffset = offset + count;
+            const auto nextStagingOffset = stagingOffset == 0 ? chunkSize : 0;
+            if (nextOffset < numDof_) {
+                const auto nextCount = std::min(chunkSize, numDof_ - nextOffset);
+                copyDeviceToHost_(hostIntensiveQuantities_.data() + nextStagingOffset,
+                                  intensiveQuantitiesBuffer_[timeIdx]->data() + nextOffset,
+                                  nextCount * sizeof(DeviceIntensiveQuantities));
+            }
+            for (auto i = std::size_t{0}; i < count; ++i) {
+                destination[offset + i]->overlayBlackOilFieldsFrom(
+                    hostIntensiveQuantities_[stagingOffset + i]);
+            }
+            stagingOffset = nextStagingOffset;
+        }
         ++counters_.intensiveQuantityDownloads;
         counters_.intensiveQuantityDownloadBytes += numDof_ * sizeof(DeviceIntensiveQuantities);
-        for (std::size_t i = 0; i < numDof_; ++i) {
-            destination[i]->overlayBlackOilFieldsFrom(hostIntensiveQuantities_[i]);
-        }
     }
 
     /*!
@@ -651,6 +684,9 @@ private:
         std::vector<DeviceIntensiveQuantities> initialIq(numDof_, *prototype_);
         for (unsigned timeIdx = 0; timeIdx < numTimeSlots; ++timeIdx) {
             hostPrimaryVariables_[timeIdx].resize(numDof_);
+            pinnedHostPrimaryVariables_[timeIdx] =
+                std::make_unique<gpuistl::PinnedMemoryHolder<DevicePrimaryVariables>>(
+                    hostPrimaryVariables_[timeIdx].data(), numDof_);
             primaryVariablesBuffer_[timeIdx] =
                 std::make_unique<gpuistl::GpuBuffer<DevicePrimaryVariables>>(numDof_);
             intensiveQuantitiesBuffer_[timeIdx] =
@@ -754,6 +790,21 @@ private:
         }
     }
 
+    // The returned view is valid until the next compact download or reset.
+    // All consumers finish their CPU reductions before requesting another.
+    [[nodiscard]] std::span<const Scalar> downloadCompactBuffer_(const gpuistl::GpuBuffer<Scalar>& buffer)
+    {
+        if (!pinnedHostCompactValues_) {
+            hostCompactValues_.resize(std::max(compactConvergenceBuffer_->size(),
+                                               relativeChangeBuffer_->size()));
+            pinnedHostCompactValues_ = std::make_unique<gpuistl::PinnedMemoryHolder<Scalar>>(
+                hostCompactValues_.data(), hostCompactValues_.size());
+        }
+        copyDeviceToHost_(hostCompactValues_.data(), buffer.data(), buffer.size() * sizeof(Scalar));
+        synchronizeStream_();
+        return {hostCompactValues_.data(), buffer.size()};
+    }
+
     void importSlot_(const SolutionVector& solution, unsigned timeIdx)
     {
         if (solution.size() != numDof_) {
@@ -853,6 +904,7 @@ private:
         for (unsigned timeIdx = 0; timeIdx < numTimeSlots; ++timeIdx) {
             primaryVariablesBuffer_[timeIdx].reset();
             intensiveQuantitiesBuffer_[timeIdx].reset();
+            pinnedHostPrimaryVariables_[timeIdx].reset();
             hostPrimaryVariables_[timeIdx].clear();
             deviceIqValid_[timeIdx] = false;
             primaryGeneration_[timeIdx] = hostPrimaryGeneration_[timeIdx] = iqGeneration_[timeIdx] = 0;
@@ -871,6 +923,8 @@ private:
         fluidSystemBuffer_.reset();
         pinnedHostIntensiveQuantities_.reset();
         hostIntensiveQuantities_.clear();
+        pinnedHostCompactValues_.reset();
+        hostCompactValues_.clear();
         prototype_.reset();
         lastWriterTimeIdx_ = invalidTimeIdx;
         numDof_ = 0;
@@ -904,10 +958,14 @@ private:
     std::array<std::unique_ptr<gpuistl::GpuBuffer<DeviceIntensiveQuantities>>, numTimeSlots>
         intensiveQuantitiesBuffer_{};
     std::array<std::vector<DevicePrimaryVariables>, numTimeSlots> hostPrimaryVariables_{};
+    std::array<std::unique_ptr<gpuistl::PinnedMemoryHolder<DevicePrimaryVariables>>, numTimeSlots>
+        pinnedHostPrimaryVariables_{};
     std::vector<DeviceIntensiveQuantities> hostIntensiveQuantities_{};
     // Declared after the vector so registration is released before its storage.
     std::unique_ptr<gpuistl::PinnedMemoryHolder<DeviceIntensiveQuantities>>
         pinnedHostIntensiveQuantities_;
+    std::vector<Scalar> hostCompactValues_;
+    std::unique_ptr<gpuistl::PinnedMemoryHolder<Scalar>> pinnedHostCompactValues_;
     std::optional<DeviceIntensiveQuantities> prototype_;
     std::unique_ptr<gpuistl::GpuBuffer<Scalar>> volumesBuffer_;
     std::unique_ptr<FluidSystemBuffer> fluidSystemBuffer_;

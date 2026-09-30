@@ -29,6 +29,7 @@
 
 #include <cstddef>
 #include <memory>
+#include <span>
 #include <vector>
 
 namespace Opm::Properties::TTag {
@@ -108,6 +109,9 @@ public:
     GpuBlackoilIntensiveQuantitiesDispatcher(const GpuBlackoilIntensiveQuantitiesDispatcher&) = delete;
     GpuBlackoilIntensiveQuantitiesDispatcher&
     operator=(const GpuBlackoilIntensiveQuantitiesDispatcher&) = delete;
+    GpuBlackoilIntensiveQuantitiesDispatcher(GpuBlackoilIntensiveQuantitiesDispatcher&&) = delete;
+    GpuBlackoilIntensiveQuantitiesDispatcher&
+    operator=(GpuBlackoilIntensiveQuantitiesDispatcher&&) = delete;
 
     /// Run the per-cell intensive-quantities update kernel on the complete
     /// CPU solution. The primary-variable transfer and kernel are ordered on
@@ -122,9 +126,10 @@ public:
                                Scalar relaxation, bool useSOR, bool stabilize,
                                bool validate);
     bool hasBridge() const;
-    std::vector<Scalar> compactConvergenceFactors();
-    std::vector<Scalar> compactRelativeChange();
-    std::vector<Scalar> compactRockCompactionState();
+    /// Views into reusable pinned storage, valid until the next compact query.
+    [[nodiscard]] std::span<const Scalar> compactConvergenceFactors();
+    [[nodiscard]] std::span<const Scalar> compactRelativeChange();
+    [[nodiscard]] std::span<const Scalar> compactRockCompactionState();
     void reportTransferCounters() const;
 
     /// Explicit CPU-boundary materialization for legacy CPU consumers.

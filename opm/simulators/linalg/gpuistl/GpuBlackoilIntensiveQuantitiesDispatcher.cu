@@ -381,7 +381,7 @@ bool GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::hasBridge() const
 }
 
 template <class CpuTypeTag>
-std::vector<typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
+std::span<const typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
 GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::compactConvergenceFactors()
 {
     using DeviceTypeTag = typename Bridge::DeviceTypeTagPublic;
@@ -396,7 +396,7 @@ GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::compactConvergenceFactors(
 }
 
 template <class CpuTypeTag>
-std::vector<typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
+std::span<const typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
 GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::compactRelativeChange()
 {
     using DeviceTypeTag = typename Bridge::DeviceTypeTagPublic;
@@ -412,7 +412,7 @@ GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::compactRelativeChange()
 }
 
 template <class CpuTypeTag>
-std::vector<typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
+std::span<const typename GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::Scalar>
 GpuBlackoilIntensiveQuantitiesDispatcher<CpuTypeTag>::compactRockCompactionState()
 {
     using DeviceTypeTag = typename Bridge::DeviceTypeTagPublic;
