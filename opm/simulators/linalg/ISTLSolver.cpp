@@ -31,7 +31,9 @@
 #include <opm/simulators/linalg/ParallelIstlInformation.hpp>
 #include <opm/simulators/utils/ParallelCommunication.hpp>
 
-#include <fmt/format.h>
+#include <opm/common/OpmLog/OpmLog.hpp>
+
+#include <format>
 
 #if COMPILE_GPU_BRIDGE
 #include <opm/simulators/linalg/gpubridge/GpuBridge.hpp>
@@ -83,28 +85,18 @@ void FlexibleSolverInfo<Matrix,Vector,Comm>::create(const Matrix& matrix,
                                                     const bool forceSerial,
                                                     [[maybe_unused]] Comm* comm)
 {
-    // Write sizes of linear systems on all ranks to debug log.
+    // Solver setup can be local: CPU and GPU ranks need not rebuild together.
+    // In particular, gathering these messages would introduce a collective
+    // that the GPU solver does not enter.
     if (!forceSerial) {
 #if HAVE_MPI
-        auto basic_comm = comm->communicator();
+        const auto rank = comm->communicator().rank();
 #else
-        auto basic_comm = Dune::Communication<Dune::No_Comm>{};
-#endif // HAVE_MPI
-        std::ostringstream os;
-        os << "Linear system ";
-        if (basic_comm.size() > 1) {
-            os << fmt::format("on MPI rank: {} ", basic_comm.rank());
-        }
-        // The static_cast of Matrix::block_type::rows is needed for fmt version 10.
-        // TODO: Check if the cast is still needed in future versions.
-        os << fmt::format("blocksize: {} size: {:7d} block nonzeroes: {:9d}",
-                          static_cast<int>(Matrix::block_type::rows), matrix.N(), matrix.nonzeroes());
-        DeferredLogger local_logger;
-        local_logger.debug(os.str());
-        auto global_logger = gatherDeferredLogger(local_logger, basic_comm);
-        if (basic_comm.rank() == 0) {
-            global_logger.logMessages();
-        }
+        constexpr auto rank = 0;
+#endif
+        OpmLog::debug(std::format("Linear system on MPI rank: {} blocksize: {} "
+                                  "size: {:7d} block nonzeroes: {:9d}",
+                                  rank, Matrix::block_type::rows, matrix.N(), matrix.nonzeroes()));
     }
 
     // Delete the operator and solver here to avoid

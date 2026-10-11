@@ -290,15 +290,8 @@ public:
             }
 #endif
             OPM_BEGIN_PARALLEL_TRY_CATCH();
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-            for (const auto& chunk : element_chunks_) {
-                ElementContext elemCtx(this->simulator_);
-                for (const auto& elem : chunk) {
-                    elemCtx.updatePrimaryStencil(elem);
-                    elemCtx.updatePrimaryIntensiveQuantities(timeIdx);
-                }
+            if (!updateIntensiveQuantitiesOnGpu_(timeIdx)) {
+                updateIntensiveQuantitiesOnCpu_(timeIdx);
             }
             OPM_END_PARALLEL_TRY_CATCH("invalidateAndUpdateIntensiveQuantities: state error",
                                        this->simulator_.vanguard().grid().comm());
@@ -409,7 +402,7 @@ public:
 
         assert(timeIdx < this->cachedIntensiveQuantityHistorySize());
         const auto* intquant = this->cachedIntensiveQuantities(globalIdx, timeIdx);
-        if (!intquant) {
+        if (intquant == nullptr) {
             OPM_THROW(std::logic_error, "Intensive quantites need to be updated in code");
         }
         return *intquant;
@@ -701,6 +694,42 @@ protected:
         intquant.template update<Args...>(this->simulator_.problem(), this->solution(timeIdx)[globalIdx], globalIdx, timeIdx);
         // Set the up-to-date flag.
         this->intensiveQuantityCacheUpToDate_[timeIdx][globalIdx] = 1;
+    }
+
+    void updateIntensiveQuantitiesOnCpu_(const unsigned timeIdx) const
+    {
+#ifdef _OPENMP
+#pragma omp parallel for
+#endif
+        for (const auto& chunk : element_chunks_) {
+            ElementContext elemCtx(this->simulator_);
+            for (const auto& elem : chunk) {
+                elemCtx.updatePrimaryStencil(elem);
+                elemCtx.updatePrimaryIntensiveQuantities(timeIdx);
+            }
+        }
+    }
+
+    [[nodiscard]] bool updateIntensiveQuantitiesOnGpu_([[maybe_unused]] const unsigned timeIdx) const
+    {
+#if HAVE_CUDA
+        if constexpr (gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value) {
+            if (useGpuIntensiveQuantitiesDispatcher_) {
+                if constexpr (getPropValue<TypeTag, Properties::EnableDiffusion>()
+                    || getPropValue<TypeTag, Properties::EnableDispersion>()) {
+                    OPM_THROW(std::logic_error,
+                              "GPU intensive quantities dispatcher does not support diffusion or dispersion");
+                }
+                runGpuIntensiveQuantitiesDispatcher_(timeIdx);
+                const auto numCells = this->intensiveQuantityCache_[timeIdx].size();
+                for (auto cell = std::size_t{0}; cell < numCells; ++cell) {
+                    this->setIntensiveQuantitiesCacheEntryValidity(cell, timeIdx, true);
+                }
+                return true;
+            }
+        }
+#endif
+        return false;
     }
 
     ElementChunks<GridView, Dune::Partitions::All> element_chunks_;

@@ -38,6 +38,7 @@ namespace Opm
 template<typename Scalar, typename IndexTraits> class BlackoilWellModelGeneric;
 class DeferredLogger;
 class Group;
+class Schedule;
 template<typename Scalar, typename IndexTraits> class WellState;
 class WellTestState;
 

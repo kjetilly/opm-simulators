@@ -71,6 +71,7 @@
 
 #include <opm/common/OpmLog/OpmLog.hpp>
 
+#include <algorithm>
 #include <format>
 #include <optional>
 #include <type_traits>
@@ -186,15 +187,17 @@ __global__ void
 dispatcherUpdateAllCellsKernel(GpuProblem problem,
                                Opm::gpuistl::GpuView<const PrimaryVariablesT> primaryVariables,
                                Opm::gpuistl::GpuView<IntensiveQuantitiesT> outIntensiveQuantities,
-                               std::size_t numCells)
+                               std::size_t numCells,
+                               std::size_t firstCell)
 {
     const std::size_t i = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (i >= numCells) {
         return;
     }
     IntensiveQuantitiesT& iq = outIntensiveQuantities[i];
-    iq.update(problem, primaryVariables[i], static_cast<unsigned>(i), 0);
-    iq.updateEnergyQuantities_(problem, static_cast<unsigned>(i), 0u);
+    const auto cell = static_cast<unsigned>(firstCell + i);
+    iq.update(problem, primaryVariables[i], cell, 0);
+    iq.updateEnergyQuantities_(problem, cell, 0u);
 }
 
 template <class DeviceTypeTag, class IntensiveQuantitiesT>

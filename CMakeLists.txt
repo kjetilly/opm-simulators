@@ -543,6 +543,26 @@ macro(opm-simulators_tests_hook)
       endif()
     endforeach()
 
+    if(TARGET test_blackoilintensivequantities_gpu)
+      add_test(NAME GpuPropertyBatches
+        COMMAND $<TARGET_FILE:test_blackoilintensivequantities_gpu>
+                --run_test=TestProductionGpuDispatcherContract,TestProductionGpuDispatcherBatchBoundaries)
+      set_tests_properties(GpuPropertyBatches PROPERTIES LABELS ${gpu_label} TIMEOUT 60)
+      add_test(NAME GpuSolutionPinLifetime
+        COMMAND $<TARGET_FILE:test_blackoilintensivequantities_gpu>
+                --run_test=TestGpuSolverReleasesSolutionRegistration)
+      set_tests_properties(GpuSolutionPinLifetime PROPERTIES LABELS ${gpu_label} TIMEOUT 60)
+    endif()
+
+    if(MPI_FOUND AND TARGET test_GpuOwnerOverlapCopy)
+      add_test(NAME GpuOwnerOverlapCopyMixed
+        COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2 ${MPIEXEC_PREFLAGS}
+                $<TARGET_FILE:test_GpuOwnerOverlapCopy> ${MPIEXEC_POSTFLAGS}
+                --run_test=TestMixedCpuGpuCommunication)
+      set_tests_properties(GpuOwnerOverlapCopyMixed PROPERTIES
+        LABELS ${gpu_label} PROCESSORS 2 TIMEOUT 60)
+    endif()
+
     if(HYPRE_USING_CUDA OR HYPRE_USING_HIP)
       target_link_libraries(test_HypreInterfaceGPU PRIVATE HYPRE::HYPRE)
       target_link_libraries(test_HyprePreconditionerGPU PRIVATE HYPRE::HYPRE)
@@ -856,6 +876,18 @@ macro(opm-simulators_targets_hook)
       SOURCES
         flow/flow_gpu_main.cpp
         ${FLOW_GPU_TGTS}
+        $<TARGET_OBJECTS:moduleVersion>
+      LIBRARIES
+        opmsimulators
+    )
+
+    # CPU companion for an MPMD run with flow_gpu. Use the host compiler so
+    # --threads-per-process also parallelizes property evaluation and assembly.
+    opm_add_executable(
+      TARGET
+        flow_gpu_cpu
+      SOURCES
+        flow/flow_gpu_cpu.cpp
         $<TARGET_OBJECTS:moduleVersion>
       LIBRARIES
         opmsimulators

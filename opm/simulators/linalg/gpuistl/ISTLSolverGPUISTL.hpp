@@ -320,12 +320,11 @@ public:
                       "m_gpuFlexibleSolver not initialized, prepare(matrix, rhs); needs to be called");
         }
 
+        // The caller owns x and can destroy it after each Newton iteration.
+        // Do not retain a registration after that storage can be recycled.
+        const auto pinnedSolutionMemory = PinnedMemoryHolder<real_type>(&x[0][0], x.dim());
         if (!m_x) {
             m_x = std::make_unique<GPUVector>(x);
-            m_pinnedXMemory = std::make_unique<PinnedMemoryHolder<real_type>>(
-                const_cast<real_type*>(&x[0][0]),
-                x.dim()
-            );
         } else {
             // copy from host to device using main stream and asynchronous transfer
             m_x->copyFromHostAsync(x);
@@ -583,7 +582,6 @@ private:
 
     std::unique_ptr<PinnedMemoryHolder<real_type>> m_pinnedMatrixMemory;
     std::unique_ptr<PinnedMemoryHolder<real_type>> m_pinnedRhsMemory;
-    std::unique_ptr<PinnedMemoryHolder<real_type>> m_pinnedXMemory;
     std::unique_ptr<PinnedMemoryHolder<real_type>> m_pinnedWeightsMemory;
 
     Vector m_cpuWeights;

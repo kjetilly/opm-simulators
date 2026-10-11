@@ -15,6 +15,7 @@
 */
 #include <config.h>
 
+
 // Tricks for older versions of ROCm that do not support alugrid
 // or dune fem. Note that these changes are only valid for this test file.
 #ifdef HAVE_DUNE_ALUGRID
@@ -97,6 +98,7 @@
 #include <string>
 #include <string_view>
 #include <sstream>
+#include <set>
 #include <type_traits>
 #include <vector>
 
@@ -706,6 +708,7 @@ static void runProductionDispatcherTest(const std::string& deckPath)
     std::vector<IntensiveQuantities*> intensiveQuantities(numCells);
     std::vector<double> mobilityBefore(numCells * 2u);
     std::vector<double> waterDensityBefore(numCells);
+    auto porosityBefore = std::vector<double>(numCells);
     constexpr unsigned activePhases[] = {FluidSystem::waterPhaseIdx,
                                          FluidSystem::gasPhaseIdx};
     for (std::size_t i = 0; i < numCells; ++i) {
@@ -718,6 +721,7 @@ static void runProductionDispatcherTest(const std::string& deckPath)
             mobilityBefore[2u * i + phaseOffset]
                 = asDouble(intensiveQuantities[i]->mobility(activePhases[phaseOffset]));
         }
+        porosityBefore[i] = asDouble(intensiveQuantities[i]->porosity());
         waterDensityBefore[i]
             = asDouble(intensiveQuantities[i]->fluidState().density(FluidSystem::waterPhaseIdx));
 
@@ -739,6 +743,7 @@ static void runProductionDispatcherTest(const std::string& deckPath)
                                   activePhases[phaseOffset])),
                               1e-6);
         }
+        BOOST_CHECK_CLOSE(porosityBefore[i], asDouble(intensiveQuantities[i]->porosity()), 1e-6);
         BOOST_CHECK_CLOSE(waterDensityBefore[i],
                           asDouble(intensiveQuantities[i]->fluidState().density(
                               FluidSystem::waterPhaseIdx)),
@@ -1055,6 +1060,91 @@ BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherContract)
         f << deckString1;
     }
     runProductionDispatcherTest(tempFile.path.string());
+}
+
+BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherBatchBoundaries)
+{
+    // Cross the 65,536-cell batch boundary and retain a partial final batch.
+    // Spatially varying porosity detects using batch-local property indices.
+    const auto tempFile = TemporaryFile("test_blackoil_dispatcher_batches.DATA");
+    auto deck = makeDeckString(41, 41, 41);
+    const auto properties = deck.find("PROPS\n");
+    BOOST_REQUIRE(properties != std::string::npos);
+    deck.insert(properties, "MULTIPLY\nPORO 0.5 1 20 1 41 1 41 /\n/\n");
+    {
+        auto output = std::ofstream(tempFile.path);
+        output << deck;
+    }
+    runProductionDispatcherTest(tempFile.path.string());
+}
+
+template <class MatrixAdapter>
+static auto makePinLifetimeMatrix(const unsigned cells)
+{
+    auto matrix = std::make_unique<MatrixAdapter>(cells, cells);
+    auto pattern = std::vector<std::set<int>>(cells);
+    for (auto cell = 0u; cell < cells; ++cell) {
+        const auto firstNeighbor = cell == 0 ? 0 : cell - 1;
+        const auto lastNeighbor = std::min(cells, cell + 2);
+        for (auto neighbor = firstNeighbor; neighbor < lastNeighbor; ++neighbor) {
+            pattern[cell].insert(static_cast<int>(neighbor));
+        }
+    }
+    matrix->reserve(pattern);
+    matrix->clear();
+    for (auto cell = 0u; cell < cells; ++cell) {
+        auto& row = matrix->istlMatrix()[cell];
+        for (auto column = row.begin(); column != row.end(); ++column) {
+            const auto value = column.index() == cell ? 4.0 : -1.0;
+            for (auto component = 0; component < column->N(); ++component) {
+                (*column)[component][component] = value;
+            }
+        }
+    }
+    return matrix;
+}
+
+BOOST_AUTO_TEST_CASE(TestGpuSolverReleasesSolutionRegistration)
+{
+    using TypeTag = Opm::Properties::TTag::FlowGasWaterEnergyProblem;
+    using Simulator = Opm::GetPropType<TypeTag, Opm::Properties::Simulator>;
+    using MatrixAdapter = Opm::GetPropType<TypeTag, Opm::Properties::SparseMatrixAdapter>;
+    using Vector = Opm::GetPropType<TypeTag, Opm::Properties::GlobalEqVector>;
+    const auto tempFile = TemporaryFile("test_gpu_solution_registration.DATA");
+    {
+        auto output = std::ofstream(tempFile.path);
+        output << deckString1;
+    }
+    initSimulatorOnce();
+    const auto filename = std::format("--ecl-deck-file-name={}", tempFile.path.string());
+    auto arguments = std::array{
+        "test_gpu_solution_registration", filename.c_str(),
+        "--linear-solver=dilu", "--matrix-add-well-contributions=true"};
+    Opm::setupParameters_<TypeTag>(static_cast<int>(arguments.size()), arguments.data(),
+                                   false, true, false, 0);
+    Opm::FlowGenericVanguard::readDeck(tempFile.path.string());
+    auto simulator = std::make_unique<Simulator>();
+    simulator->model().applyInitialSolution();
+    const auto cells = simulator->model().numGridDof();
+    BOOST_REQUIRE_GT(cells, 0u);
+    auto matrix = makePinLifetimeMatrix<MatrixAdapter>(cells);
+    auto rightHandSide = Vector(cells);
+    rightHandSide = 2.0;
+    rightHandSide[0] = 3.0;
+    rightHandSide[cells - 1] = 3.0;
+    auto solver = Opm::gpuistl::ISTLSolverGPUISTL<TypeTag>(*simulator);
+    for (auto iteration = 0; iteration < 3; ++iteration) {
+        auto solution = Vector(cells);
+        solution = 0.0;
+        solver.prepare(*matrix, rightHandSide);
+        BOOST_REQUIRE(solver.solve(solution));
+        BOOST_CHECK_SMALL(solution[0][0] - 1.0, 1e-12);
+        auto flags = 0u;
+        // Query before destruction: persistent pinning would still succeed here.
+        const auto registration = cudaHostGetFlags(&flags, &solution[0][0]);
+        BOOST_CHECK(registration != cudaSuccess);
+        static_cast<void>(cudaGetLastError());
+    }
 }
 
 BOOST_AUTO_TEST_CASE(TestInstantiateGpuFlowProblem)

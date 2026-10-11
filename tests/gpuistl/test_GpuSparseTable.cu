@@ -98,3 +98,31 @@ BOOST_AUTO_TEST_CASE(TestUsingSparseTableInKernel)
     BOOST_CHECK_EQUAL(hostValues[5], 6);
     BOOST_CHECK_EQUAL(hostValues[6], 6);
 }
+
+__global__ void fetchBoundaryTransmissibilitiesInKernel(
+    Opm::ThermalGasWaterFlowProblem<double, Opm::gpuistl::GpuView> problem,
+    std::array<double, 7>* output)
+{
+    for (auto face = 0u; face < 6; ++face) {
+        (*output)[face] = problem.getAlpha(1, face);
+    }
+    (*output)[6] = problem.getAlpha(3, 0);
+}
+
+BOOST_AUTO_TEST_CASE(TestPartitionBoundaryTransmissibilities)
+{
+    // Interior cells have empty rows; a partition cell can have six boundary faces.
+    using Problem = Opm::ThermalGasWaterFlowProblem<double>;
+    Problem::BoundaryTransmissibilities boundaryTransmissibilities(
+        {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}, {0, 0, 6, 6, 7});
+    auto problem = Problem(std::move(boundaryTransmissibilities), {});
+    auto buffer = Opm::gpuistl::copy_to_gpu(problem);
+    auto output = Opm::gpuistl::make_gpu_unique_ptr<std::array<double, 7>>({});
+    fetchBoundaryTransmissibilitiesInKernel<<<1, 1>>>(Opm::gpuistl::make_view(buffer), output.get());
+    const auto values = Opm::gpuistl::copyFromGPU<std::array<double, 7>>(output);
+    for (auto face = 0u; face < 6; ++face) {
+        BOOST_CHECK_EQUAL(values[face], face + 1.0);
+        BOOST_CHECK_EQUAL(values[face], problem.getAlpha(1, face));
+    }
+    BOOST_CHECK_EQUAL(values[6], 7.0);
+}

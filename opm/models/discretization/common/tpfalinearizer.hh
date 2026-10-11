@@ -1261,7 +1261,7 @@ public:
         OPM_TIMEBLOCK_LOCAL(linearizationForEachCell, Subsystem::Assembly);
 #endif
         const unsigned globI = domain.cells[ii];
-        const auto& nbInfos = neighborInfo[globI];
+        const auto& nbInfos = neighborInfo[useGPU ? ii : globI];
         VectorBlock res(0.0);
         MatrixBlock bMat(0.0);
         ADVectorBlock adres(0.0);
@@ -1402,10 +1402,10 @@ public:
             const unsigned globI = boundaryInfoElement.cell;
             const LocalIntensiveQuantities& insideIntQuants
                 = model.intensiveQuantities(globI, /*timeIdx*/ 0);
-            if constexpr (!std::is_empty_v<GetPropType<TypeTag, Properties::FluidSystem>>) {
-                LocalResidualT::computeBoundaryFlux(
-                    adres, problem, boundaryInfoElement.bcdata, insideIntQuants, globI);
-            }
+            // LocalResidualT and LocalIntensiveQuantities use the GPU fluid
+            // system even though this enclosing linearizer has the host TypeTag.
+            LocalResidualT::computeBoundaryFlux(
+                adres, problem, boundaryInfoElement.bcdata, insideIntQuants, globI);
             adres *= boundaryInfoElement.bcdata.faceArea;
             TpfaLinearizer<TypeTag>::setResAndJacobi(res, bMat, adres);
             auto* residualPtr = &(residual.data()[globI]);
