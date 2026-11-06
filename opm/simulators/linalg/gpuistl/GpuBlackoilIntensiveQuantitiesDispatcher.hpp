@@ -39,15 +39,6 @@ struct ExperimentalComputePropertiesOnGpu { static constexpr bool value = false;
 
 } // namespace Opm::Parameters
 
-namespace Opm::Parameters {
-
-// Experimental: route the per-element BlackOilIntensiveQuantities update through the
-// GPU dispatcher instead of computing it on the CPU. This currently supports
-// only the gas-water energy configuration.
-struct ExperimentalComputePropertiesOnGpu { static constexpr bool value = false; };
-
-} // namespace Opm::Parameters
-
 namespace Opm::Properties::TTag {
     struct FlowGasWaterEnergyProblem;
     struct FlowGasWaterEnergyProblemGPU;

@@ -150,7 +150,6 @@ public:
         m_x.reset();
         m_pinnedMatrixMemory.reset();
         m_pinnedRhsMemory.reset();
-        m_pinnedXMemory.reset();
         m_pinnedWeightsMemory.reset();
         m_weights.reset();
         m_diagonalIndices.reset();

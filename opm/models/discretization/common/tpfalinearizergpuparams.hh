@@ -146,7 +146,7 @@ private:
         gpuistl::GpuFlowGasWaterEnergyBridge<TypeTag, CorrectTypeTagView>;
 
     FullDomain<gpuistl::GpuBuffer<int>> domainBuffer_;
-    std::optional<SparseTable<NeighborInfoGPU, gpuistl::GpuBuffer>> neighborInfoBuffer_;
+    SparseTable<NeighborInfoGPU, gpuistl::GpuBuffer> neighborInfoBuffer_;
     // diagMatAddressView_ is non-owning: the underlying buffer lives in TpfaLinearizer.
     gpuistl::GpuView<MatrixBlockGPU*> diagMatAddressView_;
     // Non-owning: the matrix is owned by TpfaLinearizer and kept alive for
@@ -174,12 +174,17 @@ private:
 
 public:
     /*!
-     * \brief Populate the model, residual, and boundary buffers for one linearization pass.
-     * Neighbor metadata is uploaded separately in batches.
+     * \brief Construct and populate all GPU buffers needed for one linearization pass.
+        To avoid optionals we use initializerlists, although some are a bit ugly
+        with the lambdas
      *
      * \param domain                  The full domain (CPU).
+     * \param neighborInfo            CPU neighbor-info sparse table.
+     * \param gpuJacobian             Persistent GPU sparse-matrix wrapper (owned by
+     * TpfaLinearizer).
      * \param gpuBufferDiagMatAddress Persistent GPU diagonal-pointer buffer (owned by
      * TpfaLinearizer).
+     * \param cpuJacobian             CPU ISTL matrix (used to compute GPU pointer offsets).
      * \param residual                CPU residual vector (read to initialise the GPU residual
      * buffer).
      * \param boundaryInfo            CPU boundary-condition info.
@@ -189,13 +194,18 @@ public:
      * \param numCells                Number of cells in the domain.
      */
     TpfaLinearizerGpuParams(const FullDomain<>& domain,
+                            const SparseTable<NeighborInfoCPU>& neighborInfo,
+                            gpuistl::GpuSparseMatrixWrapper<Scalar>& gpuJacobian,
                             gpuistl::GpuBuffer<MatrixBlockGPU*>& gpuBufferDiagMatAddress,
+                            typename SparseMatrixAdapter::IstlMatrix& cpuJacobian,
                             GlobalEqVector& residual,
                             const std::vector<BoundaryInfoCPU>& boundaryInfo,
                             Model& model,
                             const Problem& problem,
                             unsigned int numCells)
         : domainBuffer_(copy_to_gpu(domain))
+        , neighborInfoBuffer_(
+              gpuistl::copy_to_gpu<MatrixBlockGPU>(neighborInfo, gpuJacobian, cpuJacobian))
         , diagMatAddressView_(gpuistl::make_view(gpuBufferDiagMatAddress))
         , gpuJacobian_(&gpuJacobian)
         , residualBuffer_(gpuistl::copy_to_gpu_residual<GlobalEqVector, VectorBlockGPU>(residual))
@@ -215,9 +225,6 @@ public:
             std::vector<Scalar> alpha5(numCells);
             const auto& thermalHalfTransBoundary
                 = problem.eclTransmissibilities().getThermalHalfTransBoundary();
-            // Partition boundaries can expose more than three faces of a cell.
-            // The second map index is a boundary face index, not a direction.
-            auto boundaryFaceCounts = std::vector<unsigned>(numCells, 0);
             for (const auto& [key, value] : thermalHalfTransBoundary) {
                 const unsigned cell = key.first;
                 const unsigned dir = key.second;
@@ -294,27 +301,14 @@ public:
 #endif
     }
 
-    auto domainView(const unsigned firstCell, const unsigned numCells)
+    auto domainView()
     {
-        return FullDomain<gpuistl::GpuView<int>>{
-            gpuistl::GpuView<int>(domainBuffer_.cells.data() + firstCell, numCells)};
-    }
-
-    void uploadNeighborInfo(const SparseTable<NeighborInfoCPU>& neighborInfo,
-                            gpuistl::GpuSparseMatrixWrapper<Scalar>& gpuJacobian,
-                            typename SparseMatrixAdapter::IstlMatrix& cpuJacobian,
-                            const unsigned firstCell,
-                            const unsigned numCells)
-    {
-        neighborInfoBuffer_.reset();
-        neighborInfoBuffer_.emplace(gpuistl::copy_to_gpu<MatrixBlockGPU>(
-            neighborInfo, gpuJacobian, cpuJacobian,
-            static_cast<int>(firstCell), static_cast<int>(numCells)));
+        return make_view(domainBuffer_);
     }
 
     auto neighborInfoView()
     {
-        return gpuistl::make_view(*neighborInfoBuffer_);
+        return gpuistl::make_view(neighborInfoBuffer_);
     }
 
     auto& diagMatAddressView()

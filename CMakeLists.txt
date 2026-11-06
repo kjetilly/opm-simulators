@@ -544,10 +544,10 @@ macro(opm-simulators_tests_hook)
     endforeach()
 
     if(TARGET test_blackoilintensivequantities_gpu)
-      add_test(NAME GpuPropertyBatches
+      add_test(NAME GpuPropertyTransfers
         COMMAND $<TARGET_FILE:test_blackoilintensivequantities_gpu>
-                --run_test=TestProductionGpuDispatcherContract,TestProductionGpuDispatcherBatchBoundaries)
-      set_tests_properties(GpuPropertyBatches PROPERTIES LABELS ${gpu_label} TIMEOUT 60)
+                --run_test=TestProductionGpuDispatcherContract,TestProductionGpuDispatcherLargeGrid)
+      set_tests_properties(GpuPropertyTransfers PROPERTIES LABELS ${gpu_label} TIMEOUT 60)
       add_test(NAME GpuSolutionPinLifetime
         COMMAND $<TARGET_FILE:test_blackoilintensivequantities_gpu>
                 --run_test=TestGpuSolverReleasesSolutionRegistration)

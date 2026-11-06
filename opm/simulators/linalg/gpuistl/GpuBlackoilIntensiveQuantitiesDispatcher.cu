@@ -71,7 +71,6 @@
 
 #include <opm/common/OpmLog/OpmLog.hpp>
 
-#include <algorithm>
 #include <format>
 #include <optional>
 #include <type_traits>
@@ -91,30 +90,6 @@ void validateDispatcherInputs(const ProblemT& problem, const SolutionVectorT& so
     if (solution.size() != static_cast<std::size_t>(problem.model().numGridDof())) {
         OPM_THROW(std::invalid_argument,
                   "GPU intensive-quantities dispatcher requires one entry per grid DoF");
-    }
-}
-
-template <class ProblemT, class PrimaryVariablesT, class IntensiveQuantitiesT>
-void validateDispatcherInputs(const ProblemT& problem,
-                              const PrimaryVariablesT* const* primaryVariables,
-                              IntensiveQuantitiesT* const* intensiveQuantities,
-                              std::size_t numDof)
-{
-    if (primaryVariables == nullptr || intensiveQuantities == nullptr) {
-        OPM_THROW(std::invalid_argument,
-                  "GPU intensive-quantities dispatcher received a null pointer array");
-    }
-
-    if (numDof != static_cast<std::size_t>(problem.model().numGridDof())) {
-        OPM_THROW(std::invalid_argument,
-                  "GPU intensive-quantities dispatcher requires one entry per grid DoF");
-    }
-
-    for (std::size_t i = 0; i < numDof; ++i) {
-        if (primaryVariables[i] == nullptr || intensiveQuantities[i] == nullptr) {
-            OPM_THROW(std::invalid_argument,
-                      "GPU intensive-quantities dispatcher received a null DoF entry");
-        }
     }
 }
 
@@ -148,19 +123,19 @@ void validateGpuPropertyInputs(const ProblemT& problem)
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires the gas-water two-phase approach");
     }
-    if (materialLawManager->hasOil() || !materialLawManager->hasGas()
-        || !materialLawManager->hasWater()) {
+    if (materialLawManager.hasOil() || !materialLawManager.hasGas()
+        || !materialLawManager.hasWater()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires water and gas without an active oil phase");
     }
-    if (!materialLawManager->satCurveIsAllPiecewiseLinear()) {
+    if (!materialLawManager.satCurveIsAllPiecewiseLinear()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation requires piecewise-linear saturation tables");
     }
-    if (materialLawManager->enableHysteresis()
-        || materialLawManager->enableEndPointScaling()
-        || materialLawManager->hasDirectionalRelperms()
-        || materialLawManager->hasDirectionalImbnum()) {
+    if (materialLawManager.enableHysteresis()
+        || materialLawManager.enableEndPointScaling()
+        || materialLawManager.hasDirectionalRelperms()
+        || materialLawManager.hasDirectionalImbnum()) {
         OPM_THROW(std::logic_error,
                   "GPU property evaluation does not support hysteresis, endpoint scaling, "
                   "or directional saturation functions");
@@ -187,17 +162,15 @@ __global__ void
 dispatcherUpdateAllCellsKernel(GpuProblem problem,
                                Opm::gpuistl::GpuView<const PrimaryVariablesT> primaryVariables,
                                Opm::gpuistl::GpuView<IntensiveQuantitiesT> outIntensiveQuantities,
-                               std::size_t numCells,
-                               std::size_t firstCell)
+                               std::size_t numCells)
 {
     const std::size_t i = static_cast<std::size_t>(blockIdx.x) * blockDim.x + threadIdx.x;
     if (i >= numCells) {
         return;
     }
     IntensiveQuantitiesT& iq = outIntensiveQuantities[i];
-    const auto cell = static_cast<unsigned>(firstCell + i);
-    iq.update(problem, primaryVariables[i], cell, 0);
-    iq.updateEnergyQuantities_(problem, cell, 0u);
+    iq.update(problem, primaryVariables[i], static_cast<unsigned>(i), 0);
+    iq.updateEnergyQuantities_(problem, static_cast<unsigned>(i), 0u);
 }
 
 template <class DeviceTypeTag, class IntensiveQuantitiesT>

@@ -547,11 +547,12 @@ solveJacobianSystem(BVector& x)
 
 #if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
     if constexpr (getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
-        const auto globalWells = this->grid_.comm().sum(
-            this->simulator_.problem().wellModel().numLocalWellsEnd());
-        if (Parameters::linearSolverAcceleratorTypeFromCLI()
+        // Match the assembly bridge's eligibility. MPI preparation must first
+        // replace overlap rows on the host, and CPU peers do not enter this branch.
+        if (this->grid_.comm().size() == 1
+            && Parameters::linearSolverAcceleratorTypeFromCLI()
                 == Parameters::LinearSolverAcceleratorType::GPU
-            && globalWells == 0)
+            && this->simulator_.problem().wellModel().numLocalWellsEnd() == 0)
         {
             auto& linearizer = this->simulator_.model().linearizer();
             if (linSolver.prepareGpu(linearizer.gpuJacobian(),
@@ -761,6 +762,10 @@ localConvergenceData(std::vector<Scalar>& R_sum,
 
     const auto& residual = this->simulator_.model().linearizer().residual();
 
+    // Mixed CPU/GPU ranks must complete the same error collective before the
+    // caller reduces the convergence contributions.
+    OPM_BEGIN_PARALLEL_TRY_CATCH();
+    auto usedGpuConvergence = false;
 #if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
     if constexpr (getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()
                   && gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value) {
@@ -790,36 +795,34 @@ localConvergenceData(std::vector<Scalar>& R_sum,
                     }
                 }
             }
-            for (unsigned compIdx = 0; compIdx < compactNumEq; ++compIdx) {
-                B_avg[compIdx] /= Scalar(this->global_nc_);
-            }
-            return {pvSumLocal, numAquiferPvSumLocal};
+            usedGpuConvergence = true;
         }
     }
 #endif
 
-    ElementContext elemCtx(this->simulator_);
-    const auto& gridView = this->simulator().gridView();
-    IsNumericalAquiferCell isNumericalAquiferCell(gridView.grid());
-    OPM_BEGIN_PARALLEL_TRY_CATCH();
-    for (const auto& elem : elements(gridView, Dune::Partitions::interior)) {
-        elemCtx.updatePrimaryStencil(elem);
-        elemCtx.updatePrimaryIntensiveQuantities(/*timeIdx=*/0);
+    if (!usedGpuConvergence) {
+        ElementContext elemCtx(this->simulator_);
+        const auto& gridView = this->simulator().gridView();
+        IsNumericalAquiferCell isNumericalAquiferCell(gridView.grid());
+        for (const auto& elem : elements(gridView, Dune::Partitions::interior)) {
+            elemCtx.updatePrimaryStencil(elem);
+            elemCtx.updatePrimaryIntensiveQuantities(/*timeIdx=*/0);
 
-        const unsigned cell_idx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
-        const auto& intQuants = elemCtx.intensiveQuantities(/*spaceIdx=*/0, /*timeIdx=*/0);
-        const auto& fs = intQuants.fluidState();
+            const unsigned cell_idx = elemCtx.globalSpaceIndex(/*spaceIdx=*/0, /*timeIdx=*/0);
+            const auto& intQuants = elemCtx.intensiveQuantities(/*spaceIdx=*/0, /*timeIdx=*/0);
+            const auto& fs = intQuants.fluidState();
 
-        const auto pvValue = problem.referencePorosity(cell_idx, /*timeIdx=*/0) *
-                             model.dofTotalVolume(cell_idx);
-        pvSumLocal += pvValue;
+            const auto pvValue = problem.referencePorosity(cell_idx, /*timeIdx=*/0) *
+                                 model.dofTotalVolume(cell_idx);
+            pvSumLocal += pvValue;
 
-        if (isNumericalAquiferCell(elem)) {
-            numAquiferPvSumLocal += pvValue;
+            if (isNumericalAquiferCell(elem)) {
+                numAquiferPvSumLocal += pvValue;
+            }
+
+            this->getMaxCoeff(cell_idx, intQuants, fs, residual, pvValue,
+                              B_avg, R_sum, maxCoeff, maxCoeffCell);
         }
-
-        this->getMaxCoeff(cell_idx, intQuants, fs, residual, pvValue,
-                          B_avg, R_sum, maxCoeff, maxCoeffCell);
     }
 
     OPM_END_PARALLEL_TRY_CATCH("NonlinearSystemBlackOilReservoir::localConvergenceData() failed: ", this->grid_.comm());

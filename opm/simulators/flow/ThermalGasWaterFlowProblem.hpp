@@ -16,14 +16,12 @@
 #ifndef THERMAL_GASWATER_FLOW_PROBLEM_HPP
 #define THERMAL_GASWATER_FLOW_PROBLEM_HPP
 
-#include <opm/common/utility/SparseTable.hpp>
+#include <opm/common/ErrorMacros.hpp>
 #include <opm/common/utility/VectorWithDefaultAllocator.hpp>
 #include <opm/common/utility/gpuDecorators.hpp>
 #include <opm/common/utility/gpuistl_if_available.hpp>
 #include <opm/models/blackoil/blackoilconvectivemixingmoduleparam.hpp>
 #include <opm/models/blackoil/blackoilmoduleparams.hh>
-
-#include <utility>
 
 /*
     A simple gas-water flow problem with thermal effects that is GPU compatible
@@ -36,7 +34,6 @@ template <class Scalar, template <class> class Storage = Opm::VectorWithDefaultA
 class ThermalGasWaterFlowProblem
 {
 public:
-    using BoundaryTransmissibilities = SparseTable<Scalar, Storage>;
     using ModuleParams = BlackoilModuleParams<ConvectiveMixingModuleParam<Scalar, Storage>>;
 
     ThermalGasWaterFlowProblem() = default;
@@ -58,7 +55,7 @@ public:
     {
     }
 
-    [[nodiscard]] OPM_HOST_DEVICE Scalar getAlpha(unsigned globalIndex, unsigned boundaryFaceIndex) const
+    OPM_HOST_DEVICE Scalar getAlpha(unsigned globalIndex, unsigned boundaryFaceIndex) const
     {
         if (boundaryFaceIndex == 0) {
             return alpha0_[globalIndex];
@@ -86,9 +83,19 @@ public:
         return moduleParams_;
     }
 
-    BoundaryTransmissibilities& boundaryTransmissibilities()
+    Storage<Scalar>& alpha0()
     {
-        return boundaryTransmissibilities_;
+        return alpha0_;
+    }
+
+    Storage<Scalar>& alpha1()
+    {
+        return alpha1_;
+    }
+
+    Storage<Scalar>& alpha2()
+    {
+        return alpha2_;
     }
 
     Storage<Scalar>& alpha3()

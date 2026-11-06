@@ -270,25 +270,7 @@ public:
                 updateCachedIntQuants(timeIdx);
                 return;
             }
-#if HAVE_CUDA
-            if constexpr (Opm::gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value)
-            {
-                if (useGpuIntensiveQuantitiesDispatcher_) {
-                    if constexpr (getPropValue<TypeTag, Properties::EnableDiffusion>()
-                        || getPropValue<TypeTag, Properties::EnableDispersion>()) {
-                        OPM_THROW(std::logic_error,
-                                  "GPU intensive quantities dispatcher does not support diffusion or dispersion");
-                    }
-                    runGpuIntensiveQuantitiesDispatcher_(timeIdx);
-                    if constexpr (!getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
-                        // CPU assembly is an explicit host boundary. The GPU/GPU
-                        // path consumes the typed bridge directly instead.
-                        ensureHostIntensiveQuantities(timeIdx);
-                    }
-                    return;
-                }
-            }
-#endif
+            // Both CPU and GPU ranks must enter the same error collective.
             OPM_BEGIN_PARALLEL_TRY_CATCH();
             if (!updateIntensiveQuantitiesOnGpu_(timeIdx)) {
                 updateIntensiveQuantitiesOnCpu_(timeIdx);
@@ -381,8 +363,14 @@ public:
         if constexpr (gpuistl::GpuBlackoilIntensiveQuantitiesDispatcherSupport<TypeTag>::value) {
             if (gpuIntensiveQuantitiesDispatcher_ && gpuIntensiveQuantitiesDispatcher_->hasBridge()
                 && gpuIntensiveQuantitiesDispatcher_->bridge().hasPrimaryVariables(1)) {
+                // CPU peers enter the property-update error collective below
+                // after restoring their host solution. Match it while keeping
+                // the GPU rollback and property evaluation device-resident.
+                OPM_BEGIN_PARALLEL_TRY_CATCH();
                 gpuIntensiveQuantitiesDispatcher_->bridge().restorePreviousSolution();
                 evaluateResidentProperties(0);
+                OPM_END_PARALLEL_TRY_CATCH("updateFailed: state error",
+                                           this->simulator_.vanguard().grid().comm());
                 return;
             }
         }
@@ -721,9 +709,10 @@ protected:
                               "GPU intensive quantities dispatcher does not support diffusion or dispersion");
                 }
                 runGpuIntensiveQuantitiesDispatcher_(timeIdx);
-                const auto numCells = this->intensiveQuantityCache_[timeIdx].size();
-                for (auto cell = std::size_t{0}; cell < numCells; ++cell) {
-                    this->setIntensiveQuantitiesCacheEntryValidity(cell, timeIdx, true);
+                if constexpr (!getPropValue<TypeTag, Properties::RunAssemblyOnGpu>()) {
+                    // Preserve the resident GPU state; only CPU assembly needs
+                    // to materialize the host intensive-quantity cache here.
+                    ensureHostIntensiveQuantities(timeIdx);
                 }
                 return true;
             }

@@ -893,11 +893,14 @@ private:
         const bool useAssemblyLinearsolveBridge = [&] {
 #if HAVE_CUDA && OPM_IS_COMPILING_WITH_GPU_COMPILER
             if constexpr (run_assembly_on_gpu) {
-                const auto globalWells = simulator_().gridView().comm().sum(
-                    problem_().wellModel().numLocalWellsEnd());
-                return Parameters::linearSolverAcceleratorTypeFromCLI()
+                // Device-resident solver preparation does not replace overlap
+                // rows with identity rows. MPI uses the host preparation path,
+                // which performs that replacement before uploading the matrix.
+                // No collective may be entered only by GPU assembly ranks.
+                return simulator_().gridView().comm().size() == 1
+                    && Parameters::linearSolverAcceleratorTypeFromCLI()
                            == Parameters::LinearSolverAcceleratorType::GPU
-                    && globalWells == 0;
+                    && problem_().wellModel().numLocalWellsEnd() == 0;
             }
 #endif
             return false;
@@ -1261,7 +1264,7 @@ public:
         OPM_TIMEBLOCK_LOCAL(linearizationForEachCell, Subsystem::Assembly);
 #endif
         const unsigned globI = domain.cells[ii];
-        const auto& nbInfos = neighborInfo[useGPU ? ii : globI];
+        const auto& nbInfos = neighborInfo[globI];
         VectorBlock res(0.0);
         MatrixBlock bMat(0.0);
         ADVectorBlock adres(0.0);
@@ -1402,8 +1405,8 @@ public:
             const unsigned globI = boundaryInfoElement.cell;
             const LocalIntensiveQuantities& insideIntQuants
                 = model.intensiveQuantities(globI, /*timeIdx*/ 0);
-            // LocalResidualT and LocalIntensiveQuantities use the GPU fluid
-            // system even though this enclosing linearizer has the host TypeTag.
+            // The residual and intensive quantities use the GPU fluid system,
+            // although the enclosing linearizer has the host TypeTag.
             LocalResidualT::computeBoundaryFlux(
                 adres, problem, boundaryInfoElement.bcdata, insideIntQuants, globI);
             adres *= boundaryInfoElement.bcdata.faceArea;

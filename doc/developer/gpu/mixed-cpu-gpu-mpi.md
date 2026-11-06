@@ -1,207 +1,190 @@
 # Mixed CPU/GPU MPI simulation
 
-`flow_gpu` and `flow_gpu_cpu` can participate in the same MPI simulation.
-Each rank owns a grid partition. GPU ranks evaluate properties, assemble the
-reservoir equations, and solve their part of the linear system on the GPU.
-CPU ranks use the host implementations, including OpenMP when enabled.
-The CPU companion inherits the GPU model's gas-water thermal physics, including
-its disabled diffusion and dispersion. Do not substitute the general `flow`
-executable without checking that its model configuration matches.
+`flow_gpu` and `flow_gpu_cpu` participate in the same MPI simulation, with
+each rank owning a grid partition. GPU ranks evaluate properties and assemble
+reservoir equations on the GPU. CPU ranks use the host implementations and
+can use OpenMP. Both executables use the same thermal gas-water model, with
+diffusion and dispersion disabled.
 
-Build both executables in the configured release build:
+This implementation is rebased onto `tobias/spe11cbenchmark` in all three OPM
+repositories. It retains Tobias's resident property, assembly, Newton, and
+output implementations, with the MPI adaptations described below.
+
+## Build and run
 
 ```sh
 cd /workspaces/opm/build_release
-ninja flow_gpu flow_gpu_cpu test_GpuOwnerOverlapCopy test_GpuSparseTable \
-      test_blackoilintensivequantities_gpu test_networkpressure
-ctest -R '^(GpuOwnerOverlapCopy|GpuOwnerOverlapCopyMixed|GpuSparseTable|GpuPropertyBatches|GpuSolutionPinLifetime|networkpressure)$' --output-on-failure
+ninja -j4 flow_gpu flow_gpu_cpu test_GpuOwnerOverlapCopy test_GpuSparseTable \
+      test_blackoilintensivequantities_gpu test_networkpressure compareECL
+ctest -R '^(GpuOwnerOverlapCopy|GpuOwnerOverlapCopyMixed|GpuSparseTable|GpuPropertyTransfers|GpuSolutionPinLifetime|networkpressure)$' --output-on-failure
 ```
 
-Use the rank launcher below, or an MPI MPMD launch with colon-separated
-executable groups. All ranks must
-use the same deck, output directory, timestep/convergence options, Krylov solver,
-and scalar precision. The tested linear solver is BiCGSTAB with local DILU.
-Use `--gpu-aware-mpi=false`: the GPU rank stages halo vectors through host memory
-and uses the same Dune owner/copy exchange as CPU ranks. Device-direct exchange
-and mixed CPR/AMG hierarchies are outside this implementation's validated scope.
-
-For a machine with 16 physical cores, launch one GPU rank and 15 CPU ranks:
+For one GPU rank and 15 single-thread CPU ranks on a 16-core machine:
 
 ```sh
 cd /workspaces/opm/build_release
-deck=/workspaces/opm/spe11/RSC_144/deck/RSC_144.DATA
-output="$PWD/mixed-mpi-output"
-common=("$deck" --matrix-add-well-contributions=true --newton-min-iterations=1
-        --enable-storage-cache=false --linear-solver=dilu --gpu-aware-mpi=false
-        "--output-dir=$output")
-UCX_TLS=sysv,self CPU_THREADS=1 mpirun --bind-to none -np 16 \
-  ../opm-simulators/examples/mixed_cpu_gpu.sh "${common[@]}"
+UCX_TLS=sysv,self HSA_OVERRIDE_CPU_AFFINITY_DEBUG=0 CPU_THREADS=1 mpirun --bind-to none -np 16 \
+  ../opm-simulators/examples/mixed_cpu_gpu.sh prepared-case.DATA \
+  --matrix-add-well-contributions=true --newton-min-iterations=1 \
+  --enable-storage-cache=false --linear-solver=dilu --gpu-aware-mpi=false \
+  --output-dir=mixed-mpi-output
 ```
 
 For one GPU rank and one CPU rank with 15 threads, use `CPU_THREADS=15` and
-`-np 2`. The script selects `flow_gpu` on rank zero and `flow_gpu_cpu` on other
-ranks, and unsets `OMP_NUM_THREADS` so the requested thread counts take effect.
-Set `FLOW_BINARY_DIR` if the binaries are elsewhere. This also works around the
-installed MPI launcher's crash with colon-separated MPMD commands. On this
-container, `UCX_TLS=sysv,self` avoids a UCX initialization failure with the 64 MiB
-POSIX shared-memory mount; that setting is for a single-node run only.
-Bind the GPU process to one physical core and the CPU process(es) to the other
-cores for reproducible measurements. The normal
-partitioner balances cells per MPI rank, not estimated CPU/GPU execution time;
-`--external-partition` can supply a different cell distribution.
+`-np 2`. The launcher chooses `flow_gpu` on rank zero and `flow_gpu_cpu` on
+other ranks. It clears `OMP_NUM_THREADS` so the rank-specific thread setting
+takes effect. `FLOW_BINARY_DIR` overrides the executable directory.
+`UCX_TLS=sysv,self` is a single-node workaround for this container's small
+POSIX shared-memory mount. The rank launcher also avoids a crash in the
+installed MPI launcher's colon-separated MPMD syntax.
+The ROCm affinity setting makes runtime threads inherit the parent CPU mask;
+the benchmark launcher supplies a separate mask for each MPI rank and records
+runtime affinity samples.
 
-The CPU companion is compiled with the host compiler because GPU translation
-units need not enable OpenMP. In particular, the HIP configuration used here
-does not parallelize host assembly inside a HIP translation unit.
+All ranks must use the same deck, output directory, scalar precision,
+timestep controls, convergence options, and Krylov solver. The tested solver
+is double-precision BiCGSTAB with local DILU and host-staged halo exchanges.
+Mixed CPR/AMG and device-direct MPI have not been validated here.
 
-## Implementation and regression coverage
+## MPI adaptations
 
-Property-update errors are reduced collectively after either the CPU or GPU
-path completes. Previously the GPU path returned before the CPU collective.
-CPU linear-solver setup now writes its local diagnostic directly, avoiding a
-log-gather collective when only CPU ranks rebuild their solver. These changes
-allow the existing CPU and GPU Krylov implementations to communicate together.
-The GPU solver pins each Newton solution vector only for the duration of its
-solve. The previous persistent registration outlived the caller's temporary
-vector and caused invalid host-to-device transfers when its address was reused
-in the large two-rank layout. `GpuSolutionPinLifetime` checks repeated solves
-and confirms that the solution registration is released before returning.
+Property evaluation and local convergence calculations enter the same error
+collectives on CPU and GPU ranks. A GPU return before the CPU collective
+would otherwise leave the MPI ranks executing different reductions.
+The resident GPU rollback after a rejected timestep also matches the CPU
+property-update error collective before either rank starts the retry.
 
-Thermal boundary transmissibilities use sparse per-cell rows, accommodating
-partition cells with more than three boundary faces. The GPU boundary kernel
-now calls the GPU residual implementation unconditionally: testing the host
-fluid-system type had silently skipped all thermal boundary contributions,
-which made CPU/GPU partitions solve different equations. `GpuSparseTable`
-checks GPU transfer and access for empty interior rows and a six-face cell.
+GPU assembly and linear-solver selection do not perform GPU-only well-count
+reductions. The resident matrix-to-solver path is retained for single-rank
+execution. MPI uses host preparation so overlap matrix rows are replaced
+with identity rows before GPU solver upload, as in the existing parallel
+solver. Properties and assembly still run on the GPU. Tobias's resident
+Newton update already restricts itself to single-rank execution; MPI uses
+the existing host Newton update and halo synchronization.
 
-Property buffers and assembly neighbor metadata are staged in 65,536-cell
-batches. This bounds temporary device memory when the GPU solver and its
-preconditioner are resident; full-grid staging exceeded this card's 16 GiB on
-RSC_144. Assembly retains complete intensive-quantity views for halo access.
-`GpuPropertyBatches` checks the production dispatcher on a 68,921-cell grid
-with varying porosity, crossing a batch boundary and including a partial final
-batch. The offset must refer to the original local cell when fetching properties.
+CPU solver setup writes its local diagnostic through OpmLog without a
+collective log gather. CPU and GPU ranks can rebuild their local solvers at
+different times. GPU solution memory is pinned only for the duration of the
+solve, so a registration cannot outlive the caller's temporary vector.
 
-`GpuOwnerOverlapCopyMixed` exercises three-component halo exchanges, dot
-products, and norms with one GPU rank and CPU peers. It checks both rank zero
-and the last rank as the GPU participant. Full simulation validation and
-benchmark measurements are recorded below.
+GPU thermal boundary fluxes use the GPU residual implementation regardless
+of the enclosing host TypeTag's fluid system. Tobias's six-face thermal
+boundary representation is retained. His persistent GPU buffers replace the
+older per-iteration batching implementation.
 
-## Validation environment
+The CPU companion is built with the host compiler so its property evaluation
+and assembly use OpenMP. The default partitioner balances cells, without
+CPU/GPU speed weights. An external partition can provide another distribution.
 
-The local build combines `opm-simulators` at `4f4603ba8`, `opm-common` at
-`a9121b318`, and `opm-grid` at `4888e311`. Rebuilding against these dependency
-versions also required adapting the moved `SparseTable` include, `BCState`,
-satellite-production accessors, summary-state initialization, and the new
-`WELDRAW` serialization include. The fmt headers now explicitly include
-`fmt/format.h` wherever `fmt::format` is used.
+## Regression coverage and benchmark artifacts
 
-The validation machine has a Ryzen 9 5950X (16 physical cores, 32 logical CPUs)
-and one Radeon RX 9070 XT (`gfx1201`). The Release build uses GCC 15 for host
-code and the ROCm Clang 23 HIP compiler for GPU code. Tests use double precision,
-host-staged MPI exchanges, and BiCGSTAB/DILU. CUDA and multiple-node execution
-have not been tested here.
+`GpuOwnerOverlapCopyMixed` checks halo exchanges, dot products, and norms with
+CPU peers, with both the first and last rank as the GPU participant.
+`GpuPropertyTransfers` checks the production resident-state dispatcher on a
+small grid and a 68,921-cell grid with varying porosity. `GpuSolutionPinLifetime`
+checks that repeated solves release solution-vector registrations.
 
-A shortened copy of the RSC_16 deck (six blocks of five 3.6-day report steps,
-108 days total, 4,608 cells) completes with CPU-only, GPU-only, GPU + 15 CPU
-processes, and GPU + one 15-thread CPU process. With
-`--linear-solver-reduction=1e-10 --relaxed-linear-solver-reduction=1e-10`,
-`compareECL` passes for `PRESSURE`, `SWAT`, `SGAS`, and `TEMP` at every report
-step using absolute and relative tolerances of `1e-5` against the CPU-only run.
-These tighter solver options are for validation, not the timing runs below.
+The experiments use the decks in `/workspaces/opm/newcases/SPE11C_cases` and
+compare CPU MPI (16 ranks), CPU OpenMP (16 threads), GPU only, GPU plus 15 CPU
+ranks, and GPU plus one 15-thread CPU rank. Grids and source definitions are
+preserved. Diffusion and dispersion are removed identically from prepared
+copies.
 
-Focused CTest coverage: `GpuSparseTable`, `GpuOwnerOverlapCopy`,
-`GpuOwnerOverlapCopyMixed`, `GpuPropertyBatches`, `GpuSolutionPinLifetime`,
-and `networkpressure` all pass. Clang-tidy was run with the workspace
-configuration; the new MPI and batch regressions and CPU companion pass the
-targeted checks. Existing warnings remain in the original sparse-table test, the
-large `linearize_cell` function, and an ISTL explicit-instantiation macro;
-GCC also emits its existing Dune
-`-Wfree-nonheap-object` diagnostics.
+The scaling study repeats the earlier 26-day workload on the new grids: all
+26 report intervals are one day, so the timing of source events is compressed.
+The maximum timestep is one day in every configuration. Commands, frozen
+binary/source provenance, input changes, logs, numerical validation, and plots
+are under `/workspaces/opm/build_release/spe11c_scaling_20261019_26days`.
 
-The broader `blackoilintensivequantities_gpu` CTest also was attempted. Its
-existing hard-coded real-deck fixture requests diffusion from a disabled model,
-and its derivative fixture reports NaNs on both CPU and GPU. Those unrelated
-fixtures fail; the two production-dispatcher cases pass when run separately.
+Separate full-schedule experiments for RSC_16, RSC_32, and RSC_48 preserve all
+730,000 days and use a maximum allowed timestep of 365,000 days with adaptive
+control. A tighter full-schedule RSC_16 numerical check uses a 365-day cap.
+Those results are under `/workspaces/opm/build_release/spe11c_scaling_20261019`;
+larger grids were not timed for that workload. The full and abbreviated
+schedules are separate datasets.
 
-The checked-in `examples/mixed_cpu_gpu.sh` launcher also completes the small
-case with 15 CPU threads. Its final results pass the same four-field `1e-5`
-comparison against the CPU reference.
+The plots show total elapsed time, simulation time, assembly, linear solve,
+properties/update, and pre/post processing against active-cell count, with
+individual phase plots and a four-panel overview. Timing runs are sequential,
+and only grids completing GPU-only execution for the plotted workload are
+included. Runtime affinity samples accompany the measurements.
+The phase plots use Flow's rank-zero wall timers. GPU property evaluation is
+asynchronous, so its execution can be charged to a later phase that waits for
+completion.
 
-Benchmark affinity is requested as CPU 0 for the GPU rank, CPUs 1–15 for the
-threaded CPU rank, and CPU `rank` for each single-thread CPU rank. `/proc`
-inspection shows that the HIP runtime expands some thread masks to CPUs 0–31;
-these runs use the runtime's default affinity behavior. The CPU OpenMP workers
-retain CPUs 1–15. The two-rank CPU process grows from four runtime threads to
-18 threads on entering simulation, consistent with 14 additional OpenMP workers
-plus its main thread. The rank-zero log's “threads per process” line describes
-the GPU rank and does not report the CPU rank's separate thread setting.
+The earlier 26-day experiments and their original binaries remain under
+`/workspaces/opm/build_release/spe11c_scaling_20261013`; their results describe
+the previous source and workload and should not be mixed into the new curves.
 
-## Benchmark method
+## Continuing the full schedule unattended
 
-The full, unmodified input is
-`/workspaces/opm/spe11/RSC_144/deck/RSC_144.DATA`: 3,027,456 active cells,
-26 report steps, and 72.2 simulated days. Runs use the options from
-`/workspaces/opm/toprofile.sh`, plus explicit host-staged MPI, convergence
-history output, and separate output directories. All final measurements run
-sequentially without concurrent builds, tests, static analysis, or other
-benchmarks. Each final layout is measured once; the results are not medians.
-Wall time includes input, partitioning, initialization, simulation, output,
-and process shutdown.
+`examples/run_spe11c_long.py` continues the full 730,000-day experiment on this
+workspace. The convenience launcher is `/workspaces/opm/run_spe11c_week.sh`.
+The default output directory is `/workspaces/opm/build_release/spe11c_week`.
 
-The two-rank layout assigns 1,665,100 owned cells to the GPU and 1,362,356 to
-the CPU. In the 16-rank layout, the GPU owns 177,976 cells. These are the
-default partitioner's distributions, with no CPU/GPU performance weighting.
+```sh
+cd /workspaces/opm
+./run_spe11c_week.sh check
+./run_spe11c_week.sh start
+./run_spe11c_week.sh status
+tail -f build_release/spe11c_week/manager.log
+```
 
-The executable preserved before this task is
-`build_release/mixed_cpu_gpu/flow_gpu.baseline`. It fails this full case with
-device-memory allocation errors and has no completed benchmark time. The
-older `rsc144-transfer-*` notes describe different archived binaries and source
-revisions; their timings are not measurements of this change.
+`start` detaches from the terminal, so the shell may be closed. The machine
+and container must remain running. The script uses the frozen executables
+and input hashes from `spe11c_scaling_20261019`; no rebuild is required.
+It copies the executables and inputs into the new experiment directory.
+Keep the baseline directory: its completed runs are reused through symlinks.
 
-Exact commands, rank-specific arguments, logs, binary hashes, and timings are
-under `/workspaces/opm/build_release/mixed_cpu_gpu`. The final run directories
-are `rsc144_pinned_gpu`, `rsc144_pinned_mixed_mpi`, and
-`rsc144_pinned_mixed_threads`; `rsc144_original_gpu` records the failed original
-executable. `collect_results.py` produces `benchmark_results.json`.
+By default, the script imports the 15 completed RSC_16–48 configurations and
+continues with 35 configurations for RSC_64–160. It runs GPU only, CPU MPI,
+CPU OpenMP, mixed MPI, and mixed OpenMP sequentially, with the same 16-core
+allocation and solver options as the full-schedule study. The original
+schedule and grid sizes are preserved; diffusion and dispersion remain
+disabled identically in the prepared decks. RSC_176 is excluded because its
+previous GPU run exhausted VRAM. If a full-schedule GPU run also exhausts
+VRAM, that grid and larger grids are excluded.
 
-## RSC_144 results
+There is **no wall-time limit by default**. To impose one, add, for example,
+`--timeout-hours 48`. This is a per-configuration limit, not a limit on the
+whole experiment. A timed-out or failed configuration is recorded and the
+queue continues. If GPU-only execution fails, the other modes for that grid
+are skipped. Use `--retry-failed` on a later start to retry failures once;
+previous attempts are archived.
 
-Times are seconds, using 16 physical CPU cores and the Radeon RX 9070 XT.
+```sh
+# Interrupt the current configuration and stop the queue.
+./run_spe11c_week.sh stop
 
-| Layout | Setup | Simulation | Total elapsed |
-| --- | ---: | ---: | ---: |
-| GPU only, rebuilt source | 52.04 | 481.27 | 539.79 |
-| One GPU rank + 15 single-thread CPU ranks | 86.81 | 134.58 | 224.49 |
-| One GPU rank + one 15-thread CPU rank | 98.65 | 325.73 | 429.73 |
+# Resume: completed configurations are skipped.
+./run_spe11c_week.sh start
 
-The 15-CPU-rank layout is 2.40 times faster end to end than the rebuilt GPU-only
-run, and 1.91 times faster than the threaded CPU layout. Its simulation phase
-is 3.58 times faster than GPU only. All three finish 28 timesteps,
-56 linearizations, and 28 Newton iterations with no wasted iterations. The
-GPU-only and threaded layouts report three linear iterations; the 16-rank
-layout reports four. These are measurements at the requested original solver
-reduction of `0.01`, with `--newton-min-iterations=1`.
+# Retry failed or timed-out configurations as well.
+./run_spe11c_week.sh start --retry-failed
+```
 
-| Simulation component | GPU only | GPU + 15 CPU ranks | GPU + 15 CPU threads |
-| --- | ---: | ---: | ---: |
-| Assembly | 370.12 | 55.50 | 219.19 |
-| Linear solve | 15.70 | 17.87 | 23.51 |
-| Properties/update | 35.42 | 25.57 | 22.78 |
-| Pre/post step | 50.13 | 20.72 | 33.80 |
+Resume operates at configuration boundaries: an interrupted simulation starts
+again from its beginning, rather than from an Eclipse restart checkpoint.
+The previous attempt is retained under `attempts/`. A lock prevents duplicate
+runners from using the same output directory. If less than 10 GiB of disk
+space remains before a run, the queue stops with an error and can be resumed
+after space is available. `--min-free-gib` changes that threshold.
 
-Both mixed runs pass `compareECL` for `PRESSURE`, `SWAT`, `SGAS`, and `TEMP`
-at every saved report step against the rebuilt GPU-only run, with absolute
-and relative tolerances of `1e-3`. The largest differences across these runs
-are 0.02887 bar in pressure, 0.01299 degrees Celsius in temperature, and
-0.000894 in saturation. Partition-dependent solves at the original `0.01`
-linear reduction do not reproduce all fields at `1e-5`; the small-case
-validation above uses tighter solves and passes that stricter comparison.
-`validation_results.json` and the `*_final_validation.log` / `*_final_analysis.log`
-files contain the comparison results. Analysis maxima there describe only
-entries exceeding both `1e-5` tolerances; null means no such entry.
+`status.json` records the current phase, case, elapsed runtime, and recent
+simulator output; `runs/CASE/MODE/console.log` contains the complete log.
+The script updates `results.csv/json` after each run and regenerates the total,
+simulation, assembly, linear-solve, properties/update, and pre/post plots after
+each case. Only grids with all five modes complete appear in the plots.
+Each plot is saved as PNG, PDF, and SVG.
 
-The final Ninja check succeeds. It refreshes generated version information
-and relinks the executables without changing simulation objects.
-`benchmark_binaries.json` records both the timed binary hashes and the hashes
-after that version-information refresh.
+After the queue finishes, it compares pressure, saturations, and temperature
+at every saved report step and retains failures in `validation_results.json`
+and `validation/`. These are the original default solver tolerances, whose
+full-schedule numerical differences were already observed; completing a
+simulation does not imply passing those comparisons. Simulation failures and
+numerical comparison results are reported separately.
+
+For a separate smaller experiment, use `--cases 16,32 --output /path/to/results`.
+Repeat those options on resume. `--no-reuse-completed` starts those selected
+configurations from scratch in the new output directory; `--no-plots` and
+`--no-validate` disable their respective postprocessing steps.

@@ -1062,10 +1062,10 @@ BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherContract)
     runProductionDispatcherTest(tempFile.path.string());
 }
 
-BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherBatchBoundaries)
+BOOST_AUTO_TEST_CASE(TestProductionGpuDispatcherLargeGrid)
 {
-    // Cross the 65,536-cell batch boundary and retain a partial final batch.
-    // Spatially varying porosity detects using batch-local property indices.
+    // Exercise the resident-state dispatcher on a larger grid. Spatially
+    // varying porosity detects incorrect mapping of cell property indices.
     const auto tempFile = TemporaryFile("test_blackoil_dispatcher_batches.DATA");
     auto deck = makeDeckString(41, 41, 41);
     const auto properties = deck.find("PROPS\n");

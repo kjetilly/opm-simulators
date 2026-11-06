@@ -20,6 +20,7 @@
 
 #define BOOST_TEST_MODULE TestGpuSparseTable
 
+#include <opm/simulators/flow/ThermalGasWaterFlowProblem.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuSparseMatrixWrapper.hpp>
 #include <opm/simulators/linalg/gpuistl/GpuVector.hpp>
 #include <opm/simulators/linalg/gpuistl/detail/gpu_safe_call.hpp>
@@ -36,6 +37,7 @@
 
 #include <opm/common/utility/SparseTable.hpp>
 
+#include <array>
 #include <cstddef>
 #include <random>
 #include <type_traits>
@@ -111,11 +113,14 @@ __global__ void fetchBoundaryTransmissibilitiesInKernel(
 
 BOOST_AUTO_TEST_CASE(TestPartitionBoundaryTransmissibilities)
 {
-    // Interior cells have empty rows; a partition cell can have six boundary faces.
+    // Interior cells have zero coefficients; a partition cell can expose six faces.
     using Problem = Opm::ThermalGasWaterFlowProblem<double>;
-    Problem::BoundaryTransmissibilities boundaryTransmissibilities(
-        {1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0}, {0, 0, 6, 6, 7});
-    auto problem = Problem(std::move(boundaryTransmissibilities), {});
+    auto problem = Problem({0.0, 1.0, 0.0, 7.0},
+                           {0.0, 2.0, 0.0, 0.0},
+                           {0.0, 3.0, 0.0, 0.0},
+                           {0.0, 4.0, 0.0, 0.0},
+                           {0.0, 5.0, 0.0, 0.0},
+                           {0.0, 6.0, 0.0, 0.0}, {});
     auto buffer = Opm::gpuistl::copy_to_gpu(problem);
     auto output = Opm::gpuistl::make_gpu_unique_ptr<std::array<double, 7>>({});
     fetchBoundaryTransmissibilitiesInKernel<<<1, 1>>>(Opm::gpuistl::make_view(buffer), output.get());

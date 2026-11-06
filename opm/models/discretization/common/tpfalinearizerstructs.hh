@@ -115,21 +115,12 @@ namespace gpuistl {
     auto copy_to_gpu(const SparseTable<NeighborInfoStruct<ResidualNBInfoType, MatrixBlockType>>&
                          cpuNeighborInfoTable,
                      GpuMatrixType& gpuJacobian,
-                     CpuMatrixType& cpuJacobian,
-                     const int firstRow,
-                     const int numRows)
+                     CpuMatrixType& cpuJacobian)
     {
         // Convert the DUNE FieldVectors to MiniMatrix types
         using StructWithMinimatrix = NeighborInfoStruct<ResidualNBInfoType, MiniMatrixType>;
         using Scalar = typename GpuMatrixType::field_type;
-        const auto& rowStarts = cpuNeighborInfoTable.rowStarts();
-        const auto firstEntry = rowStarts[firstRow];
-        const auto numEntries = rowStarts[firstRow + numRows] - firstEntry;
-        auto batchRowStarts = std::vector<int>(numRows + 1);
-        for (auto row = 0; row <= numRows; ++row) {
-            batchRowStarts[row] = rowStarts[firstRow + row] - firstEntry;
-        }
-        std::vector<StructWithMinimatrix> minimatrices(numEntries);
+        std::vector<StructWithMinimatrix> minimatrices(cpuNeighborInfoTable.dataSize());
         Scalar* gpuBufStart = gpuJacobian.getNonZeroValues().data();
         Scalar* cpuBufStart = &(cpuJacobian[0][0][0][0]);
 
@@ -144,12 +135,12 @@ namespace gpuistl {
         assert(gpuBufferSize == cpuBufferSize);
 
         const auto& dataStorage = cpuNeighborInfoTable.dataStorage();
-        const auto dataSize = static_cast<std::size_t>(numEntries);
+        const size_t dataSize = cpuNeighborInfoTable.dataSize();
 #ifdef _OPENMP
 #pragma omp parallel for
 #endif
         for (size_t idx = 0; idx < dataSize; ++idx) {
-            const auto& e = dataStorage[firstEntry + idx];
+            const auto& e = dataStorage[idx];
             Scalar* cpuPtr = &((*e.matBlockAddress)[0][0]);
 
             // convert the pointer from CPU to GPU pointer based on offset in CPU jacobian
@@ -162,7 +153,7 @@ namespace gpuistl {
 
         return SparseTable<StructWithMinimatrix, gpuistl::GpuBuffer>(
             gpuistl::GpuBuffer<StructWithMinimatrix>(minimatrices),
-            gpuistl::GpuBuffer<int>(batchRowStarts)
+            gpuistl::GpuBuffer<int>(cpuNeighborInfoTable.rowStarts())
         );
     }
 
